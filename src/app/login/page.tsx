@@ -40,66 +40,54 @@ export default function LoginPage() {
 
   return (
     <div className="flex items-center justify-center min-h-[80vh] px-4">
-      <Card className="w-full max-w-md border-t-4 border-t-[#004a99]">
-        <CardHeader className="space-y-2 pb-4">
-          <div className="flex justify-center mb-2">
-            <div className="bg-[#004a99] text-white px-3 py-1 rounded text-xs font-bold tracking-widest uppercase">
-              Lernsax Login
-            </div>
-          </div>
-          <CardTitle className="text-2xl font-bold text-center">ABI Planer Anmeldung</CardTitle>
-          <CardDescription className="text-center">
-            Logge dich mit deinem verifizierten Lernsax-Konto ein.
+      <Card className="w-full max-w-md border border-slate-200 shadow-sm p-6">
+        <CardHeader className="space-y-2 pb-8 text-center pt-4">
+          <CardTitle className="text-3xl font-bold tracking-tight">Anmelden</CardTitle>
+          <CardDescription className="text-muted-foreground">
+            Nutze dein @hgr-web.lernsax.de Konto
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleLogin}>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-6 pb-6">
             {error && (
-              <div className="bg-destructive/15 text-destructive text-sm p-3 rounded-md text-center font-medium border border-destructive/20">
+              <div className="text-destructive text-sm p-3 rounded-md bg-destructive/10 text-center font-medium">
                 {error}
               </div>
             )}
             
-            <div className="bg-blue-50 border border-blue-100 p-3 rounded-md space-y-1">
-              <p className="text-[11px] font-bold text-[#004a99] uppercase">Wichtiger Hinweis</p>
-              <p className="text-xs text-blue-800 leading-relaxed">
-                Verwende ausschließlich deine E-Mail Adresse der Form: <br/>
-                <code className="font-bold">vorname.nachname@hgr-web.lernsax.de</code>
-              </p>
-            </div>
-
             <div className="space-y-2">
-              <Label htmlFor="email">Lernsax E-Mail</Label>
+              <Label htmlFor="email" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">E-Mail</Label>
               <Input 
                 id="email" 
                 type="email" 
-                placeholder="max.mustermann@hgr-web.lernsax.de" 
+                placeholder="vorname.nachname@hgr-web.lernsax.de" 
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="border-slate-300 focus:ring-[#004a99] focus:border-[#004a99]"
+                className="bg-muted/30 border-slate-200 h-12 focus:bg-background transition-all"
                 required 
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Passwort</Label>
+              <Label htmlFor="password" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Passwort</Label>
               <Input 
                 id="password" 
                 type="password" 
+                placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="border-slate-300 focus:ring-[#004a99] focus:border-[#004a99]"
+                className="bg-muted/30 border-slate-200 h-12 focus:bg-background transition-all"
                 required 
               />
             </div>
           </CardContent>
-          <CardFooter className="flex flex-col space-y-4">
-            <Button type="submit" className="w-full bg-[#004a99] hover:bg-[#003a7a] text-white" disabled={loading}>
-              {loading ? 'Anmeldung läuft...' : 'Sicher anmelden'}
+          <CardFooter className="flex flex-col space-y-6 pt-2 pb-4">
+            <Button type="submit" className="w-full h-12 text-base font-bold shadow-md active:scale-[0.98] transition-transform" disabled={loading}>
+              {loading ? 'Anmeldung...' : 'Anmelden'}
             </Button>
             <p className="text-sm text-center text-muted-foreground">
-              Noch keinen Account für den ABI Planer?{' '}
-              <Link href="/register" className="text-[#004a99] hover:underline font-bold">
-                Hier registrieren
+              Noch keinen Account?{' '}
+              <Link href="/register" className="text-foreground hover:underline font-bold decoration-2 underline-offset-4">
+                Registrieren
               </Link>
             </p>
           </CardFooter>

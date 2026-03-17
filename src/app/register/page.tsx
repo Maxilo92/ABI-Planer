@@ -62,79 +62,65 @@ export default function RegisterPage() {
 
   return (
     <div className="flex items-center justify-center min-h-[80vh] px-4">
-      <Card className="w-full max-w-md border-t-4 border-t-[#004a99]">
-        <CardHeader className="space-y-2 pb-4">
-          <div className="flex justify-center mb-2">
-            <div className="bg-[#004a99] text-white px-3 py-1 rounded text-xs font-bold tracking-widest uppercase">
-              HGR Account
-            </div>
-          </div>
-          <CardTitle className="text-2xl font-bold text-center">Registrieren</CardTitle>
-          <CardDescription className="text-center">
-            Erstelle deinen ABI Planer Zugang mit deiner Lernsax E-Mail.
+      <Card className="w-full max-w-md border border-slate-200 shadow-sm p-6">
+        <CardHeader className="space-y-2 pb-8 text-center pt-4">
+          <CardTitle className="text-3xl font-bold tracking-tight">Registrieren</CardTitle>
+          <CardDescription className="text-muted-foreground">
+            Werde Teil der ABI Planung 2026
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleRegister}>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-6 pb-6">
             {error && (
-              <div className="bg-destructive/15 text-destructive text-sm p-3 rounded-md text-center font-medium border border-destructive/20">
+              <div className="text-destructive text-sm p-3 rounded-md bg-destructive/10 text-center font-medium">
                 {error}
               </div>
             )}
 
-            <div className="bg-blue-50 border border-blue-100 p-3 rounded-md space-y-1">
-              <p className="text-[11px] font-bold text-[#004a99] uppercase">Hinweis zur Domain</p>
-              <p className="text-xs text-blue-800 leading-relaxed">
-                Nur E-Mails von <code className="font-bold text-[#004a99]">@hgr-web.lernsax.de</code> sind für diesen Planer zugelassen.
-              </p>
-            </div>
-
             <div className="space-y-2">
-              <Label htmlFor="fullName">Vollständiger Name</Label>
+              <Label htmlFor="fullName" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Vollständiger Name</Label>
               <Input 
                 id="fullName" 
                 placeholder="Max Mustermann" 
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
-                className="border-slate-300 focus:ring-[#004a99] focus:border-[#004a99]"
+                className="bg-muted/30 border-slate-200 h-12 focus:bg-background transition-all"
                 required 
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="email">Lernsax E-Mail</Label>
+              <Label htmlFor="email" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Lernsax E-Mail</Label>
               <Input 
                 id="email" 
                 type="email" 
                 placeholder="name@hgr-web.lernsax.de" 
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="border-slate-300 focus:ring-[#004a99] focus:border-[#004a99]"
+                className="bg-muted/30 border-slate-200 h-12 focus:bg-background transition-all"
                 required 
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Passwort festlegen</Label>
+              <Label htmlFor="password" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Passwort</Label>
               <Input 
                 id="password" 
                 type="password" 
+                placeholder="Mindestens 6 Zeichen"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="border-slate-300 focus:ring-[#004a99] focus:border-[#004a99]"
+                className="bg-muted/30 border-slate-200 h-12 focus:bg-background transition-all"
                 required 
               />
-              <p className="text-[10px] text-muted-foreground italic">
-                Tipp: Nutze ein sicheres Passwort, nicht zwingend dein Lernsax-Passwort.
-              </p>
             </div>
           </CardContent>
-          <CardFooter className="flex flex-col space-y-4">
-            <Button type="submit" className="w-full bg-[#004a99] hover:bg-[#003a7a] text-white" disabled={loading}>
-              {loading ? 'Konto wird erstellt...' : 'Jetzt registrieren'}
+          <CardFooter className="flex flex-col space-y-6 pt-2 pb-4">
+            <Button type="submit" className="w-full h-12 text-base font-bold shadow-md active:scale-[0.98] transition-transform" disabled={loading}>
+              {loading ? 'Konto wird erstellt...' : 'Account erstellen'}
             </Button>
             <p className="text-sm text-center text-muted-foreground">
-              Bereits registriert?{' '}
-              <Link href="/login" className="text-[#004a99] hover:underline font-bold">
-                Hier anmelden
+              Bereits einen Account?{' '}
+              <Link href="/login" className="text-foreground hover:underline font-bold decoration-2 underline-offset-4">
+                Anmelden
               </Link>
             </p>
           </CardFooter>
