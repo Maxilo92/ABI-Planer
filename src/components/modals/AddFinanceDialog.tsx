@@ -1,7 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { createClient } from '@/lib/supabase'
+import { db } from '@/lib/firebase'
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore'
+import { useAuth } from '@/context/AuthContext'
 import { useRouter } from 'next/navigation'
 import { 
   Dialog, 
@@ -22,29 +24,28 @@ export function AddFinanceDialog() {
   const [description, setDescription] = useState('')
   const [loading, setLoading] = useState(false)
   const [open, setOpen] = useState(false)
-  const supabase = createClient()
+  const { user } = useAuth()
   const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
 
-    const { data: { user } } = await supabase.auth.getUser()
-
     if (user) {
-      const { error } = await supabase
-        .from('finances')
-        .insert([{ 
+      try {
+        await addDoc(collection(db, 'finances'), { 
           amount: parseFloat(amount.replace(',', '.')), 
           description,
-          created_by: user.id 
-        }])
+          created_by: user.uid,
+          entry_date: serverTimestamp() 
+        })
 
-      if (!error) {
         setAmount('')
         setDescription('')
         setOpen(false)
         router.refresh()
+      } catch (error) {
+        console.error('Error adding finance entry:', error)
       }
     }
     setLoading(false)

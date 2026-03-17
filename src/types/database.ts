@@ -4,6 +4,7 @@ export type TodoStatus = 'open' | 'in_progress' | 'done';
 export interface Profile {
   id: string;
   full_name: string | null;
+  email: string;
   role: UserRole;
   is_approved: boolean;
   created_at: string;

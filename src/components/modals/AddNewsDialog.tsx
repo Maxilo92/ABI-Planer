@@ -1,7 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { createClient } from '@/lib/supabase'
+import { db } from '@/lib/firebase'
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore'
+import { useAuth } from '@/context/AuthContext'
 import { useRouter } from 'next/navigation'
 import { 
   Dialog, 
@@ -23,25 +25,28 @@ export function AddNewsDialog() {
   const [content, setContent] = useState('')
   const [loading, setLoading] = useState(false)
   const [open, setOpen] = useState(false)
-  const supabase = createClient()
+  const { user } = useAuth()
   const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
 
-    const { data: { user } } = await supabase.auth.getUser()
-
     if (user) {
-      const { error } = await supabase
-        .from('news')
-        .insert([{ title, content, created_by: user.id }])
+      try {
+        await addDoc(collection(db, 'news'), { 
+          title, 
+          content, 
+          created_by: user.uid,
+          created_at: serverTimestamp()
+        })
 
-      if (!error) {
         setTitle('')
         setContent('')
         setOpen(false)
         router.refresh()
+      } catch (error) {
+        console.error('Error adding news:', error)
       }
     }
     setLoading(false)

@@ -1,7 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { createClient } from '@/lib/supabase'
+import { db } from '@/lib/firebase'
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore'
+import { useAuth } from '@/context/AuthContext'
 import { useRouter } from 'next/navigation'
 import { 
   Dialog, 
@@ -21,24 +23,27 @@ export function AddTodoDialog() {
   const [title, setTitle] = useState('')
   const [loading, setLoading] = useState(false)
   const [open, setOpen] = useState(false)
-  const supabase = createClient()
+  const { user } = useAuth()
   const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
 
-    const { data: { user } } = await supabase.auth.getUser()
-
     if (user) {
-      const { error } = await supabase
-        .from('todos')
-        .insert([{ title, created_by: user.id }])
+      try {
+        await addDoc(collection(db, 'todos'), {
+          title,
+          created_by: user.uid,
+          status: 'open',
+          created_at: serverTimestamp(),
+        })
 
-      if (!error) {
         setTitle('')
         setOpen(false)
         router.refresh()
+      } catch (error) {
+        console.error('Error adding todo:', error)
       }
     }
     setLoading(false)

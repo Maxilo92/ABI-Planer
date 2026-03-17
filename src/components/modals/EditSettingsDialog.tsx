@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { createClient } from '@/lib/supabase'
+import { db } from '@/lib/firebase'
+import { doc, setDoc } from 'firebase/firestore'
 import { useRouter } from 'next/navigation'
 import { 
   Dialog, 
@@ -31,24 +32,22 @@ export function EditSettingsDialog({ currentDate, currentGoal }: EditSettingsDia
   const [goal, setGoal] = useState(currentGoal.toString())
   const [loading, setLoading] = useState(false)
   const [open, setOpen] = useState(false)
-  const supabase = createClient()
   const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
 
-    const { error } = await supabase
-      .from('settings')
-      .update({ 
+    try {
+      await setDoc(doc(db, 'settings', 'config'), { 
         ball_date: new Date(date).toISOString(),
         funding_goal: parseFloat(goal)
-      })
-      .eq('id', 1) // Only one row exists
+      }, { merge: true })
 
-    if (!error) {
       setOpen(false)
       router.refresh()
+    } catch (error) {
+      console.error('Error updating settings:', error)
     }
     setLoading(false)
   }

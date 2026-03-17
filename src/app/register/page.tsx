@@ -41,6 +41,7 @@ export default function RegisterPage() {
       // 4. Create profile document in Firestore
       await setDoc(doc(db, 'profiles', user.uid), {
         full_name: fullName,
+        email: email,
         role: isFirstUser ? 'admin' : 'viewer',
         is_approved: true, // Auto-approve for MVP
         created_at: new Date().toISOString(),

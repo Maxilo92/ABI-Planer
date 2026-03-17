@@ -1,6 +1,8 @@
 'use client'
 
 import { useState } from 'react'
+import { auth } from '@/lib/firebase'
+import { sendPasswordResetEmail } from 'firebase/auth'
 import { 
   Dialog, 
   DialogContent, 
@@ -11,17 +13,15 @@ import {
   DialogTrigger 
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { KeyRound } from 'lucide-react'
 
 interface ResetPasswordDialogProps {
-  userId: string
+  userEmail: string
   userName: string
 }
 
-export function ResetPasswordDialog({ userId, userName }: ResetPasswordDialogProps) {
-  const [password, setPassword] = useState('')
+export function ResetPasswordDialog({ userEmail, userName }: ResetPasswordDialogProps) {
   const [loading, setLoading] = useState(false)
   const [open, setOpen] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
@@ -32,23 +32,12 @@ export function ResetPasswordDialog({ userId, userName }: ResetPasswordDialogPro
     setMessage(null)
 
     try {
-      const response = await fetch('/api/admin/reset-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, newPassword: password })
-      })
-
-      const data = await response.json()
-
-      if (data.success) {
-        setMessage({ type: 'success', text: 'Passwort erfolgreich geändert.' })
-        setPassword('')
-        setTimeout(() => setOpen(false), 2000)
-      } else {
-        setMessage({ type: 'error', text: data.error || 'Fehler beim Zurücksetzen.' })
-      }
-    } catch (err) {
-      setMessage({ type: 'error', text: 'Netzwerkfehler.' })
+      await sendPasswordResetEmail(auth, userEmail)
+      setMessage({ type: 'success', text: 'E-Mail zum Zurücksetzen des Passworts wurde gesendet.' })
+      setTimeout(() => setOpen(false), 3000)
+    } catch (err: any) {
+      console.error('Error sending reset email:', err)
+      setMessage({ type: 'error', text: 'Fehler beim Senden der E-Mail: ' + (err.message || 'Unbekannter Fehler') })
     } finally {
       setLoading(false)
     }
@@ -59,7 +48,7 @@ export function ResetPasswordDialog({ userId, userName }: ResetPasswordDialogPro
       <DialogTrigger
         render={
           <button className="flex w-full items-center px-2 py-1.5 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground">
-            <KeyRound className="mr-2 h-4 w-4" /> Passwort ändern
+            <KeyRound className="mr-2 h-4 w-4" /> Passwort zurücksetzen
           </button>
         }
       />
@@ -67,7 +56,7 @@ export function ResetPasswordDialog({ userId, userName }: ResetPasswordDialogPro
         <DialogHeader>
           <DialogTitle>Passwort zurücksetzen</DialogTitle>
           <DialogDescription>
-            Neues Passwort für <strong>{userName}</strong> festlegen.
+            Es wird eine E-Mail an <strong>{userName}</strong> ({userEmail}) gesendet, um das Passwort zurückzusetzen.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
@@ -78,21 +67,13 @@ export function ResetPasswordDialog({ userId, userName }: ResetPasswordDialogPro
               </div>
             )}
             <div className="space-y-2">
-              <Label htmlFor="newPassword">Neues Passwort</Label>
-              <Input 
-                id="newPassword" 
-                type="password"
-                placeholder="Mind. 6 Zeichen" 
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                minLength={6}
-                required 
-              />
+              <Label>E-Mail Adresse</Label>
+              <div className="text-sm font-medium">{userEmail}</div>
             </div>
           </div>
           <DialogFooter>
             <Button type="submit" disabled={loading}>
-              {loading ? 'Speichern...' : 'Passwort setzen'}
+              {loading ? 'Senden...' : 'Reset-E-Mail senden'}
             </Button>
           </DialogFooter>
         </form>

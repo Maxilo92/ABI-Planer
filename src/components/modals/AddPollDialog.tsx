@@ -1,7 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { createClient } from '@/lib/supabase'
+import { db } from '@/lib/firebase'
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore'
+import { useAuth } from '@/context/AuthContext'
 import { useRouter } from 'next/navigation'
 import { 
   Dialog, 
@@ -22,7 +24,7 @@ export function AddPollDialog() {
   const [options, setOptions] = useState(['', ''])
   const [loading, setLoading] = useState(false)
   const [open, setOpen] = useState(false)
-  const supabase = createClient()
+  const { user } = useAuth()
   const router = useRouter()
 
   const handleAddOption = () => setOptions([...options, ''])
@@ -44,35 +46,24 @@ export function AddPollDialog() {
     e.preventDefault()
     setLoading(true)
 
-    const { data: { user } } = await supabase.auth.getUser()
-
     if (user) {
-      // 1. Create Poll
-      const { data: poll, error: pollError } = await supabase
-        .from('polls')
-        .insert([{ question, created_by: user.id }])
-        .select()
-        .single()
+      try {
+        const validOptions = options.filter(opt => opt.trim() !== '')
+        
+        await addDoc(collection(db, 'polls'), {
+          question,
+          options: validOptions,
+          created_by: user.uid,
+          created_at: serverTimestamp(),
+          is_active: true
+        })
 
-      if (!pollError && poll) {
-        // 2. Create Options
-        const pollOptions = options
-          .filter(opt => opt.trim() !== '')
-          .map(opt => ({
-            poll_id: poll.id,
-            option_text: opt
-          }))
-
-        const { error: optError } = await supabase
-          .from('poll_options')
-          .insert(pollOptions)
-
-        if (!optError) {
-          setQuestion('')
-          setOptions(['', ''])
-          setOpen(false)
-          router.refresh()
-        }
+        setQuestion('')
+        setOptions(['', ''])
+        setOpen(false)
+        router.refresh()
+      } catch (error) {
+        console.error('Error creating poll:', error)
       }
     }
     setLoading(false)
