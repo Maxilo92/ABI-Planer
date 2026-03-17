@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.6.9] - 2026-03-17
+- Fix: Unterstützung für benutzerdefinierte Firestore Datenbank-ID (`abi-data`) hinzugefügt
+
 ## [0.6.8] - 2026-03-17
 - Feature: Native Firebase Konfigurationsdateien hinzugefügt (`firebase.json`, `firestore.rules`, `apphosting.yaml`)
 - Build: Automatisierte Unterstützung für Firebase App Hosting implementiert
