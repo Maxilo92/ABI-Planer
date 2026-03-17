@@ -62,6 +62,9 @@ export default function Dashboard() {
     const unsubscribeNews = onSnapshot(qNews, (snapshot) => {
       setNews(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })))
       setLoading(false)
+    }, (error) => {
+      console.error('Error fetching news:', error)
+      setLoading(false)
     })
 
     return () => {
@@ -75,8 +78,12 @@ export default function Dashboard() {
 
   const canManage = (profile?.role === 'planner' || profile?.role === 'admin') && profile?.is_approved
 
-  if (authLoading || loading) {
-    return <div className="flex items-center justify-center min-h-[50vh]">Lade Dashboard...</div>
+  if (authLoading) {
+    return <div className="flex items-center justify-center min-h-[50vh]">Verifiziere Anmeldung...</div>
+  }
+
+  if (loading) {
+    return <div className="flex items-center justify-center min-h-[50vh]">Lade Dashboard-Daten...</div>
   }
 
   return (
