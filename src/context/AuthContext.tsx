@@ -5,16 +5,11 @@ import { auth, db } from '@/lib/firebase'
 import { onAuthStateChanged, User } from 'firebase/auth'
 import { doc, getDoc } from 'firebase/firestore'
 
-interface UserProfile {
-  id: string
-  full_name: string
-  role: 'viewer' | 'planner' | 'admin'
-  is_approved: boolean
-}
+import { Profile } from '@/types/database'
 
 interface AuthContextType {
   user: User | null
-  profile: UserProfile | null
+  profile: Profile | null
   loading: boolean
 }
 
@@ -28,7 +23,7 @@ export const useAuth = () => useContext(AuthContext)
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null)
-  const [profile, setProfile] = useState<UserProfile | null>(null)
+  const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -38,7 +33,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const docRef = doc(db, 'profiles', user.uid)
         const docSnap = await getDoc(docRef)
         if (docSnap.exists()) {
-          setProfile({ id: user.uid, ...docSnap.data() } as UserProfile)
+          setProfile({ id: user.uid, ...docSnap.data() } as Profile)
         } else {
           setProfile(null)
         }

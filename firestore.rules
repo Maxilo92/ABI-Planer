@@ -1,0 +1,52 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isLernsax() {
+      return isAuthenticated() && request.auth.token.email.matches('.*@hgr-web\\.lernsax\\.de$');
+    }
+    
+    function getProfile() {
+      return get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data;
+    }
+    
+    function isPlanner() {
+      return isAuthenticated() && (getProfile().role == 'planner' || getProfile().role == 'admin');
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() && getProfile().role == 'admin';
+    }
+
+    match /profiles/{userId} {
+      allow read: if isAuthenticated();
+      allow create: if isLernsax() && request.auth.uid == userId;
+      allow update: if isAdmin() || (
+        request.auth.uid == userId && 
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'is_approved'])
+      );
+      allow delete: if isAdmin();
+    }
+
+    match /settings/{docId} {
+      allow read: if true;
+      allow write: if isPlanner();
+    }
+
+    match /todos/{id} { allow read: if true; allow write: if isPlanner(); }
+    match /events/{id} { allow read: if true; allow write: if isPlanner(); }
+    match /finances/{id} { allow read: if true; allow write: if isPlanner(); }
+    match /news/{id} { allow read: if true; allow write: if isPlanner(); }
+    match /polls/{id} { allow read: if true; allow write: if isPlanner(); }
+
+    match /votes/{voteId} {
+      allow read: if true;
+      allow create: if isLernsax() && request.resource.data.user_id == request.auth.uid;
+      allow delete: if isAdmin() || (isAuthenticated() && resource.data.user_id == request.auth.uid);
+    }
+  }
+}

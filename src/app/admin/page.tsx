@@ -124,7 +124,7 @@ export default function AdminPage() {
                             <User className="mr-2 h-4 w-4" /> Zum Zuschauer machen
                           </DropdownMenuItem>
                           
-                          <ResetPasswordDialog userId={p.id} userName={p.full_name || 'User'} />
+                          <ResetPasswordDialog userEmail={p.email} userName={p.full_name || 'User'} />
                           
                           <DropdownMenuItem className="text-destructive" onClick={() => handleDeleteProfile(p.id)}>
                             <Trash2 className="mr-2 h-4 w-4" /> Profil löschen

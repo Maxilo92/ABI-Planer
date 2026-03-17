@@ -26,8 +26,11 @@ export default function Dashboard() {
       if (doc.exists()) {
         setSettings(doc.data())
       } else {
-        // Default settings if none exist
-        setSettings({ ball_date: '2026-06-20T18:00:00Z', funding_goal: 10000 })
+        // Fallback defaults so the page doesn't break
+        setSettings({ 
+          ball_date: '2026-06-20T18:00:00Z', 
+          funding_goal: 10000 
+        })
       }
     })
 

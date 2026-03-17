@@ -25,6 +25,11 @@ export default function RegisterPage() {
     setError(null)
 
     try {
+      // 0. Domain validation
+      if (!email.endsWith('@hgr-web.lernsax.de')) {
+        throw new Error('Nur E-Mail Adressen von @hgr-web.lernsax.de sind erlaubt.')
+      }
+
       // 1. Create user in Firebase Auth
       const userCredential = await createUserWithEmailAndPassword(auth, email, password)
       const user = userCredential.user

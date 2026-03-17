@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.6.8] - 2026-03-17
+- Feature: Native Firebase Konfigurationsdateien hinzugefügt (`firebase.json`, `firestore.rules`, `apphosting.yaml`)
+- Build: Automatisierte Unterstützung für Firebase App Hosting implementiert
+- Fix: Dashboard zeigt nun robuste Standardwerte an, falls das `settings/config` Dokument noch nicht in Firestore existiert
+
+## [0.6.7] - 2026-03-17
+- Feature: Automatische Freischaltung (`is_approved: true`) für alle neu registrierten Nutzer
+- Feature: `FIRESTORE_RULES.md` mit Sicherheitsregeln und Berechtigungsmatrix hinzugefügt
+- Refactor: Admin Dashboard fokussiert nun primär auf Rollenbeförderung (Planer/Admin)
+
+## [0.6.6] - 2026-03-17
+- Fix: TypeScript-Fehler in `AdminPage` behoben (`ResetPasswordDialog` erwartet nun `userEmail` statt `userId`)
+- Fix: TypeScript-Fehler in `AuthContext` und `ProfilePage` behoben (`Profile`-Typ mit `created_at` synchronisiert)
+- Fix: Base UI Kompatibilität in `AddEventDialog` verbessert (`asChild` durch `render`-Prop ersetzt)
+- Build: Firebase-Initialisierung resilienter gegenüber fehlenden Umgebungsvariablen während des Prerendering-Prozesses gemacht
+
 ## [0.5.3] - 2026-03-17
 - Spezifische Admin-Regel für "Maximilian Priesnitz" entfernt
 - Nur noch der allererste registrierte Nutzer erhält automatisch Admin-Rechte
