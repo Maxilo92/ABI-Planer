@@ -23,10 +23,13 @@ export default function LoginPage() {
     setError(null)
 
     try {
+      if (!email.toLowerCase().endsWith('@hgr-web.lernsax.de')) {
+        throw new Error('Anmeldung nur mit @hgr-web.lernsax.de E-Mail erlaubt.')
+      }
       await signInWithEmailAndPassword(auth, email, password)
       router.push('/')
     } catch (err: any) {
-      setError('Anmeldung fehlgeschlagen. Bitte überprüfe deine Daten.')
+      setError(err.message || 'Anmeldung fehlgeschlagen. Bitte überprüfe deine Daten.')
     } finally {
       setLoading(false)
     }
