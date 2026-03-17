@@ -62,20 +62,33 @@ export default function RegisterPage() {
 
   return (
     <div className="flex items-center justify-center min-h-[80vh] px-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1">
+      <Card className="w-full max-w-md border-t-4 border-t-[#004a99]">
+        <CardHeader className="space-y-2 pb-4">
+          <div className="flex justify-center mb-2">
+            <div className="bg-[#004a99] text-white px-3 py-1 rounded text-xs font-bold tracking-widest uppercase">
+              HGR Account
+            </div>
+          </div>
           <CardTitle className="text-2xl font-bold text-center">Registrieren</CardTitle>
           <CardDescription className="text-center">
-            Erstelle einen Account, um mitzugestalten oder abzustimmen.
+            Erstelle deinen ABI Planer Zugang mit deiner Lernsax E-Mail.
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleRegister}>
           <CardContent className="space-y-4">
             {error && (
-              <div className="bg-destructive/15 text-destructive text-sm p-3 rounded-md text-center">
+              <div className="bg-destructive/15 text-destructive text-sm p-3 rounded-md text-center font-medium border border-destructive/20">
                 {error}
               </div>
             )}
+
+            <div className="bg-blue-50 border border-blue-100 p-3 rounded-md space-y-1">
+              <p className="text-[11px] font-bold text-[#004a99] uppercase">Hinweis zur Domain</p>
+              <p className="text-xs text-blue-800 leading-relaxed">
+                Nur E-Mails von <code className="font-bold text-[#004a99]">@hgr-web.lernsax.de</code> sind für diesen Planer zugelassen.
+              </p>
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="fullName">Vollständiger Name</Label>
               <Input 
@@ -83,39 +96,45 @@ export default function RegisterPage() {
                 placeholder="Max Mustermann" 
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
+                className="border-slate-300 focus:ring-[#004a99] focus:border-[#004a99]"
                 required 
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="email">E-Mail</Label>
+              <Label htmlFor="email">Lernsax E-Mail</Label>
               <Input 
                 id="email" 
                 type="email" 
-                placeholder="name@beispiel.de" 
+                placeholder="name@hgr-web.lernsax.de" 
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                className="border-slate-300 focus:ring-[#004a99] focus:border-[#004a99]"
                 required 
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Passwort</Label>
+              <Label htmlFor="password">Passwort festlegen</Label>
               <Input 
                 id="password" 
                 type="password" 
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                className="border-slate-300 focus:ring-[#004a99] focus:border-[#004a99]"
                 required 
               />
+              <p className="text-[10px] text-muted-foreground italic">
+                Tipp: Nutze ein sicheres Passwort, nicht zwingend dein Lernsax-Passwort.
+              </p>
             </div>
           </CardContent>
           <CardFooter className="flex flex-col space-y-4">
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Erstellung...' : 'Account erstellen'}
+            <Button type="submit" className="w-full bg-[#004a99] hover:bg-[#003a7a] text-white" disabled={loading}>
+              {loading ? 'Konto wird erstellt...' : 'Jetzt registrieren'}
             </Button>
             <p className="text-sm text-center text-muted-foreground">
-              Bereits einen Account?{' '}
-              <Link href="/login" className="text-primary hover:underline font-medium">
-                Anmelden
+              Bereits registriert?{' '}
+              <Link href="/login" className="text-[#004a99] hover:underline font-bold">
+                Hier anmelden
               </Link>
             </p>
           </CardFooter>
