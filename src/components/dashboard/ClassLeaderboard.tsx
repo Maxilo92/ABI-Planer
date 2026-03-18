@@ -2,8 +2,11 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
-import { Trophy, TrendingUp } from 'lucide-react'
+import { Trophy, TrendingUp, Loader2 } from 'lucide-react'
 import { ClassName } from '@/types/database'
+import { useEffect, useState } from 'react'
+import { db } from '@/lib/firebase'
+import { doc, onSnapshot } from 'firebase/firestore'
 
 interface ClassStats {
   className: ClassName
@@ -17,21 +20,40 @@ interface ClassLeaderboardProps {
 }
 
 export function ClassLeaderboard({ finances, goal }: ClassLeaderboardProps) {
-  const classes: ClassName[] = ['12A', '12B', '12C', '12D']
+  const [courses, setCourses] = useState<string[]>(['12A', '12B', '12C', '12D'])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const settingsRef = doc(db, 'settings', 'config')
+    const unsubscribe = onSnapshot(settingsRef, (doc) => {
+      if (doc.exists() && doc.data().courses) {
+        setCourses(doc.data().courses)
+      }
+      setLoading(false)
+    })
+    return () => unsubscribe()
+  }, [])
   
-  const stats: ClassStats[] = classes.map(c => {
+  const stats: ClassStats[] = courses.map(c => {
     const amount = finances
       .filter(f => f.responsible_class === c)
       .reduce((acc, f) => acc + Number(f.amount), 0)
     
-    // Calculate percentage relative to a quarter of the total goal
-    const classGoal = goal / 4
+    // Calculate percentage relative to an equal share of the total goal
+    const classGoal = goal / courses.length
     const percentage = Math.min(Math.round((amount / classGoal) * 100), 100)
     
     return { className: c, amount, percentage }
   }).sort((a, b) => b.amount - a.amount)
 
-  const totalRaisedByClasses = stats.reduce((acc, s) => acc + s.amount, 0)
+  if (loading) {
+    return (
+      <Card className="h-full border-primary/20 shadow-sm flex items-center justify-center p-12">
+        <Loader2 className="h-8 w-8 animate-spin text-primary/50" />
+      </Card>
+    )
+  }
+
   const winner = stats[0]
   const nextUp = [...stats].sort((a, b) => a.amount - b.amount)[0]
 
@@ -41,9 +63,9 @@ export function ClassLeaderboard({ finances, goal }: ClassLeaderboardProps) {
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg font-bold flex items-center gap-2">
             <Trophy className="h-5 w-5 text-yellow-500" />
-            Klassen-Wettstreit
+            Kurs-Wettstreit
           </CardTitle>
-          <Badge variant="outline" className="text-[10px]">Top: Klasse {winner.className}</Badge>
+          <Badge variant="outline" className="text-[10px]">Top: Kurs {winner.className}</Badge>
         </div>
       </CardHeader>
       <CardContent>
@@ -52,7 +74,7 @@ export function ClassLeaderboard({ finances, goal }: ClassLeaderboardProps) {
             {stats.map((s) => (
               <div key={s.className} className="space-y-1">
                 <div className="flex justify-between text-xs font-medium">
-                  <span>Klasse {s.className}</span>
+                  <span>Kurs {s.className}</span>
                   <span>{s.amount.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })} ({s.percentage}%)</span>
                 </div>
                 <Progress value={s.percentage} className="h-2" />
@@ -66,7 +88,7 @@ export function ClassLeaderboard({ finances, goal }: ClassLeaderboardProps) {
               <div className="space-y-1">
                 <p className="text-[11px] font-bold text-primary uppercase tracking-wider">Strategie-Tipp</p>
                 <p className="text-[10px] text-muted-foreground leading-tight">
-                  Klasse <span className="font-bold text-foreground">{nextUp.className}</span> ist aktuell das Schlusslicht. Zeit für einen Kuchenverkauf oder eine Pfandsammelaktion!
+                  Kurs <span className="font-bold text-foreground">{nextUp.className}</span> ist aktuell das Schlusslicht. Zeit für einen Kuchenverkauf oder eine Pfandsammelaktion!
                 </p>
               </div>
             </div>

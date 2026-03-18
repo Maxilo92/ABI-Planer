@@ -56,7 +56,7 @@ export default function FinancePage() {
     )
   }
 
-  const isPlanner = (profile?.role === 'planner' || profile?.role === 'admin_main' || profile?.role === 'admin_co') && profile?.is_approved
+  const isPlanner = (profile?.role === 'planner' || profile?.role === 'admin_main' || profile?.role === 'admin_co' || profile?.role === 'admin') && profile?.is_approved
   
   const handleDelete = async (id: string) => {
     if (!window.confirm('Möchtest du diesen Eintrag wirklich löschen?')) return
@@ -113,7 +113,7 @@ export default function FinancePage() {
                       <div className="flex flex-col">
                         <span>{entry.description}</span>
                         {entry.responsible_class && (
-                          <span className="text-[10px] text-muted-foreground">Klasse {entry.responsible_class}</span>
+                          <span className="text-[10px] text-muted-foreground">Kurs {entry.responsible_class}</span>
                         )}
                       </div>
                     </TableCell>

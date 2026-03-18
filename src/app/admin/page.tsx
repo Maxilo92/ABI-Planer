@@ -23,7 +23,7 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true)
   const router = useRouter()
 
-  const isMainAdmin = currentUser?.role === 'admin_main'
+  const isMainAdmin = currentUser?.role === 'admin_main' || currentUser?.role === 'admin'
   const isCoAdmin = currentUser?.role === 'admin_co'
   const isAdmin = isMainAdmin || isCoAdmin
 
@@ -61,7 +61,7 @@ export default function AdminPage() {
     if (!target) return
 
     // Restriction: Cannot change Main Admin's role
-    if (target.role === 'admin_main' && updates.role && updates.role !== 'admin_main') {
+    if ((target.role === 'admin_main' || target.role === 'admin') && updates.role && updates.role !== target.role) {
       toast.error('Der Haupt-Admin kann nicht degradiert werden!')
       return
     }
@@ -90,7 +90,7 @@ export default function AdminPage() {
 
   const handleDeleteProfile = async (id: string) => {
     const target = profiles.find(p => p.id === id)
-    if (target?.role === 'admin_main') {
+    if (target?.role === 'admin_main' || target?.role === 'admin') {
       toast.error('Der Haupt-Admin kann nicht gelöscht werden!')
       return
     }
@@ -122,6 +122,7 @@ export default function AdminPage() {
 
   const getRoleBadge = (role: UserRole) => {
     switch (role) {
+      case 'admin':
       case 'admin_main': return <Badge className="bg-amber-500 hover:bg-amber-600 border-none"><Crown className="h-3 w-3 mr-1" /> Main Admin</Badge>
       case 'admin_co': return <Badge className="bg-blue-500 hover:bg-blue-600 border-none"><Shield className="h-3 w-3 mr-1" /> Co-Admin</Badge>
       case 'planner': return <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 border-emerald-200"><Users className="h-3 w-3 mr-1" /> Planer</Badge>
@@ -142,6 +143,7 @@ export default function AdminPage() {
           <EditSettingsDialog 
             currentDate={appSettings?.ball_date} 
             currentGoal={appSettings?.funding_goal} 
+            currentCourses={appSettings?.courses}
           />
         )}
       </div>
@@ -150,7 +152,7 @@ export default function AdminPage() {
         <CardHeader className="pb-4">
           <CardTitle className="text-xl">Alle Mitglieder</CardTitle>
           <CardDescription>
-            Verwalte Berechtigungen und Planungsgruppen für den Jahrgang.
+            Verwalte Berechtigungen, Kurse und Planungsgruppen für den Jahrgang.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -159,7 +161,7 @@ export default function AdminPage() {
               <TableHeader>
                 <TableRow className="bg-muted/50">
                   <TableHead className="w-[200px]">Name / E-Mail</TableHead>
-                  <TableHead>Klasse</TableHead>
+                  <TableHead>Kurs</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Rolle & Gruppe</TableHead>
                   <TableHead className="text-right">Aktionen</TableHead>
@@ -168,7 +170,7 @@ export default function AdminPage() {
               <TableBody>
                 {profiles.map((p) => {
                   const isSelf = p.id === currentUser?.id
-                  const isTargetMainAdmin = p.role === 'admin_main'
+                  const isTargetMainAdmin = p.role === 'admin_main' || p.role === 'admin'
                   const canEdit = isMainAdmin ? !isSelf : (!isSelf && !isTargetMainAdmin && p.role !== 'admin_co')
 
                   return (
@@ -180,7 +182,21 @@ export default function AdminPage() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline" className="text-[10px] font-bold">{p.class_name || '?'}</Badge>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild disabled={!canEdit}>
+                            <Button variant="outline" size="sm" className="h-7 text-[10px] font-bold px-2">
+                              {p.class_name || '?'} <ChevronDown className="ml-1 h-3 w-3 opacity-50" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="start">
+                            <DropdownMenuLabel className="text-[10px] uppercase text-muted-foreground tracking-widest">Kurs wechseln</DropdownMenuLabel>
+                            {(appSettings?.courses || ['12A', '12B', '12C', '12D']).map((course) => (
+                              <DropdownMenuItem key={course} onClick={() => handleUpdateProfile(p.id, { class_name: course })}>
+                                {course} {p.class_name === course && <Check className="ml-auto h-3 w-3" />}
+                              </DropdownMenuItem>
+                            ))}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </TableCell>
                       <TableCell>
                         <Badge variant={p.is_approved ? 'secondary' : 'destructive'} className="text-[10px]">

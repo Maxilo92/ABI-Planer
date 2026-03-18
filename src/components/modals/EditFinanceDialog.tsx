@@ -96,12 +96,12 @@ export function EditFinanceDialog({ entry }: EditFinanceDialogProps) {
               />
             </div>
             <div className="space-y-2">
-              <Label>Verantwortliche Klasse</Label>
+              <Label>Verantwortlicher Kurs</Label>
               <DropdownMenu>
                 <DropdownMenuTrigger
                   render={
                     <Button variant="outline" className="w-full justify-between">
-                      {responsibleClass === 'Allgemein' ? 'Allgemein / Keine Klasse' : `Klasse ${responsibleClass}`}
+                      {responsibleClass === 'Allgemein' ? 'Allgemein / Kein Kurs' : `Kurs ${responsibleClass}`}
                       <ChevronDown className="h-4 w-4 opacity-50" />
                     </Button>
                   }
@@ -109,7 +109,7 @@ export function EditFinanceDialog({ entry }: EditFinanceDialogProps) {
                 <DropdownMenuContent className="w-[calc(100vw-4rem)] max-w-[350px]">
                   {classes.map((c) => (
                     <DropdownMenuItem key={c} onClick={() => setResponsibleClass(c)}>
-                      {c === 'Allgemein' ? 'Allgemein / Keine Klasse' : `Klasse ${c}`}
+                      {c === 'Allgemein' ? 'Allgemein / Kein Kurs' : `Kurs ${c}`}
                     </DropdownMenuItem>
                   ))}
                 </DropdownMenuContent>

@@ -32,7 +32,7 @@ export function Navbar() {
     { href: '/abstimmungen', label: 'Umfragen', icon: BarChart2 },
   ]
 
-  const isAdmin = profile?.role === 'admin_main' || profile?.role === 'admin_co'
+  const isAdmin = profile?.role === 'admin_main' || profile?.role === 'admin_co' || profile?.role === 'admin'
 
   if (isAdmin) {
     navItems.push({ href: '/admin', label: 'Admin', icon: ShieldCheck })
@@ -43,7 +43,7 @@ export function Navbar() {
   const userInitial = profile?.full_name?.substring(0, 1).toUpperCase() || 'U'
 
   const getRoleLabel = (role: string) => {
-    if (role === 'admin_main') return 'Main Admin'
+    if (role === 'admin_main' || role === 'admin') return 'Main Admin'
     if (role === 'admin_co') return 'Co-Admin'
     return role
   }

@@ -32,7 +32,7 @@ export default function ProfilePage() {
   const userInitial = profile.full_name?.substring(0, 1).toUpperCase() || 'U'
 
   const getRoleLabel = (role: string) => {
-    if (role === 'admin_main') return 'Main Admin'
+    if (role === 'admin_main' || role === 'admin') return 'Main Admin'
     if (role === 'admin_co') return 'Co-Admin'
     return role
   }
@@ -61,7 +61,7 @@ export default function ProfilePage() {
               </Badge>
               {profile.class_name && (
                 <Badge variant="outline" className="uppercase text-[10px] font-bold">
-                  Klasse {profile.class_name}
+                  Kurs {profile.class_name}
                 </Badge>
               )}
             </CardDescription>

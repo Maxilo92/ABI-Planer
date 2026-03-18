@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.15.2] - 2026-03-18
+- Fix: Wiederherstellung der Admin-Erkennung durch Unterstützung der Legacy-Rolle `'admin'` in allen Berechtigungsprüfungen und Sicherheitsregeln.
+- Security: Firestore Rules aktualisiert, um die Legacy-Admin-Rolle mit denselben Rechten wie `admin_main` auszustatten.
+
+## [0.15.1] - 2026-03-18
+- Feature: **Kurswahl bei Registrierung** implementiert. Nutzer werden nun direkt bei der Anmeldung ihrem Stammkurs (12A-12D) zugeordnet.
+- UX: Systemweite Umstellung der Terminologie von "Klasse" auf "Kurs" zur besseren Anpassung an die gymnasiale Oberstufe.
+
 ## [0.15.1] - 2026-03-18
 - Fix: Behebung der "verschwundenen" Admin-Seite durch Optimierung der Redirect-Logik während des Ladevorgangs.
 - Refactor: Letzte verbleibende `render`-Props in der Benutzerverwaltung auf stabilen `asChild` Trigger umgestellt.

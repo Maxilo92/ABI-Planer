@@ -81,7 +81,7 @@ export default function Dashboard() {
     }
   }, [])
 
-  const canManage = (profile?.role === 'planner' || profile?.role === 'admin_main' || profile?.role === 'admin_co') && profile?.is_approved
+  const canManage = (profile?.role === 'planner' || profile?.role === 'admin_main' || profile?.role === 'admin_co' || profile?.role === 'admin') && profile?.is_approved
 
   if (authLoading) {
     return <div className="flex items-center justify-center min-h-[50vh]">Verifiziere Anmeldung...</div>

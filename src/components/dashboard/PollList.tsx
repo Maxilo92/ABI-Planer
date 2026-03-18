@@ -21,7 +21,7 @@ export function PollList({ polls, userId, isApproved = false }: PollListProps) {
   const { user, profile } = useAuth()
   const [loading, setLoading] = useState<string | null>(null)
 
-  const isPlanner = (profile?.role === 'planner' || profile?.role === 'admin_main' || profile?.role === 'admin_co') && profile?.is_approved
+  const isPlanner = (profile?.role === 'planner' || profile?.role === 'admin_main' || profile?.role === 'admin_co' || profile?.role === 'admin') && profile?.is_approved
 
   const handleVote = async (pollId: string, optionId: string) => {
     if (!userId || !isApproved) return

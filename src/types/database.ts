@@ -1,6 +1,6 @@
-export type UserRole = 'viewer' | 'planner' | 'admin_co' | 'admin_main';
+export type UserRole = 'viewer' | 'planner' | 'admin_co' | 'admin_main' | 'admin';
 export type TodoStatus = 'open' | 'in_progress' | 'done';
-export type ClassName = '12A' | '12B' | '12C' | '12D';
+export type ClassName = string;
 export type PlanningGroup = 'Finanzen' | 'Location & Catering' | 'Programm & DJ' | 'Deko & Motto' | 'IT & Kommunikation';
 
 export interface Profile {
@@ -19,6 +19,7 @@ export interface Settings {
   id: number;
   ball_date: string;
   funding_goal: number;
+  courses?: string[];
 }
 
 export interface Todo {

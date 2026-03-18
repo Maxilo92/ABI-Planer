@@ -39,7 +39,7 @@ export default function NewsPage() {
     )
   }
 
-  const isPlanner = (profile?.role === 'planner' || profile?.role === 'admin_co' || profile?.role === 'admin_main') && profile?.is_approved
+  const isPlanner = (profile?.role === 'planner' || profile?.role === 'admin_co' || profile?.role === 'admin_main' || profile?.role === 'admin') && profile?.is_approved
 
   const handleDelete = async (id: string) => {
     if (!window.confirm('Möchtest du diesen News-Beitrag wirklich löschen?')) return

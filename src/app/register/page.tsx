@@ -1,28 +1,39 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { auth, db } from '@/lib/firebase'
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth'
-import { doc, setDoc, collection, getDocs, limit, query } from 'firebase/firestore'
+import { doc, setDoc, collection, getDocs, limit, query, onSnapshot } from 'firebase/firestore'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
-import { ChevronDown } from 'lucide-react'
+import { ChevronDown, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 
 export default function RegisterPage() {
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [className, setClassName] = useState<string | null>(null)
+  const [courseName, setCourseName] = useState<string | null>(null)
+  const [courses, setCourses] = useState<string[]>(['12A', '12B', '12C', '12D'])
   const [loading, setLoading] = useState(false)
+  const [loadingCourses, setLoadingCourses] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
 
-  const classes = ['12A', '12B', '12C', '12D']
+  useEffect(() => {
+    const settingsRef = doc(db, 'settings', 'config')
+    const unsubscribe = onSnapshot(settingsRef, (doc) => {
+      if (doc.exists() && doc.data().courses) {
+        setCourses(doc.data().courses)
+      }
+      setLoadingCourses(false)
+    })
+    return () => unsubscribe()
+  }, [])
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -30,8 +41,8 @@ export default function RegisterPage() {
     setError(null)
 
     try {
-      if (!className) {
-        throw new Error('Bitte wähle deine Klasse aus.')
+      if (!courseName) {
+        throw new Error('Bitte wähle deinen Kurs aus.')
       }
 
       // 0. Domain validation
@@ -58,7 +69,7 @@ export default function RegisterPage() {
         email: email,
         role: isFirstUser ? 'admin_main' : 'viewer',
         is_approved: true, // Auto-approve for MVP
-        class_name: className,
+        class_name: courseName,
         planning_group: null,
         total_contributions: 0,
         created_at: new Date().toISOString(),
@@ -126,23 +137,34 @@ export default function RegisterPage() {
             </div>
 
             <div className="space-y-2">
-              <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Deine Klasse</Label>
+              <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Dein Kurs (Tutorat)</Label>
               <DropdownMenu>
                 <DropdownMenuTrigger
                   render={
-                    <Button variant="outline" className="w-full h-12 justify-between bg-muted/30 border-slate-200 hover:bg-background transition-all text-sm font-medium">
-                      {className ? `Klasse ${className}` : 'Klasse auswählen'}
-                      <ChevronDown className="h-4 w-4 opacity-50" />
+                    <Button variant="outline" className="w-full h-12 justify-between bg-muted/30 border-slate-200 hover:bg-background transition-all text-sm font-medium" disabled={loadingCourses}>
+                      {loadingCourses ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Lade Kurse...
+                        </>
+                      ) : (
+                        <>
+                          {courseName ? `Kurs ${courseName}` : 'Kurs auswählen'}
+                          <ChevronDown className="h-4 w-4 opacity-50" />
+                        </>
+                      )}
                     </Button>
                   }
                 />
-                <DropdownMenuContent className="w-[calc(100vw-4rem)] max-w-[350px]">
-                  {classes.map((c) => (
-                    <DropdownMenuItem key={c} onClick={() => setClassName(c)}>
-                      Klasse {c}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
+                {!loadingCourses && (
+                  <DropdownMenuContent className="w-[calc(100vw-4rem)] max-w-[350px]">
+                    {courses.map((c) => (
+                      <DropdownMenuItem key={c} onClick={() => setCourseName(c)}>
+                        Kurs {c}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                )}
               </DropdownMenu>
             </div>
           </CardContent>

@@ -70,7 +70,7 @@ export default function NewsDetailPage({ params }: { params: Promise<{ id: strin
     )
   }
 
-  const isPlanner = (profile?.role === 'planner' || profile?.role === 'admin_co' || profile?.role === 'admin_main') && profile?.is_approved
+  const isPlanner = (profile?.role === 'planner' || profile?.role === 'admin_co' || profile?.role === 'admin_main' || profile?.role === 'admin') && profile?.is_approved
 
   return (
     <div className="max-w-4xl mx-auto py-4 md:py-8 space-y-6">
