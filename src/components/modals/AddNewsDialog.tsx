@@ -25,7 +25,7 @@ export function AddNewsDialog() {
   const [content, setContent] = useState('')
   const [loading, setLoading] = useState(false)
   const [open, setOpen] = useState(false)
-  const { user } = useAuth()
+  const { user, profile } = useAuth()
   const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -38,6 +38,8 @@ export function AddNewsDialog() {
           title, 
           content, 
           created_by: user.uid,
+          author_name: profile?.full_name || user.displayName || 'Unbekannt',
+          view_count: 0,
           created_at: serverTimestamp()
         })
 

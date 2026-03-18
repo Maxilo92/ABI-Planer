@@ -23,7 +23,7 @@ export function AddTodoDialog() {
   const [title, setTitle] = useState('')
   const [loading, setLoading] = useState(false)
   const [open, setOpen] = useState(false)
-  const { user } = useAuth()
+  const { user, profile } = useAuth()
   const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -35,6 +35,7 @@ export function AddTodoDialog() {
         await addDoc(collection(db, 'todos'), {
           title,
           created_by: user.uid,
+          created_by_name: profile?.full_name || user.displayName || 'Unbekannt',
           status: 'open',
           created_at: serverTimestamp(),
         })

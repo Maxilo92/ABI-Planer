@@ -17,14 +17,16 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Plus, Trash2 } from 'lucide-react'
 
 export function AddPollDialog() {
   const [question, setQuestion] = useState('')
   const [options, setOptions] = useState(['', ''])
+  const [isAnonymous, setIsAnonymous] = useState(false)
   const [loading, setLoading] = useState(false)
   const [open, setOpen] = useState(false)
-  const { user } = useAuth()
+  const { user, profile } = useAuth()
   const router = useRouter()
 
   const handleAddOption = () => setOptions([...options, ''])
@@ -53,13 +55,16 @@ export function AddPollDialog() {
         await addDoc(collection(db, 'polls'), {
           question,
           options: validOptions,
+          is_anonymous: isAnonymous,
           created_by: user.uid,
+          created_by_name: profile?.full_name || user.displayName || 'Unbekannt',
           created_at: serverTimestamp(),
           is_active: true
         })
 
         setQuestion('')
         setOptions(['', ''])
+        setIsAnonymous(false)
         setOpen(false)
         router.refresh()
       } catch (error) {
@@ -128,6 +133,18 @@ export function AddPollDialog() {
               >
                 Option hinzufügen
               </Button>
+            </div>
+
+            <div className="flex items-center space-x-2 pt-2 border-t">
+              <Checkbox 
+                id="anonymous" 
+                checked={isAnonymous}
+                onCheckedChange={(checked) => setIsAnonymous(checked as boolean)}
+              />
+              <div className="grid gap-1.5 leading-none">
+                <Label htmlFor="anonymous" className="text-sm font-medium">Anonyme Abstimmung</Label>
+                <p className="text-[10px] text-muted-foreground">Admins sehen wer abgestimmt hat, aber nicht was.</p>
+              </div>
             </div>
           </div>
           <DialogFooter>

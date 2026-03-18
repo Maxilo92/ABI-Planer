@@ -1,5 +1,6 @@
 export type UserRole = 'viewer' | 'planner' | 'admin';
 export type TodoStatus = 'open' | 'in_progress' | 'done';
+export type ClassName = '12A' | '12B' | '12C' | '12D';
 
 export interface Profile {
   id: string;
@@ -7,6 +8,8 @@ export interface Profile {
   email: string;
   role: UserRole;
   is_approved: boolean;
+  class_name: ClassName | null;
+  total_contributions: number;
   created_at: string;
 }
 
@@ -23,6 +26,10 @@ export interface Todo {
   status: TodoStatus;
   created_at: string;
   created_by: string;
+  created_by_name?: string;
+  completed_at?: string;
+  completed_by?: string;
+  completed_by_name?: string;
 }
 
 export interface FinanceEntry {
@@ -31,6 +38,8 @@ export interface FinanceEntry {
   description: string | null;
   entry_date: string;
   created_by: string;
+  responsible_class?: ClassName;
+  responsible_user_name?: string;
 }
 
 export interface Event {
@@ -40,6 +49,7 @@ export interface Event {
   event_date: string;
   created_at: string;
   created_by: string;
+  created_by_name?: string;
 }
 
 export interface NewsEntry {
@@ -48,14 +58,18 @@ export interface NewsEntry {
   content: string;
   created_at: string;
   created_by: string;
+  author_name?: string;
+  view_count: number;
 }
 
 export interface Poll {
   id: string;
   question: string;
   is_active: boolean;
+  is_anonymous: boolean;
   created_at: string;
   created_by: string;
+  created_by_name?: string;
   options?: PollOption[];
   votes?: PollVote[];
 }
@@ -70,5 +84,7 @@ export interface PollVote {
   id: string;
   poll_id: string;
   user_id: string;
+  user_name?: string;
   option_id: string;
+  created_at: string;
 }

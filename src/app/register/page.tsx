@@ -9,15 +9,20 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { ChevronDown } from 'lucide-react'
 import Link from 'next/link'
 
 export default function RegisterPage() {
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [className, setClassName] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
+
+  const classes = ['12A', '12B', '12C', '12D']
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -25,6 +30,10 @@ export default function RegisterPage() {
     setError(null)
 
     try {
+      if (!className) {
+        throw new Error('Bitte wähle deine Klasse aus.')
+      }
+
       // 0. Domain validation
       if (!email.toLowerCase().endsWith('@hgr-web.lernsax.de')) {
         throw new Error('Bitte verwende deine offizielle @hgr-web.lernsax.de E-Mail Adresse.')
@@ -49,6 +58,8 @@ export default function RegisterPage() {
         email: email,
         role: isFirstUser ? 'admin' : 'viewer',
         is_approved: true, // Auto-approve for MVP
+        class_name: className,
+        total_contributions: 0,
         created_at: new Date().toISOString(),
       })
 
@@ -101,7 +112,7 @@ export default function RegisterPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Passwort</Label>
+              <Label htmlFor="password" title="Passwort" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Passwort</Label>
               <Input 
                 id="password" 
                 type="password" 
@@ -111,6 +122,25 @@ export default function RegisterPage() {
                 className="bg-muted/30 border-slate-200 h-12 focus:bg-background transition-all"
                 required 
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Deine Klasse</Label>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="w-full h-12 justify-between bg-muted/30 border-slate-200 hover:bg-background transition-all text-sm font-medium">
+                    {className ? `Klasse ${className}` : 'Klasse auswählen'}
+                    <ChevronDown className="h-4 w-4 opacity-50" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-[calc(100vw-4rem)] max-w-[350px]">
+                  {classes.map((c) => (
+                    <DropdownMenuItem key={c} onClick={() => setClassName(c)}>
+                      Klasse {c}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </CardContent>
           <CardFooter className="flex flex-col space-y-6 pt-2 pb-4">

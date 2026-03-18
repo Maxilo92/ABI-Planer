@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.0] - 2026-03-18
+- Feature: Umfassendes Tracking-System implementiert (Wer hat was wann erstellt/erledigt?)
+- Feature: Klassen-Wettstreit (Klassen 12A-12D) mit Leaderboard auf dem Dashboard
+- Feature: Finanzzuordnung zu Klassen und Personen
+- Feature: Semi-anonyme Umfragen (Admins sehen Teilnehmer, aber bei Bedarf nicht deren Wahl)
+- Feature: Aufrufe-Zähler für News
+
 ## [0.8.0] - 2026-03-18
 - Feature: Ticketpreis-Schätzung im Finanzierungsstatus hinzugefügt. Der Preis berechnet sich dynamisch basierend auf einer einstellbaren Anzahl erwarteter Ticketverkäufe, um das restliche Ziel zu decken.
 

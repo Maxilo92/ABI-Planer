@@ -2,11 +2,12 @@
 
 import { useEffect, useState } from 'react'
 import { db } from '@/lib/firebase'
-import { collection, query, orderBy, limit, getDocs, onSnapshot, doc, getDoc, where } from 'firebase/firestore'
+import { collection, query, orderBy, limit, onSnapshot, doc, where } from 'firebase/firestore'
 import { Countdown } from '@/components/dashboard/Countdown'
 import { FundingStatus } from '@/components/dashboard/FundingStatus'
 import { TodoList } from '@/components/dashboard/TodoList'
 import { CalendarEvents } from '@/components/dashboard/CalendarEvents'
+import { ClassLeaderboard } from '@/components/dashboard/ClassLeaderboard'
 import { EditSettingsDialog } from '@/components/modals/EditSettingsDialog'
 import { useAuth } from '@/context/AuthContext'
 
@@ -16,6 +17,7 @@ export default function Dashboard() {
   const [todos, setTodos] = useState<any[]>([])
   const [events, setEvents] = useState<any[]>([])
   const [news, setNews] = useState<any[]>([])
+  const [finances, setFinances] = useState<any[]>([])
   const [currentFunding, setCurrentFunding] = useState(0)
   const [loading, setLoading] = useState(true)
 
@@ -52,7 +54,9 @@ export default function Dashboard() {
     // 4. Listen to Finances for status
     const financesRef = collection(db, 'finances')
     const unsubscribeFinances = onSnapshot(financesRef, (snapshot) => {
-      const total = snapshot.docs.reduce((acc, doc) => acc + Number(doc.data().amount), 0)
+      const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+      setFinances(docs)
+      const total = docs.reduce((acc: number, doc: any) => acc + Number(doc.amount), 0)
       setCurrentFunding(total)
     })
 
@@ -105,6 +109,10 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Main Content Sections */}
         <TodoList todos={todos || []} canManage={canManage} />
+        <ClassLeaderboard finances={finances || []} goal={settings?.funding_goal || 10000} />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <CalendarEvents events={events || []} />
       </div>
 
@@ -121,9 +129,13 @@ export default function Dashboard() {
                     {item.created_at ? new Date(item.created_at).toLocaleDateString('de-DE') : 'Neu'}
                   </span>
                 </div>
-                <p className="text-sm text-muted-foreground line-clamp-2">
+                <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
                   {item.content}
                 </p>
+                <div className="flex justify-between items-center text-[10px] text-muted-foreground border-t pt-2">
+                  <span>Verfasst von: {item.author_name || 'Unbekannt'}</span>
+                  <span>{item.view_count || 0} Aufrufe</span>
+                </div>
               </div>
             ))
           ) : (
