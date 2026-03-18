@@ -119,7 +119,8 @@ export default function RegisterPage() {
         full_name: fullName,
         email: email,
         role: isFirstUser ? 'admin' : 'viewer',
-        planning_group: selectedCourse,
+        class_name: selectedCourse,
+        planning_group: null,
         is_approved: true, // Auto-approve for MVP
         created_at: new Date().toISOString(),
       })

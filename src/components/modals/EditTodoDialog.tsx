@@ -28,8 +28,10 @@ export function EditTodoDialog({ todo }: EditTodoDialogProps) {
   const [title, setTitle] = useState(todo.title)
   const [assignedUser, setAssignedUser] = useState(todo.assigned_to_user || '')
   const [assignedClass, setAssignedClass] = useState(todo.assigned_to_class || '')
+  const [assignedGroup, setAssignedGroup] = useState(todo.assigned_to_group || '')
   const [users, setUsers] = useState<Profile[]>([])
   const [classes, setClasses] = useState<string[]>([])
+  const [planningGroups, setPlanningGroups] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
   const [open, setOpen] = useState(false)
   const router = useRouter()
@@ -47,6 +49,12 @@ export function EditTodoDialog({ todo }: EditTodoDialogProps) {
       const settingsSnap = await getDoc(settingsRef)
       if (settingsSnap.exists()) {
         setClasses(settingsSnap.data().courses || [])
+        const groups = settingsSnap.data().planning_groups || []
+        setPlanningGroups(
+          groups
+            .map((group: { name?: string }) => group.name)
+            .filter((name: string | undefined): name is string => typeof name === 'string' && name.trim().length > 0)
+        )
       }
     }
 
@@ -68,6 +76,7 @@ export function EditTodoDialog({ todo }: EditTodoDialogProps) {
         assigned_to_user: assignedUser || null,
         assigned_to_user_name: selectedUser?.full_name || null,
         assigned_to_class: assignedClass || null,
+        assigned_to_group: assignedGroup || null,
       })
 
       toast.success('Aufgabe aktualisiert.')
@@ -108,7 +117,7 @@ export function EditTodoDialog({ todo }: EditTodoDialogProps) {
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="edit-assigned-user" className="flex items-center gap-2">
                   <UserIcon className="h-3 w-3" /> Zuweisen an Person
@@ -119,7 +128,10 @@ export function EditTodoDialog({ todo }: EditTodoDialogProps) {
                   value={assignedUser}
                   onChange={(e) => {
                     setAssignedUser(e.target.value)
-                    if (e.target.value) setAssignedClass('')
+                    if (e.target.value) {
+                      setAssignedClass('')
+                      setAssignedGroup('')
+                    }
                   }}
                 >
                   <option value="">Niemand</option>
@@ -141,13 +153,41 @@ export function EditTodoDialog({ todo }: EditTodoDialogProps) {
                   value={assignedClass}
                   onChange={(e) => {
                     setAssignedClass(e.target.value)
-                    if (e.target.value) setAssignedUser('')
+                    if (e.target.value) {
+                      setAssignedUser('')
+                      setAssignedGroup('')
+                    }
                   }}
                 >
                   <option value="">Kein Kurs</option>
                   {classes.map((c) => (
                     <option key={c} value={c}>
                       {c}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit-assigned-group" className="flex items-center gap-2">
+                  <Users className="h-3 w-3" /> Erwähnen für Planungsgruppe
+                </Label>
+                <select
+                  id="edit-assigned-group"
+                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                  value={assignedGroup}
+                  onChange={(e) => {
+                    setAssignedGroup(e.target.value)
+                    if (e.target.value) {
+                      setAssignedUser('')
+                      setAssignedClass('')
+                    }
+                  }}
+                >
+                  <option value="">Keine Gruppe</option>
+                  {planningGroups.map((group) => (
+                    <option key={group} value={group}>
+                      {group}
                     </option>
                   ))}
                 </select>

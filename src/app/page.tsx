@@ -121,7 +121,7 @@ export default function Dashboard() {
         <FundingStatus
           current={currentFunding}
           goal={expenseGoal > 0 ? expenseGoal : (settings?.funding_goal || 10000)}
-          initialTicketSales={settings?.expected_ticket_sales || 150}
+          initialTicketSales={settings?.expected_ticket_sales ?? 150}
           onTicketSalesChange={handleTicketSalesChange}
         />
       </div>

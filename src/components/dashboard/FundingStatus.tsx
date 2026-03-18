@@ -6,6 +6,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useState, useEffect } from 'react'
 
+const TICKET_SALES_SAVE_DEBOUNCE_MS = 500
+
 interface FundingStatusProps {
   current: number
   goal: number
@@ -15,20 +17,30 @@ interface FundingStatusProps {
 
 export function FundingStatus({ current, goal, initialTicketSales = 150, onTicketSalesChange }: FundingStatusProps) {
   const [mounted, setHydrated] = useState(false)
-  const [ticketSales, setTicketSales] = useState(initialTicketSales)
+  const [ticketSalesInput, setTicketSalesInput] = useState(String(initialTicketSales))
   
   useEffect(() => {
     setHydrated(true)
   }, [])
 
   useEffect(() => {
-    setTicketSales(initialTicketSales)
+    setTicketSalesInput(String(initialTicketSales))
   }, [initialTicketSales])
 
   useEffect(() => {
     if (!onTicketSalesChange) return
-    onTicketSalesChange(ticketSales)
-  }, [ticketSales, onTicketSalesChange])
+    if (ticketSalesInput === '') return
+
+    const timeoutId = window.setTimeout(() => {
+      onTicketSalesChange(Number(ticketSalesInput))
+    }, TICKET_SALES_SAVE_DEBOUNCE_MS)
+
+    return () => {
+      window.clearTimeout(timeoutId)
+    }
+  }, [ticketSalesInput, onTicketSalesChange])
+
+  const ticketSales = ticketSalesInput === '' ? 0 : Number(ticketSalesInput)
 
   const safeGoal = Math.max(goal, 1)
   const percentage = Math.min(Math.round((current / safeGoal) * 100), 100)
@@ -80,10 +92,15 @@ export function FundingStatus({ current, goal, initialTicketSales = 150, onTicke
                 <Input 
                   id="tickets"
                   type="number"
-                  value={ticketSales}
-                  onChange={(e) => setTicketSales(Math.max(0, parseInt(e.target.value) || 0))}
+                  value={ticketSalesInput}
+                  onChange={(e) => {
+                    const value = e.target.value
+                    if (/^\d*$/.test(value)) {
+                      setTicketSalesInput(value)
+                    }
+                  }}
                   className="w-24 h-8 text-sm"
-                  min="1"
+                  min="0"
                 />
               </div>
               <div className="text-right">

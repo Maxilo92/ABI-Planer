@@ -63,13 +63,15 @@ export function TodoList({ todos, canManage = false }: TodoListProps) {
           ) : (
             todos.map((todo) => {
               const isAssignedToMe = todo.assigned_to_user === user?.uid
-              const userCourse = profile?.planning_group || profile?.class_name
+              const userCourse = profile?.class_name
+              const userPlanningGroup = profile?.planning_group
               const isAssignedToMyClass = todo.assigned_to_class && todo.assigned_to_class === userCourse
+              const isAssignedToMyGroup = todo.assigned_to_group && todo.assigned_to_group === userPlanningGroup
 
               return (
                 <div
                   key={todo.id}
-                  className={`group flex items-start gap-3 rounded-lg border px-3 py-2 ${isAssignedToMe || isAssignedToMyClass ? 'border-primary/30 bg-primary/10 shadow-sm' : 'border-border/70 bg-background/80'}`}
+                  className={`group flex items-start gap-3 rounded-lg border px-3 py-2 ${isAssignedToMe || isAssignedToMyClass || isAssignedToMyGroup ? 'border-primary/30 bg-primary/10 shadow-sm' : 'border-border/70 bg-background/80'}`}
                 >
                   <Checkbox 
                     id={todo.id} 
@@ -96,6 +98,11 @@ export function TodoList({ todos, canManage = false }: TodoListProps) {
                           Dein Kurs
                         </Badge>
                       )}
+                      {isAssignedToMyGroup && (
+                        <Badge variant="outline" className="text-[8px] px-1 py-0 h-3.5 border-primary text-primary">
+                          Deine Gruppe
+                        </Badge>
+                      )}
                     </div>
                     <div className="flex flex-col gap-1 mt-0.5">
                       <div className="flex items-center gap-2 flex-wrap">
@@ -110,6 +117,11 @@ export function TodoList({ todos, canManage = false }: TodoListProps) {
                         {todo.assigned_to_class && (
                           <span className="text-[11px] font-medium text-primary">
                             Kurs: {todo.assigned_to_class}
+                          </span>
+                        )}
+                        {todo.assigned_to_group && (
+                          <span className="text-[11px] font-medium text-primary">
+                            Gruppe: {todo.assigned_to_group}
                           </span>
                         )}
                         {todo.created_by_name && (

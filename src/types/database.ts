@@ -2,6 +2,12 @@ export type UserRole = 'viewer' | 'planner' | 'admin' | 'admin_main' | 'admin_co
 export type TodoStatus = 'open' | 'in_progress' | 'done';
 export type ClassName = string;
 
+export interface PlanningGroup {
+  name: string;
+  leader_user_id?: string | null;
+  leader_name?: string | null;
+}
+
 export interface Profile {
   id: string;
   full_name: string | null;
@@ -19,6 +25,7 @@ export interface Settings {
   funding_goal: number;
   courses?: ClassName[];
   expected_ticket_sales?: number;
+  planning_groups?: PlanningGroup[];
 }
 
 export interface Todo {
@@ -32,6 +39,7 @@ export interface Todo {
   assigned_to_user?: string | null;
   assigned_to_user_name?: string | null;
   assigned_to_class?: ClassName | null;
+  assigned_to_group?: string | null;
   completed_at?: string | null;
   completed_by?: string | null;
   completed_by_name?: string | null;

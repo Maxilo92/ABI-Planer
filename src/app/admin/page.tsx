@@ -13,6 +13,7 @@ import { MoreVertical, Check, Shield, User, Trash2 } from 'lucide-react'
 import { ResetPasswordDialog } from '@/components/modals/ResetPasswordDialog'
 import { useAuth } from '@/context/AuthContext'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 
 export default function AdminPage() {
   const { profile, loading: authLoading } = useAuth()
@@ -115,7 +116,11 @@ export default function AdminPage() {
               <TableBody>
                 {profiles.map((p) => (
                   <TableRow key={p.id}>
-                    <TableCell className="font-medium">{p.full_name || 'Unbekannt'}</TableCell>
+                    <TableCell className="font-medium">
+                      <Link href={`/profil/${p.id}`} className="hover:underline focus-visible:underline">
+                        {p.full_name || 'Unbekannt'}
+                      </Link>
+                    </TableCell>
                     <TableCell>
                       <Badge variant={p.is_approved ? 'secondary' : 'destructive'}>
                         {p.is_approved ? 'Freigeschaltet' : 'Wartet'}

@@ -15,6 +15,7 @@ import { ThemeToggle } from '@/components/layout/ThemeToggle'
 import { AddFeedbackDialog } from '@/components/modals/AddFeedbackDialog'
 import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
+import { Profile } from '@/types/database'
 
 interface CourseRow {
   id: string
@@ -22,10 +23,20 @@ interface CourseRow {
   after: string
 }
 
+interface PlanningGroupRow {
+  id: string
+  before: string
+  after: string
+  leaderUserId: string
+}
+
 export default function SettingsPage() {
   const { profile, loading } = useAuth()
   const [courseRows, setCourseRows] = useState<CourseRow[]>([])
+  const [planningGroupRows, setPlanningGroupRows] = useState<PlanningGroupRow[]>([])
+  const [planners, setPlanners] = useState<Profile[]>([])
   const [savingCourses, setSavingCourses] = useState(false)
+  const [savingGroups, setSavingGroups] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -38,7 +49,11 @@ export default function SettingsPage() {
     const settingsRef = doc(db, 'settings', 'config')
     const unsubscribe = onSnapshot(settingsRef, (settingsDoc) => {
       const courses = settingsDoc.exists() ? settingsDoc.data().courses : undefined
+      const planningGroups = settingsDoc.exists() ? settingsDoc.data().planning_groups : undefined
       const normalizedCourses = Array.isArray(courses) && courses.length > 0 ? courses : ['12A', '12B', '12C', '12D']
+      const normalizedGroups = Array.isArray(planningGroups) && planningGroups.length > 0
+        ? planningGroups
+        : [{ name: 'Ballplanung', leader_user_id: null }, { name: 'Gelder sammeln', leader_user_id: null }]
 
       setCourseRows(
         normalizedCourses.map((course: string, index: number) => ({
@@ -47,6 +62,30 @@ export default function SettingsPage() {
           after: course,
         }))
       )
+
+      setPlanningGroupRows(
+        normalizedGroups
+          .filter((entry: { name?: string }) => typeof entry?.name === 'string' && entry.name.trim().length > 0)
+          .map((entry: { name: string; leader_user_id?: string | null }, index: number) => ({
+            id: `group-${index}`,
+            before: entry.name,
+            after: entry.name,
+            leaderUserId: entry.leader_user_id || '',
+          }))
+      )
+    })
+
+    return () => unsubscribe()
+  }, [])
+
+  useEffect(() => {
+    const approvedProfilesRef = query(collection(db, 'profiles'), where('is_approved', '==', true))
+    const unsubscribe = onSnapshot(approvedProfilesRef, (snapshot) => {
+      const eligibleLeaders = snapshot.docs
+        .map((docSnap) => ({ id: docSnap.id, ...docSnap.data() } as Profile))
+        .filter((entry) => entry.role === 'planner' || entry.role.includes('admin'))
+
+      setPlanners(eligibleLeaders)
     })
 
     return () => unsubscribe()
@@ -64,6 +103,8 @@ export default function SettingsPage() {
     profile?.role === 'admin_main' ||
     profile?.role === 'admin_co'
   )
+
+  const canMigrateGroups = canMigrateCourses
 
   const handleSignOut = async () => {
     await signOut(auth)
@@ -86,10 +127,62 @@ export default function SettingsPage() {
 
   const migrateCourseName = async (from: string, to: string) => {
     const migrationTargets = [
-      { collectionName: 'profiles', field: 'planning_group' },
       { collectionName: 'profiles', field: 'class_name' },
       { collectionName: 'todos', field: 'assigned_to_class' },
       { collectionName: 'finances', field: 'responsible_class' },
+    ]
+
+    for (const target of migrationTargets) {
+      const docsToUpdate = await getDocs(query(collection(db, target.collectionName), where(target.field, '==', from)))
+      if (docsToUpdate.empty) continue
+
+      let batch = writeBatch(db)
+      let operations = 0
+
+      for (const docSnap of docsToUpdate.docs) {
+        batch.update(doc(db, target.collectionName, docSnap.id), { [target.field]: to })
+        operations += 1
+
+        if (operations >= 400) {
+          await batch.commit()
+          batch = writeBatch(db)
+          operations = 0
+        }
+      }
+
+      if (operations > 0) {
+        await batch.commit()
+      }
+    }
+  }
+
+  const addPlanningGroupRow = () => {
+    setPlanningGroupRows((prev) => [
+      ...prev,
+      { id: `group-new-${Date.now()}`, before: '', after: '', leaderUserId: '' },
+    ])
+  }
+
+  const removePlanningGroupRow = (id: string) => {
+    setPlanningGroupRows((prev) => prev.filter((row) => row.id !== id))
+  }
+
+  const updatePlanningGroupName = (id: string, value: string) => {
+    setPlanningGroupRows((prev) =>
+      prev.map((row) => (row.id === id ? { ...row, after: value } : row))
+    )
+  }
+
+  const updatePlanningGroupLeader = (id: string, leaderUserId: string) => {
+    setPlanningGroupRows((prev) =>
+      prev.map((row) => (row.id === id ? { ...row, leaderUserId } : row))
+    )
+  }
+
+  const migratePlanningGroupName = async (from: string, to: string) => {
+    const migrationTargets = [
+      { collectionName: 'profiles', field: 'planning_group' },
+      { collectionName: 'todos', field: 'assigned_to_group' },
     ]
 
     for (const target of migrationTargets) {
@@ -154,6 +247,65 @@ export default function SettingsPage() {
       toast.error('Kurse konnten nicht gespeichert werden.')
     } finally {
       setSavingCourses(false)
+    }
+  }
+
+  const handleSavePlanningGroups = async () => {
+    if (!canManageCourses) return
+
+    const normalizedRows = planningGroupRows.map((row) => ({
+      ...row,
+      after: row.after.trim(),
+      leaderUserId: row.leaderUserId.trim(),
+    }))
+
+    const seenGroupNames = new Set<string>()
+    const planning_groups = normalizedRows
+      .filter((row) => row.after.length > 0)
+      .filter((row) => {
+        if (seenGroupNames.has(row.after)) return false
+        seenGroupNames.add(row.after)
+        return true
+      })
+      .map((row) => {
+        const leader = planners.find((entry) => entry.id === row.leaderUserId)
+        return {
+          name: row.after,
+          leader_user_id: leader?.id || null,
+          leader_name: leader?.full_name || null,
+        }
+      })
+
+    const renamedGroups = normalizedRows.filter(
+      (row) => row.before.trim().length > 0 && row.after.length > 0 && row.before !== row.after
+    )
+
+    if (planning_groups.length === 0) {
+      toast.error('Bitte mindestens eine Planungsgruppe eintragen.')
+      return
+    }
+
+    try {
+      setSavingGroups(true)
+      await setDoc(doc(db, 'settings', 'config'), { planning_groups }, { merge: true })
+
+      if (renamedGroups.length > 0) {
+        if (!canMigrateGroups) {
+          toast.warning('Gruppen wurden gespeichert. Datenmigration ist nur für Admins möglich.')
+        } else {
+          for (const row of renamedGroups) {
+            await migratePlanningGroupName(row.before, row.after)
+          }
+          toast.success('Planungsgruppen aktualisiert und bestehende Zuordnungen umbenannt.')
+        }
+      } else {
+        toast.success('Planungsgruppen aktualisiert.')
+      }
+    } catch (error) {
+      console.error('Error saving planning groups:', error)
+      toast.error('Planungsgruppen konnten nicht gespeichert werden.')
+    } finally {
+      setSavingGroups(false)
     }
   }
 
@@ -262,6 +414,68 @@ export default function SettingsPage() {
             </p>
             <Button onClick={handleSaveCourses} disabled={!canManageCourses || savingCourses} className="gap-2">
               <Save className="h-4 w-4" /> {savingCourses ? 'Speichern...' : 'Kurse speichern'}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-xl">
+            <Users className="h-5 w-5" /> Planungsgruppen
+          </CardTitle>
+          <CardDescription>
+            Plane Teams wie Ballplanung oder Gelder sammeln. Jede Gruppe kann einen Gruppenleiter erhalten.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            {planningGroupRows.map((row) => (
+              <div key={row.id} className="grid grid-cols-1 md:grid-cols-[1fr_1fr_auto] gap-2 items-center">
+                <Input
+                  value={row.after}
+                  onChange={(e) => updatePlanningGroupName(row.id, e.target.value)}
+                  placeholder="z.B. Ballplanung"
+                  disabled={!canManageCourses}
+                />
+                <select
+                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                  value={row.leaderUserId}
+                  onChange={(e) => updatePlanningGroupLeader(row.id, e.target.value)}
+                  disabled={!canManageCourses}
+                >
+                  <option value="">Kein Gruppenleiter</option>
+                  {planners.map((entry) => (
+                    <option key={entry.id} value={entry.id}>
+                      {entry.full_name || entry.email}
+                    </option>
+                  ))}
+                </select>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => removePlanningGroupRow(row.id)}
+                  disabled={!canManageCourses || planningGroupRows.length <= 1}
+                  title="Planungsgruppe entfernen"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            ))}
+          </div>
+          <Button variant="outline" onClick={addPlanningGroupRow} disabled={!canManageCourses} className="gap-2">
+            <Plus className="h-4 w-4" /> Planungsgruppe hinzufügen
+          </Button>
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-xs text-muted-foreground">
+              {canManageCourses
+                ? canMigrateGroups
+                  ? 'Als Admin werden Umbenennungen automatisch in Profilen und Todos übernommen.'
+                  : 'Du kannst Gruppen ändern, aber Datenmigration bei Umbenennungen erfordert Admin-Rechte.'
+                : 'Nur Planer/Admins können Planungsgruppen bearbeiten.'}
+            </p>
+            <Button onClick={handleSavePlanningGroups} disabled={!canManageCourses || savingGroups} className="gap-2">
+              <Save className="h-4 w-4" /> {savingGroups ? 'Speichern...' : 'Gruppen speichern'}
             </Button>
           </div>
         </CardContent>

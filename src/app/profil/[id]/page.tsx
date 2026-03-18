@@ -60,7 +60,8 @@ export default function PublicProfilePage({ params }: { params: Promise<{ id: st
   }
 
   const userInitial = targetProfile.full_name?.substring(0, 1).toUpperCase() || 'U'
-  const userCourse = targetProfile.planning_group || targetProfile.class_name
+  const userCourse = targetProfile.class_name
+  const plannerGroup = targetProfile.planning_group
 
   const getRoleLabel = (role: UserRole) => {
     if (role === 'admin_main' || role === 'admin') return 'Main Admin'
@@ -133,7 +134,7 @@ export default function PublicProfilePage({ params }: { params: Promise<{ id: st
               <div className="flex-1">
                 <p className="text-sm font-medium leading-none">Planungsgruppe</p>
                 <p className="text-sm text-primary font-bold mt-1">
-                  {targetProfile.planning_group || 'Noch keiner Gruppe zugewiesen'}
+                  {plannerGroup || 'Noch keiner Gruppe zugewiesen'}
                 </p>
               </div>
             </div>

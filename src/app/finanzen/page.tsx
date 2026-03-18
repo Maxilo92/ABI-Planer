@@ -97,7 +97,7 @@ export default function FinancePage() {
       <FundingStatus
         current={currentFunding}
         goal={effectiveGoal}
-        initialTicketSales={settings?.expected_ticket_sales || 150}
+        initialTicketSales={settings?.expected_ticket_sales ?? 150}
         onTicketSalesChange={handleTicketSalesChange}
       />
 

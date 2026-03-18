@@ -8,11 +8,22 @@ import { Badge } from '@/components/ui/badge'
 import { User, Mail, Shield, Calendar, Users } from 'lucide-react'
 import { format } from 'date-fns'
 import { de } from 'date-fns/locale'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { toDate } from '@/lib/utils'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { auth, db } from '@/lib/firebase'
+import { deleteUser, sendPasswordResetEmail, updateProfile } from 'firebase/auth'
+import { doc, deleteDoc, setDoc, updateDoc } from 'firebase/firestore'
+import { toast } from 'sonner'
 
 export default function ProfilePage() {
   const { user, profile, loading } = useAuth()
+  const [fullName, setFullName] = useState('')
+  const [savingName, setSavingName] = useState(false)
+  const [sendingReset, setSendingReset] = useState(false)
+  const [deletingAccount, setDeletingAccount] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -20,6 +31,10 @@ export default function ProfilePage() {
       router.push('/login')
     }
   }, [user, loading, router])
+
+  useEffect(() => {
+    setFullName(profile?.full_name || '')
+  }, [profile?.full_name])
 
   if (loading) {
     return <div className="flex items-center justify-center min-h-[50vh]">Lade Profil...</div>
@@ -30,12 +45,89 @@ export default function ProfilePage() {
   }
 
   const userInitial = profile.full_name?.substring(0, 1).toUpperCase() || 'U'
-  const userCourse = profile.planning_group || profile.class_name
+  const userCourse = profile.class_name
+  const plannerGroup = profile.planning_group
 
   const getRoleLabel = (role: string) => {
     if (role === 'admin_main' || role === 'admin') return 'Main Admin'
     if (role === 'admin_co') return 'Co-Admin'
     return role
+  }
+
+  const handleUpdateName = async (e: React.FormEvent) => {
+    e.preventDefault()
+    const normalizedName = fullName.trim()
+
+    if (normalizedName.length < 2) {
+      toast.error('Bitte gib einen gültigen Namen ein.')
+      return
+    }
+
+    try {
+      setSavingName(true)
+      await updateProfile(user, { displayName: normalizedName })
+      await updateDoc(doc(db, 'profiles', user.uid), { full_name: normalizedName })
+      toast.success('Name aktualisiert.')
+      router.refresh()
+    } catch (error) {
+      console.error('Error updating full name:', error)
+      toast.error('Name konnte nicht aktualisiert werden.')
+    } finally {
+      setSavingName(false)
+    }
+  }
+
+  const handlePasswordReset = async () => {
+    if (!user.email) {
+      toast.error('Keine E-Mail-Adresse gefunden.')
+      return
+    }
+
+    try {
+      setSendingReset(true)
+      await sendPasswordResetEmail(auth, user.email)
+      toast.success('E-Mail zum Ändern des Passworts wurde gesendet.')
+    } catch (error) {
+      console.error('Error sending password reset email:', error)
+      toast.error('Passwort-E-Mail konnte nicht gesendet werden.')
+    } finally {
+      setSendingReset(false)
+    }
+  }
+
+  const handleDeleteAccount = async () => {
+    const confirmation = window.prompt('Zum Bestätigen bitte KONTO LOESCHEN eingeben:')
+    if (confirmation !== 'KONTO LOESCHEN') {
+      toast.error('Kontolöschung abgebrochen.')
+      return
+    }
+
+    const profileRef = doc(db, 'profiles', user.uid)
+    const { id: _profileId, ...profileData } = profile
+
+    try {
+      setDeletingAccount(true)
+      await deleteDoc(profileRef)
+
+      try {
+        await deleteUser(user)
+      } catch (deleteAuthError: any) {
+        await setDoc(profileRef, profileData)
+        throw deleteAuthError
+      }
+
+      toast.success('Konto wurde gelöscht.')
+      router.push('/register')
+    } catch (error: any) {
+      console.error('Error deleting account:', error)
+      if (error?.code === 'auth/requires-recent-login') {
+        toast.error('Bitte melde dich neu an und versuche das Löschen erneut.')
+      } else {
+        toast.error('Konto konnte nicht gelöscht werden.')
+      }
+    } finally {
+      setDeletingAccount(false)
+    }
   }
 
   return (
@@ -109,7 +201,7 @@ export default function ProfilePage() {
               <div className="flex-1">
                 <p className="text-sm font-medium leading-none">Planungsgruppe</p>
                 <p className="text-sm text-primary font-bold mt-1">
-                  {profile.planning_group || 'Noch keiner Gruppe zugewiesen'}
+                  {plannerGroup || 'Noch keiner Gruppe zugewiesen'}
                 </p>
               </div>
             </div>
@@ -128,16 +220,52 @@ export default function ProfilePage() {
           </div>
         </CardContent>
       </Card>
-      
-      <div className="bg-muted/30 border rounded-lg p-6">
-        <h3 className="text-lg font-medium mb-2">Hilfe & Support</h3>
-        <p className="text-sm text-muted-foreground mb-4">
-          Wenn du Probleme mit deinem Account hast oder deine Daten ändern möchtest, wende dich bitte an einen Administrator.
-        </p>
-        <div className="flex gap-4">
-          <Badge variant="outline">Admin kontaktieren</Badge>
-        </div>
-      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Kontoverwaltung</CardTitle>
+          <CardDescription>
+            Verwalte hier deinen Namen, dein Passwort und auf Wunsch dein komplettes Konto.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <form onSubmit={handleUpdateName} className="space-y-3">
+            <Label htmlFor="profile-full-name">Name ändern</Label>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <Input
+                id="profile-full-name"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                placeholder="Dein vollständiger Name"
+                required
+              />
+              <Button type="submit" disabled={savingName}>
+                {savingName ? 'Speichere...' : 'Name speichern'}
+              </Button>
+            </div>
+          </form>
+
+          <div className="space-y-3 border-t pt-4">
+            <Label>Passwort ändern</Label>
+            <p className="text-sm text-muted-foreground">
+              Wir schicken dir eine E-Mail mit einem sicheren Link zum Ändern deines Passworts.
+            </p>
+            <Button variant="outline" onClick={handlePasswordReset} disabled={sendingReset}>
+              {sendingReset ? 'Sende E-Mail...' : 'Passwort ändern'}
+            </Button>
+          </div>
+
+          <div className="space-y-3 border-t pt-4">
+            <Label className="text-destructive">Konto löschen</Label>
+            <p className="text-sm text-muted-foreground">
+              Das löscht dein Profil und deinen Login dauerhaft. Dieser Schritt kann nicht rückgängig gemacht werden.
+            </p>
+            <Button variant="destructive" onClick={handleDeleteAccount} disabled={deletingAccount}>
+              {deletingAccount ? 'Lösche Konto...' : 'Konto löschen'}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }
