@@ -51,16 +51,25 @@ service cloud.firestore {
       allow create: if isLernsax() && request.auth.uid == userId;
       
       allow update: if (
-        // Case 1: Self-update (cannot change role or approval)
-        (request.auth.uid == userId && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'is_approved', 'planning_group'])) ||
+        // Case 1: Self-update for non-admin users (cannot change role, approval, course, or group)
+        (request.auth.uid == userId && !isAdmin() &&
+         !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'is_approved', 'planning_group', 'class_name', 'timeout_until', 'timeout_reason'])) ||
+
+        // Case 2: Self-update for admin users (can switch own course/group but not own timeout flags)
+        (request.auth.uid == userId && isAdmin() &&
+         !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'is_approved', 'timeout_until', 'timeout_reason'])) ||
         
-        // Case 2: Main Admin (can do anything EXCEPT demoting themselves from their role)
+        // Case 3: Main Admin (can do anything EXCEPT demoting themselves from their role)
         (isMainAdmin() && (
           (request.auth.uid == userId && request.resource.data.role == resource.data.role) || 
           (request.auth.uid != userId)
         )) ||
         
-        // Case 3: Co-Admin (can approve but NOT change roles and NOT touch Main Admins)
+        // Case 4: Co-Admin assignment-only update (can set course/group for all accounts, including admins)
+        (isCoAdmin() && request.auth.uid != userId &&
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['class_name', 'planning_group'])) ||
+
+        // Case 5: Co-Admin general update (can approve but NOT change roles and NOT touch Main Admins)
         (isCoAdmin() && resource.data.role != 'admin_main' && resource.data.role != 'admin' && request.auth.uid != userId &&
          !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'email']))
       );

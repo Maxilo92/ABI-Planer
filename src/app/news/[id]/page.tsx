@@ -4,7 +4,7 @@ import { useEffect, useState, use } from 'react'
 import { db } from '@/lib/firebase'
 import { doc, getDoc, updateDoc, increment, arrayUnion } from 'firebase/firestore'
 import { NewsEntry } from '@/types/database'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { format } from 'date-fns'
 import { de } from 'date-fns/locale'
@@ -16,14 +16,14 @@ import { EditNewsDialog } from '@/components/modals/EditNewsDialog'
 
 export default function NewsDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
-  const { user, profile } = useAuth()
+  const { user, profile, loading: authLoading } = useAuth()
   const [news, setNews] = useState<NewsEntry | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    if (authLoading) return
+
     const fetchNews = async () => {
-      if (!user) return
-      
       try {
         const docRef = doc(db, 'news', id)
         const docSnap = await getDoc(docRef)
@@ -32,13 +32,15 @@ export default function NewsDetailPage({ params }: { params: Promise<{ id: strin
           const data = { id: docSnap.id, ...docSnap.data() } as NewsEntry
           setNews(data)
           
-          // One view per user logic
-          const viewedBy = data.viewed_by || []
-          if (!viewedBy.includes(user.uid)) {
-            await updateDoc(docRef, {
-              view_count: increment(1),
-              viewed_by: arrayUnion(user.uid)
-            })
+          // One view per logged-in user logic; article still loads without auth.
+          if (user) {
+            const viewedBy = data.viewed_by || []
+            if (!viewedBy.includes(user.uid)) {
+              await updateDoc(docRef, {
+                view_count: increment(1),
+                viewed_by: arrayUnion(user.uid)
+              })
+            }
           }
         }
       } catch (err) {
@@ -49,7 +51,7 @@ export default function NewsDetailPage({ params }: { params: Promise<{ id: strin
     }
 
     fetchNews()
-  }, [id, user])
+  }, [id, user, authLoading])
 
   if (loading) {
     return (
@@ -89,7 +91,7 @@ export default function NewsDetailPage({ params }: { params: Promise<{ id: strin
         />
       </div>
 
-      <Card className="border-0 bg-transparent shadow-none overflow-visible">
+      <article className="space-y-6">
         {news.image_url && (
           <div className="relative h-56 md:h-72 lg:h-80 w-full overflow-hidden rounded-2xl bg-muted">
             <img
@@ -105,9 +107,9 @@ export default function NewsDetailPage({ params }: { params: Promise<{ id: strin
             </div>
           </div>
         )}
-        <CardHeader className="space-y-6 p-0 pt-6 md:pt-8 pb-4 md:pb-6">
+        <div className="space-y-5">
           <div className="flex justify-between items-start gap-4">
-            <CardTitle className="text-3xl md:text-5xl font-black tracking-tight leading-[1.15] text-foreground">
+            <CardTitle className="text-3xl md:text-5xl font-black tracking-tight leading-[1.12] text-foreground">
               {news.title}
             </CardTitle>
             {isPlanner && (
@@ -116,13 +118,13 @@ export default function NewsDetailPage({ params }: { params: Promise<{ id: strin
               </div>
             )}
           </div>
-          
+
           <div className="flex flex-wrap items-center gap-y-3 gap-x-6 text-sm md:text-base text-muted-foreground font-medium">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4 text-primary/70" />
               {news.created_at ? format(toDate(news.created_at), 'dd. MMMM yyyy', { locale: de }) : 'Neu'}
             </div>
-            
+
             <Link 
               href={`/profil/${news.created_by}`}
               className="flex items-center gap-2 hover:text-primary transition-colors group"
@@ -138,14 +140,12 @@ export default function NewsDetailPage({ params }: { params: Promise<{ id: strin
               {news.view_count || 0} {news.view_count === 1 ? 'Aufruf' : 'Aufrufe'}
             </div>
           </div>
-        </CardHeader>
-        
-        <CardContent className="p-0 pt-6 md:pt-8 border-t border-border/60 bg-transparent">
-          <div className="whitespace-pre-wrap text-base md:text-xl text-foreground/90 leading-relaxed max-w-none first-letter:text-4xl first-letter:font-black first-letter:mr-1 first-letter:float-left first-letter:leading-none">
+          <div className="h-px bg-border/50" />
+          <div className="whitespace-pre-wrap text-base md:text-xl text-foreground/90 leading-relaxed max-w-none">
             {news.content.trim()}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </article>
     </div>
   )
 }

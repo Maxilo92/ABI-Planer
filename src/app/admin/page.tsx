@@ -9,11 +9,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
-import { MoreVertical, Check, Shield, User, Trash2 } from 'lucide-react'
+import { MoreVertical, Check, Shield, User, Trash2, Clock3, Undo2 } from 'lucide-react'
 import { ResetPasswordDialog } from '@/components/modals/ResetPasswordDialog'
 import { useAuth } from '@/context/AuthContext'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { toast } from 'sonner'
 
 export default function AdminPage() {
   const { profile, loading: authLoading } = useAuth()
@@ -85,8 +86,10 @@ export default function AdminPage() {
     const target = profiles.find((entry) => entry.id === id)
     if (!target) return
 
+    const updateKeys = Object.keys(updates)
+    const isAssignmentOnlyUpdate = updateKeys.every((key) => key === 'class_name' || key === 'planning_group')
     const targetIsMainAdmin = target.role === 'admin_main' || target.role === 'admin'
-    if (targetIsMainAdmin && profile?.id !== id) {
+    if (targetIsMainAdmin && profile?.id !== id && !isAssignmentOnlyUpdate) {
       return
     }
 
@@ -100,6 +103,23 @@ export default function AdminPage() {
     } catch (err) {
       console.error('Error updating profile:', err)
     }
+  }
+
+  const handleSetTimeout = async (id: string, hours: number) => {
+    const timeoutUntil = new Date(Date.now() + hours * 60 * 60 * 1000).toISOString()
+    await handleUpdateProfile(id, {
+      timeout_until: timeoutUntil,
+      timeout_reason: `Admin-Timeout (${hours}h)`,
+    })
+    toast.success(`Nutzer wurde fuer ${hours} Stunden getimeoutet.`)
+  }
+
+  const handleClearTimeout = async (id: string) => {
+    await handleUpdateProfile(id, {
+      timeout_until: null,
+      timeout_reason: null,
+    })
+    toast.success('Timeout wurde aufgehoben.')
   }
 
   const handleDeleteProfile = async (id: string) => {
@@ -167,6 +187,11 @@ export default function AdminPage() {
                       <Badge variant={p.is_approved ? 'secondary' : 'destructive'}>
                         {p.is_approved ? 'Freigeschaltet' : 'Wartet'}
                       </Badge>
+                      {p.timeout_until && new Date(p.timeout_until).getTime() > Date.now() && (
+                        <Badge variant="destructive" className="ml-2">
+                          Timeout bis {new Date(p.timeout_until).toLocaleDateString('de-DE')}
+                        </Badge>
+                      )}
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline" className="capitalize">
@@ -180,16 +205,14 @@ export default function AdminPage() {
                     </TableCell>
                     <TableCell>
                       {(() => {
-                        const isMainAdminAccount = p.role === 'admin_main' || p.role === 'admin'
-                        const isSelf = p.id === profile.id
-                        const canEditThisUser = !isMainAdminAccount && !isSelf
+                        const canEditAssignments = canManageUsers
 
                         return (
                           <select
                             className="h-9 w-full rounded-md border bg-background px-2 text-sm"
                             value={p.class_name || ''}
                             onChange={(e) => handleUpdateProfile(p.id, { class_name: e.target.value || null })}
-                            disabled={!canEditThisUser}
+                            disabled={!canEditAssignments}
                           >
                             <option value="">Kein Kurs</option>
                             {courses.map((course) => (
@@ -203,16 +226,14 @@ export default function AdminPage() {
                     </TableCell>
                     <TableCell>
                       {(() => {
-                        const isMainAdminAccount = p.role === 'admin_main' || p.role === 'admin'
-                        const isSelf = p.id === profile.id
-                        const canEditThisUser = !isMainAdminAccount && !isSelf
+                        const canEditAssignments = canManageUsers
 
                         return (
                           <select
                             className="h-9 w-full rounded-md border bg-background px-2 text-sm"
                             value={p.planning_group || ''}
                             onChange={(e) => handleUpdateProfile(p.id, { planning_group: e.target.value || null })}
-                            disabled={!canEditThisUser}
+                            disabled={!canEditAssignments}
                           >
                             <option value="">Keine Gruppe</option>
                             {planningGroups.map((groupName) => (
@@ -228,13 +249,13 @@ export default function AdminPage() {
                       {(() => {
                         const isMainAdminAccount = p.role === 'admin_main' || p.role === 'admin'
                         const isSelf = p.id === profile.id
-                        const canEditThisUser = !isMainAdminAccount && !isSelf
+                        const canManageRoleActions = !isMainAdminAccount && !isSelf
 
                         return (
                       <DropdownMenu>
                         <DropdownMenuTrigger
                           render={
-                            <Button variant="ghost" size="icon" disabled={!canEditThisUser} title={!canEditThisUser ? 'Dieser Account kann nicht bearbeitet werden' : undefined}>
+                            <Button variant="ghost" size="icon" disabled={!canManageRoleActions} title={!canManageRoleActions ? 'Rollenaktionen für diesen Account gesperrt' : undefined}>
                               <MoreVertical className="h-4 w-4" />
                             </Button>
                           }
@@ -251,11 +272,21 @@ export default function AdminPage() {
                           <DropdownMenuItem onClick={() => handleUpdateProfile(p.id, { role: 'viewer' })}>
                             <User className="mr-2 h-4 w-4" /> Zum Zuschauer machen
                           </DropdownMenuItem>
+
+                          <DropdownMenuItem onClick={() => handleSetTimeout(p.id, 24)}>
+                            <Clock3 className="mr-2 h-4 w-4" /> Timeout 24h
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleSetTimeout(p.id, 24 * 7)}>
+                            <Clock3 className="mr-2 h-4 w-4" /> Timeout 7 Tage
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleClearTimeout(p.id)}>
+                            <Undo2 className="mr-2 h-4 w-4" /> Timeout aufheben
+                          </DropdownMenuItem>
                           
                           <ResetPasswordDialog userEmail={p.email} userName={p.full_name || 'User'} />
                           
                           <DropdownMenuItem className="text-destructive" onClick={() => handleDeleteProfile(p.id)}>
-                            <Trash2 className="mr-2 h-4 w-4" /> Profil löschen
+                            <Trash2 className="mr-2 h-4 w-4" /> Fuer immer loeschen
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>

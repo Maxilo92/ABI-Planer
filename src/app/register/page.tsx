@@ -134,18 +134,19 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-[100dvh] flex items-center justify-center px-4 py-6 sm:py-10 overflow-y-auto">
-      <Card className="w-full max-w-md">
+    <div className="relative -mx-4 sm:-mx-6 lg:-mx-8 min-h-[calc(100dvh-4rem)] px-4 py-4 sm:px-6 lg:px-8 md:flex md:items-center md:justify-center">
+      <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_16%_0%,hsl(var(--primary)/0.12),transparent_42%),radial-gradient(circle_at_84%_100%,hsl(var(--primary)/0.1),transparent_38%)]" />
+      <Card className="mx-auto w-full max-w-md border-0 bg-card/90 shadow-xl ring-1 ring-foreground/10 backdrop-blur rounded-2xl p-4 sm:p-6">
         <div className="px-6 pt-6 pb-1">
           <Button
             variant="ghost"
             size="sm"
-            className="-ml-2"
+            className="-ml-2 text-muted-foreground hover:text-foreground"
             render={<Link href="/">Zurück zum Dashboard</Link>}
           />
         </div>
         <CardHeader className="space-y-2">
-          <CardTitle className="text-2xl font-bold text-center">Registrieren</CardTitle>
+          <CardTitle className="text-4xl font-black text-center tracking-tight">Registrieren</CardTitle>
           <CardDescription className="text-center">
             Erstelle einen Account, um mitzugestalten oder abzustimmen.
           </CardDescription>
@@ -169,13 +170,13 @@ export default function RegisterPage() {
             )}
             {step === 1 && (
               <div className="space-y-2">
-                <Label htmlFor="fullName">Vollständiger Name</Label>
+                <Label htmlFor="fullName" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Vollständiger Name</Label>
                 <Input 
                   id="fullName" 
                   placeholder="Max Mustermann" 
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  className="h-12 text-base"
+                  className="h-12 text-base bg-background/70 border-border"
                   autoComplete="name"
                   required 
                 />
@@ -185,26 +186,26 @@ export default function RegisterPage() {
             {step === 2 && (
               <>
                 <div className="space-y-2">
-                  <Label htmlFor="email">E-Mail</Label>
+                  <Label htmlFor="email" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">E-Mail</Label>
                   <Input 
                     id="email" 
                     type="email" 
                     placeholder="vorname.nachname@hgr-web.lernsax.de" 
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="h-12 text-base"
+                    className="h-12 text-base bg-background/70 border-border"
                     autoComplete="email"
                     required 
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="password">Passwort</Label>
+                  <Label htmlFor="password" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Passwort</Label>
                   <Input 
                     id="password" 
                     type="password" 
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="h-12 text-base"
+                    className="h-12 text-base bg-background/70 border-border"
                     autoComplete="new-password"
                     required 
                   />
@@ -214,12 +215,12 @@ export default function RegisterPage() {
 
             {step === 3 && (
               <div className="space-y-2 mb-1 sm:mb-2">
-                <Label htmlFor="course">Kurs</Label>
+                <Label htmlFor="course" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Kurs</Label>
                 <select
                   id="course"
                   value={selectedCourse}
                   onChange={(e) => setSelectedCourse(e.target.value)}
-                  className="flex h-12 w-full rounded-md border border-input bg-background px-3 py-2 text-base"
+                  className="flex h-12 w-full rounded-md border border-input bg-background/70 px-3 py-2 text-base"
                   required
                 >
                   {courses.map((course) => (
@@ -231,7 +232,7 @@ export default function RegisterPage() {
               </div>
             )}
           </CardContent>
-          <CardFooter className="flex flex-col space-y-4">
+          <CardFooter className="flex flex-col space-y-4 border-0 bg-transparent rounded-none p-0 px-4 pt-2">
             <div className="w-full flex gap-2">
               {step > 1 && (
                 <Button

@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
 import { auth, db } from '@/lib/firebase'
-import { onAuthStateChanged, User } from 'firebase/auth'
+import { onAuthStateChanged, signOut, User } from 'firebase/auth'
 import { doc, getDoc } from 'firebase/firestore'
 
 import { Profile } from '@/types/database'
@@ -44,7 +44,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           if (docSnap.exists()) {
             const profileData = docSnap.data() as Profile
             const normalizedRole = (profileData.role as string) === 'admin' ? 'admin_main' : profileData.role
-            setProfile({ ...profileData, id: user.uid, role: normalizedRole } as Profile)
+            const normalizedProfile = { ...profileData, id: user.uid, role: normalizedRole } as Profile
+
+            const timeoutUntilMs = normalizedProfile.timeout_until ? Date.parse(normalizedProfile.timeout_until) : NaN
+            const isTimedOut = Number.isFinite(timeoutUntilMs) && timeoutUntilMs > Date.now()
+
+            if (isTimedOut) {
+              console.warn('User is currently timed out. Signing out.')
+              await signOut(auth)
+              setProfile(null)
+              return
+            }
+
+            setProfile(normalizedProfile)
           } else {
             console.warn('No profile found for user:', user.uid)
             setProfile(null)

@@ -23,34 +23,37 @@ export default function LoginPage() {
     setError(null)
 
     try {
-      if (!email.toLowerCase().endsWith('@hgr-web.lernsax.de')) {
+      const normalizedEmail = email.trim().toLowerCase()
+      if (!normalizedEmail.endsWith('@hgr-web.lernsax.de')) {
         throw new Error('Anmeldung nur mit offizieller @hgr-web.lernsax.de E-Mail erlaubt.')
       }
-      await signInWithEmailAndPassword(auth, email, password)
+      await signInWithEmailAndPassword(auth, normalizedEmail, password)
       router.push('/')
     } catch (err: any) {
       let message = 'Anmeldung fehlgeschlagen. Bitte überprüfe deine Daten.'
       if (err.code === 'auth/user-not-found') message = 'Kein Account mit dieser E-Mail gefunden.'
       if (err.code === 'auth/wrong-password') message = 'Falsches Passwort.'
-      setError(err.message || message)
+      if (err.code === 'auth/invalid-credential') message = 'E-Mail oder Passwort ist nicht korrekt.'
+      setError(message)
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="min-h-[100dvh] flex items-center justify-center px-4 py-6 sm:py-10 overflow-y-auto">
-      <Card className="w-full max-w-md border border-slate-200 shadow-sm p-4 sm:p-6">
+    <div className="relative -mx-4 sm:-mx-6 lg:-mx-8 min-h-[calc(100dvh-4rem)] px-4 py-4 sm:px-6 lg:px-8 md:flex md:items-center md:justify-center">
+      <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_20%_0%,hsl(var(--primary)/0.12),transparent_42%),radial-gradient(circle_at_80%_100%,hsl(var(--primary)/0.1),transparent_38%)]" />
+      <Card className="mx-auto w-full max-w-md border-0 bg-card/90 shadow-xl ring-1 ring-foreground/10 backdrop-blur p-4 sm:p-6 rounded-2xl">
         <div className="pb-2">
           <Button
             variant="ghost"
             size="sm"
-            className="-ml-2"
+            className="-ml-2 text-muted-foreground hover:text-foreground"
             render={<Link href="/">Zurück zum Dashboard</Link>}
           />
         </div>
         <CardHeader className="space-y-2 pb-6 sm:pb-8 text-center pt-2 sm:pt-4">
-          <CardTitle className="text-3xl font-bold tracking-tight">Anmelden</CardTitle>
+          <CardTitle className="text-4xl font-black tracking-tight">Anmelden</CardTitle>
           <CardDescription className="text-muted-foreground">
             Nutze dein @hgr-web.lernsax.de Konto
           </CardDescription>
@@ -71,7 +74,7 @@ export default function LoginPage() {
                 placeholder="vorname.nachname@hgr-web.lernsax.de" 
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="bg-muted/30 border-slate-200 h-12 text-base focus:bg-background transition-all"
+                className="bg-background/70 border-border h-12 text-base focus:bg-background transition-all"
                 required 
               />
             </div>
@@ -83,12 +86,13 @@ export default function LoginPage() {
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="bg-muted/30 border-slate-200 h-12 text-base focus:bg-background transition-all"
+                className="bg-background/70 border-border h-12 text-base focus:bg-background transition-all"
+                autoComplete="current-password"
                 required 
               />
             </div>
           </CardContent>
-          <CardFooter className="flex flex-col space-y-5 sm:space-y-6 pt-2 pb-2 sm:pb-4">
+          <CardFooter className="flex flex-col space-y-5 sm:space-y-6 pt-2 pb-2 sm:pb-4 border-0 bg-transparent rounded-none p-0 px-4">
             <Button type="submit" className="w-full h-12 text-base font-bold shadow-md active:scale-[0.98] transition-transform" disabled={loading}>
               {loading ? 'Anmeldung...' : 'Anmelden'}
             </Button>

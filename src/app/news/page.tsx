@@ -7,7 +7,7 @@ import { useAuth } from '@/context/AuthContext'
 import { AddNewsDialog } from '@/components/modals/AddNewsDialog'
 import { EditNewsDialog } from '@/components/modals/EditNewsDialog'
 import { NewsEntry } from '@/types/database'
-import { Card, CardTitle } from '@/components/ui/card'
+import { CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { format } from 'date-fns'
 import { de } from 'date-fns/locale'
@@ -72,15 +72,17 @@ export default function NewsPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-6">
+      <div className="grid grid-cols-1 gap-5">
         {news.length === 0 ? (
           <p className="text-center py-12 text-muted-foreground italic bg-secondary/20 rounded-xl border-2 border-dashed">
             Noch keine Neuigkeiten vorhanden.
           </p>
         ) : (
           news.map((item) => (
-            <Card key={item.id} className="border-0 bg-transparent shadow-none">
-              <article className={`rounded-2xl bg-card/70 p-4 md:p-5 ring-1 ring-foreground/10 ${item.image_url ? 'md:grid md:grid-cols-[300px_1fr] md:gap-6 md:items-start' : ''}`}>
+            <article
+              key={item.id}
+              className={`rounded-2xl bg-card/65 p-4 md:p-5 ${item.image_url ? 'md:grid md:grid-cols-[280px_1fr] md:gap-6 md:items-start' : ''}`}
+            >
                 {item.image_url && (
                   <Link href={`/news/${item.id}`} className="block mb-4 md:mb-0">
                     <div className="relative aspect-[16/10] w-full overflow-hidden rounded-2xl bg-muted">
@@ -138,8 +140,7 @@ export default function NewsPage() {
                     </Button>
                   </div>
                 </div>
-              </article>
-            </Card>
+            </article>
           ))
         )}
       </div>

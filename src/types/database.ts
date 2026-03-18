@@ -15,6 +15,8 @@ export interface Profile {
   role: UserRole;
   planning_group?: string | null;
   class_name?: string | null;
+  timeout_until?: string | null;
+  timeout_reason?: string | null;
   is_approved: boolean;
   created_at: string;
 }
