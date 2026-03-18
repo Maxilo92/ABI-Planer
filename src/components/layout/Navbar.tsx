@@ -142,7 +142,7 @@ export function Navbar() {
 
       {/* Desktop sidebar */}
       {!loading && (
-        <aside className="hidden md:flex fixed inset-y-0 left-0 z-40 w-72 border-r bg-background/95 backdrop-blur-sm flex-col">
+        <aside className="hidden md:flex md:sticky md:top-0 md:h-screen md:shrink-0 w-72 border-r bg-background/95 backdrop-blur-sm flex-col">
           <div className="h-16 border-b px-5 flex items-center">
             <Link href="/" className="font-extrabold text-2xl tracking-tight">
               ABI Planer

@@ -28,12 +28,14 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <AuthProvider>
-            <Navbar />
-            <main className="px-4 sm:px-6 lg:px-8 py-8 md:pl-[calc(18rem+2rem)]">
-              <div className="max-w-7xl mx-auto">
-                {children}
-              </div>
-            </main>
+            <div className="md:flex md:min-h-screen">
+              <Navbar />
+              <main className="flex-1 px-4 sm:px-6 lg:px-8 py-8">
+                <div className="max-w-7xl mx-auto">
+                  {children}
+                </div>
+              </main>
+            </div>
             <Toaster />
           </AuthProvider>
         </ThemeProvider>
