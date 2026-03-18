@@ -42,6 +42,7 @@ export interface Todo {
   assigned_to_user_name?: string | null;
   assigned_to_class?: ClassName | null;
   assigned_to_group?: string | null;
+  deadline_date?: string | null;
   completed_at?: string | null;
   completed_by?: string | null;
   completed_by_name?: string | null;

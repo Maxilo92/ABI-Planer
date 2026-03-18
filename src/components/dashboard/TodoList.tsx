@@ -9,9 +9,11 @@ import { doc, updateDoc, deleteDoc } from 'firebase/firestore'
 import { useAuth } from '@/context/AuthContext'
 import { toDate } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
-import { Trash2 } from 'lucide-react'
+import { Trash2, Calendar } from 'lucide-react'
 import { toast } from 'sonner'
 import { EditTodoDialog } from '@/components/modals/EditTodoDialog'
+import { format, isBefore, startOfDay } from 'date-fns'
+import { de } from 'date-fns/locale'
 
 interface TodoListProps {
   todos: Todo[]
@@ -68,10 +70,12 @@ export function TodoList({ todos, canManage = false }: TodoListProps) {
               const isAssignedToMyClass = todo.assigned_to_class && todo.assigned_to_class === userCourse
               const isAssignedToMyGroup = todo.assigned_to_group && todo.assigned_to_group === userPlanningGroup
 
+              const isOverdue = todo.deadline_date && todo.status !== 'done' && isBefore(toDate(todo.deadline_date), startOfDay(new Date()))
+
               return (
                 <div
                   key={todo.id}
-                  className={`group flex items-start gap-3 rounded-lg border px-3 py-2 ${isAssignedToMe || isAssignedToMyClass || isAssignedToMyGroup ? 'border-primary/30 bg-primary/10 shadow-sm' : 'border-border/70 bg-background/80'}`}
+                  className={`group flex items-start gap-3 rounded-lg border px-3 py-2 ${isAssignedToMe || isAssignedToMyClass || isAssignedToMyGroup ? 'border-primary/30 bg-primary/10 shadow-sm' : 'border-border/70 bg-background/80'} ${isOverdue ? 'border-destructive/50 bg-destructive/5' : ''}`}
                 >
                   <Checkbox 
                     id={todo.id} 
@@ -127,6 +131,12 @@ export function TodoList({ todos, canManage = false }: TodoListProps) {
                         {todo.created_by_name && (
                           <span className="text-[11px] text-muted-foreground">
                             von {todo.created_by_name}
+                          </span>
+                        )}
+                        {todo.deadline_date && (
+                          <span className={`text-[11px] font-bold flex items-center gap-1 ${isOverdue ? 'text-destructive animate-pulse' : 'text-orange-500'}`}>
+                            <Calendar className="h-3 w-3" />
+                            Fällig: {format(toDate(todo.deadline_date), 'dd.MM.yyyy', { locale: de })}
                           </span>
                         )}
                       </div>

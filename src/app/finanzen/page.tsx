@@ -30,7 +30,7 @@ export default function FinancePage() {
       if (doc.exists()) {
         setSettings({ id: 1, ...doc.data() } as Settings)
       } else {
-        setSettings({ id: 1, ball_date: '2026-06-20T18:00:00Z', funding_goal: 10000 })
+        setSettings({ id: 1, ball_date: '2027-06-19T18:00:00Z', funding_goal: 10000 })
       }
     })
 

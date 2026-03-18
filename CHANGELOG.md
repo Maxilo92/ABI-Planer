@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.15.13] - 2026-03-18
+- Feature: Aufgaben (Todos) können nun mit einer optionalen Deadline versehen werden.
+- UI: Überfällige Aufgaben werden farblich hervorgehoben (rot) und mit einem pulsierenden Warnhinweis markiert.
+- UI: Deadlines werden in der Aufgabenliste mit einem Kalender-Icon angezeigt.
+
+## [0.15.12] - 2026-03-18
+- UI: Der Countdown wurde aus dem Dashboard entfernt und prominent (aber dezent) in den Header integriert.
+- UI: Implementierung einer kompakten Countdown-Komponente (`CountdownHeader`) für Desktop und Mobile.
+
+## [0.15.11] - 2026-03-18
+- Anpassung der App für den Abiturjahrgang 2027.
+- Aktualisierung des Ziel-Datums (Abiball) auf den 19.06.2027.
+- Aktualisierung der Projektdokumentation (PROJECT_KNOWLEDGE.md, INSTALL.md).
+
 ## [0.15.10] - 2026-03-18
 - Fix: Das Erstellen von News ist nun auch für von Admins bestätigte Nutzer (`is_approved`) möglich, nicht mehr nur für Planer/Admins.
 

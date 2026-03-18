@@ -16,7 +16,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Pencil, Users, User as UserIcon } from 'lucide-react'
+import { Pencil, Users, User as UserIcon, Calendar } from 'lucide-react'
 import { Todo, Profile } from '@/types/database'
 import { toast } from 'sonner'
 
@@ -29,6 +29,7 @@ export function EditTodoDialog({ todo }: EditTodoDialogProps) {
   const [assignedUser, setAssignedUser] = useState(todo.assigned_to_user || '')
   const [assignedClass, setAssignedClass] = useState(todo.assigned_to_class || '')
   const [assignedGroup, setAssignedGroup] = useState(todo.assigned_to_group || '')
+  const [deadline, setDeadline] = useState(todo.deadline_date || '')
   const [users, setUsers] = useState<Profile[]>([])
   const [classes, setClasses] = useState<string[]>([])
   const [planningGroups, setPlanningGroups] = useState<string[]>([])
@@ -77,6 +78,7 @@ export function EditTodoDialog({ todo }: EditTodoDialogProps) {
         assigned_to_user_name: selectedUser?.full_name || null,
         assigned_to_class: assignedClass || null,
         assigned_to_group: assignedGroup || null,
+        deadline_date: deadline || null,
       })
 
       toast.success('Aufgabe aktualisiert.')
@@ -191,6 +193,18 @@ export function EditTodoDialog({ todo }: EditTodoDialogProps) {
                     </option>
                   ))}
                 </select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit-deadline" className="flex items-center gap-2">
+                  <Calendar className="h-3 w-3" /> Deadline (Optional)
+                </Label>
+                <Input 
+                  id="edit-deadline" 
+                  type="date"
+                  value={deadline}
+                  onChange={(e) => setDeadline(e.target.value)}
+                />
               </div>
             </div>
           </div>

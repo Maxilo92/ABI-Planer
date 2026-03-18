@@ -17,7 +17,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Plus, Users, User as UserIcon } from 'lucide-react'
+import { Plus, Users, User as UserIcon, Calendar } from 'lucide-react'
 import { Profile } from '@/types/database'
 
 export function AddTodoDialog() {
@@ -25,6 +25,7 @@ export function AddTodoDialog() {
   const [assignedUser, setAssignedUser] = useState('')
   const [assignedClass, setAssignedClass] = useState('')
   const [assignedGroup, setAssignedGroup] = useState('')
+  const [deadline, setDeadline] = useState('')
   const [users, setUsers] = useState<Profile[]>([])
   const [classes, setClasses] = useState<string[]>([])
   const [planningGroups, setPlanningGroups] = useState<string[]>([])
@@ -77,12 +78,14 @@ export function AddTodoDialog() {
           assigned_to_user_name: selectedUser?.full_name || null,
           assigned_to_class: assignedClass || null,
           assigned_to_group: assignedGroup || null,
+          deadline_date: deadline || null,
         })
 
         setTitle('')
         setAssignedUser('')
         setAssignedClass('')
         setAssignedGroup('')
+        setDeadline('')
         setOpen(false)
         router.refresh()
       } catch (error) {
@@ -195,6 +198,18 @@ export function AddTodoDialog() {
                     </option>
                   ))}
                 </select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="deadline" className="flex items-center gap-2">
+                  <Calendar className="h-3 w-3" /> Deadline (Optional)
+                </Label>
+                <Input 
+                  id="deadline" 
+                  type="date"
+                  value={deadline}
+                  onChange={(e) => setDeadline(e.target.value)}
+                />
               </div>
             </div>
           </div>

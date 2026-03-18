@@ -10,6 +10,7 @@ import { signOut } from 'firebase/auth'
 import { useRouter, usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/context/AuthContext'
+import { CountdownHeader } from './CountdownHeader'
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
@@ -69,13 +70,16 @@ export function Navbar() {
             <Link href="/" className="font-extrabold text-xl tracking-tight">
               ABI Planer
             </Link>
-            <button
-              onClick={() => setIsOpen((v) => !v)}
-              className="inline-flex items-center justify-center p-2 rounded-md text-muted-foreground hover:bg-secondary"
-              aria-label="Navigation oeffnen"
-            >
-              {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-            </button>
+            <div className="flex items-center gap-3">
+              <CountdownHeader />
+              <button
+                onClick={() => setIsOpen((v) => !v)}
+                className="inline-flex items-center justify-center p-2 rounded-md text-muted-foreground hover:bg-secondary"
+                aria-label="Navigation oeffnen"
+              >
+                {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+              </button>
+            </div>
           </div>
         </header>
       )}
@@ -143,10 +147,11 @@ export function Navbar() {
       {/* Desktop sidebar */}
       {!loading && (
         <aside className="hidden md:flex md:sticky md:top-0 md:h-screen md:shrink-0 w-72 border-r bg-background/95 backdrop-blur-sm flex-col">
-          <div className="h-16 border-b px-5 flex items-center">
-            <Link href="/" className="font-extrabold text-2xl tracking-tight">
+          <div className="h-16 border-b px-5 flex items-center justify-between gap-2">
+            <Link href="/" className="font-extrabold text-2xl tracking-tight shrink-0">
               ABI Planer
             </Link>
+            <CountdownHeader />
           </div>
 
           <nav className="flex-1 p-4 overflow-y-auto">

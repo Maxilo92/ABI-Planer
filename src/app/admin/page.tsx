@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
-import { MoreVertical, Check, Shield, User, Trash2, Clock3, Undo2 } from 'lucide-react'
+import { MoreVertical, Shield, User, Trash2, Clock3, Undo2 } from 'lucide-react'
 import { ResetPasswordDialog } from '@/components/modals/ResetPasswordDialog'
 import { useAuth } from '@/context/AuthContext'
 import { useRouter } from 'next/navigation'
@@ -159,7 +159,7 @@ export default function AdminPage() {
         <CardHeader>
           <CardTitle>Benutzerkonten</CardTitle>
           <CardDescription>
-            Hier kannst du neue Schüler freischalten und Rollen zuweisen.
+            Hier kannst du Rollen, Kurse und Gruppen verwalten.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -187,11 +187,6 @@ export default function AdminPage() {
                         }
                       />
                       <DropdownMenuContent align="end">
-                        {!p.is_approved && (
-                          <DropdownMenuItem onClick={() => handleUpdateProfile(p.id, { is_approved: true })}>
-                            <Check className="mr-2 h-4 w-4" /> Freischalten
-                          </DropdownMenuItem>
-                        )}
                         <DropdownMenuItem onClick={() => handleUpdateProfile(p.id, { role: 'planner' })}>
                           <Shield className="mr-2 h-4 w-4" /> Zum Planer machen
                         </DropdownMenuItem>
@@ -216,9 +211,6 @@ export default function AdminPage() {
                   </div>
 
                   <div className="mt-3 flex flex-wrap gap-2">
-                    <Badge variant={p.is_approved ? 'secondary' : 'destructive'}>
-                      {p.is_approved ? 'Freigeschaltet' : 'Wartet'}
-                    </Badge>
                     <Badge variant="outline" className="capitalize">
                       {p.role}
                     </Badge>
@@ -277,7 +269,6 @@ export default function AdminPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Name</TableHead>
-                  <TableHead>Status</TableHead>
                   <TableHead>Rolle</TableHead>
                   <TableHead>Kurs</TableHead>
                   <TableHead>Gruppe</TableHead>
@@ -293,19 +284,14 @@ export default function AdminPage() {
                       </Link>
                     </TableCell>
                     <TableCell>
-                      <Badge variant={p.is_approved ? 'secondary' : 'destructive'}>
-                        {p.is_approved ? 'Freigeschaltet' : 'Wartet'}
+                      <Badge variant="outline" className="capitalize">
+                        {p.role}
                       </Badge>
                       {p.timeout_until && new Date(p.timeout_until).getTime() > Date.now() && (
                         <Badge variant="destructive" className="ml-2">
                           Timeout bis {new Date(p.timeout_until).toLocaleDateString('de-DE')}
                         </Badge>
                       )}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className="capitalize">
-                        {p.role}
-                      </Badge>
                       {(p.role === 'admin_main' || p.role === 'admin') && (
                         <Badge variant="secondary" className="ml-2">
                           Unantastbar
@@ -370,11 +356,6 @@ export default function AdminPage() {
                           }
                         />
                         <DropdownMenuContent align="end">
-                          {!p.is_approved && (
-                            <DropdownMenuItem onClick={() => handleUpdateProfile(p.id, { is_approved: true })}>
-                              <Check className="mr-2 h-4 w-4" /> Freischalten
-                            </DropdownMenuItem>
-                          )}
                           <DropdownMenuItem onClick={() => handleUpdateProfile(p.id, { role: 'planner' })}>
                             <Shield className="mr-2 h-4 w-4" /> Zum Planer machen
                           </DropdownMenuItem>

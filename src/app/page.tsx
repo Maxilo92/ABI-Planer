@@ -3,11 +3,9 @@
 import { useEffect, useState } from 'react'
 import { db } from '@/lib/firebase'
 import { collection, query, orderBy, limit, getDocs, onSnapshot, doc, getDoc, where, setDoc } from 'firebase/firestore'
-import { Countdown } from '@/components/dashboard/Countdown'
 import { FundingStatus } from '@/components/dashboard/FundingStatus'
 import { TodoList } from '@/components/dashboard/TodoList'
 import { CalendarEvents } from '@/components/dashboard/CalendarEvents'
-import { EditSettingsDialog } from '@/components/modals/EditSettingsDialog'
 import { useAuth } from '@/context/AuthContext'
 import { toDate } from '@/lib/utils'
 import Link from 'next/link'
@@ -32,7 +30,7 @@ export default function Dashboard() {
       } else {
         // Fallback defaults so the page doesn't break
         setSettings({ 
-          ball_date: '2026-06-20T18:00:00Z', 
+          ball_date: '2027-06-19T18:00:00Z', 
           funding_goal: 10000 
         })
       }
@@ -108,16 +106,12 @@ export default function Dashboard() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <h1 className="text-3xl font-extrabold tracking-tight">ABI Planer 2026</h1>
+        <h1 className="text-3xl font-extrabold tracking-tight">ABI Planer 2027</h1>
         <p className="text-muted-foreground">Willkommen zurück! Hier ist der aktuelle Stand der Dinge.</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Top Indicators */}
-        <Countdown 
-          targetDate={settings?.ball_date || '2026-06-20T18:00:00'} 
-          editButton={canManage ? <EditSettingsDialog currentDate={settings?.ball_date} currentGoal={settings?.funding_goal || 10000} currentCourses={settings?.courses} /> : null}
-        />
         <FundingStatus
           current={currentFunding}
           goal={expenseGoal > 0 ? expenseGoal : (settings?.funding_goal || 10000)}

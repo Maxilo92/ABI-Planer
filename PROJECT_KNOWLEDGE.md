@@ -1,4 +1,4 @@
-# Projekt-Wissen & Architektur (ABI Planer 2026)
+# Projekt-Wissen & Architektur (ABI Planer 2027)
 
 Dieses Dokument sichert das Wissen über die technische Struktur und die getroffenen Entscheidungen.
 
