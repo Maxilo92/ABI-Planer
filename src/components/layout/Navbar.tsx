@@ -70,8 +70,7 @@ export function Navbar() {
             <Link href="/" className="font-extrabold text-xl tracking-tight">
               ABI Planer
             </Link>
-            <div className="flex items-center gap-3">
-              <CountdownHeader />
+            <div className="flex items-center">
               <button
                 onClick={() => setIsOpen((v) => !v)}
                 className="inline-flex items-center justify-center p-2 rounded-md text-muted-foreground hover:bg-secondary"
@@ -84,8 +83,16 @@ export function Navbar() {
         </header>
       )}
 
+      {!loading && (
+        <div className="md:hidden fixed top-16 left-0 right-0 z-40 border-b bg-background/90 backdrop-blur-sm">
+          <div className="px-4 py-2 flex justify-center">
+            <CountdownHeader />
+          </div>
+        </div>
+      )}
+
       {/* Mobile spacer so content is not hidden under fixed top bar */}
-      {!loading && <div className="md:hidden h-16" />}
+      {!loading && <div className="md:hidden h-28" />}
 
       {/* Mobile drawer */}
       {!loading && isOpen && (
@@ -147,10 +154,13 @@ export function Navbar() {
       {/* Desktop sidebar */}
       {!loading && (
         <aside className="hidden md:flex md:sticky md:top-0 md:h-screen md:shrink-0 w-72 border-r bg-background/95 backdrop-blur-sm flex-col">
-          <div className="h-16 border-b px-5 flex items-center justify-between gap-2">
+          <div className="h-16 border-b px-5 flex items-center">
             <Link href="/" className="font-extrabold text-2xl tracking-tight shrink-0">
               ABI Planer
             </Link>
+          </div>
+
+          <div className="border-b px-4 py-2 flex justify-center">
             <CountdownHeader />
           </div>
 

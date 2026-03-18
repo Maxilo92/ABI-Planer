@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.15.15] - 2026-03-18
+- UI: Das Dashboard-Layout wurde optimiert. Die News-Vorschau füllt nun die Lücke neben dem Finanzstatus (wo früher der Timer war).
+- UI: Das Zahnrad für die globalen Einstellungen (Abiball-Datum, Finanzziel) wurde direkt neben den Dashboard-Titel verschoben.
+
+## [0.15.14] - 2026-03-18
+- Security: Main Admins können ihr Konto nun nicht mehr selbst löschen, ohne die Rolle vorher auf einen anderen Nutzer übertragen zu haben. Dies stellt sicher, dass immer mindestens ein Main Admin im System verbleibt.
+
 ## [0.15.13] - 2026-03-18
 - Feature: Aufgaben (Todos) können nun mit einer optionalen Deadline versehen werden.
 - UI: Überfällige Aufgaben werden farblich hervorgehoben (rot) und mit einem pulsierenden Warnhinweis markiert.

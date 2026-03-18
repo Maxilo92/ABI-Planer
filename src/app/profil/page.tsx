@@ -96,6 +96,11 @@ export default function ProfilePage() {
   }
 
   const handleDeleteAccount = async () => {
+    if (profile.role === 'admin_main' || profile.role === 'admin') {
+      toast.error('Main Admins können ihr Konto nicht löschen. Übertrage die Rolle zuerst auf einen anderen Nutzer.')
+      return
+    }
+
     const confirmation = window.prompt('Zum Bestätigen bitte KONTO LOESCHEN eingeben:')
     if (confirmation !== 'KONTO LOESCHEN') {
       toast.error('Kontolöschung abgebrochen.')
