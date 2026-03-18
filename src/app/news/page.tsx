@@ -7,7 +7,7 @@ import { useAuth } from '@/context/AuthContext'
 import { AddNewsDialog } from '@/components/modals/AddNewsDialog'
 import { EditNewsDialog } from '@/components/modals/EditNewsDialog'
 import { NewsEntry } from '@/types/database'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { format } from 'date-fns'
 import { de } from 'date-fns/locale'
@@ -79,62 +79,66 @@ export default function NewsPage() {
           </p>
         ) : (
           news.map((item) => (
-            <Card key={item.id} className="overflow-hidden border shadow-sm hover:shadow-md transition-shadow">
-              {item.image_url && (
-                <Link href={`/news/${item.id}`}>
-                  <div className="relative aspect-video w-full overflow-hidden bg-muted">
-                    <img
-                      src={item.image_url}
-                      alt={`Titelbild zu ${item.title}`}
-                      className="h-full w-full object-cover transition-transform duration-500 hover:scale-[1.03]"
-                      loading="lazy"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-black/10 to-transparent" />
-                  </div>
-                </Link>
-              )}
-              <CardHeader className="py-4 px-5 md:px-6">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <Link href={`/news/${item.id}`} className="flex-1 hover:text-primary transition-colors min-w-[220px]">
-                    <CardTitle className="text-xl font-bold leading-tight">{item.title}</CardTitle>
+            <Card key={item.id} className="border-0 bg-transparent shadow-none">
+              <article className={`rounded-2xl bg-card/70 p-4 md:p-5 ring-1 ring-foreground/10 ${item.image_url ? 'md:grid md:grid-cols-[300px_1fr] md:gap-6 md:items-start' : ''}`}>
+                {item.image_url && (
+                  <Link href={`/news/${item.id}`} className="block mb-4 md:mb-0">
+                    <div className="relative aspect-[16/10] w-full overflow-hidden rounded-2xl bg-muted">
+                      <img
+                        src={item.image_url}
+                        alt={`Titelbild zu ${item.title}`}
+                        className="h-full w-full object-cover transition-transform duration-500 hover:scale-[1.03]"
+                        loading="lazy"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
+                    </div>
                   </Link>
-                  <div className="flex items-center gap-2 shrink-0">
-                    {isPlanner && (
-                      <div className="flex items-center gap-1">
-                        <EditNewsDialog news={item} />
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                          onClick={() => handleDelete(item.id)}
-                          title="Löschen"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    )}
+                )}
+
+                <div>
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <Link href={`/news/${item.id}`} className="flex-1 hover:text-primary transition-colors min-w-[220px]">
+                      <CardTitle className="text-2xl font-black leading-tight tracking-tight">{item.title}</CardTitle>
+                    </Link>
+                    <div className="flex items-center gap-2 shrink-0">
+                      {isPlanner && (
+                        <div className="flex items-center gap-1">
+                          <EditNewsDialog news={item} />
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                            onClick={() => handleDelete(item.id)}
+                            title="Löschen"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="mb-3 mt-3 flex flex-wrap items-center gap-4 text-xs uppercase tracking-wide text-muted-foreground/90">
+                    <span>{item.created_at ? format(toDate(item.created_at), 'dd. MMMM yyyy', { locale: de }) : 'Neu'}</span>
+                    <span className="inline-flex items-center gap-1.5 normal-case tracking-normal">
+                      <UserIcon className="h-3.5 w-3.5" /> {item.author_name || 'Unbekannt'}
+                    </span>
+                    <span className="inline-flex items-center gap-1.5 normal-case tracking-normal">
+                      <Eye className="h-3.5 w-3.5" /> {item.view_count || 0}
+                    </span>
+                  </div>
+
+                  <div className="whitespace-pre-wrap text-foreground/80 leading-relaxed line-clamp-4 text-sm md:text-base">
+                    {item.content}
+                  </div>
+
+                  <div className="flex justify-end mt-4">
+                    <Button render={<Link href={`/news/${item.id}`} />} variant="link" size="sm" className="gap-1 p-0 h-auto text-primary">
+                      <>Weiterlesen <ArrowRight className="h-4 w-4" /></>
+                    </Button>
                   </div>
                 </div>
-              </CardHeader>
-              <CardContent className="pt-0 pb-5 px-5 md:px-6">
-                <div className="mb-3 flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
-                  <span>{item.created_at ? format(toDate(item.created_at), 'dd. MMMM yyyy', { locale: de }) : 'Neu'}</span>
-                  <span className="inline-flex items-center gap-1.5">
-                    <UserIcon className="h-3.5 w-3.5" /> {item.author_name || 'Unbekannt'}
-                  </span>
-                  <span className="inline-flex items-center gap-1.5">
-                    <Eye className="h-3.5 w-3.5" /> {item.view_count || 0}
-                  </span>
-                </div>
-                <div className="whitespace-pre-wrap text-foreground/80 leading-relaxed line-clamp-3 text-sm md:text-base">
-                  {item.content}
-                </div>
-                <div className="flex justify-end mt-4">
-                  <Button render={<Link href={`/news/${item.id}`} />} variant="link" size="sm" className="gap-1 p-0 h-auto text-primary">
-                    <>Weiterlesen <ArrowRight className="h-4 w-4" /></>
-                  </Button>
-                </div>
-              </CardContent>
+              </article>
             </Card>
           ))
         )}

@@ -75,7 +75,7 @@ export default function NewsDetailPage({ params }: { params: Promise<{ id: strin
   const isPlanner = (profile?.role === 'planner' || profile?.role === 'admin_co' || profile?.role === 'admin_main' || profile?.role === 'admin') && profile?.is_approved
 
   return (
-    <div className="max-w-5xl mx-auto py-4 md:py-8 space-y-6">
+    <div className="max-w-4xl mx-auto py-4 md:py-8 space-y-6">
       <div className="px-2">
         <Button
           variant="ghost"
@@ -89,9 +89,9 @@ export default function NewsDetailPage({ params }: { params: Promise<{ id: strin
         />
       </div>
 
-      <Card className="border shadow-sm overflow-hidden">
+      <Card className="border-0 bg-transparent shadow-none overflow-visible">
         {news.image_url && (
-          <div className="relative aspect-video w-full overflow-hidden bg-muted">
+          <div className="relative h-56 md:h-72 lg:h-80 w-full overflow-hidden rounded-2xl bg-muted">
             <img
               src={news.image_url}
               alt={`Titelbild zu ${news.title}`}
@@ -105,7 +105,7 @@ export default function NewsDetailPage({ params }: { params: Promise<{ id: strin
             </div>
           </div>
         )}
-        <CardHeader className="space-y-6 p-6 md:p-10 pb-4 md:pb-6">
+        <CardHeader className="space-y-6 p-0 pt-6 md:pt-8 pb-4 md:pb-6">
           <div className="flex justify-between items-start gap-4">
             <CardTitle className="text-3xl md:text-5xl font-black tracking-tight leading-[1.15] text-foreground">
               {news.title}
@@ -140,7 +140,7 @@ export default function NewsDetailPage({ params }: { params: Promise<{ id: strin
           </div>
         </CardHeader>
         
-        <CardContent className="p-6 md:p-10 pt-6 md:pt-8 border-t bg-muted/5">
+        <CardContent className="p-0 pt-6 md:pt-8 border-t border-border/60 bg-transparent">
           <div className="whitespace-pre-wrap text-base md:text-xl text-foreground/90 leading-relaxed max-w-none first-letter:text-4xl first-letter:font-black first-letter:mr-1 first-letter:float-left first-letter:leading-none">
             {news.content.trim()}
           </div>
