@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.7.2] - 2026-03-18
+- Build: Erneuter Versuch des Deployments nach `RPC::DEADLINE_EXCEEDED` im vorherigen Lauf
+
 ## [0.7.1] - 2026-03-18
 - Fix: Deployment der Firestore Indexe und Regeln explizit auf die `abi-data` Datenbank konfiguriert
 
