@@ -2,17 +2,20 @@
 
 import { useEffect, useState } from 'react'
 import { db } from '@/lib/firebase'
-import { collection, query, orderBy, onSnapshot, doc } from 'firebase/firestore'
+import { collection, query, orderBy, onSnapshot, doc, deleteDoc } from 'firebase/firestore'
 import { useAuth } from '@/context/AuthContext'
 import { FundingStatus } from '@/components/dashboard/FundingStatus'
 import { AddFinanceDialog } from '@/components/modals/AddFinanceDialog'
+import { EditFinanceDialog } from '@/components/modals/EditFinanceDialog'
 import { FinanceEntry, Settings } from '@/types/database'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { Button } from '@/components/ui/button'
 import { format } from 'date-fns'
 import { de } from 'date-fns/locale'
-import { Loader2 } from 'lucide-react'
+import { Loader2, Trash2 } from 'lucide-react'
 import { toDate } from '@/lib/utils'
+import { toast } from 'sonner'
 
 export default function FinancePage() {
   const { profile, loading: authLoading } = useAuth()
@@ -54,6 +57,19 @@ export default function FinancePage() {
   }
 
   const isPlanner = (profile?.role === 'planner' || profile?.role === 'admin_main' || profile?.role === 'admin_co') && profile?.is_approved
+  
+  const handleDelete = async (id: string) => {
+    if (!window.confirm('Möchtest du diesen Eintrag wirklich löschen?')) return
+
+    try {
+      await deleteDoc(doc(db, 'finances', id))
+      toast.success('Eintrag gelöscht.')
+    } catch (err) {
+      console.error('Error deleting finance entry:', err)
+      toast.error('Fehler beim Löschen.')
+    }
+  }
+
   const currentFunding = finances.reduce((acc, curr) => acc + Number(curr.amount), 0)
 
   return (
@@ -79,12 +95,13 @@ export default function FinancePage() {
                 <TableHead>Datum</TableHead>
                 <TableHead>Beschreibung</TableHead>
                 <TableHead className="text-right">Betrag</TableHead>
+                {isPlanner && <TableHead className="text-right w-[100px]">Aktionen</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
               {finances.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={3} className="text-center py-4 text-muted-foreground italic">
+                  <TableCell colSpan={isPlanner ? 4 : 3} className="text-center py-4 text-muted-foreground italic">
                     Noch keine Einnahmen erfasst.
                   </TableCell>
                 </TableRow>
@@ -92,10 +109,32 @@ export default function FinancePage() {
                 finances.map((entry) => (
                   <TableRow key={entry.id}>
                     <TableCell>{format(toDate(entry.entry_date), 'dd.MM.yyyy', { locale: de })}</TableCell>
-                    <TableCell>{entry.description}</TableCell>
+                    <TableCell>
+                      <div className="flex flex-col">
+                        <span>{entry.description}</span>
+                        {entry.responsible_class && (
+                          <span className="text-[10px] text-muted-foreground">Klasse {entry.responsible_class}</span>
+                        )}
+                      </div>
+                    </TableCell>
                     <TableCell className="text-right font-semibold text-green-600">
                       + {Number(entry.amount).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
                     </TableCell>
+                    {isPlanner && (
+                      <TableCell className="text-right">
+                        <div className="flex justify-end items-center gap-1">
+                          <EditFinanceDialog entry={entry} />
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                            onClick={() => handleDelete(entry.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    )}
                   </TableRow>
                 ))
               )}
