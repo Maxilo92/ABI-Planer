@@ -1,14 +1,13 @@
 'use client'
+
 import { Poll, PollOption, PollVote } from '@/types/database'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
-import { Badge } from '@/components/ui/badge'
 import { db } from '@/lib/firebase'
-import { collection, addDoc, doc, updateDoc, setDoc } from 'firebase/firestore'
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
-import { useAuth } from '@/context/AuthContext'
 
 interface PollListProps {
   polls: Poll[]
@@ -18,25 +17,21 @@ interface PollListProps {
 
 export function PollList({ polls, userId, isApproved = false }: PollListProps) {
   const router = useRouter()
-  const { user, profile } = useAuth()
   const [loading, setLoading] = useState<string | null>(null)
-
-  const isPlanner = (profile?.role === 'planner' || profile?.role === 'admin_main' || profile?.role === 'admin_co' || profile?.role === 'admin') && profile?.is_approved
 
   const handleVote = async (pollId: string, optionId: string) => {
     if (!userId || !isApproved) return
     setLoading(optionId)
-
+    
     try {
-      const voteId = `${pollId}_${userId}`
-      const voteRef = doc(db, 'poll_votes', voteId)
-
+      // One vote per user and poll by storing vote under polls/{pollId}/votes/{userId}
+      const voteRef = doc(db, 'polls', pollId, 'votes', userId)
+      
       await setDoc(voteRef, {
         poll_id: pollId,
         option_id: optionId,
         user_id: userId,
-        user_name: profile?.full_name || user?.displayName || 'Unbekannt',
-        created_at: new Date().toISOString()
+        created_at: serverTimestamp()
       })
     } catch (err) {
       console.error('Error voting:', err)
@@ -54,15 +49,9 @@ export function PollList({ polls, userId, isApproved = false }: PollListProps) {
         return (
           <Card key={poll.id}>
             <CardHeader>
-              <div className="flex justify-between items-start">
-                <CardTitle>{poll.question}</CardTitle>
-                {poll.is_anonymous && (
-                  <Badge variant="secondary" className="text-[9px]">Anonym</Badge>
-                )}
-              </div>
+              <CardTitle>{poll.question}</CardTitle>
               <CardDescription>
                 {totalVotes} {totalVotes === 1 ? 'Stimme' : 'Stimmen'} abgegeben
-                {poll.created_by_name && ` • Erstellt von ${poll.created_by_name}`}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -112,29 +101,6 @@ export function PollList({ polls, userId, isApproved = false }: PollListProps) {
                 <p className="text-xs text-center text-muted-foreground italic mt-2">
                   Du hast bereits abgestimmt.
                 </p>
-              )}
-
-              {isPlanner && poll.votes && poll.votes.length > 0 && (
-                <div className="mt-6 pt-4 border-t">
-                  <h4 className="text-[10px] font-bold uppercase text-muted-foreground mb-2">
-                    Teilnehmer-Liste (Planer-Ansicht)
-                  </h4>
-                  <div className="space-y-1">
-                    {poll.votes.map((v) => (
-                      <div key={v.id} className="text-[10px] flex justify-between">
-                        <span>{v.user_name || 'Unbekannt'}</span>
-                        {!poll.is_anonymous && (
-                          <span className="text-muted-foreground italic">
-                            {poll.options?.find(o => o.id === v.option_id)?.option_text}
-                          </span>
-                        )}
-                        {poll.is_anonymous && (
-                          <span className="text-muted-foreground italic font-medium">Abgestimmt</span>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
               )}
             </CardContent>
           </Card>
