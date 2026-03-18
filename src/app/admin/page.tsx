@@ -28,7 +28,7 @@ export default function AdminPage() {
   const isAdmin = isMainAdmin || isCoAdmin
 
   useEffect(() => {
-    if (!authLoading && !isAdmin) {
+    if (!authLoading && currentUser && !isAdmin) {
       router.push('/')
     }
   }, [currentUser, authLoading, router, isAdmin])
@@ -199,13 +199,11 @@ export default function AdminPage() {
                       </TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
-                          <DropdownMenuTrigger
-                            render={
-                              <Button variant="ghost" size="icon" className="h-8 w-8">
-                                <MoreVertical className="h-4 w-4" />
-                              </Button>
-                            }
-                          />
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="w-56">
                             <DropdownMenuLabel className="text-[10px] uppercase text-muted-foreground tracking-widest">Aktionen</DropdownMenuLabel>
                             

@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.15.1] - 2026-03-18
+- Fix: Behebung der "verschwundenen" Admin-Seite durch Optimierung der Redirect-Logik während des Ladevorgangs.
+- Refactor: Letzte verbleibende `render`-Props in der Benutzerverwaltung auf stabilen `asChild` Trigger umgestellt.
+
 ## [0.15.0] - 2026-03-18
 - Feature: **Profil-Detailseite** (`/profil/[id]`) implementiert, um Profile anderer Nutzer einzusehen.
 - Feature: Autor-Verlinkung in der News-Detailansicht hinzugefügt.
