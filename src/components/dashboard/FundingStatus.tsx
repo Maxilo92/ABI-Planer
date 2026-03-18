@@ -9,15 +9,26 @@ import { useState, useEffect } from 'react'
 interface FundingStatusProps {
   current: number
   goal: number
+  initialTicketSales?: number
+  onTicketSalesChange?: (value: number) => void
 }
 
-export function FundingStatus({ current, goal }: FundingStatusProps) {
+export function FundingStatus({ current, goal, initialTicketSales = 150, onTicketSalesChange }: FundingStatusProps) {
   const [mounted, setHydrated] = useState(false)
-  const [ticketSales, setTicketSales] = useState(150)
+  const [ticketSales, setTicketSales] = useState(initialTicketSales)
   
   useEffect(() => {
     setHydrated(true)
   }, [])
+
+  useEffect(() => {
+    setTicketSales(initialTicketSales)
+  }, [initialTicketSales])
+
+  useEffect(() => {
+    if (!onTicketSalesChange) return
+    onTicketSalesChange(ticketSales)
+  }, [ticketSales, onTicketSalesChange])
 
   const safeGoal = Math.max(goal, 1)
   const percentage = Math.min(Math.round((current / safeGoal) * 100), 100)

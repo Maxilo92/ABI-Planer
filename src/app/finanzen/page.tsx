@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { db } from '@/lib/firebase'
-import { collection, query, orderBy, onSnapshot, doc, deleteDoc } from 'firebase/firestore'
+import { collection, query, orderBy, onSnapshot, doc, deleteDoc, setDoc } from 'firebase/firestore'
 import { useAuth } from '@/context/AuthContext'
 import { FundingStatus } from '@/components/dashboard/FundingStatus'
 import { AddFinanceDialog } from '@/components/modals/AddFinanceDialog'
@@ -57,6 +57,15 @@ export default function FinancePage() {
   }
 
   const isPlanner = (profile?.role === 'planner' || profile?.role === 'admin_main' || profile?.role === 'admin_co' || profile?.role === 'admin') && profile?.is_approved
+
+  const handleTicketSalesChange = async (value: number) => {
+    if (!isPlanner) return
+    try {
+      await setDoc(doc(db, 'settings', 'config'), { expected_ticket_sales: value }, { merge: true })
+    } catch (error) {
+      console.error('Error updating expected ticket sales:', error)
+    }
+  }
   
   const handleDelete = async (id: string) => {
     if (!window.confirm('Möchtest du diesen Eintrag wirklich löschen?')) return
@@ -85,7 +94,12 @@ export default function FinancePage() {
         {isPlanner && <AddFinanceDialog />}
       </div>
 
-      <FundingStatus current={currentFunding} goal={effectiveGoal} />
+      <FundingStatus
+        current={currentFunding}
+        goal={effectiveGoal}
+        initialTicketSales={settings?.expected_ticket_sales || 150}
+        onTicketSalesChange={handleTicketSalesChange}
+      />
 
       <Card>
         <CardHeader>

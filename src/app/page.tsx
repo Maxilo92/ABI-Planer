@@ -2,13 +2,14 @@
 
 import { useEffect, useState } from 'react'
 import { db } from '@/lib/firebase'
-import { collection, query, orderBy, limit, getDocs, onSnapshot, doc, getDoc, where } from 'firebase/firestore'
+import { collection, query, orderBy, limit, getDocs, onSnapshot, doc, getDoc, where, setDoc } from 'firebase/firestore'
 import { Countdown } from '@/components/dashboard/Countdown'
 import { FundingStatus } from '@/components/dashboard/FundingStatus'
 import { TodoList } from '@/components/dashboard/TodoList'
 import { CalendarEvents } from '@/components/dashboard/CalendarEvents'
 import { EditSettingsDialog } from '@/components/modals/EditSettingsDialog'
 import { useAuth } from '@/context/AuthContext'
+import { toDate } from '@/lib/utils'
 
 export default function Dashboard() {
   const { profile, loading: authLoading } = useAuth()
@@ -39,7 +40,11 @@ export default function Dashboard() {
     const todosRef = collection(db, 'todos')
     const qTodos = query(todosRef, orderBy('created_at', 'desc'), limit(5))
     const unsubscribeTodos = onSnapshot(qTodos, (snapshot) => {
-      setTodos(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })))
+      const visibleTodos = snapshot.docs
+        .map((entryDoc) => ({ id: entryDoc.id, ...entryDoc.data() }))
+        .filter((todo: any) => todo.status !== 'done')
+        .slice(0, 5)
+      setTodos(visibleTodos)
     })
 
     // 3. Listen to Events (next 3)
@@ -85,6 +90,15 @@ export default function Dashboard() {
     profile?.role === 'admin_co'
   ) && profile?.is_approved
 
+  const handleTicketSalesChange = async (value: number) => {
+    if (!canManage) return
+    try {
+      await setDoc(doc(db, 'settings', 'config'), { expected_ticket_sales: value }, { merge: true })
+    } catch (error) {
+      console.error('Error updating expected ticket sales:', error)
+    }
+  }
+
   if (authLoading || loading) {
     return <div className="flex items-center justify-center min-h-[50vh]">Lade Dashboard...</div>
   }
@@ -102,7 +116,12 @@ export default function Dashboard() {
           targetDate={settings?.ball_date || '2026-06-20T18:00:00'} 
           editButton={canManage ? <EditSettingsDialog currentDate={settings?.ball_date} currentGoal={settings?.funding_goal || 10000} currentCourses={settings?.courses} /> : null}
         />
-        <FundingStatus current={currentFunding} goal={expenseGoal > 0 ? expenseGoal : (settings?.funding_goal || 10000)} />
+        <FundingStatus
+          current={currentFunding}
+          goal={expenseGoal > 0 ? expenseGoal : (settings?.funding_goal || 10000)}
+          initialTicketSales={settings?.expected_ticket_sales || 150}
+          onTicketSalesChange={handleTicketSalesChange}
+        />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -121,7 +140,7 @@ export default function Dashboard() {
                 <div className="flex justify-between items-start mb-2">
                   <h4 className="font-semibold">{item.title}</h4>
                   <span className="text-[10px] text-muted-foreground bg-secondary px-2 py-0.5 rounded">
-                    {item.created_at ? new Date(item.created_at).toLocaleDateString('de-DE') : 'Neu'}
+                    {item.created_at ? toDate(item.created_at).toLocaleDateString('de-DE') : 'Neu'}
                   </span>
                 </div>
                 <p className="text-sm text-muted-foreground line-clamp-2">

@@ -18,6 +18,7 @@ export interface Settings {
   ball_date: string;
   funding_goal: number;
   courses?: ClassName[];
+  expected_ticket_sales?: number;
 }
 
 export interface Todo {
