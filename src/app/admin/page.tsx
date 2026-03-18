@@ -163,8 +163,117 @@ export default function AdminPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
-            <Table>
+          <div className="space-y-3 md:hidden">
+            {profiles.map((p) => {
+              const isMainAdminAccount = p.role === 'admin_main' || p.role === 'admin'
+              const isSelf = p.id === profile.id
+              const canManageRoleActions = !isMainAdminAccount && !isSelf
+
+              return (
+                <div key={p.id} className="rounded-xl border border-border/70 bg-card/70 p-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <Link href={`/profil/${p.id}`} className="font-semibold hover:underline break-words">
+                        {p.full_name || 'Unbekannt'}
+                      </Link>
+                      <p className="text-xs text-muted-foreground mt-1 break-all">{p.email}</p>
+                    </div>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger
+                        render={
+                          <Button variant="ghost" size="icon" disabled={!canManageRoleActions} title={!canManageRoleActions ? 'Rollenaktionen für diesen Account gesperrt' : undefined}>
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        }
+                      />
+                      <DropdownMenuContent align="end">
+                        {!p.is_approved && (
+                          <DropdownMenuItem onClick={() => handleUpdateProfile(p.id, { is_approved: true })}>
+                            <Check className="mr-2 h-4 w-4" /> Freischalten
+                          </DropdownMenuItem>
+                        )}
+                        <DropdownMenuItem onClick={() => handleUpdateProfile(p.id, { role: 'planner' })}>
+                          <Shield className="mr-2 h-4 w-4" /> Zum Planer machen
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleUpdateProfile(p.id, { role: 'viewer' })}>
+                          <User className="mr-2 h-4 w-4" /> Zum Zuschauer machen
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleSetTimeout(p.id, 24)}>
+                          <Clock3 className="mr-2 h-4 w-4" /> Timeout 24h
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleSetTimeout(p.id, 24 * 7)}>
+                          <Clock3 className="mr-2 h-4 w-4" /> Timeout 7 Tage
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleClearTimeout(p.id)}>
+                          <Undo2 className="mr-2 h-4 w-4" /> Timeout aufheben
+                        </DropdownMenuItem>
+                        <ResetPasswordDialog userEmail={p.email} userName={p.full_name || 'User'} />
+                        <DropdownMenuItem className="text-destructive" onClick={() => handleDeleteProfile(p.id)}>
+                          <Trash2 className="mr-2 h-4 w-4" /> Fuer immer loeschen
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <Badge variant={p.is_approved ? 'secondary' : 'destructive'}>
+                      {p.is_approved ? 'Freigeschaltet' : 'Wartet'}
+                    </Badge>
+                    <Badge variant="outline" className="capitalize">
+                      {p.role}
+                    </Badge>
+                    {(p.role === 'admin_main' || p.role === 'admin') && (
+                      <Badge variant="secondary">Unantastbar</Badge>
+                    )}
+                    {p.timeout_until && new Date(p.timeout_until).getTime() > Date.now() && (
+                      <Badge variant="destructive">
+                        Timeout bis {new Date(p.timeout_until).toLocaleDateString('de-DE')}
+                      </Badge>
+                    )}
+                  </div>
+
+                  <div className="mt-3 grid grid-cols-1 gap-3">
+                    <div className="space-y-1">
+                      <label className="text-xs font-medium text-muted-foreground">Kurs</label>
+                      <select
+                        className="h-10 w-full rounded-md border bg-background px-2 text-sm"
+                        value={p.class_name || ''}
+                        onChange={(e) => handleUpdateProfile(p.id, { class_name: e.target.value || null })}
+                        disabled={!canManageUsers}
+                      >
+                        <option value="">Kein Kurs</option>
+                        {courses.map((course) => (
+                          <option key={course} value={course}>
+                            {course}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-xs font-medium text-muted-foreground">Gruppe</label>
+                      <select
+                        className="h-10 w-full rounded-md border bg-background px-2 text-sm"
+                        value={p.planning_group || ''}
+                        onChange={(e) => handleUpdateProfile(p.id, { planning_group: e.target.value || null })}
+                        disabled={!canManageUsers}
+                      >
+                        <option value="">Keine Gruppe</option>
+                        {planningGroups.map((groupName) => (
+                          <option key={groupName} value={groupName}>
+                            {groupName}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+
+          <div className="hidden md:block overflow-x-auto">
+            <Table className="min-w-[900px]">
               <TableHeader>
                 <TableRow>
                   <TableHead>Name</TableHead>

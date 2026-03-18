@@ -41,10 +41,9 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="relative -mx-4 sm:-mx-6 lg:-mx-8 min-h-[calc(100dvh-4rem)] px-4 py-4 sm:px-6 lg:px-8 md:flex md:items-center md:justify-center">
-      <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_20%_0%,hsl(var(--primary)/0.12),transparent_42%),radial-gradient(circle_at_80%_100%,hsl(var(--primary)/0.1),transparent_38%)]" />
-      <Card className="mx-auto w-full max-w-md border-0 bg-card/90 shadow-xl ring-1 ring-foreground/10 backdrop-blur p-4 sm:p-6 rounded-2xl">
-        <div className="pb-2">
+    <div className="-mx-4 sm:-mx-6 lg:-mx-8 min-h-[calc(100dvh-4rem)] bg-background px-4 py-8 sm:px-6 sm:py-12 lg:px-8 md:flex md:items-center md:justify-center">
+      <Card className="mx-auto w-full max-w-md rounded-2xl border border-border/70 bg-card shadow-sm">
+        <div className="px-4 pt-3 sm:px-6">
           <Button
             variant="ghost"
             size="sm"
@@ -92,7 +91,7 @@ export default function LoginPage() {
               />
             </div>
           </CardContent>
-          <CardFooter className="flex flex-col space-y-5 sm:space-y-6 pt-2 pb-2 sm:pb-4 border-0 bg-transparent rounded-none p-0 px-4">
+          <CardFooter className="flex flex-col space-y-5 sm:space-y-6 pt-2 pb-2 sm:pb-4 border-0 bg-transparent rounded-none p-0">
             <Button type="submit" className="w-full h-12 text-base font-bold shadow-md active:scale-[0.98] transition-transform" disabled={loading}>
               {loading ? 'Anmeldung...' : 'Anmelden'}
             </Button>
