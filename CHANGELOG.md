@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.8.0] - 2026-03-18
+- Feature: Ticketpreis-Schätzung im Finanzierungsstatus hinzugefügt. Der Preis berechnet sich dynamisch basierend auf einer einstellbaren Anzahl erwarteter Ticketverkäufe, um das restliche Ziel zu decken.
+
 ## [0.7.3] - 2026-03-18
 - Build: Erneuter Versuch nach `RPC::DEADLINE_EXCEEDED`. Empfehlung: Indizes direkt über den Link in der Console erstellen.
 
