@@ -19,7 +19,8 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { MessageSquarePlus, Bug, Lightbulb, HelpCircle } from 'lucide-react'
 import { toast } from 'sonner'
-import { FeedbackType } from '@/types/database'
+
+type FeedbackType = 'bug' | 'feature' | 'other'
 
 export function AddFeedbackDialog() {
   const [title, setTitle] = useState('')
