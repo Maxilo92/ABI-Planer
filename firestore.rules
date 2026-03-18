@@ -14,22 +14,47 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data;
     }
     
-    function isPlanner() {
-      return isAuthenticated() && (getProfile().role == 'planner' || getProfile().role == 'admin');
+    function isApproved() {
+      return isAuthenticated() && getProfile().is_approved == true;
     }
-    
+
+    function isPlanner() {
+      return isAuthenticated() && (
+        getProfile().role == 'planner' ||
+        getProfile().role == 'admin' ||
+        getProfile().role == 'admin_main' ||
+        getProfile().role == 'admin_co'
+      );
+    }
+
     function isAdmin() {
-      return isAuthenticated() && getProfile().role == 'admin';
+      return isAuthenticated() && (
+        getProfile().role == 'admin' ||
+        getProfile().role == 'admin_main' ||
+        getProfile().role == 'admin_co'
+      );
     }
 
     match /profiles/{userId} {
       allow read: if isAuthenticated();
       allow create: if isLernsax() && request.auth.uid == userId;
-      allow update: if isAdmin() || (
-        request.auth.uid == userId && 
-        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'is_approved'])
+      
+      allow update: if (
+        // Case 1: Self-update (cannot change role or approval)
+        (request.auth.uid == userId && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'is_approved', 'planning_group'])) ||
+        
+        // Case 2: Main Admin (can do anything EXCEPT demoting themselves from their role)
+        (isMainAdmin() && (
+          (request.auth.uid == userId && request.resource.data.role == resource.data.role) || 
+          (request.auth.uid != userId)
+        )) ||
+        
+        // Case 3: Co-Admin (can approve but NOT change roles and NOT touch Main Admins)
+        (isCoAdmin() && resource.data.role != 'admin_main' && resource.data.role != 'admin' && request.auth.uid != userId &&
+         !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'email']))
       );
-      allow delete: if isAdmin();
+      
+      allow delete: if isMainAdmin() && resource.data.role != 'admin_main' && resource.data.role != 'admin';
     }
 
     match /settings/{docId} {
@@ -47,6 +72,12 @@ service cloud.firestore {
       allow read: if true;
       allow create: if isLernsax() && request.resource.data.user_id == request.auth.uid;
       allow delete: if isAdmin() || (isAuthenticated() && resource.data.user_id == request.auth.uid);
+    }
+    
+    match /feedback/{feedbackId} {
+        allow read: if isAdmin();
+        allow create: if isApproved();
+        allow update, delete: if isAdmin();
     }
   }
 }
