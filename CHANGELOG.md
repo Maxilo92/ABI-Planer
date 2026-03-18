@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.7.1] - 2026-03-18
+- Fix: Deployment der Firestore Indexe und Regeln explizit auf die `abi-data` Datenbank konfiguriert
+
 ## [0.7.0] - 2026-03-18
 - Fix: Fehlende Firestore Composite Indexes für Umfragen und Aufgaben hinzugefügt, um Ladefehler zu beheben
 
