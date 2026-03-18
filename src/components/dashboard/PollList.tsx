@@ -5,18 +5,20 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { db } from '@/lib/firebase'
-import { collection, doc, getDocs, setDoc, serverTimestamp } from 'firebase/firestore'
+import { collection, deleteDoc, doc, getDocs, setDoc, serverTimestamp, writeBatch } from 'firebase/firestore'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
+import { Trash2 } from 'lucide-react'
 
 interface PollListProps {
   polls: Poll[]
   userId: string
   canVote?: boolean
+  canManage?: boolean
 }
 
-export function PollList({ polls, userId, canVote = false }: PollListProps) {
+export function PollList({ polls, userId, canVote = false, canManage = false }: PollListProps) {
   const router = useRouter()
   const [loading, setLoading] = useState<string | null>(null)
   const [votesByPoll, setVotesByPoll] = useState<Record<string, PollVote[]>>({})
@@ -37,6 +39,20 @@ export function PollList({ polls, userId, canVote = false }: PollListProps) {
 
   const handleVote = async (pollId: string, optionId: string) => {
     if (!userId || !canVote) return
+    const poll = polls.find((entry) => entry.id === pollId)
+    const pollVotes = votesByPoll[pollId] || poll?.votes || []
+    const existingVote = pollVotes.find((vote) => vote.user_id === userId)
+
+    if (existingVote && poll?.allow_vote_change !== true) {
+      toast.error('Diese Umfrage erlaubt keine nachträgliche Änderung der Stimme.')
+      return
+    }
+
+    if (!existingVote && poll?.allow_vote_change === false) {
+      const confirmed = window.confirm('Diese Umfrage erlaubt keine spätere Meinungsänderung. Wirklich jetzt abstimmen?')
+      if (!confirmed) return
+    }
+
     setLoading(optionId)
     
     try {
@@ -60,6 +76,52 @@ export function PollList({ polls, userId, canVote = false }: PollListProps) {
     }
   }
 
+  const deleteSubcollectionDocs = async (pollId: string, subcollection: 'options' | 'votes') => {
+    const snapshot = await getDocs(collection(db, 'polls', pollId, subcollection))
+    if (snapshot.empty) return
+
+    let batch = writeBatch(db)
+    let operations = 0
+
+    for (const item of snapshot.docs) {
+      batch.delete(doc(db, 'polls', pollId, subcollection, item.id))
+      operations += 1
+
+      if (operations >= 400) {
+        await batch.commit()
+        batch = writeBatch(db)
+        operations = 0
+      }
+    }
+
+    if (operations > 0) {
+      await batch.commit()
+    }
+  }
+
+  const handleDeletePoll = async (pollId: string) => {
+    if (!canManage) return
+    const confirmed = window.confirm('Umfrage wirklich löschen? Stimmen und Optionen werden ebenfalls gelöscht.')
+    if (!confirmed) return
+
+    try {
+      await deleteSubcollectionDocs(pollId, 'votes')
+      await deleteSubcollectionDocs(pollId, 'options')
+      await deleteDoc(doc(db, 'polls', pollId))
+
+      setVotesByPoll((prev) => {
+        const next = { ...prev }
+        delete next[pollId]
+        return next
+      })
+
+      toast.success('Umfrage gelöscht.')
+    } catch (error) {
+      console.error('Error deleting poll:', error)
+      toast.error('Umfrage konnte nicht gelöscht werden.')
+    }
+  }
+
   return (
     <div className="grid grid-cols-1 gap-6">
       {polls.map((poll) => {
@@ -70,7 +132,25 @@ export function PollList({ polls, userId, canVote = false }: PollListProps) {
         return (
           <Card key={poll.id}>
             <CardHeader>
-              <CardTitle>{poll.question}</CardTitle>
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <CardTitle>{poll.question}</CardTitle>
+                  {poll.allow_vote_change === false && (
+                    <p className="text-xs text-amber-600 mt-1">Stimme ist final und nicht änderbar</p>
+                  )}
+                </div>
+                {canManage && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                    onClick={() => handleDeletePoll(poll.id)}
+                    title="Umfrage löschen"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
               <CardDescription>
                 {totalVotes} {totalVotes === 1 ? 'Stimme' : 'Stimmen'} abgegeben
               </CardDescription>
@@ -90,15 +170,15 @@ export function PollList({ polls, userId, canVote = false }: PollListProps) {
                       <span className="font-medium">{percentage}%</span>
                     </div>
                     <Progress value={percentage} className={isSelected ? 'bg-primary/20' : ''} />
-                    {!userVote && userId && canVote && (
+                    {(!userVote || poll.allow_vote_change === true) && userId && canVote && (
                       <Button 
                         variant="outline" 
                         size="sm" 
                         className="w-full mt-1 h-8"
                         onClick={() => handleVote(poll.id, option.id)}
-                        disabled={!!loading}
+                        disabled={!!loading || (userVote?.option_id === option.id)}
                       >
-                        {loading === option.id ? 'Abstimmung...' : 'Wählen'}
+                        {loading === option.id ? 'Abstimmung...' : userVote ? 'Auswahl ändern' : 'Wählen'}
                       </Button>
                     )}
                   </div>

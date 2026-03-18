@@ -82,9 +82,9 @@ export function EditFinanceDialog({ entry }: EditFinanceDialogProps) {
       />
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Einnahme bearbeiten</DialogTitle>
+          <DialogTitle>Finanzposten bearbeiten</DialogTitle>
           <DialogDescription>
-            Passe die Details der Einnahme an.
+            Positive Werte sind Einnahmen, negative Werte sind Ausgaben.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
@@ -95,6 +95,7 @@ export function EditFinanceDialog({ entry }: EditFinanceDialogProps) {
                 id="edit-amount" 
                 type="text"
                 inputMode="decimal"
+                placeholder="z.B. 250 oder -1500"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 required 

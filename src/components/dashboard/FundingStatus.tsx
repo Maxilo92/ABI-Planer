@@ -19,7 +19,8 @@ export function FundingStatus({ current, goal }: FundingStatusProps) {
     setHydrated(true)
   }, [])
 
-  const percentage = Math.min(Math.round((current / goal) * 100), 100)
+  const safeGoal = Math.max(goal, 1)
+  const percentage = Math.min(Math.round((current / safeGoal) * 100), 100)
   const remaining = Math.max(0, goal - current)
   const estimatedPrice = ticketSales > 0 ? remaining / ticketSales : 0
   
@@ -87,7 +88,7 @@ export function FundingStatus({ current, goal }: FundingStatusProps) {
           </div>
           
           <p className="text-[10px] md:text-xs text-muted-foreground text-center italic opacity-70">
-            Zusammen schaffen wir das! Jede Einnahme zählt.
+            Das Ziel bildet eure geplanten Ausgaben ab. Einnahmen reduzieren den noch offenen Betrag.
           </p>
         </div>
       </CardContent>

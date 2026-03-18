@@ -84,7 +84,7 @@ export default function PollsPage() {
             </CardContent>
           </Card>
         ) : (
-          <PollList polls={polls} userId={user?.uid || ''} canVote={canVote} />
+          <PollList polls={polls} userId={user?.uid || ''} canVote={canVote} canManage={isPlanner} />
         )}
       </div>
     </div>

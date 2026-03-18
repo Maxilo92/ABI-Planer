@@ -70,23 +70,26 @@ export default function FinancePage() {
     }
   }
 
-  const currentFunding = finances.reduce((acc, curr) => acc + Number(curr.amount), 0)
+  const amounts = finances.map((entry) => Number(entry.amount) || 0)
+  const currentFunding = amounts.filter((value) => value > 0).reduce((acc, value) => acc + value, 0)
+  const expenseGoal = amounts.filter((value) => value < 0).reduce((acc, value) => acc + Math.abs(value), 0)
+  const effectiveGoal = expenseGoal > 0 ? expenseGoal : (settings?.funding_goal || 10000)
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Finanzen</h1>
-          <p className="text-muted-foreground">Budgetplanung und Einnahmen-Übersicht.</p>
+          <p className="text-muted-foreground">Budgetplanung mit Einnahmen und Ausgaben.</p>
         </div>
         {isPlanner && <AddFinanceDialog />}
       </div>
 
-      <FundingStatus current={currentFunding} goal={settings?.funding_goal || 10000} />
+      <FundingStatus current={currentFunding} goal={effectiveGoal} />
 
       <Card>
         <CardHeader>
-          <CardTitle>Einnahmenverlauf</CardTitle>
+          <CardTitle>Finanzverlauf</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
@@ -117,8 +120,8 @@ export default function FinancePage() {
                         )}
                       </div>
                     </TableCell>
-                    <TableCell className="text-right font-semibold text-green-600">
-                      + {Number(entry.amount).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
+                    <TableCell className={`text-right font-semibold ${Number(entry.amount) < 0 ? 'text-destructive' : 'text-green-600'}`}>
+                      {Number(entry.amount) < 0 ? '-' : '+'} {Math.abs(Number(entry.amount)).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
                     </TableCell>
                     {isPlanner && (
                       <TableCell className="text-right">

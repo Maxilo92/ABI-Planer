@@ -70,6 +70,7 @@ export interface Poll {
   id: string;
   question: string;
   is_active: boolean;
+  allow_vote_change?: boolean;
   created_at: string;
   created_by: string;
   options?: PollOption[];

@@ -17,11 +17,13 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Plus, Trash2 } from 'lucide-react'
 
 export function AddPollDialog() {
   const [question, setQuestion] = useState('')
   const [options, setOptions] = useState(['', ''])
+  const [allowVoteChange, setAllowVoteChange] = useState(true)
   const [loading, setLoading] = useState(false)
   const [open, setOpen] = useState(false)
   const { user } = useAuth()
@@ -57,7 +59,8 @@ export function AddPollDialog() {
           question,
           created_by: user.uid,
           created_at: serverTimestamp(),
-          is_active: true
+          is_active: true,
+          allow_vote_change: allowVoteChange
         })
 
         const batch = writeBatch(db)
@@ -72,6 +75,7 @@ export function AddPollDialog() {
 
         setQuestion('')
         setOptions(['', ''])
+        setAllowVoteChange(true)
         setOpen(false)
         router.refresh()
       } catch (error) {
@@ -140,6 +144,21 @@ export function AddPollDialog() {
               >
                 Option hinzufügen
               </Button>
+            </div>
+            <div className="flex items-start gap-3 rounded-md border p-3">
+              <Checkbox
+                id="allow-vote-change"
+                checked={allowVoteChange}
+                onCheckedChange={(checked) => setAllowVoteChange(checked === true)}
+              />
+              <div className="space-y-1">
+                <Label htmlFor="allow-vote-change" className="cursor-pointer">
+                  Meinung nach Wahl ändern erlauben
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  Standard: Aktiv. Wenn deaktiviert, ist die erste Stimme final.
+                </p>
+              </div>
             </div>
           </div>
           <DialogFooter>

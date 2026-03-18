@@ -17,6 +17,7 @@ export default function Dashboard() {
   const [events, setEvents] = useState<any[]>([])
   const [news, setNews] = useState<any[]>([])
   const [currentFunding, setCurrentFunding] = useState(0)
+  const [expenseGoal, setExpenseGoal] = useState(0)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -52,8 +53,12 @@ export default function Dashboard() {
     // 4. Listen to Finances for status
     const financesRef = collection(db, 'finances')
     const unsubscribeFinances = onSnapshot(financesRef, (snapshot) => {
-      const total = snapshot.docs.reduce((acc, doc) => acc + Number(doc.data().amount), 0)
-      setCurrentFunding(total)
+      const amounts = snapshot.docs.map((entryDoc) => Number(entryDoc.data().amount) || 0)
+      const incomeTotal = amounts.filter((value) => value > 0).reduce((acc, value) => acc + value, 0)
+      const plannedExpenses = amounts.filter((value) => value < 0).reduce((acc, value) => acc + Math.abs(value), 0)
+
+      setCurrentFunding(incomeTotal)
+      setExpenseGoal(plannedExpenses)
     })
 
     // 5. Listen to News (last 2)
@@ -97,7 +102,7 @@ export default function Dashboard() {
           targetDate={settings?.ball_date || '2026-06-20T18:00:00'} 
           editButton={canManage ? <EditSettingsDialog currentDate={settings?.ball_date} currentGoal={settings?.funding_goal || 10000} currentCourses={settings?.courses} /> : null}
         />
-        <FundingStatus current={currentFunding} goal={settings?.funding_goal || 10000} />
+        <FundingStatus current={currentFunding} goal={expenseGoal > 0 ? expenseGoal : (settings?.funding_goal || 10000)} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

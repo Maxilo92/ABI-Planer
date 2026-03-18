@@ -88,7 +88,9 @@ service cloud.firestore {
 
       match /votes/{voteId} {
         allow read: if true;
-        allow create, update: if isAuthenticated() && request.auth.uid == voteId && request.resource.data.user_id == request.auth.uid;
+        allow create: if isAuthenticated() && request.auth.uid == voteId && request.resource.data.user_id == request.auth.uid;
+        allow update: if isAuthenticated() && request.auth.uid == voteId && request.resource.data.user_id == request.auth.uid &&
+          get(/databases/$(database)/documents/polls/$(pollId)).data.allow_vote_change == true;
         allow delete: if isAdmin() || (isAuthenticated() && resource.data.user_id == request.auth.uid);
       }
     }

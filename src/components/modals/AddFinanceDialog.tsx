@@ -77,15 +77,15 @@ export function AddFinanceDialog() {
       <DialogTrigger
         render={
           <Button size="sm" className="gap-2">
-            <Plus className="h-4 w-4" /> Einnahme erfassen
+            <Plus className="h-4 w-4" /> Betrag erfassen
           </Button>
         }
       />
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Einnahme hinzufügen</DialogTitle>
+          <DialogTitle>Finanzposten hinzufügen</DialogTitle>
           <DialogDescription>
-            Dokumentiere Geldflüsse für das Budget.
+            Positive Werte sind Einnahmen, negative Werte sind Ausgaben.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
@@ -94,13 +94,14 @@ export function AddFinanceDialog() {
               <Label htmlFor="amount">Betrag in €</Label>
               <Input 
                 id="amount" 
-                placeholder="z.B. 50.00" 
+                placeholder="z.B. 250 oder -1500" 
                 type="text"
                 inputMode="decimal"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 required 
               />
+              <p className="text-xs text-muted-foreground">Negativ für Ausgaben (z.B. -1500 für Location).</p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="description">Beschreibung / Quelle</Label>
