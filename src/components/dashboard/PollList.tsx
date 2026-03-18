@@ -5,9 +5,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { db } from '@/lib/firebase'
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore'
+import { collection, doc, getDocs, setDoc, serverTimestamp } from 'firebase/firestore'
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { toast } from 'sonner'
 
 interface PollListProps {
   polls: Poll[]
@@ -18,6 +19,21 @@ interface PollListProps {
 export function PollList({ polls, userId, canVote = false }: PollListProps) {
   const router = useRouter()
   const [loading, setLoading] = useState<string | null>(null)
+  const [votesByPoll, setVotesByPoll] = useState<Record<string, PollVote[]>>({})
+
+  useEffect(() => {
+    const nextVotes: Record<string, PollVote[]> = {}
+    polls.forEach((poll) => {
+      nextVotes[poll.id] = poll.votes || []
+    })
+    setVotesByPoll(nextVotes)
+  }, [polls])
+
+  const refreshVotesForPoll = async (pollId: string) => {
+    const votesSnap = await getDocs(collection(db, 'polls', pollId, 'votes'))
+    const refreshedVotes = votesSnap.docs.map((voteDoc) => ({ id: voteDoc.id, ...voteDoc.data() } as PollVote))
+    setVotesByPoll((prev) => ({ ...prev, [pollId]: refreshedVotes }))
+  }
 
   const handleVote = async (pollId: string, optionId: string) => {
     if (!userId || !canVote) return
@@ -33,8 +49,12 @@ export function PollList({ polls, userId, canVote = false }: PollListProps) {
         user_id: userId,
         created_at: serverTimestamp()
       })
+
+      await refreshVotesForPoll(pollId)
+      toast.success('Deine Stimme wurde gespeichert.')
     } catch (err) {
       console.error('Error voting:', err)
+      toast.error('Abstimmung fehlgeschlagen. Bitte prüfe deine Berechtigungen.')
     } finally {
       setLoading(null)
     }
@@ -43,8 +63,9 @@ export function PollList({ polls, userId, canVote = false }: PollListProps) {
   return (
     <div className="grid grid-cols-1 gap-6">
       {polls.map((poll) => {
-        const totalVotes = poll.votes?.length || 0
-        const userVote = poll.votes?.find(v => v.user_id === userId)
+        const pollVotes = votesByPoll[poll.id] || poll.votes || []
+        const totalVotes = pollVotes.length
+        const userVote = pollVotes.find(v => v.user_id === userId)
 
         return (
           <Card key={poll.id}>
@@ -56,7 +77,7 @@ export function PollList({ polls, userId, canVote = false }: PollListProps) {
             </CardHeader>
             <CardContent className="space-y-4">
               {poll.options?.map((option) => {
-                const optionVotes = poll.votes?.filter(v => v.option_id === option.id).length || 0
+                const optionVotes = pollVotes.filter(v => v.option_id === option.id).length
                 const percentage = totalVotes > 0 ? Math.round((optionVotes / totalVotes) * 100) : 0
                 const isSelected = userVote?.option_id === option.id
 
