@@ -19,7 +19,7 @@ if (!isConfigValid && typeof window !== 'undefined') {
 
 // Initialize Firebase
 const app = isConfigValid ? (getApps().length > 0 ? getApp() : initializeApp(firebaseConfig)) : null;
-const auth = app ? getAuth(app) : null;
-const db = app ? getFirestore(app) : null;
+const auth = app ? getAuth(app) : ({} as any);
+const db = app ? getFirestore(app) : ({} as any);
 
 export { app, auth, db };

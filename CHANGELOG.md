@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.14.3] - 2026-03-18
+- Fix: TypeScript Build-Fehler behoben (Type 'null' is not assignable to type 'Firestore').
+
 ## [0.14.2] - 2026-03-18
 - Fix: Stabilität der Authentifizierung verbessert (Hängenbleiben bei "Verifiziere Anmeldung..." behoben).
 - Fix: Fehlerbehandlung beim Laden des Nutzerprofils hinzugefügt (Try-Catch-Finally).
