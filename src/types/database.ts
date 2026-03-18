@@ -1,5 +1,6 @@
 export type UserRole = 'viewer' | 'planner' | 'admin' | 'admin_main' | 'admin_co';
 export type TodoStatus = 'open' | 'in_progress' | 'done';
+export type ClassName = string;
 
 export interface Profile {
   id: string;
@@ -7,6 +8,7 @@ export interface Profile {
   email: string;
   role: UserRole;
   planning_group?: string | null;
+  class_name?: string | null;
   is_approved: boolean;
   created_at: string;
 }
@@ -15,6 +17,7 @@ export interface Settings {
   id: number;
   ball_date: string;
   funding_goal: number;
+  courses?: ClassName[];
 }
 
 export interface Todo {
@@ -24,12 +27,21 @@ export interface Todo {
   status: TodoStatus;
   created_at: string;
   created_by: string;
+  created_by_name?: string | null;
+  assigned_to_user?: string | null;
+  assigned_to_user_name?: string | null;
+  assigned_to_class?: ClassName | null;
+  completed_at?: string | null;
+  completed_by?: string | null;
+  completed_by_name?: string | null;
 }
 
 export interface FinanceEntry {
   id: string;
   amount: number;
   description: string | null;
+  responsible_class?: ClassName | null;
+  responsible_user_name?: string | null;
   entry_date: string;
   created_by: string;
 }
@@ -49,6 +61,9 @@ export interface NewsEntry {
   content: string;
   created_at: string;
   created_by: string;
+  author_name?: string | null;
+  view_count?: number;
+  viewed_by?: string[];
 }
 
 export interface Poll {
