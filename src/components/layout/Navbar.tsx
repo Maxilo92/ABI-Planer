@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { LayoutDashboard, CheckSquare, Calendar, Euro, Megaphone, BarChart2, LogOut, Menu, X, ShieldCheck, User, MessageSquareHeart } from 'lucide-react'
+import { LayoutDashboard, CheckSquare, Calendar, Euro, Megaphone, BarChart2, LogOut, Menu, X, ShieldCheck, User, MessageSquareHeart, Settings } from 'lucide-react'
 import { useState } from 'react'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -10,8 +10,6 @@ import { signOut } from 'firebase/auth'
 import { useRouter, usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/context/AuthContext'
-import { AddFeedbackDialog } from '../modals/AddFeedbackDialog'
-import { ThemeToggle } from './ThemeToggle'
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
@@ -32,6 +30,7 @@ export function Navbar() {
     { href: '/finanzen', label: 'Finanzen', icon: Euro },
     { href: '/news', label: 'News', icon: Megaphone },
     { href: '/abstimmungen', label: 'Umfragen', icon: BarChart2 },
+    { href: '/einstellungen', label: 'Einstellungen', icon: Settings },
   ]
 
   const isAdmin = profile?.role === 'admin_main' || profile?.role === 'admin_co' || profile?.role === 'admin'
@@ -95,8 +94,6 @@ export function Navbar() {
                           </AvatarFallback>
                         </Avatar>
                       </Link>
-                      <ThemeToggle />
-                      <AddFeedbackDialog />
                       <Button variant="ghost" size="icon-sm" onClick={handleSignOut} title="Abmelden">
                         <LogOut className="h-4 w-4 text-muted-foreground hover:text-destructive transition-colors" />
                       </Button>
@@ -160,7 +157,6 @@ export function Navbar() {
                       <div className="text-sm text-muted-foreground uppercase">{getRoleLabel(profile.role)}</div>
                     </div>
                   </div>
-                  <ThemeToggle />
                 </div>
                 <div className="px-2 space-y-1">
                   <Link
@@ -171,9 +167,6 @@ export function Navbar() {
                     <User className="h-5 w-5" />
                     Profil
                   </Link>
-                  <div className="px-3 py-2">
-                    <AddFeedbackDialog />
-                  </div>
                   <button
                     onClick={handleSignOut}
                     className="w-full flex items-center gap-3 px-3 py-3 rounded-md text-base font-medium text-destructive hover:bg-destructive/10"
