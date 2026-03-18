@@ -57,8 +57,8 @@ export function ClassLeaderboard({ finances, goal }: ClassLeaderboardProps) {
   const lastPlace = [...stats].reverse().find(s => s.amount >= 0) || stats[stats.length - 1]
 
   return (
-    <Card className="h-full border-border/40 shadow-subtle overflow-hidden">
-      <CardHeader className="pb-3 border-b border-border/40 bg-muted/5">
+    <Card className="h-full border-border/40 shadow-subtle overflow-hidden flex flex-col">
+      <CardHeader className="pb-3 border-b border-border/40 bg-muted/5 shrink-0">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg font-bold flex items-center gap-2">
             <Trophy className="h-5 w-5 text-yellow-500/80" />
@@ -69,12 +69,13 @@ export function ClassLeaderboard({ finances, goal }: ClassLeaderboardProps) {
           </Badge>
         </div>
       </CardHeader>
-      <CardContent className="p-0">
-        <div className="divide-y divide-border/40">
+      
+      <CardContent className="p-0 flex-1 flex flex-col min-h-0">
+        <div className="flex-1 overflow-y-auto divide-y divide-border/40 scrollbar-thin scrollbar-thumb-muted-foreground/20">
           {stats.map((s, index) => (
-            <div key={s.className} className="flex items-center justify-between p-4 transition-colors hover:bg-muted/30 group">
-              <div className="flex items-center gap-4">
-                <div className={`flex items-center justify-center h-8 w-8 rounded-full text-xs font-bold ${
+            <div key={s.className} className="flex items-center justify-between p-3 transition-colors hover:bg-muted/30 group">
+              <div className="flex items-center gap-3">
+                <div className={`flex items-center justify-center h-7 w-7 rounded-full text-[10px] font-bold ${
                   index === 0 ? 'bg-yellow-500/20 text-yellow-600 dark:text-yellow-500' : 
                   index === 1 ? 'bg-slate-400/20 text-slate-500' :
                   index === 2 ? 'bg-orange-400/20 text-orange-500' :
@@ -83,8 +84,8 @@ export function ClassLeaderboard({ finances, goal }: ClassLeaderboardProps) {
                   {index + 1}
                 </div>
                 <div>
-                  <p className="text-sm font-semibold tracking-tight">Kurs {s.className}</p>
-                  <div className="w-32 h-1.5 bg-muted rounded-full mt-1.5 overflow-hidden">
+                  <p className="text-xs font-semibold tracking-tight leading-none">Kurs {s.className}</p>
+                  <div className="w-24 h-1 bg-muted rounded-full mt-1.5 overflow-hidden">
                     <div 
                       className={`h-full rounded-full transition-all duration-500 ${
                         index === 0 ? 'bg-primary' : 'bg-primary/40'
@@ -95,27 +96,27 @@ export function ClassLeaderboard({ finances, goal }: ClassLeaderboardProps) {
                 </div>
               </div>
               <div className="text-right">
-                <p className="text-sm font-bold tabular-nums">
+                <p className="text-xs font-bold tabular-nums leading-none">
                   {s.amount.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
                 </p>
-                <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-tighter">
-                  {s.percentage}% vom Teilziel
+                <p className="text-[9px] text-muted-foreground font-medium uppercase tracking-tighter mt-1">
+                  {s.percentage}%
                 </p>
               </div>
             </div>
           ))}
         </div>
 
-        {/* Tip section */}
-        <div className="p-4 bg-muted/20 border-t border-border/40">
-          <div className="flex items-start gap-3 bg-background/50 rounded-xl p-3 border border-border/40">
-            <div className="mt-0.5 bg-primary/10 p-1.5 rounded-lg">
-              <Lightbulb className="h-3.5 w-3.5 text-primary" />
+        {/* Tip section - sticky at bottom */}
+        <div className="p-3 bg-muted/20 border-t border-border/40 shrink-0">
+          <div className="flex items-start gap-2.5 bg-background/50 rounded-xl p-2.5 border border-border/40">
+            <div className="mt-0.5 bg-primary/10 p-1 rounded-lg shrink-0">
+              <Lightbulb className="h-3 w-3 text-primary" />
             </div>
-            <div className="space-y-1">
-              <p className="text-[11px] font-extrabold text-primary uppercase tracking-[0.1em]">Wettstreit-Tipp</p>
-              <p className="text-[11px] text-muted-foreground leading-snug">
-                Kurs <span className="font-bold text-foreground">{lastPlace.className}</span> ist aktuell das Schlusslicht. Zeit für einen Kuchenverkauf oder eine Pfandsammelaktion!
+            <div className="space-y-0.5">
+              <p className="text-[10px] font-extrabold text-primary uppercase tracking-[0.1em] leading-none">Wettstreit-Tipp</p>
+              <p className="text-[10px] text-muted-foreground leading-tight line-clamp-2">
+                Kurs <span className="font-bold text-foreground">{lastPlace.className}</span> ist aktuell das Schlusslicht.
               </p>
             </div>
           </div>

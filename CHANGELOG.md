@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.15.23] - 2026-03-18
+- UI: Optimierung des Dashboard-Layouts für einen perfekten "Tiled"-Look (nx1 Kacheln). Die Höhe der Karten wurde vereinheitlicht und der Kurswettstreit scrollt nun intern, wenn die Liste zu lang wird.
+
 ## [0.15.22] - 2026-03-18
 - UI: Der Kurswettstreit wurde optisch komplett überarbeitet, um besser zum restlichen Design der App zu passen (Listenansicht mit Rang-Indikatoren, verbesserte Typografie und subtilere Schatten).
 

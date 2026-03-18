@@ -59,7 +59,7 @@ export function FundingStatus({ current, goal, initialTicketSales = 150, onTicke
   }
 
   return (
-    <Card className="w-full border-none shadow-card">
+    <Card className="w-full h-full border-none shadow-card">
       <CardHeader className="pb-2">
         <CardTitle className="text-sm font-medium uppercase tracking-wider text-muted-foreground flex justify-between">
           <span>Finanzierungsziel</span>

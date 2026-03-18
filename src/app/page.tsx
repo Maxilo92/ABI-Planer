@@ -187,38 +187,44 @@ export default function Dashboard() {
       switch (key) {
         case 'funding':
           return (
-            <FundingStatus
-              key="funding"
-              current={currentFunding}
-              goal={expenseGoal > 0 ? expenseGoal : (settings?.funding_goal || 10000)}
-              initialTicketSales={settings?.expected_ticket_sales ?? 150}
-              onTicketSalesChange={handleTicketSalesChange}
-            />
+            <div className="h-[380px]">
+              <FundingStatus
+                key="funding"
+                current={currentFunding}
+                goal={expenseGoal > 0 ? expenseGoal : (settings?.funding_goal || 10000)}
+                initialTicketSales={settings?.expected_ticket_sales ?? 150}
+                onTicketSalesChange={handleTicketSalesChange}
+              />
+            </div>
           )
         case 'news':
-          return <NewsPreview key="news" items={news} />
+          return <div className="h-[380px]"><NewsPreview key="news" items={news} /></div>
         case 'todos':
-          return <TodoList key="todos" todos={todos || []} canManage={canManage} />
+          return <div className="h-[420px]"><TodoList key="todos" todos={todos || []} canManage={canManage} /></div>
         case 'events':
-          return <CalendarEvents key="events" events={events || []} />
+          return <div className="h-[420px]"><CalendarEvents key="events" events={events || []} /></div>
         case 'polls':
           return (
-            <PollList
-              key="polls"
-              polls={polls}
-              userId={profile?.id || ''}
-              canVote={true}
-              canManage={canManage}
-              limit={2}
-            />
+            <div className="h-[420px]">
+              <PollList
+                key="polls"
+                polls={polls}
+                userId={profile?.id || ''}
+                canVote={true}
+                canManage={canManage}
+                limit={2}
+              />
+            </div>
           )
         case 'leaderboard':
           return (
-            <ClassLeaderboard
-              key="leaderboard"
-              finances={allFinances}
-              goal={settings?.funding_goal || 10000}
-            />
+            <div className="h-[380px]">
+              <ClassLeaderboard
+                key="leaderboard"
+                finances={allFinances}
+                goal={settings?.funding_goal || 10000}
+              />
+            </div>
           )
         default:
           return null
