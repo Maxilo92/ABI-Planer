@@ -73,5 +73,11 @@ service cloud.firestore {
       allow create: if isLernsax() && request.resource.data.user_id == request.auth.uid;
       allow delete: if isAdmin() || (isAuthenticated() && resource.data.user_id == request.auth.uid);
     }
+    
+    match /feedback/{feedbackId} {
+        allow read: if isAdmin();
+        allow create: if isAuthenticated();
+        allow update, delete: if isAdmin();
+    }
   }
 }
