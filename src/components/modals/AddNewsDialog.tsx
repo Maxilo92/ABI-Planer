@@ -4,7 +4,6 @@ import { useState } from 'react'
 import { db } from '@/lib/firebase'
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore'
 import { useAuth } from '@/context/AuthContext'
-import { useRouter } from 'next/navigation'
 import { 
   Dialog, 
   DialogContent, 
@@ -18,9 +17,9 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Plus } from 'lucide-react'
+import { Plus, ImagePlus } from 'lucide-react'
 import { toast } from 'sonner'
-import { prepareNewsImage, uploadNewsImage, validateNewsImageFile } from '@/lib/newsImageUpload'
+import { uploadNewsImage, validateNewsImageFile } from '@/lib/newsImageUpload'
 import { NewsImageCropper } from '@/components/modals/NewsImageCropper'
 
 export function AddNewsDialog() {
@@ -33,7 +32,6 @@ export function AddNewsDialog() {
   const [loading, setLoading] = useState(false)
   const [open, setOpen] = useState(false)
   const { user, profile } = useAuth()
-  const router = useRouter()
 
   const resetForm = () => {
     setTitle('')
@@ -104,8 +102,7 @@ export function AddNewsDialog() {
         } = {}
 
         if (imageFile) {
-          const optimizedImage = await prepareNewsImage(imageFile)
-          const uploadedImage = await uploadNewsImage(user.uid, optimizedImage)
+          const uploadedImage = await uploadNewsImage(user.uid, imageFile)
           imagePayload = {
             image_url: uploadedImage.url,
             image_path: uploadedImage.path,
@@ -127,7 +124,6 @@ export function AddNewsDialog() {
         resetForm()
         setOpen(false)
         toast.success('News-Beitrag veröffentlicht.')
-        router.refresh()
       } catch (error) {
         console.error('Error adding news:', error)
         toast.error('News konnte nicht veröffentlicht werden.')
@@ -178,7 +174,13 @@ export function AddNewsDialog() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="image">Titelbild (optional)</Label>
-              <Input key={imageInputKey} id="image" type="file" accept="image/*" onChange={handleImageChange} />
+              <Input key={imageInputKey} id="image" type="file" accept="image/*" onChange={handleImageChange} className="sr-only" />
+              <label
+                htmlFor="image"
+                className="flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-primary/40 bg-primary/5 px-4 py-3 text-sm font-medium text-foreground transition-colors hover:bg-primary/10"
+              >
+                <ImagePlus className="h-4 w-4 text-primary" /> Bild auswählen und zuschneiden
+              </label>
               <p className="text-xs text-muted-foreground">Maximal 5 MB. Nach Auswahl legst du den Bildausschnitt selbst fest.</p>
               {pendingCropFile && (
                 <NewsImageCropper
@@ -198,15 +200,15 @@ export function AddNewsDialog() {
                 />
               )}
               {imagePreviewUrl && (
-                <div className="rounded-lg border overflow-hidden bg-muted/20">
-                  <img src={imagePreviewUrl} alt="Vorschau Titelbild" className="h-40 w-full object-cover" />
+                <div className="aspect-video rounded-lg border overflow-hidden bg-muted/20">
+                  <img src={imagePreviewUrl} alt="Vorschau Titelbild" className="h-full w-full object-cover" />
                 </div>
               )}
             </div>
           </div>
           <DialogFooter>
             <Button type="submit" disabled={loading || !!pendingCropFile}>
-              {loading ? 'Veröffentlichen...' : 'Posten'}
+              {loading ? 'Veröffentliche...' : 'Veröffentlichen'}
             </Button>
           </DialogFooter>
         </form>

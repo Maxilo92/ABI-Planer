@@ -91,7 +91,7 @@ export default function NewsDetailPage({ params }: { params: Promise<{ id: strin
 
       <Card className="border shadow-sm overflow-hidden">
         {news.image_url && (
-          <div className="relative h-56 w-full overflow-hidden bg-muted md:h-80">
+          <div className="relative aspect-video w-full overflow-hidden bg-muted">
             <img
               src={news.image_url}
               alt={`Titelbild zu ${news.title}`}

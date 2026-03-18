@@ -53,6 +53,22 @@ function canvasToBlob(canvas: HTMLCanvasElement, quality: number): Promise<Blob>
   })
 }
 
+async function optimizeCanvasToWebp(canvas: HTMLCanvasElement): Promise<Blob> {
+  let quality = NEWS_IMAGE_DEFAULT_QUALITY
+  let outputBlob = await canvasToBlob(canvas, quality)
+
+  while (outputBlob.size > NEWS_IMAGE_MAX_BYTES && quality > 0.45) {
+    quality -= 0.08
+    outputBlob = await canvasToBlob(canvas, quality)
+  }
+
+  if (outputBlob.size > NEWS_IMAGE_MAX_BYTES) {
+    throw new Error('Bild konnte nicht ausreichend komprimiert werden. Bitte kleineres Bild wählen.')
+  }
+
+  return outputBlob
+}
+
 export async function prepareNewsImage(file: File): Promise<File> {
   if (!file.type.startsWith('image/')) {
     throw new Error('Nur Bilddateien sind erlaubt.')
@@ -81,17 +97,7 @@ export async function prepareNewsImage(file: File): Promise<File> {
   ctx.drawImage(bitmap, 0, 0, targetWidth, targetHeight)
   bitmap.close()
 
-  let quality = NEWS_IMAGE_DEFAULT_QUALITY
-  let outputBlob = await canvasToBlob(canvas, quality)
-
-  while (outputBlob.size > NEWS_IMAGE_MAX_BYTES && quality > 0.45) {
-    quality -= 0.08
-    outputBlob = await canvasToBlob(canvas, quality)
-  }
-
-  if (outputBlob.size > NEWS_IMAGE_MAX_BYTES) {
-    throw new Error('Bild konnte nicht ausreichend komprimiert werden. Bitte kleineres Bild wählen.')
-  }
+  const outputBlob = await optimizeCanvasToWebp(canvas)
 
   const fileBase = sanitizeFileName(file.name.replace(/\.[^/.]+$/, '')) || 'news-image'
   return new File([outputBlob], `${fileBase}.webp`, { type: 'image/webp' })
@@ -100,9 +106,13 @@ export async function prepareNewsImage(file: File): Promise<File> {
 export async function cropNewsImage(file: File, cropArea: NewsCropArea): Promise<File> {
   const bitmap = await createImageBitmap(file)
 
+  const cropWidth = Math.max(1, Math.round(cropArea.width))
+  const cropHeight = Math.max(1, Math.round(cropArea.height))
+  const scale = Math.min(1, NEWS_IMAGE_MAX_DIMENSION / Math.max(cropWidth, cropHeight))
+
   const canvas = document.createElement('canvas')
-  canvas.width = Math.max(1, Math.round(cropArea.width))
-  canvas.height = Math.max(1, Math.round(cropArea.height))
+  canvas.width = Math.max(1, Math.round(cropWidth * scale))
+  canvas.height = Math.max(1, Math.round(cropHeight * scale))
 
   const ctx = canvas.getContext('2d')
   if (!ctx) {
@@ -114,8 +124,8 @@ export async function cropNewsImage(file: File, cropArea: NewsCropArea): Promise
     bitmap,
     Math.max(0, Math.round(cropArea.x)),
     Math.max(0, Math.round(cropArea.y)),
-    Math.max(1, Math.round(cropArea.width)),
-    Math.max(1, Math.round(cropArea.height)),
+    cropWidth,
+    cropHeight,
     0,
     0,
     canvas.width,
@@ -124,7 +134,7 @@ export async function cropNewsImage(file: File, cropArea: NewsCropArea): Promise
 
   bitmap.close()
 
-  const blob = await canvasToBlob(canvas, 0.92)
+  const blob = await optimizeCanvasToWebp(canvas)
   const fileBase = sanitizeFileName(file.name.replace(/\.[^/.]+$/, '')) || 'news-image'
   return new File([blob], `${fileBase}-crop.webp`, { type: 'image/webp' })
 }

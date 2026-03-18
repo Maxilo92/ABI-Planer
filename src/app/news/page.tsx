@@ -82,7 +82,7 @@ export default function NewsPage() {
             <Card key={item.id} className="overflow-hidden border shadow-sm hover:shadow-md transition-shadow">
               {item.image_url && (
                 <Link href={`/news/${item.id}`}>
-                  <div className="relative h-44 w-full md:h-56 overflow-hidden bg-muted">
+                  <div className="relative aspect-video w-full overflow-hidden bg-muted">
                     <img
                       src={item.image_url}
                       alt={`Titelbild zu ${item.title}`}
