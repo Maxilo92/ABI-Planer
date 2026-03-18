@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { db } from '@/lib/firebase'
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore'
+import { collection, addDoc, serverTimestamp, writeBatch, doc } from 'firebase/firestore'
 import { useAuth } from '@/context/AuthContext'
 import { useRouter } from 'next/navigation'
 import { 
@@ -48,15 +48,27 @@ export function AddPollDialog() {
 
     if (user) {
       try {
-        const validOptions = options.filter(opt => opt.trim() !== '')
+        const validOptions = options.filter((opt) => opt.trim() !== '')
+        if (validOptions.length < 2) {
+          throw new Error('Bitte mindestens zwei Antwortmöglichkeiten angeben.')
+        }
         
-        await addDoc(collection(db, 'polls'), {
+        const pollRef = await addDoc(collection(db, 'polls'), {
           question,
-          options: validOptions,
           created_by: user.uid,
           created_at: serverTimestamp(),
           is_active: true
         })
+
+        const batch = writeBatch(db)
+        validOptions.forEach((option) => {
+          const optionRef = doc(collection(db, 'polls', pollRef.id, 'options'))
+          batch.set(optionRef, {
+            poll_id: pollRef.id,
+            option_text: option.trim()
+          })
+        })
+        await batch.commit()
 
         setQuestion('')
         setOptions(['', ''])

@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { db } from '@/lib/firebase'
-import { collection, addDoc, doc, updateDoc, setDoc } from 'firebase/firestore'
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
@@ -24,16 +24,14 @@ export function PollList({ polls, userId, isApproved = false }: PollListProps) {
     setLoading(optionId)
     
     try {
-      // In Firestore we use a unique ID for the vote to prevent multiple votes
-      // by using a composite ID: pollId_userId
-      const voteId = `${pollId}_${userId}`
-      const voteRef = doc(db, 'poll_votes', voteId)
+      // One vote per user and poll by storing vote under polls/{pollId}/votes/{userId}
+      const voteRef = doc(db, 'polls', pollId, 'votes', userId)
       
       await setDoc(voteRef, {
         poll_id: pollId,
         option_id: optionId,
         user_id: userId,
-        created_at: new Date().toISOString()
+        created_at: serverTimestamp()
       })
     } catch (err) {
       console.error('Error voting:', err)

@@ -19,12 +19,16 @@ export default function AdminPage() {
   const [profiles, setProfiles] = useState<Profile[]>([])
   const [loading, setLoading] = useState(true)
   const router = useRouter()
+  const canManageUsers =
+    profile?.role === 'admin' ||
+    profile?.role === 'admin_main' ||
+    profile?.role === 'admin_co'
 
   useEffect(() => {
-    if (!authLoading && (!profile || profile.role !== 'admin')) {
+    if (!authLoading && (!profile || !canManageUsers)) {
       router.push('/')
     }
-  }, [profile, authLoading, router])
+  }, [profile, authLoading, canManageUsers, router])
 
   useEffect(() => {
     const q = query(collection(db, 'profiles'), orderBy('created_at', 'desc'))
@@ -59,7 +63,7 @@ export default function AdminPage() {
     return <div className="flex items-center justify-center min-h-[50vh]">Lade Admin Dashboard...</div>
   }
 
-  if (!profile || profile.role !== 'admin') {
+  if (!profile || !canManageUsers) {
     return null
   }
 

@@ -73,7 +73,12 @@ export default function Dashboard() {
     }
   }, [])
 
-  const canManage = (profile?.role === 'planner' || profile?.role === 'admin') && profile?.is_approved
+  const canManage = (
+    profile?.role === 'planner' ||
+    profile?.role === 'admin' ||
+    profile?.role === 'admin_main' ||
+    profile?.role === 'admin_co'
+  ) && profile?.is_approved
 
   if (authLoading || loading) {
     return <div className="flex items-center justify-center min-h-[50vh]">Lade Dashboard...</div>
@@ -90,7 +95,7 @@ export default function Dashboard() {
         {/* Top Indicators */}
         <Countdown 
           targetDate={settings?.ball_date || '2026-06-20T18:00:00'} 
-          editButton={canManage ? <EditSettingsDialog currentDate={settings?.ball_date} currentGoal={settings?.funding_goal || 10000} /> : null}
+          editButton={canManage ? <EditSettingsDialog currentDate={settings?.ball_date} currentGoal={settings?.funding_goal || 10000} currentCourses={settings?.courses} /> : null}
         />
         <FundingStatus current={currentFunding} goal={settings?.funding_goal || 10000} />
       </div>

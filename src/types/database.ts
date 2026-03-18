@@ -1,4 +1,4 @@
-export type UserRole = 'viewer' | 'planner' | 'admin';
+export type UserRole = 'viewer' | 'planner' | 'admin' | 'admin_main' | 'admin_co';
 export type TodoStatus = 'open' | 'in_progress' | 'done';
 
 export interface Profile {
@@ -6,6 +6,7 @@ export interface Profile {
   full_name: string | null;
   email: string;
   role: UserRole;
+  planning_group?: string | null;
   is_approved: boolean;
   created_at: string;
 }

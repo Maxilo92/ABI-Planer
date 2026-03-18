@@ -1,9 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { auth, db } from '@/lib/firebase'
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth'
-import { doc, setDoc, collection, getDocs, limit, query } from 'firebase/firestore'
+import { doc, setDoc, collection, getDocs, limit, query, getDoc } from 'firebase/firestore'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -15,9 +15,31 @@ export default function RegisterPage() {
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [courses, setCourses] = useState<string[]>(['12A', '12B', '12C', '12D'])
+  const [selectedCourse, setSelectedCourse] = useState('12A')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
+
+  useEffect(() => {
+    const loadCourses = async () => {
+      try {
+        const settingsSnap = await getDoc(doc(db, 'settings', 'config'))
+        const configuredCourses = settingsSnap.exists() ? settingsSnap.data().courses : undefined
+        if (Array.isArray(configuredCourses) && configuredCourses.length > 0) {
+          const normalizedCourses = configuredCourses.filter((entry: unknown): entry is string => typeof entry === 'string' && entry.trim().length > 0)
+          if (normalizedCourses.length > 0) {
+            setCourses(normalizedCourses)
+            setSelectedCourse(normalizedCourses[0])
+          }
+        }
+      } catch (loadError) {
+        console.error('Error loading courses:', loadError)
+      }
+    }
+
+    loadCourses()
+  }, [])
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -48,6 +70,7 @@ export default function RegisterPage() {
         full_name: fullName,
         email: email,
         role: isFirstUser ? 'admin' : 'viewer',
+        planning_group: selectedCourse,
         is_approved: true, // Auto-approve for MVP
         created_at: new Date().toISOString(),
       })
@@ -96,6 +119,22 @@ export default function RegisterPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 required 
               />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="course">Kurs</Label>
+              <select
+                id="course"
+                value={selectedCourse}
+                onChange={(e) => setSelectedCourse(e.target.value)}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                required
+              >
+                {courses.map((course) => (
+                  <option key={course} value={course}>
+                    {course}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Passwort</Label>
