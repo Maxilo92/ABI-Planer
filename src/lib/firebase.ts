@@ -13,9 +13,13 @@ const firebaseConfig = {
 
 const isConfigValid = !!process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
 
+if (!isConfigValid && typeof window !== 'undefined') {
+  console.error('Firebase configuration is missing! Check your environment variables.');
+}
+
 // Initialize Firebase
-const app = isConfigValid ? (getApps().length > 0 ? getApp() : initializeApp(firebaseConfig)) : (null as any);
-const auth = app ? getAuth(app) : ({} as any);
-const db = app ? getFirestore(app) : ({} as any);
+const app = isConfigValid ? (getApps().length > 0 ? getApp() : initializeApp(firebaseConfig)) : null;
+const auth = app ? getAuth(app) : null;
+const db = app ? getFirestore(app) : null;
 
 export { app, auth, db };

@@ -27,20 +27,35 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    if (!auth) {
+      console.error('Firebase Auth is not initialized. Check your configuration.')
+      setLoading(false)
+      return
+    }
+
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      console.log('Auth state changed:', user ? 'Logged in' : 'Logged out')
       setUser(user)
-      if (user) {
-        const docRef = doc(db, 'profiles', user.uid)
-        const docSnap = await getDoc(docRef)
-        if (docSnap.exists()) {
-          setProfile({ id: user.uid, ...docSnap.data() } as Profile)
+      
+      try {
+        if (user) {
+          const docRef = doc(db, 'profiles', user.uid)
+          const docSnap = await getDoc(docRef)
+          if (docSnap.exists()) {
+            setProfile({ id: user.uid, ...docSnap.data() } as Profile)
+          } else {
+            console.warn('No profile found for user:', user.uid)
+            setProfile(null)
+          }
         } else {
           setProfile(null)
         }
-      } else {
+      } catch (error) {
+        console.error('Error fetching profile:', error)
         setProfile(null)
+      } finally {
+        setLoading(false)
       }
-      setLoading(false)
     })
 
     return () => unsubscribe()

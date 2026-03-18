@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.14.2] - 2026-03-18
+- Fix: Stabilität der Authentifizierung verbessert (Hängenbleiben bei "Verifiziere Anmeldung..." behoben).
+- Fix: Fehlerbehandlung beim Laden des Nutzerprofils hinzugefügt (Try-Catch-Finally).
+- Refactor: Robusterer Firebase-Initialisierungsprozess bei fehlender Konfiguration.
+
 ## [0.14.1] - 2026-03-18
 - Refactor: Vollständige Migration aller verbleibenden `asChild` Props auf die `render`-Prop in allen Modal-Komponenten (`AddEvent`, `EditEvent`, `AddFinance`, `EditFinance`) zur Behebung von Firebase Build-Fehlern.
 
