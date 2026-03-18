@@ -16,9 +16,10 @@ interface PollListProps {
   userId: string
   canVote?: boolean
   canManage?: boolean
+  limit?: number
 }
 
-export function PollList({ polls, userId, canVote = false, canManage = false }: PollListProps) {
+export function PollList({ polls, userId, canVote = false, canManage = false, limit }: PollListProps) {
   const router = useRouter()
   const [loading, setLoading] = useState<string | null>(null)
   const [votesByPoll, setVotesByPoll] = useState<Record<string, PollVote[]>>({})
@@ -30,6 +31,8 @@ export function PollList({ polls, userId, canVote = false, canManage = false }: 
     })
     setVotesByPoll(nextVotes)
   }, [polls])
+
+  const displayedPolls = limit ? polls.slice(0, limit) : polls
 
   const refreshVotesForPoll = async (pollId: string) => {
     const votesSnap = await getDocs(collection(db, 'polls', pollId, 'votes'))
@@ -124,7 +127,7 @@ export function PollList({ polls, userId, canVote = false, canManage = false }: 
 
   return (
     <div className="grid grid-cols-1 gap-6">
-      {polls.map((poll) => {
+      {displayedPolls.map((poll) => {
         const pollVotes = votesByPoll[poll.id] || poll.votes || []
         const totalVotes = pollVotes.length
         const userVote = pollVotes.find(v => v.user_id === userId)

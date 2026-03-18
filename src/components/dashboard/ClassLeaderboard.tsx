@@ -3,10 +3,11 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { Trophy, TrendingUp, Loader2 } from 'lucide-react'
-import { ClassName } from '@/types/database'
+import { ClassName, FinanceEntry } from '@/types/database'
 import { useEffect, useState } from 'react'
 import { db } from '@/lib/firebase'
 import { doc, onSnapshot } from 'firebase/firestore'
+import { Badge } from '@/components/ui/badge'
 
 interface ClassStats {
   className: ClassName
@@ -15,7 +16,7 @@ interface ClassStats {
 }
 
 interface ClassLeaderboardProps {
-  finances: any[]
+  finances: FinanceEntry[]
   goal: number
 }
 
@@ -40,7 +41,7 @@ export function ClassLeaderboard({ finances, goal }: ClassLeaderboardProps) {
       .reduce((acc, f) => acc + Number(f.amount), 0)
     
     // Calculate percentage relative to an equal share of the total goal
-    const classGoal = goal / courses.length
+    const classGoal = (goal || 1) / (courses.length || 1)
     const percentage = Math.min(Math.round((amount / classGoal) * 100), 100)
     
     return { className: c, amount, percentage }
@@ -50,6 +51,14 @@ export function ClassLeaderboard({ finances, goal }: ClassLeaderboardProps) {
     return (
       <Card className="h-full border-primary/20 shadow-sm flex items-center justify-center p-12">
         <Loader2 className="h-8 w-8 animate-spin text-primary/50" />
+      </Card>
+    )
+  }
+
+  if (stats.length === 0) {
+    return (
+      <Card className="h-full border-primary/20 shadow-sm flex items-center justify-center p-6">
+        <p className="text-sm text-muted-foreground">Keine Kurse konfiguriert.</p>
       </Card>
     )
   }
@@ -99,10 +108,3 @@ export function ClassLeaderboard({ finances, goal }: ClassLeaderboardProps) {
   )
 }
 
-function Badge({ children, variant, className }: any) {
-  return (
-    <span className={`px-2 py-0.5 rounded-full font-medium ${variant === 'outline' ? 'border text-muted-foreground' : 'bg-primary text-primary-foreground'} ${className}`}>
-      {children}
-    </span>
-  )
-}

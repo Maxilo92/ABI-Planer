@@ -1,6 +1,7 @@
 export type UserRole = 'viewer' | 'planner' | 'admin' | 'admin_main' | 'admin_co';
 export type TodoStatus = 'open' | 'in_progress' | 'done';
 export type ClassName = string;
+export type DashboardComponentKey = 'funding' | 'news' | 'todos' | 'events' | 'polls' | 'leaderboard';
 
 export interface PlanningGroup {
   name: string;

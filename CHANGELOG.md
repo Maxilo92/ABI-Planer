@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.15.18] - 2026-03-18
+- Feature: **Dynamisches Dashboard-Layout** (`useDashboardSorting`) implementiert. Die Dashboard-Elemente werden nun intelligent nach Relevanz (offene Aufgaben, anstehende Termine, neue Umfragen) für den jeweiligen Nutzer sortiert.
+- Feature: **Echtzeit-Benachrichtigungsindikatoren** in der Navbar (`useNotifications`) für Todos, Kalender, News und Umfragen hinzugefügt.
+- UX: Optimierte Scoring-Logik für die Dashboard-Reihenfolge (Todos: 100, Events: 80, Polls: 70, Finanzen: 50, News: 30).
+- CI: Regression-Guard um Prüfungen für das dynamische Layout und die Navigations-Indikatoren erweitert.
+
 ## [0.15.17] - 2026-03-18
 - Feature: Aufgaben (Todos) können nun entweder einer Person, einem Kurs ODER einer Gruppe zugewiesen werden. Die Benutzeroberfläche wurde mit einem neuen, gruppierten Auswahlfeld optimiert, um diese Exklusivität sicherzustellen.
 

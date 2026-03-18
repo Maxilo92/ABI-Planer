@@ -59,6 +59,28 @@ const checks = [
     file: 'src/app/finanzen/page.tsx',
     patterns: [/const expenseGoal =/, /const effectiveGoal =/, /goal=\{effectiveGoal\}/],
   },
+  {
+    name: 'Dashboard uses dynamic sorting',
+    file: 'src/app/page.tsx',
+    patterns: [/useDashboardSorting/, /sortedComponents\.map/],
+  },
+  {
+    name: 'Navbar uses notifications and indicators',
+    file: 'src/components/layout/Navbar.tsx',
+    patterns: [/useNotifications/, /notify: notifications/, /rounded-full bg-red-500/],
+  },
+  {
+    name: 'Dashboard scoring logic is correct',
+    file: 'src/hooks/useDashboardSorting.ts',
+    patterns: [
+      /scores\.todos = 100/,
+      /scores\.events = 80/,
+      /scores\.polls = 70/,
+      /scores\.funding = 50/,
+      /scores\.news = 30/,
+      /leaderboard: 10/
+    ],
+  },
 ]
 
 function read(relativePath) {

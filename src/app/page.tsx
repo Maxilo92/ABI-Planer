@@ -6,9 +6,13 @@ import { collection, query, orderBy, limit, getDocs, onSnapshot, doc, getDoc, wh
 import { FundingStatus } from '@/components/dashboard/FundingStatus'
 import { TodoList } from '@/components/dashboard/TodoList'
 import { CalendarEvents } from '@/components/dashboard/CalendarEvents'
+import { PollList } from '@/components/dashboard/PollList'
+import { ClassLeaderboard } from '@/components/dashboard/ClassLeaderboard'
 import { EditSettingsDialog } from '@/components/modals/EditSettingsDialog'
 import { useAuth } from '@/context/AuthContext'
+import { useDashboardSorting } from '@/hooks/useDashboardSorting'
 import { toDate } from '@/lib/utils'
+import { DashboardComponentKey, Poll, PollOption, PollVote, FinanceEntry } from '@/types/database'
 import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
 
@@ -18,6 +22,8 @@ export default function Dashboard() {
   const [todos, setTodos] = useState<any[]>([])
   const [events, setEvents] = useState<any[]>([])
   const [news, setNews] = useState<any[]>([])
+  const [polls, setPolls] = useState<Poll[]>([])
+  const [allFinances, setAllFinances] = useState<FinanceEntry[]>([])
   const [currentFunding, setCurrentFunding] = useState(0)
   const [expenseGoal, setExpenseGoal] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -59,7 +65,10 @@ export default function Dashboard() {
     // 4. Listen to Finances for status
     const financesRef = collection(db, 'finances')
     const unsubscribeFinances = onSnapshot(financesRef, (snapshot) => {
-      const amounts = snapshot.docs.map((entryDoc) => Number(entryDoc.data().amount) || 0)
+      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FinanceEntry))
+      setAllFinances(data)
+      
+      const amounts = data.map((entry) => Number(entry.amount) || 0)
       const incomeTotal = amounts.filter((value) => value > 0).reduce((acc, value) => acc + value, 0)
       const plannedExpenses = amounts.filter((value) => value < 0).reduce((acc, value) => acc + Math.abs(value), 0)
 
@@ -75,12 +84,29 @@ export default function Dashboard() {
       setLoading(false)
     })
 
+    // 6. Listen to Polls (last 5)
+    const pollsRef = collection(db, 'polls')
+    const qPolls = query(pollsRef, where('is_active', '==', true), orderBy('created_at', 'desc'), limit(5))
+    const unsubscribePolls = onSnapshot(qPolls, async (snapshot) => {
+      const pollsData: Poll[] = []
+      for (const doc of snapshot.docs) {
+        const poll = { id: doc.id, ...doc.data() } as Poll
+        const optionsSnap = await getDocs(collection(db, 'polls', doc.id, 'options'))
+        const options = optionsSnap.docs.map(d => ({ id: d.id, ...d.data() } as PollOption))
+        const votesSnap = await getDocs(collection(db, 'polls', doc.id, 'votes'))
+        const votes = votesSnap.docs.map(d => ({ id: d.id, ...d.data() } as PollVote))
+        pollsData.push({ ...poll, options, votes })
+      }
+      setPolls(pollsData)
+    })
+
     return () => {
       unsubscribeSettings()
       unsubscribeTodos()
       unsubscribeEvents()
       unsubscribeFinances()
       unsubscribeNews()
+      unsubscribePolls()
     }
   }, [])
 
@@ -97,6 +123,87 @@ export default function Dashboard() {
       await setDoc(doc(db, 'settings', 'config'), { expected_ticket_sales: value }, { merge: true })
     } catch (error) {
       console.error('Error updating expected ticket sales:', error)
+    }
+  }
+
+  const sortedComponents = useDashboardSorting(profile, todos, events, polls, news)
+
+  const NewsPreview = ({ items }: { items: any[] }) => (
+    <section className="bg-secondary/10 rounded-xl p-6 border flex flex-col h-full">
+      <h3 className="text-xl font-bold mb-4">Letzte Updates</h3>
+      <div className="space-y-4 flex-1">
+        {items && items.length > 0 ? (
+          items.map((item) => (
+            <Link
+              key={item.id}
+              href={`/news/${item.id}`}
+              className="block bg-background rounded-lg p-4 border shadow-sm transition-colors hover:bg-muted/30"
+            >
+              <div className="flex justify-between items-start mb-2">
+                <h4 className="font-semibold text-sm">{item.title}</h4>
+                <span className="text-[10px] text-muted-foreground bg-secondary px-2 py-0.5 rounded">
+                  {item.created_at ? toDate(item.created_at).toLocaleDateString('de-DE') : 'Neu'}
+                </span>
+              </div>
+              <p className="text-xs text-muted-foreground line-clamp-2">
+                {item.content}
+              </p>
+              <div className="mt-2 flex items-center justify-end text-[10px] font-medium text-primary">
+                <span className="inline-flex items-center gap-1">
+                  Zum Beitrag <ArrowRight className="h-3 w-3" />
+                </span>
+              </div>
+            </Link>
+          ))
+        ) : (
+          <p className="text-sm text-muted-foreground italic">Noch keine Neuigkeiten vorhanden.</p>
+        )}
+      </div>
+      <Link href="/news" className="mt-4 text-xs font-semibold text-center hover:underline text-muted-foreground">
+        Alle News ansehen
+      </Link>
+    </section>
+  )
+
+  const renderComponent = (key: DashboardComponentKey) => {
+    switch (key) {
+      case 'funding':
+        return (
+          <FundingStatus
+            key="funding"
+            current={currentFunding}
+            goal={expenseGoal > 0 ? expenseGoal : (settings?.funding_goal || 10000)}
+            initialTicketSales={settings?.expected_ticket_sales ?? 150}
+            onTicketSalesChange={handleTicketSalesChange}
+          />
+        )
+      case 'news':
+        return <NewsPreview key="news" items={news} />
+      case 'todos':
+        return <TodoList key="todos" todos={todos || []} canManage={canManage} />
+      case 'events':
+        return <CalendarEvents key="events" events={events || []} />
+      case 'polls':
+        return (
+          <PollList
+            key="polls"
+            polls={polls}
+            userId={profile?.id || ''}
+            canVote={true}
+            canManage={canManage}
+            limit={2}
+          />
+        )
+      case 'leaderboard':
+        return (
+          <ClassLeaderboard
+            key="leaderboard"
+            finances={allFinances}
+            goal={settings?.funding_goal || 10000}
+          />
+        )
+      default:
+        return null
     }
   }
 
@@ -120,57 +227,8 @@ export default function Dashboard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Top Indicators */}
-        <FundingStatus
-          current={currentFunding}
-          goal={expenseGoal > 0 ? expenseGoal : (settings?.funding_goal || 10000)}
-          initialTicketSales={settings?.expected_ticket_sales ?? 150}
-          onTicketSalesChange={handleTicketSalesChange}
-        />
-
-        {/* News Preview */}
-        <section className="bg-secondary/10 rounded-xl p-6 border flex flex-col h-full">
-          <h3 className="text-xl font-bold mb-4">Letzte Updates</h3>
-          <div className="space-y-4 flex-1">
-            {news && news.length > 0 ? (
-              news.map((item) => (
-                <Link
-                  key={item.id}
-                  href={`/news/${item.id}`}
-                  className="block bg-background rounded-lg p-4 border shadow-sm transition-colors hover:bg-muted/30"
-                >
-                  <div className="flex justify-between items-start mb-2">
-                    <h4 className="font-semibold text-sm">{item.title}</h4>
-                    <span className="text-[10px] text-muted-foreground bg-secondary px-2 py-0.5 rounded">
-                      {item.created_at ? toDate(item.created_at).toLocaleDateString('de-DE') : 'Neu'}
-                    </span>
-                  </div>
-                  <p className="text-xs text-muted-foreground line-clamp-2">
-                    {item.content}
-                  </p>
-                  <div className="mt-2 flex items-center justify-end text-[10px] font-medium text-primary">
-                    <span className="inline-flex items-center gap-1">
-                      Zum Beitrag <ArrowRight className="h-3 w-3" />
-                    </span>
-                  </div>
-                </Link>
-              ))
-            ) : (
-              <p className="text-sm text-muted-foreground italic">Noch keine Neuigkeiten vorhanden.</p>
-            )}
-          </div>
-          <Link href="/news" className="mt-4 text-xs font-semibold text-center hover:underline text-muted-foreground">
-            Alle News ansehen
-          </Link>
-        </section>
+        {sortedComponents.map(key => renderComponent(key))}
       </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Main Content Sections */}
-        <TodoList todos={todos || []} canManage={canManage} />
-        <CalendarEvents events={events || []} />
-      </div>
-
     </div>
   )
 }

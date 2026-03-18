@@ -11,10 +11,12 @@ import { useRouter, usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/context/AuthContext'
 import { CountdownHeader } from './CountdownHeader'
+import { useNotifications } from '@/hooks/useNotifications'
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
   const { profile, loading } = useAuth()
+  const notifications = useNotifications()
   const router = useRouter()
   const pathname = usePathname()
 
@@ -26,12 +28,12 @@ export function Navbar() {
 
   const navItems = [
     { href: '/', label: 'Dashboard', icon: LayoutDashboard },
-    { href: '/todos', label: 'Todos', icon: CheckSquare },
-    { href: '/kalender', label: 'Kalender', icon: Calendar },
+    { href: '/todos', label: 'Todos', icon: CheckSquare, notify: notifications.todos },
+    { href: '/kalender', label: 'Kalender', icon: Calendar, notify: notifications.kalender },
     { href: '/finanzen', label: 'Finanzen', icon: Euro },
-    { href: '/news', label: 'News', icon: Megaphone },
+    { href: '/news', label: 'News', icon: Megaphone, notify: notifications.news },
     { href: '/feedback', label: 'Feedback', icon: MessageSquareHeart },
-    { href: '/abstimmungen', label: 'Umfragen', icon: BarChart2 },
+    { href: '/abstimmungen', label: 'Umfragen', icon: BarChart2, notify: notifications.umfragen },
     { href: '/einstellungen', label: 'Einstellungen', icon: Settings },
   ]
 
@@ -110,7 +112,12 @@ export function Navbar() {
                     isActive(item.href) ? 'bg-secondary text-primary' : 'hover:bg-secondary'
                   )}
                 >
-                  <item.icon className="h-4 w-4" />
+                  <div className="relative">
+                    <item.icon className="h-4 w-4" />
+                    {'notify' in item && item.notify && (
+                      <span className="absolute -right-0.5 -top-0.5 flex h-2 w-2 rounded-full bg-red-500 border border-background" />
+                    )}
+                  </div>
                   {item.label}
                 </Link>
               ))}
@@ -175,7 +182,12 @@ export function Navbar() {
                     isActive(item.href) ? 'bg-secondary text-primary' : 'hover:bg-secondary'
                   )}
                 >
-                  <item.icon className="h-4 w-4" />
+                  <div className="relative">
+                    <item.icon className="h-4 w-4" />
+                    {'notify' in item && item.notify && (
+                      <span className="absolute -right-0.5 -top-0.5 flex h-2 w-2 rounded-full bg-red-500 border border-background" />
+                    )}
+                  </div>
                   {item.label}
                 </Link>
               ))}
