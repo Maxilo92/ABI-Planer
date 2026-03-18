@@ -56,9 +56,10 @@ export default function RegisterPage() {
       await setDoc(doc(db, 'profiles', user.uid), {
         full_name: fullName,
         email: email,
-        role: isFirstUser ? 'admin' : 'viewer',
+        role: isFirstUser ? 'admin_main' : 'viewer',
         is_approved: true, // Auto-approve for MVP
         class_name: className,
+        planning_group: null,
         total_contributions: 0,
         created_at: new Date().toISOString(),
       })

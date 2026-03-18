@@ -32,13 +32,21 @@ export function Navbar() {
     { href: '/abstimmungen', label: 'Umfragen', icon: BarChart2 },
   ]
 
-  if (profile?.role === 'admin') {
+  const isAdmin = profile?.role === 'admin_main' || profile?.role === 'admin_co'
+
+  if (isAdmin) {
     navItems.push({ href: '/admin', label: 'Admin', icon: ShieldCheck })
   }
 
   const isAuthPage = ['/login', '/register', '/waiting'].includes(pathname)
 
   const userInitial = profile?.full_name?.substring(0, 1).toUpperCase() || 'U'
+
+  const getRoleLabel = (role: string) => {
+    if (role === 'admin_main') return 'Main Admin'
+    if (role === 'admin_co') return 'Co-Admin'
+    return role
+  }
 
   return (
     <nav className="bg-background border-b sticky top-0 z-50">
@@ -76,7 +84,7 @@ export function Navbar() {
                       >
                         <div className="flex flex-col text-right hidden lg:flex">
                           <span className="text-sm font-semibold leading-none">{profile.full_name}</span>
-                          <span className="text-[10px] text-muted-foreground uppercase">{profile.role}</span>
+                          <span className="text-[10px] text-muted-foreground uppercase">{getRoleLabel(profile.role)}</span>
                         </div>
                         <Avatar size="default">
                           <AvatarFallback className="bg-primary/10 text-primary font-bold">
@@ -143,7 +151,7 @@ export function Navbar() {
                   </Avatar>
                   <div className="ml-3">
                     <div className="text-base font-medium">{profile.full_name}</div>
-                    <div className="text-sm text-muted-foreground uppercase">{profile.role}</div>
+                    <div className="text-sm text-muted-foreground uppercase">{getRoleLabel(profile.role)}</div>
                   </div>
                 </div>
                 <div className="px-2 space-y-1">

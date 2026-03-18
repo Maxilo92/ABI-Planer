@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.10.0] - 2026-03-18
+- Feature: Erweitertes Rollenmodell mit **Main Admin** und **Co-Admin**.
+- Feature: **Planungsgruppen** für Planer (Finanzen, Location, Programm, Deko, IT).
+- Security: Selbstschutz für Main Admins (Rolle kann nicht von anderen oder sich selbst geändert werden).
+- Security: Firestore Rules verschärft, um Rollen-Hierarchie abzusichern.
+
 ## [0.9.0] - 2026-03-18
 - Feature: Umfassendes Tracking-System implementiert (Wer hat was wann erstellt/erledigt?)
 - Feature: Klassen-Wettstreit (Klassen 12A-12D) mit Leaderboard auf dem Dashboard

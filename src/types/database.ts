@@ -1,6 +1,7 @@
-export type UserRole = 'viewer' | 'planner' | 'admin';
+export type UserRole = 'viewer' | 'planner' | 'admin_co' | 'admin_main';
 export type TodoStatus = 'open' | 'in_progress' | 'done';
 export type ClassName = '12A' | '12B' | '12C' | '12D';
+export type PlanningGroup = 'Finanzen' | 'Location & Catering' | 'Programm & DJ' | 'Deko & Motto' | 'IT & Kommunikation';
 
 export interface Profile {
   id: string;
@@ -9,6 +10,7 @@ export interface Profile {
   role: UserRole;
   is_approved: boolean;
   class_name: ClassName | null;
+  planning_group: PlanningGroup | null;
   total_contributions: number;
   created_at: string;
 }

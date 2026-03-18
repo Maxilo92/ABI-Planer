@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
-import { User, Mail, Shield, Calendar } from 'lucide-react'
+import { User, Mail, Shield, Calendar, Users } from 'lucide-react'
 import { format } from 'date-fns'
 import { de } from 'date-fns/locale'
 import { useEffect } from 'react'
@@ -30,6 +30,12 @@ export default function ProfilePage() {
 
   const userInitial = profile.full_name?.substring(0, 1).toUpperCase() || 'U'
 
+  const getRoleLabel = (role: string) => {
+    if (role === 'admin_main') return 'Main Admin'
+    if (role === 'admin_co') return 'Co-Admin'
+    return role
+  }
+
   return (
     <div className="max-w-2xl mx-auto space-y-8">
       <div>
@@ -40,7 +46,7 @@ export default function ProfilePage() {
       </div>
 
       <Card>
-        <CardHeader className="flex flex-row items-center gap-4 space-y-0">
+        <CardHeader className="flex flex-row items-center gap-4 space-y-0 border-b pb-6">
           <Avatar size="lg" className="h-16 w-16">
             <AvatarFallback className="bg-primary/10 text-primary text-xl font-bold">
               {userInitial}
@@ -49,9 +55,14 @@ export default function ProfilePage() {
           <div className="flex flex-col">
             <CardTitle className="text-2xl">{profile.full_name}</CardTitle>
             <CardDescription className="flex items-center gap-1.5 mt-1">
-              <Badge variant={profile.role === 'admin' ? 'default' : 'secondary'} className="uppercase text-[10px]">
-                {profile.role}
+              <Badge variant={profile.role.includes('admin') ? 'default' : 'secondary'} className="uppercase text-[10px]">
+                {getRoleLabel(profile.role)}
               </Badge>
+              {profile.class_name && (
+                <Badge variant="outline" className="uppercase text-[10px] font-bold">
+                  Klasse {profile.class_name}
+                </Badge>
+              )}
             </CardDescription>
           </div>
         </CardHeader>
@@ -81,14 +92,28 @@ export default function ProfilePage() {
               <Shield className="h-5 w-5 text-muted-foreground" />
             </div>
             <div className="flex-1">
-              <p className="text-sm font-medium leading-none">Status</p>
+              <p className="text-sm font-medium leading-none">Mitglied-Status</p>
               <p className="text-sm text-muted-foreground mt-1">
                 {profile.is_approved ? 'Verifiziertes Mitglied' : 'Wartet auf Freischaltung'}
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
+          {profile.role === 'planner' && (
+            <div className="flex items-center gap-4 border-t pt-4">
+              <div className="bg-primary/10 p-2 rounded-full">
+                <Users className="h-5 w-5 text-primary" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-medium leading-none">Planungsgruppe</p>
+                <p className="text-sm text-primary font-bold mt-1">
+                  {profile.planning_group || 'Noch keiner Gruppe zugewiesen'}
+                </p>
+              </div>
+            </div>
+          )}
+
+          <div className="flex items-center gap-4 border-t pt-4">
             <div className="bg-muted p-2 rounded-full">
               <Calendar className="h-5 w-5 text-muted-foreground" />
             </div>

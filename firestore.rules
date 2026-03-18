@@ -15,21 +15,45 @@ service cloud.firestore {
     }
     
     function isPlanner() {
-      return isAuthenticated() && (getProfile().role == 'planner' || getProfile().role == 'admin');
+      return isAuthenticated() && (
+        getProfile().role == 'planner' || 
+        getProfile().role == 'admin_co' || 
+        getProfile().role == 'admin_main'
+      );
     }
     
+    function isCoAdmin() {
+      return isAuthenticated() && getProfile().role == 'admin_co';
+    }
+
+    function isMainAdmin() {
+      return isAuthenticated() && getProfile().role == 'admin_main';
+    }
+
     function isAdmin() {
-      return isAuthenticated() && getProfile().role == 'admin';
+      return isCoAdmin() || isMainAdmin();
     }
 
     match /profiles/{userId} {
       allow read: if isAuthenticated();
       allow create: if isLernsax() && request.auth.uid == userId;
-      allow update: if isAdmin() || (
-        request.auth.uid == userId && 
-        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'is_approved'])
+      
+      allow update: if (
+        // Case 1: Self-update (cannot change role or approval)
+        (request.auth.uid == userId && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'is_approved', 'planning_group'])) ||
+        
+        // Case 2: Main Admin (can do anything EXCEPT demoting themselves from admin_main)
+        (isMainAdmin() && (
+          (request.auth.uid == userId && request.resource.data.role == 'admin_main') || 
+          (request.auth.uid != userId)
+        )) ||
+        
+        // Case 3: Co-Admin (can approve but NOT change roles and NOT touch Main Admins)
+        (isCoAdmin() && resource.data.role != 'admin_main' && request.auth.uid != userId &&
+         !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'email']))
       );
-      allow delete: if isAdmin();
+      
+      allow delete: if isMainAdmin() && resource.data.role != 'admin_main';
     }
 
     match /settings/{docId} {
