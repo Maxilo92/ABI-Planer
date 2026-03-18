@@ -50,9 +50,11 @@ export default function PublicProfilePage({ params }: { params: Promise<{ id: st
     return (
       <div className="text-center py-20">
         <h2 className="text-2xl font-bold">Profil nicht gefunden.</h2>
-        <Button asChild variant="link" className="mt-4">
-          <Link href="/news">Zurück zur Übersicht</Link>
-        </Button>
+        <Button
+          variant="link"
+          className="mt-4"
+          render={<Link href="/news">Zurück zur Übersicht</Link>}
+        />
       </div>
     )
   }
@@ -67,11 +69,16 @@ export default function PublicProfilePage({ params }: { params: Promise<{ id: st
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      <Button asChild variant="ghost" size="sm" className="gap-2 -ml-2 text-muted-foreground">
-        <Link href="#" onClick={(e) => { e.preventDefault(); window.history.back(); }}>
-          <ArrowLeft className="h-4 w-4" /> Zurück
-        </Link>
-      </Button>
+      <Button
+        variant="ghost"
+        size="sm"
+        className="gap-2 -ml-2 text-muted-foreground"
+        render={
+          <Link href="#" onClick={(e) => { e.preventDefault(); window.history.back(); }}>
+            <ArrowLeft className="h-4 w-4" /> Zurück
+          </Link>
+        }
+      />
 
       <Card>
         <CardHeader className="flex flex-row items-center gap-4 space-y-0 border-b pb-6">

@@ -63,9 +63,11 @@ export default function NewsDetailPage({ params }: { params: Promise<{ id: strin
     return (
       <div className="text-center py-20">
         <h2 className="text-2xl font-bold">News-Beitrag nicht gefunden.</h2>
-        <Button asChild variant="link" className="mt-4">
-          <Link href="/news">Zurück zur Übersicht</Link>
-        </Button>
+        <Button
+          variant="link"
+          className="mt-4"
+          render={<Link href="/news">Zurück zur Übersicht</Link>}
+        />
       </div>
     )
   }
@@ -75,11 +77,16 @@ export default function NewsDetailPage({ params }: { params: Promise<{ id: strin
   return (
     <div className="max-w-4xl mx-auto py-4 md:py-8 space-y-6">
       <div className="px-2">
-        <Button asChild variant="ghost" size="sm" className="gap-2 -ml-2 text-muted-foreground hover:text-foreground transition-colors">
-          <Link href="/news">
-            <ArrowLeft className="h-4 w-4" /> Zurück
-          </Link>
-        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="gap-2 -ml-2 text-muted-foreground hover:text-foreground transition-colors"
+          render={
+            <Link href="/news">
+              <ArrowLeft className="h-4 w-4" /> Zurück
+            </Link>
+          }
+        />
       </div>
 
       <Card className="border shadow-sm overflow-hidden">
