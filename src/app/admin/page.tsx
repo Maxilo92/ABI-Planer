@@ -41,6 +41,18 @@ export default function AdminPage() {
   }, [])
 
   const handleUpdateProfile = async (id: string, updates: Partial<Profile>) => {
+    const target = profiles.find((entry) => entry.id === id)
+    if (!target) return
+
+    const targetIsMainAdmin = target.role === 'admin_main' || target.role === 'admin'
+    if (targetIsMainAdmin && profile?.id !== id) {
+      return
+    }
+
+    if (id === profile?.id && updates.role && updates.role !== target.role) {
+      return
+    }
+
     try {
       const docRef = doc(db, 'profiles', id)
       await updateDoc(docRef, updates)
@@ -50,6 +62,14 @@ export default function AdminPage() {
   }
 
   const handleDeleteProfile = async (id: string) => {
+    const target = profiles.find((entry) => entry.id === id)
+    if (!target) return
+
+    const targetIsMainAdmin = target.role === 'admin_main' || target.role === 'admin'
+    if (targetIsMainAdmin || id === profile?.id) {
+      return
+    }
+
     if (confirm('Bist du sicher, dass du diesen Nutzer löschen möchtest? (Löscht nur das Profil-Dokument, nicht das Auth-Konto)')) {
       try {
         await deleteDoc(doc(db, 'profiles', id))
@@ -105,12 +125,23 @@ export default function AdminPage() {
                       <Badge variant="outline" className="capitalize">
                         {p.role}
                       </Badge>
+                      {(p.role === 'admin_main' || p.role === 'admin') && (
+                        <Badge variant="secondary" className="ml-2">
+                          Unantastbar
+                        </Badge>
+                      )}
                     </TableCell>
                     <TableCell className="text-right">
+                      {(() => {
+                        const isMainAdminAccount = p.role === 'admin_main' || p.role === 'admin'
+                        const isSelf = p.id === profile.id
+                        const canEditThisUser = !isMainAdminAccount && !isSelf
+
+                        return (
                       <DropdownMenu>
                         <DropdownMenuTrigger
                           render={
-                            <Button variant="ghost" size="icon">
+                            <Button variant="ghost" size="icon" disabled={!canEditThisUser} title={!canEditThisUser ? 'Dieser Account kann nicht bearbeitet werden' : undefined}>
                               <MoreVertical className="h-4 w-4" />
                             </Button>
                           }
@@ -135,6 +166,8 @@ export default function AdminPage() {
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
+                        )
+                      })()}
                     </TableCell>
                   </TableRow>
                 ))}

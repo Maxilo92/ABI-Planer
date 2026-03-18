@@ -35,6 +35,17 @@ service cloud.firestore {
       );
     }
 
+    function isMainAdmin() {
+      return isAuthenticated() && (
+        getProfile().role == 'admin_main' ||
+        getProfile().role == 'admin'
+      );
+    }
+
+    function isCoAdmin() {
+      return isAuthenticated() && getProfile().role == 'admin_co';
+    }
+
     match /profiles/{userId} {
       allow read: if isAuthenticated();
       allow create: if isLernsax() && request.auth.uid == userId;
