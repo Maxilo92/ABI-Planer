@@ -20,23 +20,19 @@ service cloud.firestore {
 
     function isPlanner() {
       return isAuthenticated() && (
-        getProfile().role == 'planner' || 
-        getProfile().role == 'admin_co' || 
+        getProfile().role == 'planner' ||
+        getProfile().role == 'admin' ||
         getProfile().role == 'admin_main' ||
-        getProfile().role == 'admin'
+        getProfile().role == 'admin_co'
       );
-    }
-    
-    function isCoAdmin() {
-      return isAuthenticated() && getProfile().role == 'admin_co';
-    }
-
-    function isMainAdmin() {
-      return isAuthenticated() && (getProfile().role == 'admin_main' || getProfile().role == 'admin');
     }
 
     function isAdmin() {
-      return isCoAdmin() || isMainAdmin();
+      return isAuthenticated() && (
+        getProfile().role == 'admin' ||
+        getProfile().role == 'admin_main' ||
+        getProfile().role == 'admin_co'
+      );
     }
 
     match /profiles/{userId} {
@@ -69,7 +65,7 @@ service cloud.firestore {
     match /todos/{id} { allow read: if true; allow write: if isPlanner(); }
     match /events/{id} { allow read: if true; allow write: if isPlanner(); }
     match /finances/{id} { allow read: if true; allow write: if isPlanner(); }
-    match /news/{id} { allow read: if true; allow write: if isAuthenticated(); }
+    match /news/{id} { allow read: if true; allow write: if isPlanner(); }
     match /polls/{id} { allow read: if true; allow write: if isPlanner(); }
 
     match /votes/{voteId} {
