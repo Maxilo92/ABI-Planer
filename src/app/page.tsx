@@ -113,7 +113,6 @@ export default function Dashboard() {
             <EditSettingsDialog 
               currentDate={settings?.ball_date} 
               currentGoal={settings?.funding_goal || 10000} 
-              currentCourses={settings?.courses} 
             />
           )}
         </div>

@@ -16,23 +16,20 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
 import { Settings as SettingsIcon } from 'lucide-react'
 import { format } from 'date-fns'
 
 interface EditSettingsDialogProps {
   currentDate: string
   currentGoal: number
-  currentCourses?: string[]
 }
 
-export function EditSettingsDialog({ currentDate, currentGoal, currentCourses = ['12A', '12B', '12C', '12D'] }: EditSettingsDialogProps) {
+export function EditSettingsDialog({ currentDate, currentGoal }: EditSettingsDialogProps) {
   // Format the date for the datetime-local input (YYYY-MM-DDTHH:MM)
   const initialDate = currentDate ? format(new Date(currentDate), "yyyy-MM-dd'T'HH:mm") : ''
   
   const [date, setDate] = useState(initialDate)
   const [goal, setGoal] = useState(currentGoal.toString())
-  const [courses, setCourses] = useState(currentCourses.join('\n'))
   const [loading, setLoading] = useState(false)
   const [open, setOpen] = useState(false)
   const router = useRouter()
@@ -42,15 +39,9 @@ export function EditSettingsDialog({ currentDate, currentGoal, currentCourses = 
     setLoading(true)
 
     try {
-      const normalizedCourses = courses
-        .split('\n')
-        .map((entry) => entry.trim())
-        .filter((entry, index, self) => entry.length > 0 && self.indexOf(entry) === index)
-
       await setDoc(doc(db, 'settings', 'config'), { 
         ball_date: new Date(date).toISOString(),
         funding_goal: parseFloat(goal),
-        courses: normalizedCourses.length > 0 ? normalizedCourses : ['12A', '12B', '12C', '12D']
       }, { merge: true })
 
       setOpen(false)
@@ -98,19 +89,6 @@ export function EditSettingsDialog({ currentDate, currentGoal, currentCourses = 
                 onChange={(e) => setGoal(e.target.value)}
                 required 
               />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="courses">Kurse (eine Zeile pro Kurs)</Label>
-              <Textarea
-                id="courses"
-                value={courses}
-                onChange={(e) => setCourses(e.target.value)}
-                rows={5}
-                placeholder={'12A\n12B\n12C\n12D'}
-              />
-              <p className="text-xs text-muted-foreground">
-                Hier kannst du Kurse direkt umbenennen, hinzufügen oder entfernen.
-              </p>
             </div>
           </div>
           <DialogFooter>
