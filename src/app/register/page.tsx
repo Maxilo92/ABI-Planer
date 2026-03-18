@@ -42,6 +42,51 @@ export default function RegisterPage() {
     loadCourses()
   }, [])
 
+  const validateCurrentStep = () => {
+    if (step === 1) {
+      if (!fullName.trim()) {
+        setError('Bitte gib zuerst deinen vollständigen Namen ein.')
+        return false
+      }
+      return true
+    }
+
+    if (step === 2) {
+      const normalizedEmail = email.trim().toLowerCase()
+      if (!normalizedEmail || !password.trim()) {
+        setError('Bitte gib E-Mail und Passwort ein.')
+        return false
+      }
+
+      if (!normalizedEmail.includes('@')) {
+        setError('Bitte gib eine gültige E-Mail-Adresse ein.')
+        return false
+      }
+
+      if (!normalizedEmail.endsWith('@hgr-web.lernsax.de')) {
+        setError('Nur E-Mail Adressen von @hgr-web.lernsax.de sind erlaubt.')
+        return false
+      }
+
+      if (password.length < 6) {
+        setError('Das Passwort muss mindestens 6 Zeichen lang sein.')
+        return false
+      }
+
+      return true
+    }
+
+    if (step === 3) {
+      if (!selectedCourse) {
+        setError('Bitte wähle einen Kurs aus.')
+        return false
+      }
+      return true
+    }
+
+    return true
+  }
+
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -107,7 +152,7 @@ export default function RegisterPage() {
           </div>
         </CardHeader>
         <form onSubmit={handleRegister}>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 pb-5 sm:pb-6">
             {error && (
               <div className="bg-destructive/15 text-destructive text-sm p-3 rounded-md text-center">
                 {error}
@@ -159,7 +204,7 @@ export default function RegisterPage() {
             )}
 
             {step === 3 && (
-              <div className="space-y-2">
+              <div className="space-y-2 mb-1 sm:mb-2">
                 <Label htmlFor="course">Kurs</Label>
                 <select
                   id="course"
@@ -197,19 +242,7 @@ export default function RegisterPage() {
                   className="flex-1 h-12"
                   onClick={() => {
                     setError(null)
-                    if (step === 1) {
-                      if (!fullName.trim()) {
-                        setError('Bitte gib zuerst deinen vollständigen Namen ein.')
-                        return
-                      }
-                    }
-
-                    if (step === 2) {
-                      if (!email.trim() || !password.trim()) {
-                        setError('Bitte gib E-Mail und Passwort ein.')
-                        return
-                      }
-                    }
+                    if (!validateCurrentStep()) return
 
                     setStep((prev) => (prev + 1) as 1 | 2 | 3)
                   }}
