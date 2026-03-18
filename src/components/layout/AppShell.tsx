@@ -2,6 +2,7 @@
 
 import { usePathname } from 'next/navigation'
 import { Navbar } from '@/components/layout/Navbar'
+import { Footer } from '@/components/layout/Footer'
 
 interface AppShellProps {
   children: React.ReactNode
@@ -24,9 +25,12 @@ export function AppShell({ children }: AppShellProps) {
   return (
     <div className="min-h-screen bg-background md:flex">
       <Navbar />
-      <main className="flex-1 px-4 py-8 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-7xl">{children}</div>
-      </main>
+      <div className="flex-1 flex flex-col min-h-screen">
+        <main className="flex-1 px-4 py-8 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-7xl">{children}</div>
+        </main>
+        <Footer />
+      </div>
     </div>
   )
 }

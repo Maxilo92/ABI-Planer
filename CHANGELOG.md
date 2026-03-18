@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.15.22] - 2026-03-18
+- UI: Der Kurswettstreit wurde optisch komplett überarbeitet, um besser zum restlichen Design der App zu passen (Listenansicht mit Rang-Indikatoren, verbesserte Typografie und subtilere Schatten).
+
+## [0.15.21] - 2026-03-18
+- UI: Globalen Footer mit Impressum, Urheberrecht und Versionsnummer hinzugefügt.
+- UI: Neue Impressum-Seite (`/impressum`) erstellt.
+
 ## [0.15.20] - 2026-03-18
 - Feature: **Persistente Benachrichtigungen**. Rote Punkte verschwinden nun automatisch, sobald die entsprechende Seite (News, Kalender) besucht wurde, basierend auf einem neuen `last_visited` Zeitstempel im Nutzerprofil.
 - UI: **Mehr Tiefe im Hellmodus**. Einführung von subtilen Schatten (`shadow-card`) und weicheren Rahmen für ein hochwertigeres Design. Der Hintergrund wurde minimal abgedunkelt, um weiße Karten besser hervorzuheben.
