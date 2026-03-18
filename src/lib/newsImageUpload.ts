@@ -30,20 +30,14 @@ function getStorageFallbacks(): FirebaseStorage[] {
   const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID
   if (!projectId) return []
 
-  const candidates = new Set<string>()
-  if (configuredBucket?.endsWith('.appspot.com')) {
-    candidates.add(`${projectId}.firebasestorage.app`)
-  }
-  if (configuredBucket?.endsWith('.firebasestorage.app')) {
-    candidates.add(`${projectId}.appspot.com`)
-  }
-  if (!configuredBucket) {
-    candidates.add(`${projectId}.firebasestorage.app`)
-    candidates.add(`${projectId}.appspot.com`)
-  }
+  const candidates = new Set<string>([
+    `${projectId}.firebasestorage.app`,
+    configuredBucket || '',
+    `${projectId}.appspot.com`,
+  ])
 
   return Array.from(candidates)
-    .filter((candidate) => candidate !== configuredBucket)
+    .filter((candidate) => !!candidate)
     .map((candidate) => getStorage(app!, `gs://${candidate}`))
 }
 
@@ -208,19 +202,31 @@ export async function validateNewsImageFile(file: File): Promise<void> {
 }
 
 export async function uploadNewsImage(userId: string, file: File): Promise<{ url: string; path: string; size: number; mimeType: string }> {
-  try {
-    return await uploadNewsImageToStorage(storage, userId, file)
-  } catch (primaryError) {
-    const fallbacks = getStorageFallbacks()
-    for (const fallbackStorage of fallbacks) {
-      try {
-        return await uploadNewsImageToStorage(fallbackStorage, userId, file)
-      } catch {
-        // Try the next fallback bucket.
-      }
+  const fallbackStorages = getStorageFallbacks()
+  const primaryBucket = normalizeBucketName(storage?.app?.options?.storageBucket)
+  const triedBuckets = new Set<string>()
+  const storagesToTry = [
+    ...fallbackStorages,
+    storage,
+  ].filter((candidateStorage) => {
+    const bucket = normalizeBucketName(candidateStorage?.app?.options?.storageBucket)
+    const key = bucket || '__unknown__'
+    if (triedBuckets.has(key)) return false
+    triedBuckets.add(key)
+    return true
+  })
+
+  let lastError: unknown = null
+  for (const candidateStorage of storagesToTry) {
+    try {
+      return await uploadNewsImageToStorage(candidateStorage, userId, file)
+    } catch (error) {
+      lastError = error
     }
-    throw primaryError
   }
+
+  if (lastError) throw lastError
+  throw new Error(`Kein gueltiger Storage-Bucket konfiguriert. Primärer Bucket: ${primaryBucket || 'unbekannt'}`)
 }
 
 export async function deleteNewsImageByPath(imagePath?: string | null): Promise<void> {
