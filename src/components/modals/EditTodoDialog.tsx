@@ -121,77 +121,55 @@ export function EditTodoDialog({ todo }: EditTodoDialogProps) {
 
             <div className="grid grid-cols-1 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="edit-assigned-user" className="flex items-center gap-2">
-                  <UserIcon className="h-3 w-3" /> Zuweisen an Person
+                <Label htmlFor="edit-assignment" className="flex items-center gap-2">
+                  <Users className="h-3 w-3" /> Zuständigkeit
                 </Label>
                 <select
-                  id="edit-assigned-user"
+                  id="edit-assignment"
                   className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                  value={assignedUser}
+                  value={assignedUser ? `user:${assignedUser}` : assignedClass ? `class:${assignedClass}` : assignedGroup ? `group:${assignedGroup}` : ''}
                   onChange={(e) => {
-                    setAssignedUser(e.target.value)
-                    if (e.target.value) {
-                      setAssignedClass('')
-                      setAssignedGroup('')
-                    }
+                    const val = e.target.value
+                    setAssignedUser('')
+                    setAssignedClass('')
+                    setAssignedGroup('')
+                    
+                    if (val.startsWith('user:')) setAssignedUser(val.replace('user:', ''))
+                    else if (val.startsWith('class:')) setAssignedClass(val.replace('class:', ''))
+                    else if (val.startsWith('group:')) setAssignedGroup(val.replace('group:', ''))
                   }}
                 >
-                  <option value="">Niemand</option>
-                  {users.map((u) => (
-                    <option key={u.id} value={u.id}>
-                      {u.full_name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+                  <option value="">Niemand / Alle</option>
+                  
+                  {users.length > 0 && (
+                    <optgroup label="Personen">
+                      {users.map((u) => (
+                        <option key={u.id} value={`user:${u.id}`}>
+                          {u.full_name}
+                        </option>
+                      ))}
+                    </optgroup>
+                  )}
 
-              <div className="space-y-2">
-                <Label htmlFor="edit-assigned-class" className="flex items-center gap-2">
-                  <Users className="h-3 w-3" /> Zuweisen an Kurs
-                </Label>
-                <select
-                  id="edit-assigned-class"
-                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                  value={assignedClass}
-                  onChange={(e) => {
-                    setAssignedClass(e.target.value)
-                    if (e.target.value) {
-                      setAssignedUser('')
-                      setAssignedGroup('')
-                    }
-                  }}
-                >
-                  <option value="">Kein Kurs</option>
-                  {classes.map((c) => (
-                    <option key={c} value={c}>
-                      {c}
-                    </option>
-                  ))}
-                </select>
-              </div>
+                  {classes.length > 0 && (
+                    <optgroup label="Kurse">
+                      {classes.map((c) => (
+                        <option key={c} value={`class:${c}`}>
+                          Kurs {c}
+                        </option>
+                      ))}
+                    </optgroup>
+                  )}
 
-              <div className="space-y-2">
-                <Label htmlFor="edit-assigned-group" className="flex items-center gap-2">
-                  <Users className="h-3 w-3" /> Erwähnen für Planungsgruppe
-                </Label>
-                <select
-                  id="edit-assigned-group"
-                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                  value={assignedGroup}
-                  onChange={(e) => {
-                    setAssignedGroup(e.target.value)
-                    if (e.target.value) {
-                      setAssignedUser('')
-                      setAssignedClass('')
-                    }
-                  }}
-                >
-                  <option value="">Keine Gruppe</option>
-                  {planningGroups.map((group) => (
-                    <option key={group} value={group}>
-                      {group}
-                    </option>
-                  ))}
+                  {planningGroups.length > 0 && (
+                    <optgroup label="Planungsgruppen">
+                      {planningGroups.map((g) => (
+                        <option key={g} value={`group:${g}`}>
+                          {g}
+                        </option>
+                      ))}
+                    </optgroup>
+                  )}
                 </select>
               </div>
 

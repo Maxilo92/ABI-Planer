@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.15.17] - 2026-03-18
+- Feature: Aufgaben (Todos) können nun entweder einer Person, einem Kurs ODER einer Gruppe zugewiesen werden. Die Benutzeroberfläche wurde mit einem neuen, gruppierten Auswahlfeld optimiert, um diese Exklusivität sicherzustellen.
+
 ## [0.15.16] - 2026-03-18
 - UI: Die Schnelleinstellungen im Dashboard wurden vereinfacht. Die Kursverwaltung wurde entfernt, sodass nur noch das Abiball-Datum und das Finanzziel direkt bearbeitet werden können.
 

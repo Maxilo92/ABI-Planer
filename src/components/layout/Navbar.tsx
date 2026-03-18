@@ -83,16 +83,16 @@ export function Navbar() {
         </header>
       )}
 
+      {/* Mobile spacer so content is not hidden under fixed top bar */}
+      {!loading && <div className="md:hidden h-16" />}
+
       {!loading && (
-        <div className="md:hidden fixed top-16 left-0 right-0 z-40 border-b bg-background/90 backdrop-blur-sm">
-          <div className="px-4 py-2 flex justify-center">
+        <div className="md:hidden px-4 pt-2 pb-1">
+          <div className="flex justify-center">
             <CountdownHeader />
           </div>
         </div>
       )}
-
-      {/* Mobile spacer so content is not hidden under fixed top bar */}
-      {!loading && <div className="md:hidden h-28" />}
 
       {/* Mobile drawer */}
       {!loading && isOpen && (
