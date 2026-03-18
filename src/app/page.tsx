@@ -37,7 +37,7 @@ export default function Dashboard() {
       } else {
         // Fallback defaults so the page doesn't break
         setSettings({ 
-          ball_date: '2026-06-20T18:00:00Z', 
+          ball_date: '2027-06-20T18:00:00Z', 
           funding_goal: 10000 
         })
       }
@@ -195,7 +195,7 @@ export default function Dashboard() {
   const renderTopStats = () => (
     <div key="top-stats" className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <Countdown 
-        targetDate={settings?.ball_date || '2026-06-20T18:00:00'} 
+        targetDate={settings?.ball_date || '2027-06-20T18:00:00'} 
         editButton={canManage ? <EditSettingsDialog currentDate={settings?.ball_date} currentGoal={settings?.funding_goal || 10000} /> : null}
       />
       <FundingStatus current={currentFunding} goal={settings?.funding_goal || 10000} />
@@ -223,7 +223,7 @@ export default function Dashboard() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <h1 className="text-3xl font-extrabold tracking-tight">ABI Planer 2026</h1>
+        <h1 className="text-3xl font-extrabold tracking-tight">ABI Planer 2027</h1>
         <p className="text-muted-foreground">Willkommen zurück! Hier ist der aktuelle Stand der Dinge.</p>
       </div>
 

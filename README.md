@@ -1,4 +1,4 @@
-# ABI Planer 2026
+# ABI Planer 2027
 
 Zentrale Plattform für die Planung des Abiturs.
 
