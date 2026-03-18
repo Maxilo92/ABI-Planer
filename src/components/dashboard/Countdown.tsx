@@ -48,8 +48,7 @@ export function Countdown({ targetDate, editButton }: CountdownProps) {
             <div className="relative h-full w-full bg-white rounded-[inherit] py-3 md:py-4">
               <span className="block text-3xl md:text-4xl font-black text-gray-800 tracking-tighter tabular-nums">{days}</span>
               <span className="block mt-1 text-[10px] md:text-xs uppercase tracking-[0.14em] text-gray-500">Tage</span>
-              {/* Flip-effect line */}
-              <div className="absolute inset-x-0 top-1/2 h-[1px] bg-gray-200" />
+              {/* Removed divider line */}
             </div>
           </div>
 
@@ -57,7 +56,7 @@ export function Countdown({ targetDate, editButton }: CountdownProps) {
             <div className="relative h-full w-full bg-white rounded-[inherit] py-3 md:py-4">
               <span className="block text-3xl md:text-4xl font-black text-gray-800 tracking-tighter tabular-nums">{hours}</span>
               <span className="block mt-1 text-[10px] md:text-xs uppercase tracking-[0.14em] text-gray-500">Std</span>
-              <div className="absolute inset-x-0 top-1/2 h-[1px] bg-gray-200" />
+              {/* Removed divider line */}
             </div>
           </div>
 
@@ -65,7 +64,7 @@ export function Countdown({ targetDate, editButton }: CountdownProps) {
             <div className="relative h-full w-full bg-white rounded-[inherit] py-3 md:py-4">
               <span className="block text-3xl md:text-4xl font-black text-gray-800 tracking-tighter tabular-nums">{minutes}</span>
               <span className="block mt-1 text-[10px] md:text-xs uppercase tracking-[0.14em] text-gray-500">Min</span>
-              <div className="absolute inset-x-0 top-1/2 h-[1px] bg-gray-200" />
+              {/* Removed divider line */}
             </div>
           </div>
 
@@ -73,7 +72,7 @@ export function Countdown({ targetDate, editButton }: CountdownProps) {
             <div className="relative h-full w-full bg-white rounded-[inherit] py-3 md:py-4">
               <span className="block text-3xl md:text-4xl font-black text-primary tracking-tighter tabular-nums">{seconds}</span>
               <span className="block mt-1 text-[10px] md:text-xs uppercase tracking-[0.14em] text-primary/80">Sek</span>
-              <div className="absolute inset-x-0 top-1/2 h-[1px] bg-gray-200" />
+              {/* Removed divider line */}
               <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-primary animate-pulse" />
             </div>
           </div>

@@ -69,7 +69,7 @@ service cloud.firestore {
     match /todos/{id} { allow read: if true; allow write: if isPlanner(); }
     match /events/{id} { allow read: if true; allow write: if isPlanner(); }
     match /finances/{id} { allow read: if true; allow write: if isPlanner(); }
-    match /news/{id} { allow read: if true; allow write: if isApproved(); }
+    match /news/{id} { allow read: if true; allow write: if isAuthenticated(); }
     match /polls/{id} { allow read: if true; allow write: if isPlanner(); }
 
     match /votes/{voteId} {
