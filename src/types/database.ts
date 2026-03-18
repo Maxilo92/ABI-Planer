@@ -62,6 +62,7 @@ export interface NewsEntry {
   created_by: string;
   author_name?: string;
   view_count: number;
+  viewed_by?: string[];
 }
 
 export interface Poll {

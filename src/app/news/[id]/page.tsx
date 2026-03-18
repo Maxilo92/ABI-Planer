@@ -2,13 +2,13 @@
 
 import { useEffect, useState, use } from 'react'
 import { db } from '@/lib/firebase'
-import { doc, getDoc, updateDoc, increment } from 'firebase/firestore'
+import { doc, getDoc, updateDoc, increment, arrayUnion } from 'firebase/firestore'
 import { NewsEntry } from '@/types/database'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { format } from 'date-fns'
 import { de } from 'date-fns/locale'
-import { Loader2, ArrowLeft, Eye, Calendar, User } from 'lucide-react'
+import { Loader2, ArrowLeft, Eye, Calendar, User as UserIcon } from 'lucide-react'
 import { toDate } from '@/lib/utils'
 import Link from 'next/link'
 import { useAuth } from '@/context/AuthContext'
@@ -16,23 +16,30 @@ import { EditNewsDialog } from '@/components/modals/EditNewsDialog'
 
 export default function NewsDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
-  const { profile } = useAuth()
+  const { user, profile } = useAuth()
   const [news, setNews] = useState<NewsEntry | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const fetchNews = async () => {
+      if (!user) return
+      
       try {
         const docRef = doc(db, 'news', id)
         const docSnap = await getDoc(docRef)
         
         if (docSnap.exists()) {
-          setNews({ id: docSnap.id, ...docSnap.data() } as NewsEntry)
+          const data = { id: docSnap.id, ...docSnap.data() } as NewsEntry
+          setNews(data)
           
-          // Increment view count (simple implementation)
-          await updateDoc(docRef, {
-            view_count: increment(1)
-          })
+          // One view per user logic
+          const viewedBy = data.viewed_by || []
+          if (!viewedBy.includes(user.uid)) {
+            await updateDoc(docRef, {
+              view_count: increment(1),
+              viewed_by: arrayUnion(user.uid)
+            })
+          }
         }
       } catch (err) {
         console.error('Error fetching news detail:', err)
@@ -42,7 +49,7 @@ export default function NewsDetailPage({ params }: { params: Promise<{ id: strin
     }
 
     fetchNews()
-  }, [id])
+  }, [id, user])
 
   if (loading) {
     return (
@@ -56,8 +63,8 @@ export default function NewsDetailPage({ params }: { params: Promise<{ id: strin
     return (
       <div className="text-center py-20">
         <h2 className="text-2xl font-bold">News-Beitrag nicht gefunden.</h2>
-        <Button render={<Link href="/news" />} variant="link" className="mt-4">
-          Zurück zur Übersicht
+        <Button asChild variant="link" className="mt-4">
+          <Link href="/news">Zurück zur Übersicht</Link>
         </Button>
       </div>
     )
@@ -66,44 +73,53 @@ export default function NewsDetailPage({ params }: { params: Promise<{ id: strin
   const isPlanner = (profile?.role === 'planner' || profile?.role === 'admin_co' || profile?.role === 'admin_main') && profile?.is_approved
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
-      <Button render={<Link href="/news" />} variant="ghost" size="sm" className="gap-2 -ml-2 text-muted-foreground">
-        <><ArrowLeft className="h-4 w-4" /> Zurück</>
-      </Button>
+    <div className="max-w-4xl mx-auto py-4 md:py-8 space-y-6">
+      <div className="px-2">
+        <Button asChild variant="ghost" size="sm" className="gap-2 -ml-2 text-muted-foreground hover:text-foreground transition-colors">
+          <Link href="/news">
+            <ArrowLeft className="h-4 w-4" /> Zurück
+          </Link>
+        </Button>
+      </div>
 
-      <Card className="border-none shadow-none bg-transparent">
-        <CardHeader className="px-0 space-y-4">
+      <Card className="border shadow-sm overflow-hidden">
+        <CardHeader className="space-y-6 p-6 md:p-10 pb-4 md:pb-6">
           <div className="flex justify-between items-start gap-4">
-            <CardTitle className="text-3xl md:text-4xl font-bold tracking-tight leading-tight">
+            <CardTitle className="text-3xl md:text-5xl font-black tracking-tight leading-[1.15] text-foreground">
               {news.title}
             </CardTitle>
             {isPlanner && (
-              <div className="shrink-0">
+              <div className="shrink-0 mt-1">
                 <EditNewsDialog news={news} />
               </div>
             )}
           </div>
           
-          <div className="flex flex-wrap items-center gap-y-2 gap-x-4 text-sm text-muted-foreground">
-            <div className="flex items-center gap-1.5">
-              <Calendar className="h-4 w-4" />
+          <div className="flex flex-wrap items-center gap-y-3 gap-x-6 text-sm md:text-base text-muted-foreground font-medium">
+            <div className="flex items-center gap-2">
+              <Calendar className="h-4 w-4 text-primary/70" />
               {news.created_at ? format(toDate(news.created_at), 'dd. MMMM yyyy', { locale: de }) : 'Neu'}
             </div>
-            {news.author_name && (
-              <div className="flex items-center gap-1.5">
-                <User className="h-4 w-4" />
-                {news.author_name}
-              </div>
-            )}
-            <div className="flex items-center gap-1.5">
-              <Eye className="h-4 w-4" />
-              {news.view_count || 0} Aufrufe
+            
+            <Link 
+              href={`/profil/${news.created_by}`}
+              className="flex items-center gap-2 hover:text-primary transition-colors group"
+            >
+              <UserIcon className="h-4 w-4 text-primary/70 group-hover:text-primary transition-colors" />
+              <span className="underline decoration-primary/30 underline-offset-4 decoration-2 group-hover:decoration-primary transition-all">
+                {news.author_name || 'Unbekannt'}
+              </span>
+            </Link>
+
+            <div className="flex items-center gap-2">
+              <Eye className="h-4 w-4 text-primary/70" />
+              {news.view_count || 0} {news.view_count === 1 ? 'Aufruf' : 'Aufrufe'}
             </div>
           </div>
         </CardHeader>
         
-        <CardContent className="px-0 pt-6 border-t">
-          <div className="whitespace-pre-wrap text-lg text-foreground/90 leading-relaxed">
+        <CardContent className="p-6 md:p-10 pt-6 md:pt-8 border-t bg-muted/5">
+          <div className="whitespace-pre-wrap text-base md:text-xl text-foreground/90 leading-relaxed max-w-none">
             {news.content}
           </div>
         </CardContent>

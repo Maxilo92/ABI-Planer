@@ -1,6 +1,13 @@
 # Changelog
 
-## [0.14.4] - 2026-03-18
+## [0.15.0] - 2026-03-18
+- Feature: **Profil-Detailseite** (`/profil/[id]`) implementiert, um Profile anderer Nutzer einzusehen.
+- Feature: Autor-Verlinkung in der News-Detailansicht hinzugefügt.
+- UX: News-Detailansicht optisch überarbeitet (bessere Abstände, stärkere Typografie gemäß Feedback).
+- Logic: View-Tracking verbessert: Nur noch ein View pro Nutzer/Konto möglich (Statistik-Schutz).
+- Refactor: `NewsEntry` Datenmodell um `viewed_by` erweitert.
+
+## [0.14.0] - 2026-03-18
 - Fix: Firestore-Verbindungsfehler behoben ("Database '(default)' not found"). Die explizite Datenbank-ID `abi-data` wurde wiederhergestellt.
 
 ## [0.14.3] - 2026-03-18
