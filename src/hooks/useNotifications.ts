@@ -49,19 +49,19 @@ export function useNotifications() {
       setNotifications(prev => ({ ...prev, todos: hasActionItem }))
     })
 
-    // 2. Kalender: Events occurring within the next 3 days.
+    // 2. Kalender: New events created in the last 24 hours.
     const eventsQuery = query(collection(db, 'events'))
     const unsubscribeEvents = onSnapshot(eventsQuery, (snapshot) => {
-      const now = new Date()
-      const threeDaysFromNow = new Date()
-      threeDaysFromNow.setDate(now.getDate() + 3)
+      const twentyFourHoursAgo = new Date()
+      twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24)
       
-      const hasActionItem = snapshot.docs.some(docSnap => {
+      const hasNewEvent = snapshot.docs.some(docSnap => {
         const data = docSnap.data() as Event
-        const eventDate = toDate(data.event_date)
-        return eventDate >= now && eventDate <= threeDaysFromNow
+        // We use created_at to mark it as "new" until it's 24h old
+        const createdAt = data.created_at ? toDate(data.created_at) : new Date(0)
+        return createdAt >= twentyFourHoursAgo
       })
-      setNotifications(prev => ({ ...prev, kalender: hasActionItem }))
+      setNotifications(prev => ({ ...prev, kalender: hasNewEvent }))
     })
 
     // 3. Umfragen: Active polls that the user has not yet voted in.
@@ -103,18 +103,15 @@ export function useNotifications() {
       })
     })
 
-    // 4. News: News posted in the last 24 hours.
+    // 4. News: News the user has not yet viewed.
     const newsQuery = query(collection(db, 'news'))
     const unsubscribeNews = onSnapshot(newsQuery, (snapshot) => {
-      const twentyFourHoursAgo = new Date()
-      twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24)
-      
-      const hasActionItem = snapshot.docs.some(docSnap => {
+      const hasUnviewedNews = snapshot.docs.some(docSnap => {
         const data = docSnap.data() as NewsEntry
-        const createdAt = toDate(data.created_at)
-        return createdAt >= twentyFourHoursAgo
+        const viewedBy = data.viewed_by || []
+        return !viewedBy.includes(profile.id)
       })
-      setNotifications(prev => ({ ...prev, news: hasActionItem }))
+      setNotifications(prev => ({ ...prev, news: hasUnviewedNews }))
     })
 
     return () => {

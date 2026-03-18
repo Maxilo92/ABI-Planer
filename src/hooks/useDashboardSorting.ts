@@ -22,7 +22,7 @@ export function useDashboardSorting(
       polls: 0,
       funding: 0,
       news: 0,
-      leaderboard: 10, // Baseline
+      leaderboard: 40, // Higher baseline to keep it prominent
     };
 
     if (!profile) {

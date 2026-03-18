@@ -88,7 +88,7 @@ export function Navbar() {
       {/* Mobile spacer so content is not hidden under fixed top bar */}
       {!loading && <div className="md:hidden h-16" />}
 
-      {!loading && (
+      {!loading && pathname === '/' && (
         <div className="md:hidden px-4 pt-2 pb-1">
           <div className="flex justify-center">
             <CountdownHeader />

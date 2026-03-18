@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.15.19] - 2026-03-18
+- Feature: **Interaktive Dashboard-Kacheln**. Alle Dashboard-Elemente sind nun klickbar und führen direkt zur entsprechenden Detailseite, inklusive haptischem Feedback (`scale`-Effekt) für Mobile.
+- UX: **Verfeinerte Benachrichtigungslogik**. Die roten Punkte verschwinden nun präziser: News-Punkte nur nach Aufruf des Beitrags, Kalender-Punkte nur für neue Termine (24h).
+- UI: Der Countdown auf mobilen Geräten wird nun platzsparend nur noch auf dem Dashboard angezeigt.
+- Refactor: Das Kurs-Leaderboard fokussiert sich nun rein auf das Geldsammeln (Einnahmen) und wurde im Dashboard prominenter platziert.
+
 ## [0.15.18] - 2026-03-18
 - Feature: **Dynamisches Dashboard-Layout** (`useDashboardSorting`) implementiert. Die Dashboard-Elemente werden nun intelligent nach Relevanz (offene Aufgaben, anstehende Termine, neue Umfragen) für den jeweiligen Nutzer sortiert.
 - Feature: **Echtzeit-Benachrichtigungsindikatoren** in der Navbar (`useNotifications`) für Todos, Kalender, News und Umfragen hinzugefügt.

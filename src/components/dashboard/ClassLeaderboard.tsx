@@ -37,7 +37,7 @@ export function ClassLeaderboard({ finances, goal }: ClassLeaderboardProps) {
   
   const stats: ClassStats[] = courses.map(c => {
     const amount = finances
-      .filter(f => f.responsible_class === c)
+      .filter(f => f.responsible_class === c && Number(f.amount) > 0)
       .reduce((acc, f) => acc + Number(f.amount), 0)
     
     // Calculate percentage relative to an equal share of the total goal

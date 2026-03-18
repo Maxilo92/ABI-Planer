@@ -15,8 +15,10 @@ import { toDate } from '@/lib/utils'
 import { DashboardComponentKey, Poll, PollOption, PollVote, FinanceEntry } from '@/types/database'
 import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 
 export default function Dashboard() {
+  const router = useRouter()
   const { profile, loading: authLoading } = useAuth()
   const [settings, setSettings] = useState<any>(null)
   const [todos, setTodos] = useState<any[]>([])
@@ -128,6 +130,15 @@ export default function Dashboard() {
 
   const sortedComponents = useDashboardSorting(profile, todos, events, polls, news)
 
+  const componentLinks: Record<DashboardComponentKey, string> = {
+    funding: '/finanzen',
+    news: '/news',
+    todos: '/todos',
+    events: '/kalender',
+    polls: '/abstimmungen',
+    leaderboard: '/finanzen'
+  }
+
   const NewsPreview = ({ items }: { items: any[] }) => (
     <section className="bg-secondary/10 rounded-xl p-6 border flex flex-col h-full">
       <h3 className="text-xl font-bold mb-4">Letzte Updates</h3>
@@ -137,6 +148,7 @@ export default function Dashboard() {
             <Link
               key={item.id}
               href={`/news/${item.id}`}
+              onClick={(e) => e.stopPropagation()} // Prevent card navigation
               className="block bg-background rounded-lg p-4 border shadow-sm transition-colors hover:bg-muted/30"
             >
               <div className="flex justify-between items-start mb-2">
@@ -159,52 +171,72 @@ export default function Dashboard() {
           <p className="text-sm text-muted-foreground italic">Noch keine Neuigkeiten vorhanden.</p>
         )}
       </div>
-      <Link href="/news" className="mt-4 text-xs font-semibold text-center hover:underline text-muted-foreground">
+      <Link href="/news" onClick={(e) => e.stopPropagation()} className="mt-4 text-xs font-semibold text-center hover:underline text-muted-foreground">
         Alle News ansehen
       </Link>
     </section>
   )
 
   const renderComponent = (key: DashboardComponentKey) => {
-    switch (key) {
-      case 'funding':
-        return (
-          <FundingStatus
-            key="funding"
-            current={currentFunding}
-            goal={expenseGoal > 0 ? expenseGoal : (settings?.funding_goal || 10000)}
-            initialTicketSales={settings?.expected_ticket_sales ?? 150}
-            onTicketSalesChange={handleTicketSalesChange}
-          />
-        )
-      case 'news':
-        return <NewsPreview key="news" items={news} />
-      case 'todos':
-        return <TodoList key="todos" todos={todos || []} canManage={canManage} />
-      case 'events':
-        return <CalendarEvents key="events" events={events || []} />
-      case 'polls':
-        return (
-          <PollList
-            key="polls"
-            polls={polls}
-            userId={profile?.id || ''}
-            canVote={true}
-            canManage={canManage}
-            limit={2}
-          />
-        )
-      case 'leaderboard':
-        return (
-          <ClassLeaderboard
-            key="leaderboard"
-            finances={allFinances}
-            goal={settings?.funding_goal || 10000}
-          />
-        )
-      default:
-        return null
+    const ComponentContent = () => {
+      switch (key) {
+        case 'funding':
+          return (
+            <FundingStatus
+              key="funding"
+              current={currentFunding}
+              goal={expenseGoal > 0 ? expenseGoal : (settings?.funding_goal || 10000)}
+              initialTicketSales={settings?.expected_ticket_sales ?? 150}
+              onTicketSalesChange={handleTicketSalesChange}
+            />
+          )
+        case 'news':
+          return <NewsPreview key="news" items={news} />
+        case 'todos':
+          return <TodoList key="todos" todos={todos || []} canManage={canManage} />
+        case 'events':
+          return <CalendarEvents key="events" events={events || []} />
+        case 'polls':
+          return (
+            <PollList
+              key="polls"
+              polls={polls}
+              userId={profile?.id || ''}
+              canVote={true}
+              canManage={canManage}
+              limit={2}
+            />
+          )
+        case 'leaderboard':
+          return (
+            <ClassLeaderboard
+              key="leaderboard"
+              finances={allFinances}
+              goal={settings?.funding_goal || 10000}
+            />
+          )
+        default:
+          return null
+      }
     }
+
+    return (
+      <div 
+        key={key}
+        onClick={() => router.push(componentLinks[key])}
+        className="cursor-pointer transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] group h-full"
+      >
+        <div className="pointer-events-auto h-full [&_button]:pointer-events-auto [&_a]:pointer-events-auto [&_input]:pointer-events-auto" onClick={(e) => {
+          // Check if the click target or its parent is a button or link
+          const target = e.target as HTMLElement
+          if (target.closest('button') || target.closest('a') || target.closest('input')) {
+            e.stopPropagation()
+          }
+        }}>
+          <ComponentContent />
+        </div>
+      </div>
+    )
   }
 
   if (authLoading || loading) {
