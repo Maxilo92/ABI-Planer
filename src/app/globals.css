@@ -113,6 +113,18 @@
   * {
     @apply border-border outline-ring/50;
   }
+
+  button,
+  [role='button'],
+  a,
+  input,
+  textarea,
+  select,
+  summary {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
   body {
     @apply bg-background text-foreground;
   }
