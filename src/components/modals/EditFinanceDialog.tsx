@@ -2,8 +2,7 @@
 
 import { useState } from 'react'
 import { db } from '@/lib/firebase'
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore'
-import { useAuth } from '@/context/AuthContext'
+import { doc, updateDoc } from 'firebase/firestore'
 import { useRouter } from 'next/navigation'
 import { 
   Dialog, 
@@ -18,16 +17,20 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
-import { Plus, ChevronDown } from 'lucide-react'
-import { ClassName } from '@/types/database'
+import { Pencil, ChevronDown } from 'lucide-react'
+import { ClassName, FinanceEntry } from '@/types/database'
+import { toast } from 'sonner'
 
-export function AddFinanceDialog() {
-  const [amount, setAmount] = useState('')
-  const [description, setDescription] = useState('')
-  const [responsibleClass, setResponsibleClass] = useState<ClassName | 'Allgemein'>('Allgemein')
+interface EditFinanceDialogProps {
+  entry: FinanceEntry
+}
+
+export function EditFinanceDialog({ entry }: EditFinanceDialogProps) {
+  const [amount, setAmount] = useState(entry.amount.toString())
+  const [description, setDescription] = useState(entry.description || '')
+  const [responsibleClass, setResponsibleClass] = useState<ClassName | 'Allgemein'>(entry.responsible_class || 'Allgemein')
   const [loading, setLoading] = useState(false)
   const [open, setOpen] = useState(false)
-  const { user, profile } = useAuth()
   const router = useRouter()
 
   const classes: (ClassName | 'Allgemein')[] = ['12A', '12B', '12C', '12D', 'Allgemein']
@@ -36,25 +39,20 @@ export function AddFinanceDialog() {
     e.preventDefault()
     setLoading(true)
 
-    if (user) {
-      try {
-        await addDoc(collection(db, 'finances'), { 
-          amount: parseFloat(amount.replace(',', '.')), 
-          description,
-          responsible_class: responsibleClass === 'Allgemein' ? null : responsibleClass,
-          responsible_user_name: profile?.full_name || user.displayName || 'Unbekannt',
-          created_by: user.uid,
-          entry_date: serverTimestamp() 
-        })
+    try {
+      const docRef = doc(db, 'finances', entry.id)
+      await updateDoc(docRef, { 
+        amount: parseFloat(amount.replace(',', '.')), 
+        description,
+        responsible_class: responsibleClass === 'Allgemein' ? null : responsibleClass,
+      })
 
-        setAmount('')
-        setDescription('')
-        setResponsibleClass('Allgemein')
-        setOpen(false)
-        router.refresh()
-      } catch (error) {
-        console.error('Error adding finance entry:', error)
-      }
+      toast.success('Eintrag aktualisiert.')
+      setOpen(false)
+      router.refresh()
+    } catch (error) {
+      console.error('Error updating finance entry:', error)
+      toast.error('Fehler beim Aktualisieren.')
     }
     setLoading(false)
   }
@@ -62,24 +60,23 @@ export function AddFinanceDialog() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" className="gap-2">
-          <Plus className="h-4 w-4" /> Einnahme erfassen
+        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary">
+          <Pencil className="h-4 w-4" />
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Einnahme hinzufügen</DialogTitle>
+          <DialogTitle>Einnahme bearbeiten</DialogTitle>
           <DialogDescription>
-            Dokumentiere Geldflüsse für das Budget.
+            Passe die Details der Einnahme an.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="amount">Betrag in €</Label>
+              <Label htmlFor="edit-amount">Betrag in €</Label>
               <Input 
-                id="amount" 
-                placeholder="z.B. 50.00" 
+                id="edit-amount" 
                 type="text"
                 inputMode="decimal"
                 value={amount}
@@ -88,10 +85,9 @@ export function AddFinanceDialog() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="description">Beschreibung / Quelle</Label>
+              <Label htmlFor="edit-finance-description">Beschreibung / Quelle</Label>
               <Input 
-                id="description" 
-                placeholder="z.B. Kuchenverkauf 12.03." 
+                id="edit-finance-description" 
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 required 
@@ -118,7 +114,7 @@ export function AddFinanceDialog() {
           </div>
           <DialogFooter>
             <Button type="submit" disabled={loading}>
-              {loading ? 'Speichern...' : 'Hinzufügen'}
+              {loading ? 'Speichern...' : 'Aktualisieren'}
             </Button>
           </DialogFooter>
         </form>

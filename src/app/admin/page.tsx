@@ -1,6 +1,6 @@
 'use client'
 
-import { Profile, UserRole, PlanningGroup } from '@/types/database'
+import { Profile, UserRole, PlanningGroup, Settings as AppSettings } from '@/types/database'
 import { useState, useEffect } from 'react'
 import { db } from '@/lib/firebase'
 import { collection, query, orderBy, onSnapshot, doc, updateDoc, deleteDoc } from 'firebase/firestore'
@@ -9,14 +9,17 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
-import { MoreVertical, Check, Shield, User, Trash2, Crown, Users, Settings } from 'lucide-react'
+import { MoreVertical, Check, Shield, User, Trash2, Crown, Users, Settings as SettingsIcon } from 'lucide-react'
 import { ResetPasswordDialog } from '@/components/modals/ResetPasswordDialog'
+import { EditSettingsDialog } from '@/components/modals/EditSettingsDialog'
 import { useAuth } from '@/context/AuthContext'
 import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
 
 export default function AdminPage() {
   const { profile: currentUser, loading: authLoading } = useAuth()
   const [profiles, setProfiles] = useState<Profile[]>([])
+  const [appSettings, setAppSettings] = useState<AppSettings | null>(null)
   const [loading, setLoading] = useState(true)
   const router = useRouter()
 
@@ -31,13 +34,25 @@ export default function AdminPage() {
   }, [currentUser, authLoading, router, isAdmin])
 
   useEffect(() => {
+    // 1. Listen to Profiles
     const q = query(collection(db, 'profiles'), orderBy('created_at', 'desc'))
-    const unsubscribe = onSnapshot(q, (snapshot) => {
+    const unsubscribeProfiles = onSnapshot(q, (snapshot) => {
       setProfiles(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Profile)))
+    })
+
+    // 2. Listen to Settings
+    const settingsRef = doc(db, 'settings', 'config')
+    const unsubscribeSettings = onSnapshot(settingsRef, (doc) => {
+      if (doc.exists()) {
+        setAppSettings({ id: 1, ...doc.data() } as AppSettings)
+      }
       setLoading(false)
     })
 
-    return () => unsubscribe()
+    return () => {
+      unsubscribeProfiles()
+      unsubscribeSettings()
+    }
   }, [])
 
   const handleUpdateProfile = async (id: string, updates: Partial<Profile>, targetRole?: UserRole) => {
@@ -47,42 +62,46 @@ export default function AdminPage() {
 
     // Restriction: Cannot change Main Admin's role
     if (target.role === 'admin_main' && updates.role && updates.role !== 'admin_main') {
-      alert('Der Haupt-Admin kann nicht degradiert werden!')
+      toast.error('Der Haupt-Admin kann nicht degradiert werden!')
       return
     }
 
     // Restriction: Co-Admin cannot change roles of others (only approve)
     if (isCoAdmin && updates.role) {
-      alert('Co-Admins dürfen keine Rollen vergeben.')
+      toast.error('Co-Admins dürfen keine Rollen vergeben.')
       return
     }
 
     // Restriction: Cannot change own role
     if (id === currentUser?.id && updates.role) {
-      alert('Du kannst deine eigene Rolle nicht ändern!')
+      toast.error('Du kannst deine eigene Rolle nicht ändern!')
       return
     }
 
     try {
       const docRef = doc(db, 'profiles', id)
       await updateDoc(docRef, updates)
+      toast.success('Profil erfolgreich aktualisiert.')
     } catch (err) {
       console.error('Error updating profile:', err)
+      toast.error('Fehler beim Aktualisieren des Profils.')
     }
   }
 
   const handleDeleteProfile = async (id: string) => {
     const target = profiles.find(p => p.id === id)
     if (target?.role === 'admin_main') {
-      alert('Der Haupt-Admin kann nicht gelöscht werden!')
+      toast.error('Der Haupt-Admin kann nicht gelöscht werden!')
       return
     }
 
-    if (confirm('Bist du sicher, dass du diesen Nutzer löschen möchtest?')) {
+    if (window.confirm('Bist du sicher, dass du diesen Nutzer löschen möchtest?')) {
       try {
         await deleteDoc(doc(db, 'profiles', id))
+        toast.success('Nutzer erfolgreich gelöscht.')
       } catch (err) {
         console.error('Error deleting profile:', err)
+        toast.error('Fehler beim Löschen des Nutzers.')
       }
     }
   }
@@ -119,6 +138,12 @@ export default function AdminPage() {
             {isMainAdmin ? 'Vollzugriff: Rollen, Gruppen & Freischaltung' : 'Eingeschränkt: Nur Freischaltung'}
           </p>
         </div>
+        {isAdmin && (
+          <EditSettingsDialog 
+            currentDate={appSettings?.ball_date} 
+            currentGoal={appSettings?.funding_goal} 
+          />
+        )}
       </div>
 
       <Card className="border-slate-200 shadow-sm">
@@ -174,11 +199,13 @@ export default function AdminPage() {
                       </TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                              <MoreVertical className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
+                          <DropdownMenuTrigger
+                            render={
+                              <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            }
+                          />
                           <DropdownMenuContent align="end" className="w-56">
                             <DropdownMenuLabel className="text-[10px] uppercase text-muted-foreground tracking-widest">Aktionen</DropdownMenuLabel>
                             
@@ -211,7 +238,7 @@ export default function AdminPage() {
                                     <DropdownMenuLabel className="text-[10px] uppercase text-muted-foreground tracking-widest">Gruppe zuweisen</DropdownMenuLabel>
                                     {planningGroups.map(group => (
                                       <DropdownMenuItem key={group} onClick={() => handleUpdateProfile(p.id, { planning_group: group })}>
-                                        <Settings className="mr-2 h-3 w-3" /> {group}
+                                        <SettingsIcon className="mr-2 h-3 w-3" /> {group}
                                       </DropdownMenuItem>
                                     ))}
                                   </>

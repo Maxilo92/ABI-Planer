@@ -12,6 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { format } from 'date-fns'
 import { de } from 'date-fns/locale'
 import { Loader2 } from 'lucide-react'
+import { toDate } from '@/lib/utils'
 
 export default function FinancePage() {
   const { profile, loading: authLoading } = useAuth()
@@ -52,7 +53,7 @@ export default function FinancePage() {
     )
   }
 
-  const isPlanner = (profile?.role === 'planner' || profile?.role === 'admin') && profile?.is_approved
+  const isPlanner = (profile?.role === 'planner' || profile?.role === 'admin_main' || profile?.role === 'admin_co') && profile?.is_approved
   const currentFunding = finances.reduce((acc, curr) => acc + Number(curr.amount), 0)
 
   return (
@@ -90,7 +91,7 @@ export default function FinancePage() {
               ) : (
                 finances.map((entry) => (
                   <TableRow key={entry.id}>
-                    <TableCell>{format(new Date(entry.entry_date), 'dd.MM.yyyy', { locale: de })}</TableCell>
+                    <TableCell>{format(toDate(entry.entry_date), 'dd.MM.yyyy', { locale: de })}</TableCell>
                     <TableCell>{entry.description}</TableCell>
                     <TableCell className="text-right font-semibold text-green-600">
                       + {Number(entry.amount).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}

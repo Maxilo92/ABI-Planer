@@ -5,8 +5,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Badge } from '@/components/ui/badge'
 import { db } from '@/lib/firebase'
-import { doc, updateDoc } from 'firebase/firestore'
+import { doc, updateDoc, deleteDoc } from 'firebase/firestore'
 import { useAuth } from '@/context/AuthContext'
+import { toDate } from '@/lib/utils'
+import { Button } from '@/components/ui/button'
+import { Trash2 } from 'lucide-react'
+import { toast } from 'sonner'
+import { EditTodoDialog } from '@/components/modals/EditTodoDialog'
 
 interface TodoListProps {
   todos: Todo[]
@@ -32,6 +37,20 @@ export function TodoList({ todos, canManage = false }: TodoListProps) {
     }
   }
 
+  const handleDelete = async (id: string) => {
+    if (!canManage) return
+    if (!window.confirm('Diese Aufgabe wirklich löschen?')) return
+
+    try {
+      const docRef = doc(db, 'todos', id)
+      await deleteDoc(docRef)
+      toast.success('Aufgabe gelöscht.')
+    } catch (err) {
+      console.error('Error deleting todo:', err)
+      toast.error('Fehler beim Löschen.')
+    }
+  }
+
   return (
     <Card className="h-full">
       <CardHeader className="pb-2">
@@ -43,7 +62,7 @@ export function TodoList({ todos, canManage = false }: TodoListProps) {
             <p className="text-sm text-muted-foreground italic py-4">Keine Aufgaben vorhanden.</p>
           ) : (
             todos.map((todo) => (
-              <div key={todo.id} className="flex items-start space-x-3 pb-3 border-b last:border-0">
+              <div key={todo.id} className="group flex items-start space-x-3 pb-3 border-b last:border-0">
                 <Checkbox 
                   id={todo.id} 
                   checked={todo.status === 'done'}
@@ -71,11 +90,25 @@ export function TodoList({ todos, canManage = false }: TodoListProps) {
                     </div>
                     {todo.status === 'done' && todo.completed_by_name && (
                       <span className="text-[9px] text-muted-foreground italic">
-                        Erledigt von {todo.completed_by_name} {todo.completed_at ? `am ${new Date(todo.completed_at).toLocaleDateString('de-DE')}` : ''}
+                        Erledigt von {todo.completed_by_name} {todo.completed_at ? `am ${toDate(todo.completed_at).toLocaleDateString('de-DE')}` : ''}
                       </span>
                     )}
                   </div>
                 </div>
+                {canManage && (
+                  <div className="flex items-center gap-1">
+                    <EditTodoDialog todo={todo} />
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-muted-foreground hover:text-destructive md:opacity-0 md:group-hover:opacity-100 transition-opacity"
+                      onClick={() => handleDelete(todo.id)}
+                      title="Löschen"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                )}
               </div>
             ))
           )}

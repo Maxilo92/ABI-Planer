@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react'
 import { format } from 'date-fns'
 import { de } from 'date-fns/locale'
 import { Calendar } from 'lucide-react'
+import { toDate } from '@/lib/utils'
 
 interface CountdownProps {
   targetDate: string
@@ -21,7 +22,7 @@ export function Countdown({ targetDate, editButton }: CountdownProps) {
   }, [])
   
   const formattedDate = targetDate 
-    ? format(new Date(targetDate), "EEEE, dd. MMMM yyyy 'um' HH:mm 'Uhr'", { locale: de }) 
+    ? format(toDate(targetDate), "EEEE, dd. MMMM yyyy 'um' HH:mm 'Uhr'", { locale: de }) 
     : 'Noch kein Datum festgelegt'
 
   return (

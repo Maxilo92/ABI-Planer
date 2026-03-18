@@ -21,7 +21,7 @@ export function PollList({ polls, userId, isApproved = false }: PollListProps) {
   const { user, profile } = useAuth()
   const [loading, setLoading] = useState<string | null>(null)
 
-  const isPlanner = (profile?.role === 'planner' || profile?.role === 'admin') && profile?.is_approved
+  const isPlanner = (profile?.role === 'planner' || profile?.role === 'admin_main' || profile?.role === 'admin_co') && profile?.is_approved
 
   const handleVote = async (pollId: string, optionId: string) => {
     if (!userId || !isApproved) return
@@ -94,6 +94,25 @@ export function PollList({ polls, userId, isApproved = false }: PollListProps) {
                   </div>
                 )
               })}
+              
+              {!userId && (
+                <div className="bg-muted p-3 rounded-md mt-4 text-center">
+                  <p className="text-xs text-muted-foreground mb-2">Du musst angemeldet sein, um abzustimmen.</p>
+                  <Button variant="outline" size="sm" onClick={() => router.push('/login')}>Jetzt anmelden</Button>
+                </div>
+              )}
+
+              {userId && !isApproved && (
+                <div className="bg-destructive/10 p-3 rounded-md mt-4 text-center">
+                  <p className="text-xs text-destructive font-medium">Dein Account wartet noch auf Freischaltung durch einen Admin.</p>
+                </div>
+              )}
+
+              {userVote && (
+                <p className="text-xs text-center text-muted-foreground italic mt-2">
+                  Du hast bereits abgestimmt.
+                </p>
+              )}
 
               {isPlanner && poll.votes && poll.votes.length > 0 && (
                 <div className="mt-6 pt-4 border-t">
@@ -116,56 +135,6 @@ export function PollList({ polls, userId, isApproved = false }: PollListProps) {
                     ))}
                   </div>
                 </div>
-              )}
-...
-
-            <CardContent className="space-y-4">
-              {poll.options?.map((option) => {
-                const optionVotes = poll.votes?.filter(v => v.option_id === option.id).length || 0
-                const percentage = totalVotes > 0 ? Math.round((optionVotes / totalVotes) * 100) : 0
-                const isSelected = userVote?.option_id === option.id
-
-                return (
-                  <div key={option.id} className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span className={isSelected ? 'font-bold text-primary' : ''}>
-                        {option.option_text} {isSelected && '(Deine Wahl)'}
-                      </span>
-                      <span className="font-medium">{percentage}%</span>
-                    </div>
-                    <Progress value={percentage} className={isSelected ? 'bg-primary/20' : ''} />
-                    {!userVote && userId && isApproved && (
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="w-full mt-1 h-8"
-                        onClick={() => handleVote(poll.id, option.id)}
-                        disabled={!!loading}
-                      >
-                        {loading === option.id ? 'Abstimmung...' : 'Wählen'}
-                      </Button>
-                    )}
-                  </div>
-                )
-              })}
-              
-              {!userId && (
-                <div className="bg-muted p-3 rounded-md mt-4 text-center">
-                  <p className="text-xs text-muted-foreground mb-2">Du musst angemeldet sein, um abzustimmen.</p>
-                  <Button variant="outline" size="sm" onClick={() => router.push('/login')}>Jetzt anmelden</Button>
-                </div>
-              )}
-
-              {userId && !isApproved && (
-                <div className="bg-destructive/10 p-3 rounded-md mt-4 text-center">
-                  <p className="text-xs text-destructive font-medium">Dein Account wartet noch auf Freischaltung durch einen Admin.</p>
-                </div>
-              )}
-
-              {userVote && (
-                <p className="text-xs text-center text-muted-foreground italic mt-2">
-                  Du hast bereits abgestimmt.
-                </p>
               )}
             </CardContent>
           </Card>

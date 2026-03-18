@@ -2,8 +2,7 @@
 
 import { useState } from 'react'
 import { db } from '@/lib/firebase'
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore'
-import { useAuth } from '@/context/AuthContext'
+import { doc, updateDoc } from 'firebase/firestore'
 import { useRouter } from 'next/navigation'
 import { 
   Dialog, 
@@ -18,38 +17,39 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Plus } from 'lucide-react'
+import { Pencil } from 'lucide-react'
+import { NewsEntry } from '@/types/database'
+import { toast } from 'sonner'
 
-export function AddNewsDialog() {
-  const [title, setTitle] = useState('')
-  const [content, setContent] = useState('')
+interface EditNewsDialogProps {
+  news: NewsEntry
+}
+
+export function EditNewsDialog({ news }: EditNewsDialogProps) {
+  const [title, setTitle] = useState(news.title)
+  const [content, setContent] = useState(news.content)
   const [loading, setLoading] = useState(false)
   const [open, setOpen] = useState(false)
-  const { user, profile } = useAuth()
   const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
 
-    if (user) {
-      try {
-        await addDoc(collection(db, 'news'), { 
-          title, 
-          content, 
-          created_by: user.uid,
-          author_name: profile?.full_name || user.displayName || 'Unbekannt',
-          view_count: 0,
-          created_at: serverTimestamp()
-        })
+    try {
+      const docRef = doc(db, 'news', news.id)
+      await updateDoc(docRef, { 
+        title, 
+        content,
+        updated_at: new Date().toISOString()
+      })
 
-        setTitle('')
-        setContent('')
-        setOpen(false)
-        router.refresh()
-      } catch (error) {
-        console.error('Error adding news:', error)
-      }
+      toast.success('News-Beitrag aktualisiert.')
+      setOpen(false)
+      router.refresh()
+    } catch (error) {
+      console.error('Error updating news:', error)
+      toast.error('Fehler beim Aktualisieren.')
     }
     setLoading(false)
   }
@@ -58,45 +58,43 @@ export function AddNewsDialog() {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger
         render={
-          <Button size="sm" className="gap-2">
-            <Plus className="h-4 w-4" /> News erstellen
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary">
+            <Pencil className="h-4 w-4" />
           </Button>
         }
       />
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Neues Update verfassen</DialogTitle>
+          <DialogTitle>News-Beitrag bearbeiten</DialogTitle>
           <DialogDescription>
-            Informiere den Jahrgang über Neuigkeiten.
+            Passe die Überschrift oder den Inhalt an.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="title">Überschrift</Label>
+              <Label htmlFor="edit-title">Überschrift</Label>
               <Input 
-                id="title" 
-                placeholder="z.B. Location gefunden!" 
+                id="edit-title" 
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 required 
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="content">Inhalt</Label>
+              <Label htmlFor="edit-content">Inhalt</Label>
               <Textarea 
-                id="content" 
-                placeholder="Beschreibe kurz was es Neues gibt..." 
+                id="edit-content" 
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
-                rows={5}
+                rows={8}
                 required 
               />
             </div>
           </div>
           <DialogFooter>
             <Button type="submit" disabled={loading}>
-              {loading ? 'Veröffentlichen...' : 'Posten'}
+              {loading ? 'Speichern...' : 'Aktualisieren'}
             </Button>
           </DialogFooter>
         </form>

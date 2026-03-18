@@ -1,5 +1,35 @@
 # Changelog
 
+## [0.14.0] - 2026-03-18
+- Bugfix: Kritische Syntaxfehler in `PollList.tsx` und `TodoList.tsx` behoben (Korrupte JSX-Blöcke und duplizierte Logik).
+- Bugfix: Ungültige Rollen-Vergleiche (`role === 'admin'`) durch korrekte Typen (`admin_main`, `admin_co`) ersetzt.
+- Refactor: Vollständige Migration von `asChild` auf `render`-Prop für alle `@base-ui/react` Komponenten (Button, DialogTrigger, DropdownMenuTrigger) zur Sicherstellung der Build-Kompatibilität.
+- Bugfix: Fehlende Icon-Referenz (`SettingsIcon`) im Admin-Panel korrigiert.
+
+## [0.13.0] - 2026-03-18
+- Feature: **News-Detailansicht** implementiert.
+- Feature: Automatische Zählung der Aufrufe (`view_count`) beim Öffnen der News-Details.
+- UX: News-Übersicht verbessert: Kurze Textvorschau mit "Weiterlesen"-Option statt Volltext.
+- Refactor: Datum-Format in der News-Liste kompakter gestaltet.
+
+## [0.12.1] - 2026-03-18
+- Feature: Berechtigungen erweitert: Auch **Co-Admins** können nun das Abiball-Datum und das Finanzziel bearbeiten.
+
+## [0.12.0] - 2026-03-18
+- Feature: Zentrale Steuerung der App-Einstellungen (Abiball-Datum & Finanzziel) über das Admin-Panel.
+- Feature: Bearbeiten-Funktion für **News-Beiträge** hinzugefügt.
+- Feature: Bearbeiten-Funktion für **Aufgaben (Todos)** hinzugefügt.
+- Refactor: DialogTrigger in allen Modals auf den Standard `asChild` umgestellt für bessere Stabilität.
+- UX: Verbesserte Hover-Effekte in der Aufgabenliste für Desktop-Nutzer.
+
+## [0.11.0] - 2026-03-18
+- Bugfix: Firestore-Konfiguration flexibler gestaltet (Entfernung der hardcodierten `abi-data` Datenbank-ID).
+- UX: Implementierung eines globalen Toast-Systems mit `sonner` zur Verbesserung des Feedbacks.
+- Feature: Löschfunktion für **News-Beiträge** hinzugefügt (für Planer/Admins).
+- Feature: Löschfunktion für **Aufgaben (Todos)** hinzugefügt (für Planer/Admins).
+- Refactor: Alle `alert()` und `confirm()` Aufrufe im Admin-Bereich durch moderne Toasts ersetzt.
+- Refactor: Konsistente Rollenprüfung (`admin_main`, `admin_co`, `planner`) über mehrere Seiten hinweg.
+
 ## [0.10.0] - 2026-03-18
 - Feature: Erweitertes Rollenmodell mit **Main Admin** und **Co-Admin**.
 - Feature: **Planungsgruppen** für Planer (Finanzen, Location, Programm, Deko, IT).

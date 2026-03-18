@@ -32,7 +32,7 @@ export default function CalendarPage() {
     )
   }
 
-  const isPlanner = (profile?.role === 'planner' || profile?.role === 'admin') && profile?.is_approved
+  const isPlanner = (profile?.role === 'planner' || profile?.role === 'admin_co' || profile?.role === 'admin_main') && profile?.is_approved
 
   return (
     <div className="space-y-6">
@@ -45,7 +45,7 @@ export default function CalendarPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-6">
-        <CalendarEvents events={events || []} />
+        <CalendarEvents events={events || []} canManage={isPlanner} />
       </div>
     </div>
   )

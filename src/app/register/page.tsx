@@ -128,12 +128,14 @@ export default function RegisterPage() {
             <div className="space-y-2">
               <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Deine Klasse</Label>
               <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="w-full h-12 justify-between bg-muted/30 border-slate-200 hover:bg-background transition-all text-sm font-medium">
-                    {className ? `Klasse ${className}` : 'Klasse auswählen'}
-                    <ChevronDown className="h-4 w-4 opacity-50" />
-                  </Button>
-                </DropdownMenuTrigger>
+                <DropdownMenuTrigger
+                  render={
+                    <Button variant="outline" className="w-full h-12 justify-between bg-muted/30 border-slate-200 hover:bg-background transition-all text-sm font-medium">
+                      {className ? `Klasse ${className}` : 'Klasse auswählen'}
+                      <ChevronDown className="h-4 w-4 opacity-50" />
+                    </Button>
+                  }
+                />
                 <DropdownMenuContent className="w-[calc(100vw-4rem)] max-w-[350px]">
                   {classes.map((c) => (
                     <DropdownMenuItem key={c} onClick={() => setClassName(c)}>

@@ -55,7 +55,7 @@ export default function PollsPage() {
     )
   }
 
-  const isPlanner = profile?.role === 'planner' || profile?.role === 'admin'
+  const isPlanner = profile?.role === 'planner' || profile?.role === 'admin_main' || profile?.role === 'admin_co'
   const isApproved = profile?.is_approved || false
 
   return (

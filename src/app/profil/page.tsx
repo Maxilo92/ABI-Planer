@@ -9,6 +9,7 @@ import { User, Mail, Shield, Calendar, Users } from 'lucide-react'
 import { format } from 'date-fns'
 import { de } from 'date-fns/locale'
 import { useEffect } from 'react'
+import { toDate } from '@/lib/utils'
 
 export default function ProfilePage() {
   const { user, profile, loading } = useAuth()
@@ -120,7 +121,7 @@ export default function ProfilePage() {
             <div className="flex-1">
               <p className="text-sm font-medium leading-none">Mitglied seit</p>
               <p className="text-sm text-muted-foreground mt-1">
-                {profile.created_at ? format(new Date(profile.created_at), 'PPP', { locale: de }) : 'Unbekannt'}
+                {profile.created_at ? format(toDate(profile.created_at), 'PPP', { locale: de }) : 'Unbekannt'}
               </p>
             </div>
           </div>

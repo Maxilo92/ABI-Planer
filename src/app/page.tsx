@@ -10,6 +10,7 @@ import { CalendarEvents } from '@/components/dashboard/CalendarEvents'
 import { ClassLeaderboard } from '@/components/dashboard/ClassLeaderboard'
 import { EditSettingsDialog } from '@/components/modals/EditSettingsDialog'
 import { useAuth } from '@/context/AuthContext'
+import { toDate } from '@/lib/utils'
 
 export default function Dashboard() {
   const { profile, loading: authLoading } = useAuth()
@@ -80,7 +81,7 @@ export default function Dashboard() {
     }
   }, [])
 
-  const canManage = (profile?.role === 'planner' || profile?.role === 'admin') && profile?.is_approved
+  const canManage = (profile?.role === 'planner' || profile?.role === 'admin_main' || profile?.role === 'admin_co') && profile?.is_approved
 
   if (authLoading) {
     return <div className="flex items-center justify-center min-h-[50vh]">Verifiziere Anmeldung...</div>
@@ -126,7 +127,7 @@ export default function Dashboard() {
                 <div className="flex justify-between items-start mb-2">
                   <h4 className="font-semibold">{item.title}</h4>
                   <span className="text-[10px] text-muted-foreground bg-secondary px-2 py-0.5 rounded">
-                    {item.created_at ? new Date(item.created_at).toLocaleDateString('de-DE') : 'Neu'}
+                    {item.created_at ? toDate(item.created_at).toLocaleDateString('de-DE') : 'Neu'}
                   </span>
                 </div>
                 <p className="text-sm text-muted-foreground line-clamp-2 mb-3">

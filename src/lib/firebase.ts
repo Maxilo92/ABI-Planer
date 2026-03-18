@@ -16,6 +16,6 @@ const isConfigValid = !!process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
 // Initialize Firebase
 const app = isConfigValid ? (getApps().length > 0 ? getApp() : initializeApp(firebaseConfig)) : (null as any);
 const auth = app ? getAuth(app) : ({} as any);
-const db = app ? getFirestore(app, "abi-data") : ({} as any);
+const db = app ? getFirestore(app) : ({} as any);
 
 export { app, auth, db };

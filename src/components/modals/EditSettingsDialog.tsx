@@ -18,15 +18,18 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Settings as SettingsIcon } from 'lucide-react'
 import { format } from 'date-fns'
+import { toDate } from '@/lib/utils'
+
+import { toast } from 'sonner'
 
 interface EditSettingsDialogProps {
-  currentDate: string
-  currentGoal: number
+  currentDate?: string
+  currentGoal?: number
 }
 
-export function EditSettingsDialog({ currentDate, currentGoal }: EditSettingsDialogProps) {
+export function EditSettingsDialog({ currentDate = '2026-06-20T18:00:00Z', currentGoal = 10000 }: EditSettingsDialogProps) {
   // Format the date for the datetime-local input (YYYY-MM-DDTHH:MM)
-  const initialDate = currentDate ? format(new Date(currentDate), "yyyy-MM-dd'T'HH:mm") : ''
+  const initialDate = currentDate ? format(toDate(currentDate), "yyyy-MM-dd'T'HH:mm") : ''
   
   const [date, setDate] = useState(initialDate)
   const [goal, setGoal] = useState(currentGoal.toString())
@@ -44,24 +47,28 @@ export function EditSettingsDialog({ currentDate, currentGoal }: EditSettingsDia
         funding_goal: parseFloat(goal)
       }, { merge: true })
 
+      toast.success('Einstellungen erfolgreich aktualisiert.')
       setOpen(false)
       router.refresh()
     } catch (error) {
       console.error('Error updating settings:', error)
+      toast.error('Fehler beim Speichern der Einstellungen.')
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger
         render={
-          <Button variant="ghost" size="icon-sm" className="h-8 w-8 text-muted-foreground hover:text-primary">
+          <Button variant="outline" size="sm" className="gap-2">
             <SettingsIcon className="h-4 w-4" />
+            <span>Einstellungen</span>
           </Button>
         }
       />
-      <DialogContent>
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Einstellungen bearbeiten</DialogTitle>
           <DialogDescription>
