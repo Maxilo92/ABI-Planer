@@ -3,7 +3,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
 import { auth, db } from '@/lib/firebase'
 import { onAuthStateChanged, User } from 'firebase/auth'
-import { doc, getDoc, updateDoc } from 'firebase/firestore'
+import { doc, getDoc } from 'firebase/firestore'
 
 import { Profile } from '@/types/database'
 
@@ -43,15 +43,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           const docSnap = await getDoc(docRef)
           if (docSnap.exists()) {
             const profileData = docSnap.data() as Profile
-            
-            // Auto-migration: Legacy 'admin' -> 'admin_main'
-            if ((profileData.role as string) === 'admin') {
-              console.log('Migrating legacy admin to admin_main...')
-              await updateDoc(docRef, { role: 'admin_main' })
-              setProfile({ ...profileData, id: user.uid, role: 'admin_main' })
-            } else {
-              setProfile({ ...profileData, id: user.uid } as Profile)
-            }
+            const normalizedRole = (profileData.role as string) === 'admin' ? 'admin_main' : profileData.role
+            setProfile({ ...profileData, id: user.uid, role: normalizedRole } as Profile)
           } else {
             console.warn('No profile found for user:', user.uid)
             setProfile(null)
