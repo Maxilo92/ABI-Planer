@@ -71,6 +71,10 @@ export interface NewsEntry {
   created_at: string;
   created_by: string;
   author_name?: string | null;
+  image_url?: string | null;
+  image_path?: string | null;
+  image_size_bytes?: number | null;
+  image_mime_type?: string | null;
   view_count?: number;
   viewed_by?: string[];
 }

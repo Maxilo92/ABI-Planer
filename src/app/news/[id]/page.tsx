@@ -75,7 +75,7 @@ export default function NewsDetailPage({ params }: { params: Promise<{ id: strin
   const isPlanner = (profile?.role === 'planner' || profile?.role === 'admin_co' || profile?.role === 'admin_main' || profile?.role === 'admin') && profile?.is_approved
 
   return (
-    <div className="max-w-4xl mx-auto py-4 md:py-8 space-y-6">
+    <div className="max-w-5xl mx-auto py-4 md:py-8 space-y-6">
       <div className="px-2">
         <Button
           variant="ghost"
@@ -90,6 +90,21 @@ export default function NewsDetailPage({ params }: { params: Promise<{ id: strin
       </div>
 
       <Card className="border shadow-sm overflow-hidden">
+        {news.image_url && (
+          <div className="relative h-56 w-full overflow-hidden bg-muted md:h-80">
+            <img
+              src={news.image_url}
+              alt={`Titelbild zu ${news.title}`}
+              className="h-full w-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/15 to-transparent" />
+            <div className="absolute bottom-0 left-0 right-0 p-5 md:p-8">
+              <span className="inline-flex rounded-full bg-background/90 px-3 py-1 text-xs font-semibold text-foreground shadow-sm">
+                News
+              </span>
+            </div>
+          </div>
+        )}
         <CardHeader className="space-y-6 p-6 md:p-10 pb-4 md:pb-6">
           <div className="flex justify-between items-start gap-4">
             <CardTitle className="text-3xl md:text-5xl font-black tracking-tight leading-[1.15] text-foreground">
@@ -126,8 +141,8 @@ export default function NewsDetailPage({ params }: { params: Promise<{ id: strin
         </CardHeader>
         
         <CardContent className="p-6 md:p-10 pt-6 md:pt-8 border-t bg-muted/5">
-          <div className="whitespace-pre-wrap text-base md:text-xl text-foreground/90 leading-relaxed max-w-none">
-            {news.content}
+          <div className="whitespace-pre-wrap text-base md:text-xl text-foreground/90 leading-relaxed max-w-none first-letter:text-4xl first-letter:font-black first-letter:mr-1 first-letter:float-left first-letter:leading-none">
+            {news.content.trim()}
           </div>
         </CardContent>
       </Card>

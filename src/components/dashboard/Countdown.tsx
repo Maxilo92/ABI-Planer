@@ -68,7 +68,6 @@ export function Countdown({ targetDate, editButton }: CountdownProps) {
             <div className="relative h-full w-full bg-background rounded-[inherit] py-3 md:py-4">
               <span className="block text-3xl md:text-4xl font-black text-primary tracking-tighter tabular-nums">{seconds}</span>
               <span className="block mt-1 text-[10px] md:text-xs uppercase tracking-[0.14em] text-primary/80">Sek</span>
-              <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-primary animate-pulse" />
             </div>
           </div>
         </div>

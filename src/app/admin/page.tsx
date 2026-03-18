@@ -18,6 +18,8 @@ import Link from 'next/link'
 export default function AdminPage() {
   const { profile, loading: authLoading } = useAuth()
   const [profiles, setProfiles] = useState<Profile[]>([])
+  const [courses, setCourses] = useState<string[]>([])
+  const [planningGroups, setPlanningGroups] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
   const router = useRouter()
   const canManageUsers =
@@ -36,6 +38,44 @@ export default function AdminPage() {
     const unsubscribe = onSnapshot(q, (snapshot) => {
       setProfiles(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Profile)))
       setLoading(false)
+    })
+
+    return () => unsubscribe()
+  }, [])
+
+  useEffect(() => {
+    const unsubscribe = onSnapshot(doc(db, 'settings', 'config'), (snapshot) => {
+      if (!snapshot.exists()) {
+        setCourses([])
+        setPlanningGroups([])
+        return
+      }
+
+      const data = snapshot.data()
+      const rawCourses = data.courses
+      const rawGroups = data.planning_groups
+
+      const normalizedCourses = Array.isArray(rawCourses)
+        ? rawCourses
+            .filter((course): course is string => typeof course === 'string' && course.trim().length > 0)
+            .map((course) => course.trim())
+        : []
+
+      const normalizedGroups = Array.isArray(rawGroups)
+        ? rawGroups
+            .map((entry) => {
+              if (typeof entry === 'string') return entry
+              if (entry && typeof entry === 'object' && 'name' in entry && typeof entry.name === 'string') {
+                return entry.name
+              }
+              return null
+            })
+            .filter((name): name is string => !!name && name.trim().length > 0)
+            .map((name) => name.trim())
+        : []
+
+      setCourses(normalizedCourses)
+      setPlanningGroups(normalizedGroups)
     })
 
     return () => unsubscribe()
@@ -110,6 +150,8 @@ export default function AdminPage() {
                   <TableHead>Name</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Rolle</TableHead>
+                  <TableHead>Kurs</TableHead>
+                  <TableHead>Gruppe</TableHead>
                   <TableHead className="text-right">Aktionen</TableHead>
                 </TableRow>
               </TableHeader>
@@ -135,6 +177,52 @@ export default function AdminPage() {
                           Unantastbar
                         </Badge>
                       )}
+                    </TableCell>
+                    <TableCell>
+                      {(() => {
+                        const isMainAdminAccount = p.role === 'admin_main' || p.role === 'admin'
+                        const isSelf = p.id === profile.id
+                        const canEditThisUser = !isMainAdminAccount && !isSelf
+
+                        return (
+                          <select
+                            className="h-9 w-full rounded-md border bg-background px-2 text-sm"
+                            value={p.class_name || ''}
+                            onChange={(e) => handleUpdateProfile(p.id, { class_name: e.target.value || null })}
+                            disabled={!canEditThisUser}
+                          >
+                            <option value="">Kein Kurs</option>
+                            {courses.map((course) => (
+                              <option key={course} value={course}>
+                                {course}
+                              </option>
+                            ))}
+                          </select>
+                        )
+                      })()}
+                    </TableCell>
+                    <TableCell>
+                      {(() => {
+                        const isMainAdminAccount = p.role === 'admin_main' || p.role === 'admin'
+                        const isSelf = p.id === profile.id
+                        const canEditThisUser = !isMainAdminAccount && !isSelf
+
+                        return (
+                          <select
+                            className="h-9 w-full rounded-md border bg-background px-2 text-sm"
+                            value={p.planning_group || ''}
+                            onChange={(e) => handleUpdateProfile(p.id, { planning_group: e.target.value || null })}
+                            disabled={!canEditThisUser}
+                          >
+                            <option value="">Keine Gruppe</option>
+                            {planningGroups.map((groupName) => (
+                              <option key={groupName} value={groupName}>
+                                {groupName}
+                              </option>
+                            ))}
+                          </select>
+                        )
+                      })()}
                     </TableCell>
                     <TableCell className="text-right">
                       {(() => {
