@@ -1,7 +1,7 @@
 'use client'
 
-import { deleteObject, getDownloadURL, ref, uploadBytes } from 'firebase/storage'
-import { storage } from '@/lib/firebase'
+import { deleteObject, getDownloadURL, getStorage, ref, type FirebaseStorage, uploadBytes } from 'firebase/storage'
+import { app, storage } from '@/lib/firebase'
 
 export const NEWS_IMAGE_MAX_BYTES = 5 * 1024 * 1024
 const NEWS_IMAGE_MAX_DIMENSION = 1920
@@ -16,6 +16,59 @@ export interface NewsCropArea {
 
 function sanitizeFileName(name: string) {
   return name.toLowerCase().replace(/[^a-z0-9.-]+/g, '-').replace(/-+/g, '-')
+}
+
+function normalizeBucketName(bucket?: string): string | null {
+  if (!bucket) return null
+  return bucket.replace(/^gs:\/\//, '').trim() || null
+}
+
+function getStorageFallbacks(): FirebaseStorage[] {
+  if (!app) return []
+
+  const configuredBucket = normalizeBucketName(process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET)
+  const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID
+  if (!projectId) return []
+
+  const candidates = new Set<string>()
+  if (configuredBucket?.endsWith('.appspot.com')) {
+    candidates.add(`${projectId}.firebasestorage.app`)
+  }
+  if (configuredBucket?.endsWith('.firebasestorage.app')) {
+    candidates.add(`${projectId}.appspot.com`)
+  }
+  if (!configuredBucket) {
+    candidates.add(`${projectId}.firebasestorage.app`)
+    candidates.add(`${projectId}.appspot.com`)
+  }
+
+  return Array.from(candidates)
+    .filter((candidate) => candidate !== configuredBucket)
+    .map((candidate) => getStorage(app!, `gs://${candidate}`))
+}
+
+async function uploadNewsImageToStorage(
+  targetStorage: FirebaseStorage,
+  userId: string,
+  file: File,
+): Promise<{ url: string; path: string; size: number; mimeType: string }> {
+  const safeName = sanitizeFileName(file.name)
+  const filePath = `news-images/${userId}/${Date.now()}-${safeName}`
+  const storageRef = ref(targetStorage, filePath)
+
+  const snapshot = await uploadBytes(storageRef, file, {
+    contentType: file.type,
+    cacheControl: 'public,max-age=31536000,immutable',
+  })
+
+  const url = await getDownloadURL(snapshot.ref)
+
+  return {
+    url,
+    path: snapshot.ref.fullPath,
+    size: file.size,
+    mimeType: file.type,
+  }
 }
 
 function readImageDimensions(file: File): Promise<{ width: number; height: number }> {
@@ -155,22 +208,18 @@ export async function validateNewsImageFile(file: File): Promise<void> {
 }
 
 export async function uploadNewsImage(userId: string, file: File): Promise<{ url: string; path: string; size: number; mimeType: string }> {
-  const safeName = sanitizeFileName(file.name)
-  const filePath = `news-images/${userId}/${Date.now()}-${safeName}`
-  const storageRef = ref(storage, filePath)
-
-  const snapshot = await uploadBytes(storageRef, file, {
-    contentType: file.type,
-    cacheControl: 'public,max-age=31536000,immutable',
-  })
-
-  const url = await getDownloadURL(snapshot.ref)
-
-  return {
-    url,
-    path: snapshot.ref.fullPath,
-    size: file.size,
-    mimeType: file.type,
+  try {
+    return await uploadNewsImageToStorage(storage, userId, file)
+  } catch (primaryError) {
+    const fallbacks = getStorageFallbacks()
+    for (const fallbackStorage of fallbacks) {
+      try {
+        return await uploadNewsImageToStorage(fallbackStorage, userId, file)
+      } catch {
+        // Try the next fallback bucket.
+      }
+    }
+    throw primaryError
   }
 }
 
