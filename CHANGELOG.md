@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.7.0] - 2026-03-18
+- Fix: Fehlende Firestore Composite Indexes für Umfragen und Aufgaben hinzugefügt, um Ladefehler zu beheben
+
 ## [0.6.9] - 2026-03-17
 - Fix: Unterstützung für benutzerdefinierte Firestore Datenbank-ID (`abi-data`) hinzugefügt
 
