@@ -41,9 +41,9 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="-mx-4 sm:-mx-6 lg:-mx-8 min-h-[calc(100dvh-4rem)] bg-background px-4 py-8 sm:px-6 sm:py-12 lg:px-8 md:flex md:items-center md:justify-center">
+    <div className="min-h-screen bg-background px-4 py-10 sm:px-6 sm:py-14 lg:px-8 md:flex md:items-center md:justify-center">
       <Card className="mx-auto w-full max-w-md rounded-2xl border border-border/70 bg-card shadow-sm">
-        <div className="px-4 pt-3 sm:px-6">
+        <div className="px-5 pt-4 sm:px-7 sm:pt-5">
           <Button
             variant="ghost"
             size="sm"
@@ -51,14 +51,14 @@ export default function LoginPage() {
             render={<Link href="/">Zurück zum Dashboard</Link>}
           />
         </div>
-        <CardHeader className="space-y-2 pb-6 sm:pb-8 text-center pt-2 sm:pt-4">
+        <CardHeader className="space-y-3 px-5 pb-7 pt-3 text-center sm:px-7 sm:pb-9 sm:pt-5">
           <CardTitle className="text-4xl font-black tracking-tight">Anmelden</CardTitle>
           <CardDescription className="text-muted-foreground">
             Nutze dein @hgr-web.lernsax.de Konto
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleLogin}>
-          <CardContent className="space-y-5 sm:space-y-6 pb-5 sm:pb-6">
+          <CardContent className="space-y-6 px-5 pb-7 sm:space-y-7 sm:px-7 sm:pb-8">
             {error && (
               <div className="text-destructive text-sm p-3 rounded-md bg-destructive/10 text-center font-medium">
                 {error}
@@ -91,7 +91,7 @@ export default function LoginPage() {
               />
             </div>
           </CardContent>
-          <CardFooter className="flex flex-col space-y-5 sm:space-y-6 pt-2 pb-2 sm:pb-4 border-0 bg-transparent rounded-none p-0">
+          <CardFooter className="flex flex-col space-y-6 border-0 bg-transparent rounded-none px-5 pb-7 pt-3 sm:px-7 sm:pb-8 sm:pt-4">
             <Button type="submit" className="w-full h-12 text-base font-bold shadow-md active:scale-[0.98] transition-transform" disabled={loading}>
               {loading ? 'Anmeldung...' : 'Anmelden'}
             </Button>

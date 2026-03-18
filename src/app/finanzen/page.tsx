@@ -134,7 +134,7 @@ export default function FinancePage() {
                         )}
                       </div>
                     </TableCell>
-                    <TableCell className={`text-right font-semibold ${Number(entry.amount) < 0 ? 'text-destructive' : 'text-green-600'}`}>
+                    <TableCell className={`text-right font-semibold ${Number(entry.amount) < 0 ? 'text-destructive' : 'text-success'}`}>
                       {Number(entry.amount) < 0 ? '-' : '+'} {Math.abs(Number(entry.amount)).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
                     </TableCell>
                     {isPlanner && (

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
-import { Navbar } from '@/components/layout/Navbar'
+import { AppShell } from '@/components/layout/AppShell'
 import { AuthProvider } from '@/context/AuthContext'
 import { Toaster } from '@/components/ui/sonner'
 import { ThemeProvider } from '@/context/ThemeProvider'
@@ -28,14 +28,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <AuthProvider>
-            <div className="md:flex md:min-h-screen">
-              <Navbar />
-              <main className="flex-1 px-4 sm:px-6 lg:px-8 py-8">
-                <div className="max-w-7xl mx-auto">
-                  {children}
-                </div>
-              </main>
-            </div>
+            <AppShell>{children}</AppShell>
             <Toaster />
           </AuthProvider>
         </ThemeProvider>

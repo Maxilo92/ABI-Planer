@@ -134,9 +134,9 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="-mx-4 sm:-mx-6 lg:-mx-8 min-h-[calc(100dvh-4rem)] bg-background px-4 py-8 sm:px-6 sm:py-12 lg:px-8 md:flex md:items-center md:justify-center">
+    <div className="min-h-screen bg-background px-4 py-10 sm:px-6 sm:py-14 lg:px-8 md:flex md:items-center md:justify-center">
       <Card className="mx-auto w-full max-w-md rounded-2xl border border-border/70 bg-card shadow-sm">
-        <div className="px-4 pt-3 sm:px-6">
+        <div className="px-5 pt-4 sm:px-7 sm:pt-5">
           <Button
             variant="ghost"
             size="sm"
@@ -144,12 +144,12 @@ export default function RegisterPage() {
             render={<Link href="/">Zurück zum Dashboard</Link>}
           />
         </div>
-        <CardHeader className="space-y-2">
+        <CardHeader className="space-y-3 px-5 pb-7 pt-3 sm:px-7 sm:pb-8 sm:pt-5">
           <CardTitle className="text-4xl font-black text-center tracking-tight">Registrieren</CardTitle>
           <CardDescription className="text-center">
             Erstelle einen Account, um mitzugestalten oder abzustimmen.
           </CardDescription>
-          <div className="pt-2 space-y-2">
+          <div className="pt-3 space-y-2.5">
             <div className="flex gap-2">
               <div className={`h-1.5 flex-1 rounded-full ${step >= 1 ? 'bg-primary' : 'bg-muted'}`} />
               <div className={`h-1.5 flex-1 rounded-full ${step >= 2 ? 'bg-primary' : 'bg-muted'}`} />
@@ -161,7 +161,7 @@ export default function RegisterPage() {
           </div>
         </CardHeader>
         <form onSubmit={handleRegister}>
-          <CardContent className="space-y-4 pb-5 sm:pb-6">
+          <CardContent className="space-y-6 px-5 pb-7 sm:px-7 sm:pb-8">
             {error && (
               <div className="bg-destructive/15 text-destructive text-sm p-3 rounded-md text-center">
                 {error}
@@ -231,7 +231,7 @@ export default function RegisterPage() {
               </div>
             )}
           </CardContent>
-          <CardFooter className="flex flex-col space-y-4 border-0 bg-transparent rounded-none p-0 pt-2">
+          <CardFooter className="flex flex-col space-y-5 border-0 bg-transparent rounded-none px-5 pb-7 pt-3 sm:px-7 sm:pb-8 sm:pt-4">
             <div className="w-full flex gap-2">
               {step > 1 && (
                 <Button

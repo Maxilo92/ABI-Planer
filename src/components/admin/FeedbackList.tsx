@@ -31,16 +31,16 @@ export function FeedbackList({ feedbackItems }: FeedbackListProps) {
   const [loading, setLoading] = useState<string | null>(null)
 
   const getIcon = (type: string) => {
-    if (type === 'bug') return <Bug className="h-4 w-4 text-red-500" />
-    if (type === 'feature') return <Lightbulb className="h-4 w-4 text-yellow-500" />
-    return <HelpCircle className="h-4 w-4 text-gray-500" />
+    if (type === 'bug') return <Bug className="h-4 w-4 text-destructive" />
+    if (type === 'feature') return <Lightbulb className="h-4 w-4 text-info" />
+    return <HelpCircle className="h-4 w-4 text-muted-foreground" />
   }
 
   const getStatusBadge = (status: FeedbackStatus) => {
     switch (status) {
       case 'new': return <Badge variant="secondary">Neu</Badge>
-      case 'in_progress': return <Badge variant="default" className="bg-blue-500">In Arbeit</Badge>
-      case 'implemented': return <Badge variant="default" className="bg-green-600">Umgesetzt</Badge>
+      case 'in_progress': return <Badge variant="outline" className="border-info/40 bg-info/10 text-info">In Arbeit</Badge>
+      case 'implemented': return <Badge variant="outline" className="border-success/40 bg-success/10 text-success">Umgesetzt</Badge>
       case 'rejected': return <Badge variant="destructive">Abgelehnt</Badge>
       default: return <Badge variant="outline">Unbekannt</Badge>
     }
