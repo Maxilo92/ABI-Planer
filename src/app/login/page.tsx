@@ -39,16 +39,16 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex items-center justify-center min-h-[80vh] px-4">
-      <Card className="w-full max-w-md border border-slate-200 shadow-sm p-6">
-        <CardHeader className="space-y-2 pb-8 text-center pt-4">
+    <div className="min-h-[100dvh] flex items-center justify-center px-4 py-6 sm:py-10 overflow-y-auto">
+      <Card className="w-full max-w-md border border-slate-200 shadow-sm p-4 sm:p-6">
+        <CardHeader className="space-y-2 pb-6 sm:pb-8 text-center pt-2 sm:pt-4">
           <CardTitle className="text-3xl font-bold tracking-tight">Anmelden</CardTitle>
           <CardDescription className="text-muted-foreground">
             Nutze dein @hgr-web.lernsax.de Konto
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleLogin}>
-          <CardContent className="space-y-6 pb-6">
+          <CardContent className="space-y-5 sm:space-y-6 pb-5 sm:pb-6">
             {error && (
               <div className="text-destructive text-sm p-3 rounded-md bg-destructive/10 text-center font-medium">
                 {error}
@@ -63,7 +63,7 @@ export default function LoginPage() {
                 placeholder="vorname.nachname@hgr-web.lernsax.de" 
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="bg-muted/30 border-slate-200 h-12 focus:bg-background transition-all"
+                className="bg-muted/30 border-slate-200 h-12 text-base focus:bg-background transition-all"
                 required 
               />
             </div>
@@ -75,12 +75,12 @@ export default function LoginPage() {
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="bg-muted/30 border-slate-200 h-12 focus:bg-background transition-all"
+                className="bg-muted/30 border-slate-200 h-12 text-base focus:bg-background transition-all"
                 required 
               />
             </div>
           </CardContent>
-          <CardFooter className="flex flex-col space-y-6 pt-2 pb-4">
+          <CardFooter className="flex flex-col space-y-5 sm:space-y-6 pt-2 pb-2 sm:pb-4">
             <Button type="submit" className="w-full h-12 text-base font-bold shadow-md active:scale-[0.98] transition-transform" disabled={loading}>
               {loading ? 'Anmeldung...' : 'Anmelden'}
             </Button>
