@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.7.3] - 2026-03-18
+- Build: Erneuter Versuch nach `RPC::DEADLINE_EXCEEDED`. Empfehlung: Indizes direkt über den Link in der Console erstellen.
+
 ## [0.7.2] - 2026-03-18
 - Build: Erneuter Versuch des Deployments nach `RPC::DEADLINE_EXCEEDED` im vorherigen Lauf
 
