@@ -63,7 +63,8 @@ export function TodoList({ todos, canManage = false }: TodoListProps) {
           ) : (
             todos.map((todo) => {
               const isAssignedToMe = todo.assigned_to_user === user?.uid
-              const isAssignedToMyClass = todo.assigned_to_class && todo.assigned_to_class === profile?.class_name
+              const userCourse = profile?.planning_group || profile?.class_name
+              const isAssignedToMyClass = todo.assigned_to_class && todo.assigned_to_class === userCourse
 
               return (
                 <div key={todo.id} className={`group flex items-start space-x-3 pb-3 border-b last:border-0 ${isAssignedToMe || isAssignedToMyClass ? 'bg-primary/5 -mx-2 px-2 rounded-lg border-b-0' : ''}`}>

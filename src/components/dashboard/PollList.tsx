@@ -12,15 +12,15 @@ import { useState } from 'react'
 interface PollListProps {
   polls: Poll[]
   userId: string
-  isApproved?: boolean
+  canVote?: boolean
 }
 
-export function PollList({ polls, userId, isApproved = false }: PollListProps) {
+export function PollList({ polls, userId, canVote = false }: PollListProps) {
   const router = useRouter()
   const [loading, setLoading] = useState<string | null>(null)
 
   const handleVote = async (pollId: string, optionId: string) => {
-    if (!userId || !isApproved) return
+    if (!userId || !canVote) return
     setLoading(optionId)
     
     try {
@@ -69,7 +69,7 @@ export function PollList({ polls, userId, isApproved = false }: PollListProps) {
                       <span className="font-medium">{percentage}%</span>
                     </div>
                     <Progress value={percentage} className={isSelected ? 'bg-primary/20' : ''} />
-                    {!userVote && userId && isApproved && (
+                    {!userVote && userId && canVote && (
                       <Button 
                         variant="outline" 
                         size="sm" 
@@ -88,12 +88,6 @@ export function PollList({ polls, userId, isApproved = false }: PollListProps) {
                 <div className="bg-muted p-3 rounded-md mt-4 text-center">
                   <p className="text-xs text-muted-foreground mb-2">Du musst angemeldet sein, um abzustimmen.</p>
                   <Button variant="outline" size="sm" onClick={() => router.push('/login')}>Jetzt anmelden</Button>
-                </div>
-              )}
-
-              {userId && !isApproved && (
-                <div className="bg-destructive/10 p-3 rounded-md mt-4 text-center">
-                  <p className="text-xs text-destructive font-medium">Dein Account wartet noch auf Freischaltung durch einen Admin.</p>
                 </div>
               )}
 

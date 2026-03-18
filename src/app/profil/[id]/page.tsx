@@ -60,6 +60,7 @@ export default function PublicProfilePage({ params }: { params: Promise<{ id: st
   }
 
   const userInitial = targetProfile.full_name?.substring(0, 1).toUpperCase() || 'U'
+  const userCourse = targetProfile.planning_group || targetProfile.class_name
 
   const getRoleLabel = (role: UserRole) => {
     if (role === 'admin_main' || role === 'admin') return 'Main Admin'
@@ -93,9 +94,9 @@ export default function PublicProfilePage({ params }: { params: Promise<{ id: st
               <Badge variant={targetProfile.role.includes('admin') ? 'default' : 'secondary'} className="uppercase text-[10px]">
                 {getRoleLabel(targetProfile.role)}
               </Badge>
-              {targetProfile.class_name && (
+              {userCourse && (
                 <Badge variant="outline" className="uppercase text-[10px] font-bold">
-                  Kurs {targetProfile.class_name}
+                  Kurs {userCourse}
                 </Badge>
               )}
             </div>

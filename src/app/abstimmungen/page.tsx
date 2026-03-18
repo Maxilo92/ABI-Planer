@@ -60,7 +60,7 @@ export default function PollsPage() {
     profile?.role === 'admin' ||
     profile?.role === 'admin_main' ||
     profile?.role === 'admin_co'
-  const isApproved = profile?.is_approved || false
+  const canVote = !!user
 
   return (
     <div className="space-y-6">
@@ -84,7 +84,7 @@ export default function PollsPage() {
             </CardContent>
           </Card>
         ) : (
-          <PollList polls={polls} userId={user?.uid || ''} isApproved={isApproved} />
+          <PollList polls={polls} userId={user?.uid || ''} canVote={canVote} />
         )}
       </div>
     </div>
