@@ -1,5 +1,36 @@
 # Changelog
 
+## [0.15.8] - 2026-03-18
+- Feature: **Dark Mode** implementiert. Nutzer können nun zwischen einem hellen, einem dunklen und dem System-Theme wechseln.
+- UX: Der Theme-Switcher wurde in der Navbar (Desktop & Mobile) platziert.
+
+## [0.15.7] - 2026-03-18
+- Feature: **Feedback & Feature-Request System** implementiert.
+  - Alle angemeldeten Nutzer können über einen Button in der Navbar detailliertes Feedback (Bug, Feature-Wunsch, Sonstiges) einreichen.
+  - Admins erhalten eine neue, geschützte Seite (`/admin/feedback`) zur Verwaltung aller Einreichungen.
+  - Admins können den Status des Feedbacks ändern (Neu, In Arbeit, Umgesetzt, Abgelehnt) oder es löschen.
+- Security: Firestore Rules für die neue `feedback`-Collection hinzugefügt.
+
+## [0.15.6] - 2026-03-18
+- Feature: **Zielgerichtete Aufgaben (Todos)**. Aufgaben können nun spezifischen Personen oder Kursen zugewiesen werden.
+- UX: **Highlights für Zuweisungen**. Nutzer sehen sofort, welche Aufgaben direkt an sie oder ihren Kurs gerichtet sind ("An Dich" / "Dein Kurs" Badges).
+- UX: **News-Indikator**. Neue News, die der Nutzer noch nicht gesehen hat, werden auf dem Dashboard mit einem pulsierenden "NEU"-Badge markiert.
+
+## [0.15.5] - 2026-03-18
+- Feature: **Nutzergruppen-spezifisches Dashboard** implementiert. Die Reihenfolge der Dashboard-Elemente passt sich nun automatisch der Nutzerrolle an:
+  - **Gäste (nicht eingeloggt)**: Fokus auf News und Updates.
+  - **Schüler (Viewer)**: Fokus auf Abstimmungen und das Klassen-Leaderboard.
+  - **Planer/Admins**: Fokus auf Finanzstatus und offene Aufgaben (Todos).
+- Feature: Integration der **Umfragen (Polls)** direkt auf dem Dashboard.
+
+## [0.15.4] - 2026-03-18
+- Fix: Kritischer Build-Fehler behoben (TypeScript). Die `asChild` Prop wurde durch die korrekte `render` Prop für alle Base UI Komponenten (Dropdown-Trigger, Buttons) ersetzt.
+
+## [0.15.3] - 2026-03-18
+- Feature: **Dynamische Kursverwaltung** implementiert. Admins können nun die verfügbaren Kurse in den Einstellungen definieren (hinzufügen/entfernen).
+- Feature: **Kurs-Zuweisung für Admins**. Admins können nun in der Benutzerverwaltung die Kurse einzelner Nutzer nachträglich ändern oder neu zuweisen.
+- Refactor: Alle kursabhängigen Komponenten (Registrierung, Leaderboard, Finanzen) nutzen nun die dynamische Kursliste aus der Datenbank.
+
 ## [0.15.2] - 2026-03-18
 - Fix: Wiederherstellung der Admin-Erkennung durch Unterstützung der Legacy-Rolle `'admin'` in allen Berechtigungsprüfungen und Sicherheitsregeln.
 - Security: Firestore Rules aktualisiert, um die Legacy-Admin-Rolle mit denselben Rechten wie `admin_main` auszustatten.

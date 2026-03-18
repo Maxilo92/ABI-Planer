@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { LayoutDashboard, CheckSquare, Calendar, Euro, Megaphone, BarChart2, LogOut, Menu, X, ShieldCheck, User } from 'lucide-react'
+import { LayoutDashboard, CheckSquare, Calendar, Euro, Megaphone, BarChart2, LogOut, Menu, X, ShieldCheck, User, MessageSquareHeart } from 'lucide-react'
 import { useState } from 'react'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -10,6 +10,8 @@ import { signOut } from 'firebase/auth'
 import { useRouter, usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/context/AuthContext'
+import { AddFeedbackDialog } from '../modals/AddFeedbackDialog'
+import { ThemeToggle } from './ThemeToggle'
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
@@ -36,6 +38,7 @@ export function Navbar() {
 
   if (isAdmin) {
     navItems.push({ href: '/admin', label: 'Admin', icon: ShieldCheck })
+    navItems.push({ href: '/admin/feedback', label: 'Feedback', icon: MessageSquareHeart })
   }
 
   const isAuthPage = ['/login', '/register', '/waiting'].includes(pathname)
@@ -92,6 +95,8 @@ export function Navbar() {
                           </AvatarFallback>
                         </Avatar>
                       </Link>
+                      <ThemeToggle />
+                      <AddFeedbackDialog />
                       <Button variant="ghost" size="icon-sm" onClick={handleSignOut} title="Abmelden">
                         <LogOut className="h-4 w-4 text-muted-foreground hover:text-destructive transition-colors" />
                       </Button>
@@ -143,16 +148,19 @@ export function Navbar() {
           <div className="pt-4 pb-3 border-t">
             {profile ? (
               <>
-                <div className="flex items-center px-5 mb-3">
-                  <Avatar size="lg">
-                    <AvatarFallback className="bg-primary/10 text-primary font-bold">
-                      {userInitial}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="ml-3">
-                    <div className="text-base font-medium">{profile.full_name}</div>
-                    <div className="text-sm text-muted-foreground uppercase">{getRoleLabel(profile.role)}</div>
+                <div className="flex items-center justify-between px-5 mb-3">
+                  <div className='flex items-center'>
+                    <Avatar size="lg">
+                      <AvatarFallback className="bg-primary/10 text-primary font-bold">
+                        {userInitial}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="ml-3">
+                      <div className="text-base font-medium">{profile.full_name}</div>
+                      <div className="text-sm text-muted-foreground uppercase">{getRoleLabel(profile.role)}</div>
+                    </div>
                   </div>
+                  <ThemeToggle />
                 </div>
                 <div className="px-2 space-y-1">
                   <Link
@@ -163,6 +171,9 @@ export function Navbar() {
                     <User className="h-5 w-5" />
                     Profil
                   </Link>
+                  <div className="px-3 py-2">
+                    <AddFeedbackDialog />
+                  </div>
                   <button
                     onClick={handleSignOut}
                     className="w-full flex items-center gap-3 px-3 py-3 rounded-md text-base font-medium text-destructive hover:bg-destructive/10"
