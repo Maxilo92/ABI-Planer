@@ -29,6 +29,7 @@ export function Navbar() {
     { href: '/kalender', label: 'Kalender', icon: Calendar },
     { href: '/finanzen', label: 'Finanzen', icon: Euro },
     { href: '/news', label: 'News', icon: Megaphone },
+    { href: '/feedback', label: 'Feedback', icon: MessageSquareHeart },
     { href: '/abstimmungen', label: 'Umfragen', icon: BarChart2 },
     { href: '/einstellungen', label: 'Einstellungen', icon: Settings },
   ]
@@ -37,7 +38,7 @@ export function Navbar() {
 
   if (isAdmin) {
     navItems.push({ href: '/admin', label: 'Admin', icon: ShieldCheck })
-    navItems.push({ href: '/admin/feedback', label: 'Feedback', icon: MessageSquareHeart })
+    navItems.push({ href: '/admin/feedback', label: 'Feedback Admin', icon: MessageSquareHeart })
   }
 
   const isAuthPage = ['/login', '/register', '/waiting'].includes(pathname)
