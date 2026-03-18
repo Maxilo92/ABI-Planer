@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { db } from '@/lib/firebase'
-import { collection, query, orderBy, onSnapshot, doc, deleteDoc } from 'firebase/firestore'
+import { collection, query, orderBy, onSnapshot, doc, deleteDoc, updateDoc } from 'firebase/firestore'
 import { useAuth } from '@/context/AuthContext'
 import { AddNewsDialog } from '@/components/modals/AddNewsDialog'
 import { EditNewsDialog } from '@/components/modals/EditNewsDialog'
@@ -31,6 +31,22 @@ export default function NewsPage() {
 
     return () => unsubscribe()
   }, [])
+
+  useEffect(() => {
+    if (!authLoading && profile) {
+      const updateLastVisited = async () => {
+        try {
+          const userRef = doc(db, 'profiles', profile.id)
+          await updateDoc(userRef, {
+            [`last_visited.news`]: new Date().toISOString()
+          })
+        } catch (error) {
+          console.error('Error updating last_visited for news:', error)
+        }
+      }
+      updateLastVisited()
+    }
+  }, [profile, authLoading])
 
   if (authLoading || loading) {
     return (

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { db } from '@/lib/firebase'
-import { collection, query, orderBy, onSnapshot } from 'firebase/firestore'
+import { collection, query, orderBy, onSnapshot, doc, updateDoc } from 'firebase/firestore'
 import { useAuth } from '@/context/AuthContext'
 import { CalendarEvents } from '@/components/dashboard/CalendarEvents'
 import { AddEventDialog } from '@/components/modals/AddEventDialog'
@@ -23,6 +23,22 @@ export default function CalendarPage() {
 
     return () => unsubscribe()
   }, [])
+
+  useEffect(() => {
+    if (!authLoading && profile) {
+      const updateLastVisited = async () => {
+        try {
+          const userRef = doc(db, 'profiles', profile.id)
+          await updateDoc(userRef, {
+            [`last_visited.kalender`]: new Date().toISOString()
+          })
+        } catch (error) {
+          console.error('Error updating last_visited for kalender:', error)
+        }
+      }
+      updateLastVisited()
+    }
+  }, [profile, authLoading])
 
   if (authLoading || loading) {
     return (

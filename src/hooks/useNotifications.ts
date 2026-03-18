@@ -49,17 +49,19 @@ export function useNotifications() {
       setNotifications(prev => ({ ...prev, todos: hasActionItem }))
     })
 
-    // 2. Kalender: New events created in the last 24 hours.
+    // 2. Kalender: New events created since last visit or within 24h.
     const eventsQuery = query(collection(db, 'events'))
     const unsubscribeEvents = onSnapshot(eventsQuery, (snapshot) => {
       const twentyFourHoursAgo = new Date()
       twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24)
       
+      const lastVisited = profile.last_visited?.kalender ? new Date(profile.last_visited.kalender) : new Date(0)
+      
       const hasNewEvent = snapshot.docs.some(docSnap => {
         const data = docSnap.data() as Event
-        // We use created_at to mark it as "new" until it's 24h old
         const createdAt = data.created_at ? toDate(data.created_at) : new Date(0)
-        return createdAt >= twentyFourHoursAgo
+        // Mark as new if created after last visit AND (either within 24h OR never visited)
+        return createdAt > lastVisited && createdAt >= twentyFourHoursAgo
       })
       setNotifications(prev => ({ ...prev, kalender: hasNewEvent }))
     })
@@ -103,13 +105,18 @@ export function useNotifications() {
       })
     })
 
-    // 4. News: News the user has not yet viewed.
+    // 4. News: News the user has not yet viewed or visited since creation.
     const newsQuery = query(collection(db, 'news'))
     const unsubscribeNews = onSnapshot(newsQuery, (snapshot) => {
+      const lastVisited = profile.last_visited?.news ? new Date(profile.last_visited.news) : new Date(0)
+
       const hasUnviewedNews = snapshot.docs.some(docSnap => {
         const data = docSnap.data() as NewsEntry
         const viewedBy = data.viewed_by || []
-        return !viewedBy.includes(profile.id)
+        const createdAt = data.created_at ? toDate(data.created_at) : new Date(0)
+        
+        // Unviewed if: not in viewed_by list AND created after last category visit
+        return !viewedBy.includes(profile.id) && createdAt > lastVisited
       })
       setNotifications(prev => ({ ...prev, news: hasUnviewedNews }))
     })

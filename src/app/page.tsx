@@ -8,6 +8,7 @@ import { TodoList } from '@/components/dashboard/TodoList'
 import { CalendarEvents } from '@/components/dashboard/CalendarEvents'
 import { PollList } from '@/components/dashboard/PollList'
 import { ClassLeaderboard } from '@/components/dashboard/ClassLeaderboard'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { EditSettingsDialog } from '@/components/modals/EditSettingsDialog'
 import { useAuth } from '@/context/AuthContext'
 import { useDashboardSorting } from '@/hooks/useDashboardSorting'
@@ -140,41 +141,45 @@ export default function Dashboard() {
   }
 
   const NewsPreview = ({ items }: { items: any[] }) => (
-    <section className="bg-secondary/10 rounded-xl p-6 border flex flex-col h-full">
-      <h3 className="text-xl font-bold mb-4">Letzte Updates</h3>
-      <div className="space-y-4 flex-1">
-        {items && items.length > 0 ? (
-          items.map((item) => (
-            <Link
-              key={item.id}
-              href={`/news/${item.id}`}
-              onClick={(e) => e.stopPropagation()} // Prevent card navigation
-              className="block bg-background rounded-lg p-4 border shadow-sm transition-colors hover:bg-muted/30"
-            >
-              <div className="flex justify-between items-start mb-2">
-                <h4 className="font-semibold text-sm">{item.title}</h4>
-                <span className="text-[10px] text-muted-foreground bg-secondary px-2 py-0.5 rounded">
-                  {item.created_at ? toDate(item.created_at).toLocaleDateString('de-DE') : 'Neu'}
-                </span>
-              </div>
-              <p className="text-xs text-muted-foreground line-clamp-2">
-                {item.content}
-              </p>
-              <div className="mt-2 flex items-center justify-end text-[10px] font-medium text-primary">
-                <span className="inline-flex items-center gap-1">
-                  Zum Beitrag <ArrowRight className="h-3 w-3" />
-                </span>
-              </div>
-            </Link>
-          ))
-        ) : (
-          <p className="text-sm text-muted-foreground italic">Noch keine Neuigkeiten vorhanden.</p>
-        )}
-      </div>
-      <Link href="/news" onClick={(e) => e.stopPropagation()} className="mt-4 text-xs font-semibold text-center hover:underline text-muted-foreground">
-        Alle News ansehen
-      </Link>
-    </section>
+    <Card className="flex flex-col h-full border-none shadow-card">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-xl font-bold">Letzte Updates</CardTitle>
+      </CardHeader>
+      <CardContent className="flex-1">
+        <div className="space-y-4">
+          {items && items.length > 0 ? (
+            items.map((item) => (
+              <Link
+                key={item.id}
+                href={`/news/${item.id}`}
+                onClick={(e) => e.stopPropagation()} // Prevent card navigation
+                className="block bg-background rounded-xl p-4 border border-border/40 shadow-subtle transition-all hover:border-primary/20 hover:shadow-md active:scale-[0.98]"
+              >
+                <div className="flex justify-between items-start mb-2">
+                  <h4 className="font-semibold text-sm">{item.title}</h4>
+                  <span className="text-[10px] text-muted-foreground bg-secondary px-2 py-0.5 rounded">
+                    {item.created_at ? toDate(item.created_at).toLocaleDateString('de-DE') : 'Neu'}
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground line-clamp-2">
+                  {item.content}
+                </p>
+                <div className="mt-2 flex items-center justify-end text-[10px] font-medium text-primary">
+                  <span className="inline-flex items-center gap-1">
+                    Zum Beitrag <ArrowRight className="h-3 w-3" />
+                  </span>
+                </div>
+              </Link>
+            ))
+          ) : (
+            <p className="text-sm text-muted-foreground italic">Noch keine Neuigkeiten vorhanden.</p>
+          )}
+        </div>
+        <Link href="/news" onClick={(e) => e.stopPropagation()} className="block mt-6 text-xs font-semibold text-center hover:underline text-muted-foreground">
+          Alle News ansehen
+        </Link>
+      </CardContent>
+    </Card>
   )
 
   const renderComponent = (key: DashboardComponentKey) => {

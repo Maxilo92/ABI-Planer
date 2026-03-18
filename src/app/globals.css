@@ -34,6 +34,9 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-sm: calc(var(--radius) - 4px);
 
+  --shadow-subtle: var(--shadow-subtle-var);
+  --shadow-card: var(--shadow-card-var);
+
   --animate-accordion-down: accordion-down 0.2s ease-out;
   --animate-accordion-up: accordion-up 0.2s ease-out;
 
@@ -49,7 +52,8 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
+    /* Slightly off-white background for better contrast with white cards */
+    --background: 210 20% 98%;
     --foreground: 222.2 84% 4.9%;
 
     --card: 0 0% 100%;
@@ -75,11 +79,16 @@
     --success: 142 71% 45%;
     --info: 217 91% 60%;
 
+    /* Softer borders for white mode */
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
     --ring: 222.2 84% 4.9%;
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
+
+    /* Subtle shadows for depth in white mode */
+    --shadow-subtle-var: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow-card-var: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05), 0 0 0 1px rgb(0 0 0 / 0.02);
   }
 
   .dark {
@@ -112,6 +121,10 @@
     --border: 222 18% 28%;
     --input: 222 18% 26%;
     --ring: 212 80% 72%;
+
+    /* Near-invisible shadows in dark mode to keep it flat/clean */
+    --shadow-subtle-var: none;
+    --shadow-card-var: 0 0 0 1px rgb(255 255 255 / 0.05);
   }
 }
 
@@ -132,6 +145,11 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+  }
+
+  /* Global utility for cards/containers that should feel "elevated" */
+  .elevated-card {
+    @apply bg-card text-card-foreground shadow-card border-none;
   }
 }

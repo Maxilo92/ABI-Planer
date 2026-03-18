@@ -20,6 +20,7 @@ export interface Profile {
   timeout_reason?: string | null;
   is_approved: boolean;
   created_at: string;
+  last_visited?: Record<string, string> | null;
 }
 
 export interface Settings {
