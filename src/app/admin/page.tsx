@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
-import { MoreVertical, Check, Shield, User, Trash2, Crown, Users, Settings as SettingsIcon } from 'lucide-react'
+import { MoreVertical, ChevronDown, Check, Shield, User, Trash2, Crown, Users, Settings as SettingsIcon } from 'lucide-react'
 import { ResetPasswordDialog } from '@/components/modals/ResetPasswordDialog'
 import { EditSettingsDialog } from '@/components/modals/EditSettingsDialog'
 import { useAuth } from '@/context/AuthContext'
@@ -183,11 +183,14 @@ export default function AdminPage() {
                       </TableCell>
                       <TableCell>
                         <DropdownMenu>
-                          <DropdownMenuTrigger asChild disabled={!canEdit}>
-                            <Button variant="outline" size="sm" className="h-7 text-[10px] font-bold px-2">
-                              {p.class_name || '?'} <ChevronDown className="ml-1 h-3 w-3 opacity-50" />
-                            </Button>
-                          </DropdownMenuTrigger>
+                          <DropdownMenuTrigger
+                            disabled={!canEdit}
+                            render={
+                              <Button variant="outline" size="sm" className="h-7 text-[10px] font-bold px-2">
+                                {p.class_name || '?'} <ChevronDown className="ml-1 h-3 w-3 opacity-50" />
+                              </Button>
+                            }
+                          />
                           <DropdownMenuContent align="start">
                             <DropdownMenuLabel className="text-[10px] uppercase text-muted-foreground tracking-widest">Kurs wechseln</DropdownMenuLabel>
                             {(appSettings?.courses || ['12A', '12B', '12C', '12D']).map((course) => (
@@ -215,11 +218,13 @@ export default function AdminPage() {
                       </TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                              <MoreVertical className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
+                          <DropdownMenuTrigger
+                            render={
+                              <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            }
+                          />
                           <DropdownMenuContent align="end" className="w-56">
                             <DropdownMenuLabel className="text-[10px] uppercase text-muted-foreground tracking-widest">Aktionen</DropdownMenuLabel>
                             
