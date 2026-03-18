@@ -14,6 +14,10 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data;
     }
     
+    function isApproved() {
+      return isAuthenticated() && getProfile().is_approved == true;
+    }
+
     function isPlanner() {
       return isAuthenticated() && (
         getProfile().role == 'planner' || 
@@ -76,7 +80,7 @@ service cloud.firestore {
     
     match /feedback/{feedbackId} {
         allow read: if isAdmin();
-        allow create: if isAuthenticated();
+        allow create: if isApproved();
         allow update, delete: if isAdmin();
     }
   }

@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.15.9] - 2026-03-18
+- Security: Das Einreichen von Feedback ist nun nur noch für von Admins bestätigte Nutzer (`is_approved`) möglich, um die Qualität der Einreichungen zu sichern.
+
 ## [0.15.8] - 2026-03-18
 - Feature: **Dark Mode** implementiert. Nutzer können nun zwischen einem hellen, einem dunklen und dem System-Theme wechseln.
 - UX: Der Theme-Switcher wurde in der Navbar (Desktop & Mobile) platziert.
