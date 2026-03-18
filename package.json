@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test:regressions": "node scripts/regression-guard.mjs",
+    "check": "npm run test:regressions && npx tsc --noEmit && npm run build"
   },
   "devDependencies": {
     "@types/react": "19.2.14",

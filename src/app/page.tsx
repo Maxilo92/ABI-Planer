@@ -10,6 +10,8 @@ import { CalendarEvents } from '@/components/dashboard/CalendarEvents'
 import { EditSettingsDialog } from '@/components/modals/EditSettingsDialog'
 import { useAuth } from '@/context/AuthContext'
 import { toDate } from '@/lib/utils'
+import Link from 'next/link'
+import { ArrowRight } from 'lucide-react'
 
 export default function Dashboard() {
   const { profile, loading: authLoading } = useAuth()
@@ -136,7 +138,11 @@ export default function Dashboard() {
         <div className="space-y-4">
           {news && news.length > 0 ? (
             news.map((item) => (
-              <div key={item.id} className="bg-background rounded-lg p-4 border shadow-sm">
+              <Link
+                key={item.id}
+                href={`/news/${item.id}`}
+                className="block bg-background rounded-lg p-4 border shadow-sm transition-colors hover:bg-muted/30"
+              >
                 <div className="flex justify-between items-start mb-2">
                   <h4 className="font-semibold">{item.title}</h4>
                   <span className="text-[10px] text-muted-foreground bg-secondary px-2 py-0.5 rounded">
@@ -146,7 +152,12 @@ export default function Dashboard() {
                 <p className="text-sm text-muted-foreground line-clamp-2">
                   {item.content}
                 </p>
-              </div>
+                <div className="mt-3 flex items-center justify-end text-xs font-medium text-primary">
+                  <span className="inline-flex items-center gap-1">
+                    Zum Beitrag <ArrowRight className="h-3.5 w-3.5" />
+                  </span>
+                </div>
+              </Link>
             ))
           ) : (
             <p className="text-sm text-muted-foreground italic">Noch keine Neuigkeiten vorhanden.</p>

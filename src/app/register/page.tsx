@@ -135,6 +135,14 @@ export default function RegisterPage() {
   return (
     <div className="min-h-[100dvh] flex items-center justify-center px-4 py-6 sm:py-10 overflow-y-auto">
       <Card className="w-full max-w-md">
+        <div className="px-6 pt-6 pb-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="-ml-2"
+            render={<Link href="/">Zurück zum Dashboard</Link>}
+          />
+        </div>
         <CardHeader className="space-y-2">
           <CardTitle className="text-2xl font-bold text-center">Registrieren</CardTitle>
           <CardDescription className="text-center">

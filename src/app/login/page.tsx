@@ -41,6 +41,14 @@ export default function LoginPage() {
   return (
     <div className="min-h-[100dvh] flex items-center justify-center px-4 py-6 sm:py-10 overflow-y-auto">
       <Card className="w-full max-w-md border border-slate-200 shadow-sm p-4 sm:p-6">
+        <div className="pb-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="-ml-2"
+            render={<Link href="/">Zurück zum Dashboard</Link>}
+          />
+        </div>
         <CardHeader className="space-y-2 pb-6 sm:pb-8 text-center pt-2 sm:pt-4">
           <CardTitle className="text-3xl font-bold tracking-tight">Anmelden</CardTitle>
           <CardDescription className="text-muted-foreground">
