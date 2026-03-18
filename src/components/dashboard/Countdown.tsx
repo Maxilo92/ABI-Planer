@@ -26,9 +26,13 @@ export function Countdown({ targetDate, editButton }: CountdownProps) {
     : 'Noch kein Datum festgelegt'
 
   return (
-    <Card className="w-full relative">
-      {editButton && <div className="absolute top-2 right-2 z-10">{editButton}</div>}
-      <CardHeader className="pb-2 text-center">
+    <Card className="w-full">
+      <CardHeader className="pb-2">
+        {editButton && (
+          <div className="flex justify-end mb-1">
+            {editButton}
+          </div>
+        )}
         <CardTitle className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
           Countdown zum Ball
         </CardTitle>

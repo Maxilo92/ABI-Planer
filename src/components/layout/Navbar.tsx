@@ -51,146 +51,147 @@ export function Navbar() {
     return role
   }
 
+  const isActive = (href: string) => {
+    if (href === '/') return pathname === '/'
+    return pathname === href || pathname.startsWith(`${href}/`)
+  }
+
+  if (isAuthPage) {
+    return null
+  }
+
   return (
-    <nav className="bg-background border-b sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16">
-          <div className="flex items-center">
-            <Link href="/" className="flex-shrink-0 flex items-center gap-2">
-              <span className="text-xl font-bold">ABI Planer</span>
+    <>
+      {/* Mobile top bar */}
+      {!loading && (
+        <header className="md:hidden fixed top-0 left-0 right-0 z-50 h-16 border-b bg-background/95 backdrop-blur-sm">
+          <div className="h-full px-4 flex items-center justify-between">
+            <Link href="/" className="font-extrabold text-xl tracking-tight">
+              ABI Planer
             </Link>
+            <button
+              onClick={() => setIsOpen((v) => !v)}
+              className="inline-flex items-center justify-center p-2 rounded-md text-muted-foreground hover:bg-secondary"
+              aria-label="Navigation oeffnen"
+            >
+              {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            </button>
           </div>
+        </header>
+      )}
 
-          {!isAuthPage && !loading && (
-            <>
-              {/* Desktop Menu */}
-              <div className="hidden md:flex md:items-center md:space-x-1 lg:space-x-2">
-                {navItems.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className={`flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                      pathname === item.href ? 'bg-secondary text-primary' : 'hover:bg-secondary'
-                    }`}
-                  >
-                    <item.icon className="h-4 w-4" />
-                    {item.label}
-                  </Link>
-                ))}
-                
-                <div className="ml-2 pl-4 border-l flex items-center gap-2">
-                  {profile ? (
-                    <>
-                      <Link 
-                        href="/profil" 
-                        className="flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-secondary transition-colors"
-                      >
-                        <div className="flex flex-col text-right hidden lg:flex">
-                          <span className="text-sm font-semibold leading-none">{profile.full_name}</span>
-                          <span className="text-[10px] text-muted-foreground uppercase">{getRoleLabel(profile.role)}</span>
-                        </div>
-                        <Avatar size="default">
-                          <AvatarFallback className="bg-primary/10 text-primary font-bold">
-                            {userInitial}
-                          </AvatarFallback>
-                        </Avatar>
-                      </Link>
-                      <Button variant="ghost" size="icon-sm" onClick={handleSignOut} title="Abmelden">
-                        <LogOut className="h-4 w-4 text-muted-foreground hover:text-destructive transition-colors" />
-                      </Button>
-                    </>
-                  ) : (
-                    <Link 
-                      href="/login" 
-                      className={cn(buttonVariants({ size: "sm" }))}
-                    >
-                      Anmelden
-                    </Link>
+      {/* Mobile spacer so content is not hidden under fixed top bar */}
+      {!loading && <div className="md:hidden h-16" />}
+
+      {/* Mobile drawer */}
+      {!loading && isOpen && (
+        <div className="md:hidden fixed inset-0 z-40">
+          <button className="absolute inset-0 bg-black/50" onClick={() => setIsOpen(false)} aria-label="Navigation schliessen" />
+          <aside className="absolute left-0 top-16 bottom-0 w-80 max-w-[85vw] border-r bg-background p-4 overflow-y-auto">
+            <div className="space-y-1">
+              {navItems.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setIsOpen(false)}
+                  className={cn(
+                    'flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors',
+                    isActive(item.href) ? 'bg-secondary text-primary' : 'hover:bg-secondary'
                   )}
-                </div>
-              </div>
-
-              {/* Mobile Menu Button */}
-              <div className="md:hidden flex items-center">
-                <button
-                  onClick={() => setIsOpen(!isOpen)}
-                  className="inline-flex items-center justify-center p-2 rounded-md text-muted-foreground hover:bg-secondary focus:outline-none"
                 >
-                  {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-                </button>
-              </div>
-            </>
-          )}
-        </div>
-      </div>
+                  <item.icon className="h-4 w-4" />
+                  {item.label}
+                </Link>
+              ))}
+            </div>
 
-      {/* Mobile Menu */}
-      {!isAuthPage && isOpen && !loading && (
-        <div className="md:hidden border-t bg-background">
-          <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-            {navItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={() => setIsOpen(false)}
-                className={`flex items-center gap-3 px-3 py-3 rounded-md text-base font-medium ${
-                  pathname === item.href ? 'bg-secondary text-primary' : 'hover:bg-secondary'
-                }`}
-              >
-                <item.icon className="h-5 w-5" />
-                {item.label}
-              </Link>
-            ))}
-          </div>
-          
-          <div className="pt-4 pb-3 border-t">
-            {profile ? (
-              <>
-                <div className="flex items-center justify-between px-5 mb-3">
-                  <div className='flex items-center'>
-                    <Avatar size="lg">
-                      <AvatarFallback className="bg-primary/10 text-primary font-bold">
-                        {userInitial}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="ml-3">
-                      <div className="text-base font-medium">{profile.full_name}</div>
-                      <div className="text-sm text-muted-foreground uppercase">{getRoleLabel(profile.role)}</div>
-                    </div>
-                  </div>
-                </div>
-                <div className="px-2 space-y-1">
+            <div className="mt-6 pt-4 border-t space-y-2">
+              {profile ? (
+                <>
                   <Link
                     href="/profil"
                     onClick={() => setIsOpen(false)}
-                    className="flex items-center gap-3 px-3 py-3 rounded-md text-base font-medium hover:bg-secondary"
+                    className="flex items-center gap-3 rounded-md px-3 py-2.5 hover:bg-secondary"
                   >
-                    <User className="h-5 w-5" />
-                    Profil
+                    <Avatar size="default">
+                      <AvatarFallback className="bg-primary/10 text-primary font-bold">{userInitial}</AvatarFallback>
+                    </Avatar>
+                    <div className="min-w-0">
+                      <div className="font-semibold leading-none truncate">{profile.full_name}</div>
+                      <div className="text-xs text-muted-foreground uppercase mt-1">{getRoleLabel(profile.role)}</div>
+                    </div>
                   </Link>
-                  <button
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start gap-3 text-destructive hover:bg-destructive/10"
                     onClick={handleSignOut}
-                    className="w-full flex items-center gap-3 px-3 py-3 rounded-md text-base font-medium text-destructive hover:bg-destructive/10"
                   >
-                    <LogOut className="h-5 w-5" />
+                    <LogOut className="h-4 w-4" />
                     Abmelden
-                  </button>
-                </div>
-              </>
-            ) : (
-              <div className="px-5">
-                <Link 
-                  href="/login" 
-                  onClick={() => setIsOpen(false)}
-                  className={cn(buttonVariants({ variant: "default" }), "w-full justify-center")}
-                >
+                  </Button>
+                </>
+              ) : (
+                <Link href="/login" onClick={() => setIsOpen(false)} className={cn(buttonVariants({ variant: 'default' }), 'w-full justify-center')}>
                   Anmelden
                 </Link>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
+          </aside>
         </div>
       )}
-    </nav>
+
+      {/* Desktop sidebar */}
+      {!loading && (
+        <aside className="hidden md:flex fixed inset-y-0 left-0 z-40 w-72 border-r bg-background/95 backdrop-blur-sm flex-col">
+          <div className="h-16 border-b px-5 flex items-center">
+            <Link href="/" className="font-extrabold text-2xl tracking-tight">
+              ABI Planer
+            </Link>
+          </div>
+
+          <nav className="flex-1 p-4 overflow-y-auto">
+            <div className="space-y-1">
+              {navItems.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    'flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors',
+                    isActive(item.href) ? 'bg-secondary text-primary' : 'hover:bg-secondary'
+                  )}
+                >
+                  <item.icon className="h-4 w-4" />
+                  {item.label}
+                </Link>
+              ))}
+            </div>
+          </nav>
+
+          <div className="p-4 border-t">
+            {profile ? (
+              <>
+                <Link href="/profil" className="flex items-center gap-3 rounded-md px-3 py-2.5 hover:bg-secondary transition-colors">
+                  <Avatar size="default">
+                    <AvatarFallback className="bg-primary/10 text-primary font-bold">{userInitial}</AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0">
+                    <div className="text-sm font-semibold truncate">{profile.full_name}</div>
+                    <div className="text-[10px] text-muted-foreground uppercase mt-0.5">{getRoleLabel(profile.role)}</div>
+                  </div>
+                </Link>
+                <Button variant="ghost" className="w-full justify-start gap-3 mt-2 text-destructive hover:bg-destructive/10" onClick={handleSignOut}>
+                  <LogOut className="h-4 w-4" />
+                  Abmelden
+                </Button>
+              </>
+            ) : (
+              <Link href="/login" className={cn(buttonVariants({ variant: 'default' }), 'w-full justify-center')}>
+                Anmelden
+              </Link>
+            )}
+          </div>
+        </aside>
+      )}
+    </>
   )
 }
