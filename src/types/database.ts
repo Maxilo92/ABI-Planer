@@ -33,6 +33,9 @@ export interface Todo {
   completed_at?: string;
   completed_by?: string;
   completed_by_name?: string;
+  assigned_to_user?: string;
+  assigned_to_user_name?: string;
+  assigned_to_class?: string;
 }
 
 export interface FinanceEntry {
@@ -91,4 +94,18 @@ export interface PollVote {
   user_name?: string;
   option_id: string;
   created_at: string;
+}
+
+export type FeedbackType = 'bug' | 'feature' | 'other';
+export type FeedbackStatus = 'new' | 'in_progress' | 'implemented' | 'rejected';
+
+export interface Feedback {
+  id: string;
+  title: string;
+  description: string;
+  type: FeedbackType;
+  status: FeedbackStatus;
+  created_at: string;
+  created_by: string;
+  created_by_name?: string;
 }

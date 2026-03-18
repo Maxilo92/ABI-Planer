@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.15.10] - 2026-03-18
+- Fix: Das Erstellen von News ist nun auch für von Admins bestätigte Nutzer (`is_approved`) möglich, nicht mehr nur für Planer/Admins.
+
 ## [0.15.9] - 2026-03-18
 - Security: Das Einreichen von Feedback ist nun nur noch für von Admins bestätigte Nutzer (`is_approved`) möglich, um die Qualität der Einreichungen zu sichern.
 

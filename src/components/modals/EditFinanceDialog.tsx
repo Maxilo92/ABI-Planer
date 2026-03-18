@@ -1,8 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { db } from '@/lib/firebase'
-import { doc, updateDoc } from 'firebase/firestore'
+import { doc, updateDoc, onSnapshot } from 'firebase/firestore'
 import { useRouter } from 'next/navigation'
 import { 
   Dialog, 
@@ -17,7 +17,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
-import { Pencil, ChevronDown } from 'lucide-react'
+import { Pencil, ChevronDown, Loader2 } from 'lucide-react'
 import { ClassName, FinanceEntry } from '@/types/database'
 import { toast } from 'sonner'
 
@@ -29,11 +29,24 @@ export function EditFinanceDialog({ entry }: EditFinanceDialogProps) {
   const [amount, setAmount] = useState(entry.amount.toString())
   const [description, setDescription] = useState(entry.description || '')
   const [responsibleClass, setResponsibleClass] = useState<ClassName | 'Allgemein'>(entry.responsible_class || 'Allgemein')
+  const [courses, setCourses] = useState<string[]>(['12A', '12B', '12C', '12D'])
   const [loading, setLoading] = useState(false)
+  const [loadingCourses, setLoadingCourses] = useState(true)
   const [open, setOpen] = useState(false)
   const router = useRouter()
 
-  const classes: (ClassName | 'Allgemein')[] = ['12A', '12B', '12C', '12D', 'Allgemein']
+  useEffect(() => {
+    const settingsRef = doc(db, 'settings', 'config')
+    const unsubscribe = onSnapshot(settingsRef, (doc) => {
+      if (doc.exists() && doc.data().courses) {
+        setCourses(doc.data().courses)
+      }
+      setLoadingCourses(false)
+    })
+    return () => unsubscribe()
+  }, [])
+
+  const dropdownClasses: (ClassName | 'Allgemein')[] = [...courses, 'Allgemein']
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -53,8 +66,9 @@ export function EditFinanceDialog({ entry }: EditFinanceDialogProps) {
     } catch (error) {
       console.error('Error updating finance entry:', error)
       toast.error('Fehler beim Aktualisieren.')
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   return (
@@ -100,19 +114,30 @@ export function EditFinanceDialog({ entry }: EditFinanceDialogProps) {
               <DropdownMenu>
                 <DropdownMenuTrigger
                   render={
-                    <Button variant="outline" className="w-full justify-between">
-                      {responsibleClass === 'Allgemein' ? 'Allgemein / Kein Kurs' : `Kurs ${responsibleClass}`}
-                      <ChevronDown className="h-4 w-4 opacity-50" />
+                    <Button variant="outline" className="w-full justify-between" disabled={loadingCourses}>
+                      {loadingCourses ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Lade Kurse...
+                        </>
+                      ) : (
+                        <>
+                          {responsibleClass === 'Allgemein' ? 'Allgemein / Kein Kurs' : `Kurs ${responsibleClass}`}
+                          <ChevronDown className="h-4 w-4 opacity-50" />
+                        </>
+                      )}
                     </Button>
                   }
                 />
-                <DropdownMenuContent className="w-[calc(100vw-4rem)] max-w-[350px]">
-                  {classes.map((c) => (
-                    <DropdownMenuItem key={c} onClick={() => setResponsibleClass(c)}>
-                      {c === 'Allgemein' ? 'Allgemein / Kein Kurs' : `Kurs ${c}`}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
+                {!loadingCourses && (
+                  <DropdownMenuContent className="w-[calc(100vw-4rem)] max-w-[350px]">
+                    {dropdownClasses.map((c) => (
+                      <DropdownMenuItem key={c} onClick={() => setResponsibleClass(c)}>
+                        {c === 'Allgemein' ? 'Allgemein / Kein Kurs' : `Kurs ${c}`}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                )}
               </DropdownMenu>
             </div>
           </div>

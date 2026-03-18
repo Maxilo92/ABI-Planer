@@ -42,32 +42,27 @@ export default function RegisterPage() {
         setError('Bitte gib deinen vollständigen Namen ein.')
         return false
       }
-
+    }
+    if (targetStep === 2) {
       if (!email.trim()) {
         setError('Bitte gib deine E-Mail ein.')
         return false
       }
-
       if (!email.toLowerCase().endsWith('@hgr-web.lernsax.de')) {
         setError('Bitte verwende deine offizielle @hgr-web.lernsax.de E-Mail Adresse.')
         return false
       }
-    }
-
-    if (targetStep === 2) {
-      if (!courseName) {
-        setError('Bitte wähle deinen Kurs aus.')
-        return false
-      }
-    }
-
-    if (targetStep === 3) {
       if (!password || password.length < 6) {
         setError('Bitte wähle ein Passwort mit mindestens 6 Zeichen.')
         return false
       }
     }
-
+    if (targetStep === 3) {
+      if (!courseName) {
+        setError('Bitte wähle deinen Kurs aus.')
+        return false
+      }
+    }
     return true
   }
 
@@ -179,6 +174,11 @@ export default function RegisterPage() {
                     required 
                   />
                 </div>
+              </div>
+            )}
+
+            {step === 2 && (
+              <div className="space-y-6">
                 <div className="space-y-2">
                   <Label htmlFor="email" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Lernsax E-Mail</Label>
                   <Input 
@@ -191,10 +191,22 @@ export default function RegisterPage() {
                     required 
                   />
                 </div>
+                <div className="space-y-2">
+                  <Label htmlFor="password" title="Passwort" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Passwort</Label>
+                  <Input 
+                    id="password" 
+                    type="password" 
+                    placeholder="Mindestens 6 Zeichen"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="bg-muted/30 border-slate-200 h-12 focus:bg-background transition-all"
+                    required 
+                  />
+                </div>
               </div>
             )}
 
-            {step === 2 && (
+            {step === 3 && (
               <div className="space-y-4">
                 <p className="text-sm text-muted-foreground">Wähle deinen Kurs, damit du den richtigen Bereichen zugeordnet wirst.</p>
                 <div className="space-y-2">
@@ -228,27 +240,10 @@ export default function RegisterPage() {
                     )}
                   </DropdownMenu>
                 </div>
-              </div>
-            )}
-
-            {step === 3 && (
-              <div className="space-y-6">
-                <div className="rounded-lg border bg-muted/20 p-3 text-sm">
+                <div className="rounded-lg border bg-muted/20 p-3 text-sm mt-4">
                   <p><span className="font-semibold">Name:</span> {fullName || '—'}</p>
                   <p><span className="font-semibold">E-Mail:</span> {email || '—'}</p>
                   <p><span className="font-semibold">Kurs:</span> {courseName ? `Kurs ${courseName}` : '—'}</p>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="password" title="Passwort" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Passwort</Label>
-                  <Input 
-                    id="password" 
-                    type="password" 
-                    placeholder="Mindestens 6 Zeichen"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="bg-muted/30 border-slate-200 h-12 focus:bg-background transition-all"
-                    required 
-                  />
                 </div>
               </div>
             )}

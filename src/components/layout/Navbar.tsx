@@ -185,9 +185,9 @@ export function Navbar() {
                 </Button>
               </>
             ) : (
-              <Link href="/login" className={cn(buttonVariants({ variant: 'default' }), 'w-full justify-center')}>
-                Anmelden
-              </Link>
+                <Link href="/login" className={cn(buttonVariants({ variant: 'default' }), 'w-full justify-center')}>
+                  Anmelden
+                </Link>
             )}
           </div>
         </aside>
