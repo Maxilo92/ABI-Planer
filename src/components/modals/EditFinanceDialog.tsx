@@ -59,11 +59,13 @@ export function EditFinanceDialog({ entry }: EditFinanceDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary">
-          <Pencil className="h-4 w-4" />
-        </Button>
-      </DialogTrigger>
+      <DialogTrigger
+        render={
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary">
+            <Pencil className="h-4 w-4" />
+          </Button>
+        }
+      />
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Einnahme bearbeiten</DialogTitle>
@@ -96,12 +98,14 @@ export function EditFinanceDialog({ entry }: EditFinanceDialogProps) {
             <div className="space-y-2">
               <Label>Verantwortliche Klasse</Label>
               <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="w-full justify-between">
-                    {responsibleClass === 'Allgemein' ? 'Allgemein / Keine Klasse' : `Klasse ${responsibleClass}`}
-                    <ChevronDown className="h-4 w-4 opacity-50" />
-                  </Button>
-                </DropdownMenuTrigger>
+                <DropdownMenuTrigger
+                  render={
+                    <Button variant="outline" className="w-full justify-between">
+                      {responsibleClass === 'Allgemein' ? 'Allgemein / Keine Klasse' : `Klasse ${responsibleClass}`}
+                      <ChevronDown className="h-4 w-4 opacity-50" />
+                    </Button>
+                  }
+                />
                 <DropdownMenuContent className="w-[calc(100vw-4rem)] max-w-[350px]">
                   {classes.map((c) => (
                     <DropdownMenuItem key={c} onClick={() => setResponsibleClass(c)}>

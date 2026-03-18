@@ -51,11 +51,13 @@ export function EditEventDialog({ event }: EditEventDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary">
-          <Pencil className="h-4 w-4" />
-        </Button>
-      </DialogTrigger>
+      <DialogTrigger
+        render={
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary">
+            <Pencil className="h-4 w-4" />
+          </Button>
+        }
+      />
       <DialogContent className="sm:max-w-[425px]">
         <form onSubmit={handleSubmit}>
           <DialogHeader>

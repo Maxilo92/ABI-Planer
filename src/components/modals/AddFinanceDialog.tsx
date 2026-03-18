@@ -61,11 +61,13 @@ export function AddFinanceDialog() {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button size="sm" className="gap-2">
-          <Plus className="h-4 w-4" /> Einnahme erfassen
-        </Button>
-      </DialogTrigger>
+      <DialogTrigger
+        render={
+          <Button size="sm" className="gap-2">
+            <Plus className="h-4 w-4" /> Einnahme erfassen
+          </Button>
+        }
+      />
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Einnahme hinzufügen</DialogTitle>
@@ -100,12 +102,14 @@ export function AddFinanceDialog() {
             <div className="space-y-2">
               <Label>Verantwortliche Klasse</Label>
               <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="w-full justify-between">
-                    {responsibleClass === 'Allgemein' ? 'Allgemein / Keine Klasse' : `Klasse ${responsibleClass}`}
-                    <ChevronDown className="h-4 w-4 opacity-50" />
-                  </Button>
-                </DropdownMenuTrigger>
+                <DropdownMenuTrigger
+                  render={
+                    <Button variant="outline" className="w-full justify-between">
+                      {responsibleClass === 'Allgemein' ? 'Allgemein / Keine Klasse' : `Klasse ${responsibleClass}`}
+                      <ChevronDown className="h-4 w-4 opacity-50" />
+                    </Button>
+                  }
+                />
                 <DropdownMenuContent className="w-[calc(100vw-4rem)] max-w-[350px]">
                   {classes.map((c) => (
                     <DropdownMenuItem key={c} onClick={() => setResponsibleClass(c)}>

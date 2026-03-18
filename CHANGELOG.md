@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.14.1] - 2026-03-18
+- Refactor: Vollständige Migration aller verbleibenden `asChild` Props auf die `render`-Prop in allen Modal-Komponenten (`AddEvent`, `EditEvent`, `AddFinance`, `EditFinance`) zur Behebung von Firebase Build-Fehlern.
+
 ## [0.14.0] - 2026-03-18
 - Feature: Vollständige Edit- und Delete-Funktionalität für alle Planungsmodule (**News, Todos, Kalender, Finanzen**).
 - Feature: **News-Detailansicht** mit View-Count Tracking implementiert.
