@@ -231,3 +231,27 @@ export async function deleteNewsImageByPath(imagePath?: string | null): Promise<
     // Intentionally ignore failures for already removed files.
   }
 }
+
+export function getNewsUploadErrorMessage(error: unknown): string {
+  const defaultMessage = 'News konnte nicht veröffentlicht werden.'
+  if (!error || typeof error !== 'object') return defaultMessage
+
+  const maybeError = error as { code?: string; message?: string }
+  const code = maybeError.code || ''
+  const message = maybeError.message || ''
+  const lowerMessage = message.toLowerCase()
+
+  if (code.includes('storage/unauthorized')) {
+    return 'Upload nicht erlaubt. Bitte Storage-Regeln prüfen.'
+  }
+
+  if (code.includes('storage/retry-limit-exceeded')) {
+    return 'Upload abgebrochen (Zeitlimit). Bitte erneut versuchen.'
+  }
+
+  if (lowerMessage.includes('not found') || lowerMessage.includes('404')) {
+    return 'Storage-Bucket nicht gefunden. Bitte Firebase Storage initialisieren und NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET prüfen.'
+  }
+
+  return defaultMessage
+}

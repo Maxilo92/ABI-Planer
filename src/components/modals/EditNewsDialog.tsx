@@ -19,7 +19,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Pencil, ImagePlus } from 'lucide-react'
 import { NewsEntry } from '@/types/database'
 import { toast } from 'sonner'
-import { deleteNewsImageByPath, uploadNewsImage, validateNewsImageFile } from '@/lib/newsImageUpload'
+import { deleteNewsImageByPath, getNewsUploadErrorMessage, uploadNewsImage, validateNewsImageFile } from '@/lib/newsImageUpload'
 import { useAuth } from '@/context/AuthContext'
 import { NewsImageCropper } from '@/components/modals/NewsImageCropper'
 
@@ -126,7 +126,7 @@ export function EditNewsDialog({ news }: EditNewsDialogProps) {
       setOpen(false)
     } catch (error) {
       console.error('Error updating news:', error)
-      toast.error('Fehler beim Aktualisieren.')
+      toast.error(getNewsUploadErrorMessage(error))
     }
     setLoading(false)
   }

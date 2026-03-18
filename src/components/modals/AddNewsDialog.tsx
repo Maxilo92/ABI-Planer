@@ -19,7 +19,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Plus, ImagePlus } from 'lucide-react'
 import { toast } from 'sonner'
-import { uploadNewsImage, validateNewsImageFile } from '@/lib/newsImageUpload'
+import { getNewsUploadErrorMessage, uploadNewsImage, validateNewsImageFile } from '@/lib/newsImageUpload'
 import { NewsImageCropper } from '@/components/modals/NewsImageCropper'
 
 export function AddNewsDialog() {
@@ -126,7 +126,7 @@ export function AddNewsDialog() {
         toast.success('News-Beitrag veröffentlicht.')
       } catch (error) {
         console.error('Error adding news:', error)
-        toast.error('News konnte nicht veröffentlicht werden.')
+        toast.error(getNewsUploadErrorMessage(error))
       }
     }
     setLoading(false)
