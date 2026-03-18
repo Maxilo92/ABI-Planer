@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.14.4] - 2026-03-18
+- Fix: Firestore-Verbindungsfehler behoben ("Database '(default)' not found"). Die explizite Datenbank-ID `abi-data` wurde wiederhergestellt.
+
 ## [0.14.3] - 2026-03-18
 - Fix: TypeScript Build-Fehler behoben (Type 'null' is not assignable to type 'Firestore').
 
