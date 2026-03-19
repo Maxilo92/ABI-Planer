@@ -125,6 +125,13 @@ service cloud.firestore {
       allow create, update: if isAuthenticated() && request.auth.uid == request.resource.data.user_id;
       allow delete: if isAdmin() || (isAuthenticated() && resource.data.user_id == request.auth.uid);
     }
+
+    match /logs/{logId} {
+      allow read: if isAdmin();
+      // Übergang: Bis der serverseitige Logging-Endpunkt aktiv ist, dürfen freigeschaltete Nutzer Logs schreiben.
+      allow create: if isApproved();
+      allow update, delete: if false;
+    }
     
     match /feedback/{feedbackId} {
         allow read: if isAdmin();

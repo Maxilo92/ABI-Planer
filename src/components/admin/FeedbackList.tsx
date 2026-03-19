@@ -10,6 +10,8 @@ import { doc, updateDoc, deleteDoc } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import { toast } from 'sonner'
 import { Trash2, Bug, Lightbulb, HelpCircle, ChevronsRight, CheckCircle, XCircle, Download } from 'lucide-react'
+import { useAuth } from '@/context/AuthContext'
+import { logAction } from '@/lib/logging'
 
 type FeedbackStatus = 'new' | 'in_progress' | 'implemented' | 'rejected'
 type FeedbackType = 'bug' | 'feature' | 'other'
@@ -32,6 +34,7 @@ interface FeedbackListProps {
 }
 
 export function FeedbackList({ feedbackItems }: FeedbackListProps) {
+  const { user, profile } = useAuth()
   const [loading, setLoading] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<'all' | FeedbackStatus>('all')
@@ -57,9 +60,20 @@ export function FeedbackList({ feedbackItems }: FeedbackListProps) {
 
   const handleStatusChange = async (id: string, newStatus: FeedbackStatus) => {
     setLoading(id)
+    const target = feedbackItems.find((entry) => entry.id === id)
+
     try {
       const docRef = doc(db, 'feedback', id)
       await updateDoc(docRef, { status: newStatus })
+
+      if (user) {
+        await logAction('FEEDBACK_UPDATED', user.uid, profile?.full_name, {
+          feedback_id: id,
+          title: target?.title,
+          status: newStatus,
+        })
+      }
+
       toast.success('Status aktualisiert.')
     } catch (error) {
       console.error('Error updating status:', error)
@@ -72,9 +86,20 @@ export function FeedbackList({ feedbackItems }: FeedbackListProps) {
   const handleDelete = async (id: string) => {
     if (!window.confirm('Dieses Feedback wirklich löschen?')) return
     setLoading(id)
+    const target = feedbackItems.find((entry) => entry.id === id)
+
     try {
       const docRef = doc(db, 'feedback', id)
       await deleteDoc(docRef)
+
+      if (user) {
+        await logAction('FEEDBACK_DELETED', user.uid, profile?.full_name, {
+          feedback_id: id,
+          title: target?.title,
+          type: target?.type,
+        })
+      }
+
       toast.success('Feedback gelöscht.')
     } catch (error) {
       console.error('Error deleting feedback:', error)

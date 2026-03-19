@@ -16,6 +16,7 @@ import { AddFeedbackDialog } from '@/components/modals/AddFeedbackDialog'
 import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
 import { Profile } from '@/types/database'
+import { logAction } from '@/lib/logging'
 
 interface CourseRow {
   id: string
@@ -242,6 +243,14 @@ export default function SettingsPage() {
       } else {
         toast.success('Kurssystem aktualisiert.')
       }
+
+      if (user) {
+        await logAction('SETTINGS_UPDATED', user.uid, profile?.full_name, {
+          field: 'courses',
+          total_courses: courses.length,
+          renamed_courses: renamedCourses.map((row) => ({ before: row.before, after: row.after })),
+        })
+      }
     } catch (error) {
       console.error('Error saving courses:', error)
       toast.error('Kurse konnten nicht gespeichert werden.')
@@ -300,6 +309,14 @@ export default function SettingsPage() {
         }
       } else {
         toast.success('Planungsgruppen aktualisiert.')
+      }
+
+      if (user) {
+        await logAction('SETTINGS_UPDATED', user.uid, profile?.full_name, {
+          field: 'planning_groups',
+          total_groups: planning_groups.length,
+          renamed_groups: renamedGroups.map((row) => ({ before: row.before, after: row.after })),
+        })
       }
     } catch (error) {
       console.error('Error saving planning groups:', error)

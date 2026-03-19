@@ -17,6 +17,7 @@ import { auth, db } from '@/lib/firebase'
 import { deleteUser, sendPasswordResetEmail, updateProfile } from 'firebase/auth'
 import { doc, deleteDoc, setDoc, updateDoc, getDoc } from 'firebase/firestore'
 import { toast } from 'sonner'
+import { logAction } from '@/lib/logging'
 
 export default function ProfilePage() {
   const { user, profile, loading } = useAuth()
@@ -90,6 +91,12 @@ export default function ProfilePage() {
       setSavingName(true)
       await updateProfile(user, { displayName: normalizedName })
       await updateDoc(doc(db, 'profiles', user.uid), { full_name: normalizedName })
+
+      await logAction('PROFILE_UPDATED', user.uid, profile.full_name, {
+        field: 'full_name',
+        value: normalizedName,
+      })
+
       toast.success('Name aktualisiert.')
       router.refresh()
     } catch (error) {
@@ -111,6 +118,12 @@ export default function ProfilePage() {
     try {
       setSavingCourse(true)
       await updateDoc(doc(db, 'profiles', user.uid), { class_name: selectedCourse })
+
+      await logAction('PROFILE_UPDATED', user.uid, profile.full_name, {
+        field: 'class_name',
+        value: selectedCourse,
+      })
+
       toast.success('Kurs aktualisiert.')
       router.refresh()
     } catch (error) {
@@ -164,6 +177,10 @@ export default function ProfilePage() {
         await setDoc(profileRef, profileData)
         throw deleteAuthError
       }
+
+      await logAction('PROFILE_DELETED', user.uid, profile.full_name, {
+        self_delete: true,
+      })
 
       toast.success('Konto wurde gelöscht.')
       router.push('/register')

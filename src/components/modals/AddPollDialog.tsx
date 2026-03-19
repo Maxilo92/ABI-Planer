@@ -19,6 +19,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Plus, Trash2 } from 'lucide-react'
+import { logAction } from '@/lib/logging'
 
 export function AddPollDialog() {
   const [question, setQuestion] = useState('')
@@ -72,6 +73,13 @@ export function AddPollDialog() {
           })
         })
         await batch.commit()
+
+        await logAction('POLL_CREATED', user.uid, null, {
+          poll_id: pollRef.id,
+          question,
+          options_count: validOptions.length,
+          allow_vote_change: allowVoteChange,
+        })
 
         setQuestion('')
         setOptions(['', ''])

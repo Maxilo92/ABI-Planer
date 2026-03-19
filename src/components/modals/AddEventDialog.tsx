@@ -14,6 +14,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Plus, X, Users, Shield, Group } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { Profile, UserRole } from '@/types/database'
+import { logAction } from '@/lib/logging'
 
 const AVAILABLE_ROLES: { id: UserRole; label: string }[] = [
   { id: 'admin_main', label: 'Haupt-Admin' },
@@ -85,6 +86,15 @@ export function AddEventDialog() {
         mentioned_roles: mentionedRoles,
         mentioned_groups: mentionedGroups,
       })
+
+      await logAction('EVENT_CREATED', user.uid, null, {
+        title,
+        event_date: new Date(date).toISOString(),
+        mentions_users_count: mentionedUserIds.length,
+        mentions_roles_count: mentionedRoles.length,
+        mentions_groups_count: mentionedGroups.length,
+      })
+
       setOpen(false)
       setTitle('')
       setDescription('')

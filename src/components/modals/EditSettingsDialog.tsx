@@ -18,6 +18,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Settings as SettingsIcon } from 'lucide-react'
 import { format } from 'date-fns'
+import { useAuth } from '@/context/AuthContext'
+import { logAction } from '@/lib/logging'
 
 interface EditSettingsDialogProps {
   currentDate: string
@@ -25,6 +27,7 @@ interface EditSettingsDialogProps {
 }
 
 export function EditSettingsDialog({ currentDate, currentGoal }: EditSettingsDialogProps) {
+  const { user, profile } = useAuth()
   // Format the date for the datetime-local input (YYYY-MM-DDTHH:MM)
   const initialDate = currentDate ? format(new Date(currentDate), "yyyy-MM-dd'T'HH:mm") : ''
   
@@ -43,6 +46,15 @@ export function EditSettingsDialog({ currentDate, currentGoal }: EditSettingsDia
         ball_date: new Date(date).toISOString(),
         funding_goal: parseFloat(goal),
       }, { merge: true })
+
+      if (user) {
+        await logAction('SETTINGS_UPDATED', user.uid, profile?.full_name, {
+          fields: ['ball_date', 'funding_goal'],
+          ball_date: new Date(date).toISOString(),
+          funding_goal: parseFloat(goal),
+          source: 'edit-settings-dialog',
+        })
+      }
 
       setOpen(false)
       router.refresh()

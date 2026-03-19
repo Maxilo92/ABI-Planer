@@ -63,6 +63,14 @@ export default function FinancePage() {
     if (!isPlanner) return
     try {
       await setDoc(doc(db, 'settings', 'config'), { expected_ticket_sales: value }, { merge: true })
+
+      if (user) {
+        await logAction('SETTINGS_UPDATED', user.uid, profile?.full_name, {
+          field: 'expected_ticket_sales',
+          value,
+          source: 'finanzen',
+        })
+      }
     } catch (error) {
       console.error('Error updating expected ticket sales:', error)
     }

@@ -19,6 +19,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Plus, Users, User as UserIcon, Calendar } from 'lucide-react'
 import { Profile } from '@/types/database'
+import { logAction } from '@/lib/logging'
 
 interface AddTodoDialogProps {
   defaultGroup?: string
@@ -84,6 +85,15 @@ export function AddTodoDialog({ defaultGroup }: AddTodoDialogProps) {
           created_by_name: profile?.full_name || user.displayName || 'Unbekannt',
           status: 'open',
           created_at: serverTimestamp(),
+          assigned_to_user: assignedUser || null,
+          assigned_to_user_name: selectedUser?.full_name || null,
+          assigned_to_class: assignedClass || null,
+          assigned_to_group: assignedGroup || null,
+          deadline_date: deadline || null,
+        })
+
+        await logAction('TODO_CREATED', user.uid, profile?.full_name, {
+          title,
           assigned_to_user: assignedUser || null,
           assigned_to_user_name: selectedUser?.full_name || null,
           assigned_to_class: assignedClass || null,

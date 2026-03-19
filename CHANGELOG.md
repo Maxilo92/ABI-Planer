@@ -1,12 +1,17 @@
 # Changelog
 
+## [0.16.3] - 2026-03-19
+- Logging: **Aktionsabdeckung erweitert**. Nutzergetriggerte Create/Update/Delete-Aktionen wurden in den Kernmodulen konsistent mit `logAction` abgesichert.
+- Logging: **Audit-Details verbessert**. Logs enthalten jetzt mehr Kontext (z. B. betroffene IDs, Titel, Status, Herkunft), um Support und Moderation zu erleichtern.
+- Security/UX: **Admin-Logs stabilisiert**. Chunk-Laden und Rollen-Gating bleiben aktiv, sodass Berechtigungsfehler bei unberechtigtem Zugriff vermieden werden.
+
 ## [0.16.2] - 2026-03-19
-- Navigation: **Submenus ausgebaut**. Der Bereich **Gruppen** wurde in echte Untermenüs aufgeteilt (Mein Team, Alle Gruppen, Shared Hub).
-- Admin: **Logs entkoppelt**. Aktivitäts-Logs sind nun als eigenes Submenu mit eigener Route unter `/admin/logs` verfügbar, getrennt von der Benutzerverwaltung.
-- UX: **Mobile-First Tab-Handling**. Gruppen-Unteransichten sind nun URL-gesteuert, sodass Untermenü-Links direkt die passende Ansicht öffnen.
-- UI: **Überdimensionierte Toggles verkleinert**. Tab- und Aktionsflächen auf der Gruppenseite wurden auf kompakte, touch-freundliche Größen angepasst.
-- Responsive: **Tablet/Phone Layout verbessert**. Grid-Breakpoints und Komponentenbreiten wurden so angepasst, dass verfügbarer Platz besser genutzt wird.
-- Core UI: **Dialog/Popover viewport-sicher**. Globale Komponenten wurden gegen Overflow auf kleinen Displays abgesichert.
+- Admin: **Logs in Chunks**. Die Logs-Seite lädt jetzt paginiert mit Nachladen beim Scrollen und reduziert so DB- sowie UI-Last deutlich.
+- Admin: **Permission-Hotfix**. Der Logs-Listener startet nur noch für berechtigte Nutzer, wodurch `permission-denied`-Fehler bei Redirects vermieden werden.
+- Gruppen: **Untermenüs neu aufgebaut**. Die verschachtelte Struktur wurde entfernt und in drei klare Bereiche neu organisiert: Mein Team, Alle Gruppen, Shared Hub.
+- Gruppen: **Duplikate entfernt**. Die doppelte Mitgliederzuordnung wurde in eine zentrale Ansicht zusammengeführt.
+- UI: **Beta-Kennzeichnung**. Dashboard, Gruppen und Admin-Logs sind jetzt in Navigation und Seitentitel mit `Beta` markiert.
+- Build: **Versionssync stabilisiert**. `VERSION` und `package.json` werden vor dem Build automatisch synchronisiert (`scripts/sync-version.mjs`).
 
 ## [0.16.1] - 2026-03-19
 - UI: **Kurs-Ranking** (ehemals Kurswettstreit) optisch verfeinert und Clipping-Fehler in der Kachel-Ansicht behoben.

@@ -19,6 +19,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { MessageSquarePlus, Bug, Lightbulb, HelpCircle } from 'lucide-react'
 import { toast } from 'sonner'
+import { logAction } from '@/lib/logging'
 
 type FeedbackType = 'bug' | 'feature' | 'other'
 
@@ -47,6 +48,11 @@ export function AddFeedbackDialog() {
         created_at: new Date().toISOString(),
         created_by: user.uid,
         created_by_name: profile?.full_name || user.displayName || 'Unbekannt',
+      })
+
+      await logAction('FEEDBACK_CREATED', user.uid, profile?.full_name, {
+        title,
+        type,
       })
 
       toast.success('Danke für dein Feedback!')

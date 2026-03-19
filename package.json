@@ -1,10 +1,13 @@
 {
   "name": "abi-planer",
-  "version": "0.16.1",
+  "version": "0.16.3",
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "sync:version": "node scripts/sync-version.mjs",
+    "prebuild": "npm run sync:version",
     "build": "next build",
+    "build:clean": "rm -rf .next && npm run build",
     "start": "node .next/standalone/server.js",
     "lint": "next lint",
     "test:regressions": "node scripts/regression-guard.mjs",

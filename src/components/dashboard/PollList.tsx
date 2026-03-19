@@ -160,6 +160,14 @@ export function PollList({
       await deleteSubcollectionDocs(pollId, 'options')
       await deleteDoc(doc(db, 'polls', pollId))
 
+      const deletedPoll = polls.find((poll) => poll.id === pollId)
+      if (userId) {
+        await logAction('POLL_DELETED', userId, null, {
+          poll_id: pollId,
+          question: deletedPoll?.question,
+        })
+      }
+
       setVotesByPoll((prev) => {
         const next = { ...prev }
         delete next[pollId]

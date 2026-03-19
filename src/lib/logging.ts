@@ -3,10 +3,13 @@ import { db } from './firebase'
 
 export type LogActionType = 
   | 'FEEDBACK_CREATED'
+  | 'FEEDBACK_UPDATED'
+  | 'FEEDBACK_DELETED'
   | 'VOTE_CAST'
   | 'FINANCE_ADDED'
   | 'FINANCE_EDITED'
   | 'FINANCE_DELETED'
+  | 'TODO_DELETED'
   | 'TODO_CREATED'
   | 'TODO_EDITED'
   | 'TODO_COMPLETED'
@@ -21,9 +24,13 @@ export type LogActionType =
   | 'POLL_DELETED'
   | 'SETTINGS_UPDATED'
   | 'PROFILE_UPDATED'
+  | 'PROFILE_DELETED'
   | 'GROUP_MEMBER_ADDED'
   | 'GROUP_MEMBER_REMOVED'
   | 'GROUP_LEADER_ASSIGNED'
+  | 'GROUP_MESSAGE_CREATED'
+  | 'GROUP_MESSAGE_DELETED'
+  | 'GROUP_MESSAGE_PINNED'
 
 export interface LogEntry {
   action: LogActionType

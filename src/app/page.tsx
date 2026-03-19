@@ -9,6 +9,7 @@ import { CalendarEvents } from '@/components/dashboard/CalendarEvents'
 import { PollList } from '@/components/dashboard/PollList'
 import { ClassRanking } from '@/components/dashboard/ClassRanking'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
 import { EditSettingsDialog } from '@/components/modals/EditSettingsDialog'
 import { useAuth } from '@/context/AuthContext'
 import { useDashboardSorting } from '@/hooks/useDashboardSorting'
@@ -17,6 +18,7 @@ import { DashboardComponentKey, Poll, PollOption, PollVote, FinanceEntry } from 
 import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import { logAction } from '@/lib/logging'
 
 export default function Dashboard() {
   const router = useRouter()
@@ -124,6 +126,14 @@ export default function Dashboard() {
     if (!canManage) return
     try {
       await setDoc(doc(db, 'settings', 'config'), { expected_ticket_sales: value }, { merge: true })
+
+      if (user) {
+        await logAction('SETTINGS_UPDATED', user.uid, profile?.full_name, {
+          field: 'expected_ticket_sales',
+          value,
+          source: 'dashboard',
+        })
+      }
     } catch (error) {
       console.error('Error updating expected ticket sales:', error)
     }
@@ -289,7 +299,9 @@ export default function Dashboard() {
     | { type: 'poll'; poll: Poll }
     | { type: 'component'; key: Exclude<DashboardComponentKey, 'polls'> }
 
-  const dashboardItems = sortedComponents.reduce<DashboardItem[]>((items, key) => {
+  const sortedComponentKeys = sortedComponents.map((key) => key)
+
+  const dashboardItems = sortedComponentKeys.reduce<DashboardItem[]>((items, key) => {
     if (key === 'polls') {
       return [...items, ...unvotedPolls.map((poll) => ({ type: 'poll' as const, poll }))]
     }
@@ -306,6 +318,7 @@ export default function Dashboard() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <h1 className="text-3xl font-extrabold tracking-tight">ABI Planer 2027</h1>
+          <Badge variant="secondary" className="uppercase tracking-wide text-[10px]">Beta</Badge>
           {canManage && (
             <EditSettingsDialog 
               currentDate={settings?.ball_date} 

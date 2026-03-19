@@ -5,6 +5,7 @@ import { LayoutDashboard, CheckSquare, Calendar, Euro, Megaphone, BarChart2, Log
 import { useEffect, useState } from 'react'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Badge } from '@/components/ui/badge'
 import { auth } from '@/lib/firebase'
 import { signOut } from 'firebase/auth'
 import { useRouter, usePathname } from 'next/navigation'
@@ -18,6 +19,7 @@ interface NavItem {
   label: string
   icon: any
   notify?: boolean
+  isBeta?: boolean
   subItems?: NavItem[]
 }
 
@@ -60,7 +62,7 @@ export function Navbar() {
   const isAdmin = profile?.role === 'admin_main' || profile?.role === 'admin_co' || profile?.role === 'admin'
 
   const navItems: NavItem[] = [
-    { href: '/', label: 'Dashboard', icon: LayoutDashboard },
+    { href: '/', label: 'Dashboard', icon: LayoutDashboard, isBeta: true },
     { href: '/todos', label: 'Todos', icon: CheckSquare, notify: notifications.todos },
     { href: '/kalender', label: 'Kalender', icon: Calendar, notify: notifications.kalender },
     { href: '/finanzen', label: 'Finanzen', icon: Euro },
@@ -70,6 +72,7 @@ export function Navbar() {
       href: '/gruppen-root',
       label: 'Gruppen',
       icon: Users,
+      isBeta: true,
       subItems: [
         { href: '/gruppen?bereich=mein-team', label: 'Mein Team', icon: Users },
         { href: '/gruppen?bereich=alle-gruppen', label: 'Alle Gruppen', icon: Users },
@@ -87,7 +90,7 @@ export function Navbar() {
       icon: ShieldCheck,
       subItems: [
         { href: '/admin', label: 'Benutzer', icon: Users },
-        { href: '/admin/logs', label: 'Logs', icon: BarChart2 },
+        { href: '/admin/logs', label: 'Logs', icon: BarChart2, isBeta: true },
         { href: '/admin/feedback', label: 'Feedback Admin', icon: MessageSquareHeart },
       ]
     })
@@ -150,6 +153,11 @@ export function Navbar() {
                 )}
               </div>
               <span className="truncate">{item.label}</span>
+              {item.isBeta && (
+                <Badge variant="secondary" className="ml-1 px-1.5 py-0 text-[9px] uppercase tracking-wide">
+                  Beta
+                </Badge>
+              )}
             </div>
             {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
           </button>
@@ -169,6 +177,11 @@ export function Navbar() {
               )}
             </div>
             <span className="truncate">{item.label}</span>
+            {item.isBeta && (
+              <Badge variant="secondary" className="ml-1 px-1.5 py-0 text-[9px] uppercase tracking-wide">
+                Beta
+              </Badge>
+            )}
           </Link>
         )}
 
@@ -193,6 +206,11 @@ export function Navbar() {
               >
                 <subItem.icon className="h-3.5 w-3.5" />
                 <span className="truncate">{subItem.label}</span>
+                {subItem.isBeta && (
+                  <Badge variant="secondary" className="ml-1 px-1.5 py-0 text-[9px] uppercase tracking-wide">
+                    Beta
+                  </Badge>
+                )}
               </Link>
             ))}
           </div>

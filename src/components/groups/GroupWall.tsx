@@ -34,6 +34,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { logAction } from '@/lib/logging'
 
 interface GroupWallProps {
   groupName: string
@@ -103,6 +104,14 @@ export function GroupWall({ groupName, canManage = false, type = 'internal' }: G
         type: type,
         created_at: serverTimestamp(),
       })
+
+      await logAction('GROUP_MESSAGE_CREATED', user.uid, profile.full_name, {
+        group_name: groupName,
+        type,
+        target_group: targetGroup,
+        content_length: newMessage.trim().length,
+      })
+
       setNewMessage('')
       setTargetGroup(null)
     } catch (error) {
@@ -114,10 +123,22 @@ export function GroupWall({ groupName, canManage = false, type = 'internal' }: G
   }
 
   const handleDeleteMessage = async (messageId: string) => {
-    if (!canManage && messages.find(m => m.id === messageId)?.created_by !== user?.uid) return
+    const message = messages.find((m) => m.id === messageId)
+    if (!canManage && message?.created_by !== user?.uid) return
     
     try {
       await deleteDoc(doc(db, 'group_messages', messageId))
+
+      if (user) {
+        await logAction('GROUP_MESSAGE_DELETED', user.uid, profile?.full_name, {
+          message_id: messageId,
+          group_name: groupName,
+          type,
+          was_pinned: !!message?.pinned,
+          target_group: message?.target_group || null,
+        })
+      }
+
       toast.success('Nachricht gelöscht.')
     } catch (error) {
       console.error('Error deleting message:', error)
@@ -132,6 +153,16 @@ export function GroupWall({ groupName, canManage = false, type = 'internal' }: G
       await updateDoc(doc(db, 'group_messages', messageId), {
         pinned: !isPinned
       })
+
+      if (user) {
+        await logAction('GROUP_MESSAGE_PINNED', user.uid, profile?.full_name, {
+          message_id: messageId,
+          group_name: groupName,
+          type,
+          pinned: !isPinned,
+        })
+      }
+
       toast.success(isPinned ? 'Anheftung aufgehoben.' : 'Nachricht angeheftet.')
     } catch (error) {
       console.error('Error pinning message:', error)

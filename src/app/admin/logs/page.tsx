@@ -1,12 +1,13 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
-import { collection, onSnapshot, orderBy, query } from 'firebase/firestore'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { collection, getDocs, limit, orderBy, query, startAfter, type DocumentData, type QueryDocumentSnapshot } from 'firebase/firestore'
 import { Activity } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { db } from '@/lib/firebase'
 import { useAuth } from '@/context/AuthContext'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
@@ -14,6 +15,7 @@ import { toDate } from '@/lib/utils'
 import type { LogActionType, LogEntry } from '@/lib/logging'
 
 type AdminLog = LogEntry & { id: string }
+const LOGS_PAGE_SIZE = 40
 
 export default function AdminLogsPage() {
   const { profile, loading: authLoading } = useAuth()
@@ -23,6 +25,11 @@ export default function AdminLogsPage() {
   const [userFilter, setUserFilter] = useState('')
   const [detailsFilter, setDetailsFilter] = useState('')
   const [loading, setLoading] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const [hasMore, setHasMore] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
+  const [lastVisible, setLastVisible] = useState<QueryDocumentSnapshot<DocumentData> | null>(null)
+  const sentinelRef = useRef<HTMLDivElement | null>(null)
   const router = useRouter()
 
   const canManageUsers =
@@ -36,15 +43,105 @@ export default function AdminLogsPage() {
     }
   }, [profile, authLoading, canManageUsers, router])
 
-  useEffect(() => {
-    const q = query(collection(db, 'logs'), orderBy('timestamp', 'desc'))
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      setLogs(snapshot.docs.map((entryDoc) => ({ id: entryDoc.id, ...entryDoc.data() } as AdminLog)))
-      setLoading(false)
-    })
+  const fetchLogsChunk = useCallback(async (cursor: QueryDocumentSnapshot<DocumentData> | null) => {
+    const constraints = [orderBy('timestamp', 'desc'), limit(LOGS_PAGE_SIZE)]
+    const logsQuery = cursor
+      ? query(collection(db, 'logs'), ...constraints, startAfter(cursor))
+      : query(collection(db, 'logs'), ...constraints)
 
-    return () => unsubscribe()
+    const snapshot = await getDocs(logsQuery)
+    const chunk = snapshot.docs.map((entryDoc) => ({ id: entryDoc.id, ...entryDoc.data() } as AdminLog))
+    const nextCursor = snapshot.docs.length > 0 ? snapshot.docs[snapshot.docs.length - 1] : cursor
+
+    return {
+      chunk,
+      nextCursor,
+      hasNext: snapshot.docs.length === LOGS_PAGE_SIZE,
+    }
   }, [])
+
+  const loadInitial = useCallback(async () => {
+    setLoading(true)
+    setLoadError(null)
+    setLogs([])
+    setLastVisible(null)
+    setHasMore(true)
+
+    try {
+      const { chunk, nextCursor, hasNext } = await fetchLogsChunk(null)
+      setLogs(chunk)
+      setLastVisible(nextCursor)
+      setHasMore(hasNext)
+    } catch (error) {
+      console.error('Error loading admin logs:', error)
+      setLoadError('Logs konnten nicht geladen werden. Prüfe bitte die Firestore-Berechtigungen.')
+      setHasMore(false)
+    } finally {
+      setLoading(false)
+    }
+  }, [fetchLogsChunk])
+
+  const loadMore = useCallback(async () => {
+    if (loading || loadingMore || !hasMore || !lastVisible) return
+
+    setLoadingMore(true)
+    setLoadError(null)
+
+    try {
+      const { chunk, nextCursor, hasNext } = await fetchLogsChunk(lastVisible)
+      setLogs((previous) => {
+        const seen = new Set(previous.map((entry) => entry.id))
+        const merged = [...previous]
+        chunk.forEach((entry) => {
+          if (!seen.has(entry.id)) {
+            merged.push(entry)
+          }
+        })
+        return merged
+      })
+      setLastVisible(nextCursor)
+      setHasMore(hasNext)
+    } catch (error) {
+      console.error('Error loading more admin logs:', error)
+      setLoadError('Weitere Logs konnten nicht geladen werden.')
+    } finally {
+      setLoadingMore(false)
+    }
+  }, [fetchLogsChunk, hasMore, lastVisible, loading, loadingMore])
+
+  useEffect(() => {
+    if (authLoading) return
+
+    if (!profile || !canManageUsers) {
+      setLoading(false)
+      return
+    }
+
+    void loadInitial()
+  }, [authLoading, profile, canManageUsers, loadInitial])
+
+  useEffect(() => {
+    if (authLoading || !profile || !canManageUsers || !hasMore || loading) return
+
+    const sentinel = sentinelRef.current
+    if (!sentinel) return
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          void loadMore()
+        }
+      },
+      {
+        root: null,
+        rootMargin: '240px 0px',
+        threshold: 0,
+      }
+    )
+
+    observer.observe(sentinel)
+    return () => observer.disconnect()
+  }, [authLoading, profile, canManageUsers, hasMore, loading, loadMore])
 
   const availableActions = useMemo(() => {
     return Array.from(new Set(logs.map((entry) => entry.action))).sort()
@@ -114,7 +211,10 @@ export default function AdminLogsPage() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <h1 className="text-3xl font-bold tracking-tight">Admin Logs</h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-3xl font-bold tracking-tight">Admin Logs</h1>
+          <Badge variant="secondary" className="uppercase tracking-wide text-[10px]">Beta</Badge>
+        </div>
         <p className="text-muted-foreground text-sm">Nachvollziehbare Aktivitaeten fuer Moderation und Support</p>
       </div>
 
@@ -169,6 +269,12 @@ export default function AdminLogsPage() {
             <span>{filteredLogs.length} Eintraege gefunden</span>
             {filteredLogs.length > 0 && <span>Neuester Eintrag zuerst</span>}
           </div>
+
+          {loadError && (
+            <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
+              {loadError}
+            </div>
+          )}
 
           {filteredLogs.length === 0 ? (
             <div className="rounded-lg border border-dashed py-10 text-center text-sm text-muted-foreground">
@@ -226,6 +332,17 @@ export default function AdminLogsPage() {
                     ))}
                   </TableBody>
                 </Table>
+              </div>
+
+              <div className="flex flex-col items-center gap-3 pt-2">
+                {loadingMore && <p className="text-xs text-muted-foreground">Lade weitere Logs...</p>}
+                {!loadingMore && hasMore && (
+                  <Button variant="outline" size="sm" onClick={() => void loadMore()}>
+                    Mehr laden
+                  </Button>
+                )}
+                {!hasMore && <p className="text-xs text-muted-foreground">Ende der Logs erreicht.</p>}
+                <div ref={sentinelRef} className="h-1 w-full" aria-hidden="true" />
               </div>
             </>
           )}

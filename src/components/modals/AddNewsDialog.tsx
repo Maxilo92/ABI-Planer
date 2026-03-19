@@ -21,6 +21,7 @@ import { Plus, ImagePlus } from 'lucide-react'
 import { toast } from 'sonner'
 import { getNewsUploadErrorMessage, uploadNewsImage, validateNewsImageFile } from '@/lib/newsImageUpload'
 import { NewsImageCropper } from '@/components/modals/NewsImageCropper'
+import { logAction } from '@/lib/logging'
 
 export function AddNewsDialog() {
   const [title, setTitle] = useState('')
@@ -119,6 +120,11 @@ export function AddNewsDialog() {
           view_count: 0,
           created_at: serverTimestamp(),
           ...imagePayload,
+        })
+
+        await logAction('NEWS_CREATED', user.uid, profile?.full_name, {
+          title: trimmedTitle,
+          has_image: !!imagePayload.image_url,
         })
 
         resetForm()

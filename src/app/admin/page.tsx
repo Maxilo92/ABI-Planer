@@ -15,9 +15,10 @@ import { useAuth } from '@/context/AuthContext'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { toast } from 'sonner'
+import { logAction } from '@/lib/logging'
 
 export default function AdminPage() {
-  const { profile, loading: authLoading } = useAuth()
+  const { user, profile, loading: authLoading } = useAuth()
   const [profiles, setProfiles] = useState<Profile[]>([])
   const [courses, setCourses] = useState<string[]>([])
   const [planningGroups, setPlanningGroups] = useState<string[]>([])
@@ -100,6 +101,14 @@ export default function AdminPage() {
     try {
       const docRef = doc(db, 'profiles', id)
       await updateDoc(docRef, updates)
+
+      if (user) {
+        await logAction('PROFILE_UPDATED', user.uid, profile?.full_name, {
+          target_user_id: id,
+          target_user_name: target.full_name,
+          updates,
+        })
+      }
     } catch (err) {
       console.error('Error updating profile:', err)
     }
@@ -134,6 +143,13 @@ export default function AdminPage() {
     if (confirm('Bist du sicher, dass du diesen Nutzer löschen möchtest? (Löscht nur das Profil-Dokument, nicht das Auth-Konto)')) {
       try {
         await deleteDoc(doc(db, 'profiles', id))
+
+        if (user) {
+          await logAction('PROFILE_DELETED', user.uid, profile?.full_name, {
+            target_user_id: id,
+            target_user_name: target.full_name,
+          })
+        }
       } catch (err) {
         console.error('Error deleting profile:', err)
       }

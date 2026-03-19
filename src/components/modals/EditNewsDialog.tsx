@@ -22,6 +22,7 @@ import { toast } from 'sonner'
 import { deleteNewsImageByPath, getNewsUploadErrorMessage, uploadNewsImage, validateNewsImageFile } from '@/lib/newsImageUpload'
 import { useAuth } from '@/context/AuthContext'
 import { NewsImageCropper } from '@/components/modals/NewsImageCropper'
+import { logAction } from '@/lib/logging'
 
 interface EditNewsDialogProps {
   news: NewsEntry
@@ -121,6 +122,15 @@ export function EditNewsDialog({ news }: EditNewsDialogProps) {
       }
 
       await updateDoc(docRef, updates)
+
+      if (user) {
+        await logAction('NEWS_EDITED', user.uid, null, {
+          news_id: news.id,
+          title: trimmedTitle,
+          removed_image: removeCurrentImage,
+          replaced_image: !!imageFile,
+        })
+      }
 
       toast.success('News-Beitrag aktualisiert.')
       setOpen(false)

@@ -16,6 +16,7 @@ import { toDate } from '@/lib/utils'
 import { toast } from 'sonner'
 import Link from 'next/link'
 import { deleteNewsImageByPath } from '@/lib/newsImageUpload'
+import { logAction } from '@/lib/logging'
 
 export default function NewsPage() {
   const { profile, loading: authLoading } = useAuth()
@@ -73,6 +74,15 @@ export default function NewsPage() {
         await deleteNewsImageByPath(selectedNews.image_path)
       }
       await deleteDoc(doc(db, 'news', id))
+
+      if (profile?.id) {
+        await logAction('NEWS_DELETED', profile.id, profile.full_name, {
+          news_id: id,
+          title: selectedNews?.title,
+          had_image: !!selectedNews?.image_url,
+        })
+      }
+
       toast.success('Beitrag erfolgreich gelöscht.')
     } catch (err) {
       console.error('Error deleting news:', err)

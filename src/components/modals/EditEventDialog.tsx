@@ -17,6 +17,8 @@ import { format } from 'date-fns'
 import { toDate } from '@/lib/utils'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
+import { useAuth } from '@/context/AuthContext'
+import { logAction } from '@/lib/logging'
 
 interface EditEventDialogProps {
   event: Event
@@ -31,6 +33,7 @@ const AVAILABLE_ROLES: { id: UserRole; label: string }[] = [
 ]
 
 export function EditEventDialog({ event }: EditEventDialogProps) {
+  const { user, profile } = useAuth()
   const [open, setOpen] = useState(false)
   const [title, setTitle] = useState(event.title)
   const [description, setDescription] = useState(event.description || '')
@@ -90,6 +93,18 @@ export function EditEventDialog({ event }: EditEventDialogProps) {
         mentioned_roles: mentionedRoles,
         mentioned_groups: mentionedGroups,
       })
+
+      if (user) {
+        await logAction('EVENT_EDITED', user.uid, profile?.full_name, {
+          event_id: event.id,
+          title,
+          event_date: new Date(date).toISOString(),
+          mentions_users_count: mentionedUserIds.length,
+          mentions_roles_count: mentionedRoles.length,
+          mentions_groups_count: mentionedGroups.length,
+        })
+      }
+
       toast.success('Termin aktualisiert.')
       setOpen(false)
       router.refresh()

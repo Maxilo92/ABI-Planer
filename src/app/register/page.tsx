@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import Link from 'next/link'
+import { logAction } from '@/lib/logging'
 
 export default function RegisterPage() {
   const [step, setStep] = useState<1 | 2 | 3>(1)
@@ -129,6 +130,12 @@ export default function RegisterPage() {
         planning_group: null,
         is_approved: true, // Auto-approve for MVP
         created_at: new Date().toISOString(),
+      })
+
+      await logAction('PROFILE_UPDATED', user.uid, fullName, {
+        action: 'profile_created',
+        role: isFirstUser ? 'admin' : 'viewer',
+        class_name: selectedCourse,
       })
 
       router.push('/')

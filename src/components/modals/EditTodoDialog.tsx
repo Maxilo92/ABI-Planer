@@ -19,12 +19,15 @@ import { Label } from '@/components/ui/label'
 import { Pencil, Users, User as UserIcon, Calendar } from 'lucide-react'
 import { Todo, Profile } from '@/types/database'
 import { toast } from 'sonner'
+import { useAuth } from '@/context/AuthContext'
+import { logAction } from '@/lib/logging'
 
 interface EditTodoDialogProps {
   todo: Todo
 }
 
 export function EditTodoDialog({ todo }: EditTodoDialogProps) {
+  const { user, profile } = useAuth()
   const [title, setTitle] = useState(todo.title)
   const [assignedUser, setAssignedUser] = useState(todo.assigned_to_user || '')
   const [assignedClass, setAssignedClass] = useState(todo.assigned_to_class || '')
@@ -80,6 +83,18 @@ export function EditTodoDialog({ todo }: EditTodoDialogProps) {
         assigned_to_group: assignedGroup || null,
         deadline_date: deadline || null,
       })
+
+      if (user) {
+        await logAction('TODO_EDITED', user.uid, profile?.full_name, {
+          todo_id: todo.id,
+          title,
+          assigned_to_user: assignedUser || null,
+          assigned_to_user_name: selectedUser?.full_name || null,
+          assigned_to_class: assignedClass || null,
+          assigned_to_group: assignedGroup || null,
+          deadline_date: deadline || null,
+        })
+      }
 
       toast.success('Aufgabe aktualisiert.')
       setOpen(false)

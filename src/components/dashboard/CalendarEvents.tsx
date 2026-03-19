@@ -12,6 +12,8 @@ import { CalendarEventDetailsDialog } from '@/components/modals/CalendarEventDet
 import { db } from '@/lib/firebase'
 import { doc, deleteDoc } from 'firebase/firestore'
 import { toast } from 'sonner'
+import { useAuth } from '@/context/AuthContext'
+import { logAction } from '@/lib/logging'
 
 interface CalendarEventsProps {
   events: Event[]
@@ -26,11 +28,24 @@ export function CalendarEvents({
   maxItems,
   useScrollContainer = true,
 }: CalendarEventsProps) {
+  const { user, profile } = useAuth()
+
   const handleDelete = async (id: string) => {
     if (!window.confirm('Möchtest du diesen Termin wirklich löschen?')) return
 
+    const eventToDelete = events.find((entry) => entry.id === id)
+
     try {
       await deleteDoc(doc(db, 'events', id))
+
+      if (user) {
+        await logAction('EVENT_DELETED', user.uid, profile?.full_name, {
+          event_id: id,
+          title: eventToDelete?.title,
+          event_date: eventToDelete?.event_date,
+        })
+      }
+
       toast.success('Termin gelöscht.')
     } catch (err) {
       console.error('Error deleting event:', err)

@@ -14,6 +14,7 @@ import { toast } from 'sonner'
 import { EditTodoDialog } from '@/components/modals/EditTodoDialog'
 import { format, isBefore, startOfDay } from 'date-fns'
 import { de } from 'date-fns/locale'
+import { logAction } from '@/lib/logging'
 
 interface TodoListProps {
   todos: Todo[]
@@ -34,6 +35,8 @@ export function TodoList({
   const handleToggle = async (id: string, completed: boolean) => {
     if (!canManage) return
 
+    const todo = todos.find((entry) => entry.id === id)
+
     try {
       const docRef = doc(db, 'todos', id)
       await updateDoc(docRef, { 
@@ -42,6 +45,14 @@ export function TodoList({
         completed_by: completed ? user?.uid : null,
         completed_by_name: completed ? (profile?.full_name || user?.displayName || 'Unbekannt') : null
       })
+
+      if (user) {
+        await logAction('TODO_COMPLETED', user.uid, profile?.full_name, {
+          todo_id: id,
+          title: todo?.title,
+          status: completed ? 'done' : 'open',
+        })
+      }
     } catch (err) {
       console.error('Error updating todo:', err)
     }
@@ -51,9 +62,19 @@ export function TodoList({
     if (!canManage) return
     if (!window.confirm('Diese Aufgabe wirklich löschen?')) return
 
+    const todo = todos.find((entry) => entry.id === id)
+
     try {
       const docRef = doc(db, 'todos', id)
       await deleteDoc(docRef)
+
+      if (user) {
+        await logAction('TODO_DELETED', user.uid, profile?.full_name, {
+          todo_id: id,
+          title: todo?.title,
+        })
+      }
+
       toast.success('Aufgabe gelöscht.')
     } catch (err) {
       console.error('Error deleting todo:', err)
