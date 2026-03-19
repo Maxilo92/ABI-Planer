@@ -147,12 +147,12 @@ export default function Dashboard() {
   }
 
   const NewsPreview = ({ items }: { items: any[] }) => (
-    <Card className="flex flex-col h-full border-border/40 shadow-card overflow-hidden bg-card">
+    <Card className="flex flex-col border-border/40 shadow-card overflow-hidden bg-card">
       <CardHeader className="pb-3 border-b border-border bg-muted/10 shrink-0">
         <CardTitle className="text-lg font-bold">Letzte Updates</CardTitle>
       </CardHeader>
-      <CardContent className="flex-1 min-h-0 overflow-hidden p-0">
-        <div className="h-full overflow-y-auto p-4 space-y-4 scrollbar-thin scrollbar-thumb-muted-foreground/20">
+      <CardContent className="p-0">
+        <div className="p-4 space-y-4">
           {items && items.length > 0 ? (
             items.map((item) => (
               <Link
@@ -193,7 +193,7 @@ export default function Dashboard() {
       switch (key) {
         case 'funding':
           return (
-            <div className="h-[380px] overflow-hidden flex flex-col">
+            <div className="flex flex-col">
               <FundingStatus
                 key="funding"
                 current={currentFunding}
@@ -204,20 +204,30 @@ export default function Dashboard() {
             </div>
           )
         case 'news':
-          return <div className="h-[380px] overflow-hidden flex flex-col"><NewsPreview key="news" items={news} /></div>
+          return <div className="flex flex-col"><NewsPreview key="news" items={news.slice(0, 2)} /></div>
         case 'todos':
-          return <div className="h-[420px] overflow-hidden flex flex-col"><TodoList key="todos" todos={todos || []} canManage={canManage} /></div>
+          return (
+            <div className="flex flex-col">
+              <TodoList key="todos" todos={todos || []} canManage={canManage} maxItems={3} useScrollContainer={false} />
+            </div>
+          )
         case 'events':
-          return <div className="h-[420px] overflow-hidden flex flex-col"><CalendarEvents key="events" events={events || []} /></div>
+          return (
+            <div className="flex flex-col">
+              <CalendarEvents key="events" events={events || []} maxItems={3} useScrollContainer={false} />
+            </div>
+          )
         case 'polls':
           return null
         case 'leaderboard':
           return (
-            <div className="h-[380px] overflow-hidden flex flex-col">
+            <div className="flex flex-col">
               <ClassRanking
                 key="leaderboard"
                 finances={allFinances}
                 goal={settings?.funding_goal || 10000}
+                maxRows={4}
+                useScrollContainer={false}
               />
             </div>
           )
@@ -230,9 +240,9 @@ export default function Dashboard() {
       <div 
         key={key}
         onClick={() => router.push(componentLinks[key])}
-        className="cursor-pointer transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] group h-full overflow-hidden rounded-xl"
+        className="cursor-pointer transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] group rounded-xl"
       >
-        <div className="pointer-events-auto h-full [&_button]:pointer-events-auto [&_a]:pointer-events-auto [&_input]:pointer-events-auto overflow-hidden flex flex-col" onClick={(e) => {
+        <div className="pointer-events-auto [&_button]:pointer-events-auto [&_a]:pointer-events-auto [&_input]:pointer-events-auto" onClick={(e) => {
           // Check if the click target or its parent is a button or link
           const target = e.target as HTMLElement
           if (target.closest('button') || target.closest('a') || target.closest('input')) {
@@ -250,10 +260,10 @@ export default function Dashboard() {
       <div
         key={`poll-${poll.id}`}
         onClick={() => router.push('/abstimmungen')}
-        className="cursor-pointer transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] group h-full overflow-hidden rounded-xl"
+        className="cursor-pointer transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] group rounded-xl"
       >
         <div
-          className="pointer-events-auto h-full [&_button]:pointer-events-auto [&_a]:pointer-events-auto [&_input]:pointer-events-auto overflow-hidden flex flex-col"
+          className="pointer-events-auto [&_button]:pointer-events-auto [&_a]:pointer-events-auto [&_input]:pointer-events-auto"
           onClick={(e) => {
             const target = e.target as HTMLElement
             if (target.closest('button') || target.closest('a') || target.closest('input')) {
@@ -261,7 +271,7 @@ export default function Dashboard() {
             }
           }}
         >
-          <div className="h-[420px] overflow-hidden flex flex-col">
+          <div className="flex flex-col">
             <PollList
               polls={[poll]}
               userId={currentUserId}

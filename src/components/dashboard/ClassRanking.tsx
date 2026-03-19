@@ -17,9 +17,16 @@ interface ClassStats {
 interface ClassRankingProps {
   finances: FinanceEntry[]
   goal: number
+  maxRows?: number
+  useScrollContainer?: boolean
 }
 
-export function ClassRanking({ finances, goal }: ClassRankingProps) {
+export function ClassRanking({
+  finances,
+  goal,
+  maxRows,
+  useScrollContainer = true,
+}: ClassRankingProps) {
   const [courses, setCourses] = useState<string[]>(['12A', '12B', '12C', '12D'])
   const [loading, setLoading] = useState(true)
 
@@ -49,6 +56,8 @@ export function ClassRanking({ finances, goal }: ClassRankingProps) {
     return { className: c, amount, percentage }
   }).sort((a, b) => b.amount - a.amount)
 
+  const displayedStats = typeof maxRows === 'number' ? stats.slice(0, maxRows) : stats
+
   if (loading) {
     return (
       <Card className="h-full border-border/40 shadow-subtle flex items-center justify-center p-12">
@@ -75,8 +84,8 @@ export function ClassRanking({ finances, goal }: ClassRankingProps) {
       </CardHeader>
       
       <CardContent className="p-0 flex-1 flex flex-col min-h-0 bg-card">
-        <div className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-muted-foreground/20">
-          {stats.map((s, index) => (
+        <div className={useScrollContainer ? "flex-1 overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-muted-foreground/20" : "overflow-x-hidden"}>
+          {displayedStats.map((s, index) => (
             <div key={s.className} className="flex items-center justify-between p-3 min-h-[58px] border-b border-border/70 last:border-b-0 transition-colors hover:bg-muted/30 group">
               <div className="flex items-center gap-3">
                 <div className={`flex items-center justify-center h-7 w-7 rounded-full text-[10px] font-bold ${

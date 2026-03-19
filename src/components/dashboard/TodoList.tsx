@@ -18,10 +18,18 @@ import { de } from 'date-fns/locale'
 interface TodoListProps {
   todos: Todo[]
   canManage?: boolean
+  maxItems?: number
+  useScrollContainer?: boolean
 }
 
-export function TodoList({ todos, canManage = false }: TodoListProps) {
+export function TodoList({
+  todos,
+  canManage = false,
+  maxItems,
+  useScrollContainer = true,
+}: TodoListProps) {
   const { user, profile } = useAuth()
+  const displayedTodos = typeof maxItems === 'number' ? todos.slice(0, maxItems) : todos
 
   const handleToggle = async (id: string, completed: boolean) => {
     if (!canManage) return
@@ -58,12 +66,12 @@ export function TodoList({ todos, canManage = false }: TodoListProps) {
       <CardHeader className="pb-3 border-b border-border bg-muted/10 shrink-0">
         <CardTitle className="text-lg font-bold">Aufgaben</CardTitle>
       </CardHeader>
-      <CardContent className="p-0 flex-1 min-h-0 overflow-hidden bg-card">
-        <div className="h-full overflow-y-auto p-4 space-y-3 scrollbar-thin scrollbar-thumb-muted-foreground/20">
-          {todos.length === 0 ? (
+      <CardContent className="p-0 bg-card">
+        <div className={useScrollContainer ? "h-full overflow-y-auto p-4 space-y-3 scrollbar-thin scrollbar-thumb-muted-foreground/20" : "p-4 space-y-3"}>
+          {displayedTodos.length === 0 ? (
             <p className="text-sm text-muted-foreground italic py-4">Keine Aufgaben vorhanden.</p>
           ) : (
-            todos.map((todo) => {
+            displayedTodos.map((todo) => {
               const isAssignedToMe = todo.assigned_to_user === user?.uid
               const userCourse = profile?.class_name
               const userPlanningGroup = profile?.planning_group

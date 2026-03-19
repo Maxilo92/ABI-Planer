@@ -16,9 +16,16 @@ import { toast } from 'sonner'
 interface CalendarEventsProps {
   events: Event[]
   canManage?: boolean
+  maxItems?: number
+  useScrollContainer?: boolean
 }
 
-export function CalendarEvents({ events, canManage = false }: CalendarEventsProps) {
+export function CalendarEvents({
+  events,
+  canManage = false,
+  maxItems,
+  useScrollContainer = true,
+}: CalendarEventsProps) {
   const handleDelete = async (id: string) => {
     if (!window.confirm('Möchtest du diesen Termin wirklich löschen?')) return
 
@@ -51,6 +58,8 @@ export function CalendarEvents({ events, canManage = false }: CalendarEventsProp
     return isPastA ? 1 : -1
   })
 
+  const displayedEvents = typeof maxItems === 'number' ? sortedEvents.slice(0, maxItems) : sortedEvents
+
   return (
     <Card className="h-full border-border/40 shadow-subtle flex flex-col overflow-hidden">
       <CardHeader className="pb-3 border-b border-border bg-muted/10 shrink-0">
@@ -59,14 +68,14 @@ export function CalendarEvents({ events, canManage = false }: CalendarEventsProp
           Nächste Termine
         </CardTitle>
       </CardHeader>
-      <CardContent className="p-0 flex-1 min-h-0 overflow-hidden bg-card">
-        <div className="h-full overflow-y-auto p-4 space-y-4 scrollbar-thin scrollbar-thumb-muted-foreground/20">
-          {sortedEvents.length === 0 ? (
+      <CardContent className="p-0 bg-card">
+        <div className={useScrollContainer ? "h-full overflow-y-auto p-4 space-y-4 scrollbar-thin scrollbar-thumb-muted-foreground/20" : "p-4 space-y-4"}>
+          {displayedEvents.length === 0 ? (
             <p className="text-sm text-muted-foreground italic text-center py-4">
               Keine anstehenden Termine.
             </p>
           ) : (
-            sortedEvents.map((event) => {
+            displayedEvents.map((event) => {
               const eventDate = toDate(event.event_date)
               return (
                 <div key={event.id} className="group flex items-center justify-between gap-4 pb-3 border-b last:border-0">
