@@ -90,19 +90,25 @@ export default function RegisterPage() {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (step !== 3) return
+    setError(null)
+    if (!validateCurrentStep()) return
+
+    if (step < 3) {
+      setStep((prev) => (prev + 1) as 1 | 2 | 3)
+      return
+    }
 
     setLoading(true)
-    setError(null)
 
     try {
+      const normalizedEmail = email.trim().toLowerCase()
       // 0. Domain validation
-      if (!email.endsWith('@hgr-web.lernsax.de')) {
+      if (!normalizedEmail.endsWith('@hgr-web.lernsax.de')) {
         throw new Error('Nur E-Mail Adressen von @hgr-web.lernsax.de sind erlaubt.')
       }
 
       // 1. Create user in Firebase Auth
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password)
+      const userCredential = await createUserWithEmailAndPassword(auth, normalizedEmail, password)
       const user = userCredential.user
 
       // 2. Update display name
@@ -117,7 +123,7 @@ export default function RegisterPage() {
       // 4. Create profile document in Firestore
       await setDoc(doc(db, 'profiles', user.uid), {
         full_name: fullName,
-        email: email,
+        email: normalizedEmail,
         role: isFirstUser ? 'admin' : 'viewer',
         class_name: selectedCourse,
         planning_group: null,
@@ -245,25 +251,9 @@ export default function RegisterPage() {
                 </Button>
               )}
 
-              {step < 3 ? (
-                <Button
-                  type="button"
-                  className="flex-1 h-12"
-                  onClick={() => {
-                    setError(null)
-                    if (!validateCurrentStep()) return
-
-                    setStep((prev) => (prev + 1) as 1 | 2 | 3)
-                  }}
-                  disabled={loading}
-                >
-                  Weiter
-                </Button>
-              ) : (
-                <Button type="submit" className="flex-1 h-12" disabled={loading}>
-                  {loading ? 'Erstellung...' : 'Account erstellen'}
-                </Button>
-              )}
+              <Button type="submit" className="flex-1 h-12" disabled={loading}>
+                {step < 3 ? 'Weiter' : (loading ? 'Erstellung...' : 'Account erstellen')}
+              </Button>
             </div>
             <p className="text-sm text-center text-muted-foreground">
               Bereits einen Account?{' '}

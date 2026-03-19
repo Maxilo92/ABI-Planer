@@ -15,16 +15,38 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { auth, db } from '@/lib/firebase'
 import { deleteUser, sendPasswordResetEmail, updateProfile } from 'firebase/auth'
-import { doc, deleteDoc, setDoc, updateDoc } from 'firebase/firestore'
+import { doc, deleteDoc, setDoc, updateDoc, getDoc } from 'firebase/firestore'
 import { toast } from 'sonner'
 
 export default function ProfilePage() {
   const { user, profile, loading } = useAuth()
   const [fullName, setFullName] = useState('')
   const [savingName, setSavingName] = useState(false)
+  const [courses, setCourses] = useState<string[]>(['12A', '12B', '12C', '12D'])
+  const [selectedCourse, setSelectedCourse] = useState('')
+  const [savingCourse, setSavingCourse] = useState(false)
   const [sendingReset, setSendingReset] = useState(false)
   const [deletingAccount, setDeletingAccount] = useState(false)
   const router = useRouter()
+
+  useEffect(() => {
+    const loadCourses = async () => {
+      try {
+        const settingsSnap = await getDoc(doc(db, 'settings', 'config'))
+        const configuredCourses = settingsSnap.exists() ? settingsSnap.data().courses : undefined
+        if (Array.isArray(configuredCourses) && configuredCourses.length > 0) {
+          const normalizedCourses = configuredCourses.filter((entry: unknown): entry is string => typeof entry === 'string' && entry.trim().length > 0)
+          if (normalizedCourses.length > 0) {
+            setCourses(normalizedCourses)
+          }
+        }
+      } catch (loadError) {
+        console.error('Error loading courses:', loadError)
+      }
+    }
+
+    loadCourses()
+  }, [])
 
   useEffect(() => {
     if (!loading && !user) {
@@ -34,7 +56,8 @@ export default function ProfilePage() {
 
   useEffect(() => {
     setFullName(profile?.full_name || '')
-  }, [profile?.full_name])
+    setSelectedCourse(profile?.class_name || '')
+  }, [profile?.full_name, profile?.class_name])
 
   if (loading) {
     return <div className="flex items-center justify-center min-h-[50vh]">Lade Profil...</div>
@@ -74,6 +97,27 @@ export default function ProfilePage() {
       toast.error('Name konnte nicht aktualisiert werden.')
     } finally {
       setSavingName(false)
+    }
+  }
+
+  const handleUpdateCourse = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    if (!selectedCourse) {
+      toast.error('Bitte wähle einen Kurs aus.')
+      return
+    }
+
+    try {
+      setSavingCourse(true)
+      await updateDoc(doc(db, 'profiles', user.uid), { class_name: selectedCourse })
+      toast.success('Kurs aktualisiert.')
+      router.refresh()
+    } catch (error) {
+      console.error('Error updating course:', error)
+      toast.error('Kurs konnte nicht aktualisiert werden.')
+    } finally {
+      setSavingCourse(false)
     }
   }
 
@@ -246,6 +290,28 @@ export default function ProfilePage() {
               />
               <Button type="submit" disabled={savingName}>
                 {savingName ? 'Speichere...' : 'Name speichern'}
+              </Button>
+            </div>
+          </form>
+
+          <form onSubmit={handleUpdateCourse} className="space-y-3 border-t pt-4">
+            <Label htmlFor="profile-course">Kurs ändern</Label>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <select
+                id="profile-course"
+                value={selectedCourse}
+                onChange={(e) => setSelectedCourse(e.target.value)}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                required
+              >
+                {courses.map((course) => (
+                  <option key={course} value={course}>
+                    {course}
+                  </option>
+                ))}
+              </select>
+              <Button type="submit" disabled={savingCourse}>
+                {savingCourse ? 'Speichere...' : 'Kurs speichern'}
               </Button>
             </div>
           </form>

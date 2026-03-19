@@ -7,7 +7,7 @@ import { FundingStatus } from '@/components/dashboard/FundingStatus'
 import { TodoList } from '@/components/dashboard/TodoList'
 import { CalendarEvents } from '@/components/dashboard/CalendarEvents'
 import { PollList } from '@/components/dashboard/PollList'
-import { ClassLeaderboard } from '@/components/dashboard/ClassLeaderboard'
+import { ClassRanking } from '@/components/dashboard/ClassRanking'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { EditSettingsDialog } from '@/components/modals/EditSettingsDialog'
 import { useAuth } from '@/context/AuthContext'
@@ -219,7 +219,7 @@ export default function Dashboard() {
         case 'leaderboard':
           return (
             <div className="h-[380px]">
-              <ClassLeaderboard
+              <ClassRanking
                 key="leaderboard"
                 finances={allFinances}
                 goal={settings?.funding_goal || 10000}

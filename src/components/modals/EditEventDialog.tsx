@@ -1,15 +1,18 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { db } from '@/lib/firebase'
-import { doc, updateDoc } from 'firebase/firestore'
+import { doc, updateDoc, collection, query, orderBy, onSnapshot } from 'firebase/firestore'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Pencil } from 'lucide-react'
-import { Event } from '@/types/database'
+import { Badge } from '@/components/ui/badge'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Pencil, X, Users, Shield, Group, Plus } from 'lucide-react'
+import { Event, Profile, UserRole } from '@/types/database'
 import { format } from 'date-fns'
 import { toDate } from '@/lib/utils'
 import { toast } from 'sonner'
@@ -19,13 +22,59 @@ interface EditEventDialogProps {
   event: Event
 }
 
+const AVAILABLE_ROLES: { id: UserRole; label: string }[] = [
+  { id: 'admin_main', label: 'Haupt-Admin' },
+  { id: 'admin', label: 'Admin' },
+  { id: 'admin_co', label: 'Co-Admin' },
+  { id: 'planner', label: 'Planer' },
+  { id: 'viewer', label: 'Zuschauer' },
+]
+
 export function EditEventDialog({ event }: EditEventDialogProps) {
   const [open, setOpen] = useState(false)
   const [title, setTitle] = useState(event.title)
   const [description, setDescription] = useState(event.description || '')
   const [date, setDate] = useState(format(toDate(event.event_date), "yyyy-MM-dd'T'HH:mm"))
+  const [mentionedUserIds, setMentionedUserIds] = useState<string[]>(event.mentioned_user_ids || [])
+  const [mentionedRoles, setMentionedRoles] = useState<string[]>(event.mentioned_roles || [])
+  const [mentionedGroups, setMentionedGroups] = useState<string[]>(event.mentioned_groups || [])
   const [loading, setLoading] = useState(false)
+  
+  const [profiles, setProfiles] = useState<Profile[]>([])
+  const [availableGroups, setAvailableGroups] = useState<string[]>([])
   const router = useRouter()
+
+  useEffect(() => {
+    if (!open) return
+
+    const profilesUnsubscribe = onSnapshot(
+      query(collection(db, 'profiles'), orderBy('full_name')),
+      (snapshot) => {
+        setProfiles(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Profile)))
+      }
+    )
+
+    const settingsUnsubscribe = onSnapshot(doc(db, 'settings', 'config'), (snapshot) => {
+      if (snapshot.exists()) {
+        const rawGroups = snapshot.data().planning_groups
+        const normalizedGroups = Array.isArray(rawGroups)
+          ? rawGroups
+              .map((entry) => {
+                if (typeof entry === 'string') return entry
+                if (entry && typeof entry === 'object' && 'name' in entry) return entry.name
+                return null
+              })
+              .filter((name): name is string => !!name)
+          : []
+        setAvailableGroups(normalizedGroups)
+      }
+    })
+
+    return () => {
+      profilesUnsubscribe()
+      settingsUnsubscribe()
+    }
+  }, [open])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -37,6 +86,9 @@ export function EditEventDialog({ event }: EditEventDialogProps) {
         title,
         description,
         event_date: new Date(date).toISOString(),
+        mentioned_user_ids: mentionedUserIds,
+        mentioned_roles: mentionedRoles,
+        mentioned_groups: mentionedGroups,
       })
       toast.success('Termin aktualisiert.')
       setOpen(false)
@@ -47,6 +99,24 @@ export function EditEventDialog({ event }: EditEventDialogProps) {
     } finally {
       setLoading(false)
     }
+  }
+
+  const toggleUser = (userId: string) => {
+    setMentionedUserIds(prev => 
+      prev.includes(userId) ? prev.filter(id => id !== userId) : [...prev, userId]
+    )
+  }
+
+  const toggleRole = (role: string) => {
+    setMentionedRoles(prev => 
+      prev.includes(role) ? prev.filter(r => r !== role) : [...prev, role]
+    )
+  }
+
+  const toggleGroup = (group: string) => {
+    setMentionedGroups(prev => 
+      prev.includes(group) ? prev.filter(g => g !== group) : [...prev, group]
+    )
   }
 
   return (
@@ -78,6 +148,89 @@ export function EditEventDialog({ event }: EditEventDialogProps) {
             <div className="grid gap-2">
               <Label htmlFor="edit-date">Datum & Uhrzeit</Label>
               <Input id="edit-date" type="datetime-local" value={date} onChange={(e) => setDate(e.target.value)} required />
+            </div>
+
+            <div className="grid gap-2">
+              <Label>Erwähnungen</Label>
+              <div className="flex flex-wrap gap-2 min-h-[2.5rem] p-2 rounded-md border border-input bg-background/50">
+                {mentionedRoles.map(role => (
+                  <Badge key={role} variant="secondary" className="gap-1">
+                    <Shield className="h-3 w-3" />
+                    {AVAILABLE_ROLES.find(r => r.id === role)?.label || role}
+                    <X className="h-3 w-3 cursor-pointer hover:text-destructive" onClick={() => toggleRole(role)} />
+                  </Badge>
+                ))}
+                {mentionedGroups.map(group => (
+                  <Badge key={group} variant="secondary" className="gap-1">
+                    <Group className="h-3 w-3" />
+                    {group}
+                    <X className="h-3 w-3 cursor-pointer hover:text-destructive" onClick={() => toggleGroup(group)} />
+                  </Badge>
+                ))}
+                {mentionedUserIds.map(userId => {
+                  const p = profiles.find(p => p.id === userId)
+                  return (
+                    <Badge key={userId} variant="secondary" className="gap-1">
+                      <Users className="h-3 w-3" />
+                      {p?.full_name || 'Unbekannt'}
+                      <X className="h-3 w-3 cursor-pointer hover:text-destructive" onClick={() => toggleUser(userId)} />
+                    </Badge>
+                  )
+                })}
+                
+                <Popover>
+                  <PopoverTrigger
+                    render={
+                      <Button type="button" variant="ghost" size="sm" className="h-6 px-2 text-xs gap-1">
+                        <Plus className="h-3 w-3" /> Hinzufügen
+                      </Button>
+                    }
+                  />
+                  <PopoverContent className="w-[300px] p-0" align="start">
+                    <div className="max-h-[300px] overflow-y-auto p-2">
+                      <div className="space-y-4">
+                        <div>
+                          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-2">Rollen</p>
+                          <div className="space-y-1">
+                            {AVAILABLE_ROLES.map(role => (
+                              <label key={role.id} className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-muted cursor-pointer transition-colors">
+                                <Checkbox checked={mentionedRoles.includes(role.id)} onCheckedChange={() => toggleRole(role.id)} />
+                                <span className="text-sm">{role.label}</span>
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+
+                        {availableGroups.length > 0 && (
+                          <div>
+                            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-2">Gruppen</p>
+                            <div className="space-y-1">
+                              {availableGroups.map(group => (
+                                <label key={group} className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-muted cursor-pointer transition-colors">
+                                  <Checkbox checked={mentionedGroups.includes(group)} onCheckedChange={() => toggleGroup(group)} />
+                                  <span className="text-sm">{group}</span>
+                                </label>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        <div>
+                          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-2">Personen</p>
+                          <div className="space-y-1">
+                            {profiles.map(p => (
+                              <label key={p.id} className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-muted cursor-pointer transition-colors">
+                                <Checkbox checked={mentionedUserIds.includes(p.id)} onCheckedChange={() => toggleUser(p.id)} />
+                                <span className="text-sm">{p.full_name || p.email}</span>
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </div>
             </div>
           </div>
           <DialogFooter>

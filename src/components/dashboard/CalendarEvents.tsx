@@ -31,6 +31,26 @@ export function CalendarEvents({ events, canManage = false }: CalendarEventsProp
     }
   }
 
+  const now = new Date().getTime()
+  const sortedEvents = [...events].sort((a, b) => {
+    const dateA = toDate(a.event_date).getTime()
+    const dateB = toDate(b.event_date).getTime()
+
+    const isPastA = dateA < now
+    const isPastB = dateB < now
+
+    // Both upcoming: ascending by date (sooner first)
+    if (!isPastA && !isPastB) {
+      return dateA - dateB
+    }
+    // Both past: descending by date (most recent first)
+    if (isPastA && isPastB) {
+      return dateB - dateA
+    }
+    // One upcoming, one past: upcoming first
+    return isPastA ? 1 : -1
+  })
+
   return (
     <Card className="h-full">
       <CardHeader className="pb-2">
@@ -41,12 +61,12 @@ export function CalendarEvents({ events, canManage = false }: CalendarEventsProp
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {events.length === 0 ? (
+          {sortedEvents.length === 0 ? (
             <p className="text-sm text-muted-foreground italic text-center py-4">
               Keine anstehenden Termine.
             </p>
           ) : (
-            events.map((event) => {
+            sortedEvents.map((event) => {
               const eventDate = toDate(event.event_date)
               return (
                 <div key={event.id} className="group flex items-center justify-between gap-4 pb-3 border-b last:border-0">

@@ -35,6 +35,10 @@ service cloud.firestore {
       );
     }
 
+    function isGroupLeader(groupName) {
+      return isAuthenticated() && getProfile().planning_group == groupName && getProfile().is_group_leader == true;
+    }
+
     function isMainAdmin() {
       return isAuthenticated() && (
         getProfile().role == 'admin_main' ||
@@ -53,11 +57,11 @@ service cloud.firestore {
       allow update: if (
         // Case 1: Self-update for non-admin users (cannot change role, approval, course, or group)
         (request.auth.uid == userId && !isAdmin() &&
-         !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'is_approved', 'planning_group', 'class_name', 'timeout_until', 'timeout_reason'])) ||
+         !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'is_approved', 'planning_group', 'class_name', 'timeout_until', 'timeout_reason', 'is_group_leader'])) ||
 
         // Case 2: Self-update for admin users (can switch own course/group but not own timeout flags)
         (request.auth.uid == userId && isAdmin() &&
-         !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'is_approved', 'timeout_until', 'timeout_reason'])) ||
+         !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'is_approved', 'timeout_until', 'timeout_reason', 'is_group_leader'])) ||
         
         // Case 3: Main Admin (can do anything EXCEPT demoting themselves from their role)
         (isMainAdmin() && (
@@ -71,7 +75,13 @@ service cloud.firestore {
 
         // Case 5: Co-Admin general update (can approve but NOT change roles and NOT touch Main Admins)
         (isCoAdmin() && resource.data.role != 'admin_main' && resource.data.role != 'admin' && request.auth.uid != userId &&
-         !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'email']))
+         !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'email'])) ||
+
+        // Case 6: Group Leader member management (can add unassigned to own group OR remove from own group)
+        (isGroupLeader(getProfile().planning_group) && request.auth.uid != userId && (
+          (resource.data.planning_group == null && request.resource.data.planning_group == getProfile().planning_group) ||
+          (resource.data.planning_group == getProfile().planning_group && request.resource.data.planning_group == null)
+        ) && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'is_approved', 'is_group_leader', 'email']))
       );
       
       allow delete: if isMainAdmin() && resource.data.role != 'admin_main' && resource.data.role != 'admin';
@@ -120,6 +130,15 @@ service cloud.firestore {
         allow read: if isAdmin();
         allow create: if isApproved();
         allow update, delete: if isAdmin();
+    }
+
+    match /group_messages/{id} {
+        allow read: if isApproved();
+        allow create: if isApproved() && (
+          (request.resource.data.type == 'internal' && request.resource.data.group_name == getProfile().planning_group) || 
+          (request.resource.data.type == 'hub')
+        );
+        allow update, delete: if isAdmin() || isGroupLeader(resource.data.group_name) || (isAuthenticated() && resource.data.created_by == request.auth.uid);
     }
   }
 }

@@ -1,6 +1,7 @@
 'use client'
 
-import { Event } from '@/types/database'
+import { useState, useEffect } from 'react'
+import { Event, Profile, UserRole } from '@/types/database'
 import {
   Dialog,
   DialogContent,
@@ -9,21 +10,52 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import { Calendar as CalendarIcon, Clock, MapPin, User, FileText } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
+import { Calendar as CalendarIcon, Clock, User, FileText, Users, Shield, Group as GroupIcon } from 'lucide-react'
 import { format } from 'date-fns'
 import { de } from 'date-fns/locale'
 import { toDate } from '@/lib/utils'
+import { db } from '@/lib/firebase'
+import { collection, query, onSnapshot, orderBy } from 'firebase/firestore'
 
 interface CalendarEventDetailsDialogProps {
   event: Event
   children: React.ReactElement
 }
 
+const ROLE_LABELS: Record<string, string> = {
+  admin_main: 'Haupt-Admin',
+  admin: 'Admin',
+  admin_co: 'Co-Admin',
+  planner: 'Planer',
+  viewer: 'Zuschauer',
+}
+
 export function CalendarEventDetailsDialog({ event, children }: CalendarEventDetailsDialogProps) {
+  const [open, setOpen] = useState(false)
+  const [profiles, setProfiles] = useState<Profile[]>([])
   const eventDate = toDate(event.event_date)
 
+  useEffect(() => {
+    if (!open) return
+
+    const unsubscribe = onSnapshot(
+      query(collection(db, 'profiles'), orderBy('full_name')),
+      (snapshot) => {
+        setProfiles(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Profile)))
+      }
+    )
+
+    return () => unsubscribe()
+  }, [open])
+
+  const hasMentions = 
+    (event.mentioned_user_ids?.length || 0) > 0 || 
+    (event.mentioned_roles?.length || 0) > 0 || 
+    (event.mentioned_groups?.length || 0) > 0
+
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger render={children} />
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
@@ -48,6 +80,38 @@ export function CalendarEventDetailsDialog({ event, children }: CalendarEventDet
               <p className="text-sm text-muted-foreground bg-muted/30 p-4 rounded-lg whitespace-pre-wrap leading-relaxed">
                 {event.description}
               </p>
+            </div>
+          )}
+
+          {hasMentions && (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
+                <Users className="h-4 w-4" />
+                Erwähnungen
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {event.mentioned_roles?.map(role => (
+                  <Badge key={role} variant="secondary" className="gap-1 bg-primary/10 text-primary hover:bg-primary/20 border-none">
+                    <Shield className="h-3 w-3" />
+                    {ROLE_LABELS[role] || role}
+                  </Badge>
+                ))}
+                {event.mentioned_groups?.map(group => (
+                  <Badge key={group} variant="secondary" className="gap-1 bg-blue-500/10 text-blue-600 hover:bg-blue-500/20 border-none">
+                    <GroupIcon className="h-3 w-3" />
+                    {group}
+                  </Badge>
+                ))}
+                {event.mentioned_user_ids?.map(userId => {
+                  const p = profiles.find(p => p.id === userId)
+                  return (
+                    <Badge key={userId} variant="secondary" className="gap-1 bg-green-500/10 text-green-600 hover:bg-green-500/20 border-none">
+                      <User className="h-3 w-3" />
+                      {p?.full_name || 'Lädt...'}
+                    </Badge>
+                  )
+                })}
+              </div>
             </div>
           )}
 

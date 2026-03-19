@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react'
 import { db } from '@/lib/firebase'
 import { doc, onSnapshot } from 'firebase/firestore'
 import { Badge } from '@/components/ui/badge'
-import { Trophy, Lightbulb, Loader2 } from 'lucide-react'
+import { BarChart3, Lightbulb, Loader2 } from 'lucide-react'
 
 interface ClassStats {
   className: ClassName
@@ -14,12 +14,12 @@ interface ClassStats {
   percentage: number
 }
 
-interface ClassLeaderboardProps {
+interface ClassRankingProps {
   finances: FinanceEntry[]
   goal: number
 }
 
-export function ClassLeaderboard({ finances, goal }: ClassLeaderboardProps) {
+export function ClassRanking({ finances, goal }: ClassRankingProps) {
   const [courses, setCourses] = useState<string[]>(['12A', '12B', '12C', '12D'])
   const [loading, setLoading] = useState(true)
 
@@ -61,8 +61,8 @@ export function ClassLeaderboard({ finances, goal }: ClassLeaderboardProps) {
       <CardHeader className="pb-3 border-b border-border/40 bg-muted/5 shrink-0">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg font-bold flex items-center gap-2">
-            <Trophy className="h-5 w-5 text-yellow-500/80" />
-            Kurswettstreit
+            <BarChart3 className="h-5 w-5 text-primary" />
+            Kurs-Ranking
           </CardTitle>
           <Badge variant="secondary" className="text-[10px] font-bold uppercase tracking-wider bg-primary/10 text-primary border-none">
             Top: {winner.className}
@@ -111,11 +111,11 @@ export function ClassLeaderboard({ finances, goal }: ClassLeaderboardProps) {
         <div className="p-3 bg-muted/20 border-t border-border/40 shrink-0">
           <div className="flex items-start gap-2.5 bg-background/50 rounded-xl p-2.5 border border-border/40">
             <div className="mt-0.5 bg-primary/10 p-1 rounded-lg shrink-0">
-              <Lightbulb className="h-3 w-3 text-primary" />
+              <Lightbulb className="h-3.5 w-3.5 text-primary" />
             </div>
-            <div className="space-y-0.5">
-              <p className="text-[10px] font-extrabold text-primary uppercase tracking-[0.1em] leading-none">Wettstreit-Tipp</p>
-              <p className="text-[10px] text-muted-foreground leading-tight line-clamp-2">
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] font-extrabold text-primary uppercase tracking-[0.1em] leading-tight mb-0.5">Ranking-Tipp</p>
+              <p className="text-[11px] text-muted-foreground leading-normal">
                 Kurs <span className="font-bold text-foreground">{lastPlace.className}</span> ist aktuell das Schlusslicht.
               </p>
             </div>
@@ -125,4 +125,3 @@ export function ClassLeaderboard({ finances, goal }: ClassLeaderboardProps) {
     </Card>
   )
 }
-

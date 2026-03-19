@@ -19,8 +19,22 @@ export interface Profile {
   timeout_until?: string | null;
   timeout_reason?: string | null;
   is_approved: boolean;
+  is_group_leader?: boolean | null;
   created_at: string;
   last_visited?: Record<string, string> | null;
+}
+
+export interface GroupMessage {
+  id: string;
+  content: string;
+  created_at: string;
+  created_by: string;
+  author_name: string;
+  author_group?: string | null;
+  target_group?: string | null;
+  group_name: string | 'hub';
+  type: 'internal' | 'hub';
+  pinned?: boolean;
 }
 
 export interface Settings {
@@ -67,6 +81,9 @@ export interface Event {
   event_date: string;
   created_at: string;
   created_by: string;
+  mentioned_user_ids?: string[];
+  mentioned_roles?: string[];
+  mentioned_groups?: string[];
 }
 
 export interface NewsEntry {

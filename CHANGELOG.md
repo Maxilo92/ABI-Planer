@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.16.1] - 2026-03-19
+- UI: **Kurs-Ranking** (ehemals Kurswettstreit) optisch verfeinert und Clipping-Fehler in der Kachel-Ansicht behoben.
+- Feature: **Event-Mentions**. In Kalenderterminen können nun gezielt Personen, Rollen (z.B. 'Admin') oder Planungsgruppen erwähnt werden.
+- UX: **Intelligente Kalender-Sortierung**. Anstehende Termine werden nun zuerst angezeigt (aufsteigend), während vergangene Termine automatisch ans Ende der Liste rücken (absteigend).
+- Fix: **Registrierungs-Workflow optimiert**. Ein Fehler wurde behoben, durch den die Kursauswahl bei der Registrierung übersprungen werden konnte.
+- Feature: **Nachträgliche Kursänderung**. Schüler können ihren zugewiesenen Kurs nun jederzeit in ihren Profileinstellungen selbst korrigieren.
+- Fix: Kritischer TypeScript-Fehler in der Gruppen-Pinnwand (`GroupWall.tsx`) durch Migration auf die korrekte `render`-Prop behoben.
+
+## [0.16.0] - 2026-03-19
+- Feature: **Kollaborative Planungs-Hubs** (`/gruppen`). Die Gruppenseite wurde zu einem vollwertigen Workspace für Teams ausgebaut.
+- Feature: **Interne Team-Bereiche**. Jede Gruppe hat nun einen privaten Bereich mit eigener Pinnwand, Team-Aufgaben und Team-Kalender.
+- Feature: **Shared Hub**. Ein neuer zentraler Ort für den Austausch und die Koordination zwischen verschiedenen Planungsgruppen.
+- Feature: **Erweiterte Gruppenleiter-Funktionen**. Teamleiter (`is_group_leader`) können nun eigenständig Mitglieder für ihr Team verwalten und wichtige Nachrichten auf der Pinnwand pinnen.
+- Feature: **Targeted Messaging**. Im Shared Hub können Nachrichten gezielt an bestimmte Gruppen adressiert werden.
+- Security: Firestore-Regeln wurden angepasst, um Gruppenleitern administrative Rechte innerhalb ihrer eigenen Teams zu gewähren.
+- Security: Autoren können ihre eigenen Nachrichten in der Pinnwand und im Hub nun wieder selbst löschen.
+- Fix: Bei der Zuweisung eines neuen Gruppenleiters wird die Berechtigung beim vorherigen Leiter nun korrekt entzogen.
+
 ## [0.15.24] - 2026-03-19
 - Fix: **Kritische Fehler bei Registrierung und Anmeldung behoben**. Das Nutzerprofil wird nun sofort nach der Erstellung erkannt (`onSnapshot`), und neue Nutzer landen nicht mehr in einer Endlosschleife auf der Login-Seite oder vor verschlossenen Einstellungen.
 - Feature: **Planungsgruppen-Modul** (`/gruppen`). Strukturierte Teams mit Gruppenleitern und Mitgliedern. Plannungsgruppen können nun effizienter verwaltet und Aufgaben gezielt zugewiesen werden.

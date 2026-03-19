@@ -20,11 +20,15 @@ import { Label } from '@/components/ui/label'
 import { Plus, Users, User as UserIcon, Calendar } from 'lucide-react'
 import { Profile } from '@/types/database'
 
-export function AddTodoDialog() {
+interface AddTodoDialogProps {
+  defaultGroup?: string
+}
+
+export function AddTodoDialog({ defaultGroup }: AddTodoDialogProps) {
   const [title, setTitle] = useState('')
   const [assignedUser, setAssignedUser] = useState('')
   const [assignedClass, setAssignedClass] = useState('')
-  const [assignedGroup, setAssignedGroup] = useState('')
+  const [assignedGroup, setAssignedGroup] = useState(defaultGroup || '')
   const [deadline, setDeadline] = useState('')
   const [users, setUsers] = useState<Profile[]>([])
   const [classes, setClasses] = useState<string[]>([])
@@ -33,6 +37,12 @@ export function AddTodoDialog() {
   const [open, setOpen] = useState(false)
   const { user, profile } = useAuth()
   const router = useRouter()
+
+  useEffect(() => {
+    if (defaultGroup) {
+      setAssignedGroup(defaultGroup)
+    }
+  }, [defaultGroup, open])
 
   useEffect(() => {
     const fetchData = async () => {

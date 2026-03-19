@@ -8,6 +8,7 @@ import { CalendarEvents } from '@/components/dashboard/CalendarEvents'
 import { AddEventDialog } from '@/components/modals/AddEventDialog'
 import { Event } from '@/types/database'
 import { Loader2 } from 'lucide-react'
+import { toDate } from '@/lib/utils'
 
 export default function CalendarPage() {
   const { profile, loading: authLoading } = useAuth()
@@ -17,7 +18,23 @@ export default function CalendarPage() {
   useEffect(() => {
     const q = query(collection(db, 'events'), orderBy('event_date', 'asc'))
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      setEvents(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Event)))
+      const fetchedEvents = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Event))
+      
+      const now = new Date().getTime()
+      // Sort: Upcoming (asc), Past (desc) at the bottom
+      const sorted = [...fetchedEvents].sort((a, b) => {
+        const dateA = toDate(a.event_date).getTime()
+        const dateB = toDate(b.event_date).getTime()
+
+        const isPastA = dateA < now
+        const isPastB = dateB < now
+
+        if (!isPastA && !isPastB) return dateA - dateB
+        if (isPastA && isPastB) return dateB - dateA
+        return isPastA ? 1 : -1
+      })
+      
+      setEvents(sorted)
       setLoading(false)
     })
 
