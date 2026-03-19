@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { LayoutDashboard, CheckSquare, Calendar, Euro, Megaphone, BarChart2, LogOut, Menu, X, ShieldCheck, User, MessageSquareHeart, Settings, Users, ChevronDown, ChevronRight } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { auth } from '@/lib/firebase'
@@ -24,10 +24,23 @@ interface NavItem {
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
   const [openSubmenus, setOpenSubmenus] = useState<Record<string, boolean>>({})
+  const [currentSearch, setCurrentSearch] = useState('')
   const { profile, loading } = useAuth()
   const notifications = useNotifications()
   const router = useRouter()
   const pathname = usePathname()
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const syncSearch = () => {
+      setCurrentSearch(window.location.search)
+    }
+
+    syncSearch()
+    window.addEventListener('popstate', syncSearch)
+    return () => window.removeEventListener('popstate', syncSearch)
+  }, [pathname])
 
   const handleSignOut = async () => {
     await signOut(auth)
@@ -53,7 +66,16 @@ export function Navbar() {
     { href: '/finanzen', label: 'Finanzen', icon: Euro },
     { href: '/news', label: 'News', icon: Megaphone, notify: notifications.news },
     { href: '/feedback', label: 'Feedback', icon: MessageSquareHeart },
-    { href: '/gruppen', label: 'Gruppen', icon: Users },
+    {
+      href: '/gruppen-root',
+      label: 'Gruppen',
+      icon: Users,
+      subItems: [
+        { href: '/gruppen?bereich=mein-team', label: 'Mein Team', icon: Users },
+        { href: '/gruppen?bereich=alle-gruppen', label: 'Alle Gruppen', icon: Users },
+        { href: '/gruppen?bereich=shared-hub', label: 'Shared Hub', icon: MessageSquareHeart },
+      ],
+    },
     { href: '/abstimmungen', label: 'Umfragen', icon: BarChart2, notify: notifications.umfragen },
     { href: '/einstellungen', label: 'Einstellungen', icon: Settings },
   ]
@@ -65,6 +87,7 @@ export function Navbar() {
       icon: ShieldCheck,
       subItems: [
         { href: '/admin', label: 'Benutzer', icon: Users },
+        { href: '/admin/logs', label: 'Logs', icon: BarChart2 },
         { href: '/admin/feedback', label: 'Feedback Admin', icon: MessageSquareHeart },
       ]
     })
@@ -81,9 +104,27 @@ export function Navbar() {
   }
 
   const isActive = (href: string) => {
+    const [path, queryString] = href.split('?')
+
     if (href === '/') return pathname === '/'
     if (href === '/admin-root') return pathname.startsWith('/admin')
-    return pathname === href || pathname.startsWith(`${href}/`)
+    if (href === '/gruppen-root') return pathname.startsWith('/gruppen')
+
+    if (queryString) {
+      if (pathname !== path) return false
+
+      const linkParams = new URLSearchParams(queryString)
+      const activeParams = new URLSearchParams(currentSearch)
+      for (const [key, value] of linkParams.entries()) {
+        if (activeParams.get(key) !== value) {
+          return false
+        }
+      }
+
+      return true
+    }
+
+    return pathname === path || pathname.startsWith(`${path}/`)
   }
 
   const renderNavItem = (item: NavItem, isMobile: boolean = false) => {
@@ -108,7 +149,7 @@ export function Navbar() {
                   <span className="absolute -right-0.5 -top-0.5 flex h-2 w-2 rounded-full bg-red-500 border border-background" />
                 )}
               </div>
-              {item.label}
+              <span className="truncate">{item.label}</span>
             </div>
             {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
           </button>
@@ -127,7 +168,7 @@ export function Navbar() {
                 <span className="absolute -right-0.5 -top-0.5 flex h-2 w-2 rounded-full bg-red-500 border border-background" />
               )}
             </div>
-            {item.label}
+            <span className="truncate">{item.label}</span>
           </Link>
         )}
 
@@ -137,14 +178,21 @@ export function Navbar() {
               <Link
                 key={subItem.href}
                 href={subItem.href}
-                onClick={() => isMobile && setIsOpen(false)}
+                onClick={() => {
+                  if (isMobile) setIsOpen(false)
+
+                  const queryIndex = subItem.href.indexOf('?')
+                  if (queryIndex >= 0) {
+                    setCurrentSearch(subItem.href.slice(queryIndex))
+                  }
+                }}
                 className={cn(
                   'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
-                  pathname === subItem.href ? 'text-primary bg-secondary/30' : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
+                  isActive(subItem.href) ? 'text-primary bg-secondary/30' : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
                 )}
               >
                 <subItem.icon className="h-3.5 w-3.5" />
-                {subItem.label}
+                <span className="truncate">{subItem.label}</span>
               </Link>
             ))}
           </div>
@@ -194,7 +242,7 @@ export function Navbar() {
       {!loading && isOpen && (
         <div className="md:hidden fixed inset-0 z-40">
           <button className="absolute inset-0 bg-black/50" onClick={() => setIsOpen(false)} aria-label="Navigation schliessen" />
-          <aside className="absolute left-0 top-16 bottom-0 w-80 max-w-[85vw] border-r bg-background flex flex-col">
+          <aside className="absolute left-0 top-16 bottom-0 w-[85vw] max-w-80 border-r bg-background flex flex-col">
             <div className="flex-1 p-4 overflow-y-auto space-y-1">
               {navItems.map((item) => renderNavItem(item, true))}
             </div>

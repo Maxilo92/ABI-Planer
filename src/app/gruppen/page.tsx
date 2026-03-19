@@ -27,13 +27,21 @@ import { toast } from 'sonner'
 import Link from 'next/link'
 import { logAction } from '@/lib/logging'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { usePathname, useRouter } from 'next/navigation'
 import { TodoList } from '@/components/dashboard/TodoList'
 import { CalendarEvents } from '@/components/dashboard/CalendarEvents'
 import { GroupWall } from '@/components/groups/GroupWall'
 import { AddTodoDialog } from '@/components/modals/AddTodoDialog'
 
+type GroupsMainTab = 'mein-team' | 'alle-gruppen' | 'shared-hub'
+type TeamTab = 'workspace' | 'mitglieder'
+type AllGroupsTab = 'gruppen' | 'zuordnung'
+
 export default function GroupsPage() {
   const { user, profile, loading: authLoading } = useAuth()
+  const router = useRouter()
+  const pathname = usePathname()
+  const [currentSearch, setCurrentSearch] = useState('')
   const [profiles, setProfiles] = useState<Profile[]>([])
   const [planningGroups, setPlanningGroups] = useState<PlanningGroup[]>([])
   const [todos, setTodos] = useState<Todo[]>([])
@@ -43,6 +51,16 @@ export default function GroupsPage() {
 
   const isPlanner = (profile?.role === 'planner' || profile?.role === 'admin_main' || profile?.role === 'admin_co' || profile?.role === 'admin') && profile?.is_approved
   const isGroupLeader = profile?.is_group_leader
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const syncSearch = () => setCurrentSearch(window.location.search)
+    syncSearch()
+
+    window.addEventListener('popstate', syncSearch)
+    return () => window.removeEventListener('popstate', syncSearch)
+  }, [pathname])
 
   useEffect(() => {
     // 1. Listen to Profiles
@@ -189,6 +207,65 @@ export default function GroupsPage() {
   )
   const canManageTeamMembers = isGroupLeader || isPlanner
   const myTeamTodos = todos.filter(t => t.assigned_to_group === profile?.planning_group)
+  const activeParams = new URLSearchParams(currentSearch)
+
+  const defaultMainTab: GroupsMainTab = profile?.planning_group ? 'mein-team' : 'alle-gruppen'
+  const requestedMainTab = activeParams.get('bereich')
+  const mainTab: GroupsMainTab =
+    requestedMainTab === 'mein-team' || requestedMainTab === 'alle-gruppen' || requestedMainTab === 'shared-hub'
+      ? requestedMainTab
+      : defaultMainTab
+  const safeMainTab: GroupsMainTab = mainTab === 'mein-team' && !profile?.planning_group ? 'alle-gruppen' : mainTab
+
+  const requestedTeamTab = activeParams.get('teamTab')
+  const teamTab: TeamTab = canManageTeamMembers && requestedTeamTab === 'mitglieder' ? 'mitglieder' : 'workspace'
+
+  const requestedAllGroupsTab = activeParams.get('gruppenTab')
+  const allGroupsTab: AllGroupsTab = requestedAllGroupsTab === 'zuordnung' ? 'zuordnung' : 'gruppen'
+
+  const updateTabsQuery = (next: Partial<Record<'bereich' | 'teamTab' | 'gruppenTab', string | null>>) => {
+    const params = new URLSearchParams(currentSearch)
+
+    Object.entries(next).forEach(([key, value]) => {
+      if (value === null) {
+        params.delete(key)
+        return
+      }
+
+      params.set(key, value)
+    })
+
+    const query = params.toString()
+    setCurrentSearch(query ? `?${query}` : '')
+    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false })
+  }
+
+  const handleMainTabChange = (value: string) => {
+    if (value !== 'mein-team' && value !== 'alle-gruppen' && value !== 'shared-hub') return
+
+    if (value === 'mein-team') {
+      updateTabsQuery({ bereich: value, teamTab: 'workspace', gruppenTab: null })
+      return
+    }
+
+    if (value === 'alle-gruppen') {
+      updateTabsQuery({ bereich: value, gruppenTab: 'gruppen', teamTab: null })
+      return
+    }
+
+    updateTabsQuery({ bereich: value, teamTab: null, gruppenTab: null })
+  }
+
+  const handleTeamTabChange = (value: string) => {
+    if (!canManageTeamMembers && value === 'mitglieder') return
+    if (value !== 'workspace' && value !== 'mitglieder') return
+    updateTabsQuery({ bereich: 'mein-team', teamTab: value, gruppenTab: null })
+  }
+
+  const handleAllGroupsTabChange = (value: string) => {
+    if (value !== 'gruppen' && value !== 'zuordnung') return
+    updateTabsQuery({ bereich: 'alle-gruppen', gruppenTab: value, teamTab: null })
+  }
 
   return (
     <div className="space-y-8">
@@ -199,11 +276,11 @@ export default function GroupsPage() {
         </div>
       </div>
 
-      <Tabs defaultValue={profile?.planning_group ? "mein-team" : "alle-gruppen"} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3 max-w-md">
-          <TabsTrigger value="mein-team">Mein Team</TabsTrigger>
-          <TabsTrigger value="alle-gruppen">Alle Gruppen</TabsTrigger>
-          <TabsTrigger value="shared-hub">Shared Hub</TabsTrigger>
+      <Tabs value={safeMainTab} onValueChange={handleMainTabChange} className="space-y-6">
+        <TabsList className="grid h-auto w-full grid-cols-3 auto-rows-[2.5rem]">
+          <TabsTrigger value="mein-team" className="h-10 text-xs sm:text-sm">Mein Team</TabsTrigger>
+          <TabsTrigger value="alle-gruppen" className="h-10 text-xs sm:text-sm">Alle Gruppen</TabsTrigger>
+          <TabsTrigger value="shared-hub" className="h-10 text-xs sm:text-sm">Shared Hub</TabsTrigger>
         </TabsList>
 
         <TabsContent value="mein-team" className="space-y-8">
@@ -232,22 +309,22 @@ export default function GroupsPage() {
                 </div>
               </div>
 
-              <Tabs defaultValue="workspace" className="space-y-6">
-                <TabsList className={`grid w-full max-w-md ${canManageTeamMembers ? 'grid-cols-2' : 'grid-cols-1'}`}>
-                  <TabsTrigger value="workspace">Team-Workspace</TabsTrigger>
-                  {canManageTeamMembers && <TabsTrigger value="mitglieder">Mitglieder verwalten</TabsTrigger>}
+              <Tabs value={teamTab} onValueChange={handleTeamTabChange} className="space-y-6">
+                <TabsList className={`grid h-auto w-full auto-rows-[2.5rem] ${canManageTeamMembers ? 'grid-cols-2' : 'grid-cols-1'}`}>
+                  <TabsTrigger value="workspace" className="h-10 text-xs sm:text-sm">Team-Workspace</TabsTrigger>
+                  {canManageTeamMembers && <TabsTrigger value="mitglieder" className="h-10 text-xs sm:text-sm">Mitglieder verwalten</TabsTrigger>}
                 </TabsList>
 
                 <TabsContent value="workspace" className="space-y-6">
-                  <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 lg:gap-8">
-                    <div className="xl:col-span-8 2xl:col-span-7 min-w-0">
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
+                    <div className="lg:col-span-8 2xl:col-span-7 min-w-0">
                       <GroupWall 
                         groupName={profile.planning_group} 
                         canManage={isGroupLeader || isPlanner} 
                       />
                     </div>
 
-                    <div className="xl:col-span-4 2xl:col-span-5 min-w-0 space-y-6">
+                    <div className="lg:col-span-4 2xl:col-span-5 min-w-0 space-y-6">
                       <div className="space-y-4">
                         <div className="flex items-center justify-between">
                           <h3 className="font-semibold flex items-center gap-2">
@@ -323,7 +400,7 @@ export default function GroupsPage() {
                                         key={group.name}
                                         variant="outline"
                                         size="sm"
-                                        className="text-[10px] h-7 px-2"
+                                        className="h-10 px-3 text-xs sm:h-7 sm:px-2 sm:text-[10px]"
                                         onClick={() => handleUpdateMember(p.id, group.name)}
                                       >
                                         + {group.name}
@@ -333,7 +410,7 @@ export default function GroupsPage() {
                                     <Button
                                       variant="outline"
                                       size="sm"
-                                      className="text-[10px] h-7 px-2"
+                                      className="h-10 px-3 text-xs sm:h-7 sm:px-2 sm:text-[10px]"
                                       onClick={() => handleUpdateMember(p.id, profile?.planning_group || null)}
                                       title="Zu deinem Team hinzufügen"
                                     >
@@ -365,10 +442,10 @@ export default function GroupsPage() {
         </TabsContent>
 
         <TabsContent value="alle-gruppen" className="space-y-8">
-          <Tabs defaultValue="gruppen" className="space-y-6">
-            <TabsList className="grid w-full max-w-md grid-cols-2">
-              <TabsTrigger value="gruppen">Gruppenübersicht</TabsTrigger>
-              <TabsTrigger value="zuordnung">Mitgliederzuordnung</TabsTrigger>
+          <Tabs value={allGroupsTab} onValueChange={handleAllGroupsTabChange} className="space-y-6">
+            <TabsList className="grid h-auto w-full grid-cols-2 auto-rows-[2.5rem] sm:max-w-xl">
+              <TabsTrigger value="gruppen" className="h-10 text-xs sm:text-sm">Gruppenübersicht</TabsTrigger>
+              <TabsTrigger value="zuordnung" className="h-10 text-xs sm:text-sm">Mitgliederzuordnung</TabsTrigger>
             </TabsList>
 
             <TabsContent value="gruppen" className="space-y-6">
@@ -440,7 +517,7 @@ export default function GroupsPage() {
                                             <Button 
                                               variant="ghost" 
                                               size="icon" 
-                                              className="h-7 w-7 text-amber-600 hover:text-amber-700 hover:bg-amber-50"
+                                              className="h-9 w-9 sm:h-7 sm:w-7 text-amber-600 hover:text-amber-700 hover:bg-amber-50"
                                               onClick={() => handleAssignLeader(group.name, member.id)}
                                               title="Zum Leiter machen"
                                             >
@@ -450,7 +527,7 @@ export default function GroupsPage() {
                                           <Button 
                                             variant="ghost" 
                                             size="icon" 
-                                            className="h-7 w-7 text-destructive hover:bg-destructive/10"
+                                            className="h-9 w-9 sm:h-7 sm:w-7 text-destructive hover:bg-destructive/10"
                                             onClick={() => handleUpdateMember(member.id, null)}
                                             title={isPlanner ? "Aus Gruppe entfernen" : "Aus meinem Team entfernen"}
                                           >
@@ -541,7 +618,7 @@ export default function GroupsPage() {
                                     key={group.name}
                                     variant="outline"
                                     size="sm"
-                                    className="text-[10px] h-7 px-2"
+                                    className="h-10 px-3 text-xs sm:h-7 sm:px-2 sm:text-[10px]"
                                     onClick={() => handleUpdateMember(p.id, group.name)}
                                   >
                                     + {group.name}
@@ -551,7 +628,7 @@ export default function GroupsPage() {
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  className="text-[10px] h-7 px-2"
+                                  className="h-10 px-3 text-xs sm:h-7 sm:px-2 sm:text-[10px]"
                                   onClick={() => handleUpdateMember(p.id, profile?.planning_group || null)}
                                   title="Zu deinem Team hinzufügen"
                                 >
@@ -583,8 +660,8 @@ export default function GroupsPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-            <div className="xl:col-span-2">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2">
               <GroupWall 
                 groupName="hub" 
                 type="hub"

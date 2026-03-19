@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.16.2] - 2026-03-19
+- Navigation: **Submenus ausgebaut**. Der Bereich **Gruppen** wurde in echte Untermenüs aufgeteilt (Mein Team, Alle Gruppen, Shared Hub).
+- Admin: **Logs entkoppelt**. Aktivitäts-Logs sind nun als eigenes Submenu mit eigener Route unter `/admin/logs` verfügbar, getrennt von der Benutzerverwaltung.
+- UX: **Mobile-First Tab-Handling**. Gruppen-Unteransichten sind nun URL-gesteuert, sodass Untermenü-Links direkt die passende Ansicht öffnen.
+- UI: **Überdimensionierte Toggles verkleinert**. Tab- und Aktionsflächen auf der Gruppenseite wurden auf kompakte, touch-freundliche Größen angepasst.
+- Responsive: **Tablet/Phone Layout verbessert**. Grid-Breakpoints und Komponentenbreiten wurden so angepasst, dass verfügbarer Platz besser genutzt wird.
+- Core UI: **Dialog/Popover viewport-sicher**. Globale Komponenten wurden gegen Overflow auf kleinen Displays abgesichert.
+
 ## [0.16.1] - 2026-03-19
 - UI: **Kurs-Ranking** (ehemals Kurswettstreit) optisch verfeinert und Clipping-Fehler in der Kachel-Ansicht behoben.
 - Feature: **Event-Mentions**. In Kalenderterminen können nun gezielt Personen, Rollen (z.B. 'Admin') oder Planungsgruppen erwähnt werden.
