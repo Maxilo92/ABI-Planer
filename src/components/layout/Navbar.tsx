@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { LayoutDashboard, CheckSquare, Calendar, Euro, Megaphone, BarChart2, LogOut, Menu, X, ShieldCheck, User, MessageSquareHeart, Settings, Users } from 'lucide-react'
+import { LayoutDashboard, CheckSquare, Calendar, Euro, Megaphone, BarChart2, LogOut, Menu, X, ShieldCheck, User, MessageSquareHeart, Settings, Users, ChevronDown, ChevronRight } from 'lucide-react'
 import { useState } from 'react'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -13,8 +13,17 @@ import { useAuth } from '@/context/AuthContext'
 import { CountdownHeader } from './CountdownHeader'
 import { useNotifications } from '@/hooks/useNotifications'
 
+interface NavItem {
+  href: string
+  label: string
+  icon: any
+  notify?: boolean
+  subItems?: NavItem[]
+}
+
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
+  const [openSubmenus, setOpenSubmenus] = useState<Record<string, boolean>>({})
   const { profile, loading } = useAuth()
   const notifications = useNotifications()
   const router = useRouter()
@@ -26,7 +35,18 @@ export function Navbar() {
     router.push('/login')
   }
 
-  const navItems = [
+  const toggleSubmenu = (href: string, e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setOpenSubmenus(prev => ({
+      ...prev,
+      [href]: !prev[href]
+    }))
+  }
+
+  const isAdmin = profile?.role === 'admin_main' || profile?.role === 'admin_co' || profile?.role === 'admin'
+
+  const navItems: NavItem[] = [
     { href: '/', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/todos', label: 'Todos', icon: CheckSquare, notify: notifications.todos },
     { href: '/kalender', label: 'Kalender', icon: Calendar, notify: notifications.kalender },
@@ -38,11 +58,16 @@ export function Navbar() {
     { href: '/einstellungen', label: 'Einstellungen', icon: Settings },
   ]
 
-  const isAdmin = profile?.role === 'admin_main' || profile?.role === 'admin_co' || profile?.role === 'admin'
-
   if (isAdmin) {
-    navItems.push({ href: '/admin', label: 'Admin', icon: ShieldCheck })
-    navItems.push({ href: '/admin/feedback', label: 'Feedback Admin', icon: MessageSquareHeart })
+    navItems.push({ 
+      href: '/admin-root', 
+      label: 'Admin Bereich', 
+      icon: ShieldCheck,
+      subItems: [
+        { href: '/admin', label: 'Benutzer', icon: Users },
+        { href: '/admin/feedback', label: 'Feedback Admin', icon: MessageSquareHeart },
+      ]
+    })
   }
 
   const isAuthPage = ['/login', '/register', '/waiting'].includes(pathname)
@@ -57,17 +82,75 @@ export function Navbar() {
 
   const isActive = (href: string) => {
     if (href === '/') return pathname === '/'
-    
-    // Check if there is a more specific (longer) match in navItems
-    const hasMoreSpecificMatch = navItems.some(item => 
-      item.href !== href && 
-      item.href.length > href.length && 
-      (pathname === item.href || pathname.startsWith(`${item.href}/`))
-    )
-    
-    if (hasMoreSpecificMatch) return false
-    
+    if (href === '/admin-root') return pathname.startsWith('/admin')
     return pathname === href || pathname.startsWith(`${href}/`)
+  }
+
+  const renderNavItem = (item: NavItem, isMobile: boolean = false) => {
+    const hasSubItems = item.subItems && item.subItems.length > 0
+    const isExpanded = openSubmenus[item.href] || (hasSubItems && isActive(item.href))
+    const active = isActive(item.href)
+
+    return (
+      <div key={item.href} className="space-y-1">
+        {hasSubItems ? (
+          <button
+            onClick={(e) => toggleSubmenu(item.href, e)}
+            className={cn(
+              'flex w-full items-center justify-between rounded-md px-3 py-2.5 text-sm font-medium transition-colors',
+              active ? 'bg-secondary/50 text-primary' : 'hover:bg-secondary'
+            )}
+          >
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <item.icon className="h-4 w-4" />
+                {item.notify && (
+                  <span className="absolute -right-0.5 -top-0.5 flex h-2 w-2 rounded-full bg-red-500 border border-background" />
+                )}
+              </div>
+              {item.label}
+            </div>
+            {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+          </button>
+        ) : (
+          <Link
+            href={item.href}
+            onClick={() => isMobile && setIsOpen(false)}
+            className={cn(
+              'flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors',
+              active ? 'bg-secondary text-primary' : 'hover:bg-secondary'
+            )}
+          >
+            <div className="relative">
+              <item.icon className="h-4 w-4" />
+              {item.notify && (
+                <span className="absolute -right-0.5 -top-0.5 flex h-2 w-2 rounded-full bg-red-500 border border-background" />
+              )}
+            </div>
+            {item.label}
+          </Link>
+        )}
+
+        {hasSubItems && isExpanded && (
+          <div className={cn("ml-4 pl-4 border-l space-y-1", isMobile ? "mt-1" : "mt-1")}>
+            {item.subItems!.map((subItem) => (
+              <Link
+                key={subItem.href}
+                href={subItem.href}
+                onClick={() => isMobile && setIsOpen(false)}
+                className={cn(
+                  'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
+                  pathname === subItem.href ? 'text-primary bg-secondary/30' : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
+                )}
+              >
+                <subItem.icon className="h-3.5 w-3.5" />
+                {subItem.label}
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
+    )
   }
 
   if (isAuthPage) {
@@ -113,25 +196,7 @@ export function Navbar() {
           <button className="absolute inset-0 bg-black/50" onClick={() => setIsOpen(false)} aria-label="Navigation schliessen" />
           <aside className="absolute left-0 top-16 bottom-0 w-80 max-w-[85vw] border-r bg-background flex flex-col">
             <div className="flex-1 p-4 overflow-y-auto space-y-1">
-              {navItems.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setIsOpen(false)}
-                  className={cn(
-                    'flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors',
-                    isActive(item.href) ? 'bg-secondary text-primary' : 'hover:bg-secondary'
-                  )}
-                >
-                  <div className="relative">
-                    <item.icon className="h-4 w-4" />
-                    {'notify' in item && item.notify && (
-                      <span className="absolute -right-0.5 -top-0.5 flex h-2 w-2 rounded-full bg-red-500 border border-background" />
-                    )}
-                  </div>
-                  {item.label}
-                </Link>
-              ))}
+              {navItems.map((item) => renderNavItem(item, true))}
             </div>
 
             <div className="p-4 border-t space-y-2">
@@ -184,24 +249,7 @@ export function Navbar() {
 
           <nav className="flex-1 p-4 overflow-y-auto">
             <div className="space-y-1">
-              {navItems.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={cn(
-                    'flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors',
-                    isActive(item.href) ? 'bg-secondary text-primary' : 'hover:bg-secondary'
-                  )}
-                >
-                  <div className="relative">
-                    <item.icon className="h-4 w-4" />
-                    {'notify' in item && item.notify && (
-                      <span className="absolute -right-0.5 -top-0.5 flex h-2 w-2 rounded-full bg-red-500 border border-background" />
-                    )}
-                  </div>
-                  {item.label}
-                </Link>
-              ))}
+              {navItems.map((item) => renderNavItem(item))}
             </div>
           </nav>
 

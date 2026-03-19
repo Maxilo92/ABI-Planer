@@ -34,13 +34,17 @@ export function ClassRanking({ finances, goal }: ClassRankingProps) {
     return () => unsubscribe()
   }, [])
   
-  const stats: ClassStats[] = courses.map(c => {
+  const stats: ClassStats[] = courses.map((c) => {
     const amount = finances
-      .filter(f => f.responsible_class === c && Number(f.amount) > 0)
+      .filter((f) => f.responsible_class === c && Number(f.amount) > 0)
       .reduce((acc, f) => acc + Number(f.amount), 0)
-    
-    const classGoal = (goal || 1) / (courses.length || 1)
-    const percentage = Math.min(Math.round((amount / classGoal) * 100), 100)
+
+    const safeGoal = Number.isFinite(goal) && goal > 0 ? goal : 1
+    const classGoal = safeGoal / Math.max(courses.length, 1)
+    const rawPercentage = classGoal > 0 ? (amount / classGoal) * 100 : 0
+    const percentage = Number.isFinite(rawPercentage)
+      ? Math.max(0, Math.min(Math.round(rawPercentage), 100))
+      : 0
     
     return { className: c, amount, percentage }
   }).sort((a, b) => b.amount - a.amount)
@@ -57,8 +61,8 @@ export function ClassRanking({ finances, goal }: ClassRankingProps) {
   const lastPlace = [...stats].reverse().find(s => s.amount >= 0) || stats[stats.length - 1]
 
   return (
-    <Card className="h-full border-border/40 shadow-subtle overflow-hidden flex flex-col">
-      <CardHeader className="pb-3 border-b border-border/40 bg-muted/5 shrink-0">
+    <Card className="h-full border-border/40 shadow-subtle overflow-hidden flex flex-col elevated-card">
+      <CardHeader className="pb-3 border-b border-border bg-muted/10 shrink-0">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg font-bold flex items-center gap-2">
             <BarChart3 className="h-5 w-5 text-primary" />
@@ -70,10 +74,10 @@ export function ClassRanking({ finances, goal }: ClassRankingProps) {
         </div>
       </CardHeader>
       
-      <CardContent className="p-0 flex-1 flex flex-col min-h-0">
-        <div className="flex-1 overflow-y-auto divide-y divide-border/40 scrollbar-thin scrollbar-thumb-muted-foreground/20">
+      <CardContent className="p-0 flex-1 flex flex-col min-h-0 bg-card">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-muted-foreground/20">
           {stats.map((s, index) => (
-            <div key={s.className} className="flex items-center justify-between p-3 transition-colors hover:bg-muted/30 group">
+            <div key={s.className} className="flex items-center justify-between p-3 min-h-[58px] border-b border-border/70 last:border-b-0 transition-colors hover:bg-muted/30 group">
               <div className="flex items-center gap-3">
                 <div className={`flex items-center justify-center h-7 w-7 rounded-full text-[10px] font-bold ${
                   index === 0 ? 'bg-yellow-500/20 text-yellow-600 dark:text-yellow-500' : 

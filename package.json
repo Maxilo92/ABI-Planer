@@ -1,11 +1,11 @@
 {
   "name": "abi-planer",
-  "version": "0.1.0",
+  "version": "0.16.1",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
+    "start": "node .next/standalone/server.js",
     "lint": "next lint",
     "test:regressions": "node scripts/regression-guard.mjs",
     "check": "npm run test:regressions && npx tsc --noEmit && npm run build"

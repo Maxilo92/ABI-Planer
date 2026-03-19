@@ -54,12 +54,12 @@ export function TodoList({ todos, canManage = false }: TodoListProps) {
   }
 
   return (
-    <Card className="h-full">
-      <CardHeader className="pb-2">
+    <Card className="h-full border-border/40 shadow-subtle flex flex-col overflow-hidden">
+      <CardHeader className="pb-3 border-b border-border bg-muted/10 shrink-0">
         <CardTitle className="text-lg font-bold">Aufgaben</CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
+      <CardContent className="p-0 flex-1 min-h-0 overflow-hidden bg-card">
+        <div className="h-full overflow-y-auto p-4 space-y-3 scrollbar-thin scrollbar-thumb-muted-foreground/20">
           {todos.length === 0 ? (
             <p className="text-sm text-muted-foreground italic py-4">Keine Aufgaben vorhanden.</p>
           ) : (

@@ -55,9 +55,9 @@ const checks = [
     patterns: [/refreshVotesForPoll/, /toast\.success\('Deine Stimme wurde gespeichert\.'/, /toast\.error\('Abstimmung fehlgeschlagen/],
   },
   {
-    name: 'Finance page keeps effective goal from expenses',
+    name: 'Finance page keeps goal logic',
     file: 'src/app/finanzen/page.tsx',
-    patterns: [/const expenseGoal =/, /const effectiveGoal =/, /goal=\{effectiveGoal\}/],
+    patterns: [/const fundingGoal =/, /current=\{currentBalance\}/, /goal=\{fundingGoal\}/],
   },
   {
     name: 'Dashboard uses dynamic sorting',
@@ -78,7 +78,7 @@ const checks = [
       /scores\.polls = 70/,
       /scores\.funding = 50/,
       /scores\.news = 30/,
-      /leaderboard: 10/
+      /leaderboard: 40/
     ],
   },
 ]

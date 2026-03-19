@@ -166,7 +166,7 @@ export function PollList({ polls, userId, canVote = false, canManage = false, li
   }
 
   return (
-    <div className="grid grid-cols-1 gap-6">
+    <div className="h-full overflow-y-auto pr-2 space-y-6 scrollbar-thin scrollbar-thumb-muted-foreground/20">
       {displayedPolls.map((poll) => {
         const pollVotes = votesByPoll[poll.id] || poll.votes || []
         const totalVotes = pollVotes.length
