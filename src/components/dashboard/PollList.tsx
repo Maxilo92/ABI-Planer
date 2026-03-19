@@ -18,9 +18,17 @@ interface PollListProps {
   canVote?: boolean
   canManage?: boolean
   limit?: number
+  useScrollContainer?: boolean
 }
 
-export function PollList({ polls, userId, canVote = false, canManage = false, limit }: PollListProps) {
+export function PollList({
+  polls,
+  userId,
+  canVote = false,
+  canManage = false,
+  limit,
+  useScrollContainer = true,
+}: PollListProps) {
   const router = useRouter()
   const [loading, setLoading] = useState<string | null>(null)
   const [votesByPoll, setVotesByPoll] = useState<Record<string, PollVote[]>>({})
@@ -165,9 +173,7 @@ export function PollList({ polls, userId, canVote = false, canManage = false, li
     }
   }
 
-  return (
-    <div className="h-full overflow-y-auto pr-2 space-y-6 scrollbar-thin scrollbar-thumb-muted-foreground/20">
-      {displayedPolls.map((poll) => {
+  const pollCards = displayedPolls.map((poll) => {
         const pollVotes = votesByPoll[poll.id] || poll.votes || []
         const totalVotes = pollVotes.length
         const userVote = pollVotes.find(v => v.user_id === userId)
@@ -256,7 +262,15 @@ export function PollList({ polls, userId, canVote = false, canManage = false, li
             </CardContent>
           </Card>
         )
-      })}
+      })
+
+  if (!useScrollContainer) {
+    return <div className="space-y-6">{pollCards}</div>
+  }
+
+  return (
+    <div className="h-full overflow-y-auto pr-2 space-y-6 scrollbar-thin scrollbar-thumb-muted-foreground/20">
+      {pollCards}
     </div>
   )
 }

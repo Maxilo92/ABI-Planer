@@ -20,7 +20,7 @@ import { useRouter } from 'next/navigation'
 
 export default function Dashboard() {
   const router = useRouter()
-  const { profile, loading: authLoading } = useAuth()
+  const { user, profile, loading: authLoading } = useAuth()
   const [settings, setSettings] = useState<any>(null)
   const [todos, setTodos] = useState<any[]>([])
   const [events, setEvents] = useState<any[]>([])
@@ -130,6 +130,12 @@ export default function Dashboard() {
   }
 
   const sortedComponents = useDashboardSorting(profile, todos, events, polls, news)
+  const currentUserId = user?.uid || profile?.id || ''
+  const unvotedPolls = polls.filter((poll) => {
+    if (!poll.is_active) return false
+    if (!currentUserId) return true
+    return !(poll.votes || []).some((vote) => vote.user_id === currentUserId)
+  })
 
   const componentLinks: Record<DashboardComponentKey, string> = {
     funding: '/finanzen',
@@ -204,18 +210,7 @@ export default function Dashboard() {
         case 'events':
           return <div className="h-[420px] overflow-hidden flex flex-col"><CalendarEvents key="events" events={events || []} /></div>
         case 'polls':
-          return (
-            <div className="h-[420px] overflow-hidden flex flex-col">
-              <PollList
-                key="polls"
-                polls={polls}
-                userId={profile?.id || ''}
-                canVote={true}
-                canManage={canManage}
-                limit={2}
-              />
-            </div>
-          )
+          return null
         case 'leaderboard':
           return (
             <div className="h-[380px] overflow-hidden flex flex-col">
@@ -250,6 +245,48 @@ export default function Dashboard() {
     )
   }
 
+  const renderPollComponent = (poll: Poll) => {
+    return (
+      <div
+        key={`poll-${poll.id}`}
+        onClick={() => router.push('/abstimmungen')}
+        className="cursor-pointer transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] group h-full overflow-hidden rounded-xl"
+      >
+        <div
+          className="pointer-events-auto h-full [&_button]:pointer-events-auto [&_a]:pointer-events-auto [&_input]:pointer-events-auto overflow-hidden flex flex-col"
+          onClick={(e) => {
+            const target = e.target as HTMLElement
+            if (target.closest('button') || target.closest('a') || target.closest('input')) {
+              e.stopPropagation()
+            }
+          }}
+        >
+          <div className="h-[420px] overflow-hidden flex flex-col">
+            <PollList
+              polls={[poll]}
+              userId={currentUserId}
+              canVote={!!currentUserId}
+              canManage={canManage}
+              useScrollContainer={false}
+            />
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  type DashboardItem =
+    | { type: 'poll'; poll: Poll }
+    | { type: 'component'; key: Exclude<DashboardComponentKey, 'polls'> }
+
+  const dashboardItems = sortedComponents.reduce<DashboardItem[]>((items, key) => {
+    if (key === 'polls') {
+      return [...items, ...unvotedPolls.map((poll) => ({ type: 'poll' as const, poll }))]
+    }
+
+    return [...items, { type: 'component' as const, key }]
+  }, [])
+
   if (authLoading || loading) {
     return <div className="flex items-center justify-center min-h-[50vh]">Lade Dashboard...</div>
   }
@@ -270,7 +307,9 @@ export default function Dashboard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {sortedComponents.map(key => renderComponent(key))}
+        {dashboardItems.map((item) =>
+          item.type === 'poll' ? renderPollComponent(item.poll) : renderComponent(item.key)
+        )}
       </div>
     </div>
   )

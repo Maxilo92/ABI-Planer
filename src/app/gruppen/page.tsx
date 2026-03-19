@@ -233,9 +233,9 @@ export default function GroupsPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 xl:grid-cols-4 lg:grid-cols-3 gap-8">
+              <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 lg:gap-8">
                 {/* Team Wall */}
-                <div className="lg:col-span-2 xl:col-span-2">
+                <div className="xl:col-span-8 2xl:col-span-7 min-w-0">
                   <GroupWall 
                     groupName={profile.planning_group} 
                     canManage={isGroupLeader || isPlanner} 
@@ -243,7 +243,7 @@ export default function GroupsPage() {
                 </div>
 
                 {/* Team Tasks & Events */}
-                <div className="space-y-8">
+                <div className="xl:col-span-4 2xl:col-span-5 min-w-0 space-y-6">
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
                       <h3 className="font-semibold flex items-center gap-2">
@@ -272,7 +272,7 @@ export default function GroupsPage() {
 
                 {/* Sidebar: Add Members (Only for Leader) */}
                 {(isGroupLeader || isPlanner) && (
-                  <div className="xl:col-span-1 lg:col-span-3">
+                  <div className="xl:col-span-12">
                     <Card>
                       <CardHeader>
                         <CardTitle className="text-lg flex items-center gap-2">
@@ -293,7 +293,7 @@ export default function GroupsPage() {
                           />
                         </div>
 
-                        <div className="space-y-2 max-h-[400px] overflow-y-auto pr-1">
+                        <div className="space-y-2 max-h-[460px] overflow-y-auto pr-1">
                           {unassignedProfiles.length === 0 ? (
                             <p className="text-sm text-muted-foreground italic text-center py-4">
                               Alle aktiven Nutzer sind bereits in Gruppen.
