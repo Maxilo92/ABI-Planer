@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { db } from '@/lib/firebase'
-import { collection, query, orderBy, onSnapshot } from 'firebase/firestore'
+import { collection, query, orderBy, onSnapshot, doc, updateDoc } from 'firebase/firestore'
 import { useAuth } from '@/context/AuthContext'
 import { TodoList } from '@/components/dashboard/TodoList'
 import { AddTodoDialog } from '@/components/modals/AddTodoDialog'
@@ -27,6 +27,28 @@ export default function TodosPage() {
 
     return () => unsubscribe()
   }, [])
+
+  useEffect(() => {
+    if (!authLoading && profile) {
+      const updateLastVisited = async () => {
+        try {
+          const now = new Date()
+          const lastVisitedStr = profile.last_visited?.todos
+          const lastVisited = lastVisitedStr ? new Date(lastVisitedStr) : new Date(0)
+          
+          if (!lastVisitedStr || (now.getTime() - lastVisited.getTime() > 60 * 60 * 1000)) {
+            const userRef = doc(db, 'profiles', profile.id)
+            await updateDoc(userRef, {
+              [`last_visited.todos`]: now.toISOString()
+            })
+          }
+        } catch (error) {
+          console.error('Error updating last_visited for todos:', error)
+        }
+      }
+      updateLastVisited()
+    }
+  }, [profile?.id, profile?.last_visited?.todos, authLoading])
 
   if (authLoading || loading) {
     return (

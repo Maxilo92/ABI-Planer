@@ -20,6 +20,7 @@ import { Label } from '@/components/ui/label'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Plus, ChevronDown, Loader2 } from 'lucide-react'
 import { ClassName } from '@/types/database'
+import { logAction } from '@/lib/logging'
 
 export function AddFinanceDialog() {
   const [amount, setAmount] = useState('')
@@ -51,13 +52,20 @@ export function AddFinanceDialog() {
 
     if (user) {
       try {
+        const numericAmount = parseFloat(amount.replace(',', '.'))
         await addDoc(collection(db, 'finances'), { 
-          amount: parseFloat(amount.replace(',', '.')), 
+          amount: numericAmount, 
           description,
           responsible_class: responsibleClass === 'Allgemein' ? null : responsibleClass,
           responsible_user_name: profile?.full_name || user.displayName || 'Unbekannt',
           created_by: user.uid,
           entry_date: serverTimestamp() 
+        })
+
+        await logAction('FINANCE_ADDED', user.uid, profile?.full_name, { 
+          amount: numericAmount, 
+          description,
+          responsible_class: responsibleClass
         })
 
         setAmount('')

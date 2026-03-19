@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { LayoutDashboard, CheckSquare, Calendar, Euro, Megaphone, BarChart2, LogOut, Menu, X, ShieldCheck, User, MessageSquareHeart, Settings } from 'lucide-react'
+import { LayoutDashboard, CheckSquare, Calendar, Euro, Megaphone, BarChart2, LogOut, Menu, X, ShieldCheck, User, MessageSquareHeart, Settings, Users } from 'lucide-react'
 import { useState } from 'react'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -33,6 +33,7 @@ export function Navbar() {
     { href: '/finanzen', label: 'Finanzen', icon: Euro },
     { href: '/news', label: 'News', icon: Megaphone, notify: notifications.news },
     { href: '/feedback', label: 'Feedback', icon: MessageSquareHeart },
+    { href: '/gruppen', label: 'Gruppen', icon: Users },
     { href: '/abstimmungen', label: 'Umfragen', icon: BarChart2, notify: notifications.umfragen },
     { href: '/einstellungen', label: 'Einstellungen', icon: Settings },
   ]
@@ -56,6 +57,16 @@ export function Navbar() {
 
   const isActive = (href: string) => {
     if (href === '/') return pathname === '/'
+    
+    // Check if there is a more specific (longer) match in navItems
+    const hasMoreSpecificMatch = navItems.some(item => 
+      item.href !== href && 
+      item.href.length > href.length && 
+      (pathname === item.href || pathname.startsWith(`${item.href}/`))
+    )
+    
+    if (hasMoreSpecificMatch) return false
+    
     return pathname === href || pathname.startsWith(`${href}/`)
   }
 
@@ -100,8 +111,8 @@ export function Navbar() {
       {!loading && isOpen && (
         <div className="md:hidden fixed inset-0 z-40">
           <button className="absolute inset-0 bg-black/50" onClick={() => setIsOpen(false)} aria-label="Navigation schliessen" />
-          <aside className="absolute left-0 top-16 bottom-0 w-80 max-w-[85vw] border-r bg-background p-4 overflow-y-auto">
-            <div className="space-y-1">
+          <aside className="absolute left-0 top-16 bottom-0 w-80 max-w-[85vw] border-r bg-background flex flex-col">
+            <div className="flex-1 p-4 overflow-y-auto space-y-1">
               {navItems.map((item) => (
                 <Link
                   key={item.href}
@@ -123,13 +134,13 @@ export function Navbar() {
               ))}
             </div>
 
-            <div className="mt-6 pt-4 border-t space-y-2">
+            <div className="p-4 border-t space-y-2">
               {profile ? (
                 <>
                   <Link
                     href="/profil"
                     onClick={() => setIsOpen(false)}
-                    className="flex items-center gap-3 rounded-md px-3 py-2.5 hover:bg-secondary"
+                    className="flex items-center gap-3 rounded-md px-3 py-2.5 hover:bg-secondary transition-colors"
                   >
                     <Avatar size="default">
                       <AvatarFallback className="bg-primary/10 text-primary font-bold">{userInitial}</AvatarFallback>

@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.15.24] - 2026-03-19
+- Fix: **Kritische Fehler bei Registrierung und Anmeldung behoben**. Das Nutzerprofil wird nun sofort nach der Erstellung erkannt (`onSnapshot`), und neue Nutzer landen nicht mehr in einer Endlosschleife auf der Login-Seite oder vor verschlossenen Einstellungen.
+- Feature: **Planungsgruppen-Modul** (`/gruppen`). Strukturierte Teams mit Gruppenleitern und Mitgliedern. Plannungsgruppen können nun effizienter verwaltet und Aufgaben gezielt zugewiesen werden.
+- Feature: **Öffentlicher Bug-Tracker & Feedback-System**. Feedback ist nun für alle Nutzer einsehbar. Unterstützung für **Bild-Uploads** (Screenshots) direkt im Feedback-Formular.
+- Feature: **Erweitertes Logging-System**. Alle wichtigen Aktionen (Abstimmungen, Finanz-Updates, Feedback) werden nun revisionssicher mit Zeitstempel und Nutzer-ID protokolliert.
+- Feature: **Interaktiver Kalender**. Termine sind nun klickbar und zeigen eine detaillierte Ansicht mit allen Informationen.
+- Feature: **Finanz-Update**. Der Finanzstatus berechnet sich nun korrekt aus Einnahmen minus Ausgaben. Anzeige von Ticketpreis-Prognosen basierend auf dem Finanzierungsziel und den erwarteten Verkäufen.
+- UX: **Verbesserte Navigation & Responsivität**. Fix für iPad/Tablet Layout-Glitches (Footer/Account-Button). Korrektur der Menü-Hervorhebung bei Admin-Unterseiten.
+- UX: **Theme-Switcher Optimierung**. Die aktuelle Theme-Wahl wird nun im Dropdown klar markiert.
+- UX: **Umfragen-Verbesserung**. Nutzer können ihre Teilnahme an Umfragen nun zurückziehen (sofern die Umfrage Änderungen erlaubt).
+- Fix: **Sonderzeichen-Support**. Korrekte Behandlung und Normalisierung von ä, ö, ü und ß im gesamten System.
+- Legal: Neue **AGB-Seite** (`/agb`) hinzugefügt und im Footer verlinkt.
+
 ## [0.15.23] - 2026-03-18
 - UI: Optimierung des Dashboard-Layouts für einen perfekten "Tiled"-Look (nx1 Kacheln). Die Höhe der Karten wurde vereinheitlicht und der Kurswettstreit scrollt nun intern, wenn die Liste zu lang wird.
 

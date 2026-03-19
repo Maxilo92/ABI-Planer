@@ -111,12 +111,12 @@ export function FundingStatus({ current, goal, initialTicketSales = 150, onTicke
               </div>
             </div>
             <p className="text-[10px] text-muted-foreground italic leading-tight">
-              Der Ticketpreis berechnet sich aus dem restlichen Finanzierungsziel ({formatCurrency(remaining)}) geteilt durch die Anzahl der erwarteten Verkäufe.
+              Der Ticketpreis berechnet sich aus dem noch offenen Betrag ({formatCurrency(remaining)}), um das Ziel von {formatCurrency(goal)} zu erreichen, geteilt durch die Anzahl der erwarteten Verkäufe.
             </p>
           </div>
           
           <p className="text-[10px] md:text-xs text-muted-foreground text-center italic opacity-70">
-            Das Ziel bildet eure geplanten Ausgaben ab. Einnahmen reduzieren den noch offenen Betrag.
+            Das Ziel bildet euren angestrebten Reingewinn ab. Einnahmen abzüglich Ausgaben bilden den aktuellen Stand.
           </p>
         </div>
       </CardContent>

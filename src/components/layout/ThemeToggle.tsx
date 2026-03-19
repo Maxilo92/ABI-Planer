@@ -1,7 +1,7 @@
 'use client'
 
 import * as React from 'react'
-import { Moon, Sun } from 'lucide-react'
+import { Moon, Sun, Check } from 'lucide-react'
 import { useTheme } from 'next-themes'
 
 import { Button } from '@/components/ui/button'
@@ -11,9 +11,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { cn } from '@/lib/utils'
 
 export function ThemeToggle() {
-  const { setTheme } = useTheme()
+  const { theme, setTheme } = useTheme()
 
   return (
     <DropdownMenu>
@@ -27,14 +28,26 @@ export function ThemeToggle() {
         }
       />
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => setTheme('light')}>
+        <DropdownMenuItem 
+          onClick={() => setTheme('light')}
+          className={cn("flex items-center justify-between", theme === 'light' && "bg-secondary font-bold")}
+        >
           Light
+          {theme === 'light' && <Check className="h-4 w-4 ml-2" />}
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme('dark')}>
+        <DropdownMenuItem 
+          onClick={() => setTheme('dark')}
+          className={cn("flex items-center justify-between", theme === 'dark' && "bg-secondary font-bold")}
+        >
           Dark
+          {theme === 'dark' && <Check className="h-4 w-4 ml-2" />}
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme('system')}>
+        <DropdownMenuItem 
+          onClick={() => setTheme('system')}
+          className={cn("flex items-center justify-between", theme === 'system' && "bg-secondary font-bold")}
+        >
           System
+          {theme === 'system' && <Check className="h-4 w-4 ml-2" />}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

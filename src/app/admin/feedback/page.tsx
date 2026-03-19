@@ -16,6 +16,7 @@ type Feedback = {
   created_at: string
   created_by: string
   created_by_name?: string
+  image_url?: string
 }
 
 export default function AdminFeedbackPage() {

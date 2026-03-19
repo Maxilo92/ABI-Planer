@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react'
 import { db } from '@/lib/firebase'
 import { doc, updateDoc, onSnapshot } from 'firebase/firestore'
 import { useRouter } from 'next/navigation'
+import { useAuth } from '@/context/AuthContext'
+import { logAction } from '@/lib/logging'
 import { 
   Dialog, 
   DialogContent, 
@@ -33,6 +35,7 @@ export function EditFinanceDialog({ entry }: EditFinanceDialogProps) {
   const [loading, setLoading] = useState(false)
   const [loadingCourses, setLoadingCourses] = useState(true)
   const [open, setOpen] = useState(false)
+  const { user, profile } = useAuth()
   const router = useRouter()
 
   useEffect(() => {
@@ -52,23 +55,32 @@ export function EditFinanceDialog({ entry }: EditFinanceDialogProps) {
     e.preventDefault()
     setLoading(true)
 
-    try {
-      const docRef = doc(db, 'finances', entry.id)
-      await updateDoc(docRef, { 
-        amount: parseFloat(amount.replace(',', '.')), 
-        description,
-        responsible_class: responsibleClass === 'Allgemein' ? null : responsibleClass,
-      })
+    if (user) {
+      try {
+        const numericAmount = parseFloat(amount.replace(',', '.'))
+        const docRef = doc(db, 'finances', entry.id)
+        await updateDoc(docRef, { 
+          amount: numericAmount, 
+          description,
+          responsible_class: responsibleClass === 'Allgemein' ? null : responsibleClass,
+        })
 
-      toast.success('Eintrag aktualisiert.')
-      setOpen(false)
-      router.refresh()
-    } catch (error) {
-      console.error('Error updating finance entry:', error)
-      toast.error('Fehler beim Aktualisieren.')
-    } finally {
-      setLoading(false)
+        await logAction('FINANCE_EDITED', user.uid, profile?.full_name, { 
+          id: entry.id,
+          amount: numericAmount, 
+          description,
+          responsible_class: responsibleClass
+        })
+
+        toast.success('Eintrag aktualisiert.')
+        setOpen(false)
+        router.refresh()
+      } catch (error) {
+        console.error('Error updating finance entry:', error)
+        toast.error('Fehler beim Aktualisieren.')
+      }
     }
+    setLoading(false)
   }
 
   return (

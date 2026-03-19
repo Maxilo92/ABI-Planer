@@ -26,3 +26,16 @@ export function toDate(date: any): Date {
   const parsed = new Date(date)
   return isNaN(parsed.getTime()) ? new Date() : parsed
 }
+
+/**
+ * Normalizes special characters (ä, ö, ü, ß) to their non-special counterparts.
+ * This can be used for searching or when special characters are not supported.
+ */
+export function normalizeChars(str: string): string {
+  if (typeof str !== 'string') return ''
+  const charMap: Record<string, string> = {
+    'ä': 'ae', 'ö': 'oe', 'ü': 'ue', 'ß': 'ss',
+    'Ä': 'Ae', 'Ö': 'Oe', 'Ü': 'Ue'
+  }
+  return str.replace(/[äöüßÄÖÜ]/g, match => charMap[match])
+}

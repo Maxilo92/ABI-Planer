@@ -16,9 +16,10 @@ import { de } from 'date-fns/locale'
 import { Loader2, Trash2 } from 'lucide-react'
 import { toDate } from '@/lib/utils'
 import { toast } from 'sonner'
+import { logAction } from '@/lib/logging'
 
 export default function FinancePage() {
-  const { profile, loading: authLoading } = useAuth()
+  const { user, profile, loading: authLoading } = useAuth()
   const [settings, setSettings] = useState<Settings | null>(null)
   const [finances, setFinances] = useState<FinanceEntry[]>([])
   const [loading, setLoading] = useState(true)
@@ -70,8 +71,19 @@ export default function FinancePage() {
   const handleDelete = async (id: string) => {
     if (!window.confirm('Möchtest du diesen Eintrag wirklich löschen?')) return
 
+    const entryToDelete = finances.find(f => f.id === id)
+
     try {
       await deleteDoc(doc(db, 'finances', id))
+      
+      if (user) {
+        await logAction('FINANCE_DELETED', user.uid, profile?.full_name, { 
+          id, 
+          amount: entryToDelete?.amount,
+          description: entryToDelete?.description
+        })
+      }
+
       toast.success('Eintrag gelöscht.')
     } catch (err) {
       console.error('Error deleting finance entry:', err)
@@ -80,9 +92,10 @@ export default function FinancePage() {
   }
 
   const amounts = finances.map((entry) => Number(entry.amount) || 0)
-  const currentFunding = amounts.filter((value) => value > 0).reduce((acc, value) => acc + value, 0)
-  const expenseGoal = amounts.filter((value) => value < 0).reduce((acc, value) => acc + Math.abs(value), 0)
-  const effectiveGoal = expenseGoal > 0 ? expenseGoal : (settings?.funding_goal || 10000)
+  const totalIncome = amounts.filter((value) => value > 0).reduce((acc, value) => acc + value, 0)
+  const totalExpenses = amounts.filter((value) => value < 0).reduce((acc, value) => acc + Math.abs(value), 0)
+  const currentBalance = totalIncome - totalExpenses
+  const fundingGoal = settings?.funding_goal || 10000
 
   return (
     <div className="space-y-6">
@@ -94,9 +107,42 @@ export default function FinancePage() {
         {isPlanner && <AddFinanceDialog />}
       </div>
 
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground uppercase">Gesamteinnahmen</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-success">
+              + {totalIncome.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground uppercase">Gesamtausgaben</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-destructive">
+              - {totalExpenses.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="bg-primary/5 border-primary/20">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-primary uppercase">Aktueller Kontostand</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className={`text-2xl font-bold ${currentBalance < 0 ? 'text-destructive' : 'text-primary'}`}>
+              {currentBalance.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
       <FundingStatus
-        current={currentFunding}
-        goal={effectiveGoal}
+        current={currentBalance}
+        goal={fundingGoal}
         initialTicketSales={settings?.expected_ticket_sales ?? 150}
         onTicketSalesChange={handleTicketSalesChange}
       />

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { db } from '@/lib/firebase'
-import { collection, query, where, orderBy, onSnapshot, getDocs } from 'firebase/firestore'
+import { collection, query, where, orderBy, onSnapshot, getDocs, doc, updateDoc } from 'firebase/firestore'
 import { useAuth } from '@/context/AuthContext'
 import { Card, CardContent } from '@/components/ui/card'
 import { BarChart2, Loader2 } from 'lucide-react'
@@ -46,6 +46,28 @@ export default function PollsPage() {
 
     return () => unsubscribe()
   }, [authLoading])
+
+  useEffect(() => {
+    if (!authLoading && profile) {
+      const updateLastVisited = async () => {
+        try {
+          const now = new Date()
+          const lastVisitedStr = profile.last_visited?.umfragen
+          const lastVisited = lastVisitedStr ? new Date(lastVisitedStr) : new Date(0)
+          
+          if (!lastVisitedStr || (now.getTime() - lastVisited.getTime() > 60 * 60 * 1000)) {
+            const userRef = doc(db, 'profiles', profile.id)
+            await updateDoc(userRef, {
+              [`last_visited.umfragen`]: now.toISOString()
+            })
+          }
+        } catch (error) {
+          console.error('Error updating last_visited for polls:', error)
+        }
+      }
+      updateLastVisited()
+    }
+  }, [profile?.id, profile?.last_visited?.umfragen, authLoading])
 
   if (authLoading || loading) {
     return (

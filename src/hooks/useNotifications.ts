@@ -10,7 +10,7 @@ import {
   doc 
 } from 'firebase/firestore'
 import { useAuth } from '@/context/AuthContext'
-import { Todo, Event, NewsEntry } from '@/types/database'
+import { Todo, Event, NewsEntry, Poll } from '@/types/database'
 import { toDate } from '@/lib/utils'
 
 export function useNotifications() {
@@ -33,71 +33,75 @@ export function useNotifications() {
       return
     }
 
-    // 1. Todos: Open todos assigned to current user, their group, or their class.
+    // 1. Todos: New todos since last visit.
     const todosQuery = query(
       collection(db, 'todos'),
       where('status', 'in', ['open', 'in_progress'])
     )
     const unsubscribeTodos = onSnapshot(todosQuery, (snapshot) => {
+      const lastVisited = profile.last_visited?.todos ? new Date(profile.last_visited.todos) : new Date(0)
+      
       const hasActionItem = snapshot.docs.some(docSnap => {
         const data = docSnap.data() as Todo
-        const isAssignedToUser = data.assigned_to_user === profile.id
-        const isAssignedToClass = data.assigned_to_class === profile.class_name
-        const isAssignedToGroup = data.assigned_to_group === profile.planning_group
-        return isAssignedToUser || isAssignedToClass || isAssignedToGroup
+        const createdAt = data.created_at ? toDate(data.created_at) : new Date(0)
+        
+        // Show notification if it's assigned to user/class/group AND created since last visit
+        const isAssigned = data.assigned_to_user === profile.id || 
+                           data.assigned_to_class === profile.class_name || 
+                           data.assigned_to_group === profile.planning_group
+        
+        return isAssigned && createdAt > lastVisited
       })
       setNotifications(prev => ({ ...prev, todos: hasActionItem }))
     })
 
-    // 2. Kalender: New events created since last visit or within 24h.
+    // 2. Kalender: New events created since last visit.
     const eventsQuery = query(collection(db, 'events'))
     const unsubscribeEvents = onSnapshot(eventsQuery, (snapshot) => {
-      const twentyFourHoursAgo = new Date()
-      twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24)
-      
       const lastVisited = profile.last_visited?.kalender ? new Date(profile.last_visited.kalender) : new Date(0)
       
       const hasNewEvent = snapshot.docs.some(docSnap => {
         const data = docSnap.data() as Event
         const createdAt = data.created_at ? toDate(data.created_at) : new Date(0)
-        // Mark as new if created after last visit AND (either within 24h OR never visited)
-        return createdAt > lastVisited && createdAt >= twentyFourHoursAgo
+        return createdAt > lastVisited
       })
       setNotifications(prev => ({ ...prev, kalender: hasNewEvent }))
     })
 
-    // 3. Umfragen: Active polls that the user has not yet voted in.
+    // 3. Umfragen: Active polls since last visit OR unvoted active polls.
     let voteUnsubscribes: (() => void)[] = []
     const pollsQuery = query(collection(db, 'polls'), where('is_active', '==', true))
     const unsubscribePolls = onSnapshot(pollsQuery, (snapshot) => {
-      // Clear old vote listeners
       voteUnsubscribes.forEach(unsub => unsub())
       voteUnsubscribes = []
 
-      const activePollIds = snapshot.docs.map(d => d.id)
-      const pollStatus: Record<string, boolean> = {} // pollId -> hasVoted
+      const activePolls = snapshot.docs.map(d => ({ ...d.data() as Poll, id: d.id }))
+      const lastVisited = profile.last_visited?.umfragen ? new Date(profile.last_visited.umfragen) : new Date(0)
 
-      if (activePollIds.length === 0) {
+      if (activePolls.length === 0) {
         setNotifications(prev => ({ ...prev, umfragen: false }))
         return
       }
 
-      activePollIds.forEach(pollId => {
-        const vRef = doc(db, 'polls', pollId, 'votes', profile.id)
+      // First check if there are NEW polls since last visit
+      const hasNewPoll = activePolls.some(poll => {
+        const createdAt = poll.created_at ? toDate(poll.created_at) : new Date(0)
+        return createdAt > lastVisited
+      })
+
+      if (hasNewPoll) {
+        setNotifications(prev => ({ ...prev, umfragen: true }))
+        return
+      }
+
+      // If no new polls, check if there are unvoted active polls
+      const pollStatus: Record<string, boolean> = {}
+      activePolls.forEach(poll => {
+        const vRef = doc(db, 'polls', poll.id, 'votes', profile.id)
         const unsub = onSnapshot(vRef, (vSnap) => {
-          pollStatus[pollId] = vSnap.exists()
-          
-          // Check if we have results for all active polls
-          if (Object.keys(pollStatus).length === activePollIds.length) {
-            const hasUnvoted = activePollIds.some(id => !pollStatus[id])
-            setNotifications(prev => ({ ...prev, umfragen: hasUnvoted }))
-          }
-        }, (error) => {
-          console.error(`Error listening to votes for poll ${pollId}:`, error)
-          // Fallback: assume voted if we can't check
-          pollStatus[pollId] = true
-          if (Object.keys(pollStatus).length === activePollIds.length) {
-            const hasUnvoted = activePollIds.some(id => !pollStatus[id])
+          pollStatus[poll.id] = vSnap.exists()
+          if (Object.keys(pollStatus).length === activePolls.length) {
+            const hasUnvoted = activePolls.some(p => !pollStatus[p.id])
             setNotifications(prev => ({ ...prev, umfragen: hasUnvoted }))
           }
         })
@@ -105,7 +109,7 @@ export function useNotifications() {
       })
     })
 
-    // 4. News: News the user has not yet viewed or visited since creation.
+    // 4. News: News created since last visit or not viewed.
     const newsQuery = query(collection(db, 'news'))
     const unsubscribeNews = onSnapshot(newsQuery, (snapshot) => {
       const lastVisited = profile.last_visited?.news ? new Date(profile.last_visited.news) : new Date(0)
@@ -115,7 +119,6 @@ export function useNotifications() {
         const viewedBy = data.viewed_by || []
         const createdAt = data.created_at ? toDate(data.created_at) : new Date(0)
         
-        // Unviewed if: not in viewed_by list AND created after last category visit
         return !viewedBy.includes(profile.id) && createdAt > lastVisited
       })
       setNotifications(prev => ({ ...prev, news: hasUnviewedNews }))

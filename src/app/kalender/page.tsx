@@ -28,17 +28,25 @@ export default function CalendarPage() {
     if (!authLoading && profile) {
       const updateLastVisited = async () => {
         try {
-          const userRef = doc(db, 'profiles', profile.id)
-          await updateDoc(userRef, {
-            [`last_visited.kalender`]: new Date().toISOString()
-          })
+          const now = new Date()
+          const lastVisitedStr = profile.last_visited?.kalender
+          const lastVisited = lastVisitedStr ? new Date(lastVisitedStr) : new Date(0)
+          
+          // Only update if it's been more than an hour since last update
+          // or if it hasn't been set yet
+          if (!lastVisitedStr || (now.getTime() - lastVisited.getTime() > 60 * 60 * 1000)) {
+            const userRef = doc(db, 'profiles', profile.id)
+            await updateDoc(userRef, {
+              [`last_visited.kalender`]: now.toISOString()
+            })
+          }
         } catch (error) {
           console.error('Error updating last_visited for kalender:', error)
         }
       }
       updateLastVisited()
     }
-  }, [profile, authLoading])
+  }, [profile?.id, profile?.last_visited?.kalender, authLoading])
 
   if (authLoading || loading) {
     return (

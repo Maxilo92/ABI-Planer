@@ -10,6 +10,7 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { Trash2 } from 'lucide-react'
+import { logAction } from '@/lib/logging'
 
 interface PollListProps {
   polls: Poll[]
@@ -71,9 +72,48 @@ export function PollList({ polls, userId, canVote = false, canManage = false, li
 
       await refreshVotesForPoll(pollId)
       toast.success('Deine Stimme wurde gespeichert.')
+      
+      const optionText = poll?.options?.find(o => o.id === optionId)?.option_text || optionId
+      await logAction('VOTE_CAST', userId, null, { 
+        poll_id: pollId, 
+        poll_question: poll?.question,
+        option_id: optionId,
+        option_text: optionText
+      })
     } catch (err) {
       console.error('Error voting:', err)
       toast.error('Abstimmung fehlgeschlagen. Bitte prüfe deine Berechtigungen.')
+    } finally {
+      setLoading(null)
+    }
+  }
+
+  const handleWithdraw = async (pollId: string) => {
+    if (!userId || !canVote) return
+    const poll = polls.find((entry) => entry.id === pollId)
+    if (poll?.allow_vote_change !== true) {
+      toast.error('Diese Umfrage erlaubt keine nachträgliche Änderung der Stimme.')
+      return
+    }
+
+    const confirmed = window.confirm('Möchtest du deine Stimme wirklich zurückziehen?')
+    if (!confirmed) return
+
+    setLoading('withdraw-' + pollId)
+    
+    try {
+      const voteRef = doc(db, 'polls', pollId, 'votes', userId)
+      await deleteDoc(voteRef)
+      await refreshVotesForPoll(pollId)
+      toast.success('Deine Teilnahme wurde zurückgezogen.')
+      await logAction('VOTE_CAST', userId, null, { 
+        poll_id: pollId, 
+        poll_question: poll?.question,
+        action: 'withdraw' 
+      })
+    } catch (err) {
+      console.error('Error withdrawing vote:', err)
+      toast.error('Zurückziehen fehlgeschlagen. Bitte prüfe deine Berechtigungen.')
     } finally {
       setLoading(null)
     }
@@ -196,9 +236,22 @@ export function PollList({ polls, userId, canVote = false, canManage = false, li
               )}
 
               {userVote && (
-                <p className="text-xs text-center text-muted-foreground italic mt-2">
-                  Du hast bereits abgestimmt.
-                </p>
+                <div className="flex flex-col items-center gap-2 mt-4 pt-4 border-t border-border/50">
+                  <p className="text-xs text-muted-foreground italic">
+                    Du hast bereits abgestimmt.
+                  </p>
+                  {poll.allow_vote_change === true && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-xs text-muted-foreground hover:text-destructive h-7"
+                      onClick={() => handleWithdraw(poll.id)}
+                      disabled={!!loading}
+                    >
+                      {loading === 'withdraw-' + poll.id ? 'Wird zurückgezogen...' : 'Teilnahme zurückziehen'}
+                    </Button>
+                  )}
+                </div>
               )}
             </CardContent>
           </Card>

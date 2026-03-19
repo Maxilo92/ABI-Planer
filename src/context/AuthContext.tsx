@@ -3,7 +3,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
 import { auth, db } from '@/lib/firebase'
 import { onAuthStateChanged, signOut, User } from 'firebase/auth'
-import { doc, getDoc } from 'firebase/firestore'
+import { doc, onSnapshot } from 'firebase/firestore'
 
 import { Profile } from '@/types/database'
 
@@ -33,46 +33,77 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return
     }
 
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+    let profileUnsubscribe: (() => void) | null = null
+
+    const authUnsubscribe = onAuthStateChanged(auth, async (user) => {
       console.log('Auth state changed:', user ? 'Logged in' : 'Logged out')
       setUser(user)
+
+      // Unsubscribe from previous profile if exists
+      if (profileUnsubscribe) {
+        profileUnsubscribe()
+        profileUnsubscribe = null
+      }
       
       try {
         if (user) {
           const docRef = doc(db, 'profiles', user.uid)
-          const docSnap = await getDoc(docRef)
-          if (docSnap.exists()) {
-            const profileData = docSnap.data() as Profile
-            const normalizedRole = (profileData.role as string) === 'admin' ? 'admin_main' : profileData.role
-            const normalizedProfile = { ...profileData, id: user.uid, role: normalizedRole } as Profile
+          
+          // Use onSnapshot to make the profile reactive
+          profileUnsubscribe = onSnapshot(docRef, async (docSnap) => {
+            try {
+              if (docSnap.exists()) {
+                const profileData = docSnap.data() as Profile
+                const normalizedRole = (profileData.role as string) === 'admin' ? 'admin_main' : profileData.role
+                const normalizedProfile = { ...profileData, id: user.uid, role: normalizedRole } as Profile
 
-            const timeoutUntilMs = normalizedProfile.timeout_until ? Date.parse(normalizedProfile.timeout_until) : NaN
-            const isTimedOut = Number.isFinite(timeoutUntilMs) && timeoutUntilMs > Date.now()
+                const timeoutUntilMs = normalizedProfile.timeout_until ? Date.parse(normalizedProfile.timeout_until) : NaN
+                const isTimedOut = Number.isFinite(timeoutUntilMs) && timeoutUntilMs > Date.now()
 
-            if (isTimedOut) {
-              console.warn('User is currently timed out. Signing out.')
-              await signOut(auth)
+                if (isTimedOut) {
+                  console.warn('User is currently timed out. Signing out.')
+                  // Ensure we unsubscribe before signing out to avoid state updates after logout
+                  if (profileUnsubscribe) {
+                    profileUnsubscribe()
+                    profileUnsubscribe = null
+                  }
+                  await signOut(auth)
+                  setProfile(null)
+                  setLoading(false)
+                  return
+                }
+
+                setProfile(normalizedProfile)
+              } else {
+                console.warn('No profile found for user:', user.uid)
+                setProfile(null)
+              }
+            } catch (error) {
+              console.error('Error in profile snapshot:', error)
               setProfile(null)
-              return
+            } finally {
+              setLoading(false)
             }
-
-            setProfile(normalizedProfile)
-          } else {
-            console.warn('No profile found for user:', user.uid)
+          }, (error) => {
+            console.error('Profile snapshot error:', error)
             setProfile(null)
-          }
+            setLoading(false)
+          })
         } else {
           setProfile(null)
+          setLoading(false)
         }
       } catch (error) {
         console.error('Error fetching profile:', error)
         setProfile(null)
-      } finally {
         setLoading(false)
       }
     })
 
-    return () => unsubscribe()
+    return () => {
+      authUnsubscribe()
+      if (profileUnsubscribe) profileUnsubscribe()
+    }
   }, [])
 
   return (

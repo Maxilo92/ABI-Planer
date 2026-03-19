@@ -31,7 +31,7 @@ interface PlanningGroupRow {
 }
 
 export default function SettingsPage() {
-  const { profile, loading } = useAuth()
+  const { user, profile, loading } = useAuth()
   const [courseRows, setCourseRows] = useState<CourseRow[]>([])
   const [planningGroupRows, setPlanningGroupRows] = useState<PlanningGroupRow[]>([])
   const [planners, setPlanners] = useState<Profile[]>([])
@@ -40,10 +40,10 @@ export default function SettingsPage() {
   const router = useRouter()
 
   useEffect(() => {
-    if (!loading && !profile) {
+    if (!loading && !user) {
       router.push('/login')
     }
-  }, [loading, profile, router])
+  }, [loading, user, router])
 
   useEffect(() => {
     const settingsRef = doc(db, 'settings', 'config')

@@ -36,17 +36,23 @@ export default function NewsPage() {
     if (!authLoading && profile) {
       const updateLastVisited = async () => {
         try {
-          const userRef = doc(db, 'profiles', profile.id)
-          await updateDoc(userRef, {
-            [`last_visited.news`]: new Date().toISOString()
-          })
+          const now = new Date()
+          const lastVisitedStr = profile.last_visited?.news
+          const lastVisited = lastVisitedStr ? new Date(lastVisitedStr) : new Date(0)
+          
+          if (!lastVisitedStr || (now.getTime() - lastVisited.getTime() > 60 * 60 * 1000)) {
+            const userRef = doc(db, 'profiles', profile.id)
+            await updateDoc(userRef, {
+              [`last_visited.news`]: now.toISOString()
+            })
+          }
         } catch (error) {
           console.error('Error updating last_visited for news:', error)
         }
       }
       updateLastVisited()
     }
-  }, [profile, authLoading])
+  }, [profile?.id, profile?.last_visited?.news, authLoading])
 
   if (authLoading || loading) {
     return (

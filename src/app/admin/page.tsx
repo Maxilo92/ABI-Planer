@@ -187,6 +187,12 @@ export default function AdminPage() {
                         }
                       />
                       <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => handleUpdateProfile(p.id, { role: 'admin' })}>
+                          <Shield className="mr-2 h-4 w-4" /> Zum Admin machen
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleUpdateProfile(p.id, { role: 'admin_co' })}>
+                          <Shield className="mr-2 h-4 w-4" /> Zum Co-Admin machen
+                        </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => handleUpdateProfile(p.id, { role: 'planner' })}>
                           <Shield className="mr-2 h-4 w-4" /> Zum Planer machen
                         </DropdownMenuItem>
@@ -356,6 +362,12 @@ export default function AdminPage() {
                           }
                         />
                         <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => handleUpdateProfile(p.id, { role: 'admin' })}>
+                            <Shield className="mr-2 h-4 w-4" /> Zum Admin machen
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleUpdateProfile(p.id, { role: 'admin_co' })}>
+                            <Shield className="mr-2 h-4 w-4" /> Zum Co-Admin machen
+                          </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => handleUpdateProfile(p.id, { role: 'planner' })}>
                             <Shield className="mr-2 h-4 w-4" /> Zum Planer machen
                           </DropdownMenuItem>

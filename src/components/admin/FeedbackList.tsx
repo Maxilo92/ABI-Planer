@@ -24,6 +24,7 @@ type Feedback = {
   created_at: string
   created_by: string
   created_by_name?: string
+  image_url?: string
 }
 
 interface FeedbackListProps {
@@ -240,7 +241,21 @@ export function FeedbackList({ feedbackItems }: FeedbackListProps) {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-sm whitespace-pre-wrap">{item.description}</p>
+              <div className="space-y-4">
+                <p className="text-sm whitespace-pre-wrap">{item.description}</p>
+                {item.image_url && (
+                  <div className="mt-2">
+                    <a href={item.image_url} target="_blank" rel="noopener noreferrer" className="inline-block">
+                      <img 
+                        src={item.image_url} 
+                        alt={item.title} 
+                        className="rounded-md border max-h-48 object-contain bg-muted/20 hover:opacity-90 transition-opacity"
+                      />
+                    </a>
+                    <p className="text-[10px] text-muted-foreground mt-1">Klicken zum Vergrößern</p>
+                  </div>
+                )}
+              </div>
               <div className="flex justify-between items-center mt-4 pt-4 border-t">
                 <div className="flex items-center gap-2">
                   <Button 

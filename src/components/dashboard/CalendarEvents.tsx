@@ -8,6 +8,7 @@ import { de } from 'date-fns/locale'
 import { toDate } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { EditEventDialog } from '@/components/modals/EditEventDialog'
+import { CalendarEventDetailsDialog } from '@/components/modals/CalendarEventDetailsDialog'
 import { db } from '@/lib/firebase'
 import { doc, deleteDoc } from 'firebase/firestore'
 import { toast } from 'sonner'
@@ -41,25 +42,29 @@ export function CalendarEvents({ events, canManage = false }: CalendarEventsProp
       <CardContent>
         <div className="space-y-4">
           {events.length === 0 ? (
-            <p className="text-sm text-muted-foreground italic py-4">Keine Termine geplant.</p>
+            <p className="text-sm text-muted-foreground italic text-center py-4">
+              Keine anstehenden Termine.
+            </p>
           ) : (
             events.map((event) => {
               const eventDate = toDate(event.event_date)
               return (
                 <div key={event.id} className="group flex items-center justify-between gap-4 pb-3 border-b last:border-0">
-                  <div className="flex gap-4">
-                    <div className="flex flex-col items-center justify-center bg-primary text-primary-foreground rounded-lg p-2 min-w-[50px] h-[50px]">
-                      <span className="text-xs uppercase font-medium">{format(eventDate, 'MMM', { locale: de })}</span>
-                      <span className="text-xl font-bold leading-none">{format(eventDate, 'dd')}</span>
-                    </div>
-                    <div className="flex flex-col justify-center space-y-1">
-                      <h4 className="text-sm font-semibold">{event.title}</h4>
-                      <div className="flex items-center text-[10px] md:text-xs text-muted-foreground gap-1">
-                        <Clock className="h-3 w-3" />
-                        {format(eventDate, 'EEEE, HH:mm', { locale: de })} Uhr
+                  <CalendarEventDetailsDialog event={event}>
+                    <div className="flex gap-4 cursor-pointer hover:opacity-80 transition-all flex-1">
+                      <div className="flex flex-col items-center justify-center bg-primary text-primary-foreground rounded-lg p-2 min-w-[50px] h-[50px]">
+                        <span className="text-xs uppercase font-medium">{format(eventDate, 'MMM', { locale: de })}</span>
+                        <span className="text-xl font-bold leading-none">{format(eventDate, 'dd')}</span>
+                      </div>
+                      <div className="flex flex-col justify-center space-y-1">
+                        <h4 className="text-sm font-semibold">{event.title}</h4>
+                        <div className="flex items-center text-[10px] md:text-xs text-muted-foreground gap-1">
+                          <Clock className="h-3 w-3" />
+                          {format(eventDate, 'EEEE, HH:mm', { locale: de })} Uhr
+                        </div>
                       </div>
                     </div>
-                  </div>
+                  </CalendarEventDetailsDialog>
 
                   {canManage && (
                     <div className="flex items-center gap-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
@@ -68,7 +73,10 @@ export function CalendarEvents({ events, canManage = false }: CalendarEventsProp
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                        onClick={() => handleDelete(event.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete(event.id);
+                        }}
                         title="Löschen"
                       >
                         <Trash2 className="h-4 w-4" />

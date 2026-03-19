@@ -1,0 +1,85 @@
+'use client'
+
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { ArrowLeft, ShieldCheck } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+
+export default function AGBPage() {
+  const router = useRouter()
+
+  return (
+    <div className="max-w-3xl mx-auto space-y-8 py-8 px-4">
+      <Button 
+        variant="ghost" 
+        className="gap-2 -ml-2 text-muted-foreground hover:text-foreground"
+        onClick={() => router.back()}
+      >
+        <ArrowLeft className="h-4 w-4" /> Zurück
+      </Button>
+
+      <Card className="border-none shadow-lg">
+        <CardHeader className="border-b bg-muted/30">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-primary/10 rounded-lg">
+              <ShieldCheck className="h-6 w-6 text-primary" />
+            </div>
+            <CardTitle className="text-2xl font-bold tracking-tight">Allgemeine Geschäftsbedingungen (AGB)</CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent className="prose prose-sm dark:prose-invert max-w-none space-y-8 pt-8">
+          <section>
+            <h3 className="text-lg font-semibold text-foreground border-l-4 border-primary pl-3 mb-4">1. Geltungsbereich</h3>
+            <p className="text-muted-foreground leading-relaxed">
+              Diese Allgemeinen Geschäftsbedingungen gelten für die Nutzung des "ABI Planer" (im Folgenden "Plattform" genannt). Die Plattform ist ein privates Organisations-Tool für den Abiturjahrgang 2027 des HGR. Durch die Registrierung und Nutzung erklären Sie sich mit diesen Bedingungen einverstanden.
+            </p>
+          </section>
+
+          <section>
+            <h3 className="text-lg font-semibold text-foreground border-l-4 border-primary pl-3 mb-4">2. Nutzung des Dienstes</h3>
+            <p className="text-muted-foreground leading-relaxed">
+              Die Plattform dient ausschließlich der Organisation und Planung von Aktivitäten rund um den Abiturjahrgang 2027. Die Nutzung ist Mitgliedern des Jahrgangs vorbehalten, die über eine offizielle E-Mail-Adresse (@hgr-web.lernsax.de) verfügen.
+            </p>
+          </section>
+
+          <section>
+            <h3 className="text-lg font-semibold text-foreground border-l-4 border-primary pl-3 mb-4">3. Nutzerpflichten</h3>
+            <p className="text-muted-foreground leading-relaxed">
+              Nutzer verpflichten sich, die Plattform nicht missbräuchlich zu verwenden. Insbesondere sind beleidigende, diskriminierende oder rechtswidrige Inhalte untersagt. Die Administratoren behalten sich das Recht vor, Inhalte zu moderieren und Nutzer bei Verstößen von der Plattform auszuschließen.
+            </p>
+          </section>
+
+          <section>
+            <h3 className="text-lg font-semibold text-foreground border-l-4 border-primary pl-3 mb-4">4. Datenschutz & Logging</h3>
+            <p className="text-muted-foreground leading-relaxed">
+              Wir nehmen den Schutz Ihrer persönlichen Daten ernst. Zur Gewährleistung der Datensicherheit und Rückverfolgbarkeit von Aktionen (z.B. Finanz-Updates, Abstimmungen) werden Nutzeraktionen protokolliert (Logging). Details entnehmen Sie bitte unserer Datenschutzerklärung.
+            </p>
+          </section>
+
+          <section>
+            <h3 className="text-lg font-semibold text-foreground border-l-4 border-primary pl-3 mb-4">5. Haftung</h3>
+            <p className="text-muted-foreground leading-relaxed">
+              Die Plattform wird auf freiwilliger Basis von Schülern für Schüler betrieben. Eine Haftung für die Richtigkeit der eingetragenen Daten (insbesondere bei Finanzen) oder für die ständige Verfügbarkeit des Dienstes wird ausgeschlossen. Die Plattform dient lediglich als Planungshilfe.
+            </p>
+          </section>
+
+          <section>
+            <h3 className="text-lg font-semibold text-foreground border-l-4 border-primary pl-3 mb-4">6. Schlussbestimmungen</h3>
+            <p className="text-muted-foreground leading-relaxed">
+              Sollten einzelne Bestimmungen dieser AGB unwirksam sein oder werden, bleibt die Wirksamkeit der übrigen Bestimmungen hiervon unberührt. Gerichtsstand ist, soweit zulässig, der Standort der Schule.
+            </p>
+          </section>
+
+          <div className="pt-8 border-t space-y-2">
+            <p className="text-xs text-muted-foreground italic">
+              Stand: 19. März 2026. Dies ist ein Schul-Projekt.
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Projekt-Link: <a href="https://github.com/Maxilo92/ABI-Planer" className="underline hover:text-primary">GitHub Repository</a>
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}

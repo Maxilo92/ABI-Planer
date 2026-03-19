@@ -23,9 +23,9 @@ export function AppShell({ children }: AppShellProps) {
   }
 
   return (
-    <div className="min-h-screen bg-background md:flex">
+    <div className="min-h-[100dvh] bg-background md:flex">
       <Navbar />
-      <div className="flex-1 flex flex-col min-h-screen">
+      <div className="flex-1 flex flex-col min-h-[100dvh]">
         <main className="flex-1 px-4 py-8 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-7xl">{children}</div>
         </main>
