@@ -53,7 +53,7 @@ export default function GlobalSettingsPage() {
   const [newTeacherName, setNewTeacherName] = useState('')
   const [newTeacherRarity, setNewTeacherRarity] = useState<TeacherRarity>('common')
   const router = useRouter()
-...
+
   const handleAddTeacher = () => {
     if (!newTeacherName.trim()) return
     setSettings(prev => ({

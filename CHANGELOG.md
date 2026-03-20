@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.17.8] - 2026-03-20
+- Fix: **Build-Fehler GlobalSettings**. Ein Syntaxfehler (Platzhalter `...`) in der globalen Einstellungsseite wurde behoben, um das Deployment wieder zu ermöglichen.
+
 ## [0.17.7] - 2026-03-20
 - UI: **Horizontal Tabs Overhaul**. Replaced the bulky "mega" vertical toggles with a clean, horizontal tab layout across Todos, Calendar, and Planning Groups for better space efficiency and visual consistency.
 
