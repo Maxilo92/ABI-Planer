@@ -242,7 +242,6 @@ export default function GroupsPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <h1 className="text-3xl font-bold tracking-tight">Planungsgruppen</h1>
-          <Badge variant="secondary" className="uppercase tracking-wide text-[10px]">Beta</Badge>
         </div>
         <p className="text-muted-foreground">Teams für die ABI-Vorbereitung.</p>
       </div>

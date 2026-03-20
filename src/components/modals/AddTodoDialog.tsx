@@ -23,9 +23,10 @@ import { logAction } from '@/lib/logging'
 
 interface AddTodoDialogProps {
   defaultGroup?: string
+  parentId?: string
 }
 
-export function AddTodoDialog({ defaultGroup }: AddTodoDialogProps) {
+export function AddTodoDialog({ defaultGroup, parentId }: AddTodoDialogProps) {
   const [title, setTitle] = useState('')
   const [assignedUser, setAssignedUser] = useState('')
   const [assignedClass, setAssignedClass] = useState('')
@@ -81,6 +82,7 @@ export function AddTodoDialog({ defaultGroup }: AddTodoDialogProps) {
         const selectedUser = users.find(u => u.id === assignedUser)
         await addDoc(collection(db, 'todos'), {
           title,
+          parentId: parentId || null,
           created_by: user.uid,
           created_by_name: profile?.full_name || user.displayName || 'Unbekannt',
           status: 'open',
@@ -92,8 +94,9 @@ export function AddTodoDialog({ defaultGroup }: AddTodoDialogProps) {
           deadline_date: deadline || null,
         })
 
-        await logAction('TODO_CREATED', user.uid, profile?.full_name, {
+        await logAction(parentId ? 'SUBTODO_CREATED' : 'TODO_CREATED', user.uid, profile?.full_name, {
           title,
+          parentId: parentId || null,
           assigned_to_user: assignedUser || null,
           assigned_to_user_name: selectedUser?.full_name || null,
           assigned_to_class: assignedClass || null,
@@ -119,16 +122,22 @@ export function AddTodoDialog({ defaultGroup }: AddTodoDialogProps) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger
         render={
-          <Button size="sm" className="gap-2">
-            <Plus className="h-4 w-4" /> Aufgabe hinzufügen
-          </Button>
+          parentId ? (
+            <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-primary md:opacity-0 md:group-hover:opacity-100 transition-opacity" title="Unteraufgabe hinzufügen">
+              <Plus className="h-3.5 w-3.5" />
+            </Button>
+          ) : (
+            <Button size="sm" className="gap-2">
+              <Plus className="h-4 w-4" /> Aufgabe hinzufügen
+            </Button>
+          )
         }
       />
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Neue Aufgabe erstellen</DialogTitle>
+          <DialogTitle>{parentId ? 'Neue Unteraufgabe' : 'Neue Aufgabe erstellen'}</DialogTitle>
           <DialogDescription>
-            Was muss für das Abi noch erledigt werden?
+            {parentId ? 'Füge eine detailliertere Teilaufgabe hinzu.' : 'Was muss für das Abi noch erledigt werden?'}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>

@@ -318,7 +318,6 @@ export default function Dashboard() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <h1 className="text-3xl font-extrabold tracking-tight">ABI Planer 2027</h1>
-          <Badge variant="secondary" className="uppercase tracking-wide text-[10px]">Beta</Badge>
           {canManage && (
             <EditSettingsDialog 
               currentDate={settings?.ball_date} 

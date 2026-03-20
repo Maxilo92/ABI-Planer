@@ -31,6 +31,10 @@ export function FundingStatus({ current, goal, initialTicketSales = 150, onTicke
     if (!onTicketSalesChange) return
     if (ticketSalesInput === '') return
 
+    // Don't call onTicketSalesChange if the value hasn't changed from the initial prop value
+    // This avoids redundant logAction calls on mount
+    if (Number(ticketSalesInput) === initialTicketSales) return
+
     const timeoutId = window.setTimeout(() => {
       onTicketSalesChange(Number(ticketSalesInput))
     }, TICKET_SALES_SAVE_DEBOUNCE_MS)
@@ -38,7 +42,7 @@ export function FundingStatus({ current, goal, initialTicketSales = 150, onTicke
     return () => {
       window.clearTimeout(timeoutId)
     }
-  }, [ticketSalesInput, onTicketSalesChange])
+  }, [ticketSalesInput, onTicketSalesChange, initialTicketSales])
 
   const ticketSales = ticketSalesInput === '' ? 0 : Number(ticketSalesInput)
 

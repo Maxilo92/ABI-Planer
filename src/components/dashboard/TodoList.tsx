@@ -1,5 +1,6 @@
 'use client'
 
+import { useMemo } from 'react'
 import { Todo } from '@/types/database'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -9,9 +10,11 @@ import { doc, updateDoc, deleteDoc } from 'firebase/firestore'
 import { useAuth } from '@/context/AuthContext'
 import { toDate } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
-import { Trash2, Calendar } from 'lucide-react'
+import { Trash2, Calendar, Plus } from 'lucide-react'
 import { toast } from 'sonner'
 import { EditTodoDialog } from '@/components/modals/EditTodoDialog'
+import { AddTodoDialog } from '@/components/modals/AddTodoDialog'
+import { TodoDetailDialog } from '@/components/modals/TodoDetailDialog'
 import { format, isBefore, startOfDay } from 'date-fns'
 import { de } from 'date-fns/locale'
 import { logAction } from '@/lib/logging'
@@ -30,7 +33,25 @@ export function TodoList({
   useScrollContainer = true,
 }: TodoListProps) {
   const { user, profile } = useAuth()
-  const displayedTodos = typeof maxItems === 'number' ? todos.slice(0, maxItems) : todos
+
+  // Flatten the todo tree for rendering
+  const displayedTodos = useMemo(() => {
+    const getFlattenedTodos = (
+      allTodos: Todo[],
+      parentId: string | null = null,
+      depth = 0
+    ): (Todo & { depth: number })[] => {
+      return allTodos
+        .filter((t) => (t.parentId || null) === parentId)
+        .flatMap((t) => [
+          { ...t, depth },
+          ...getFlattenedTodos(allTodos, t.id, depth + 1),
+        ])
+    }
+
+    const flattened = getFlattenedTodos(todos)
+    return typeof maxItems === 'number' ? flattened.slice(0, maxItems) : flattened
+  }, [todos, maxItems])
 
   const handleToggle = async (id: string, completed: boolean) => {
     if (!canManage) return
@@ -60,22 +81,31 @@ export function TodoList({
 
   const handleDelete = async (id: string) => {
     if (!canManage) return
-    if (!window.confirm('Diese Aufgabe wirklich löschen?')) return
+    if (!window.confirm('Diese Aufgabe wirklich löschen? (Alle Unteraufgaben werden ebenfalls gelöscht)')) return
 
-    const todo = todos.find((entry) => entry.id === id)
+    const getDescendantIds = (parentId: string): string[] => {
+      const children = todos.filter((t) => (t.parentId || null) === parentId)
+      return children.flatMap((c) => [c.id, ...getDescendantIds(c.id)])
+    }
+
+    const idsToDelete = [id, ...getDescendantIds(id)]
 
     try {
-      const docRef = doc(db, 'todos', id)
-      await deleteDoc(docRef)
+      for (const docId of idsToDelete) {
+        const docRef = doc(db, 'todos', docId)
+        await deleteDoc(docRef)
+      }
 
       if (user) {
+        const mainTodo = todos.find(t => t.id === id)
         await logAction('TODO_DELETED', user.uid, profile?.full_name, {
           todo_id: id,
-          title: todo?.title,
+          title: mainTodo?.title,
+          deleted_count: idsToDelete.length,
         })
       }
 
-      toast.success('Aufgabe gelöscht.')
+      toast.success(idsToDelete.length > 1 ? `${idsToDelete.length} Aufgaben gelöscht.` : 'Aufgabe gelöscht.')
     } catch (err) {
       console.error('Error deleting todo:', err)
       toast.error('Fehler beim Löschen.')
@@ -104,6 +134,7 @@ export function TodoList({
               return (
                 <div
                   key={todo.id}
+                  style={todo.depth > 0 ? { marginLeft: `${todo.depth * 1}rem` } : {}}
                   className={`group flex items-start gap-3 rounded-lg border px-3 py-2 ${isAssignedToMe || isAssignedToMyClass || isAssignedToMyGroup ? 'border-primary/30 bg-primary/10 shadow-sm' : 'border-border/70 bg-background/80'} ${isOverdue ? 'border-destructive/50 bg-destructive/5' : ''}`}
                 >
                   <Checkbox 
@@ -115,12 +146,17 @@ export function TodoList({
                   />
                   <div className="flex-1 space-y-1">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <label 
-                        htmlFor={todo.id}
-                        className={`text-sm font-semibold leading-tight cursor-pointer ${todo.status === 'done' ? 'line-through text-muted-foreground' : 'text-foreground'}`}
-                      >
-                        {todo.title}
-                      </label>
+                      <TodoDetailDialog
+                        todo={todo}
+                        allTodos={todos}
+                        trigger={
+                          <span 
+                            className={`text-sm font-semibold leading-tight cursor-pointer hover:underline ${todo.status === 'done' ? 'line-through text-muted-foreground' : 'text-foreground'}`}
+                          >
+                            {todo.title}
+                          </span>
+                        }
+                      />
                       {isAssignedToMe && (
                         <Badge variant="default" className="text-[8px] px-1 py-0 h-3.5 bg-primary text-primary-foreground">
                           An Dich
@@ -178,6 +214,9 @@ export function TodoList({
                   </div>
                   {canManage && (
                     <div className="flex items-center gap-1">
+                      {todo.depth < 4 && (
+                        <AddTodoDialog parentId={todo.id} defaultGroup={todo.assigned_to_group || undefined} />
+                      )}
                       <EditTodoDialog todo={todo} />
                       <Button
                         variant="ghost"

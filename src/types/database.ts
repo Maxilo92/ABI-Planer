@@ -62,6 +62,7 @@ export interface Todo {
   completed_at?: string | null;
   completed_by?: string | null;
   completed_by_name?: string | null;
+  parentId?: string | null;
 }
 
 export interface FinanceEntry {

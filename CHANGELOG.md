@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.2.0] - 2026-03-20
+- Feature: **ToDo DetailView**. Clicking a task title now opens a detailed view with a description and sub-tasks list.
+- Logic: **Nesting Limit**. Sub-tasks are now limited to 5 levels (0-4) to ensure layout stability.
+- UI: **Beta Labels Removed**. Removed "Beta" badges from Dashboard, Groups, and Admin Logs to reflect the platform's release state.
+
+## [0.16.4] - 2026-03-20
+- Feature: **ToDo Unteraufgaben**. Aufgaben unterstützen nun rekursive Verschachtelung. Unteraufgaben werden eingerückt im Dashboard angezeigt.
+- Logic: **Cascading Deletes**. Das Löschen einer Hauptaufgabe löscht nun automatisch alle zugehörigen Unteraufgaben.
+- Fix: **Log-Spam behoben**. In der `FundingStatus`-Komponente (Dashboard/Finanzen) wurde ein redundanter Update-Trigger auf Mount unterbunden, der bei jedem Seitenaufruf unnötige Log-Einträge erzeugte.
+- Logging: **SUBTODO_CREATED** hinzugefügt, um die Erstellung von Unteraufgaben separat zu tracken.
+
 ## [0.16.3] - 2026-03-19
 - Logging: **Aktionsabdeckung erweitert**. Nutzergetriggerte Create/Update/Delete-Aktionen wurden in den Kernmodulen konsistent mit `logAction` abgesichert.
 - Logging: **Audit-Details verbessert**. Logs enthalten jetzt mehr Kontext (z. B. betroffene IDs, Titel, Status, Herkunft), um Support und Moderation zu erleichtern.

@@ -11,6 +11,7 @@ export type LogActionType =
   | 'FINANCE_DELETED'
   | 'TODO_DELETED'
   | 'TODO_CREATED'
+  | 'SUBTODO_CREATED'
   | 'TODO_EDITED'
   | 'TODO_COMPLETED'
   | 'EVENT_CREATED'

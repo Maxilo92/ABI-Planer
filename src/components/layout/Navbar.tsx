@@ -62,7 +62,7 @@ export function Navbar() {
   const isAdmin = profile?.role === 'admin_main' || profile?.role === 'admin_co' || profile?.role === 'admin'
 
   const navItems: NavItem[] = [
-    { href: '/', label: 'Dashboard', icon: LayoutDashboard, isBeta: true },
+    { href: '/', label: 'Dashboard', icon: LayoutDashboard, isBeta: false },
     { href: '/todos', label: 'Todos', icon: CheckSquare, notify: notifications.todos },
     { href: '/kalender', label: 'Kalender', icon: Calendar, notify: notifications.kalender },
     { href: '/finanzen', label: 'Finanzen', icon: Euro },
@@ -72,7 +72,7 @@ export function Navbar() {
       href: '/gruppen-root',
       label: 'Gruppen',
       icon: Users,
-      isBeta: true,
+      isBeta: false,
       subItems: [
         { href: '/gruppen?bereich=mein-team', label: 'Mein Team', icon: Users },
         { href: '/gruppen?bereich=alle-gruppen', label: 'Alle Gruppen', icon: Users },
@@ -90,7 +90,7 @@ export function Navbar() {
       icon: ShieldCheck,
       subItems: [
         { href: '/admin', label: 'Benutzer', icon: Users },
-        { href: '/admin/logs', label: 'Logs', icon: BarChart2, isBeta: true },
+        { href: '/admin/logs', label: 'Logs', icon: BarChart2, isBeta: false },
         { href: '/admin/feedback', label: 'Feedback Admin', icon: MessageSquareHeart },
       ]
     })
