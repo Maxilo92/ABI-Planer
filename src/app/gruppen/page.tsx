@@ -292,24 +292,9 @@ export default function GroupsPage() {
         <p className="text-muted-foreground">Zentraler Workspace für Teams & Koordination.</p>
       </div>
 
-      <Tabs 
-        value={safeMainTab} 
-        onValueChange={handleMainTabChange} 
-        className="w-full flex flex-col gap-8"
-      >
-        <TabsList className="h-9 w-fit">
-          <TabsTrigger value="mein-team" className="px-4" disabled={!profile?.planning_group}>
-            Mein Team
-          </TabsTrigger>
-          <TabsTrigger value="alle-gruppen" className="px-4">
-            Alle Gruppen
-          </TabsTrigger>
-          <TabsTrigger value="shared-hub" className="px-4">
-            Shared Hub
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="mein-team" className="space-y-8">
+      <div className="w-full flex flex-col gap-8">
+        {safeMainTab === 'mein-team' && (
+          <div className="space-y-8 animate-in fade-in duration-500">
             {profile?.planning_group ? (
               <div className="space-y-8">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-primary/5 p-6 rounded-2xl border border-primary/10">
@@ -335,7 +320,7 @@ export default function GroupsPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
                   <div className="lg:col-span-7 2xl:col-span-8 min-w-0">
                     <GroupWall
                       groupName={profile.planning_group}
@@ -376,133 +361,25 @@ export default function GroupsPage() {
                       </GroupCard.MemberList>
                     </GroupCard>
 
-                    <div className="h-[400px]">
-                      <TodoList
-                        todos={myTeamTodos}
-                        canManage={isGroupLeader || isPlanner}
-                      />
-                    </div>
+                    <TodoList
+                      todos={myTeamTodos}
+                      canManage={isGroupLeader || isPlanner}
+                      maxItems={8}
+                    />
 
-                    <div className="h-[350px]">
-                      <CalendarEvents
-                        events={events.slice(0, 5)}
-                        canManage={isPlanner}
-                      />
-                    </div>
+                    <CalendarEvents
+                      events={events.slice(0, 5)}
+                      canManage={isPlanner}
+                      useScrollContainer={false}
+                    />
                   </div>
                 </div>
 
-                {canManageTeamMembers && (
-                  <Card className="border-primary/10 bg-muted/30">
-                    <CardHeader className="pb-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <CardTitle className="text-lg flex items-center gap-2">
-                            <UserPlus className="h-5 w-5 text-primary" /> Mitglieder hinzufügen
-                          </CardTitle>
-                          <CardDescription>
-                            Wähle Nutzer aus, die noch keiner Gruppe zugeordnet sind.
-                          </CardDescription>
-                        </div>
-                        <Badge variant="outline">{unassignedProfiles.length} verfügbar</Badge>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="relative">
-                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          placeholder="Nutzer suchen..."
-                          className="pl-9 bg-background"
-                          value={searchQuery}
-                          onChange={(e) => setSearchQuery(e.target.value)}
-                        />
-                      </div>
+          </div>
+        )}
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-3 max-h-[400px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-muted-foreground/20">
-                        {unassignedProfiles.length === 0 ? (
-                          <div className="col-span-full py-12 text-center">
-                            <Users className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
-                            <p className="text-sm text-muted-foreground italic">
-                              Alle aktiven Nutzer sind bereits in Gruppen.
-                            </p>
-                          </div>
-                        ) : (
-                          filteredUnassignedProfiles.map((p) => (
-                            <div key={p.id} className="flex items-center justify-between p-3 rounded-xl border bg-background hover:border-primary/30 transition-all group">
-                              <div className="flex items-center gap-3 min-w-0">
-                                <Avatar className="h-10 w-10 border shadow-sm">
-                                  <AvatarFallback className="bg-primary/5 text-primary">
-                                    {p.full_name?.charAt(0) || '?'}
-                                  </AvatarFallback>
-                                </Avatar>
-                                <div className="min-w-0">
-                                  <p className="text-sm font-semibold truncate group-hover:text-primary transition-colors">{p.full_name}</p>
-                                  <p className="text-[10px] text-muted-foreground truncate">{p.email}</p>
-                                </div>
-                              </div>
-
-                              <div className="flex gap-1 shrink-0">
-                                {isPlanner ? (
-                                  <DropdownMenu>
-                                    <DropdownMenuTrigger
-                                      render={
-                                        <Button
-                                          variant="outline"
-                                          size="sm"
-                                          className="h-8 px-2 text-[10px] gap-1"
-                                        >
-                                          <PlusCircle className="h-3 w-3" />
-                                          Hinzufügen
-                                        </Button>
-                                      }
-                                    />
-                                    <DropdownMenuContent align="end" className="w-56">
-                                      {planningGroups.map((group) => (
-                                        <DropdownMenuItem 
-                                          key={group.name}
-                                          onClick={() => handleUpdateMember(p.id, group.name)}
-                                        >
-                                          {group.name}
-                                        </DropdownMenuItem>
-                                      ))}
-                                    </DropdownMenuContent>
-                                  </DropdownMenu>
-                                ) : (
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="h-8 px-3 text-[10px] gap-1"
-                                    onClick={() => handleUpdateMember(p.id, profile?.planning_group || null)}
-                                  >
-                                    <PlusCircle className="h-3 w-3" />
-                                    Mein Team
-                                  </Button>
-                                )}
-                              </div>
-                            </div>
-                          ))
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-              </div>
-            ) : (
-              <Card className="border-dashed">
-                <CardContent className="py-20 text-center">
-                  <div className="bg-muted w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <Users className="h-10 w-10 text-muted-foreground opacity-40" />
-                  </div>
-                  <h3 className="text-xl font-semibold mb-2">Du bist noch in keinem Team</h3>
-                  <p className="text-muted-foreground max-w-md mx-auto">
-                    Wende dich an die Planer, um einer Planungsgruppe zugewiesen zu werden und deinen Team-Workspace zu aktivieren.
-                  </p>
-                </CardContent>
-              </Card>
-            )}
-          </TabsContent>
-
-          <TabsContent value="alle-gruppen" className="space-y-8">
+        {safeMainTab === 'alle-gruppen' && (
+          <div className="space-y-8 animate-in fade-in duration-500">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
               <div className="lg:col-span-8 space-y-6">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -736,9 +613,11 @@ export default function GroupsPage() {
                 </Card>
               </div>
             </div>
-          </TabsContent>
+          </div>
+        )}
 
-          <TabsContent value="shared-hub" className="space-y-8">
+        {safeMainTab === 'shared-hub' && (
+          <div className="space-y-8 animate-in fade-in duration-500">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-8 rounded-3xl border border-primary/10 relative overflow-hidden">
               <div className="absolute top-0 right-0 p-8 opacity-5">
                 <MessageSquare className="h-32 w-32 rotate-12" />
@@ -826,9 +705,9 @@ export default function GroupsPage() {
                 </Card>
               </div>
             </div>
-          </TabsContent>
-        </Tabs>
-    </div>
+          </div>
+        )}
+      </div>    </div>
   )
 }
 

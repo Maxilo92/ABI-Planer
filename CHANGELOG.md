@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.18.3] - 2026-03-20
+- UI: **Group Navigation Overhaul**. Internal page toggles in the Groups section have been removed in favor of the primary sidebar sub-menu for a cleaner, more integrated experience.
+- UI: **Widget Layout Fixes**. Resolved overlapping and glitching issues in the group workspace by optimizing the grid layout and removing problematic fixed heights.
+
 ## [0.18.2] - 2026-03-20
 - UI: **Lootbox Progress Fix**. Die Fortschrittsanzeige unter der Lootbox zeigt nun korrekt nur noch die 4 Upgrade-Phasen an. Der finale 5. Klick zum Öffnen wird visuell separat behandelt.
 
