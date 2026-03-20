@@ -11,12 +11,19 @@ import { Textarea } from '@/components/ui/textarea'
 import { useAuth } from '@/context/AuthContext'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { Loader2, Plus, Trash2, Save, RotateCcw, Cookie } from 'lucide-react'
+import { Loader2, Plus, Trash2, Save, RotateCcw, Cookie, Gift, GraduationCap } from 'lucide-react'
 import { logAction } from '@/lib/logging'
+import { TeacherRarity } from '@/types/database'
+
+interface LootTeacher {
+  name: string
+  rarity: TeacherRarity
+}
 
 interface GlobalSettings {
   cookie_banner_chance: number
   cookie_messages: string[]
+  loot_teachers: LootTeacher[]
 }
 
 const DEFAULT_SETTINGS: GlobalSettings = {
@@ -29,6 +36,11 @@ const DEFAULT_SETTINGS: GlobalSettings = {
     "Diese Seite ist 100% krümelfrei. Echte Cookies gibt's am Kiosk (und der Erlös geht hoffentlich in eure Kasse)!",
     "Hier gibt es keine digitalen Kekse. Aber echte Kekse mit eurem Abi-Logo wären doch eine super Finanzierungsidee, oder?",
     "0% Cookies, 100% Abi-Planung. Denkt dran: Einnahmen aus dem Verkauf von Süßigkeiten steigern euren Kontostand massiv!"
+  ],
+  loot_teachers: [
+    { name: "Max Mustermann", rarity: "common" },
+    { name: "Erika Musterfrau", rarity: "rare" },
+    { name: "Albert Einstein", rarity: "legendary" }
   ]
 }
 
@@ -38,7 +50,48 @@ export default function GlobalSettingsPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [newMessage, setNewMessage] = useState('')
+  const [newTeacherName, setNewTeacherName] = useState('')
+  const [newTeacherRarity, setNewTeacherRarity] = useState<TeacherRarity>('common')
   const router = useRouter()
+...
+  const handleAddTeacher = () => {
+    if (!newTeacherName.trim()) return
+    setSettings(prev => ({
+      ...prev,
+      loot_teachers: [...(prev.loot_teachers || []), { name: newTeacherName.trim(), rarity: newTeacherRarity }]
+    }))
+    setNewTeacherName('')
+    setNewTeacherRarity('common')
+  }
+
+  const handleRemoveTeacher = (index: number) => {
+    setSettings(prev => ({
+      ...prev,
+      loot_teachers: prev.loot_teachers.filter((_, i) => i !== index)
+    }))
+  }
+
+  const getRarityLabel = (rarity: TeacherRarity) => {
+    switch (rarity) {
+      case 'common': return 'Gewöhnlich (Grau)'
+      case 'rare': return 'Selten (Grün)'
+      case 'epic': return 'Episch (Lila)'
+      case 'mythic': return 'Mythisch (Rot)'
+      case 'legendary': return 'Legendär (Gelb)'
+      default: return rarity
+    }
+  }
+
+  const getRarityColor = (rarity: TeacherRarity) => {
+    switch (rarity) {
+      case 'common': return 'text-slate-500'
+      case 'rare': return 'text-emerald-500'
+      case 'epic': return 'text-purple-500'
+      case 'mythic': return 'text-red-500'
+      case 'legendary': return 'text-amber-500'
+      default: return ''
+    }
+  }
 
   const isAdmin = profile?.role === 'admin_main' || profile?.role === 'admin_co' || profile?.role === 'admin'
 
@@ -194,6 +247,79 @@ export default function GlobalSettingsPage() {
               </div>
             </div>
           </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <GraduationCap className="h-5 w-5 text-primary" />
+              Lehrer-Lootbox (Easter Egg)
+            </CardTitle>
+            <CardDescription>
+              Verwalte die Lehrer, die aus der geheimen Lootbox gezogen werden können.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="space-y-4">
+              <Label>Verfügbare Lehrer</Label>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {(settings.loot_teachers || []).map((teacher, index) => (
+                  <div key={index} className="flex items-center justify-between p-3 rounded-lg border bg-secondary/20">
+                    <div className="flex flex-col">
+                      <span className="font-semibold text-sm">{teacher.name}</span>
+                      <span className={`text-[10px] font-bold uppercase ${getRarityColor(teacher.rarity)}`}>
+                        {getRarityLabel(teacher.rarity)}
+                      </span>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="text-destructive hover:bg-destructive/10 h-8 w-8"
+                      onClick={() => handleRemoveTeacher(index)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t">
+                <div className="flex-1 space-y-2">
+                  <Label htmlFor="teacher-name" className="text-xs">Name des Lehrers</Label>
+                  <Input
+                    id="teacher-name"
+                    placeholder="z.B. Herr Schmidt"
+                    value={newTeacherName}
+                    onChange={(e) => setNewTeacherName(e.target.value)}
+                  />
+                </div>
+                <div className="sm:w-[200px] space-y-2">
+                  <Label htmlFor="teacher-rarity" className="text-xs">Seltenheit</Label>
+                  <select
+                    id="teacher-rarity"
+                    className="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                    value={newTeacherRarity}
+                    onChange={(e) => setNewTeacherRarity(e.target.value as TeacherRarity)}
+                  >
+                    <option value="common">Gewöhnlich (Grau)</option>
+                    <option value="rare">Selten (Grün)</option>
+                    <option value="epic">Episch (Lila)</option>
+                    <option value="mythic">Mythisch (Rot)</option>
+                    <option value="legendary">Legendär (Gelb)</option>
+                  </select>
+                </div>
+                <div className="flex items-end">
+                  <Button onClick={handleAddTeacher} disabled={!newTeacherName.trim()} className="w-full sm:w-auto">
+                    <Plus className="h-4 w-4 mr-2" /> Hinzufügen
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+          <CardFooter className="bg-muted/50 text-[10px] text-muted-foreground flex items-center gap-2">
+            <Gift className="h-3 w-3" />
+            Die Lootbox startet bei "Gewöhnlich" und hat 4 Chancen auf ein Upgrade (33% für +1, 10% für +2).
+          </CardFooter>
         </Card>
       </div>
     </div>

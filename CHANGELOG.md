@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.17.6] - 2026-03-20
+- Feature: **Lehrer-Lootbox**. Das Easter Egg wurde zu einer interaktiven Lootbox umgebaut, aus der man Lehrer ziehen kann.
+- UI: **Rarity Upgrades**. Die Lootbox kann durch 4 Klicks aufgewertet werden (Upgrades für Seltenheit basierend auf Wahrscheinlichkeiten).
+- Admin: **Loot-Verwaltung**. Lehrer und ihre Seltenheitsstufen können nun in den Globalen Einstellungen gepflegt werden.
+
 ## [0.17.5] - 2026-03-20
 - Fix: **Build-Fehler CountdownHeader**. Die `asChild` Prop wurde durch die im Projekt verwendete `render` Prop für Base UI Komponenten ersetzt, um den Firebase Deployment-Fehler zu beheben.
 

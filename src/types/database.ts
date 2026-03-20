@@ -38,6 +38,13 @@ export interface GroupMessage {
   pinned?: boolean;
 }
 
+export type TeacherRarity = 'common' | 'rare' | 'epic' | 'mythic' | 'legendary';
+
+export interface LootTeacher {
+  name: string;
+  rarity: TeacherRarity;
+}
+
 export interface Settings {
   id: number;
   ball_date: string;
@@ -45,6 +52,7 @@ export interface Settings {
   courses?: ClassName[];
   expected_ticket_sales?: number;
   planning_groups?: PlanningGroup[];
+  loot_teachers?: LootTeacher[];
 }
 
 export interface Todo {

@@ -68,7 +68,6 @@ export function Footer() {
                 {showFeedback === '?' ? (
                   <div className="flex items-center gap-1">
                     <span>Was guckst du?</span>
-                    <span className="text-sm">💬</span>
                   </div>
                 ) : showFeedback}
                 <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-primary rotate-45" />

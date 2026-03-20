@@ -92,23 +92,23 @@ export default function TodosPage() {
         </div>
       </div>
 
-      <Tabs defaultValue="all" className="w-full">
-        <TabsList className="grid w-full max-w-[600px] grid-cols-4">
-          <TabsTrigger value="all">Alle ({filteredTodos.length})</TabsTrigger>
-          <TabsTrigger value="open">Offen ({openTodos.length})</TabsTrigger>
-          <TabsTrigger value="in_progress">In Arbeit ({inProgressTodos.length})</TabsTrigger>
-          <TabsTrigger value="done">Erledigt ({doneTodos.length})</TabsTrigger>
+      <Tabs defaultValue="all" className="w-full flex flex-col gap-4">
+        <TabsList className="h-9 w-fit">
+          <TabsTrigger value="all" className="px-4">Alle ({filteredTodos.length})</TabsTrigger>
+          <TabsTrigger value="open" className="px-4">Offen ({openTodos.length})</TabsTrigger>
+          <TabsTrigger value="in_progress" className="px-4">In Arbeit ({inProgressTodos.length})</TabsTrigger>
+          <TabsTrigger value="done" className="px-4">Erledigt ({doneTodos.length})</TabsTrigger>
         </TabsList>
-        <TabsContent value="all" className="mt-6">
+        <TabsContent value="all">
           <TodoList todos={filteredTodos} canManage={canManage} useScrollContainer={false} />
         </TabsContent>
-        <TabsContent value="open" className="mt-6">
+        <TabsContent value="open">
           <TodoList todos={openTodos} canManage={canManage} useScrollContainer={false} />
         </TabsContent>
-        <TabsContent value="in_progress" className="mt-6">
+        <TabsContent value="in_progress">
           <TodoList todos={inProgressTodos} canManage={canManage} useScrollContainer={false} />
         </TabsContent>
-        <TabsContent value="done" className="mt-6">
+        <TabsContent value="done">
           <TodoList todos={doneTodos} canManage={canManage} useScrollContainer={false} />
         </TabsContent>
       </Tabs>
