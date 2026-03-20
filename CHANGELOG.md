@@ -1,6 +1,9 @@
 # Changelog
 
 ## [Unreleased]
+- _Noch keine Änderungen._
+
+## [0.18.13] - 2026-03-20
 - UX: **Rechtstexte in Registrierung zerstörungsfrei**. Links zu AGB und Datenschutz öffnen jetzt in einem neuen Tab, sodass der Registrierungsfortschritt beim Nachlesen erhalten bleibt.
 - UI: **Consent-Checkbox Layout stabilisiert**. In der Registrierung umbrechen die Texte neben den Checkboxen jetzt auf allen Geräten korrekt (inklusive Links zu AGB/Datenschutz) ohne zerrissene Zeilen.
 - Performance: **Lootbox-Animationen optimiert**. Schwergewichtige Effekte (große Blur-/Ping-Layer, aggressive Shake-Amplituden) wurden durch leichtere, transform-basierte Animationen ersetzt, damit Mobile-Browser deutlich flüssiger bleiben.
@@ -10,6 +13,7 @@
 - Dashboard/Finanzen: **Konsistente Fortschrittslogik**. Der Funding-Fortschritt basiert auf dem aktuellen Kontostand, während Ausgaben separat nur in "Gesamtausgaben" erscheinen.
 - Fix: **Globales UI-Flackern & Navigations-Hänger behoben**. Der Presence-Heartbeat im `AuthContext` war an das gesamte `profile`-Objekt gekoppelt und erzeugte dadurch eine Re-Subscribe-/Write-Schleife (`isOnline`/`lastOnline`) mit permanenten Re-Renders.
 - Stability: **Auth-Heartbeat entkoppelt**. Online-Status-Updates laufen jetzt nur noch pro Benutzer-ID-Lifecycle statt bei jeder Profil-Änderung, wodurch Dashboard, News, Feedback und Admin-Logs wieder stabil reagieren.
+- UI: **Footer adaptiv einzeilig bei genug Platz**. Copyright und Rechtslinks dürfen auf breiten Viewports wieder in einer Zeile stehen und umbrechen nur bei engem Platzbedarf.
 
 ## [0.18.12] - 2026-03-20
 - Legal: **Datenschutzerklärung hinzugefügt**. Neue Seite `/datenschutz` mit Verantwortlichem, Verarbeitungszwecken, Rechtsgrundlagen, Speicherdauer, Betroffenenrechten und Kontakt.

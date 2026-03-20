@@ -49,7 +49,7 @@ export function Footer() {
   return (
     <footer className="mt-auto border-t bg-background/95 backdrop-blur-sm py-6 px-6 md:px-8">
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6 text-xs text-muted-foreground">
-        <div className="w-full md:w-auto flex flex-col items-center md:items-start gap-2 font-medium">
+        <div className="w-full md:w-auto flex flex-wrap items-center justify-center md:justify-start gap-x-2 gap-y-2 font-medium">
           <span className="text-center md:text-left">&copy; {new Date().getFullYear()} Maximilian Priesnitz</span>
           <div className="flex flex-wrap items-center justify-center md:justify-start gap-1.5">
             <Link href="/impressum" className="hover:text-primary transition-colors py-1 px-2 rounded-md hover:bg-secondary/50">
