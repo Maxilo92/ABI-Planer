@@ -23,6 +23,7 @@ export function RandomCookieBanner() {
   const [message, setMessage] = useState('')
 
   useEffect(() => {
+    // Check if it has already been shown in THIS session
     const lastShown = sessionStorage.getItem('cookie_banner_shown')
     if (lastShown) return
 
@@ -38,13 +39,20 @@ export function RandomCookieBanner() {
           : FALLBACK_MESSAGES
       }
 
-      if (Math.random() < chance) {
+      // Check if it is the VERY first visit (across all sessions)
+      const firstVisitDone = localStorage.getItem('cookie_banner_first_visit_done')
+      const isFirstVisit = !firstVisitDone
+
+      // Show if it's the first visit OR if the random chance hits
+      if (isFirstVisit || Math.random() < chance) {
         const randomMsg = messages[Math.floor(Math.random() * messages.length)]
         setMessage(randomMsg)
 
         const timer = setTimeout(() => {
           setShow(true)
+          // Set both session and local storage to track that it's been shown
           sessionStorage.setItem('cookie_banner_shown', 'true')
+          localStorage.setItem('cookie_banner_first_visit_done', 'true')
         }, 3000)
 
         return () => clearTimeout(timer)

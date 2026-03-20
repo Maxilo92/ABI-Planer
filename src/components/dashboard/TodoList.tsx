@@ -227,7 +227,7 @@ export function TodoList({
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-7 w-7 text-muted-foreground hover:text-destructive md:opacity-0 md:group-hover:opacity-100 transition-opacity"
+                        className="h-7 w-7 text-muted-foreground hover:text-destructive transition-opacity"
                         onClick={() => handleDelete(todo.id)}
                         title="Löschen"
                       >

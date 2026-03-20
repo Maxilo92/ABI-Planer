@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.17.4] - 2026-03-20
+- UI: **Mobile Edit Buttons**. Fixed visibility of edit and delete buttons for ToDos and Calendar events on mobile devices.
+
+## [0.17.3] - 2026-03-20
+- UI: **Calendar Tabs Fix**. Replaced the "mega" vertical tabs with a more subtle, top-aligned horizontal layout to improve visibility and ease of use.
+- Feature: **Interaktiver Timer**. Der Countdown-Header ist nun klickbar und öffnet einen informativen Dialog mit detaillierten Zeitangaben (Gesamtstunden, -minuten und -sekunden) bis zum Abiball.
+- Logic: **Cookie Banner First Visit**. The cookie banner now always appears on the very first visit to the site, regardless of the randomized settings. After the first visit, it reverts to the configured random chance.
+- Feature: **Easter Egg**. Added a hidden easter egg triggered by clicking the version number in the footer. Unlocks a "Top Secret" page for the account.
+
 ## [0.17.0] - 2026-03-20
 - UI: **Theme Labels**. Theme toggle now shows text labels ("Hell", "Dunkel", "System") for better accessibility and clarity.
 - Feature: **Location field**. Support for location fields added to news and calendar entries.

@@ -20,6 +20,7 @@ export interface Profile {
   timeout_reason?: string | null;
   is_approved: boolean;
   is_group_leader?: boolean | null;
+  easter_egg_unlocked?: boolean;
   created_at: string;
   last_visited?: Record<string, string> | null;
 }

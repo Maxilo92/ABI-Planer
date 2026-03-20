@@ -91,15 +91,15 @@ export default function CalendarPage() {
         </div>
       </div>
 
-      <Tabs defaultValue="upcoming" className="w-full">
-        <TabsList className="grid w-full max-w-[400px] grid-cols-2">
-          <TabsTrigger value="upcoming">Anstehend ({upcomingEvents.length})</TabsTrigger>
-          <TabsTrigger value="past">Vergangen ({pastEvents.length})</TabsTrigger>
+      <Tabs defaultValue="upcoming" className="w-full flex flex-col gap-4">
+        <TabsList className="h-9 w-fit">
+          <TabsTrigger value="upcoming" className="px-4">Anstehend ({upcomingEvents.length})</TabsTrigger>
+          <TabsTrigger value="past" className="px-4">Vergangen ({pastEvents.length})</TabsTrigger>
         </TabsList>
-        <TabsContent value="upcoming" className="mt-6">
+        <TabsContent value="upcoming">
           <CalendarEvents events={upcomingEvents} canManage={isPlanner} useScrollContainer={false} />
         </TabsContent>
-        <TabsContent value="past" className="mt-6">
+        <TabsContent value="past">
           <CalendarEvents events={pastEvents} canManage={isPlanner} useScrollContainer={false} />
         </TabsContent>
       </Tabs>

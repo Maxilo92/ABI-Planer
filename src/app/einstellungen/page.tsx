@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { signOut } from 'firebase/auth'
-import { User, MoonStar, MessageSquarePlus, LogOut, Users, Save, Plus, Trash2 } from 'lucide-react'
+import { User, MoonStar, MessageSquarePlus, LogOut, Users, Save, Plus, Trash2, Sparkles } from 'lucide-react'
 import { collection, doc, getDocs, onSnapshot, query, setDoc, updateDoc, where, writeBatch } from 'firebase/firestore'
 
 import { auth, db } from '@/lib/firebase'
@@ -374,6 +374,39 @@ export default function SettingsPage() {
           <ThemeToggle />
         </CardContent>
       </Card>
+
+      {profile?.easter_egg_unlocked && (
+        <Card className="border-primary/20 bg-primary/5">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-xl">
+              <Sparkles className="h-5 w-5 text-primary" /> Geheimnisse
+            </CardTitle>
+            <CardDescription>Du hast das Easter Egg gefunden. Hier kannst du es wieder verstecken.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button 
+              variant="outline" 
+              className="w-full sm:w-auto border-primary/20 hover:bg-primary/10"
+              onClick={async () => {
+                if (user) {
+                  try {
+                    await updateDoc(doc(db, 'profiles', user.uid), {
+                      easter_egg_unlocked: false
+                    })
+                    toast.success('Geheimnisse wurden wieder versteckt.')
+                    router.push('/')
+                  } catch (error) {
+                    console.error('Error resetting easter egg:', error)
+                    toast.error('Konnte Geheimnisse nicht verstecken.')
+                  }
+                }
+              }}
+            >
+              Easter Egg zurücksetzen & verstecken
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>

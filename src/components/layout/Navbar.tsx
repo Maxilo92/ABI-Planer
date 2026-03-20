@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { LayoutDashboard, CheckSquare, Calendar, Euro, Megaphone, BarChart2, LogOut, Menu, X, ShieldCheck, User, MessageSquareHeart, Settings, Users, ChevronDown, ChevronRight } from 'lucide-react'
+import { LayoutDashboard, CheckSquare, Calendar, Euro, Megaphone, BarChart2, LogOut, Menu, X, ShieldCheck, User, MessageSquareHeart, Settings, Users, ChevronDown, ChevronRight, Sparkles } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -80,8 +80,13 @@ export function Navbar() {
       ],
     },
     { href: '/abstimmungen', label: 'Umfragen', icon: BarChart2, notify: notifications.umfragen },
-    { href: '/einstellungen', label: 'Einstellungen', icon: Settings },
   ]
+
+  if (profile?.easter_egg_unlocked) {
+    navItems.push({ href: '/geheim', label: 'Top Secret', icon: Sparkles })
+  }
+
+  navItems.push({ href: '/einstellungen', label: 'Einstellungen', icon: Settings })
 
   if (isAdmin) {
     navItems.push({ 

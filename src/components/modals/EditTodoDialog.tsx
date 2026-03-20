@@ -110,7 +110,7 @@ export function EditTodoDialog({ todo }: EditTodoDialogProps) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger
         render={
-          <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-primary md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+          <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-primary transition-opacity">
             <Pencil className="h-3.5 w-3.5" />
           </Button>
         }
