@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.18.2] - 2026-03-20
+- UI: **Lootbox Progress Fix**. Die Fortschrittsanzeige unter der Lootbox zeigt nun korrekt nur noch die 4 Upgrade-Phasen an. Der finale 5. Klick zum Öffnen wird visuell separat behandelt.
+
 ## [0.18.1] - 2026-03-20
 - UI: **Secret Page Layout**. Die Lootbox-Seite ist nun korrekt in das Standard-Layout (mit Sidebar) integriert, behält aber ihren minimalistischen, fokussierten Look im Inhaltsbereich bei.
 
