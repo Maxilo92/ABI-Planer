@@ -72,7 +72,7 @@ export function Navbar() {
       href: '/gruppen-root',
       label: 'Gruppen',
       icon: Users,
-      isBeta: false,
+      isBeta: true,
       subItems: [
         { href: '/gruppen?bereich=mein-team', label: 'Mein Team', icon: Users },
         { href: '/gruppen?bereich=alle-gruppen', label: 'Alle Gruppen', icon: Users },
