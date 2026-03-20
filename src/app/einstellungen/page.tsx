@@ -42,7 +42,7 @@ export default function SettingsPage() {
 
   useEffect(() => {
     if (!loading && !user) {
-      router.push('/login')
+      router.push('/login?reason=unauthorized')
     }
   }, [loading, user, router])
 

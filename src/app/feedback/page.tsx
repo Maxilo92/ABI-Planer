@@ -53,7 +53,7 @@ export default function FeedbackPage() {
 
   useEffect(() => {
     if (!authLoading && !user) {
-      router.push('/login')
+      router.push('/login?reason=unauthorized')
     }
   }, [authLoading, user, router])
 

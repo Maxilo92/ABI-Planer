@@ -15,12 +15,18 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [timeoutMessage, setTimeoutMessage] = useState(false)
+  const [reasonMessage, setReasonMessage] = useState<string | null>(null)
   const router = useRouter()
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && window.location.search.includes('reason=timeout')) {
-      setTimeoutMessage(true)
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search)
+      const reason = params.get('reason')
+      if (reason === 'timeout') {
+        setReasonMessage('Deine Sitzung ist abgelaufen. Bitte melde dich erneut an.')
+      } else if (reason === 'unauthorized') {
+        setReasonMessage('Du musst angemeldet sein, um auf diesen Bereich zuzugreifen.')
+      }
     }
   }, [])
 
@@ -66,9 +72,9 @@ export default function LoginPage() {
         </CardHeader>
         <form onSubmit={handleLogin}>
           <CardContent className="space-y-6 px-5 pb-7 sm:space-y-7 sm:px-7 sm:pb-8">
-            {timeoutMessage && (
-              <div className="text-amber-600 text-sm p-3 rounded-md bg-amber-50 border border-amber-200 text-center font-medium">
-                Du wurdest aufgrund einer Zeitüberschreitung abgemeldet.
+            {reasonMessage && (
+              <div className="text-amber-600 dark:text-amber-400 text-sm p-3 rounded-md bg-amber-500/10 text-center font-medium border border-amber-500/20">
+                {reasonMessage}
               </div>
             )}
             {error && (
