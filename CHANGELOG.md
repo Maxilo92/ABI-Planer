@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+- Performance: **Lootbox-Animationen optimiert**. Schwergewichtige Effekte (grosse Blur-/Ping-Layer, aggressive Shake-Amplituden) wurden durch leichtere, transform-basierte Animationen ersetzt, damit Mobile-Browser deutlich fluessiger bleiben.
+- UI: **Footer Mobile-Zeilenumbruch**. Auf kleinen Displays stehen Copyright und Footer-Links jetzt in getrennten Zeilen mit sauberem Wrap statt gequetschter Einzeile.
 - UX: **Dashboard-Layout ohne sichtbares Umsortieren**. Widgets werden erst angezeigt, nachdem alle initialen Datenquellen geladen sind, damit die Personalisierung ohne sichtbares Springen erfolgt.
 - Finanzen: **Zielbetrag entkoppelt**. Das Finanzierungsziel ist jetzt wieder ein eigener Schaetzwert aus den Einstellungen und wird nicht mehr aus Ausgaben abgeleitet.
 - Dashboard/Finanzen: **Konsistente Fortschrittslogik**. Der Funding-Fortschritt basiert auf dem aktuellen Kontostand, waehrend Ausgaben separat nur in "Gesamtausgaben" erscheinen.

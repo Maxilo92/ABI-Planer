@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useAuth } from '@/context/AuthContext'
 import { db } from '@/lib/firebase'
 import { doc, updateDoc } from 'firebase/firestore'
@@ -49,24 +49,25 @@ export function Footer() {
   return (
     <footer className="mt-auto border-t bg-background/95 backdrop-blur-sm py-6 px-6 md:px-8">
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6 text-xs text-muted-foreground">
-        <div className="flex items-center gap-2 font-medium">
-          <span>&copy; {new Date().getFullYear()} Maximilian Priesnitz</span>
-          <span className="hidden md:inline text-muted-foreground/30 mx-1">•</span>
-          <Link href="/impressum" className="hover:text-primary transition-colors py-1 px-2 rounded-md hover:bg-secondary/50">
-            Impressum
-          </Link>
-          <span className="text-muted-foreground/30 mx-1">•</span>
-          <Link href="/agb" className="hover:text-primary transition-colors py-1 px-2 rounded-md hover:bg-secondary/50">
-            AGB
-          </Link>
-          <span className="text-muted-foreground/30 mx-1">•</span>
-          <Link href="/uber" className="hover:text-primary transition-colors py-1 px-2 rounded-md hover:bg-secondary/50">
-            Über
-          </Link>
-          <span className="text-muted-foreground/30 mx-1">•</span>
-          <Link href="/datenschutz" className="hover:text-primary transition-colors py-1 px-2 rounded-md hover:bg-secondary/50">
-            Datenschutz
-          </Link>
+        <div className="w-full md:w-auto flex flex-col items-center md:items-start gap-2 font-medium">
+          <span className="text-center md:text-left">&copy; {new Date().getFullYear()} Maximilian Priesnitz</span>
+          <div className="flex flex-wrap items-center justify-center md:justify-start gap-1.5">
+            <Link href="/impressum" className="hover:text-primary transition-colors py-1 px-2 rounded-md hover:bg-secondary/50">
+              Impressum
+            </Link>
+            <span className="hidden md:inline text-muted-foreground/30 mx-1">•</span>
+            <Link href="/agb" className="hover:text-primary transition-colors py-1 px-2 rounded-md hover:bg-secondary/50">
+              AGB
+            </Link>
+            <span className="hidden md:inline text-muted-foreground/30 mx-1">•</span>
+            <Link href="/uber" className="hover:text-primary transition-colors py-1 px-2 rounded-md hover:bg-secondary/50">
+              Über
+            </Link>
+            <span className="hidden md:inline text-muted-foreground/30 mx-1">•</span>
+            <Link href="/datenschutz" className="hover:text-primary transition-colors py-1 px-2 rounded-md hover:bg-secondary/50">
+              Datenschutz
+            </Link>
+          </div>
         </div>
         
         <div className="flex items-center gap-3">

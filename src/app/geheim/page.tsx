@@ -142,10 +142,10 @@ export default function SecretPage() {
     <div className="flex flex-col items-center justify-center min-h-[calc(100vh-12rem)] md:min-h-[calc(100vh-8rem)] overflow-hidden">
       <div className="relative flex flex-col items-center space-y-12 w-full max-w-sm px-6">
         
-        {/* Background Flash Effect during reveal */}
+        {/* Lightweight reveal glow */}
         {gameState === 'revealed' && (
           <div className={cn(
-            "absolute inset-0 -z-10 w-[200%] h-[200%] blur-[120px] opacity-20 animate-pulse",
+            "absolute inset-0 -z-10 w-[140%] h-[140%] blur-3xl opacity-25",
             currentInfo.color
           )} />
         )}
@@ -156,7 +156,7 @@ export default function SecretPage() {
           gameState === 'revealed' ? "opacity-100 scale-110" : "opacity-40"
         )}>
           <h1 className="text-3xl font-black tracking-tighter font-mono flex items-center gap-3">
-            <Sparkles className={cn("h-7 w-7", gameState === 'revealed' ? "text-white animate-spin" : "text-primary")} />
+            <Sparkles className={cn("h-7 w-7", gameState === 'revealed' ? "text-white animate-pulse" : "text-primary")} />
             LOOTBOX
           </h1>
         </div>
@@ -174,14 +174,14 @@ export default function SecretPage() {
           ) : (
             <div 
               className={cn(
-                "relative w-64 h-64 rounded-[2.5rem] flex flex-col items-center justify-center transition-all duration-300 border-[8px] shadow-2xl",
+                "relative w-64 h-64 rounded-[2.5rem] flex flex-col items-center justify-center transition-all duration-300 border-[8px] shadow-xl will-change-transform",
                 currentInfo.color,
                 "border-white/40",
                 currentInfo.glow,
                 shake && currentInfo.shake,
                 !shake && gameState === 'interacting' && "animate-float",
                 gameState === 'interacting' && "cursor-pointer active:scale-90",
-                gameState === 'revealed' && "scale-125 border-white shadow-[0_0_100px_rgba(255,255,255,0.4)] animate-reveal-pop"
+                gameState === 'revealed' && "scale-[1.12] border-white shadow-[0_0_36px_rgba(255,255,255,0.28)] animate-reveal-pop"
               )}
               onClick={handleBoxClick}
             >
@@ -219,16 +219,15 @@ export default function SecretPage() {
                   </div>
 
                   {isAnimating && (
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <Zap className="h-full w-full text-white/40 animate-ping" />
-                      <div className="absolute w-full h-full rounded-full border-4 border-white/40 animate-ping opacity-0" style={{ animationDelay: '0.1s' }} />
+                    <div className="absolute -top-2 right-4 rounded-full bg-white/30 px-2 py-1 text-[10px] font-black uppercase tracking-wider text-white">
+                      <Zap className="h-3.5 w-3.5" />
                     </div>
                   )}
                 </>
               ) : (
                 <div className="flex flex-col items-center">
                   <div className="relative mb-4">
-                    <GraduationCap className="h-28 w-28 text-white drop-shadow-[0_12px_12px_rgba(0,0,0,0.4)] animate-bounce" style={{ animationDuration: '3s' }} />
+                    <GraduationCap className="h-28 w-28 text-white drop-shadow-[0_12px_12px_rgba(0,0,0,0.35)] animate-float" />
                     <Sparkles className="absolute -top-4 -right-4 h-8 w-8 text-white animate-pulse" />
                   </div>
                   

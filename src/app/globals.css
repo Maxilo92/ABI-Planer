@@ -49,44 +49,44 @@
     to { height: 0; }
   }
 
-  --animate-lootbox-shake-1: lootbox-shake-1 0.4s cubic-bezier(.36,.07,.19,.97) both;
-  --animate-lootbox-shake-2: lootbox-shake-2 0.35s cubic-bezier(.36,.07,.19,.97) both;
-  --animate-lootbox-shake-3: lootbox-shake-3 0.3s cubic-bezier(.36,.07,.19,.97) both;
-  --animate-lootbox-shake-4: lootbox-shake-4 0.25s cubic-bezier(.36,.07,.19,.97) both;
+  --animate-lootbox-shake-1: lootbox-shake-1 0.32s cubic-bezier(.36,.07,.19,.97) both;
+  --animate-lootbox-shake-2: lootbox-shake-2 0.3s cubic-bezier(.36,.07,.19,.97) both;
+  --animate-lootbox-shake-3: lootbox-shake-3 0.28s cubic-bezier(.36,.07,.19,.97) both;
+  --animate-lootbox-shake-4: lootbox-shake-4 0.24s cubic-bezier(.36,.07,.19,.97) both;
   --animate-lootbox-shake-5: lootbox-shake-5 0.2s cubic-bezier(.36,.07,.19,.97) both;
-  --animate-reveal-pop: reveal-pop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
-  --animate-float: float 3s ease-in-out infinite;
+  --animate-reveal-pop: reveal-pop 0.45s cubic-bezier(0.2, 0.8, 0.2, 1.1) both;
+  --animate-float: float 3.6s ease-in-out infinite;
   --animate-glow-pulse: glow-pulse 2s ease-in-out infinite;
 
   @keyframes lootbox-shake-1 {
-    10%, 90% { transform: translate3d(-1px, 0, 0); }
-    20%, 80% { transform: translate3d(2px, 0, 0); }
-    30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
-    40%, 60% { transform: translate3d(4px, 0, 0); }
+    10%, 90% { transform: translate3d(-0.5px, 0, 0); }
+    20%, 80% { transform: translate3d(1px, 0, 0); }
+    30%, 50%, 70% { transform: translate3d(-2px, 0, 0); }
+    40%, 60% { transform: translate3d(2px, 0, 0); }
   }
   @keyframes lootbox-shake-2 {
-    10%, 90% { transform: translate3d(-2px, -1px, 0) rotate(-1deg); }
-    20%, 80% { transform: translate3d(3px, 1px, 0) rotate(1deg); }
-    30%, 50%, 70% { transform: translate3d(-5px, -2px, 0) rotate(-2deg); }
-    40%, 60% { transform: translate3d(5px, 2px, 0) rotate(2deg); }
+    10%, 90% { transform: translate3d(-1px, -0.5px, 0) rotate(-0.6deg); }
+    20%, 80% { transform: translate3d(2px, 0.5px, 0) rotate(0.6deg); }
+    30%, 50%, 70% { transform: translate3d(-3px, -1px, 0) rotate(-1.2deg); }
+    40%, 60% { transform: translate3d(3px, 1px, 0) rotate(1.2deg); }
   }
   @keyframes lootbox-shake-3 {
-    10%, 90% { transform: translate3d(-3px, -2px, 0) rotate(-2deg) scale(1.02); }
-    20%, 80% { transform: translate3d(4px, 2px, 0) rotate(2deg) scale(1.02); }
-    30%, 50%, 70% { transform: translate3d(-7px, -3px, 0) rotate(-3deg) scale(1.05); }
-    40%, 60% { transform: translate3d(7px, 3px, 0) rotate(3deg) scale(1.05); }
+    10%, 90% { transform: translate3d(-2px, -1px, 0) rotate(-1deg) scale(1.01); }
+    20%, 80% { transform: translate3d(2px, 1px, 0) rotate(1deg) scale(1.01); }
+    30%, 50%, 70% { transform: translate3d(-4px, -2px, 0) rotate(-1.8deg) scale(1.03); }
+    40%, 60% { transform: translate3d(4px, 2px, 0) rotate(1.8deg) scale(1.03); }
   }
   @keyframes lootbox-shake-4 {
-    10%, 90% { transform: translate3d(-4px, -3px, 0) rotate(-3deg) scale(1.05); }
-    20%, 80% { transform: translate3d(6px, 3px, 0) rotate(3deg) scale(1.05); }
-    30%, 50%, 70% { transform: translate3d(-9px, -4px, 0) rotate(-5deg) scale(1.1); }
-    40%, 60% { transform: translate3d(9px, 4px, 0) rotate(5deg) scale(1.1); }
+    10%, 90% { transform: translate3d(-2px, -1px, 0) rotate(-1.5deg) scale(1.03); }
+    20%, 80% { transform: translate3d(3px, 1px, 0) rotate(1.5deg) scale(1.03); }
+    30%, 50%, 70% { transform: translate3d(-5px, -2px, 0) rotate(-2.2deg) scale(1.05); }
+    40%, 60% { transform: translate3d(5px, 2px, 0) rotate(2.2deg) scale(1.05); }
   }
   @keyframes lootbox-shake-5 {
-    10%, 90% { transform: translate3d(-5px, -4px, 0) rotate(-5deg) scale(1.1); }
-    20%, 80% { transform: translate3d(8px, 4px, 0) rotate(5deg) scale(1.1); }
-    30%, 50%, 70% { transform: translate3d(-12px, -6px, 0) rotate(-8deg) scale(1.15); filter: brightness(1.5); }
-    40%, 60% { transform: translate3d(12px, 6px, 0) rotate(8deg) scale(1.15); filter: brightness(1.5); }
+    10%, 90% { transform: translate3d(-3px, -1px, 0) rotate(-2deg) scale(1.05); }
+    20%, 80% { transform: translate3d(4px, 1px, 0) rotate(2deg) scale(1.05); }
+    30%, 50%, 70% { transform: translate3d(-6px, -2px, 0) rotate(-3deg) scale(1.08); }
+    40%, 60% { transform: translate3d(6px, 2px, 0) rotate(3deg) scale(1.08); }
   }
   @keyframes reveal-pop {
     0% { transform: scale(0.5) rotate(-10deg); opacity: 0; }
@@ -95,11 +95,23 @@
   }
   @keyframes float {
     0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-10px); }
+    50% { transform: translateY(-6px); }
   }
   @keyframes glow-pulse {
     0%, 100% { box-shadow: 0 0 20px rgba(255, 255, 255, 0.1); }
     50% { box-shadow: 0 0 40px rgba(255, 255, 255, 0.4); }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-lootbox-shake-1,
+  .animate-lootbox-shake-2,
+  .animate-lootbox-shake-3,
+  .animate-lootbox-shake-4,
+  .animate-lootbox-shake-5,
+  .animate-reveal-pop,
+  .animate-float {
+    animation: none !important;
   }
 }
 
