@@ -295,38 +295,9 @@ export default function GroupsPage() {
       <Tabs 
         value={safeMainTab} 
         onValueChange={handleMainTabChange} 
-        orientation="vertical"
-        className="flex flex-col md:flex-row gap-8 items-start"
+        className="w-full space-y-8"
       >
-        <aside className="w-full md:w-64 shrink-0">
-          <TabsList className="flex flex-row md:flex-col h-auto w-full justify-start p-1.5 bg-muted/30 border backdrop-blur-sm md:sticky md:top-8">
-            <TabsTrigger 
-              value="mein-team" 
-              className="flex-1 md:flex-none px-4 py-2.5 justify-start gap-2.5 transition-all data-[active]:bg-background data-[active]:shadow-sm"
-              disabled={!profile?.planning_group}
-            >
-              <Users className="h-4 w-4" />
-              <span className="font-medium">Mein Team</span>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="alle-gruppen" 
-              className="flex-1 md:flex-none px-4 py-2.5 justify-start gap-2.5 transition-all data-[active]:bg-background data-[active]:shadow-sm"
-            >
-              <LayoutDashboard className="h-4 w-4" />
-              <span className="font-medium">Alle Gruppen</span>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="shared-hub" 
-              className="flex-1 md:flex-none px-4 py-2.5 justify-start gap-2.5 transition-all data-[active]:bg-background data-[active]:shadow-sm"
-            >
-              <MessageSquare className="h-4 w-4" />
-              <span className="font-medium">Shared Hub</span>
-            </TabsTrigger>
-          </TabsList>
-        </aside>
-
-        <div className="flex-1 min-w-0 w-full">
-          <TabsContent value="mein-team" className="mt-0 focus-visible:outline-none space-y-8">
+        <TabsContent value="mein-team" className="mt-0 focus-visible:outline-none space-y-8">
             {profile?.planning_group ? (
               <div className="space-y-8">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-primary/5 p-6 rounded-2xl border border-primary/10">
@@ -844,8 +815,7 @@ export default function GroupsPage() {
               </div>
             </div>
           </TabsContent>
-        </div>
-      </Tabs>
+        </Tabs>
     </div>
   )
 }
