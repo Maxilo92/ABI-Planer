@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.17.7] - 2026-03-20
+- UI: **Horizontal Tabs Overhaul**. Replaced the bulky "mega" vertical toggles with a clean, horizontal tab layout across Todos, Calendar, and Planning Groups for better space efficiency and visual consistency.
+
 ## [0.17.6] - 2026-03-20
 - Feature: **Lehrer-Lootbox**. Das Easter Egg wurde zu einer interaktiven Lootbox umgebaut, aus der man Lehrer ziehen kann.
 - UI: **Rarity Upgrades**. Die Lootbox kann durch 4 Klicks aufgewertet werden (Upgrades für Seltenheit basierend auf Wahrscheinlichkeiten).

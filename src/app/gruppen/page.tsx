@@ -295,9 +295,21 @@ export default function GroupsPage() {
       <Tabs 
         value={safeMainTab} 
         onValueChange={handleMainTabChange} 
-        className="w-full space-y-8"
+        className="w-full flex flex-col gap-8"
       >
-        <TabsContent value="mein-team" className="mt-0 focus-visible:outline-none space-y-8">
+        <TabsList className="h-9 w-fit">
+          <TabsTrigger value="mein-team" className="px-4" disabled={!profile?.planning_group}>
+            Mein Team
+          </TabsTrigger>
+          <TabsTrigger value="alle-gruppen" className="px-4">
+            Alle Gruppen
+          </TabsTrigger>
+          <TabsTrigger value="shared-hub" className="px-4">
+            Shared Hub
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="mein-team" className="space-y-8">
             {profile?.planning_group ? (
               <div className="space-y-8">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-primary/5 p-6 rounded-2xl border border-primary/10">
@@ -490,7 +502,7 @@ export default function GroupsPage() {
             )}
           </TabsContent>
 
-          <TabsContent value="alle-gruppen" className="mt-0 focus-visible:outline-none space-y-8">
+          <TabsContent value="alle-gruppen" className="space-y-8">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
               <div className="lg:col-span-8 space-y-6">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -726,7 +738,7 @@ export default function GroupsPage() {
             </div>
           </TabsContent>
 
-          <TabsContent value="shared-hub" className="mt-0 focus-visible:outline-none space-y-8">
+          <TabsContent value="shared-hub" className="space-y-8">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-8 rounded-3xl border border-primary/10 relative overflow-hidden">
               <div className="absolute top-0 right-0 p-8 opacity-5">
                 <MessageSquare className="h-32 w-32 rotate-12" />
