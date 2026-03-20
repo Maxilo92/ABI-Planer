@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.18.1] - 2026-03-20
+- UI: **Secret Page Layout**. Die Lootbox-Seite ist nun korrekt in das Standard-Layout (mit Sidebar) integriert, behält aber ihren minimalistischen, fokussierten Look im Inhaltsbereich bei.
+
 ## [0.18.0] - 2026-03-20
 - Feature: **Navigation Guard**. Auf der Einstellungsseite erscheint nun eine Warnung (Modal), wenn man versucht die Seite mit ungespeicherten Änderungen am Kurssystem oder den Planungsgruppen zu verlassen.
 
