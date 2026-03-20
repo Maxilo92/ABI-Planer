@@ -17,8 +17,21 @@ const FALLBACK_MESSAGES = [
   "0% Cookies, 100% Abi-Planung. Denkt dran: Einnahmen aus dem Verkauf von Süßigkeiten steigern euren Kontostand massiv!"
 ]
 
-const FIRST_START_QUESTION = 'Wir nutzen keine Tracking-Cookies. Wollen wir trotzdem so tun, als wäre das hier ein offizielles Cookie-Banner?'
-const STANDARD_INFO_MESSAGE = 'Info: Diese App bleibt cookie-frei. Spart euch lieber die Klicks und plant den nächsten kreativen Abi-Fundraiser.'
+const PARODY_AD_MESSAGES = [
+  'Werbung (nicht bezahlt): 10 Minuten Team-Meeting sparen euch 2 Stunden Abi-Chaos am Ende der Woche.',
+  'Abi-Tipp des Tages: Erst Budget planen, dann Motto-Glitzer kaufen. Euer Kassenwart wird es euch danken.',
+  'Parodie-Anzeige: Kuchenverkauf Plus bringt +100 Sympathie und +250 EUR Klassenkasse.',
+  'Sponsoring-Idee: Lokale Cafes fragen, ob sie euren Abi-Jahrgang bei Aktionen supporten.',
+  'Promo-Hinweis: Eine gute Aufgabenliste ist günstiger als jede Last-Minute-Rettungsaktion.',
+  'Abi-Gag mit Mehrwert: Plant den DJ frueh, bevor nur noch die Schuetzenkapelle frei ist.',
+  'Werbeblock Ende: Wenn jeder im Team eine Mini-Aufgabe uebernimmt, wird der Abiball plotzlich machbar.'
+]
+
+interface GlobalBannerSettings {
+  cookie_banner_chance?: number
+  cookie_messages?: string[]
+  ad_messages?: string[]
+}
 
 export function RandomCookieBanner() {
   const [show, setShow] = useState(false)
@@ -39,14 +52,18 @@ export function RandomCookieBanner() {
       if (decisionHandledRef.current) return
 
       let chance = 0.3
-      let messages = FALLBACK_MESSAGES
+      let cookieMessages = FALLBACK_MESSAGES
+      let adMessages = PARODY_AD_MESSAGES
 
       if (snapshot.exists()) {
-        const data = snapshot.data()
+        const data = snapshot.data() as GlobalBannerSettings
         chance = typeof data.cookie_banner_chance === 'number' ? data.cookie_banner_chance : 0.3
-        messages = Array.isArray(data.cookie_messages) && data.cookie_messages.length > 0 
+        cookieMessages = Array.isArray(data.cookie_messages) && data.cookie_messages.length > 0
           ? data.cookie_messages 
           : FALLBACK_MESSAGES
+        adMessages = Array.isArray(data.ad_messages) && data.ad_messages.length > 0
+          ? data.ad_messages
+          : PARODY_AD_MESSAGES
       }
 
       // Check if it is the VERY first visit (across all sessions)
@@ -57,7 +74,8 @@ export function RandomCookieBanner() {
       if (isFirstVisit) {
         decisionHandledRef.current = true
         setIsFirstStartQuestion(true)
-        setMessage(FIRST_START_QUESTION)
+        const cookieMessage = cookieMessages[Math.floor(Math.random() * cookieMessages.length)]
+        setMessage(cookieMessage)
 
         const timer = setTimeout(() => {
           setShow(true)
@@ -69,13 +87,8 @@ export function RandomCookieBanner() {
       if (Math.random() < chance) {
         decisionHandledRef.current = true
         setIsFirstStartQuestion(false)
-        setMessage(STANDARD_INFO_MESSAGE)
-
-        // Keep configured messages available as fallback if the standard info is empty for any reason.
-        if (!STANDARD_INFO_MESSAGE.trim()) {
-          const randomMsg = messages[Math.floor(Math.random() * messages.length)]
-          setMessage(randomMsg)
-        }
+        const adMessage = adMessages[Math.floor(Math.random() * adMessages.length)]
+        setMessage(adMessage)
 
         const timer = setTimeout(() => {
           setShow(true)
@@ -102,7 +115,7 @@ export function RandomCookieBanner() {
               <div className="flex items-center justify-between">
                 <h4 className="font-bold text-sm flex items-center gap-2">
                   {isFirstStartQuestion ? <Cookie className="h-3.5 w-3.5 text-primary" /> : <Info className="h-3.5 w-3.5 text-primary" />}
-                  {isFirstStartQuestion ? 'Cookie-Einstellungen' : 'Cookie-Info'}
+                  {isFirstStartQuestion ? 'Cookie-Einstellungen' : 'Abi-Werbung'}
                 </h4>
                 <Button 
                   variant="ghost" 

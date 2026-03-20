@@ -32,6 +32,7 @@ interface LootTeacher {
 interface GlobalSettings {
   cookie_banner_chance: number
   cookie_messages: string[]
+  ad_messages: string[]
   loot_teachers: LootTeacher[]
 }
 
@@ -45,6 +46,15 @@ const DEFAULT_SETTINGS: GlobalSettings = {
     "Diese Seite ist 100% krümelfrei. Echte Cookies gibt's am Kiosk (und der Erlös geht hoffentlich in eure Kasse)!",
     "Hier gibt es keine digitalen Kekse. Aber echte Kekse mit eurem Abi-Logo wären doch eine super Finanzierungsidee, oder?",
     "0% Cookies, 100% Abi-Planung. Denkt dran: Einnahmen aus dem Verkauf von Süßigkeiten steigern euren Kontostand massiv!"
+  ],
+  ad_messages: [
+    'Werbung (nicht bezahlt): 10 Minuten Team-Meeting sparen euch 2 Stunden Abi-Chaos am Ende der Woche.',
+    'Abi-Tipp des Tages: Erst Budget planen, dann Motto-Glitzer kaufen. Euer Kassenwart wird es euch danken.',
+    'Parodie-Anzeige: Kuchenverkauf Plus bringt +100 Sympathie und +250 EUR Klassenkasse.',
+    'Sponsoring-Idee: Lokale Cafes fragen, ob sie euren Abi-Jahrgang bei Aktionen supporten.',
+    'Promo-Hinweis: Eine gute Aufgabenliste ist guenstiger als jede Last-Minute-Rettungsaktion.',
+    'Abi-Gag mit Mehrwert: Plant den DJ frueh, bevor nur noch die Schuetzenkapelle frei ist.',
+    'Werbeblock Ende: Wenn jeder im Team eine Mini-Aufgabe uebernimmt, wird der Abiball ploetzlich machbar.'
   ],
   loot_teachers: [
     { name: "Max Mustermann", rarity: "common" },
@@ -60,6 +70,7 @@ export default function GlobalSettingsPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [newMessage, setNewMessage] = useState('')
+  const [newAdMessage, setNewAdMessage] = useState('')
   const [newTeacherName, setNewTeacherName] = useState('')
   const [newTeacherRarity, setNewTeacherRarity] = useState<TeacherRarity>('common')
   const [teacherSearch, setTeacherSearch] = useState('')
@@ -117,6 +128,7 @@ export default function GlobalSettingsPage() {
         const loadedSettings = {
           ...DEFAULT_SETTINGS,
           ...data,
+          ad_messages: data.ad_messages || DEFAULT_SETTINGS.ad_messages,
           loot_teachers: data.loot_teachers || DEFAULT_SETTINGS.loot_teachers
         }
         setSettings(loadedSettings)
@@ -182,6 +194,22 @@ export default function GlobalSettingsPage() {
     setSettings(prev => ({
       ...prev,
       cookie_messages: prev.cookie_messages.filter((_, i) => i !== index)
+    }))
+  }
+
+  const handleAddAdMessage = () => {
+    if (!newAdMessage.trim()) return
+    setSettings(prev => ({
+      ...prev,
+      ad_messages: [...prev.ad_messages, newAdMessage.trim()]
+    }))
+    setNewAdMessage('')
+  }
+
+  const handleRemoveAdMessage = (index: number) => {
+    setSettings(prev => ({
+      ...prev,
+      ad_messages: prev.ad_messages.filter((_, i) => i !== index)
     }))
   }
 
@@ -353,6 +381,45 @@ export default function GlobalSettingsPage() {
                   className="flex-1"
                 />
                 <Button onClick={handleAddMessage} disabled={!newMessage.trim()} className="shrink-0">
+                  <Plus className="h-4 w-4 mr-2" /> Hinzufügen
+                </Button>
+              </div>
+            </div>
+
+            <div className="space-y-4 pt-4 border-t">
+              <Label>Werbe-/Abi-Gag-Nachrichten (ohne Cookie-Bezug)</Label>
+              <div className="space-y-3">
+                {settings.ad_messages.map((msg, index) => (
+                  <div key={index} className="flex gap-2">
+                    <Textarea
+                      value={msg}
+                      onChange={(e) => {
+                        const newMsgs = [...settings.ad_messages]
+                        newMsgs[index] = e.target.value
+                        setSettings(prev => ({ ...prev, ad_messages: newMsgs }))
+                      }}
+                      className="flex-1"
+                    />
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="text-destructive hover:bg-destructive/10 shrink-0"
+                      onClick={() => handleRemoveAdMessage(index)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex gap-2 pt-2 border-t">
+                <Textarea
+                  placeholder="Neue Werbe-/Abi-Gag-Nachricht hinzufügen..."
+                  value={newAdMessage}
+                  onChange={(e) => setNewAdMessage(e.target.value)}
+                  className="flex-1"
+                />
+                <Button onClick={handleAddAdMessage} disabled={!newAdMessage.trim()} className="shrink-0">
                   <Plus className="h-4 w-4 mr-2" /> Hinzufügen
                 </Button>
               </div>
