@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { LayoutDashboard, CheckSquare, Calendar, Euro, Megaphone, BarChart2, LogOut, Menu, X, ShieldCheck, User, MessageSquareHeart, Settings, Users, ChevronDown, ChevronRight, Sparkles } from 'lucide-react'
+import { LayoutDashboard, CheckSquare, Calendar, Euro, Megaphone, BarChart2, LogOut, Menu, X, ShieldCheck, User, MessageSquareHeart, Settings, Users, ChevronDown, ChevronRight, Sparkles, Info, HelpCircle } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -68,6 +68,8 @@ export function Navbar() {
     { href: '/finanzen', label: 'Finanzen', icon: Euro },
     { href: '/news', label: 'News', icon: Megaphone, notify: notifications.news },
     { href: '/feedback', label: 'Feedback', icon: MessageSquareHeart },
+      { href: '/hilfe', label: 'Hilfe', icon: HelpCircle },
+      { href: '/uber', label: 'Über', icon: Info },
     {
       href: '/gruppen-root',
       label: 'Gruppen',
@@ -242,7 +244,7 @@ export function Navbar() {
               <button
                 onClick={() => setIsOpen((v) => !v)}
                 className="inline-flex items-center justify-center p-2 rounded-md text-muted-foreground hover:bg-secondary"
-                aria-label="Navigation oeffnen"
+                aria-label="Navigation öffnen"
               >
                 {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
               </button>

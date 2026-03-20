@@ -21,10 +21,10 @@ const PARODY_AD_MESSAGES = [
   'Werbung (nicht bezahlt): 10 Minuten Team-Meeting sparen euch 2 Stunden Abi-Chaos am Ende der Woche.',
   'Abi-Tipp des Tages: Erst Budget planen, dann Motto-Glitzer kaufen. Euer Kassenwart wird es euch danken.',
   'Parodie-Anzeige: Kuchenverkauf Plus bringt +100 Sympathie und +250 EUR Klassenkasse.',
-  'Sponsoring-Idee: Lokale Cafes fragen, ob sie euren Abi-Jahrgang bei Aktionen supporten.',
+  'Sponsoring-Idee: Lokale Cafés fragen, ob sie euren Abi-Jahrgang bei Aktionen supporten.',
   'Promo-Hinweis: Eine gute Aufgabenliste ist günstiger als jede Last-Minute-Rettungsaktion.',
-  'Abi-Gag mit Mehrwert: Plant den DJ frueh, bevor nur noch die Schuetzenkapelle frei ist.',
-  'Werbeblock Ende: Wenn jeder im Team eine Mini-Aufgabe uebernimmt, wird der Abiball plotzlich machbar.'
+  'Abi-Gag mit Mehrwert: Plant den DJ früh, bevor nur noch die Schützenkapelle frei ist.',
+  'Werbeblock Ende: Wenn jeder im Team eine Mini-Aufgabe übernimmt, wird der Abiball plötzlich machbar.'
 ]
 
 interface GlobalBannerSettings {
@@ -115,7 +115,7 @@ export function RandomCookieBanner() {
               <div className="flex items-center justify-between">
                 <h4 className="font-bold text-sm flex items-center gap-2">
                   {isFirstStartQuestion ? <Cookie className="h-3.5 w-3.5 text-primary" /> : <Info className="h-3.5 w-3.5 text-primary" />}
-                  {isFirstStartQuestion ? 'Cookie-Einstellungen' : 'Abi-Werbung'}
+                  {isFirstStartQuestion ? 'Cookie-Einstellungen' : 'Werbung'}
                 </h4>
                 <Button 
                   variant="ghost" 

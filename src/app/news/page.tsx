@@ -53,7 +53,7 @@ export default function NewsPage() {
       }
       updateLastVisited()
     }
-  }, [profile?.id, profile?.last_visited?.news, authLoading])
+  }, [profile, authLoading])
 
   if (authLoading || loading) {
     return (

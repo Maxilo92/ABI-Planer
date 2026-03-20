@@ -32,7 +32,11 @@ const checks = [
   {
     name: 'Dashboard keeps expense-driven funding goal logic',
     file: 'src/app/page.tsx',
-    patterns: [/const \[expenseGoal, setExpenseGoal\]/, /todo\.status !== 'done'/, /goal=\{expenseGoal > 0 \? expenseGoal : \(settings\?\.funding_goal \|\| 10000\)\}/],
+    patterns: [
+      /const \[expenseGoal, setExpenseGoal\]/,
+      /(?:todo|t)\.status !== 'done'/,
+      /goal=\{expenseGoal > 0 \? expenseGoal : \(settings\?\.funding_goal (?:\|\||\?\?) 10000\)\}/,
+    ],
   },
   {
     name: 'Dashboard persists expected ticket sales',

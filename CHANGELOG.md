@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.18.11] - 2026-03-20
+- Fix: **Release-Check Stabilization**. `lint` nutzt jetzt die ESLint-CLI statt `next lint` und ist kompatibel mit Next.js 16.
+- Fix: **Funding Logic Consistency**. Dashboard berücksichtigt wieder ausgabengetriebenes Ziel (mit sauberem Fallback), und die Finanzseite nutzt im Finanzstatus den tatsächlichen Kontostand.
+- Security: **Log Write Guard Hardening**. Log-Erstellung ist auf eigene Einträge (`user_id == auth.uid`) mit valide gesetzter Aktion eingeschränkt.
+- Quality: **Regression Guard Hardening**. Pattern-Checks tolerieren nun stabile Syntax-Varianten (`||`/`??`) ohne Verhaltensverlust.
+
 ## [0.18.10] - 2026-03-20
 - Feature: **Mobile-First User Management**. Die Benutzerverwaltung im Admin-Bereich wurde für mobile Geräte komplett überarbeitet und bietet nun volle Feature-Parität zur Desktop-Version (Rollen, Kurse, Gruppen, Timeouts).
 - UI: **Mobile Accessibility Improvements**. Größere Touch-Targets für To-Do Aktionen, reaktiver Finanzverlauf mit horizontalem Scrolling und verbesserte mobile Bedienung der Pinnwand-Aktionen.
@@ -28,8 +34,6 @@
 
 - Fix: **Version Synchronization**. The version in `package.json` is now automatically synced with the `VERSION` file during build.
 - Automation: **Version Script**. Added `npm run sync:version -- patch` to automatically increment and sync the version.
-
-## [0.18.4] - 2026-03-20
 - UI: **Lootbox Animation Overhaul**. Die Lootbox-Animationen wurden grundlegend überarbeitet, um sie flüssiger und aufregender zu gestalten.
 - UI: **Rarity-Specific Shakes**. Jede Seltenheitsstufe (Common bis Legendary) hat nun einen eigenen, immer intensiver werdenden Shake-Effekt mit dynamischer Skalierung und Rotation.
 - UI: **Enhanced Visual Feedback**. Neue Idle-Animationen (Floating), Flash-Effekte beim Reveal und verbesserte Upgrade-Indikatoren sorgen für ein deutlich hochwertigeres "Gefühl" beim Öffnen der Boxen.

@@ -1,4 +1,4 @@
-# Release Checklist & Installation
+# Installation & Setup (v1.0.0 Release)
 
 Folge diesen Schritten, um den ABI Planer produktiv zu setzen.
 

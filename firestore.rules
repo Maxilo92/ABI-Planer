@@ -128,8 +128,11 @@ service cloud.firestore {
 
     match /logs/{logId} {
       allow read: if isAdmin();
-      // Übergang: Bis der serverseitige Logging-Endpunkt aktiv ist, dürfen freigeschaltete Nutzer Logs schreiben.
-      allow create: if isApproved();
+        // Übergang: Bis der serverseitige Logging-Endpunkt aktiv ist, dürfen
+        // freigeschaltete Nutzer nur eigene Logeinträge mit Aktions-Typ schreiben.
+        allow create: if isApproved()
+          && request.resource.data.user_id == request.auth.uid
+          && request.resource.data.action is string;
       allow update, delete: if false;
     }
     

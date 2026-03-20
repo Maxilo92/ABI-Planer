@@ -149,7 +149,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // Set to offline on logout or unmount
       updateStatus(false)
     }
-  }, [user?.uid, !!profile])
+  }, [user, profile])
 
   return (
     <AuthContext.Provider value={{ user, profile, loading }}>

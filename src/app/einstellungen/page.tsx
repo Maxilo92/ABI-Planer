@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { signOut } from 'firebase/auth'
@@ -52,6 +52,22 @@ export default function SettingsPage() {
   const [nextPath, setNextPath] = useState<string | null>(null)
   const router = useRouter()
 
+  // Check for unsaved changes
+  const hasUnsavedChanges = useCallback(() => {
+    // Check courses
+    const currentCourses = courseRows.map(r => r.after.trim()).filter(Boolean)
+    const coursesChanged = JSON.stringify(currentCourses) !== JSON.stringify(originalCourses)
+    
+    // Check groups
+    const currentGroups = planningGroupRows.map(r => ({ 
+      name: r.after.trim(), 
+      leader_user_id: r.leaderUserId || null 
+    })).filter(g => g.name)
+    const groupsChanged = JSON.stringify(currentGroups) !== JSON.stringify(originalGroups)
+    
+    return coursesChanged || groupsChanged
+  }, [courseRows, planningGroupRows, originalCourses, originalGroups])
+
   // Handle internal navigation clicks
   useEffect(() => {
     const handleAnchorClick = (e: MouseEvent) => {
@@ -72,7 +88,7 @@ export default function SettingsPage() {
 
     window.addEventListener('click', handleAnchorClick, true)
     return () => window.removeEventListener('click', handleAnchorClick, true)
-  }, [courseRows, planningGroupRows, originalCourses, originalGroups])
+  }, [courseRows, planningGroupRows, originalCourses, originalGroups, hasUnsavedChanges])
 
   const handleConfirmNavigation = () => {
     setIsGuardOpen(false)
@@ -140,22 +156,6 @@ export default function SettingsPage() {
     return () => unsubscribe()
   }, [])
 
-  // Check for unsaved changes
-  const hasUnsavedChanges = () => {
-    // Check courses
-    const currentCourses = courseRows.map(r => r.after.trim()).filter(Boolean)
-    const coursesChanged = JSON.stringify(currentCourses) !== JSON.stringify(originalCourses)
-    
-    // Check groups
-    const currentGroups = planningGroupRows.map(r => ({ 
-      name: r.after.trim(), 
-      leader_user_id: r.leaderUserId || null 
-    })).filter(g => g.name)
-    const groupsChanged = JSON.stringify(currentGroups) !== JSON.stringify(originalGroups)
-    
-    return coursesChanged || groupsChanged
-  }
-
   // Warning for page refresh/close
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
@@ -167,7 +167,7 @@ export default function SettingsPage() {
 
     window.addEventListener('beforeunload', handleBeforeUnload)
     return () => window.removeEventListener('beforeunload', handleBeforeUnload)
-  }, [courseRows, planningGroupRows, originalCourses, originalGroups])
+  }, [courseRows, planningGroupRows, originalCourses, originalGroups, hasUnsavedChanges])
 
   useEffect(() => {
     const approvedProfilesRef = query(collection(db, 'profiles'), where('is_approved', '==', true))

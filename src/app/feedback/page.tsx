@@ -132,7 +132,7 @@ export default function FeedbackPage() {
         has_image: !!imageUrl
       })
 
-      toast.success('Danke fuer dein Feedback!')
+      toast.success('Danke für dein Feedback!')
       setTitle('')
       setDescription('')
       setType('feature')
@@ -186,7 +186,7 @@ export default function FeedbackPage() {
           <CardHeader>
             <CardTitle>Neues Feedback senden</CardTitle>
             <CardDescription>
-              Je genauer deine Beschreibung, desto schneller koennen wir es umsetzen.
+              Je genauer deine Beschreibung, desto schneller können wir es umsetzen.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -239,7 +239,7 @@ export default function FeedbackPage() {
                 <Label htmlFor="feedback-description">Beschreibung</Label>
                 <Textarea
                   id="feedback-description"
-                  placeholder="Was passiert? Wie kann man es reproduzieren? Was waere das gewuenschte Verhalten?"
+                  placeholder="Was passiert? Wie kann man es reproduzieren? Was wäre das gewünschte Verhalten?"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   rows={4}

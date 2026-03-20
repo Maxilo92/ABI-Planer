@@ -226,7 +226,7 @@ export async function uploadNewsImage(userId: string, file: File): Promise<{ url
   }
 
   if (lastError) throw lastError
-  throw new Error(`Kein gueltiger Storage-Bucket konfiguriert. Primärer Bucket: ${primaryBucket || 'unbekannt'}`)
+  throw new Error(`Kein gültiger Storage-Bucket konfiguriert. Primärer Bucket: ${primaryBucket || 'unbekannt'}`)
 }
 
 export async function deleteNewsImageByPath(imagePath?: string | null): Promise<void> {

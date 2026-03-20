@@ -1,6 +1,6 @@
 {
   "name": "abi-planer",
-  "version": "0.18.7",
+  "version": "0.18.11",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -9,13 +9,15 @@
     "build": "next build",
     "build:clean": "rm -rf .next && npm run build",
     "start": "node .next/standalone/server.js",
-    "lint": "next lint",
+    "lint": "eslint .",
     "test:regressions": "node scripts/regression-guard.mjs",
     "check": "npm run test:regressions && npx tsc --noEmit && npm run build"
   },
   "devDependencies": {
     "@types/react": "19.2.14",
     "autoprefixer": "^10.4.27",
+    "eslint": "^9.39.0",
+    "eslint-config-next": "^16.1.7",
     "postcss": "^8.5.8",
     "tailwindcss": "^4.2.1",
     "typescript": "^5.9.3"

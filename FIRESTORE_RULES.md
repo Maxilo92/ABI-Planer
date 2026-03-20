@@ -148,6 +148,15 @@ service cloud.firestore {
         allow create: if isApproved();
         allow update, delete: if isAdmin();
     }
+
+    // Logs: nur Admins lesen; freigeschaltete Nutzer dürfen nur eigene Aktionen schreiben.
+    match /logs/{logId} {
+      allow read: if isAdmin();
+      allow create: if isApproved()
+        && request.resource.data.user_id == request.auth.uid
+        && request.resource.data.action is string;
+      allow update, delete: if false;
+    }
   }
 }
 ```

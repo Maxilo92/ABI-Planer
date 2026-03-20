@@ -214,7 +214,7 @@ export default function AdminLogsPage() {
         <div className="flex items-center gap-3">
           <h1 className="text-3xl font-bold tracking-tight">Admin Logs</h1>
         </div>
-        <p className="text-muted-foreground text-sm">Nachvollziehbare Aktivitaeten fuer Moderation und Support</p>
+        <p className="text-muted-foreground text-sm">Nachvollziehbare Aktivitäten für Moderation und Support</p>
       </div>
 
       <Card>

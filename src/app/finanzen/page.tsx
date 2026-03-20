@@ -103,7 +103,7 @@ export default function FinancePage() {
   const totalIncome = amounts.filter((value) => value > 0).reduce((acc, value) => acc + value, 0)
   const totalExpenses = amounts.filter((value) => value < 0).reduce((acc, value) => acc + Math.abs(value), 0)
   const currentBalance = totalIncome - totalExpenses
-  const fundingGoal = settings?.funding_goal || 10000
+  const fundingGoal = settings?.funding_goal ?? 10000
 
   return (
     <div className="space-y-6">
@@ -149,7 +149,7 @@ export default function FinancePage() {
       </div>
 
       <FundingStatus
-        current={totalIncome}
+        current={currentBalance}
         goal={fundingGoal}
         initialTicketSales={settings?.expected_ticket_sales ?? 150}
         onTicketSalesChange={handleTicketSalesChange}

@@ -51,10 +51,10 @@ const DEFAULT_SETTINGS: GlobalSettings = {
     'Werbung (nicht bezahlt): 10 Minuten Team-Meeting sparen euch 2 Stunden Abi-Chaos am Ende der Woche.',
     'Abi-Tipp des Tages: Erst Budget planen, dann Motto-Glitzer kaufen. Euer Kassenwart wird es euch danken.',
     'Parodie-Anzeige: Kuchenverkauf Plus bringt +100 Sympathie und +250 EUR Klassenkasse.',
-    'Sponsoring-Idee: Lokale Cafes fragen, ob sie euren Abi-Jahrgang bei Aktionen supporten.',
-    'Promo-Hinweis: Eine gute Aufgabenliste ist guenstiger als jede Last-Minute-Rettungsaktion.',
-    'Abi-Gag mit Mehrwert: Plant den DJ frueh, bevor nur noch die Schuetzenkapelle frei ist.',
-    'Werbeblock Ende: Wenn jeder im Team eine Mini-Aufgabe uebernimmt, wird der Abiball ploetzlich machbar.'
+    'Sponsoring-Idee: Lokale Cafés fragen, ob sie euren Abi-Jahrgang bei Aktionen supporten.',
+    'Promo-Hinweis: Eine gute Aufgabenliste ist günstiger als jede Last-Minute-Rettungsaktion.',
+    'Abi-Gag mit Mehrwert: Plant den DJ früh, bevor nur noch die Schützenkapelle frei ist.',
+    'Werbeblock Ende: Wenn jeder im Team eine Mini-Aufgabe übernimmt, wird der Abiball plötzlich machbar.'
   ],
   loot_teachers: [
     { name: "Max Mustermann", rarity: "common" },

@@ -124,7 +124,7 @@ export default function AdminPage() {
       timeout_until: timeoutUntil,
       timeout_reason: `Admin-Timeout (${hours}h)`,
     })
-    toast.success(`Nutzer wurde fuer ${hours} Stunden getimeoutet.`)
+    toast.success(`Nutzer wurde für ${hours} Stunden getimeoutet.`)
   }
 
   const handleClearTimeout = async (id: string) => {

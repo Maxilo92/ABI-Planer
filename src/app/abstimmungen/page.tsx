@@ -67,7 +67,7 @@ export default function PollsPage() {
       }
       updateLastVisited()
     }
-  }, [profile?.id, profile?.last_visited?.umfragen, authLoading])
+  }, [profile, authLoading])
 
   if (authLoading || loading) {
     return (

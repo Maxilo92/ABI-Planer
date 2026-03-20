@@ -1,6 +1,6 @@
-# Projekt-Wissen & Architektur (ABI Planer 2027)
+# Projekt-Wissen & Architektur (ABI Planer v1.0.0)
 
-Dieses Dokument sichert das Wissen über die technische Struktur und die getroffenen Entscheidungen.
+Dieses Dokument sichert das Wissen über die technische Struktur und die getroffenen Entscheidungen für die Production-Release.
 
 ## 1. Architektur & Stack
 - **Framework:** Next.js 16 (App Router)

@@ -50,7 +50,7 @@ export default function TodosPage() {
       }
       updateLastVisited()
     }
-  }, [profile?.id, profile?.last_visited?.todos, authLoading])
+  }, [profile, authLoading])
 
   if (authLoading || loading) {
     return (

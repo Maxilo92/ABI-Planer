@@ -266,7 +266,7 @@ export default function Dashboard() {
               <FundingStatus
                 key="funding"
                 current={currentFunding}
-                goal={settings?.funding_goal || 10000}
+                goal={expenseGoal > 0 ? expenseGoal : (settings?.funding_goal ?? 10000)}
                 initialTicketSales={settings?.expected_ticket_sales ?? 150}
                 onTicketSalesChange={handleTicketSalesChange}
               />
@@ -380,7 +380,7 @@ export default function Dashboard() {
           {canManage && (
             <EditSettingsDialog 
               currentDate={settings?.ball_date} 
-              currentGoal={settings?.funding_goal || 10000} 
+              currentGoal={settings?.funding_goal ?? 10000} 
             />
           )}
         </div>
