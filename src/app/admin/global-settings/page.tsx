@@ -8,10 +8,18 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { useAuth } from '@/context/AuthContext'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { Loader2, Plus, Trash2, Save, RotateCcw, Cookie, Gift, GraduationCap, Search } from 'lucide-react'
+import { Loader2, Plus, Trash2, Save, RotateCcw, Cookie, Gift, GraduationCap, Search, AlertTriangle } from 'lucide-react'
 import { logAction } from '@/lib/logging'
 import { TeacherRarity } from '@/types/database'
 import { Badge } from '@/components/ui/badge'
@@ -48,15 +56,54 @@ const DEFAULT_SETTINGS: GlobalSettings = {
 export default function GlobalSettingsPage() {
   const { user, profile, loading: authLoading } = useAuth()
   const [settings, setSettings] = useState<GlobalSettings>(DEFAULT_SETTINGS)
+  const [initialSettings, setInitialSettings] = useState<GlobalSettings>(DEFAULT_SETTINGS)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [newMessage, setNewMessage] = useState('')
   const [newTeacherName, setNewTeacherName] = useState('')
   const [newTeacherRarity, setNewTeacherRarity] = useState<TeacherRarity>('common')
   const [teacherSearch, setTeacherSearch] = useState('')
+  const [isGuardOpen, setIsGuardOpen] = useState(false)
+  const [nextPath, setNextPath] = useState<string | null>(null)
   const router = useRouter()
 
   const isAdmin = profile?.role === 'admin_main' || profile?.role === 'admin_co' || profile?.role === 'admin'
+
+  const hasUnsavedChanges = JSON.stringify(settings) !== JSON.stringify(initialSettings)
+
+  useEffect(() => {
+    const handleAnchorClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement
+      const anchor = target.closest('a')
+
+      if (anchor && anchor.href && anchor.target !== '_blank') {
+        const url = new URL(anchor.href)
+        const destination = `${url.pathname}${url.search}${url.hash}`
+        const current = `${window.location.pathname}${window.location.search}${window.location.hash}`
+
+        if (url.origin === window.location.origin && destination !== current && hasUnsavedChanges) {
+          e.preventDefault()
+          setNextPath(destination)
+          setIsGuardOpen(true)
+        }
+      }
+    }
+
+    window.addEventListener('click', handleAnchorClick, true)
+    return () => window.removeEventListener('click', handleAnchorClick, true)
+  }, [hasUnsavedChanges])
+
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault()
+        e.returnValue = ''
+      }
+    }
+
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+  }, [hasUnsavedChanges])
 
   useEffect(() => {
     if (!authLoading && (!profile || !isAdmin)) {
@@ -67,13 +114,16 @@ export default function GlobalSettingsPage() {
     const unsubscribe = onSnapshot(doc(db, 'settings', 'global'), (snapshot) => {
       if (snapshot.exists()) {
         const data = snapshot.data() as GlobalSettings
-        setSettings({
+        const loadedSettings = {
           ...DEFAULT_SETTINGS,
           ...data,
           loot_teachers: data.loot_teachers || DEFAULT_SETTINGS.loot_teachers
-        })
+        }
+        setSettings(loadedSettings)
+        setInitialSettings(loadedSettings)
       } else {
         setSettings(DEFAULT_SETTINGS)
+        setInitialSettings(DEFAULT_SETTINGS)
       }
       setLoading(false)
     })
@@ -81,19 +131,41 @@ export default function GlobalSettingsPage() {
     return () => unsubscribe()
   }, [profile, authLoading, isAdmin, router])
 
-  const handleSave = async () => {
-    if (!user || !isAdmin) return
+  const handleSave = async (): Promise<boolean> => {
+    if (!user || !isAdmin) return false
     setSaving(true)
 
     try {
       await setDoc(doc(db, 'settings', 'global'), settings)
       await logAction('GLOBAL_SETTINGS_UPDATED', user.uid, profile?.full_name, { settings })
+      setInitialSettings(settings)
       toast.success('Einstellungen erfolgreich gespeichert.')
+      return true
     } catch (error) {
       console.error('Error saving global settings:', error)
       toast.error('Fehler beim Speichern der Einstellungen.')
+      return false
     } finally {
       setSaving(false)
+    }
+  }
+
+  const handleConfirmNavigation = () => {
+    setIsGuardOpen(false)
+    if (nextPath) {
+      router.push(nextPath)
+      setNextPath(null)
+    }
+  }
+
+  const handleSaveAndContinue = async () => {
+    const didSave = await handleSave()
+    if (!didSave) return
+
+    setIsGuardOpen(false)
+    if (nextPath) {
+      router.push(nextPath)
+      setNextPath(null)
     }
   }
 
@@ -191,6 +263,30 @@ export default function GlobalSettingsPage() {
           </Button>
         </div>
       </div>
+
+      <Dialog open={isGuardOpen} onOpenChange={setIsGuardOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-destructive">
+              <AlertTriangle className="h-5 w-5" /> Ungespeicherte Änderungen
+            </DialogTitle>
+            <DialogDescription>
+              Du hast Änderungen vorgenommen, die noch nicht gespeichert wurden. Möchtest du diese jetzt speichern oder die Seite verlassen?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex flex-col sm:flex-row gap-2">
+            <Button variant="ghost" onClick={handleConfirmNavigation}>
+              Verwerfen & Verlassen
+            </Button>
+            <Button variant="outline" onClick={() => setIsGuardOpen(false)}>
+              Abbrechen
+            </Button>
+            <Button onClick={handleSaveAndContinue} disabled={saving}>
+              Speichern & Fortfahren
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <div className="grid grid-cols-1 gap-6">
         <Card>
