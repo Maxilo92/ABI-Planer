@@ -374,7 +374,19 @@ export default function GroupsPage() {
                     />
                   </div>
                 </div>
-
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-12 text-center bg-card rounded-2xl border border-dashed p-8">
+                <Users className="h-12 w-12 text-muted-foreground/40 mb-4" />
+                <h3 className="text-lg font-bold">Kein Team zugewiesen</h3>
+                <p className="text-muted-foreground max-w-xs mx-auto mt-1">
+                  Du bist aktuell noch keiner Planungsgruppe zugeordnet.
+                </p>
+                <Button variant="outline" size="sm" className="mt-6" render={<Link href="/einstellungen" />}>
+                  Profil vervollständigen
+                </Button>
+              </div>
+            )}
           </div>
         )}
 
