@@ -1,8 +1,8 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { db } from '@/lib/firebase'
-import { collection, query, onSnapshot, doc, updateDoc, where, getDoc, orderBy, writeBatch } from 'firebase/firestore'
+import { collection, query, onSnapshot, doc, updateDoc, getDoc, orderBy, writeBatch } from 'firebase/firestore'
 import { useAuth } from '@/context/AuthContext'
 import { Profile, PlanningGroup, Settings, Todo, Event } from '@/types/database'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -27,29 +27,25 @@ import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
 import Link from 'next/link'
 import { logAction } from '@/lib/logging'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { usePathname, useRouter } from 'next/navigation'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { TodoList } from '@/components/dashboard/TodoList'
 import { CalendarEvents } from '@/components/dashboard/CalendarEvents'
 import { GroupWall } from '@/components/groups/GroupWall'
 import { GroupCard } from '@/components/groups/GroupCard'
 import { MemberItem } from '@/components/groups/MemberItem'
 import { AddTodoDialog } from '@/components/modals/AddTodoDialog'
-import { cn } from '@/lib/utils'
 
 type GroupsMainTab = 'mein-team' | 'alle-gruppen' | 'shared-hub'
 
-export default function GroupsPage() {
+function GroupsPageContent() {
   const { user, profile, loading: authLoading } = useAuth()
-  const router = useRouter()
-  const pathname = usePathname()
-  const [currentSearch, setCurrentSearch] = useState('')
+  const searchParams = useSearchParams()
   const [profiles, setProfiles] = useState<Profile[]>([])
   const [planningGroups, setPlanningGroups] = useState<PlanningGroup[]>([])
   const [todos, setTodos] = useState<Todo[]>([])
@@ -59,16 +55,6 @@ export default function GroupsPage() {
 
   const isPlanner = (profile?.role === 'planner' || profile?.role === 'admin_main' || profile?.role === 'admin_co' || profile?.role === 'admin') && profile?.is_approved
   const isGroupLeader = profile?.is_group_leader
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-
-    const syncSearch = () => setCurrentSearch(window.location.search)
-    syncSearch()
-
-    window.addEventListener('popstate', syncSearch)
-    return () => window.removeEventListener('popstate', syncSearch)
-  }, [pathname])
 
   useEffect(() => {
     // 1. Listen to Profiles
@@ -122,7 +108,6 @@ export default function GroupsPage() {
         planning_group: groupName
       }
 
-      // Fix #1: Reset is_group_leader to false when removed from group
       if (groupName === null) {
         updateData.is_group_leader = false
       }
@@ -176,21 +161,18 @@ export default function GroupsPage() {
 
         const previousLeaderId = currentGroups.find(g => g.name === groupName)?.leader_user_id
 
-        // Fix #2: Use writeBatch for atomic updates
         const batch = writeBatch(db)
         
         batch.update(settingsRef, {
           planning_groups: updatedGroups
         })
 
-        // Unset old leader
         if (previousLeaderId && previousLeaderId !== leaderUserId) {
           batch.update(doc(db, 'profiles', previousLeaderId), {
             is_group_leader: false
           })
         }
 
-        // Also update the is_group_leader flag on the profile
         if (leaderUserId) {
           batch.update(doc(db, 'profiles', leaderUserId), {
             is_group_leader: true
@@ -214,34 +196,11 @@ export default function GroupsPage() {
 
   if (authLoading || loading) {
     return (
-      <div className="flex flex-col gap-8">
-        <div className="flex flex-col gap-2">
-          <div className="h-10 w-64 bg-muted animate-pulse rounded-lg" />
-          <div className="h-4 w-96 bg-muted animate-pulse rounded" />
-        </div>
-        
-        <div className="flex flex-col md:flex-row gap-8">
-          <aside className="w-full md:w-64 space-y-2">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="h-12 w-full bg-muted/50 animate-pulse rounded-md" />
-            ))}
-          </aside>
-          
-          <div className="flex-1 space-y-8">
-            <div className="h-32 w-full bg-muted/50 animate-pulse rounded-2xl" />
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-              <div className="lg:col-span-8 h-[600px] bg-muted/30 animate-pulse rounded-xl" />
-              <div className="lg:col-span-4 space-y-6">
-                <div className="h-64 bg-muted/30 animate-pulse rounded-xl" />
-                <div className="h-64 bg-muted/30 animate-pulse rounded-xl" />
-              </div>
-            </div>
-          </div>
-        </div>
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     )
   }
-
 
   const unassignedProfiles = profiles.filter(p => !p.planning_group && p.is_approved)
   const filteredUnassignedProfiles = unassignedProfiles.filter(p => 
@@ -253,37 +212,13 @@ export default function GroupsPage() {
   const myTeamMembers = profiles.filter(p => p.planning_group === profile?.planning_group)
   const myTeamLeader = planningGroups.find(g => g.name === profile?.planning_group)?.leader_user_id
 
-  const activeParams = new URLSearchParams(currentSearch)
-
   const defaultMainTab: GroupsMainTab = profile?.planning_group ? 'mein-team' : 'alle-gruppen'
-  const requestedMainTab = activeParams.get('bereich')
+  const requestedMainTab = searchParams.get('bereich')
   const mainTab: GroupsMainTab =
     requestedMainTab === 'mein-team' || requestedMainTab === 'alle-gruppen' || requestedMainTab === 'shared-hub'
       ? requestedMainTab
       : defaultMainTab
   const safeMainTab: GroupsMainTab = mainTab === 'mein-team' && !profile?.planning_group ? 'alle-gruppen' : mainTab
-
-  const updateTabsQuery = (next: Partial<Record<'bereich' | 'teamTab' | 'gruppenTab', string | null>>) => {
-    const params = new URLSearchParams(currentSearch)
-
-    Object.entries(next).forEach(([key, value]) => {
-      if (value === null) {
-        params.delete(key)
-        return
-      }
-
-      params.set(key, value)
-    })
-
-    const query = params.toString()
-    setCurrentSearch(query ? `?${query}` : '')
-    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false })
-  }
-
-  const handleMainTabChange = (value: string) => {
-    if (value !== 'mein-team' && value !== 'alle-gruppen' && value !== 'shared-hub') return
-    updateTabsQuery({ bereich: value, teamTab: null, gruppenTab: null })
-  }
 
   return (
     <div className="flex flex-col gap-8">
@@ -374,6 +309,101 @@ export default function GroupsPage() {
                     />
                   </div>
                 </div>
+
+                {canManageTeamMembers && (
+                  <Card className="border-primary/10 bg-muted/30">
+                    <CardHeader className="pb-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <CardTitle className="text-lg flex items-center gap-2">
+                            <UserPlus className="h-5 w-5 text-primary" /> Mitglieder hinzufügen
+                          </CardTitle>
+                          <CardDescription>
+                            Wähle Nutzer aus, die noch keiner Gruppe zugeordnet sind.
+                          </CardDescription>
+                        </div>
+                        <Badge variant="outline">{unassignedProfiles.length} verfügbar</Badge>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="relative">
+                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          placeholder="Nutzer suchen..."
+                          className="pl-9 bg-background"
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-3 max-h-[400px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-muted-foreground/20">
+                        {unassignedProfiles.length === 0 ? (
+                          <div className="col-span-full py-12 text-center">
+                            <Users className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
+                            <p className="text-sm text-muted-foreground italic">
+                              Alle aktiven Nutzer sind bereits in Gruppen.
+                            </p>
+                          </div>
+                        ) : (
+                          filteredUnassignedProfiles.map((p) => (
+                            <div key={p.id} className="flex items-center justify-between p-3 rounded-xl border bg-background hover:border-primary/30 transition-all group">
+                              <div className="flex items-center gap-3 min-w-0">
+                                <Avatar size="default">
+                                  <AvatarFallback className="bg-primary/5 text-primary">
+                                    {p.full_name?.charAt(0) || '?'}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div className="min-w-0">
+                                  <p className="text-sm font-semibold truncate group-hover:text-primary transition-colors">{p.full_name}</p>
+                                  <p className="text-[10px] text-muted-foreground truncate">{p.email}</p>
+                                </div>
+                              </div>
+
+                              <div className="flex gap-1 shrink-0">
+                                {isPlanner ? (
+                                  <DropdownMenu>
+                                    <DropdownMenuTrigger
+                                      render={
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          className="h-8 px-2 text-[10px] gap-1"
+                                        >
+                                          <PlusCircle className="h-3 w-3" />
+                                          Hinzufügen
+                                        </Button>
+                                      }
+                                    />
+                                    <DropdownMenuContent align="end" className="w-56">
+                                      {planningGroups.map((group) => (
+                                        <DropdownMenuItem 
+                                          key={group.name}
+                                          onClick={() => handleUpdateMember(p.id, group.name)}
+                                        >
+                                          {group.name}
+                                        </DropdownMenuItem>
+                                      ))}
+                                    </DropdownMenuContent>
+                                  </DropdownMenu>
+                                ) : (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-8 px-3 text-[10px] gap-1"
+                                    onClick={() => handleUpdateMember(p.id, profile?.planning_group || null)}
+                                  >
+                                    <PlusCircle className="h-3 w-3" />
+                                    Mein Team
+                                  </Button>
+                                )}
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center py-12 text-center bg-card rounded-2xl border border-dashed p-8">
@@ -467,7 +497,6 @@ export default function GroupsPage() {
                                 size="sm" 
                                 className="w-full h-8 text-[11px] font-bold uppercase tracking-wider"
                                 onClick={() => {
-                                  // For quick navigation to settings if needed
                                   router.push('/einstellungen')
                                 }}
                               >
@@ -557,7 +586,7 @@ export default function GroupsPage() {
                         filteredUnassignedProfiles.map((p) => (
                           <div key={p.id} className="flex flex-col p-4 rounded-xl border bg-background hover:border-primary/30 transition-all gap-4 group/item">
                             <div className="flex items-center gap-3">
-                              <Avatar className="h-10 w-10 border shadow-sm group-hover/item:scale-105 transition-transform">
+                              <Avatar size="default">
                                 <AvatarFallback className="bg-primary/5 text-primary font-bold">
                                   {p.full_name?.charAt(0) || '?'}
                                 </AvatarFallback>
@@ -650,7 +679,7 @@ export default function GroupsPage() {
               <div className="flex items-center gap-3 relative z-10">
                 <div className="flex -space-x-3 overflow-hidden">
                   {profiles.filter(p => p.planning_group).slice(0, 5).map((p, i) => (
-                    <Avatar key={i} className="inline-block h-9 w-9 rounded-full ring-2 ring-background border-2 border-primary/10">
+                    <Avatar key={i} size="default">
                       <AvatarFallback className="bg-muted text-[10px] font-bold">{p.full_name?.charAt(0)}</AvatarFallback>
                     </Avatar>
                   ))}
@@ -723,3 +752,14 @@ export default function GroupsPage() {
   )
 }
 
+export default function GroupsPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    }>
+      <GroupsPageContent />
+    </Suspense>
+  )
+}
