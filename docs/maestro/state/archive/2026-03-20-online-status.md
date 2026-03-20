@@ -2,8 +2,8 @@
 session_id: 2026-03-20-online-status
 task: füg eine ist online und war zu letzt online funktion hinzu. diesen status soll man auf dem profil einer person sehen können
 created: '2026-03-20T19:26:50.336Z'
-updated: '2026-03-20T19:36:16.597Z'
-status: in_progress
+updated: '2026-03-20T19:44:00.347Z'
+status: completed
 workflow_mode: standard
 design_document: docs/maestro/plans/2026-03-20-online-status-design.md
 implementation_plan: docs/maestro/plans/2026-03-20-online-status-impl-plan.md
@@ -69,22 +69,25 @@ phases:
     retry_count: 0
   - id: 3
     name: UI Integration - Profile Page
-    status: in_progress
+    status: completed
     agents: []
     parallel: false
     started: '2026-03-20T19:36:16.597Z'
-    completed: null
+    completed: '2026-03-20T19:43:28.043Z'
     blocked_by:
       - 2
     files_created: []
-    files_modified: []
+    files_modified:
+      - src/app/profil/[id]/page.tsx
+      - src/lib/utils.ts
     files_deleted: []
     downstream_context:
-      key_interfaces_introduced: []
-      patterns_established: []
       integration_points: []
       assumptions: []
       warnings: []
+      patterns_established:
+        - Using getOnlineStatus in src/lib/utils.ts for consistent online status formatting across the app.
+      key_interfaces_introduced: []
     errors: []
     retry_count: 0
 ---

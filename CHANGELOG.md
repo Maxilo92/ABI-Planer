@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.18.8] - 2026-03-20
+- Feature: **User Presence System**. Implementierung einer "Ist online" und "Zuletzt online" Statusanzeige für alle Benutzer.
+- Core: **Heartbeat Mechanism**. Ein in `AuthContext` integrierter Heartbeat aktualisiert den Status alle 2 Minuten in Firestore.
+- UI: **Status Indicators**. Auf der Profilseite wird nun ein grüner Punkt für aktive Nutzer und ein "Zuletzt online" Zeitstempel (mit 5-Minuten-Stale-Session-Fallback) für inaktive Nutzer angezeigt.
+
+## [0.18.7] - 2026-03-20
+- Feature: **Simplified Admin User Management**. Die Benutzerverwaltung für Admins wurde grundlegend vereinfacht und modernisiert.
+- UI: **Responsive Profile Tables**. Tabellarische Übersicht aller Nutzer mit direkter Bearbeitungsfunktion für Rollen und Kurszuweisungen.
+
+## [0.18.6] - 2026-03-20
+- Fix: **Reactive Group Navigation**. Die Navigation innerhalb der Gruppen wurde auf `useSearchParams` umgestellt, um die Reaktivität und Browser-History-Unterstützung zu verbessern.
+
 ## [0.18.5] - 2026-03-20
 - UI: **Dashboard News Preview**. Die News-Vorschau auf dem Dashboard zeigt nun auch das jeweilige Vorschaubild (falls vorhanden) klein auf der linken Seite an, um die visuelle Attraktivität zu steigern.
 - UI: **Layout Refinement**. Optimierung des Abstands und der Ausrichtung von Titeln und Inhalten in der Dashboard-Vorschau.
