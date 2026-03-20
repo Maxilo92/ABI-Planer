@@ -30,7 +30,6 @@ export default function Dashboard() {
   const [polls, setPolls] = useState<Poll[]>([])
   const [allFinances, setAllFinances] = useState<FinanceEntry[]>([])
   const [currentFunding, setCurrentFunding] = useState(0)
-  const [expenseGoal, setExpenseGoal] = useState(0)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -77,8 +76,7 @@ export default function Dashboard() {
       const incomeTotal = amounts.filter((value) => value > 0).reduce((acc, value) => acc + value, 0)
       const plannedExpenses = amounts.filter((value) => value < 0).reduce((acc, value) => acc + Math.abs(value), 0)
 
-      setCurrentFunding(incomeTotal)
-      setExpenseGoal(plannedExpenses)
+      setCurrentFunding(incomeTotal - plannedExpenses)
     })
 
     // 5. Listen to News (last 2)
@@ -207,7 +205,7 @@ export default function Dashboard() {
               <FundingStatus
                 key="funding"
                 current={currentFunding}
-                goal={expenseGoal > 0 ? expenseGoal : (settings?.funding_goal || 10000)}
+                goal={settings?.funding_goal || 10000}
                 initialTicketSales={settings?.expected_ticket_sales ?? 150}
                 onTicketSalesChange={handleTicketSalesChange}
               />
