@@ -51,6 +51,12 @@ export default function GroupsPage() {
   const isGroupLeader = profile?.is_group_leader
 
   useEffect(() => {
+    if (!authLoading && !user) {
+      router.push('/login')
+    }
+  }, [user, authLoading, router])
+
+  useEffect(() => {
     if (typeof window === 'undefined') return
 
     const syncSearch = () => setCurrentSearch(window.location.search)
@@ -196,6 +202,10 @@ export default function GroupsPage() {
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     )
+  }
+
+  if (!user) {
+    return null
   }
 
   const unassignedProfiles = profiles.filter(p => !p.planning_group && p.is_approved)
