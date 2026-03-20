@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.17.0] - 2026-03-20
+- UI: **Theme Labels**. Theme toggle now shows text labels ("Hell", "Dunkel", "System") for better accessibility and clarity.
+- Feature: **Location field**. Support for location fields added to news and calendar entries.
+- Logic: **Nested todos**. Improved stability and display of nested sub-task structures.
+- Admin: **Admin emails**. Fixed issues with admin notification emails.
+- Performance: **Feedback performance**. Optimized loading and list rendering in the feedback admin module.
+- Finance: **Finance stand**. Updated finance calculations and overview dashboard.
+- Auth: **Auth timeout info**. Better session timeout handling and user information.
+
 ## [1.2.0] - 2026-03-20
 - Feature: **ToDo DetailView**. Clicking a task title now opens a detailed view with a description and sub-tasks list.
 - Logic: **Nesting Limit**. Sub-tasks are now limited to 5 levels (0-4) to ensure layout stability.

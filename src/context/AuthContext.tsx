@@ -36,7 +36,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     let profileUnsubscribe: (() => void) | null = null
 
     const authUnsubscribe = onAuthStateChanged(auth, async (user) => {
-      console.log('Auth state changed:', user ? 'Logged in' : 'Logged out')
       setUser(user)
 
       // Unsubscribe from previous profile if exists
@@ -70,6 +69,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                   await signOut(auth)
                   setProfile(null)
                   setLoading(false)
+                  window.location.href = '/login?reason=timeout'
                   return
                 }
 

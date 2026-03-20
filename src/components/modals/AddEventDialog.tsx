@@ -11,7 +11,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Plus, X, Users, Shield, Group } from 'lucide-react'
+import { Plus, X, Users, Shield, Group, MapPin } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { Profile, UserRole } from '@/types/database'
 import { logAction } from '@/lib/logging'
@@ -28,6 +28,7 @@ export function AddEventDialog() {
   const [open, setOpen] = useState(false)
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
+  const [location, setLocation] = useState('')
   const [date, setDate] = useState('')
   const [mentionedUserIds, setMentionedUserIds] = useState<string[]>([])
   const [mentionedRoles, setMentionedRoles] = useState<string[]>([])
@@ -79,6 +80,7 @@ export function AddEventDialog() {
       await addDoc(collection(db, 'events'), {
         title,
         description,
+        location,
         event_date: new Date(date).toISOString(),
         created_at: new Date().toISOString(),
         created_by: user.uid,
@@ -89,6 +91,7 @@ export function AddEventDialog() {
 
       await logAction('EVENT_CREATED', user.uid, null, {
         title,
+        location,
         event_date: new Date(date).toISOString(),
         mentions_users_count: mentionedUserIds.length,
         mentions_roles_count: mentionedRoles.length,
@@ -98,6 +101,7 @@ export function AddEventDialog() {
       setOpen(false)
       setTitle('')
       setDescription('')
+      setLocation('')
       setDate('')
       setMentionedUserIds([])
       setMentionedRoles([])
@@ -152,6 +156,10 @@ export function AddEventDialog() {
             <div className="grid gap-2">
               <Label htmlFor="description">Beschreibung</Label>
               <Textarea id="description" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Weitere Details..." />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="location">Ort</Label>
+              <Input id="location" value={location} onChange={(e) => setLocation(e.target.value)} placeholder="z.B. Aula, Sportplatz..." />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="date">Datum & Uhrzeit</Label>

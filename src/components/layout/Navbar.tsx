@@ -90,6 +90,7 @@ export function Navbar() {
       icon: ShieldCheck,
       subItems: [
         { href: '/admin', label: 'Benutzer', icon: Users },
+        { href: '/admin/global-settings', label: 'Globale Einstellungen', icon: Settings },
         { href: '/admin/logs', label: 'Logs', icon: BarChart2, isBeta: false },
         { href: '/admin/feedback', label: 'Feedback Admin', icon: MessageSquareHeart },
       ]

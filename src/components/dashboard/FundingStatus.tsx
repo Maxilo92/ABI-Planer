@@ -120,7 +120,7 @@ export function FundingStatus({ current, goal, initialTicketSales = 150, onTicke
           </div>
           
           <p className="text-[10px] md:text-xs text-muted-foreground text-center italic opacity-70">
-            Das Ziel bildet euren angestrebten Reingewinn ab. Einnahmen abzüglich Ausgaben bilden den aktuellen Stand.
+            Das Ziel bildet euer angestrebtes Budget ab. Einnahmen bilden den aktuellen Stand.
           </p>
         </div>
       </CardContent>

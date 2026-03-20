@@ -11,7 +11,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Pencil, X, Users, Shield, Group, Plus } from 'lucide-react'
+import { Pencil, X, Users, Shield, Group, Plus, MapPin } from 'lucide-react'
 import { Event, Profile, UserRole } from '@/types/database'
 import { format } from 'date-fns'
 import { toDate } from '@/lib/utils'
@@ -37,6 +37,7 @@ export function EditEventDialog({ event }: EditEventDialogProps) {
   const [open, setOpen] = useState(false)
   const [title, setTitle] = useState(event.title)
   const [description, setDescription] = useState(event.description || '')
+  const [location, setLocation] = useState(event.location || '')
   const [date, setDate] = useState(format(toDate(event.event_date), "yyyy-MM-dd'T'HH:mm"))
   const [mentionedUserIds, setMentionedUserIds] = useState<string[]>(event.mentioned_user_ids || [])
   const [mentionedRoles, setMentionedRoles] = useState<string[]>(event.mentioned_roles || [])
@@ -88,6 +89,7 @@ export function EditEventDialog({ event }: EditEventDialogProps) {
       await updateDoc(docRef, {
         title,
         description,
+        location,
         event_date: new Date(date).toISOString(),
         mentioned_user_ids: mentionedUserIds,
         mentioned_roles: mentionedRoles,
@@ -98,6 +100,7 @@ export function EditEventDialog({ event }: EditEventDialogProps) {
         await logAction('EVENT_EDITED', user.uid, profile?.full_name, {
           event_id: event.id,
           title,
+          location,
           event_date: new Date(date).toISOString(),
           mentions_users_count: mentionedUserIds.length,
           mentions_roles_count: mentionedRoles.length,
@@ -159,6 +162,10 @@ export function EditEventDialog({ event }: EditEventDialogProps) {
             <div className="grid gap-2">
               <Label htmlFor="edit-description">Beschreibung</Label>
               <Textarea id="edit-description" value={description} onChange={(e) => setDescription(e.target.value)} />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="edit-location">Ort</Label>
+              <Input id="edit-location" value={location} onChange={(e) => setLocation(e.target.value)} placeholder="z.B. Aula, Sportplatz..." />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="edit-date">Datum & Uhrzeit</Label>

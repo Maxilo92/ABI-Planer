@@ -20,18 +20,28 @@ import {
   Trophy,
   MessageSquare,
   CheckCircle2,
-  Calendar as CalendarIcon
+  Calendar as CalendarIcon,
+  LayoutDashboard
 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
 import Link from 'next/link'
 import { logAction } from '@/lib/logging'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { usePathname, useRouter } from 'next/navigation'
 import { TodoList } from '@/components/dashboard/TodoList'
 import { CalendarEvents } from '@/components/dashboard/CalendarEvents'
 import { GroupWall } from '@/components/groups/GroupWall'
+import { GroupCard } from '@/components/groups/GroupCard'
+import { MemberItem } from '@/components/groups/MemberItem'
 import { AddTodoDialog } from '@/components/modals/AddTodoDialog'
+import { cn } from '@/lib/utils'
 
 type GroupsMainTab = 'mein-team' | 'alle-gruppen' | 'shared-hub'
 
@@ -192,11 +202,34 @@ export default function GroupsPage() {
 
   if (authLoading || loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="flex flex-col gap-8">
+        <div className="flex flex-col gap-2">
+          <div className="h-10 w-64 bg-muted animate-pulse rounded-lg" />
+          <div className="h-4 w-96 bg-muted animate-pulse rounded" />
+        </div>
+        
+        <div className="flex flex-col md:flex-row gap-8">
+          <aside className="w-full md:w-64 space-y-2">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-12 w-full bg-muted/50 animate-pulse rounded-md" />
+            ))}
+          </aside>
+          
+          <div className="flex-1 space-y-8">
+            <div className="h-32 w-full bg-muted/50 animate-pulse rounded-2xl" />
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+              <div className="lg:col-span-8 h-[600px] bg-muted/30 animate-pulse rounded-xl" />
+              <div className="lg:col-span-4 space-y-6">
+                <div className="h-64 bg-muted/30 animate-pulse rounded-xl" />
+                <div className="h-64 bg-muted/30 animate-pulse rounded-xl" />
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     )
   }
+
 
   const unassignedProfiles = profiles.filter(p => !p.planning_group && p.is_approved)
   const filteredUnassignedProfiles = unassignedProfiles.filter(p => 
@@ -205,6 +238,9 @@ export default function GroupsPage() {
   )
   const canManageTeamMembers = isGroupLeader || isPlanner
   const myTeamTodos = todos.filter(t => t.assigned_to_group === profile?.planning_group)
+  const myTeamMembers = profiles.filter(p => p.planning_group === profile?.planning_group)
+  const myTeamLeader = planningGroups.find(g => g.name === profile?.planning_group)?.leader_user_id
+
   const activeParams = new URLSearchParams(currentSearch)
 
   const defaultMainTab: GroupsMainTab = profile?.planning_group ? 'mein-team' : 'alle-gruppen'
@@ -238,408 +274,567 @@ export default function GroupsPage() {
   }
 
   return (
-    <div className="space-y-8">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <h1 className="text-3xl font-bold tracking-tight">Planungsgruppen</h1>
-        </div>
-        <p className="text-muted-foreground">Teams für die ABI-Vorbereitung.</p>
+    <div className="flex flex-col gap-8">
+      <div className="flex flex-col gap-1">
+        <h1 className="text-3xl font-bold tracking-tight">Planungsgruppen</h1>
+        <p className="text-muted-foreground">Zentraler Workspace für Teams & Koordination.</p>
       </div>
 
-      <Tabs value={safeMainTab} onValueChange={handleMainTabChange} className="space-y-6">
-        <TabsList className="grid h-auto w-full grid-cols-3 auto-rows-[2.5rem]">
-          <TabsTrigger value="mein-team" className="h-10 text-xs sm:text-sm">Mein Team</TabsTrigger>
-          <TabsTrigger value="alle-gruppen" className="h-10 text-xs sm:text-sm">Alle Gruppen</TabsTrigger>
-          <TabsTrigger value="shared-hub" className="h-10 text-xs sm:text-sm">Shared Hub</TabsTrigger>
-        </TabsList>
+      <Tabs 
+        value={safeMainTab} 
+        onValueChange={handleMainTabChange} 
+        orientation="vertical"
+        className="flex flex-col md:flex-row gap-8 items-start"
+      >
+        <aside className="w-full md:w-64 shrink-0">
+          <TabsList className="flex flex-row md:flex-col h-auto w-full justify-start p-1.5 bg-muted/30 border backdrop-blur-sm md:sticky md:top-8">
+            <TabsTrigger 
+              value="mein-team" 
+              className="flex-1 md:flex-none px-4 py-2.5 justify-start gap-2.5 transition-all data-[active]:bg-background data-[active]:shadow-sm"
+              disabled={!profile?.planning_group}
+            >
+              <Users className="h-4 w-4" />
+              <span className="font-medium">Mein Team</span>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="alle-gruppen" 
+              className="flex-1 md:flex-none px-4 py-2.5 justify-start gap-2.5 transition-all data-[active]:bg-background data-[active]:shadow-sm"
+            >
+              <LayoutDashboard className="h-4 w-4" />
+              <span className="font-medium">Alle Gruppen</span>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="shared-hub" 
+              className="flex-1 md:flex-none px-4 py-2.5 justify-start gap-2.5 transition-all data-[active]:bg-background data-[active]:shadow-sm"
+            >
+              <MessageSquare className="h-4 w-4" />
+              <span className="font-medium">Shared Hub</span>
+            </TabsTrigger>
+          </TabsList>
+        </aside>
 
-        <TabsContent value="mein-team" className="space-y-8">
-          {profile?.planning_group ? (
-            <div className="space-y-8">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-primary/5 p-6 rounded-2xl border border-primary/10">
-                <div className="flex items-center gap-4">
-                  <div className="bg-primary text-primary-foreground p-3 rounded-xl">
-                    <Users className="h-6 w-6" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h2 className="text-2xl font-bold">{profile.planning_group}</h2>
-                      {isGroupLeader && (
-                        <Badge variant="secondary" className="bg-amber-100 text-amber-700 border-amber-200 hover:bg-amber-100 flex items-center gap-1">
-                          <ShieldCheck className="h-3 w-3" />
-                          Gruppenleiter-Modus
-                        </Badge>
-                      )}
+        <div className="flex-1 min-w-0 w-full">
+          <TabsContent value="mein-team" className="mt-0 focus-visible:outline-none space-y-8">
+            {profile?.planning_group ? (
+              <div className="space-y-8">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-primary/5 p-6 rounded-2xl border border-primary/10">
+                  <div className="flex items-center gap-4">
+                    <div className="bg-primary text-primary-foreground p-3 rounded-xl shadow-lg shadow-primary/20">
+                      <Users className="h-6 w-6" />
                     </div>
-                    <p className="text-sm text-muted-foreground">Dein Team-Workspace</p>
+                    <div>
+                      <div className="flex items-center gap-2 text-primary">
+                        <h2 className="text-2xl font-bold">{profile.planning_group}</h2>
+                        {isGroupLeader && (
+                          <Badge variant="secondary" className="bg-amber-100 text-amber-700 border-amber-200 hover:bg-amber-100 flex items-center gap-1">
+                            <ShieldCheck className="h-3 w-3" />
+                            Gruppenleiter-Modus
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-sm text-muted-foreground">Dein Team-Workspace</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <AddTodoDialog defaultGroup={profile.planning_group} />
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <AddTodoDialog defaultGroup={profile.planning_group} />
-                </div>
-              </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
-                <div className="lg:col-span-8 2xl:col-span-7 min-w-0">
-                  <GroupWall
-                    groupName={profile.planning_group}
-                    canManage={isGroupLeader || isPlanner}
-                  />
-                </div>
-
-                <div className="lg:col-span-4 2xl:col-span-5 min-w-0 space-y-6">
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <h3 className="font-semibold flex items-center gap-2">
-                        <CheckCircle2 className="h-4 w-4 text-primary" /> Team-Aufgaben
-                      </h3>
-                      <Badge variant="outline">{myTeamTodos.length}</Badge>
-                    </div>
-                    <TodoList
-                      todos={myTeamTodos}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
+                  <div className="lg:col-span-7 2xl:col-span-8 min-w-0">
+                    <GroupWall
+                      groupName={profile.planning_group}
                       canManage={isGroupLeader || isPlanner}
                     />
                   </div>
 
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <h3 className="font-semibold flex items-center gap-2">
-                        <CalendarIcon className="h-4 w-4 text-primary" /> Nächste Termine
-                      </h3>
+                  <div className="lg:col-span-5 2xl:col-span-4 min-w-0 space-y-6">
+                    <GroupCard className="border-primary/5 shadow-subtle">
+                      <GroupCard.Header 
+                        name="Team Mitglieder" 
+                        memberCount={myTeamMembers.length}
+                        actions={
+                          canManageTeamMembers && (
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-primary">
+                              <UserPlus className="h-4 w-4" />
+                            </Button>
+                          )
+                        }
+                      />
+                      <GroupCard.MemberList 
+                        emptyState={
+                          <p className="text-sm text-muted-foreground italic text-center py-4">
+                            Keine Mitglieder gefunden.
+                          </p>
+                        }
+                      >
+                        {myTeamMembers.map((member) => (
+                          <MemberItem
+                            key={member.id}
+                            member={member}
+                            isLeader={member.id === myTeamLeader || !!member.is_group_leader}
+                            showActions={canManageTeamMembers}
+                            onMakeLeader={(id) => handleAssignLeader(profile.planning_group!, id)}
+                            onRemove={(id) => handleUpdateMember(id, null)}
+                          />
+                        ))}
+                      </GroupCard.MemberList>
+                    </GroupCard>
+
+                    <div className="h-[400px]">
+                      <TodoList
+                        todos={myTeamTodos}
+                        canManage={isGroupLeader || isPlanner}
+                      />
                     </div>
-                    <CalendarEvents
-                      events={events.slice(0, 5)}
-                      canManage={isPlanner}
-                    />
+
+                    <div className="h-[350px]">
+                      <CalendarEvents
+                        events={events.slice(0, 5)}
+                        canManage={isPlanner}
+                      />
+                    </div>
                   </div>
                 </div>
+
+                {canManageTeamMembers && (
+                  <Card className="border-primary/10 bg-muted/30">
+                    <CardHeader className="pb-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <CardTitle className="text-lg flex items-center gap-2">
+                            <UserPlus className="h-5 w-5 text-primary" /> Mitglieder hinzufügen
+                          </CardTitle>
+                          <CardDescription>
+                            Wähle Nutzer aus, die noch keiner Gruppe zugeordnet sind.
+                          </CardDescription>
+                        </div>
+                        <Badge variant="outline">{unassignedProfiles.length} verfügbar</Badge>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="relative">
+                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          placeholder="Nutzer suchen..."
+                          className="pl-9 bg-background"
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-3 max-h-[400px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-muted-foreground/20">
+                        {unassignedProfiles.length === 0 ? (
+                          <div className="col-span-full py-12 text-center">
+                            <Users className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
+                            <p className="text-sm text-muted-foreground italic">
+                              Alle aktiven Nutzer sind bereits in Gruppen.
+                            </p>
+                          </div>
+                        ) : (
+                          filteredUnassignedProfiles.map((p) => (
+                            <div key={p.id} className="flex items-center justify-between p-3 rounded-xl border bg-background hover:border-primary/30 transition-all group">
+                              <div className="flex items-center gap-3 min-w-0">
+                                <Avatar className="h-10 w-10 border shadow-sm">
+                                  <AvatarFallback className="bg-primary/5 text-primary">
+                                    {p.full_name?.charAt(0) || '?'}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div className="min-w-0">
+                                  <p className="text-sm font-semibold truncate group-hover:text-primary transition-colors">{p.full_name}</p>
+                                  <p className="text-[10px] text-muted-foreground truncate">{p.email}</p>
+                                </div>
+                              </div>
+
+                              <div className="flex gap-1 shrink-0">
+                                {isPlanner ? (
+                                  <DropdownMenu>
+                                    <DropdownMenuTrigger
+                                      render={
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          className="h-8 px-2 text-[10px] gap-1"
+                                        >
+                                          <PlusCircle className="h-3 w-3" />
+                                          Hinzufügen
+                                        </Button>
+                                      }
+                                    />
+                                    <DropdownMenuContent align="end" className="w-56">
+                                      {planningGroups.map((group) => (
+                                        <DropdownMenuItem 
+                                          key={group.name}
+                                          onClick={() => handleUpdateMember(p.id, group.name)}
+                                        >
+                                          {group.name}
+                                        </DropdownMenuItem>
+                                      ))}
+                                    </DropdownMenuContent>
+                                  </DropdownMenu>
+                                ) : (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-8 px-3 text-[10px] gap-1"
+                                    onClick={() => handleUpdateMember(p.id, profile?.planning_group || null)}
+                                  >
+                                    <PlusCircle className="h-3 w-3" />
+                                    Mein Team
+                                  </Button>
+                                )}
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+            ) : (
+              <Card className="border-dashed">
+                <CardContent className="py-20 text-center">
+                  <div className="bg-muted w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <Users className="h-10 w-10 text-muted-foreground opacity-40" />
+                  </div>
+                  <h3 className="text-xl font-semibold mb-2">Du bist noch in keinem Team</h3>
+                  <p className="text-muted-foreground max-w-md mx-auto">
+                    Wende dich an die Planer, um einer Planungsgruppe zugewiesen zu werden und deinen Team-Workspace zu aktivieren.
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+
+          <TabsContent value="alle-gruppen" className="mt-0 focus-visible:outline-none space-y-8">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+              <div className="lg:col-span-8 space-y-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div>
+                    <h2 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+                      <LayoutDashboard className="h-6 w-6 text-primary" /> Alle Planungsgruppen
+                    </h2>
+                    <p className="text-sm text-muted-foreground">Übersicht aller aktiven Teams und deren Mitglieder.</p>
+                  </div>
+                  {isPlanner && (
+                    <Button variant="outline" size="sm" className="h-9 gap-2 shadow-sm" render={
+                      <Link href="/einstellungen">
+                        <PlusCircle className="h-4 w-4 text-primary" /> 
+                        <span className="font-semibold">Gruppen verwalten</span>
+                      </Link>
+                    } />
+                  )}
+                </div>
+
+                {planningGroups.length === 0 ? (
+                  <Card className="border-dashed bg-muted/20">
+                    <CardContent className="py-20 text-center">
+                      <div className="bg-muted w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Users className="h-8 w-8 text-muted-foreground/30" />
+                      </div>
+                      <p className="text-muted-foreground font-medium">Noch keine Planungsgruppen erstellt.</p>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {planningGroups.map((group) => {
+                      const members = profiles.filter((p) => p.planning_group === group.name)
+                      const leader = profiles.find((p) => p.id === group.leader_user_id)
+
+                      return (
+                        <GroupCard key={group.name} className="border-primary/5 hover:border-primary/20 hover:shadow-md transition-all">
+                          <GroupCard.Header 
+                            name={group.name} 
+                            memberCount={members.length}
+                            actions={
+                              leader && (
+                                <Badge variant="secondary" className="bg-amber-50 text-amber-700 border-amber-200/50 hover:bg-amber-50 gap-1 px-1.5 py-0.5">
+                                  <Trophy className="h-3 w-3 text-amber-500 fill-amber-500" />
+                                  <span className="text-[10px] font-bold uppercase">{leader.full_name?.split(' ')[0]}</span>
+                                </Badge>
+                              )
+                            }
+                          />
+                          <GroupCard.MemberList 
+                            emptyState={
+                              <div className="py-8 text-center">
+                                <Users className="h-8 w-8 text-muted-foreground/20 mx-auto mb-2" />
+                                <p className="text-xs text-muted-foreground italic">Keine Mitglieder</p>
+                              </div>
+                            }
+                            className="max-h-[300px] overflow-y-auto scrollbar-thin"
+                          >
+                            {members.map((member) => (
+                              <MemberItem
+                                key={member.id}
+                                member={member}
+                                isLeader={member.id === group.leader_user_id || !!member.is_group_leader}
+                                showActions={!!isPlanner || !!(isGroupLeader && group.name === profile?.planning_group)}
+                                onMakeLeader={isPlanner ? (id) => handleAssignLeader(group.name, id) : undefined}
+                                onRemove={(id) => handleUpdateMember(id, null)}
+                              />
+                            ))}
+                          </GroupCard.MemberList>
+                          {isPlanner && (
+                            <GroupCard.Actions>
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                className="w-full h-8 text-[11px] font-bold uppercase tracking-wider"
+                                onClick={() => {
+                                  // For quick navigation to settings if needed
+                                  router.push('/einstellungen')
+                                }}
+                              >
+                                Team Konfigurieren
+                              </Button>
+                            </GroupCard.Actions>
+                          )}
+                        </GroupCard>
+                      )
+                    })}
+                  </div>
+                )}
               </div>
 
-              {canManageTeamMembers && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg flex items-center gap-2">
-                      <UserPlus className="h-5 w-5 text-primary" /> Mitglieder hinzufügen
-                    </CardTitle>
-                    <CardDescription>
-                      Wähle Nutzer aus, die noch keiner Gruppe zugeordnet sind.
-                    </CardDescription>
+              <div className="lg:col-span-4 space-y-6">
+                <Card className="border-primary/10 shadow-subtle overflow-hidden">
+                  <div className="h-1.5 bg-primary" />
+                  <CardHeader className="pb-4">
+                    <CardTitle className="text-lg font-bold">Gruppen-Statistik</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="relative">
-                      <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <div className="flex items-center justify-between p-3 rounded-xl bg-muted/30 border border-border/50 transition-all hover:bg-muted/50">
+                      <div className="flex items-center gap-3">
+                        <div className="bg-primary/10 p-2 rounded-lg">
+                          <LayoutDashboard className="h-4 w-4 text-primary" />
+                        </div>
+                        <span className="text-sm font-medium text-muted-foreground">Gruppen gesamt</span>
+                      </div>
+                      <Badge variant="secondary" className="font-bold">{planningGroups.length}</Badge>
+                    </div>
+                    
+                    <div className="flex items-center justify-between p-3 rounded-xl bg-muted/30 border border-border/50 transition-all hover:bg-muted/50">
+                      <div className="flex items-center gap-3">
+                        <div className="bg-primary/10 p-2 rounded-lg">
+                          <Users className="h-4 w-4 text-primary" />
+                        </div>
+                        <span className="text-sm font-medium text-muted-foreground">Zugeordnete Nutzer</span>
+                      </div>
+                      <Badge variant="secondary" className="font-bold">{profiles.filter((p) => p.planning_group).length}</Badge>
+                    </div>
+
+                    <div className="flex items-center justify-between p-3 rounded-xl bg-red-50/50 dark:bg-red-950/10 border border-red-100/50 dark:border-red-900/50 transition-all hover:bg-red-50 dark:hover:bg-red-950/20 group">
+                      <div className="flex items-center gap-3">
+                        <div className="bg-red-100 dark:bg-red-900/30 p-2 rounded-lg group-hover:scale-110 transition-transform">
+                          <UserMinus className="h-4 w-4 text-red-600" />
+                        </div>
+                        <span className="text-sm font-medium text-red-700 dark:text-red-400">Ohne Gruppe</span>
+                      </div>
+                      <Badge variant="destructive" className="bg-red-600 hover:bg-red-700 font-bold shadow-sm shadow-red-200">{unassignedProfiles.length}</Badge>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="border-primary/10 shadow-subtle border-l-4 border-l-primary">
+                  <CardHeader className="pb-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <CardTitle className="text-lg font-bold flex items-center gap-2">
+                          <UserPlus className="h-5 w-5 text-primary" /> Schnelle Zuordnung
+                        </CardTitle>
+                        <CardDescription className="text-xs">
+                          Nutzer direkt einem Team zuweisen.
+                        </CardDescription>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="relative group">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
                       <Input
                         placeholder="Nutzer suchen..."
-                        className="pl-9"
+                        className="pl-10 h-10 bg-muted/20 border-border/50 focus:bg-background transition-all"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                       />
                     </div>
 
-                    <div className="space-y-2 max-h-[520px] overflow-y-auto pr-1">
+                    <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2 scrollbar-thin">
                       {unassignedProfiles.length === 0 ? (
-                        <p className="text-sm text-muted-foreground italic text-center py-4">
-                          Alle aktiven Nutzer sind bereits in Gruppen.
-                        </p>
+                        <div className="py-12 text-center bg-muted/10 rounded-2xl border border-dashed border-border/50">
+                          <CheckCircle2 className="h-10 w-10 text-primary/20 mx-auto mb-3" />
+                          <p className="text-xs text-muted-foreground italic font-medium">
+                            Alle Nutzer sind versorgt!
+                          </p>
+                        </div>
                       ) : (
                         filteredUnassignedProfiles.map((p) => (
-                          <div key={p.id} className="flex flex-col p-3 rounded-lg border bg-muted/30 gap-3">
+                          <div key={p.id} className="flex flex-col p-4 rounded-xl border bg-background hover:border-primary/30 transition-all gap-4 group/item">
                             <div className="flex items-center gap-3">
-                              <Avatar className="h-9 w-9">
-                                <AvatarFallback>{p.full_name?.charAt(0) || '?'}</AvatarFallback>
+                              <Avatar className="h-10 w-10 border shadow-sm group-hover/item:scale-105 transition-transform">
+                                <AvatarFallback className="bg-primary/5 text-primary font-bold">
+                                  {p.full_name?.charAt(0) || '?'}
+                                </AvatarFallback>
                               </Avatar>
                               <div className="min-w-0">
-                                <p className="text-sm font-semibold truncate">{p.full_name}</p>
-                                <p className="text-[10px] text-muted-foreground truncate">{p.email}</p>
+                                <p className="text-sm font-bold truncate group-hover/item:text-primary transition-colors">{p.full_name}</p>
+                                <p className="text-[10px] text-muted-foreground font-medium truncate">{p.email}</p>
                               </div>
                             </div>
 
-                            <div className="flex flex-wrap gap-1">
-                              {isPlanner ? (
-                                planningGroups.map((group) => (
+                            {(isPlanner || isGroupLeader) && (
+                              <div className="flex flex-wrap gap-1.5 pt-1">
+                                {isPlanner ? (
+                                  planningGroups.slice(0, 4).map((group) => (
+                                    <Button
+                                      key={group.name}
+                                      variant="outline"
+                                      size="sm"
+                                      className="h-7 px-2.5 text-[10px] font-bold uppercase tracking-wider hover:bg-primary hover:text-white transition-all"
+                                      onClick={() => handleUpdateMember(p.id, group.name)}
+                                    >
+                                      + {group.name}
+                                    </Button>
+                                  ))
+                                ) : (
                                   <Button
-                                    key={group.name}
                                     variant="outline"
                                     size="sm"
-                                    className="h-10 px-3 text-xs sm:h-7 sm:px-2 sm:text-[10px]"
-                                    onClick={() => handleUpdateMember(p.id, group.name)}
+                                    className="w-full h-8 text-[10px] font-bold uppercase tracking-wider gap-2 bg-primary/5 border-primary/20 text-primary hover:bg-primary hover:text-white transition-all"
+                                    onClick={() => handleUpdateMember(p.id, profile?.planning_group || null)}
                                   >
-                                    + {group.name}
+                                    <PlusCircle className="h-3.5 w-3.5" />
+                                    In mein Team
                                   </Button>
-                                ))
-                              ) : (
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="h-10 px-3 text-xs sm:h-7 sm:px-2 sm:text-[10px]"
-                                  onClick={() => handleUpdateMember(p.id, profile?.planning_group || null)}
-                                  title="Zu deinem Team hinzufügen"
-                                >
-                                  + Mein Team
-                                </Button>
-                              )}
-                            </div>
+                                )}
+                                {isPlanner && planningGroups.length > 4 && (
+                                  <DropdownMenu>
+                                    <DropdownMenuTrigger
+                                      render={
+                                        <Button variant="ghost" size="sm" className="h-7 px-2 text-[10px] font-bold">
+                                          Mehr...
+                                        </Button>
+                                      }
+                                    />
+                                    <DropdownMenuContent align="end" className="w-48">
+                                      {planningGroups.slice(4).map((group) => (
+                                        <DropdownMenuItem 
+                                          key={group.name}
+                                          onClick={() => handleUpdateMember(p.id, group.name)}
+                                          className="text-xs font-medium"
+                                        >
+                                          {group.name}
+                                        </DropdownMenuItem>
+                                      ))}
+                                    </DropdownMenuContent>
+                                  </DropdownMenu>
+                                )}
+                              </div>
+                            )}
                           </div>
                         ))
                       )}
                     </div>
                   </CardContent>
                 </Card>
-              )}
-            </div>
-          ) : (
-            <Card>
-              <CardContent className="py-20 text-center">
-                <Users className="h-16 w-16 text-muted-foreground mx-auto mb-4 opacity-20" />
-                <h3 className="text-xl font-semibold mb-2">Du bist noch in keinem Team</h3>
-                <p className="text-muted-foreground max-w-md mx-auto">
-                  Wende dich an die Planer, um einer Planungsgruppe zugewiesen zu werden und deinen Team-Workspace zu aktivieren.
-                </p>
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
-
-        <TabsContent value="alle-gruppen" className="space-y-8">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2 space-y-6">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold">Alle Planungsgruppen</h2>
-                {isPlanner && (
-                  <Button variant="outline" size="sm" render={
-                    <Link href="/einstellungen">
-                      <PlusCircle className="mr-2 h-4 w-4" /> Gruppen verwalten
-                    </Link>
-                  } />
-                )}
               </div>
+            </div>
+          </TabsContent>
 
-              {planningGroups.length === 0 ? (
-                <Card>
-                  <CardContent className="py-10 text-center">
-                    <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-20" />
-                    <p className="text-muted-foreground italic">Noch keine Planungsgruppen erstellt.</p>
+          <TabsContent value="shared-hub" className="mt-0 focus-visible:outline-none space-y-8">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-8 rounded-3xl border border-primary/10 relative overflow-hidden">
+              <div className="absolute top-0 right-0 p-8 opacity-5">
+                <MessageSquare className="h-32 w-32 rotate-12" />
+              </div>
+              
+              <div className="flex items-center gap-6 relative z-10">
+                <div className="bg-primary text-primary-foreground p-4 rounded-2xl shadow-xl shadow-primary/30 scale-110">
+                  <MessageSquare className="h-8 w-8" />
+                </div>
+                <div>
+                  <h2 className="text-3xl font-bold tracking-tight text-primary">Shared Hub</h2>
+                  <p className="text-muted-foreground max-w-xl font-medium mt-1">
+                    Zentrale Kommunikationsstelle für alle Planungsteams. Koordination, Austausch und Synergien nutzen.
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-3 relative z-10">
+                <div className="flex -space-x-3 overflow-hidden">
+                  {profiles.filter(p => p.planning_group).slice(0, 5).map((p, i) => (
+                    <Avatar key={i} className="inline-block h-9 w-9 rounded-full ring-2 ring-background border-2 border-primary/10">
+                      <AvatarFallback className="bg-muted text-[10px] font-bold">{p.full_name?.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                  ))}
+                  <div className="flex items-center justify-center h-9 w-9 rounded-full bg-muted ring-2 ring-background text-[10px] font-bold">
+                    +{profiles.filter(p => p.planning_group).length - 5}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+              <div className="lg:col-span-8 min-w-0">
+                <GroupWall 
+                  groupName="hub" 
+                  type="hub"
+                  canManage={isPlanner} 
+                />
+              </div>
+              <div className="lg:col-span-4 space-y-6">
+                <Card className="bg-card border-primary/10 shadow-subtle relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-bl-full transition-all group-hover:scale-110" />
+                  <CardHeader>
+                    <CardTitle className="text-xl font-bold flex items-center gap-2">
+                      <ShieldCheck className="h-5 w-5 text-primary" /> Richtlinien
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="text-sm space-y-6 relative z-10">
+                    <div className="space-y-4">
+                      <div className="flex gap-4">
+                        <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0 font-bold text-primary text-xs">1</div>
+                        <p className="text-muted-foreground leading-relaxed pt-1">Nutze den Hub für <strong>gruppenübergreifende</strong> Anfragen und wichtige Updates für alle.</p>
+                      </div>
+                      <div className="flex gap-4">
+                        <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0 font-bold text-primary text-xs">2</div>
+                        <p className="text-muted-foreground leading-relaxed pt-1">Sei präzise bei Anfragen an andere Teams – nutze die <strong>"An: Gruppe"</strong> Funktion.</p>
+                      </div>
+                      <div className="flex gap-4">
+                        <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0 font-bold text-primary text-xs">3</div>
+                        <p className="text-muted-foreground leading-relaxed pt-1">Wichtige Ankündigungen werden von den Planern oben <strong>angeheftet</strong>.</p>
+                      </div>
+                    </div>
+
+                    <div className="p-4 rounded-2xl bg-primary/5 border border-primary/10">
+                      <p className="text-xs text-primary font-bold italic text-center">
+                        "Zusammenarbeit ist der Schlüssel zu einem unvergesslichen Abschluss!"
+                      </p>
+                    </div>
                   </CardContent>
                 </Card>
-              ) : (
-                planningGroups.map((group) => {
-                  const members = profiles.filter((p) => p.planning_group === group.name)
-                  const leader = profiles.find((p) => p.id === group.leader_user_id)
 
-                  return (
-                    <Card key={group.name} className="overflow-hidden">
-                      <CardHeader className="bg-primary/5 border-b border-primary/10">
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <CardTitle className="text-xl">{group.name}</CardTitle>
-                            <CardDescription>{members.length} Mitglieder</CardDescription>
-                          </div>
-                          {leader && (
-                            <div className="flex items-center gap-2 bg-background/80 backdrop-blur-sm px-3 py-1.5 rounded-full border border-primary/20">
-                              <Trophy className="h-4 w-4 text-amber-500" />
-                              <span className="text-xs font-semibold">{leader.full_name}</span>
-                            </div>
-                          )}
-                        </div>
-                      </CardHeader>
-                      <CardContent className="pt-6">
-                        <div className="space-y-4">
-                          {members.length === 0 ? (
-                            <p className="text-sm text-muted-foreground italic text-center py-4">
-                              Noch keine Mitglieder in dieser Gruppe.
-                            </p>
-                          ) : (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                              {members.map((member) => (
-                                <div key={member.id} className="flex items-center justify-between p-2 rounded-lg border bg-card hover:bg-accent/50 transition-colors">
-                                  <div className="flex items-center gap-3">
-                                    <Avatar className="h-8 w-8">
-                                      <AvatarFallback>{member.full_name?.charAt(0) || '?'}</AvatarFallback>
-                                    </Avatar>
-                                    <div className="min-w-0">
-                                      <p className="text-sm font-medium truncate">{member.full_name}</p>
-                                      {(member.id === group.leader_user_id || member.is_group_leader) && (
-                                        <span className="text-[10px] text-amber-600 font-bold uppercase tracking-wider">Leiter</span>
-                                      )}
-                                    </div>
-                                  </div>
-                                  {(isPlanner || (isGroupLeader && group.name === profile?.planning_group)) && (
-                                    <div className="flex items-center gap-1">
-                                      {isPlanner && member.id !== group.leader_user_id && (
-                                        <Button
-                                          variant="ghost"
-                                          size="icon"
-                                          className="h-9 w-9 sm:h-7 sm:w-7 text-amber-600 hover:text-amber-700 hover:bg-amber-50"
-                                          onClick={() => handleAssignLeader(group.name, member.id)}
-                                          title="Zum Leiter machen"
-                                        >
-                                          <ShieldCheck className="h-4 w-4" />
-                                        </Button>
-                                      )}
-                                      <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="h-9 w-9 sm:h-7 sm:w-7 text-destructive hover:bg-destructive/10"
-                                        onClick={() => handleUpdateMember(member.id, null)}
-                                        title={isPlanner ? 'Aus Gruppe entfernen' : 'Aus meinem Team entfernen'}
-                                      >
-                                        <UserMinus className="h-4 w-4" />
-                                      </Button>
-                                    </div>
-                                  )}
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )
-                })
-              )}
-            </div>
-
-            <div className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Statistik</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Gruppen gesamt:</span>
-                    <span className="font-bold">{planningGroups.length}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Zugeordnete Nutzer:</span>
-                    <span className="font-bold">{profiles.filter((p) => p.planning_group).length}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Ohne Gruppe:</span>
-                    <span className="font-bold">{unassignedProfiles.length}</span>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <UserPlus className="h-5 w-5 text-primary" /> Mitgliederzuordnung
-                  </CardTitle>
-                  <CardDescription>
-                    Ordne unzugeordnete Nutzer zentral direkt den Teams zu.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="relative">
-                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      placeholder="Nutzer suchen..."
-                      className="pl-9"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                    />
-                  </div>
-
-                  <div className="space-y-2 max-h-[520px] overflow-y-auto pr-1">
-                    {unassignedProfiles.length === 0 ? (
-                      <p className="text-sm text-muted-foreground italic text-center py-4">
-                        Alle aktiven Nutzer sind bereits in Gruppen.
-                      </p>
-                    ) : (
-                      filteredUnassignedProfiles.map((p) => (
-                        <div key={p.id} className="flex flex-col p-3 rounded-lg border bg-muted/30 gap-3">
-                          <div className="flex items-center gap-3">
-                            <Avatar className="h-9 w-9">
-                              <AvatarFallback>{p.full_name?.charAt(0) || '?'}</AvatarFallback>
-                            </Avatar>
-                            <div className="min-w-0">
-                              <p className="text-sm font-semibold truncate">{p.full_name}</p>
-                              <p className="text-[10px] text-muted-foreground truncate">{p.email}</p>
-                            </div>
-                          </div>
-
-                          {(isPlanner || isGroupLeader) && (
-                            <div className="flex flex-wrap gap-1">
-                              {isPlanner ? (
-                                planningGroups.map((group) => (
-                                  <Button
-                                    key={group.name}
-                                    variant="outline"
-                                    size="sm"
-                                    className="h-10 px-3 text-xs sm:h-7 sm:px-2 sm:text-[10px]"
-                                    onClick={() => handleUpdateMember(p.id, group.name)}
-                                  >
-                                    + {group.name}
-                                  </Button>
-                                ))
-                              ) : (
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="h-10 px-3 text-xs sm:h-7 sm:px-2 sm:text-[10px]"
-                                  onClick={() => handleUpdateMember(p.id, profile?.planning_group || null)}
-                                  title="Zu deinem Team hinzufügen"
-                                >
-                                  + Mein Team
-                                </Button>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="shared-hub" className="space-y-6">
-          <div className="bg-primary/5 p-6 rounded-2xl border border-primary/10">
-            <div className="flex items-center gap-4">
-              <div className="bg-primary text-primary-foreground p-3 rounded-xl">
-                <MessageSquare className="h-6 w-6" />
-              </div>
-              <div>
-                <h2 className="text-2xl font-bold">Shared Hub</h2>
-                <p className="text-sm text-muted-foreground">Gruppenübergreifender Austausch & Koordination. Ideal für Anfragen an andere Teams oder allgemeine Infos.</p>
+                <Card className="border-primary/5 bg-muted/20">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-lg font-bold">Aktivität</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex items-center gap-3">
+                      <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+                      <span className="text-xs font-medium text-muted-foreground">Hub ist live & bereit für Input</span>
+                    </div>
+                    <p className="text-[11px] text-muted-foreground italic">
+                      Nachrichten im Hub sind für alle Mitglieder sichtbar. Private Team-Details gehören in die Team-Pinnwand.
+                    </p>
+                  </CardContent>
+                </Card>
               </div>
             </div>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2">
-              <GroupWall 
-                groupName="hub" 
-                type="hub"
-                canManage={isPlanner} 
-              />
-            </div>
-            <div className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Was ist der Hub?</CardTitle>
-                </CardHeader>
-                <CardContent className="text-sm text-muted-foreground space-y-4">
-                  <p>
-                    Der <strong>Shared Hub</strong> ist die zentrale Kommunikationsstelle für alle Planungsteams.
-                  </p>
-                  <ul className="list-disc pl-4 space-y-2">
-                    <li>Stelle Fragen an andere Gruppen</li>
-                    <li>Teile wichtige Updates für alle</li>
-                    <li>Koordiniere Termine gruppenübergreifend</li>
-                    <li>Suche Unterstützung für Aufgaben</li>
-                  </ul>
-                  <p className="italic pt-2">
-                    Deine Nachrichten im Hub sind für alle Nutzer sichtbar, die einer Planungsgruppe angehören.
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        </TabsContent>
+          </TabsContent>
+        </div>
       </Tabs>
     </div>
   )
 }
+

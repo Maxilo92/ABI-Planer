@@ -2,7 +2,7 @@
 
 import { Event } from '@/types/database'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Calendar as CalendarIcon, Clock, Trash2 } from 'lucide-react'
+import { Calendar as CalendarIcon, Clock, Trash2, MapPin } from 'lucide-react'
 import { format } from 'date-fns'
 import { de } from 'date-fns/locale'
 import { toDate } from '@/lib/utils'
@@ -106,6 +106,12 @@ export function CalendarEvents({
                           <Clock className="h-3 w-3" />
                           {format(eventDate, 'EEEE, HH:mm', { locale: de })} Uhr
                         </div>
+                        {event.location && (
+                          <div className="flex items-center text-[10px] md:text-xs text-muted-foreground gap-1">
+                            <MapPin className="h-3 w-3" />
+                            {event.location}
+                          </div>
+                        )}
                       </div>
                     </div>
                   </CalendarEventDetailsDialog>

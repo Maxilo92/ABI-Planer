@@ -16,14 +16,19 @@ import { cn } from '@/lib/utils'
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme()
 
+  const themeLabel = theme === 'light' ? 'Hell' : theme === 'dark' ? 'Dunkel' : 'System'
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
         render={
-          <Button variant="outline" size="icon">
-            <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-            <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-            <span className="sr-only">Toggle theme</span>
+          <Button variant="outline" className="flex items-center gap-2">
+            <div className="relative h-[1.2rem] w-[1.2rem]">
+              <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+              <Moon className="absolute inset-0 h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+            </div>
+            <span className="text-sm font-medium">{themeLabel}</span>
+            <span className="sr-only">Farbschema wählen</span>
           </Button>
         }
       />
@@ -32,14 +37,14 @@ export function ThemeToggle() {
           onClick={() => setTheme('light')}
           className={cn("flex items-center justify-between", theme === 'light' && "bg-secondary font-bold")}
         >
-          Light
+          Hell
           {theme === 'light' && <Check className="h-4 w-4 ml-2" />}
         </DropdownMenuItem>
         <DropdownMenuItem 
           onClick={() => setTheme('dark')}
           className={cn("flex items-center justify-between", theme === 'dark' && "bg-secondary font-bold")}
         >
-          Dark
+          Dunkel
           {theme === 'dark' && <Check className="h-4 w-4 ml-2" />}
         </DropdownMenuItem>
         <DropdownMenuItem 

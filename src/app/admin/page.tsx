@@ -291,6 +291,7 @@ export default function AdminPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Name</TableHead>
+                  <TableHead>Email</TableHead>
                   <TableHead>Rolle</TableHead>
                   <TableHead>Kurs</TableHead>
                   <TableHead>Gruppe</TableHead>
@@ -304,6 +305,9 @@ export default function AdminPage() {
                       <Link href={`/profil/${p.id}`} className="hover:underline focus-visible:underline">
                         {p.full_name || 'Unbekannt'}
                       </Link>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground break-all">
+                      {p.email}
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline" className="capitalize">

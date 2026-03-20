@@ -36,21 +36,27 @@ export function TodoList({
 
   // Flatten the todo tree for rendering
   const displayedTodos = useMemo(() => {
-    const getFlattenedTodos = (
-      allTodos: Todo[],
-      parentId: string | null = null,
-      depth = 0
-    ): (Todo & { depth: number })[] => {
-      return allTodos
-        .filter((t) => (t.parentId || null) === parentId)
-        .flatMap((t) => [
-          { ...t, depth },
-          ...getFlattenedTodos(allTodos, t.id, depth + 1),
-        ])
-    }
+    const result: (Todo & { depth: number })[] = [];
+    const processed = new Set<string>();
 
-    const flattened = getFlattenedTodos(todos)
-    return typeof maxItems === 'number' ? flattened.slice(0, maxItems) : flattened
+    const addWithChildren = (todo: Todo, depth: number) => {
+      if (processed.has(todo.id)) return;
+      processed.add(todo.id);
+      result.push({ ...todo, depth });
+      
+      const children = todos.filter((t) => t.parentId === todo.id);
+      children.forEach((c) => addWithChildren(c, depth + 1));
+    };
+
+    // First, process todos that are "roots" in the current set 
+    // (either parentId is null or parent is not present in the current todos array)
+    const roots = todos.filter((t) => !t.parentId || !todos.find((p) => p.id === t.parentId));
+    
+    // Process roots to build the partial tree
+    roots.forEach((r) => addWithChildren(r, 0));
+    
+    // Finally, apply maxItems slice if necessary (though page.tsx already limits to 5)
+    return typeof maxItems === 'number' ? result.slice(0, maxItems) : result;
   }, [todos, maxItems])
 
   const handleToggle = async (id: string, completed: boolean) => {

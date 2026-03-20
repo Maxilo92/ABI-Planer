@@ -11,7 +11,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { Badge } from '@/components/ui/badge'
-import { Calendar as CalendarIcon, Clock, User, FileText, Users, Shield, Group as GroupIcon } from 'lucide-react'
+import { Calendar as CalendarIcon, Clock, User, FileText, Users, Shield, Group as GroupIcon, MapPin } from 'lucide-react'
 import { format } from 'date-fns'
 import { de } from 'date-fns/locale'
 import { toDate } from '@/lib/utils'
@@ -71,6 +71,18 @@ export function CalendarEventDetailsDialog({ event, children }: CalendarEventDet
         </DialogHeader>
 
         <div className="space-y-6 py-4">
+          {event.location && (
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-sm font-semibold">
+                <MapPin className="h-4 w-4 text-muted-foreground" />
+                Ort
+              </div>
+              <p className="text-sm text-muted-foreground bg-muted/30 p-4 rounded-lg whitespace-pre-wrap leading-relaxed">
+                {event.location}
+              </p>
+            </div>
+          )}
+
           {event.description && (
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm font-semibold">

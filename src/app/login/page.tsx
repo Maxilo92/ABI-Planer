@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { auth } from '@/lib/firebase'
 import { signInWithEmailAndPassword } from 'firebase/auth'
 import { useRouter } from 'next/navigation'
@@ -15,7 +15,14 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [timeoutMessage, setTimeoutMessage] = useState(false)
   const router = useRouter()
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.location.search.includes('reason=timeout')) {
+      setTimeoutMessage(true)
+    }
+  }, [])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -59,6 +66,11 @@ export default function LoginPage() {
         </CardHeader>
         <form onSubmit={handleLogin}>
           <CardContent className="space-y-6 px-5 pb-7 sm:space-y-7 sm:px-7 sm:pb-8">
+            {timeoutMessage && (
+              <div className="text-amber-600 text-sm p-3 rounded-md bg-amber-50 border border-amber-200 text-center font-medium">
+                Du wurdest aufgrund einer Zeitüberschreitung abgemeldet.
+              </div>
+            )}
             {error && (
               <div className="text-destructive text-sm p-3 rounded-md bg-destructive/10 text-center font-medium">
                 {error}

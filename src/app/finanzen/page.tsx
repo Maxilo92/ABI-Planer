@@ -149,7 +149,7 @@ export default function FinancePage() {
       </div>
 
       <FundingStatus
-        current={currentBalance}
+        current={totalIncome}
         goal={fundingGoal}
         initialTicketSales={settings?.expected_ticket_sales ?? 150}
         onTicketSalesChange={handleTicketSalesChange}

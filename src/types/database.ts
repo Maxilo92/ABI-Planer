@@ -79,6 +79,7 @@ export interface Event {
   id: string;
   title: string;
   description: string | null;
+  location: string | null;
   event_date: string;
   created_at: string;
   created_by: string;

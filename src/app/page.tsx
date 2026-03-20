@@ -48,15 +48,61 @@ export default function Dashboard() {
       }
     })
 
-    // 2. Listen to Todos (top 5)
+    // 2. Listen to Todos (top 5 most relevant tasks total)
     const todosRef = collection(db, 'todos')
-    const qTodos = query(todosRef, orderBy('created_at', 'desc'), limit(5))
-    const unsubscribeTodos = onSnapshot(qTodos, (snapshot) => {
-      const visibleTodos = snapshot.docs
-        .map((entryDoc) => ({ id: entryDoc.id, ...entryDoc.data() }))
-        .filter((todo: any) => todo.status !== 'done')
-        .slice(0, 5)
-      setTodos(visibleTodos)
+    const unsubscribeTodos = onSnapshot(todosRef, (snapshot) => {
+      const allTodosData = snapshot.docs.map((entryDoc) => ({ 
+        id: entryDoc.id, 
+        ...entryDoc.data() 
+      })) as any[]
+      
+      const openTodos = allTodosData.filter(t => t.status !== 'done')
+      
+      // Determine relevance for ALL open tasks
+      const userCourse = profile?.class_name
+      const userPlanningGroup = profile?.planning_group
+      const currentUserId = user?.uid
+
+      const scoredTodos = openTodos.map(todo => {
+        let score = 0
+        
+        // Priority 1: Directly assigned to user
+        if (todo.assigned_to_user === currentUserId) score += 100
+        
+        // Priority 2: Assigned to user's planning group
+        if (todo.assigned_to_group && todo.assigned_to_group === userPlanningGroup) score += 50
+        
+        // Priority 3: Assigned to user's class
+        if (todo.assigned_to_class && todo.assigned_to_class === userCourse) score += 25
+        
+        // Priority 4: Deadline (sooner = more relevant)
+        if (todo.deadline_date) {
+          const daysToDeadline = (toDate(todo.deadline_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+          if (daysToDeadline < 0) score += 40 // Overdue
+          else if (daysToDeadline < 7) score += 20 // Within a week
+          else if (daysToDeadline < 14) score += 10 // Within two weeks
+        }
+
+        return { ...todo, relevanceScore: score }
+      })
+
+      // Sort ALL tasks by relevance score (desc), then deadline (asc), then creation date (desc)
+      const sortedTodos = scoredTodos.sort((a, b) => {
+        if (b.relevanceScore !== a.relevanceScore) return b.relevanceScore - a.relevanceScore
+        
+        const dateA = a.deadline_date ? toDate(a.deadline_date).getTime() : Infinity
+        const dateB = b.deadline_date ? toDate(b.deadline_date).getTime() : Infinity
+        if (dateA !== dateB) return dateA - dateB
+        
+        const createdA = a.created_at ? toDate(a.created_at).getTime() : 0
+        const createdB = b.created_at ? toDate(b.created_at).getTime() : 0
+        return createdB - createdA
+      })
+
+      // Take exactly the top 5 items total
+      const finalTodos = sortedTodos.slice(0, 5)
+
+      setTodos(finalTodos)
     })
 
     // 3. Listen to Events (next 3)
@@ -207,7 +253,7 @@ export default function Dashboard() {
               <FundingStatus
                 key="funding"
                 current={currentFunding}
-                goal={expenseGoal > 0 ? expenseGoal : (settings?.funding_goal || 10000)}
+                goal={settings?.funding_goal || 10000}
                 initialTicketSales={settings?.expected_ticket_sales ?? 150}
                 onTicketSalesChange={handleTicketSalesChange}
               />
@@ -218,7 +264,7 @@ export default function Dashboard() {
         case 'todos':
           return (
             <div className="flex flex-col">
-              <TodoList key="todos" todos={todos || []} canManage={canManage} maxItems={3} useScrollContainer={false} />
+              <TodoList key="todos" todos={todos || []} canManage={canManage} maxItems={5} useScrollContainer={false} />
             </div>
           )
         case 'events':
@@ -328,10 +374,17 @@ export default function Dashboard() {
         <p className="text-muted-foreground">Willkommen zurück! Hier ist der aktuelle Stand der Dinge.</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {dashboardItems.map((item) =>
-          item.type === 'poll' ? renderPollComponent(item.poll) : renderComponent(item.key)
-        )}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+        <div className="flex flex-col gap-6">
+          {dashboardItems
+            .filter((_, i) => i % 2 === 0)
+            .map((item) => (item.type === 'poll' ? renderPollComponent(item.poll) : renderComponent(item.key)))}
+        </div>
+        <div className="flex flex-col gap-6">
+          {dashboardItems
+            .filter((_, i) => i % 2 !== 0)
+            .map((item) => (item.type === 'poll' ? renderPollComponent(item.poll) : renderComponent(item.key)))}
+        </div>
       </div>
     </div>
   )

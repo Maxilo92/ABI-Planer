@@ -3,6 +3,7 @@
 import { usePathname } from 'next/navigation'
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
+import { RandomCookieBanner } from '@/components/layout/RandomCookieBanner'
 
 interface AppShellProps {
   children: React.ReactNode
@@ -18,6 +19,7 @@ export function AppShell({ children }: AppShellProps) {
     return (
       <div className="min-h-screen bg-background">
         <main className="min-h-screen">{children}</main>
+        <RandomCookieBanner />
       </div>
     )
   }
@@ -31,6 +33,7 @@ export function AppShell({ children }: AppShellProps) {
         </main>
         <Footer />
       </div>
+      <RandomCookieBanner />
     </div>
   )
 }
