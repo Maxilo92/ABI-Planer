@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { LayoutDashboard, CheckSquare, Calendar, Euro, Megaphone, BarChart2, LogOut, Menu, X, ShieldCheck, User, MessageSquareHeart, Settings, Users, ChevronDown, ChevronRight, Sparkles, Info, HelpCircle } from 'lucide-react'
+import { LayoutDashboard, CheckSquare, Calendar, Euro, Megaphone, BarChart2, LogOut, Menu, X, ShieldCheck, User, MessageSquareHeart, Settings, Users, ChevronDown, ChevronRight, Sparkles, HelpCircle } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -68,8 +68,6 @@ export function Navbar() {
     { href: '/finanzen', label: 'Finanzen', icon: Euro },
     { href: '/news', label: 'News', icon: Megaphone, notify: notifications.news },
     { href: '/feedback', label: 'Feedback', icon: MessageSquareHeart },
-      { href: '/hilfe', label: 'Hilfe', icon: HelpCircle },
-      { href: '/uber', label: 'Über', icon: Info },
     {
       href: '/gruppen-root',
       label: 'Gruppen',
@@ -103,6 +101,8 @@ export function Navbar() {
       ]
     })
   }
+
+  navItems.push({ href: '/hilfe', label: 'Hilfe', icon: HelpCircle })
 
   const isAuthPage = ['/login', '/register', '/waiting'].includes(pathname)
 

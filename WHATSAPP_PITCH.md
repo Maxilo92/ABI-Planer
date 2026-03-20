@@ -1,38 +1,41 @@
-*ABI PLANER v1.0.0 – TESTING PHASE*
+*ABI-PLANER v1.0.0 – TESTING PHASE*
 
-Hi. Wegen den vielen unsicherheiten und verwirrungen habe ich in den letzten Tagen ein "kleines" Tool entwickelt was den Planungsprozess für den Abiball und alles drum herum vereinfacht und zentralisiert. Ich bin kurz davor in die Vollversion der App zu gehen, brauche aber vorher noch ein paar Tests. Hier brauche ich ein paar von euch um die App einfach mal auseinander zu nehmen und sie auf Herz und Nieren zu testen, weitere Infos zum Test unten.
+Hi,
+
+aufgrund der vielen Unsicherheiten und Unklarheiten habe ich in den letzten Tagen ein Tool entwickelt, das den Planungsprozess für den Abiball und alles drumherum vereinfacht und zentralisiert. Bevor die App in die Vollversion geht, benötige ich aber noch eure Hilfe beim testen der Anwendung auf Herz und Nieren und finden von Fehlern.
 
 ---
 
-*TESTING PHASE (Dauer: ~5 Min.)*
+*TESTING PHASE (Dauer: ca. 5 Min.)*
+
 Testet die App, findet Bugs und gebt Feedback!
 *Wo:* https://abi-planer-27.de
-*Browser:* Egal (Chrome, Safari, Handy, etc.)
+*Browser:* Alle (Chrome, Safari, Mobile etc.)
 
 *So geht’s:*
 1. Link öffnen: https://abi-planer-27.de
-2. Registrieren mit deiner *@hgr-web.lernsax.de* Adresse
-3. Features ausprobieren (Dashboard, Kalender, etc.)
-4. Fehler oder Ideen? Über *"Feedback"* im Menü melden.
+2. Mit deiner @hgr-web.lernsax.de Adresse registrieren
+3. Features ausprobieren (Dashboard, Kalender etc.)
+4. Fehler oder Ideen? Über "Feedback" im Menü melden
 5. Fertig!
 
 ---
 
 *Worauf solltet ihr achten?*
-• *Bugs:* Funktioniert etwas nicht oder stürzt ab?
-• *Speed:* Lädt alles schnell?
-• *Mobile:* Sieht es auf dem Handy gut aus?
-• *Design:* Gefällt dir die Optik?
-• *Easter Egg?!* 
+* *Bugs:* Funktioniert etwas nicht oder stürzt die App ab?
+* *Speed:* Lädt alles schnell?
+* *Mobile:* Sieht es auf dem Smartphone gut aus?
+* *Design:* Gefällt dir die Optik?
+* *Easter Egg:* Findest du eins?
 
 ---
 
-*Was kommt dann?*
+*Wie geht es weiter?*
 
-Wenn die App alle Testphasen durchlaufen ist und die v1.0.0 endlich veröffentlicht wurde wird die App an den Jahrgang verteilt, aber keine Angst, über das Rollensystem haben Zuschauer keinen einfluss auf die arbeit mit der App. Durch die news sollen Schüler und Planer über Neuigkeiten und Meilensteine Informiert werden.
+Sobald die App alle Testphasen durchlaufen hat und die Version 1.0.0 offiziell veröffentlicht wurde, wird sie an den gesamten Jahrgang verteilt. Keine Sorge: Durch das Rollensystem haben Zuschauer keinen Einfluss auf die aktive Arbeit mit der App. Über die News-Funktion werden alle Schüler und Planer über Neuigkeiten und Meilensteine informiert.
 
-*Danke für die Hilfe!*
+Danke für eure Hilfe!
 
 *Direkt zum Link:* https://abi-planer-27.de
 
-Bei Fragen einfach hier schreiben oder direkt in der App Feedback geben. Viel Spaß beim Testen! ✨
+Bei Fragen schreibt einfach hier oder gebt direkt in der App Feedback. Viel Spaß beim Testen!

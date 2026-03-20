@@ -38,7 +38,14 @@ export default function AGBPage() {
           <section>
             <h3 className="text-lg font-semibold text-foreground border-l-4 border-primary pl-3 mb-4">2. Nutzung des Dienstes</h3>
             <p className="text-muted-foreground leading-relaxed">
-              Die Plattform dient ausschließlich der Organisation und Planung von Aktivitäten rund um den Abiturjahrgang 2027. Die Nutzung ist Mitgliedern des Jahrgangs vorbehalten, die über eine offizielle E-Mail-Adresse (@hgr-web.lernsax.de) verfügen.
+              Die Plattform dient ausschließlich der Organisation und Planung von Aktivitäten rund um den Abiturjahrgang 2027. Die Nutzung ist Mitgliedern des Jahrgangs vorbehalten, die über eine offizielle E-Mail-Adresse (@hgr-web.lernsax.de) verfügen. Eine Registrierung und Nutzung ist nur für Personen zulässig, die mindestens 16 Jahre alt sind.
+            </p>
+          </section>
+
+          <section>
+            <h3 className="text-lg font-semibold text-foreground border-l-4 border-primary pl-3 mb-4">3.1 Kein offizielles Angebot der Schule</h3>
+            <p className="text-muted-foreground leading-relaxed">
+              Die Plattform wird privat betrieben und ist kein offizielles digitales Angebot der Schule. Eine Nutzung von Schul-E-Mail-Adressen erfolgt ausschließlich zur Zuordnung zum Jahrgang und begründet keine Trägerschaft oder Verantwortung der Schule.
             </p>
           </section>
 
@@ -72,7 +79,7 @@ export default function AGBPage() {
 
           <div className="pt-8 border-t space-y-2">
             <p className="text-xs text-muted-foreground italic">
-              Stand: 19. März 2026. Dies ist ein Schul-Projekt.
+              Stand: 20. März 2026. Dies ist ein privat betriebenes Schul-Projekt.
             </p>
             <p className="text-xs text-muted-foreground">
               Projekt-Link: <a href="https://github.com/Maxilo92/ABI-Planer" className="underline hover:text-primary">GitHub Repository</a>

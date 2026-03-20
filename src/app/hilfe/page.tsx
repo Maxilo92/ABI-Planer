@@ -21,7 +21,7 @@ export default function HilfePage() {
   const faqs = [
     {
       id: 'registrierung',
-      category: '🔐 Registrierung & Anmeldung',
+      category: 'Registrierung & Anmeldung',
       items: [
         {
           q: 'Welche E-Mail-Adresse kann ich zur Registrierung nutzen?',
@@ -43,7 +43,7 @@ export default function HilfePage() {
     },
     {
       id: 'features',
-      category: '✨ Features & Funktionen',
+      category: 'Features & Funktionen',
       items: [
         {
           q: 'Wie erstelle ich eine neue Aufgabe?',
@@ -69,7 +69,7 @@ export default function HilfePage() {
     },
     {
       id: 'finanzen',
-      category: '💰 Finanzen & Kontostand',
+      category: 'Finanzen & Kontostand',
       items: [
         {
           q: 'Wie werden Einnahmen & Ausgaben berechnet?',
@@ -91,11 +91,11 @@ export default function HilfePage() {
     },
     {
       id: 'gruppen',
-      category: '👥 Gruppen & Rollen',
+      category: 'Gruppen & Rollen',
       items: [
         {
           q: 'Was ist der Unterschied zwischen Viewer, Planner und Admin?',
-          a: '👤 Viewer: Kann alles ansehen & lesen, aber nicht erstellen. 🔧 Planner: Kann Events, Aufgaben, News erstellen & editieren. 🔐 Admin: Kann alles + Nutzer-Rollen verwalten.'
+          a: 'Viewer: Kann alles ansehen & lesen, aber nicht erstellen. Planner: Kann Events, Aufgaben, News erstellen & editieren. Admin: Kann alles + Nutzer-Rollen verwalten.'
         },
         {
           q: 'Wie werden Gruppen erstellt?',
@@ -109,7 +109,7 @@ export default function HilfePage() {
     },
     {
       id: 'technisch',
-      category: '⚡ Technische Fragen',
+      category: 'Technische Fragen',
       items: [
         {
           q: 'Die App lädt sehr langsam.',
@@ -135,7 +135,7 @@ export default function HilfePage() {
     },
     {
       id: 'datenschutz',
-      category: '🔒 Datenschutz & Sicherheit',
+      category: 'Datenschutz & Sicherheit',
       items: [
         {
           q: 'Wer kann meine Daten sehen?',
@@ -157,7 +157,7 @@ export default function HilfePage() {
     },
     {
       id: 'bugs',
-      category: '🐛 Bugs & Fehler',
+      category: 'Bugs & Fehler',
       items: [
         {
           q: 'Ich habe einen Bug gefunden – wie melde ich ihn?',
@@ -175,7 +175,7 @@ export default function HilfePage() {
     },
     {
       id: 'kontakt',
-      category: '📞 Support & Kontakt',
+      category: 'Support & Kontakt',
       items: [
         {
           q: 'Wer kann mir helfen wenn ich Probleme habe?',
@@ -211,7 +211,7 @@ export default function HilfePage() {
         <CardContent className="pt-8 space-y-8">
           <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
             <p className="text-sm text-blue-900 dark:text-blue-100">
-              <strong>💡 Tipp:</strong> Nutze Strg+F (Cmd+F auf Mac) um diese Seite zu durchsuchen!
+              <strong>Tipp:</strong> Nutze Strg+F (Cmd+F auf Mac) um diese Seite zu durchsuchen!
             </p>
           </div>
 
@@ -253,7 +253,7 @@ export default function HilfePage() {
           ))}
 
           <section className="bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-lg p-6 space-y-3">
-            <h3 className="text-lg font-semibold text-foreground">❓ Deine Frage ist nicht beantwortet?</h3>
+            <h3 className="text-lg font-semibold text-foreground">Deine Frage ist nicht beantwortet?</h3>
             <p className="text-muted-foreground leading-relaxed">
               Kein Problem! Nutze das <strong>Feedback-Feature</strong> im Menü – schreib deine Frage auf und das Team wird dir helfen. Oder stell die Frage im Planner-Team-Chat.
             </p>

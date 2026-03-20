@@ -59,6 +59,14 @@ export function Footer() {
           <Link href="/agb" className="hover:text-primary transition-colors py-1 px-2 rounded-md hover:bg-secondary/50">
             AGB
           </Link>
+          <span className="text-muted-foreground/30 mx-1">•</span>
+          <Link href="/uber" className="hover:text-primary transition-colors py-1 px-2 rounded-md hover:bg-secondary/50">
+            Über
+          </Link>
+          <span className="text-muted-foreground/30 mx-1">•</span>
+          <Link href="/datenschutz" className="hover:text-primary transition-colors py-1 px-2 rounded-md hover:bg-secondary/50">
+            Datenschutz
+          </Link>
         </div>
         
         <div className="flex items-center gap-3">

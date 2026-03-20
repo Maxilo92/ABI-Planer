@@ -23,6 +23,14 @@ export interface Profile {
   is_approved: boolean;
   is_group_leader?: boolean | null;
   easter_egg_unlocked?: boolean;
+  legal_consents?: {
+    is_at_least_16: boolean;
+    terms_accepted: boolean;
+    terms_version: string;
+    privacy_accepted: boolean;
+    privacy_version: string;
+    accepted_at: string;
+  };
   created_at: string;
   last_visited?: Record<string, string> | null;
   isOnline: boolean;

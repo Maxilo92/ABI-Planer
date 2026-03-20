@@ -1,5 +1,12 @@
 # Changelog
 
+## [Unreleased]
+- Legal: **Datenschutzerklärung hinzugefügt**. Neue Seite `/datenschutz` mit Verantwortlichem, Verarbeitungszwecken, Rechtsgrundlagen, Speicherdauer, Betroffenenrechten und Kontakt.
+- Legal: **AGB und Impressum aktualisiert**. Mindestalter (16+) klargestellt, Hinweis auf privaten Betrieb (kein offizielles Schulangebot) ergänzt, Impressum auf `§ 5 DDG` aktualisiert.
+- Auth/Legal: **Verpflichtende Einwilligungen bei Registrierung**. Schritt 3 der Registrierung erfordert nun aktive Bestätigung von Mindestalter (16+), AGB und Datenschutzerklärung.
+- Compliance: **Consent-Nachweis gespeichert**. Bei Registrierung werden Zustimmungsmetadaten (`legal_consents`) inklusive Versionsstand und Zeitstempel im Profil dokumentiert.
+- UI: **Footer-Rechtslinks erweitert**. Link auf Datenschutz zusätzlich zu Impressum und AGB eingebunden.
+
 ## [0.18.11] - 2026-03-20
 - Fix: **Release-Check Stabilization**. `lint` nutzt jetzt die ESLint-CLI statt `next lint` und ist kompatibel mit Next.js 16.
 - Fix: **Funding Logic Consistency**. Dashboard berücksichtigt wieder ausgabengetriebenes Ziel (mit sauberem Fallback), und die Finanzseite nutzt im Finanzstatus den tatsächlichen Kontostand.

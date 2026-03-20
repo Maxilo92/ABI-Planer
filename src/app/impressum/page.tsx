@@ -3,6 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft } from 'lucide-react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
 export default function ImpressumPage() {
@@ -24,7 +25,7 @@ export default function ImpressumPage() {
         </CardHeader>
         <CardContent className="prose prose-sm dark:prose-invert max-w-none space-y-6">
           <section>
-            <h3 className="text-lg font-semibold border-b pb-2 mb-3">Angaben gemäß § 5 TMG</h3>
+            <h3 className="text-lg font-semibold border-b pb-2 mb-3">Angaben gemäß § 5 DDG</h3>
             <p className="text-muted-foreground leading-relaxed">
               Maximilian Priesnitz<br />
               Wohnhaft in Feldschlösschen<br />
@@ -37,6 +38,20 @@ export default function ImpressumPage() {
             <p className="text-muted-foreground leading-relaxed">
               E-Mail: priesnitz.maximilian@icloud.com<br />
               Webseite: https://github.com/Maxilo92/ABI-Planer
+            </p>
+          </section>
+
+          <section>
+            <h3 className="text-lg font-semibold border-b pb-2 mb-3">Hinweis zur Verantwortlichkeit</h3>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              ABI Planer ist ein privat betriebenes Projekt von Schülern für Schüler und kein offizielles Angebot der Schule.
+            </p>
+          </section>
+
+          <section>
+            <h3 className="text-lg font-semibold border-b pb-2 mb-3">Datenschutz</h3>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Informationen zur Verarbeitung personenbezogener Daten finden Sie in der <Link href="/datenschutz" className="underline hover:text-primary">Datenschutzerklärung</Link>.
             </p>
           </section>
 
@@ -55,7 +70,7 @@ export default function ImpressumPage() {
           </section>
 
           <section className="pt-4 text-xs text-muted-foreground italic border-t">
-            Hinweis: Dies ist ein Schul-Projekt für den Abiturjahrgang 2027.
+            Stand: 20. März 2026.
           </section>
         </CardContent>
       </Card>

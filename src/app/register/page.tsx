@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import Link from 'next/link'
 import { logAction } from '@/lib/logging'
@@ -19,6 +20,9 @@ export default function RegisterPage() {
   const [password, setPassword] = useState('')
   const [courses, setCourses] = useState<string[]>(['12A', '12B', '12C', '12D'])
   const [selectedCourse, setSelectedCourse] = useState('12A')
+  const [isAtLeast16, setIsAtLeast16] = useState(false)
+  const [acceptsTerms, setAcceptsTerms] = useState(false)
+  const [acceptsPrivacy, setAcceptsPrivacy] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
@@ -82,6 +86,17 @@ export default function RegisterPage() {
         setError('Bitte wähle einen Kurs aus.')
         return false
       }
+
+      if (!isAtLeast16) {
+        setError('Du musst bestätigen, dass du mindestens 16 Jahre alt bist.')
+        return false
+      }
+
+      if (!acceptsTerms || !acceptsPrivacy) {
+        setError('Bitte akzeptiere AGB und Datenschutzerklärung.')
+        return false
+      }
+
       return true
     }
 
@@ -130,12 +145,21 @@ export default function RegisterPage() {
         planning_group: null,
         is_approved: true, // Auto-approve for MVP
         created_at: new Date().toISOString(),
+        legal_consents: {
+          is_at_least_16: true,
+          terms_accepted: true,
+          terms_version: '2026-03-20',
+          privacy_accepted: true,
+          privacy_version: '2026-03-20',
+          accepted_at: new Date().toISOString(),
+        },
       })
 
       await logAction('PROFILE_UPDATED', user.uid, fullName, {
         action: 'profile_created',
         role: isFirstUser ? 'admin' : 'viewer',
         class_name: selectedCourse,
+        legal_consents_recorded: true,
       })
 
       router.push('/')
@@ -226,21 +250,61 @@ export default function RegisterPage() {
             )}
 
             {step === 3 && (
-              <div className="space-y-2 mb-1 sm:mb-2">
-                <Label htmlFor="course" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Kurs</Label>
-                <select
-                  id="course"
-                  value={selectedCourse}
-                  onChange={(e) => setSelectedCourse(e.target.value)}
-                  className="flex h-12 w-full rounded-md border border-input bg-background/70 px-3 py-2 text-base"
-                  required
-                >
-                  {courses.map((course) => (
-                    <option key={course} value={course}>
-                      {course}
-                    </option>
-                  ))}
-                </select>
+              <div className="space-y-5 mb-1 sm:mb-2">
+                <div className="space-y-2">
+                  <Label htmlFor="course" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Kurs</Label>
+                  <select
+                    id="course"
+                    value={selectedCourse}
+                    onChange={(e) => setSelectedCourse(e.target.value)}
+                    className="flex h-12 w-full rounded-md border border-input bg-background/70 px-3 py-2 text-base"
+                    required
+                  >
+                    {courses.map((course) => (
+                      <option key={course} value={course}>
+                        {course}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="space-y-3 rounded-lg border border-border/70 bg-muted/20 p-3">
+                  <div className="flex items-start gap-3">
+                    <Checkbox
+                      id="age16"
+                      checked={isAtLeast16}
+                      onCheckedChange={(checked) => setIsAtLeast16(checked === true)}
+                      className="mt-0.5"
+                    />
+                    <Label htmlFor="age16" className="text-xs leading-relaxed text-muted-foreground font-medium cursor-pointer">
+                      Ich bestätige, dass ich mindestens 16 Jahre alt bin.
+                    </Label>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <Checkbox
+                      id="termsAccepted"
+                      checked={acceptsTerms}
+                      onCheckedChange={(checked) => setAcceptsTerms(checked === true)}
+                      className="mt-0.5"
+                    />
+                    <Label htmlFor="termsAccepted" className="text-xs leading-relaxed text-muted-foreground font-medium cursor-pointer">
+                      Ich akzeptiere die <Link href="/agb" className="underline hover:text-primary">AGB</Link>.
+                    </Label>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <Checkbox
+                      id="privacyAccepted"
+                      checked={acceptsPrivacy}
+                      onCheckedChange={(checked) => setAcceptsPrivacy(checked === true)}
+                      className="mt-0.5"
+                    />
+                    <Label htmlFor="privacyAccepted" className="text-xs leading-relaxed text-muted-foreground font-medium cursor-pointer">
+                      Ich habe die <Link href="/datenschutz" className="underline hover:text-primary">Datenschutzerklärung</Link> gelesen und akzeptiere sie.
+                    </Label>
+                  </div>
+                </div>
               </div>
             )}
           </CardContent>
