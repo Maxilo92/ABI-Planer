@@ -67,8 +67,8 @@ export function RandomCookieBanner() {
             <div className="flex-1 space-y-2">
               <div className="flex items-center justify-between">
                 <h4 className="font-bold text-sm flex items-center gap-2">
-                  <Info className="h-3.5 w-3.5 text-muted-foreground" />
-                  Wichtiger Hinweis
+                  <Cookie className="h-3.5 w-3.5 text-primary" />
+                  Cookie-Einstellungen
                 </h4>
                 <Button 
                   variant="ghost" 
@@ -79,17 +79,25 @@ export function RandomCookieBanner() {
                   <X className="h-4 w-4" />
                 </Button>
               </div>
-              <p className="text-sm leading-relaxed text-muted-foreground italic">
-                "{message}"
+              <p className="text-sm leading-relaxed text-muted-foreground">
+                {message}
               </p>
-              <div className="pt-2 flex justify-end">
+              <div className="pt-2 flex justify-end gap-2">
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  className="text-xs font-medium px-4"
+                  onClick={() => setShow(false)}
+                >
+                  Ablehnen
+                </Button>
                 <Button 
                   size="sm" 
                   variant="default" 
                   className="text-xs font-bold px-4"
                   onClick={() => setShow(false)}
                 >
-                  Verstanden!
+                  Alle akzeptieren
                 </Button>
               </div>
             </div>
