@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.17.9] - 2026-03-20
+- UI: **Lootbox Refinement**. Die Lootbox-Seite wurde auf das Wesentliche reduziert. Das Öffnen erfolgt nun nach genau 5 Klicks (4 Upgrades + 1 Reveal).
+- UI: **Animationen**. Shake-Effekte beim Upgrade und eine verbesserte Reveal-Animation hinzugefügt.
+- Admin: **Lehrer-Management**. Die Verwaltung unterstützt nun bis zu 100 Lehrer mit Suchfunktion und optimierter Listenansicht.
+
 ## [0.17.8] - 2026-03-20
 - Fix: **Build-Fehler GlobalSettings**. Ein Syntaxfehler (Platzhalter `...`) in der globalen Einstellungsseite wurde behoben, um das Deployment wieder zu ermöglichen.
 

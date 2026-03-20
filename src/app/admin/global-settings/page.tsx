@@ -11,9 +11,10 @@ import { Textarea } from '@/components/ui/textarea'
 import { useAuth } from '@/context/AuthContext'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { Loader2, Plus, Trash2, Save, RotateCcw, Cookie, Gift, GraduationCap } from 'lucide-react'
+import { Loader2, Plus, Trash2, Save, RotateCcw, Cookie, Gift, GraduationCap, Search } from 'lucide-react'
 import { logAction } from '@/lib/logging'
 import { TeacherRarity } from '@/types/database'
+import { Badge } from '@/components/ui/badge'
 
 interface LootTeacher {
   name: string
@@ -52,46 +53,8 @@ export default function GlobalSettingsPage() {
   const [newMessage, setNewMessage] = useState('')
   const [newTeacherName, setNewTeacherName] = useState('')
   const [newTeacherRarity, setNewTeacherRarity] = useState<TeacherRarity>('common')
+  const [teacherSearch, setTeacherSearch] = useState('')
   const router = useRouter()
-
-  const handleAddTeacher = () => {
-    if (!newTeacherName.trim()) return
-    setSettings(prev => ({
-      ...prev,
-      loot_teachers: [...(prev.loot_teachers || []), { name: newTeacherName.trim(), rarity: newTeacherRarity }]
-    }))
-    setNewTeacherName('')
-    setNewTeacherRarity('common')
-  }
-
-  const handleRemoveTeacher = (index: number) => {
-    setSettings(prev => ({
-      ...prev,
-      loot_teachers: prev.loot_teachers.filter((_, i) => i !== index)
-    }))
-  }
-
-  const getRarityLabel = (rarity: TeacherRarity) => {
-    switch (rarity) {
-      case 'common': return 'Gewöhnlich (Grau)'
-      case 'rare': return 'Selten (Grün)'
-      case 'epic': return 'Episch (Lila)'
-      case 'mythic': return 'Mythisch (Rot)'
-      case 'legendary': return 'Legendär (Gelb)'
-      default: return rarity
-    }
-  }
-
-  const getRarityColor = (rarity: TeacherRarity) => {
-    switch (rarity) {
-      case 'common': return 'text-slate-500'
-      case 'rare': return 'text-emerald-500'
-      case 'epic': return 'text-purple-500'
-      case 'mythic': return 'text-red-500'
-      case 'legendary': return 'text-amber-500'
-      default: return ''
-    }
-  }
 
   const isAdmin = profile?.role === 'admin_main' || profile?.role === 'admin_co' || profile?.role === 'admin'
 
@@ -103,7 +66,12 @@ export default function GlobalSettingsPage() {
 
     const unsubscribe = onSnapshot(doc(db, 'settings', 'global'), (snapshot) => {
       if (snapshot.exists()) {
-        setSettings(snapshot.data() as GlobalSettings)
+        const data = snapshot.data() as GlobalSettings
+        setSettings({
+          ...DEFAULT_SETTINGS,
+          ...data,
+          loot_teachers: data.loot_teachers || DEFAULT_SETTINGS.loot_teachers
+        })
       } else {
         setSettings(DEFAULT_SETTINGS)
       }
@@ -145,6 +113,49 @@ export default function GlobalSettingsPage() {
     }))
   }
 
+  const handleAddTeacher = () => {
+    if (!newTeacherName.trim()) return
+    if ((settings.loot_teachers || []).length >= 100) {
+      toast.error('Limit von 100 Lehrern erreicht.')
+      return
+    }
+    setSettings(prev => ({
+      ...prev,
+      loot_teachers: [...(prev.loot_teachers || []), { name: newTeacherName.trim(), rarity: newTeacherRarity }]
+    }))
+    setNewTeacherName('')
+    setNewTeacherRarity('common')
+  }
+
+  const handleRemoveTeacher = (index: number) => {
+    setSettings(prev => ({
+      ...prev,
+      loot_teachers: prev.loot_teachers.filter((_, i) => i !== index)
+    }))
+  }
+
+  const getRarityLabel = (rarity: TeacherRarity) => {
+    switch (rarity) {
+      case 'common': return 'Gewöhnlich'
+      case 'rare': return 'Selten'
+      case 'epic': return 'Episch'
+      case 'mythic': return 'Mythisch'
+      case 'legendary': return 'Legendär'
+      default: return rarity
+    }
+  }
+
+  const getRarityColor = (rarity: TeacherRarity) => {
+    switch (rarity) {
+      case 'common': return 'text-slate-500'
+      case 'rare': return 'text-emerald-500'
+      case 'epic': return 'text-purple-500'
+      case 'mythic': return 'text-red-500'
+      case 'legendary': return 'text-amber-500'
+      default: return ''
+    }
+  }
+
   const handleResetToDefault = () => {
     if (confirm('Möchtest du wirklich alle Einstellungen auf die Standardwerte zurücksetzen?')) {
       setSettings(DEFAULT_SETTINGS)
@@ -158,6 +169,10 @@ export default function GlobalSettingsPage() {
       </div>
     )
   }
+
+  const filteredTeachers = (settings.loot_teachers || []).filter(t => 
+    t.name.toLowerCase().includes(teacherSearch.toLowerCase())
+  )
 
   return (
     <div className="space-y-6">
@@ -251,46 +266,30 @@ export default function GlobalSettingsPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <GraduationCap className="h-5 w-5 text-primary" />
-              Lehrer-Lootbox (Easter Egg)
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <GraduationCap className="h-5 w-5 text-primary" />
+                Lehrer-Lootbox (Easter Egg)
+              </CardTitle>
+              <Badge variant="secondary">
+                {(settings.loot_teachers || []).length} / 100
+              </Badge>
+            </div>
             <CardDescription>
               Verwalte die Lehrer, die aus der geheimen Lootbox gezogen werden können.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="space-y-4">
-              <Label>Verfügbare Lehrer</Label>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                {(settings.loot_teachers || []).map((teacher, index) => (
-                  <div key={index} className="flex items-center justify-between p-3 rounded-lg border bg-secondary/20">
-                    <div className="flex flex-col">
-                      <span className="font-semibold text-sm">{teacher.name}</span>
-                      <span className={`text-[10px] font-bold uppercase ${getRarityColor(teacher.rarity)}`}>
-                        {getRarityLabel(teacher.rarity)}
-                      </span>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-destructive hover:bg-destructive/10 h-8 w-8"
-                      onClick={() => handleRemoveTeacher(index)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-
-              <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t">
+              <div className="flex flex-col sm:flex-row gap-4 items-end pt-2">
                 <div className="flex-1 space-y-2">
-                  <Label htmlFor="teacher-name" className="text-xs">Name des Lehrers</Label>
+                  <Label htmlFor="teacher-name" className="text-xs">Neuer Lehrer Name</Label>
                   <Input
                     id="teacher-name"
                     placeholder="z.B. Herr Schmidt"
                     value={newTeacherName}
                     onChange={(e) => setNewTeacherName(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleAddTeacher()}
                   />
                 </div>
                 <div className="sm:w-[200px] space-y-2">
@@ -308,17 +307,64 @@ export default function GlobalSettingsPage() {
                     <option value="legendary">Legendär (Gelb)</option>
                   </select>
                 </div>
-                <div className="flex items-end">
-                  <Button onClick={handleAddTeacher} disabled={!newTeacherName.trim()} className="w-full sm:w-auto">
-                    <Plus className="h-4 w-4 mr-2" /> Hinzufügen
-                  </Button>
+                <Button onClick={handleAddTeacher} disabled={!newTeacherName.trim() || (settings.loot_teachers || []).length >= 100} className="w-full sm:w-auto">
+                  <Plus className="h-4 w-4 mr-2" /> Hinzufügen
+                </Button>
+              </div>
+
+              <div className="pt-4 border-t space-y-4">
+                <div className="relative">
+                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Lehrer suchen..."
+                    className="pl-9"
+                    value={teacherSearch}
+                    onChange={(e) => setTeacherSearch(e.target.value)}
+                  />
+                </div>
+
+                <div className="rounded-md border bg-muted/20">
+                  <div className="max-h-[400px] overflow-y-auto p-2 scrollbar-thin scrollbar-thumb-primary/10">
+                    {filteredTeachers.length === 0 ? (
+                      <div className="py-8 text-center text-sm text-muted-foreground italic">
+                        Keine Lehrer gefunden.
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                        {filteredTeachers.map((teacher) => {
+                          const originalIndex = settings.loot_teachers.findIndex(t => t === teacher)
+                          return (
+                            <div key={`${teacher.name}-${originalIndex}`} className="flex items-center justify-between p-2 rounded-lg border bg-background group">
+                              <div className="flex flex-col min-w-0">
+                                <span className="font-semibold text-xs truncate">{teacher.name}</span>
+                                <span className={`text-[9px] font-black uppercase ${getRarityColor(teacher.rarity)}`}>
+                                  {getRarityLabel(teacher.rarity)}
+                                </span>
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="text-destructive hover:bg-destructive/10 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+                                onClick={() => handleRemoveTeacher(originalIndex)}
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
           </CardContent>
-          <CardFooter className="bg-muted/50 text-[10px] text-muted-foreground flex items-center gap-2">
-            <Gift className="h-3 w-3" />
-            Die Lootbox startet bei "Gewöhnlich" und hat 4 Chancen auf ein Upgrade (33% für +1, 10% für +2).
+          <CardFooter className="bg-muted/50 text-[10px] text-muted-foreground flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Gift className="h-3 w-3" />
+              Upgrade: 4 Klicks (33% +1, 10% +2) | Reveal: 5. Klick
+            </div>
+            <span>Limit: 100 Lehrer</span>
           </CardFooter>
         </Card>
       </div>
