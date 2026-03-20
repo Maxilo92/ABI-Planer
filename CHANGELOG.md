@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.17.5] - 2026-03-20
+- Fix: **Build-Fehler CountdownHeader**. Die `asChild` Prop wurde durch die im Projekt verwendete `render` Prop für Base UI Komponenten ersetzt, um den Firebase Deployment-Fehler zu beheben.
+
 ## [0.17.4] - 2026-03-20
 - UI: **Mobile Edit Buttons**. Fixed visibility of edit and delete buttons for ToDos and Calendar events on mobile devices.
 
