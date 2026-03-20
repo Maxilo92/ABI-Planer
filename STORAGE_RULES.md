@@ -1,6 +1,6 @@
 # Storage Security Rules
 
-Diese Regeln gelten fuer Firebase Storage und steuern den Upload fuer News-Bilder.
+Diese Regeln gelten für Firebase Storage und steuern den Upload für News-Bilder.
 
 ## Wichtiger Hinweis
 
@@ -38,9 +38,9 @@ service firebase.storage {
 
 ## Bedeutung
 
-- Lesen: News-Bilder sind oeffentlich sichtbar.
+- Lesen: News-Bilder sind öffentlich sichtbar.
 - Schreiben: Nur eingeloggte Nutzer duerfen hochladen.
-- Dateigroesse: Maximal 5 MB.
+- Dateigröße: Maximal 5 MB.
 - Dateityp: Nur Bilder (`image/*`).
 - Alles ausserhalb von `news-images/...` ist gesperrt.
 
@@ -61,5 +61,5 @@ firebase deploy --only firestore,storage
 ## Kurztest
 
 1. Eingeloggt ein Bild unter 5 MB hochladen -> muss funktionieren.
-2. Ein Bild ueber 5 MB hochladen -> muss abgelehnt werden.
+2. Ein Bild über 5 MB hochladen -> muss abgelehnt werden.
 3. Nicht eingeloggt hochladen -> muss abgelehnt werden.

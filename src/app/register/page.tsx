@@ -269,39 +269,59 @@ export default function RegisterPage() {
                 </div>
 
                 <div className="space-y-3 rounded-lg border border-border/70 bg-muted/20 p-3">
-                  <div className="flex items-start gap-3">
+                  <div className="grid grid-cols-[1.25rem_minmax(0,1fr)] items-start gap-x-3 gap-y-1">
                     <Checkbox
                       id="age16"
                       checked={isAtLeast16}
                       onCheckedChange={(checked) => setIsAtLeast16(checked === true)}
-                      className="mt-0.5"
+                      className="mt-0.5 shrink-0"
                     />
-                    <Label htmlFor="age16" className="text-xs leading-relaxed text-muted-foreground font-medium cursor-pointer">
+                    <Label htmlFor="age16" className="!block text-xs leading-relaxed text-muted-foreground font-medium cursor-pointer">
                       Ich bestätige, dass ich mindestens 16 Jahre alt bin.
                     </Label>
                   </div>
 
-                  <div className="flex items-start gap-3">
+                  <div className="grid grid-cols-[1.25rem_minmax(0,1fr)] items-start gap-x-3 gap-y-1">
                     <Checkbox
                       id="termsAccepted"
                       checked={acceptsTerms}
                       onCheckedChange={(checked) => setAcceptsTerms(checked === true)}
-                      className="mt-0.5"
+                      className="mt-0.5 shrink-0"
                     />
-                    <Label htmlFor="termsAccepted" className="text-xs leading-relaxed text-muted-foreground font-medium cursor-pointer">
-                      Ich akzeptiere die <Link href="/agb" className="underline hover:text-primary">AGB</Link>.
+                    <Label htmlFor="termsAccepted" className="!block text-xs leading-relaxed text-muted-foreground font-medium cursor-pointer">
+                      Ich akzeptiere die{' '}
+                      <Link
+                        href="/agb"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className="underline hover:text-primary"
+                      >
+                        AGB
+                      </Link>
+                      .
                     </Label>
                   </div>
 
-                  <div className="flex items-start gap-3">
+                  <div className="grid grid-cols-[1.25rem_minmax(0,1fr)] items-start gap-x-3 gap-y-1">
                     <Checkbox
                       id="privacyAccepted"
                       checked={acceptsPrivacy}
                       onCheckedChange={(checked) => setAcceptsPrivacy(checked === true)}
-                      className="mt-0.5"
+                      className="mt-0.5 shrink-0"
                     />
-                    <Label htmlFor="privacyAccepted" className="text-xs leading-relaxed text-muted-foreground font-medium cursor-pointer">
-                      Ich habe die <Link href="/datenschutz" className="underline hover:text-primary">Datenschutzerklärung</Link> gelesen und akzeptiere sie.
+                    <Label htmlFor="privacyAccepted" className="!block text-xs leading-relaxed text-muted-foreground font-medium cursor-pointer">
+                      Ich habe die{' '}
+                      <Link
+                        href="/datenschutz"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className="underline hover:text-primary"
+                      >
+                        Datenschutzerklärung
+                      </Link>{' '}
+                      gelesen und akzeptiere sie.
                     </Label>
                   </div>
                 </div>

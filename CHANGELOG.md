@@ -1,13 +1,15 @@
 # Changelog
 
 ## [Unreleased]
-- Performance: **Lootbox-Animationen optimiert**. Schwergewichtige Effekte (grosse Blur-/Ping-Layer, aggressive Shake-Amplituden) wurden durch leichtere, transform-basierte Animationen ersetzt, damit Mobile-Browser deutlich fluessiger bleiben.
+- UX: **Rechtstexte in Registrierung zerstörungsfrei**. Links zu AGB und Datenschutz öffnen jetzt in einem neuen Tab, sodass der Registrierungsfortschritt beim Nachlesen erhalten bleibt.
+- UI: **Consent-Checkbox Layout stabilisiert**. In der Registrierung umbrechen die Texte neben den Checkboxen jetzt auf allen Geräten korrekt (inklusive Links zu AGB/Datenschutz) ohne zerrissene Zeilen.
+- Performance: **Lootbox-Animationen optimiert**. Schwergewichtige Effekte (große Blur-/Ping-Layer, aggressive Shake-Amplituden) wurden durch leichtere, transform-basierte Animationen ersetzt, damit Mobile-Browser deutlich flüssiger bleiben.
 - UI: **Footer Mobile-Zeilenumbruch**. Auf kleinen Displays stehen Copyright und Footer-Links jetzt in getrennten Zeilen mit sauberem Wrap statt gequetschter Einzeile.
 - UX: **Dashboard-Layout ohne sichtbares Umsortieren**. Widgets werden erst angezeigt, nachdem alle initialen Datenquellen geladen sind, damit die Personalisierung ohne sichtbares Springen erfolgt.
-- Finanzen: **Zielbetrag entkoppelt**. Das Finanzierungsziel ist jetzt wieder ein eigener Schaetzwert aus den Einstellungen und wird nicht mehr aus Ausgaben abgeleitet.
-- Dashboard/Finanzen: **Konsistente Fortschrittslogik**. Der Funding-Fortschritt basiert auf dem aktuellen Kontostand, waehrend Ausgaben separat nur in "Gesamtausgaben" erscheinen.
-- Fix: **Globales UI-Flackern & Navigations-Haenger behoben**. Der Presence-Heartbeat im `AuthContext` war an das gesamte `profile`-Objekt gekoppelt und erzeugte dadurch eine Re-Subscribe-/Write-Schleife (`isOnline`/`lastOnline`) mit permanenten Re-Renders.
-- Stability: **Auth-Heartbeat entkoppelt**. Online-Status-Updates laufen jetzt nur noch pro Benutzer-ID-Lifecycle statt bei jeder Profil-Aenderung, wodurch Dashboard, News, Feedback und Admin-Logs wieder stabil reagieren.
+- Finanzen: **Zielbetrag entkoppelt**. Das Finanzierungsziel ist jetzt wieder ein eigener Schätzwert aus den Einstellungen und wird nicht mehr aus Ausgaben abgeleitet.
+- Dashboard/Finanzen: **Konsistente Fortschrittslogik**. Der Funding-Fortschritt basiert auf dem aktuellen Kontostand, während Ausgaben separat nur in "Gesamtausgaben" erscheinen.
+- Fix: **Globales UI-Flackern & Navigations-Hänger behoben**. Der Presence-Heartbeat im `AuthContext` war an das gesamte `profile`-Objekt gekoppelt und erzeugte dadurch eine Re-Subscribe-/Write-Schleife (`isOnline`/`lastOnline`) mit permanenten Re-Renders.
+- Stability: **Auth-Heartbeat entkoppelt**. Online-Status-Updates laufen jetzt nur noch pro Benutzer-ID-Lifecycle statt bei jeder Profil-Änderung, wodurch Dashboard, News, Feedback und Admin-Logs wieder stabil reagieren.
 
 ## [0.18.12] - 2026-03-20
 - Legal: **Datenschutzerklärung hinzugefügt**. Neue Seite `/datenschutz` mit Verantwortlichem, Verarbeitungszwecken, Rechtsgrundlagen, Speicherdauer, Betroffenenrechten und Kontakt.

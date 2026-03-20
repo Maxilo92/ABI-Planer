@@ -201,7 +201,7 @@ export default function AdminLogsPage() {
   }
 
   if (authLoading || loading) {
-    return <div className="flex items-center justify-center min-h-[50vh]">Lade Aktivitaets-Logs...</div>
+    return <div className="flex items-center justify-center min-h-[50vh]">Lade Aktivitäts-Logs...</div>
   }
 
   if (!profile || !canManageUsers) {
@@ -220,7 +220,7 @@ export default function AdminLogsPage() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Activity className="h-5 w-5" /> Aktivitaets-Logs
+            <Activity className="h-5 w-5" /> Aktivitäts-Logs
           </CardTitle>
           <CardDescription>
             Filtere Aktionen nach Typ, Zeitraum, Nutzer oder Inhalt.
@@ -265,7 +265,7 @@ export default function AdminLogsPage() {
           </div>
 
           <div className="flex items-center justify-between text-sm text-muted-foreground">
-            <span>{filteredLogs.length} Eintraege gefunden</span>
+            <span>{filteredLogs.length} Einträge gefunden</span>
             {filteredLogs.length > 0 && <span>Neuester Eintrag zuerst</span>}
           </div>
 
