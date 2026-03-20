@@ -217,19 +217,32 @@ export default function Dashboard() {
                 onClick={(e) => e.stopPropagation()} // Prevent card navigation
                 className="block bg-background rounded-xl p-4 border border-border/40 shadow-subtle transition-all hover:border-primary/20 hover:shadow-md active:scale-[0.98]"
               >
-                <div className="flex justify-between items-start mb-2">
-                  <h4 className="font-semibold text-sm">{item.title}</h4>
-                  <span className="text-[10px] text-muted-foreground bg-secondary px-2 py-0.5 rounded">
-                    {item.created_at ? toDate(item.created_at).toLocaleDateString('de-DE') : 'Neu'}
-                  </span>
-                </div>
-                <p className="text-xs text-muted-foreground line-clamp-2">
-                  {item.content}
-                </p>
-                <div className="mt-2 flex items-center justify-end text-[10px] font-medium text-primary">
-                  <span className="inline-flex items-center gap-1">
-                    Zum Beitrag <ArrowRight className="h-3 w-3" />
-                  </span>
+                <div className="flex gap-4 items-start">
+                  {item.image_url && (
+                    <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-muted border border-border/20">
+                      <img
+                        src={item.image_url}
+                        alt=""
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex justify-between items-start mb-1 gap-2">
+                      <h4 className="font-semibold text-sm truncate leading-tight">{item.title}</h4>
+                      <span className="text-[10px] text-muted-foreground bg-secondary px-2 py-0.5 rounded shrink-0">
+                        {item.created_at ? toDate(item.created_at).toLocaleDateString('de-DE') : 'Neu'}
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+                      {item.content}
+                    </p>
+                    <div className="mt-2 flex items-center justify-end text-[10px] font-medium text-primary">
+                      <span className="inline-flex items-center gap-1">
+                        Zum Beitrag <ArrowRight className="h-3 w-3" />
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </Link>
             ))

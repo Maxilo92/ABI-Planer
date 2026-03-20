@@ -1,6 +1,11 @@
 # Changelog
 
 ## [0.18.5] - 2026-03-20
+- UI: **Dashboard News Preview**. Die News-Vorschau auf dem Dashboard zeigt nun auch das jeweilige Vorschaubild (falls vorhanden) klein auf der linken Seite an, um die visuelle Attraktivität zu steigern.
+- UI: **Layout Refinement**. Optimierung des Abstands und der Ausrichtung von Titeln und Inhalten in der Dashboard-Vorschau.
+
+## [0.18.4] - 2026-03-20
+
 - Fix: **Version Synchronization**. The version in `package.json` is now automatically synced with the `VERSION` file during build.
 - Automation: **Version Script**. Added `npm run sync:version -- patch` to automatically increment and sync the version.
 
