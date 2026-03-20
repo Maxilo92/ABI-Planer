@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { auth } from '@/lib/firebase'
 import { signInWithEmailAndPassword } from 'firebase/auth'
 import { useRouter } from 'next/navigation'
@@ -16,6 +16,27 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
+
+  useEffect(() => {
+    const timeoutUntil = sessionStorage.getItem('timeout_until')
+    const timeoutReason = sessionStorage.getItem('timeout_reason')
+    if (timeoutUntil) {
+      const until = new Date(timeoutUntil)
+      const isValidDate = !isNaN(until.getTime())
+      let msg = 'Dein Konto ist derzeit gesperrt.'
+      if (isValidDate) {
+        const formattedDate = until.toLocaleString('de-DE', {
+          dateStyle: 'medium',
+          timeStyle: 'short',
+        })
+        msg = `Dein Konto ist gesperrt bis ${formattedDate}.`
+      }
+      if (timeoutReason) msg += ` Grund: ${timeoutReason}`
+      setError(msg)
+      sessionStorage.removeItem('timeout_until')
+      sessionStorage.removeItem('timeout_reason')
+    }
+  }, [])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()

@@ -62,6 +62,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
                 if (isTimedOut) {
                   console.warn('User is currently timed out. Signing out.')
+                  // Store timeout info so the login page can display a reason
+                  if (normalizedProfile.timeout_until) {
+                    sessionStorage.setItem('timeout_until', normalizedProfile.timeout_until)
+                  }
+                  if (normalizedProfile.timeout_reason) {
+                    sessionStorage.setItem('timeout_reason', normalizedProfile.timeout_reason)
+                  }
                   // Ensure we unsubscribe before signing out to avoid state updates after logout
                   if (profileUnsubscribe) {
                     profileUnsubscribe()
@@ -70,6 +77,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                   await signOut(auth)
                   setProfile(null)
                   setLoading(false)
+                  window.location.href = '/login'
                   return
                 }
 
