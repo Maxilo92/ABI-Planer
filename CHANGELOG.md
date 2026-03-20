@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.7.1] - 2026-03-20
+- Chore: Versionsnummer auf 0.7.1 gesetzt.
+
 ## [1.2.0] - 2026-03-20
 - Feature: **ToDo DetailView**. Clicking a task title now opens a detailed view with a description and sub-tasks list.
 - Logic: **Nesting Limit**. Sub-tasks are now limited to 5 levels (0-4) to ensure layout stability.
