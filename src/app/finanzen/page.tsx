@@ -103,7 +103,7 @@ export default function FinancePage() {
   const totalIncome = amounts.filter((value) => value > 0).reduce((acc, value) => acc + value, 0)
   const totalExpenses = amounts.filter((value) => value < 0).reduce((acc, value) => acc + Math.abs(value), 0)
   const currentBalance = totalIncome - totalExpenses
-  const fundingGoal = settings?.funding_goal ?? 10000
+  const estimatedFundingGoal = settings?.funding_goal ?? 10000
 
   return (
     <div className="space-y-6">
@@ -115,7 +115,7 @@ export default function FinancePage() {
         {isPlanner && <AddFinanceDialog />}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground uppercase">Gesamteinnahmen</CardTitle>
@@ -136,6 +136,16 @@ export default function FinancePage() {
             </div>
           </CardContent>
         </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground uppercase">Finanzierungsziel</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-foreground">
+              {estimatedFundingGoal.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
+            </div>
+          </CardContent>
+        </Card>
         <Card className="bg-primary/5 border-primary/20">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-primary uppercase">Aktueller Kontostand</CardTitle>
@@ -150,7 +160,7 @@ export default function FinancePage() {
 
       <FundingStatus
         current={currentBalance}
-        goal={fundingGoal}
+        goal={estimatedFundingGoal}
         initialTicketSales={settings?.expected_ticket_sales ?? 150}
         onTicketSalesChange={handleTicketSalesChange}
       />

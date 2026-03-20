@@ -1,6 +1,9 @@
 # Changelog
 
 ## [Unreleased]
+- UX: **Dashboard-Layout ohne sichtbares Umsortieren**. Widgets werden erst angezeigt, nachdem alle initialen Datenquellen geladen sind, damit die Personalisierung ohne sichtbares Springen erfolgt.
+- Finanzen: **Zielbetrag entkoppelt**. Das Finanzierungsziel ist jetzt wieder ein eigener Schaetzwert aus den Einstellungen und wird nicht mehr aus Ausgaben abgeleitet.
+- Dashboard/Finanzen: **Konsistente Fortschrittslogik**. Der Funding-Fortschritt basiert auf dem aktuellen Kontostand, waehrend Ausgaben separat nur in "Gesamtausgaben" erscheinen.
 - Fix: **Globales UI-Flackern & Navigations-Haenger behoben**. Der Presence-Heartbeat im `AuthContext` war an das gesamte `profile`-Objekt gekoppelt und erzeugte dadurch eine Re-Subscribe-/Write-Schleife (`isOnline`/`lastOnline`) mit permanenten Re-Renders.
 - Stability: **Auth-Heartbeat entkoppelt**. Online-Status-Updates laufen jetzt nur noch pro Benutzer-ID-Lifecycle statt bei jeder Profil-Aenderung, wodurch Dashboard, News, Feedback und Admin-Logs wieder stabil reagieren.
 

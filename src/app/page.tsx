@@ -30,8 +30,18 @@ export default function Dashboard() {
   const [polls, setPolls] = useState<Poll[]>([])
   const [allFinances, setAllFinances] = useState<FinanceEntry[]>([])
   const [currentFunding, setCurrentFunding] = useState(0)
-  const [expenseGoal, setExpenseGoal] = useState(0)
-  const [loading, setLoading] = useState(true)
+  const [initialLoadState, setInitialLoadState] = useState({
+    settings: false,
+    todos: false,
+    events: false,
+    finances: false,
+    news: false,
+    polls: false,
+  })
+
+  const markLoaded = (key: keyof typeof initialLoadState) => {
+    setInitialLoadState((previous) => (previous[key] ? previous : { ...previous, [key]: true }))
+  }
 
   useEffect(() => {
     // 1. Listen to Settings
@@ -46,6 +56,7 @@ export default function Dashboard() {
           funding_goal: 10000 
         })
       }
+      markLoaded('settings')
     })
 
     // 2. Listen to Todos (top 5 most relevant tasks total)
@@ -103,6 +114,7 @@ export default function Dashboard() {
       const finalTodos = sortedTodos.slice(0, 5)
 
       setTodos(finalTodos)
+      markLoaded('todos')
     })
 
     // 3. Listen to Events (next 3)
@@ -111,6 +123,7 @@ export default function Dashboard() {
     const qEvents = query(eventsRef, where('event_date', '>=', now), orderBy('event_date', 'asc'), limit(3))
     const unsubscribeEvents = onSnapshot(qEvents, (snapshot) => {
       setEvents(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })))
+      markLoaded('events')
     })
 
     // 4. Listen to Finances for status
@@ -121,10 +134,10 @@ export default function Dashboard() {
       
       const amounts = data.map((entry) => Number(entry.amount) || 0)
       const incomeTotal = amounts.filter((value) => value > 0).reduce((acc, value) => acc + value, 0)
-      const plannedExpenses = amounts.filter((value) => value < 0).reduce((acc, value) => acc + Math.abs(value), 0)
+      const expenseTotal = amounts.filter((value) => value < 0).reduce((acc, value) => acc + Math.abs(value), 0)
 
-      setCurrentFunding(incomeTotal)
-      setExpenseGoal(plannedExpenses)
+      setCurrentFunding(incomeTotal - expenseTotal)
+      markLoaded('finances')
     })
 
     // 5. Listen to News (last 2)
@@ -132,7 +145,7 @@ export default function Dashboard() {
     const qNews = query(newsRef, orderBy('created_at', 'desc'), limit(2))
     const unsubscribeNews = onSnapshot(qNews, (snapshot) => {
       setNews(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })))
-      setLoading(false)
+      markLoaded('news')
     })
 
     // 6. Listen to Polls (last 5)
@@ -149,6 +162,7 @@ export default function Dashboard() {
         pollsData.push({ ...poll, options, votes })
       }
       setPolls(pollsData)
+      markLoaded('polls')
     })
 
     return () => {
@@ -266,7 +280,7 @@ export default function Dashboard() {
               <FundingStatus
                 key="funding"
                 current={currentFunding}
-                goal={expenseGoal > 0 ? expenseGoal : (settings?.funding_goal ?? 10000)}
+                goal={settings?.funding_goal ?? 10000}
                 initialTicketSales={settings?.expected_ticket_sales ?? 150}
                 onTicketSalesChange={handleTicketSalesChange}
               />
@@ -294,7 +308,7 @@ export default function Dashboard() {
               <ClassRanking
                 key="leaderboard"
                 finances={allFinances}
-                goal={settings?.funding_goal || 10000}
+                goal={settings?.funding_goal ?? 10000}
                 maxRows={4}
                 useScrollContainer={false}
               />
@@ -360,6 +374,8 @@ export default function Dashboard() {
 
   const sortedComponentKeys = sortedComponents.map((key) => key)
 
+  const isInitialDashboardDataLoading = Object.values(initialLoadState).some((isLoaded) => !isLoaded)
+
   const dashboardItems = sortedComponentKeys.reduce<DashboardItem[]>((items, key) => {
     if (key === 'polls') {
       return [...items, ...unvotedPolls.map((poll) => ({ type: 'poll' as const, poll }))]
@@ -368,7 +384,7 @@ export default function Dashboard() {
     return [...items, { type: 'component' as const, key }]
   }, [])
 
-  if (authLoading || loading) {
+  if (authLoading || isInitialDashboardDataLoading) {
     return <div className="flex items-center justify-center min-h-[50vh]">Lade Dashboard...</div>
   }
 
