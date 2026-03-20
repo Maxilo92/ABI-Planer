@@ -27,7 +27,7 @@ export default function ImpressumPage() {
             <h3 className="text-lg font-semibold border-b pb-2 mb-3">Angaben gemäß § 5 TMG</h3>
             <p className="text-muted-foreground leading-relaxed">
               Maximilian Priesnitz<br />
-              Wohnhaft in [Dein Ort/Adresse]<br />
+              Wohnhaft in Feldschlösschen<br />
               Deutschland
             </p>
           </section>
@@ -35,7 +35,7 @@ export default function ImpressumPage() {
           <section>
             <h3 className="text-lg font-semibold border-b pb-2 mb-3">Kontakt</h3>
             <p className="text-muted-foreground leading-relaxed">
-              E-Mail: [Deine E-Mail Adresse]<br />
+              E-Mail: priesnitz.maximilian@icloud.com<br />
               Webseite: https://github.com/Maxilo92/ABI-Planer
             </p>
           </section>

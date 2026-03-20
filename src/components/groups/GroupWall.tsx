@@ -247,8 +247,8 @@ export function GroupWall({ groupName, canManage = false, type = 'internal' }: G
               <p className="leading-relaxed whitespace-pre-wrap">{msg.content}</p>
               
               <div className={cn(
-                "absolute top-0 flex items-center gap-1.5 transition-all opacity-0 group-hover:opacity-100",
-                isOwn ? "right-full mr-3" : "left-full ml-3"
+                "absolute top-0 flex items-center gap-1.5 transition-all sm:opacity-0 sm:group-hover:opacity-100",
+                isOwn ? "right-full mr-2 sm:mr-3" : "left-full ml-2 sm:ml-3"
               )}>
                 {canManage && (
                   <button
@@ -259,7 +259,7 @@ export function GroupWall({ groupName, canManage = false, type = 'internal' }: G
                     )}
                     title={isPinned ? "Anheftung aufheben" : "Anheften"}
                   >
-                    {isPinned ? <PinOff className="h-3.5 w-3.5" /> : <Pin className="h-3.5 w-3.5" />}
+                    {isPinned ? <PinOff className="h-3 sm:h-3.5 w-3 sm:w-3.5" /> : <Pin className="h-3 sm:h-3.5 w-3 sm:w-3.5" />}
                   </button>
                 )}
                 {(canManage || isOwn) && (
@@ -268,7 +268,7 @@ export function GroupWall({ groupName, canManage = false, type = 'internal' }: G
                     className="p-1.5 bg-background border rounded-lg text-muted-foreground hover:text-destructive hover:border-destructive/30 shadow-sm hover:scale-110 transition-transform"
                     title="Löschen"
                   >
-                    <Trash2 className="h-3.5 w-3.5" />
+                    <Trash2 className="h-3 sm:h-3.5 w-3 sm:w-3.5" />
                   </button>
                 )}
               </div>

@@ -123,8 +123,8 @@ export function AddTodoDialog({ defaultGroup, parentId }: AddTodoDialogProps) {
       <DialogTrigger
         render={
           parentId ? (
-            <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-primary transition-opacity" title="Unteraufgabe hinzufügen">
-              <Plus className="h-3.5 w-3.5" />
+            <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-7 sm:w-7 text-muted-foreground hover:text-primary transition-opacity" title="Unteraufgabe hinzufügen">
+              <Plus className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
             </Button>
           ) : (
             <Button size="sm" className="gap-2">

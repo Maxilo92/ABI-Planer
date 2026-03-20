@@ -160,57 +160,59 @@ export default function FinancePage() {
           <CardTitle>Finanzverlauf</CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Datum</TableHead>
-                <TableHead>Beschreibung</TableHead>
-                <TableHead className="text-right">Betrag</TableHead>
-                {isPlanner && <TableHead className="text-right w-[100px]">Aktionen</TableHead>}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {finances.length === 0 ? (
+          <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+            <Table className="min-w-[600px] sm:min-w-0">
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={isPlanner ? 4 : 3} className="text-center py-4 text-muted-foreground italic">
-                    Noch keine Einnahmen erfasst.
-                  </TableCell>
+                  <TableHead>Datum</TableHead>
+                  <TableHead>Beschreibung</TableHead>
+                  <TableHead className="text-right">Betrag</TableHead>
+                  {isPlanner && <TableHead className="text-right w-[100px]">Aktionen</TableHead>}
                 </TableRow>
-              ) : (
-                finances.map((entry) => (
-                  <TableRow key={entry.id}>
-                    <TableCell>{format(toDate(entry.entry_date), 'dd.MM.yyyy', { locale: de })}</TableCell>
-                    <TableCell>
-                      <div className="flex flex-col">
-                        <span>{entry.description}</span>
-                        {entry.responsible_class && (
-                          <span className="text-[10px] text-muted-foreground">Kurs {entry.responsible_class}</span>
-                        )}
-                      </div>
+              </TableHeader>
+              <TableBody>
+                {finances.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={isPlanner ? 4 : 3} className="text-center py-4 text-muted-foreground italic">
+                      Noch keine Einnahmen erfasst.
                     </TableCell>
-                    <TableCell className={`text-right font-semibold ${Number(entry.amount) < 0 ? 'text-destructive' : 'text-success'}`}>
-                      {Number(entry.amount) < 0 ? '-' : '+'} {Math.abs(Number(entry.amount)).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
-                    </TableCell>
-                    {isPlanner && (
-                      <TableCell className="text-right">
-                        <div className="flex justify-end items-center gap-1">
-                          <EditFinanceDialog entry={entry} />
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                            onClick={() => handleDelete(entry.id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                  </TableRow>
+                ) : (
+                  finances.map((entry) => (
+                    <TableRow key={entry.id}>
+                      <TableCell className="whitespace-nowrap">{format(toDate(entry.entry_date), 'dd.MM.yyyy', { locale: de })}</TableCell>
+                      <TableCell>
+                        <div className="flex flex-col min-w-[150px]">
+                          <span>{entry.description}</span>
+                          {entry.responsible_class && (
+                            <span className="text-[10px] text-muted-foreground">Kurs {entry.responsible_class}</span>
+                          )}
                         </div>
                       </TableCell>
-                    )}
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+                      <TableCell className={`text-right font-semibold whitespace-nowrap ${Number(entry.amount) < 0 ? 'text-destructive' : 'text-success'}`}>
+                        {Number(entry.amount) < 0 ? '-' : '+'} {Math.abs(Number(entry.amount)).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
+                      </TableCell>
+                      {isPlanner && (
+                        <TableCell className="text-right">
+                          <div className="flex justify-end items-center gap-1">
+                            <EditFinanceDialog entry={entry} />
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                              onClick={() => handleDelete(entry.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      )}
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
     </div>

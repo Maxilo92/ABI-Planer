@@ -307,19 +307,102 @@ export default function AdminPage() {
             </Table>
           </div>
 
-          {/* Mobile List View (Simplified) */}
+          {/* Mobile List View (Functional) */}
           <div className="lg:hidden space-y-4">
-            {filteredProfiles.map(p => (
-              <div key={p.id} className="border rounded-lg p-4 space-y-3">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <Link href={`/profil/${p.id}`} className="font-bold hover:underline">{p.full_name || 'Unbekannt'}</Link>
-                    <p className="text-xs text-muted-foreground break-all">{p.email}</p>
+            {filteredProfiles.map((p) => {
+              const isMainAdminAccount = p.role === 'admin_main' || p.role === 'admin'
+              const isSelf = p.id === profile.id
+              const canManageRoleActions = !isMainAdminAccount && !isSelf
+
+              return (
+                <div key={p.id} className="border rounded-xl p-4 space-y-4 bg-card/50">
+                  <div className="flex justify-between items-start gap-2">
+                    <div className="min-w-0">
+                      <Link href={`/profil/${p.id}`} className="font-bold hover:underline truncate block">
+                        {p.full_name || 'Unbekannt'}
+                      </Link>
+                      <p className="text-xs text-muted-foreground break-all">{p.email}</p>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <Badge variant="outline" className="capitalize">
+                        {p.role}
+                      </Badge>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger
+                          render={
+                            <Button variant="ghost" size="icon" className="h-8 w-8" disabled={!canManageRoleActions}>
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          }
+                        />
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => handleUpdateProfile(p.id, { role: 'admin' })}>
+                            <Shield className="mr-2 h-4 w-4" /> Zum Admin
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleUpdateProfile(p.id, { role: 'admin_co' })}>
+                            <Shield className="mr-2 h-4 w-4" /> Zum Co-Admin
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleUpdateProfile(p.id, { role: 'planner' })}>
+                            <Shield className="mr-2 h-4 w-4" /> Zum Planer
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleUpdateProfile(p.id, { role: 'viewer' })}>
+                            <User className="mr-2 h-4 w-4" /> Zum Zuschauer
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleSetTimeout(p.id, 24)}>
+                            <Clock3 className="mr-2 h-4 w-4" /> Timeout 24h
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleSetTimeout(p.id, 24 * 7)}>
+                            <Clock3 className="mr-2 h-4 w-4" /> Timeout 7 Tage
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleClearTimeout(p.id)}>
+                            <Undo2 className="mr-2 h-4 w-4" /> Timeout aufheben
+                          </DropdownMenuItem>
+                          <ResetPasswordDialog userEmail={p.email} userName={p.full_name || 'User'} />
+                          <DropdownMenuItem className="text-destructive" onClick={() => handleDeleteProfile(p.id)}>
+                            <Trash2 className="mr-2 h-4 w-4" /> Löschen
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
                   </div>
-                  <Badge variant="outline" className="capitalize">{p.role}</Badge>
+
+                  {p.timeout_until && new Date(p.timeout_until).getTime() > Date.now() && (
+                    <Badge variant="destructive" className="w-full justify-center py-1">
+                      Nutzer ist getimeoutet
+                    </Badge>
+                  )}
+
+                  <div className="grid grid-cols-2 gap-3 pt-2 border-t">
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold uppercase text-muted-foreground ml-1">Kurs</label>
+                      <select
+                        className="h-9 w-full rounded-md border bg-background px-2 text-xs"
+                        value={p.class_name || ''}
+                        onChange={(e) => handleUpdateProfile(p.id, { class_name: e.target.value || null })}
+                      >
+                        <option value="">Kein Kurs</option>
+                        {courses.map((course) => (
+                          <option key={course} value={course}>{course}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold uppercase text-muted-foreground ml-1">Gruppe</label>
+                      <select
+                        className="h-9 w-full rounded-md border bg-background px-2 text-xs"
+                        value={p.planning_group || ''}
+                        onChange={(e) => handleUpdateProfile(p.id, { planning_group: e.target.value || null })}
+                      >
+                        <option value="">Keine Gruppe</option>
+                        {planningGroups.map((groupName) => (
+                          <option key={groupName} value={groupName}>{groupName}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </CardContent>
       </Card>

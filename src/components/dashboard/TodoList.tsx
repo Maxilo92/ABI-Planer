@@ -219,7 +219,7 @@ export function TodoList({
                     </div>
                   </div>
                   {canManage && (
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-0.5 sm:gap-1">
                       {todo.depth < 4 && (
                         <AddTodoDialog parentId={todo.id} defaultGroup={todo.assigned_to_group || undefined} />
                       )}
@@ -227,11 +227,11 @@ export function TodoList({
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-7 w-7 text-muted-foreground hover:text-destructive transition-opacity"
+                        className="h-8 w-8 sm:h-7 sm:w-7 text-muted-foreground hover:text-destructive transition-opacity"
                         onClick={() => handleDelete(todo.id)}
                         title="Löschen"
                       >
-                        <Trash2 className="h-3.5 w-3.5" />
+                        <Trash2 className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
                       </Button>
                     </div>
                   )}

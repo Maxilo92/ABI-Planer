@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.18.10] - 2026-03-20
+- Feature: **Mobile-First User Management**. Die Benutzerverwaltung im Admin-Bereich wurde für mobile Geräte komplett überarbeitet und bietet nun volle Feature-Parität zur Desktop-Version (Rollen, Kurse, Gruppen, Timeouts).
+- UI: **Mobile Accessibility Improvements**. Größere Touch-Targets für To-Do Aktionen, reaktiver Finanzverlauf mit horizontalem Scrolling und verbesserte mobile Bedienung der Pinnwand-Aktionen.
+
 ## [0.18.9] - 2026-03-20
 - Fix: **Groups Page Router**. Resolved a build error in `src/app/gruppen/page.tsx` where `router` was undefined.
 
