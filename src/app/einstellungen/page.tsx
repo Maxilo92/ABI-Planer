@@ -4,13 +4,21 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { signOut } from 'firebase/auth'
-import { User, MoonStar, MessageSquarePlus, LogOut, Users, Save, Plus, Trash2, Sparkles } from 'lucide-react'
+import { User, MoonStar, MessageSquarePlus, LogOut, Users, Save, Plus, Trash2, Sparkles, AlertTriangle } from 'lucide-react'
 import { collection, doc, getDocs, onSnapshot, query, setDoc, updateDoc, where, writeBatch } from 'firebase/firestore'
 
 import { auth, db } from '@/lib/firebase'
 import { useAuth } from '@/context/AuthContext'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogDescription, 
+  DialogFooter, 
+  DialogHeader, 
+  DialogTitle 
+} from '@/components/ui/dialog'
 import { ThemeToggle } from '@/components/layout/ThemeToggle'
 import { AddFeedbackDialog } from '@/components/modals/AddFeedbackDialog'
 import { Input } from '@/components/ui/input'
@@ -34,11 +42,62 @@ interface PlanningGroupRow {
 export default function SettingsPage() {
   const { user, profile, loading } = useAuth()
   const [courseRows, setCourseRows] = useState<CourseRow[]>([])
+  const [originalCourses, setOriginalCourses] = useState<string[]>([])
   const [planningGroupRows, setPlanningGroupRows] = useState<PlanningGroupRow[]>([])
+  const [originalGroups, setOriginalGroups] = useState<{name: string, leader_user_id: string | null}[]>([])
   const [planners, setPlanners] = useState<Profile[]>([])
   const [savingCourses, setSavingCourses] = useState(false)
   const [savingGroups, setSavingGroups] = useState(false)
+  const [isGuardOpen, setIsGuardOpen] = useState(false)
+  const [nextPath, setNextPath] = useState<string | null>(null)
   const router = useRouter()
+
+  // Handle internal navigation clicks
+  useEffect(() => {
+    const handleAnchorClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement
+      const anchor = target.closest('a')
+
+      if (anchor && anchor.href && anchor.target !== '_blank') {
+        const url = new URL(anchor.href)
+        if (url.origin === window.location.origin && url.pathname !== window.location.pathname) {
+          if (hasUnsavedChanges()) {
+            e.preventDefault()
+            setNextPath(url.pathname + url.search)
+            setIsGuardOpen(true)
+          }
+        }
+      }
+    }
+
+    window.addEventListener('click', handleAnchorClick, true)
+    return () => window.removeEventListener('click', handleAnchorClick, true)
+  }, [courseRows, planningGroupRows, originalCourses, originalGroups])
+
+  const handleConfirmNavigation = () => {
+    setIsGuardOpen(false)
+    if (nextPath) {
+      router.push(nextPath)
+    }
+  }
+
+  const handleSaveAll = async () => {
+    setSavingCourses(true)
+    setSavingGroups(true)
+    try {
+      await Promise.all([handleSaveCourses(), handleSavePlanningGroups()])
+      toast.success('Alles gespeichert.')
+      if (nextPath) {
+        router.push(nextPath)
+      }
+    } catch (error) {
+      console.error('Error saving all:', error)
+    } finally {
+      setSavingCourses(false)
+      setSavingGroups(false)
+      setIsGuardOpen(false)
+    }
+  }
 
   useEffect(() => {
     if (!loading && !user) {
@@ -56,6 +115,7 @@ export default function SettingsPage() {
         ? planningGroups
         : [{ name: 'Ballplanung', leader_user_id: null }, { name: 'Gelder sammeln', leader_user_id: null }]
 
+      setOriginalCourses(normalizedCourses)
       setCourseRows(
         normalizedCourses.map((course: string, index: number) => ({
           id: `course-${index}`,
@@ -64,6 +124,7 @@ export default function SettingsPage() {
         }))
       )
 
+      setOriginalGroups(normalizedGroups.map((g: any) => ({ name: g.name, leader_user_id: g.leader_user_id || null })))
       setPlanningGroupRows(
         normalizedGroups
           .filter((entry: { name?: string }) => typeof entry?.name === 'string' && entry.name.trim().length > 0)
@@ -78,6 +139,35 @@ export default function SettingsPage() {
 
     return () => unsubscribe()
   }, [])
+
+  // Check for unsaved changes
+  const hasUnsavedChanges = () => {
+    // Check courses
+    const currentCourses = courseRows.map(r => r.after.trim()).filter(Boolean)
+    const coursesChanged = JSON.stringify(currentCourses) !== JSON.stringify(originalCourses)
+    
+    // Check groups
+    const currentGroups = planningGroupRows.map(r => ({ 
+      name: r.after.trim(), 
+      leader_user_id: r.leaderUserId || null 
+    })).filter(g => g.name)
+    const groupsChanged = JSON.stringify(currentGroups) !== JSON.stringify(originalGroups)
+    
+    return coursesChanged || groupsChanged
+  }
+
+  // Warning for page refresh/close
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasUnsavedChanges()) {
+        e.preventDefault()
+        e.returnValue = ''
+      }
+    }
+
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+  }, [courseRows, planningGroupRows, originalCourses, originalGroups])
 
   useEffect(() => {
     const approvedProfilesRef = query(collection(db, 'profiles'), where('is_approved', '==', true))
@@ -530,6 +620,31 @@ export default function SettingsPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Navigation Guard Dialog */}
+      <Dialog open={isGuardOpen} onOpenChange={setIsGuardOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-destructive">
+              <AlertTriangle className="h-5 w-5" /> Ungespeicherte Änderungen
+            </DialogTitle>
+            <DialogDescription>
+              Du hast Änderungen vorgenommen, die noch nicht gespeichert wurden. Möchtest du diese jetzt speichern oder die Seite verlassen?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex flex-col sm:flex-row gap-2">
+            <Button variant="ghost" onClick={handleConfirmNavigation}>
+              Verwerfen & Verlassen
+            </Button>
+            <Button variant="outline" onClick={() => setIsGuardOpen(false)}>
+              Abbrechen
+            </Button>
+            <Button onClick={handleSaveAll} disabled={savingCourses || savingGroups}>
+              Speichern & Fortfahren
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

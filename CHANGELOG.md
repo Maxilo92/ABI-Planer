@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.18.0] - 2026-03-20
+- Feature: **Navigation Guard**. Auf der Einstellungsseite erscheint nun eine Warnung (Modal), wenn man versucht die Seite mit ungespeicherten Änderungen am Kurssystem oder den Planungsgruppen zu verlassen.
+
 ## [0.17.9] - 2026-03-20
 - UI: **Lootbox Refinement**. Die Lootbox-Seite wurde auf das Wesentliche reduziert. Das Öffnen erfolgt nun nach genau 5 Klicks (4 Upgrades + 1 Reveal).
 - UI: **Animationen**. Shake-Effekte beim Upgrade und eine verbesserte Reveal-Animation hinzugefügt.
