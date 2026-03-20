@@ -1,12 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { db } from '@/lib/firebase'
 import { doc, onSnapshot } from 'firebase/firestore'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { X, Cookie, Info } from 'lucide-react'
-import { cn } from '@/lib/utils'
 
 const FALLBACK_MESSAGES = [
   "Diese Webseite nutzt keine Cookies. Aber hast du schon mal drüber nachgedacht, echte Cookies in der Schule zu verkaufen, um Geld für die Abikasse zu sammeln?",
@@ -25,6 +24,7 @@ export function RandomCookieBanner() {
   const [show, setShow] = useState(false)
   const [message, setMessage] = useState('')
   const [isFirstStartQuestion, setIsFirstStartQuestion] = useState(false)
+  const decisionHandledRef = useRef(false)
 
   const closeBanner = () => {
     if (isFirstStartQuestion) {
@@ -35,11 +35,9 @@ export function RandomCookieBanner() {
   }
 
   useEffect(() => {
-    // Check if it has already been shown in THIS session
-    const lastShown = sessionStorage.getItem('cookie_banner_shown')
-    if (lastShown) return
-
     const unsubscribe = onSnapshot(doc(db, 'settings', 'global'), (snapshot) => {
+      if (decisionHandledRef.current) return
+
       let chance = 0.3
       let messages = FALLBACK_MESSAGES
 
@@ -57,18 +55,19 @@ export function RandomCookieBanner() {
 
       // First app start: explicit cookie question. Afterwards: standard info banner.
       if (isFirstVisit) {
+        decisionHandledRef.current = true
         setIsFirstStartQuestion(true)
         setMessage(FIRST_START_QUESTION)
 
         const timer = setTimeout(() => {
           setShow(true)
-          sessionStorage.setItem('cookie_banner_shown', 'true')
         }, 1200)
 
         return () => clearTimeout(timer)
       }
 
       if (Math.random() < chance) {
+        decisionHandledRef.current = true
         setIsFirstStartQuestion(false)
         setMessage(STANDARD_INFO_MESSAGE)
 
@@ -80,7 +79,6 @@ export function RandomCookieBanner() {
 
         const timer = setTimeout(() => {
           setShow(true)
-          sessionStorage.setItem('cookie_banner_shown', 'true')
         }, 3000)
 
         return () => clearTimeout(timer)

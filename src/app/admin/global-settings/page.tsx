@@ -274,14 +274,14 @@ export default function GlobalSettingsPage() {
               Du hast Änderungen vorgenommen, die noch nicht gespeichert wurden. Möchtest du diese jetzt speichern oder die Seite verlassen?
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="flex flex-col sm:flex-row gap-2">
-            <Button variant="ghost" onClick={handleConfirmNavigation}>
+          <DialogFooter className="flex flex-col gap-2 sm:flex-col">
+            <Button variant="ghost" className="w-full" onClick={handleConfirmNavigation}>
               Verwerfen & Verlassen
             </Button>
-            <Button variant="outline" onClick={() => setIsGuardOpen(false)}>
+            <Button variant="outline" className="w-full" onClick={() => setIsGuardOpen(false)}>
               Abbrechen
             </Button>
-            <Button onClick={handleSaveAndContinue} disabled={saving}>
+            <Button className="w-full" onClick={handleSaveAndContinue} disabled={saving}>
               Speichern & Fortfahren
             </Button>
           </DialogFooter>
