@@ -45,6 +45,7 @@ type GroupsMainTab = 'mein-team' | 'alle-gruppen' | 'shared-hub'
 
 function GroupsPageContent() {
   const { user, profile, loading: authLoading } = useAuth()
+  const router = useRouter()
   const searchParams = useSearchParams()
   const [profiles, setProfiles] = useState<Profile[]>([])
   const [planningGroups, setPlanningGroups] = useState<PlanningGroup[]>([])

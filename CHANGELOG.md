@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.18.9] - 2026-03-20
+- Fix: **Groups Page Router**. Resolved a build error in `src/app/gruppen/page.tsx` where `router` was undefined.
+
 ## [0.18.8] - 2026-03-20
 - Feature: **User Presence System**. Implementierung einer "Ist online" und "Zuletzt online" Statusanzeige für alle Benutzer.
 - Core: **Heartbeat Mechanism**. Ein in `AuthContext` integrierter Heartbeat aktualisiert den Status alle 2 Minuten in Firestore.
@@ -10,6 +13,7 @@
 - UI: **Responsive Profile Tables**. Tabellarische Übersicht aller Nutzer mit direkter Bearbeitungsfunktion für Rollen und Kurszuweisungen.
 
 ## [0.18.6] - 2026-03-20
+- Feature: **Groups Page Overhaul**. Die Gruppen-Seite wurde komplett überarbeitet, um eine reaktive Navigation mittels `useSearchParams` zu ermöglichen.
 - Fix: **Reactive Group Navigation**. Die Navigation innerhalb der Gruppen wurde auf `useSearchParams` umgestellt, um die Reaktivität und Browser-History-Unterstützung zu verbessern.
 
 ## [0.18.5] - 2026-03-20
