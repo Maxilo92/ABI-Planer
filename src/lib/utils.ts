@@ -1,5 +1,7 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
+import { formatDistanceToNow } from 'date-fns'
+import { de } from 'date-fns/locale'
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -25,6 +27,26 @@ export function toDate(date: any): Date {
   // If it's a string (ISO) or number (timestamp)
   const parsed = new Date(date)
   return isNaN(parsed.getTime()) ? new Date() : parsed
+}
+
+/**
+ * Returns the online status and a formatted label for the user.
+ * Implements a 5-minute stale session fallback.
+ */
+export function getOnlineStatus(isOnline: boolean, lastOnline: any): { isOnline: boolean; label: string } {
+  const lastOnlineDate = toDate(lastOnline)
+  const now = new Date()
+  const diffInMinutes = (now.getTime() - lastOnlineDate.getTime()) / (1000 * 60)
+  
+  // Stale session fallback: if isOnline is true but lastOnline is more than 5 minutes old
+  const effectiveOnline = isOnline && diffInMinutes < 5
+
+  if (effectiveOnline) {
+    return { isOnline: true, label: 'Online' }
+  }
+
+  const relativeTime = formatDistanceToNow(lastOnlineDate, { addSuffix: true, locale: de })
+  return { isOnline: false, label: `Zuletzt online: ${relativeTime}` }
 }
 
 /**

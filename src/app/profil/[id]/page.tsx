@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge'
 import { Loader2, ArrowLeft, Mail, Shield, Calendar, Users, User } from 'lucide-react'
 import { format } from 'date-fns'
 import { de } from 'date-fns/locale'
-import { toDate } from '@/lib/utils'
+import { toDate, getOnlineStatus, cn } from '@/lib/utils'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 
@@ -62,6 +62,7 @@ export default function PublicProfilePage({ params }: { params: Promise<{ id: st
   const userInitial = targetProfile.full_name?.substring(0, 1).toUpperCase() || 'U'
   const userCourse = targetProfile.class_name
   const plannerGroup = targetProfile.planning_group
+  const { isOnline, label: onlineLabel } = getOnlineStatus(targetProfile.isOnline, targetProfile.lastOnline)
 
   const getRoleLabel = (role: UserRole) => {
     if (role === 'admin_main' || role === 'admin') return 'Main Admin'
@@ -84,22 +85,38 @@ export default function PublicProfilePage({ params }: { params: Promise<{ id: st
 
       <Card>
         <CardHeader className="flex flex-row items-center gap-4 space-y-0 border-b pb-6">
-          <Avatar className="h-16 w-16">
-            <AvatarFallback className="bg-primary/10 text-primary text-xl font-bold">
-              {userInitial}
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex flex-col">
-            <CardTitle className="text-2xl">{targetProfile.full_name}</CardTitle>
-            <div className="flex items-center gap-1.5 mt-1">
-              <Badge variant={targetProfile.role.includes('admin') ? 'default' : 'secondary'} className="uppercase text-[10px]">
-                {getRoleLabel(targetProfile.role)}
-              </Badge>
-              {userCourse && (
-                <Badge variant="outline" className="uppercase text-[10px] font-bold">
-                  Kurs {userCourse}
-                </Badge>
+          <div className="relative">
+            <Avatar className="h-16 w-16">
+              <AvatarFallback className="bg-primary/10 text-primary text-xl font-bold">
+                {userInitial}
+              </AvatarFallback>
+            </Avatar>
+            <div 
+              className={cn(
+                "absolute bottom-0 right-0 w-4 h-4 rounded-full border-2 border-background",
+                isOnline ? "bg-green-500" : "bg-muted-foreground"
               )}
+              title={onlineLabel}
+            />
+          </div>
+          <div className="flex flex-col">
+            <CardTitle className="text-2xl flex items-center gap-2">
+              {targetProfile.full_name}
+            </CardTitle>
+            <div className="flex flex-col gap-1.5 mt-1">
+              <div className="flex items-center gap-1.5">
+                <Badge variant={targetProfile.role.includes('admin') ? 'default' : 'secondary'} className="uppercase text-[10px]">
+                  {getRoleLabel(targetProfile.role)}
+                </Badge>
+                {userCourse && (
+                  <Badge variant="outline" className="uppercase text-[10px] font-bold">
+                    Kurs {userCourse}
+                  </Badge>
+                )}
+              </div>
+              <p className="text-[11px] text-muted-foreground font-medium">
+                {onlineLabel}
+              </p>
             </div>
           </div>
         </CardHeader>

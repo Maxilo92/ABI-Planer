@@ -3,7 +3,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
 import { auth, db } from '@/lib/firebase'
 import { onAuthStateChanged, signOut, User } from 'firebase/auth'
-import { doc, onSnapshot } from 'firebase/firestore'
+import { doc, onSnapshot, updateDoc, serverTimestamp } from 'firebase/firestore'
 
 import { Profile } from '@/types/database'
 
@@ -105,6 +105,51 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (profileUnsubscribe) profileUnsubscribe()
     }
   }, [])
+
+  // Heartbeat logic to track online status
+  useEffect(() => {
+    if (!user || !profile) return
+
+    const updateStatus = async (isOnline: boolean) => {
+      try {
+        const docRef = doc(db, 'profiles', user.uid)
+        await updateDoc(docRef, {
+          isOnline,
+          lastOnline: serverTimestamp(),
+        })
+      } catch (error) {
+        console.error('Error updating online status:', error)
+      }
+    }
+
+    // Set online status initially
+    updateStatus(true)
+
+    // Heartbeat every 2 minutes
+    const interval = setInterval(() => {
+      updateStatus(true)
+    }, 120000)
+
+    // Handle tab close or navigation away
+    const handleBeforeUnload = () => {
+      const docRef = doc(db, 'profiles', user.uid)
+      // Note: updateDoc is async and might not complete in beforeunload,
+      // but it's the requested method.
+      updateDoc(docRef, {
+        isOnline: false,
+        lastOnline: serverTimestamp(),
+      }).catch(console.error)
+    }
+
+    window.addEventListener('beforeunload', handleBeforeUnload)
+
+    return () => {
+      clearInterval(interval)
+      window.removeEventListener('beforeunload', handleBeforeUnload)
+      // Set to offline on logout or unmount
+      updateStatus(false)
+    }
+  }, [user?.uid, !!profile])
 
   return (
     <AuthContext.Provider value={{ user, profile, loading }}>

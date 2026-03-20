@@ -1,3 +1,5 @@
+import { Timestamp } from 'firebase/firestore';
+
 export type UserRole = 'viewer' | 'planner' | 'admin' | 'admin_main' | 'admin_co';
 export type TodoStatus = 'open' | 'in_progress' | 'done';
 export type ClassName = string;
@@ -23,6 +25,8 @@ export interface Profile {
   easter_egg_unlocked?: boolean;
   created_at: string;
   last_visited?: Record<string, string> | null;
+  isOnline: boolean;
+  lastOnline: Timestamp | Date;
 }
 
 export interface GroupMessage {
