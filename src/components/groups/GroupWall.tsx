@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { db } from '@/lib/firebase'
 import { 
   collection, 
@@ -123,7 +123,7 @@ export function GroupWall({ groupName, canManage = false, type = 'internal' }: G
     }
   }
 
-  const handleDeleteMessage = async (messageId: string) => {
+  const handleDeleteMessage = useCallback(async (messageId: string) => {
     const message = messages.find((m) => m.id === messageId)
     if (!canManage && message?.created_by !== user?.uid) return
     
@@ -145,9 +145,9 @@ export function GroupWall({ groupName, canManage = false, type = 'internal' }: G
       console.error('Error deleting message:', error)
       toast.error('Fehler beim Löschen.')
     }
-  }
+  }, [messages, canManage, user, profile, groupName, type])
 
-  const handlePinMessage = async (messageId: string, isPinned: boolean) => {
+  const handlePinMessage = useCallback(async (messageId: string, isPinned: boolean) => {
     if (!canManage) return
 
     try {
@@ -169,12 +169,12 @@ export function GroupWall({ groupName, canManage = false, type = 'internal' }: G
       console.error('Error pinning message:', error)
       toast.error('Fehler beim Anheften.')
     }
-  }
+  }, [canManage, user, profile, groupName, type])
 
   const pinnedMessages = messages.filter(m => m.pinned)
   const regularMessages = messages.filter(m => !m.pinned)
 
-  const renderMessage = (msg: GroupMessage) => {
+  const renderMessage = useCallback((msg: GroupMessage) => {
     const isOwn = msg.created_by === user?.uid
     const date = toDate(msg.created_at)
     const isPinned = msg.pinned
@@ -285,10 +285,10 @@ export function GroupWall({ groupName, canManage = false, type = 'internal' }: G
         </div>
       </div>
     )
-  }
+  }, [user?.uid, type, canManage, handlePinMessage, handleDeleteMessage])
 
   return (
-    <Card className="flex flex-col h-[650px] shadow-lg border-primary/5 overflow-hidden">
+    <Card className="flex flex-col h-[550px] md:h-[650px] lg:h-[750px] shadow-lg border-primary/5 overflow-hidden">
       <CardHeader className="py-4 px-6 border-b bg-muted/20 backdrop-blur-md">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">

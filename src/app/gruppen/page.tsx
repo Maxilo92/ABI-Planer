@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { db } from '@/lib/firebase'
-import { collection, query, onSnapshot, doc, updateDoc, where, getDoc, orderBy } from 'firebase/firestore'
+import { collection, query, onSnapshot, doc, updateDoc, where, getDoc, orderBy, writeBatch } from 'firebase/firestore'
 import { useAuth } from '@/context/AuthContext'
 import { Profile, PlanningGroup, Settings, Todo, Event } from '@/types/database'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -118,9 +118,16 @@ export default function GroupsPage() {
     try {
       const profileRef = doc(db, 'profiles', userId)
       
-      await updateDoc(profileRef, {
+      const updateData: any = {
         planning_group: groupName
-      })
+      }
+
+      // Fix #1: Reset is_group_leader to false when removed from group
+      if (groupName === null) {
+        updateData.is_group_leader = false
+      }
+      
+      await updateDoc(profileRef, updateData)
 
       if (groupName) {
         toast.success(`${targetProfile?.full_name || 'Nutzer'} zur Gruppe "${groupName}" hinzugefügt.`)
@@ -169,23 +176,28 @@ export default function GroupsPage() {
 
         const previousLeaderId = currentGroups.find(g => g.name === groupName)?.leader_user_id
 
-        await updateDoc(settingsRef, {
+        // Fix #2: Use writeBatch for atomic updates
+        const batch = writeBatch(db)
+        
+        batch.update(settingsRef, {
           planning_groups: updatedGroups
         })
 
         // Unset old leader
         if (previousLeaderId && previousLeaderId !== leaderUserId) {
-          await updateDoc(doc(db, 'profiles', previousLeaderId), {
+          batch.update(doc(db, 'profiles', previousLeaderId), {
             is_group_leader: false
           })
         }
 
         // Also update the is_group_leader flag on the profile
         if (leaderUserId) {
-          await updateDoc(doc(db, 'profiles', leaderUserId), {
+          batch.update(doc(db, 'profiles', leaderUserId), {
             is_group_leader: true
           })
         }
+
+        await batch.commit()
 
         toast.success(`Gruppenleiter für "${groupName}" aktualisiert.`)
         await logAction('GROUP_LEADER_ASSIGNED', user!.uid, profile?.full_name, {
@@ -374,7 +386,7 @@ export default function GroupsPage() {
                             member={member}
                             isLeader={member.id === myTeamLeader || !!member.is_group_leader}
                             showActions={canManageTeamMembers}
-                            onMakeLeader={(id) => handleAssignLeader(profile.planning_group!, id)}
+                            onMakeLeader={isPlanner ? (id) => handleAssignLeader(profile.planning_group!, id) : undefined}
                             onRemove={(id) => handleUpdateMember(id, null)}
                           />
                         ))}
