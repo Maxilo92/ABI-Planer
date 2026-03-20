@@ -1,6 +1,6 @@
 'use client'
 
-import { Profile, Event } from '@/types/database'
+import { Profile, Event, Todo } from '@/types/database'
 import { useState, useEffect } from 'react'
 import { db } from '@/lib/firebase'
 import { collection, query, orderBy, onSnapshot, doc, updateDoc, deleteDoc } from 'firebase/firestore'
@@ -9,10 +9,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
-import { MoreVertical, Shield, User, Trash2, Clock3, Undo2, Calendar, MapPin, Search } from 'lucide-react'
+import { MoreVertical, Shield, User, Trash2, Clock3, Undo2, Calendar, MapPin, Search, CheckSquare, ListTodo } from 'lucide-react'
 import { ResetPasswordDialog } from '@/components/modals/ResetPasswordDialog'
 import { EditEventDialog } from '@/components/modals/EditEventDialog'
 import { AddEventDialog } from '@/components/modals/AddEventDialog'
+import { EditTodoDialog } from '@/components/modals/EditTodoDialog'
+import { AddTodoDialog } from '@/components/modals/AddTodoDialog'
 import { useAuth } from '@/context/AuthContext'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -28,8 +30,10 @@ export default function AdminPage() {
   const { user, profile, loading: authLoading } = useAuth()
   const [profiles, setProfiles] = useState<Profile[]>([])
   const [events, setEvents] = useState<Event[]>([])
+  const [todos, setTodos] = useState<Todo[]>([])
   const [userSearch, setUserSearch] = useState('')
   const [eventSearch, setEventSearch] = useState('')
+  const [todoSearch, setTodoSearch] = useState('')
   const [courses, setCourses] = useState<string[]>([])
   const [planningGroups, setPlanningGroups] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
@@ -54,12 +58,18 @@ export default function AdminPage() {
     const qEvents = query(collection(db, 'events'), orderBy('event_date', 'desc'))
     const unsubscribeEvents = onSnapshot(qEvents, (snapshot) => {
       setEvents(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Event)))
+    })
+
+    const qTodos = query(collection(db, 'todos'), orderBy('created_at', 'desc'))
+    const unsubscribeTodos = onSnapshot(qTodos, (snapshot) => {
+      setTodos(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Todo)))
       setLoading(false)
     })
 
     return () => {
       unsubscribeProfiles()
       unsubscribeEvents()
+      unsubscribeTodos()
     }
   }, [])
 
@@ -184,6 +194,21 @@ export default function AdminPage() {
     }
   }
 
+  const handleDeleteTodo = async (id: string) => {
+    if (!confirm('Diese Aufgabe wirklich löschen? Alle Unteraufgaben werden ebenfalls gelöscht.')) return
+    try {
+      // Find children
+      const children = todos.filter(t => t.parentId === id)
+      for (const child of children) {
+        await deleteDoc(doc(db, 'todos', child.id))
+      }
+      await deleteDoc(doc(db, 'todos', id))
+      toast.success('Aufgabe gelöscht.')
+    } catch (err) {
+      toast.error('Fehler beim Löschen.')
+    }
+  }
+
   if (authLoading || loading) {
     return <div className="flex items-center justify-center min-h-[50vh]">Lade Admin Dashboard...</div>
   }
@@ -202,6 +227,20 @@ export default function AdminPage() {
     e.location?.toLowerCase().includes(eventSearch.toLowerCase())
   )
 
+  const filteredTodos = todos.filter(t => 
+    t.title.toLowerCase().includes(todoSearch.toLowerCase()) ||
+    t.description?.toLowerCase().includes(todoSearch.toLowerCase())
+  )
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'open': return <Badge variant="secondary">Offen</Badge>
+      case 'in_progress': return <Badge variant="outline" className="text-amber-600 border-amber-200 bg-amber-50">In Arbeit</Badge>
+      case 'done': return <Badge variant="outline" className="text-emerald-600 border-emerald-200 bg-emerald-50">Erledigt</Badge>
+      default: return <Badge variant="outline">{status}</Badge>
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -210,9 +249,12 @@ export default function AdminPage() {
       </div>
 
       <Tabs defaultValue="users" className="w-full">
-        <TabsList className="grid w-full max-w-[400px] grid-cols-2">
+        <TabsList className="grid w-full max-w-[600px] grid-cols-3">
           <TabsTrigger value="users" className="gap-2">
             <User className="h-4 w-4" /> Benutzer
+          </TabsTrigger>
+          <TabsTrigger value="todos" className="gap-2">
+            <CheckSquare className="h-4 w-4" /> Aufgaben
           </TabsTrigger>
           <TabsTrigger value="events" className="gap-2">
             <Calendar className="h-4 w-4" /> Termine
@@ -326,6 +368,9 @@ export default function AdminPage() {
                                   <DropdownMenuItem onClick={() => handleSetTimeout(p.id, 24)}>
                                     <Clock3 className="mr-2 h-4 w-4" /> Timeout 24h
                                   </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => handleSetTimeout(p.id, 24 * 7)}>
+                                    <Clock3 className="mr-2 h-4 w-4" /> Timeout 7 Tage
+                                  </DropdownMenuItem>
                                   <DropdownMenuItem onClick={() => handleClearTimeout(p.id)}>
                                     <Undo2 className="mr-2 h-4 w-4" /> Timeout aufheben
                                   </DropdownMenuItem>
@@ -357,6 +402,89 @@ export default function AdminPage() {
                     </div>
                   </div>
                 ))}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="todos" className="mt-6">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0">
+              <div className="space-y-1">
+                <CardTitle>Plattform Aufgaben</CardTitle>
+                <CardDescription>Hier kannst du alle To-Dos zentral verwalten.</CardDescription>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="relative w-full max-w-sm">
+                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Aufgaben suchen..."
+                    className="pl-9"
+                    value={todoSearch}
+                    onChange={(e) => setTodoSearch(e.target.value)}
+                  />
+                </div>
+                <AddTodoDialog />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <Table className="min-w-[900px]">
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Titel</TableHead>
+                      <TableHead>Zuständig</TableHead>
+                      <TableHead>Frist</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Typ</TableHead>
+                      <TableHead className="text-right">Aktionen</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredTodos.map((todo) => {
+                      const deadline = todo.deadline_date ? toDate(todo.deadline_date) : null
+                      const isSubtask = !!todo.parentId
+
+                      return (
+                        <TableRow key={todo.id}>
+                          <TableCell className="font-medium max-w-[250px] truncate" title={todo.title}>
+                            <div className="flex items-center gap-2">
+                              {isSubtask && <ListTodo className="h-3.5 w-3.5 text-muted-foreground" />}
+                              {todo.title}
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-xs">
+                            {todo.assigned_to_user_name || todo.assigned_to_group || todo.assigned_to_class || '-'}
+                          </TableCell>
+                          <TableCell className="text-xs">
+                            {deadline ? format(deadline, 'dd.MM.yy', { locale: de }) : '-'}
+                          </TableCell>
+                          <TableCell>
+                            {getStatusBadge(todo.status)}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className="text-[10px]">
+                              {isSubtask ? 'Unteraufgabe' : 'Hauptaufgabe'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex justify-end gap-1">
+                              <EditTodoDialog todo={todo} />
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                                onClick={() => handleDeleteTodo(todo.id)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      )
+                    })}
+                  </TableBody>
+                </Table>
               </div>
             </CardContent>
           </Card>
