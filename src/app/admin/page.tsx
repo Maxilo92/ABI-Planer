@@ -1,6 +1,6 @@
 'use client'
 
-import { Profile } from '@/types/database'
+import { Profile, Event } from '@/types/database'
 import { useState, useEffect } from 'react'
 import { db } from '@/lib/firebase'
 import { collection, query, orderBy, onSnapshot, doc, updateDoc, deleteDoc } from 'firebase/firestore'
@@ -9,17 +9,27 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
-import { MoreVertical, Shield, User, Trash2, Clock3, Undo2 } from 'lucide-react'
+import { MoreVertical, Shield, User, Trash2, Clock3, Undo2, Calendar, MapPin, Search } from 'lucide-react'
 import { ResetPasswordDialog } from '@/components/modals/ResetPasswordDialog'
+import { EditEventDialog } from '@/components/modals/EditEventDialog'
+import { AddEventDialog } from '@/components/modals/AddEventDialog'
 import { useAuth } from '@/context/AuthContext'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { toast } from 'sonner'
 import { logAction } from '@/lib/logging'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { format } from 'date-fns'
+import { de } from 'date-fns/locale'
+import { toDate } from '@/lib/utils'
+import { Input } from '@/components/ui/input'
 
 export default function AdminPage() {
   const { user, profile, loading: authLoading } = useAuth()
   const [profiles, setProfiles] = useState<Profile[]>([])
+  const [events, setEvents] = useState<Event[]>([])
+  const [userSearch, setUserSearch] = useState('')
+  const [eventSearch, setEventSearch] = useState('')
   const [courses, setCourses] = useState<string[]>([])
   const [planningGroups, setPlanningGroups] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
@@ -36,13 +46,21 @@ export default function AdminPage() {
   }, [profile, authLoading, canManageUsers, router])
 
   useEffect(() => {
-    const q = query(collection(db, 'profiles'), orderBy('created_at', 'desc'))
-    const unsubscribe = onSnapshot(q, (snapshot) => {
+    const qProfiles = query(collection(db, 'profiles'), orderBy('created_at', 'desc'))
+    const unsubscribeProfiles = onSnapshot(qProfiles, (snapshot) => {
       setProfiles(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Profile)))
+    })
+
+    const qEvents = query(collection(db, 'events'), orderBy('event_date', 'desc'))
+    const unsubscribeEvents = onSnapshot(qEvents, (snapshot) => {
+      setEvents(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Event)))
       setLoading(false)
     })
 
-    return () => unsubscribe()
+    return () => {
+      unsubscribeProfiles()
+      unsubscribeEvents()
+    }
   }, [])
 
   useEffect(() => {
@@ -156,6 +174,16 @@ export default function AdminPage() {
     }
   }
 
+  const handleDeleteEvent = async (id: string) => {
+    if (!confirm('Diesen Termin wirklich löschen?')) return
+    try {
+      await deleteDoc(doc(db, 'events', id))
+      toast.success('Termin gelöscht.')
+    } catch (err) {
+      toast.error('Fehler beim Löschen.')
+    }
+  }
+
   if (authLoading || loading) {
     return <div className="flex items-center justify-center min-h-[50vh]">Lade Admin Dashboard...</div>
   }
@@ -164,264 +192,252 @@ export default function AdminPage() {
     return null
   }
 
+  const filteredProfiles = profiles.filter(p => 
+    p.full_name?.toLowerCase().includes(userSearch.toLowerCase()) ||
+    p.email?.toLowerCase().includes(userSearch.toLowerCase())
+  )
+
+  const filteredEvents = events.filter(e => 
+    e.title.toLowerCase().includes(eventSearch.toLowerCase()) ||
+    e.location?.toLowerCase().includes(eventSearch.toLowerCase())
+  )
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <h1 className="text-3xl font-bold tracking-tight">Admin Dashboard</h1>
-        <p className="text-muted-foreground text-sm">Nutzerverwaltung und Rechtevergabe</p>
+        <p className="text-muted-foreground text-sm">Zentrale Verwaltung der Plattform</p>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Benutzerkonten</CardTitle>
-          <CardDescription>
-            Hier kannst du Rollen, Kurse und Gruppen verwalten.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3 lg:hidden">
-            {profiles.map((p) => {
-              const isMainAdminAccount = p.role === 'admin_main' || p.role === 'admin'
-              const isSelf = p.id === profile.id
-              const canManageRoleActions = !isMainAdminAccount && !isSelf
+      <Tabs defaultValue="users" className="w-full">
+        <TabsList className="grid w-full max-w-[400px] grid-cols-2">
+          <TabsTrigger value="users" className="gap-2">
+            <User className="h-4 w-4" /> Benutzer
+          </TabsTrigger>
+          <TabsTrigger value="events" className="gap-2">
+            <Calendar className="h-4 w-4" /> Termine
+          </TabsTrigger>
+        </TabsList>
 
-              return (
-                <div key={p.id} className="rounded-xl border border-border/70 bg-card/70 p-3">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <Link href={`/profil/${p.id}`} className="font-semibold hover:underline break-words">
-                        {p.full_name || 'Unbekannt'}
-                      </Link>
-                      <p className="text-xs text-muted-foreground mt-1 break-all">{p.email}</p>
-                    </div>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger
-                        render={
-                          <Button variant="ghost" size="icon" disabled={!canManageRoleActions} title={!canManageRoleActions ? 'Rollenaktionen für diesen Account gesperrt' : undefined}>
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        }
-                      />
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => handleUpdateProfile(p.id, { role: 'admin' })}>
-                          <Shield className="mr-2 h-4 w-4" /> Zum Admin machen
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleUpdateProfile(p.id, { role: 'admin_co' })}>
-                          <Shield className="mr-2 h-4 w-4" /> Zum Co-Admin machen
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleUpdateProfile(p.id, { role: 'planner' })}>
-                          <Shield className="mr-2 h-4 w-4" /> Zum Planer machen
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleUpdateProfile(p.id, { role: 'viewer' })}>
-                          <User className="mr-2 h-4 w-4" /> Zum Zuschauer machen
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleSetTimeout(p.id, 24)}>
-                          <Clock3 className="mr-2 h-4 w-4" /> Timeout 24h
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleSetTimeout(p.id, 24 * 7)}>
-                          <Clock3 className="mr-2 h-4 w-4" /> Timeout 7 Tage
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleClearTimeout(p.id)}>
-                          <Undo2 className="mr-2 h-4 w-4" /> Timeout aufheben
-                        </DropdownMenuItem>
-                        <ResetPasswordDialog userEmail={p.email} userName={p.full_name || 'User'} />
-                        <DropdownMenuItem className="text-destructive" onClick={() => handleDeleteProfile(p.id)}>
-                          <Trash2 className="mr-2 h-4 w-4" /> Fuer immer loeschen
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    <Badge variant="outline" className="capitalize">
-                      {p.role}
-                    </Badge>
-                    {(p.role === 'admin_main' || p.role === 'admin') && (
-                      <Badge variant="secondary">Unantastbar</Badge>
-                    )}
-                    {p.timeout_until && new Date(p.timeout_until).getTime() > Date.now() && (
-                      <Badge variant="destructive">
-                        Timeout bis {new Date(p.timeout_until).toLocaleDateString('de-DE')}
-                      </Badge>
-                    )}
-                  </div>
-
-                  <div className="mt-3 grid grid-cols-1 gap-3">
-                    <div className="space-y-1">
-                      <label className="text-xs font-medium text-muted-foreground">Kurs</label>
-                      <select
-                        className="h-10 w-full rounded-md border bg-background px-2 text-sm"
-                        value={p.class_name || ''}
-                        onChange={(e) => handleUpdateProfile(p.id, { class_name: e.target.value || null })}
-                        disabled={!canManageUsers}
-                      >
-                        <option value="">Kein Kurs</option>
-                        {courses.map((course) => (
-                          <option key={course} value={course}>
-                            {course}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div className="space-y-1">
-                      <label className="text-xs font-medium text-muted-foreground">Gruppe</label>
-                      <select
-                        className="h-10 w-full rounded-md border bg-background px-2 text-sm"
-                        value={p.planning_group || ''}
-                        onChange={(e) => handleUpdateProfile(p.id, { planning_group: e.target.value || null })}
-                        disabled={!canManageUsers}
-                      >
-                        <option value="">Keine Gruppe</option>
-                        {planningGroups.map((groupName) => (
-                          <option key={groupName} value={groupName}>
-                            {groupName}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-
-          <div className="hidden lg:block overflow-x-auto">
-            <Table className="min-w-[860px]">
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Rolle</TableHead>
-                  <TableHead>Kurs</TableHead>
-                  <TableHead>Gruppe</TableHead>
-                  <TableHead className="text-right">Aktionen</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {profiles.map((p) => (
-                  <TableRow key={p.id}>
-                    <TableCell className="font-medium">
-                      <Link href={`/profil/${p.id}`} className="hover:underline focus-visible:underline">
-                        {p.full_name || 'Unbekannt'}
-                      </Link>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground break-all">
-                      {p.email}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className="capitalize">
-                        {p.role}
-                      </Badge>
-                      {p.timeout_until && new Date(p.timeout_until).getTime() > Date.now() && (
-                        <Badge variant="destructive" className="ml-2">
-                          Timeout bis {new Date(p.timeout_until).toLocaleDateString('de-DE')}
-                        </Badge>
-                      )}
-                      {(p.role === 'admin_main' || p.role === 'admin') && (
-                        <Badge variant="secondary" className="ml-2">
-                          Unantastbar
-                        </Badge>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {(() => {
-                        const canEditAssignments = canManageUsers
-
-                        return (
+        <TabsContent value="users" className="mt-6 space-y-6">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0">
+              <div className="space-y-1">
+                <CardTitle>Benutzerkonten</CardTitle>
+                <CardDescription>Rollen, Kurse und Gruppen verwalten.</CardDescription>
+              </div>
+              <div className="relative w-full max-w-sm ml-4">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Nutzer suchen..."
+                  className="pl-9"
+                  value={userSearch}
+                  onChange={(e) => setUserSearch(e.target.value)}
+                />
+              </div>
+            </CardHeader>
+            <CardContent>
+              {/* Desktop Table */}
+              <div className="hidden lg:block overflow-x-auto">
+                <Table className="min-w-[860px]">
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Email</TableHead>
+                      <TableHead>Rolle</TableHead>
+                      <TableHead>Kurs</TableHead>
+                      <TableHead>Gruppe</TableHead>
+                      <TableHead className="text-right">Aktionen</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredProfiles.map((p) => (
+                      <TableRow key={p.id}>
+                        <TableCell className="font-medium">
+                          <Link href={`/profil/${p.id}`} className="hover:underline focus-visible:underline">
+                            {p.full_name || 'Unbekannt'}
+                          </Link>
+                        </TableCell>
+                        <TableCell className="text-muted-foreground break-all">
+                          {p.email}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="capitalize">
+                            {p.role}
+                          </Badge>
+                          {p.timeout_until && new Date(p.timeout_until).getTime() > Date.now() && (
+                            <Badge variant="destructive" className="ml-2">
+                              Timeout
+                            </Badge>
+                          )}
+                        </TableCell>
+                        <TableCell>
                           <select
                             className="h-9 w-full rounded-md border bg-background px-2 text-sm"
                             value={p.class_name || ''}
                             onChange={(e) => handleUpdateProfile(p.id, { class_name: e.target.value || null })}
-                            disabled={!canEditAssignments}
                           >
                             <option value="">Kein Kurs</option>
                             {courses.map((course) => (
-                              <option key={course} value={course}>
-                                {course}
-                              </option>
+                              <option key={course} value={course}>{course}</option>
                             ))}
                           </select>
-                        )
-                      })()}
-                    </TableCell>
-                    <TableCell>
-                      {(() => {
-                        const canEditAssignments = canManageUsers
-
-                        return (
+                        </TableCell>
+                        <TableCell>
                           <select
                             className="h-9 w-full rounded-md border bg-background px-2 text-sm"
                             value={p.planning_group || ''}
                             onChange={(e) => handleUpdateProfile(p.id, { planning_group: e.target.value || null })}
-                            disabled={!canEditAssignments}
                           >
                             <option value="">Keine Gruppe</option>
                             {planningGroups.map((groupName) => (
-                              <option key={groupName} value={groupName}>
-                                {groupName}
-                              </option>
+                              <option key={groupName} value={groupName}>{groupName}</option>
                             ))}
                           </select>
-                        )
-                      })()}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {(() => {
-                        const isMainAdminAccount = p.role === 'admin_main' || p.role === 'admin'
-                        const isSelf = p.id === profile.id
-                        const canManageRoleActions = !isMainAdminAccount && !isSelf
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {(() => {
+                            const isMainAdminAccount = p.role === 'admin_main' || p.role === 'admin'
+                            const isSelf = p.id === profile.id
+                            const canManageRoleActions = !isMainAdminAccount && !isSelf
 
-                        return (
-                      <DropdownMenu>
-                        <DropdownMenuTrigger
-                          render={
-                            <Button variant="ghost" size="icon" disabled={!canManageRoleActions} title={!canManageRoleActions ? 'Rollenaktionen für diesen Account gesperrt' : undefined}>
-                              <MoreVertical className="h-4 w-4" />
-                            </Button>
-                          }
-                        />
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleUpdateProfile(p.id, { role: 'admin' })}>
-                            <Shield className="mr-2 h-4 w-4" /> Zum Admin machen
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleUpdateProfile(p.id, { role: 'admin_co' })}>
-                            <Shield className="mr-2 h-4 w-4" /> Zum Co-Admin machen
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleUpdateProfile(p.id, { role: 'planner' })}>
-                            <Shield className="mr-2 h-4 w-4" /> Zum Planer machen
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleUpdateProfile(p.id, { role: 'viewer' })}>
-                            <User className="mr-2 h-4 w-4" /> Zum Zuschauer machen
-                          </DropdownMenuItem>
+                            return (
+                              <DropdownMenu>
+                                <DropdownMenuTrigger
+                                  render={
+                                    <Button variant="ghost" size="icon" disabled={!canManageRoleActions}>
+                                      <MoreVertical className="h-4 w-4" />
+                                    </Button>
+                                  }
+                                />
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem onClick={() => handleUpdateProfile(p.id, { role: 'admin' })}>
+                                    <Shield className="mr-2 h-4 w-4" /> Zum Admin
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => handleUpdateProfile(p.id, { role: 'admin_co' })}>
+                                    <Shield className="mr-2 h-4 w-4" /> Zum Co-Admin
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => handleUpdateProfile(p.id, { role: 'planner' })}>
+                                    <Shield className="mr-2 h-4 w-4" /> Zum Planer
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => handleUpdateProfile(p.id, { role: 'viewer' })}>
+                                    <User className="mr-2 h-4 w-4" /> Zum Zuschauer
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => handleSetTimeout(p.id, 24)}>
+                                    <Clock3 className="mr-2 h-4 w-4" /> Timeout 24h
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => handleClearTimeout(p.id)}>
+                                    <Undo2 className="mr-2 h-4 w-4" /> Timeout aufheben
+                                  </DropdownMenuItem>
+                                  <ResetPasswordDialog userEmail={p.email} userName={p.full_name || 'User'} />
+                                  <DropdownMenuItem className="text-destructive" onClick={() => handleDeleteProfile(p.id)}>
+                                    <Trash2 className="mr-2 h-4 w-4" /> Löschen
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            )
+                          })()}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
 
-                          <DropdownMenuItem onClick={() => handleSetTimeout(p.id, 24)}>
-                            <Clock3 className="mr-2 h-4 w-4" /> Timeout 24h
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleSetTimeout(p.id, 24 * 7)}>
-                            <Clock3 className="mr-2 h-4 w-4" /> Timeout 7 Tage
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleClearTimeout(p.id)}>
-                            <Undo2 className="mr-2 h-4 w-4" /> Timeout aufheben
-                          </DropdownMenuItem>
-                          
-                          <ResetPasswordDialog userEmail={p.email} userName={p.full_name || 'User'} />
-                          
-                          <DropdownMenuItem className="text-destructive" onClick={() => handleDeleteProfile(p.id)}>
-                            <Trash2 className="mr-2 h-4 w-4" /> Fuer immer loeschen
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                        )
-                      })()}
-                    </TableCell>
-                  </TableRow>
+              {/* Mobile List View (Simplified) */}
+              <div className="lg:hidden space-y-4">
+                {filteredProfiles.map(p => (
+                  <div key={p.id} className="border rounded-lg p-4 space-y-3">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <Link href={`/profil/${p.id}`} className="font-bold hover:underline">{p.full_name || 'Unbekannt'}</Link>
+                        <p className="text-xs text-muted-foreground break-all">{p.email}</p>
+                      </div>
+                      <Badge variant="outline" className="capitalize">{p.role}</Badge>
+                    </div>
+                  </div>
                 ))}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="events" className="mt-6">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0">
+              <div className="space-y-1">
+                <CardTitle>Plattform Termine</CardTitle>
+                <CardDescription>Hier kannst du alle Termine zentral verwalten.</CardDescription>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="relative w-full max-w-sm">
+                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Termine suchen..."
+                    className="pl-9"
+                    value={eventSearch}
+                    onChange={(e) => setEventSearch(e.target.value)}
+                  />
+                </div>
+                <AddEventDialog />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <Table className="min-w-[800px]">
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Datum</TableHead>
+                      <TableHead>Titel</TableHead>
+                      <TableHead>Ort</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Aktionen</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredEvents.map((event) => {
+                      const eventDate = toDate(event.event_date)
+                      const isPast = eventDate.getTime() < Date.now()
+
+                      return (
+                        <TableRow key={event.id}>
+                          <TableCell className="whitespace-nowrap font-medium">
+                            {format(eventDate, 'dd.MM.yyyy HH:mm', { locale: de })} Uhr
+                          </TableCell>
+                          <TableCell className="max-w-[200px] truncate" title={event.title}>
+                            {event.title}
+                          </TableCell>
+                          <TableCell className="max-w-[150px] truncate text-muted-foreground">
+                            {event.location || '-'}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={isPast ? 'secondary' : 'default'} className="text-[10px]">
+                              {isPast ? 'Vergangen' : 'Bevorstehend'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex justify-end gap-1">
+                              <EditEventDialog event={event} />
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                                onClick={() => handleDeleteEvent(event.id)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      )
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }

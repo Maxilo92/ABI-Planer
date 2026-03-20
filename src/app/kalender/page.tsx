@@ -7,34 +7,21 @@ import { useAuth } from '@/context/AuthContext'
 import { CalendarEvents } from '@/components/dashboard/CalendarEvents'
 import { AddEventDialog } from '@/components/modals/AddEventDialog'
 import { Event } from '@/types/database'
-import { Loader2 } from 'lucide-react'
+import { Loader2, Search, Filter } from 'lucide-react'
 import { toDate } from '@/lib/utils'
+import { Input } from '@/components/ui/input'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 export default function CalendarPage() {
   const { profile, loading: authLoading } = useAuth()
   const [events, setEvents] = useState<Event[]>([])
+  const [searchQuery, setSearchQuery] = useState('')
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const q = query(collection(db, 'events'), orderBy('event_date', 'asc'))
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const fetchedEvents = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Event))
-      
-      const now = new Date().getTime()
-      // Sort: Upcoming (asc), Past (desc) at the bottom
-      const sorted = [...fetchedEvents].sort((a, b) => {
-        const dateA = toDate(a.event_date).getTime()
-        const dateB = toDate(b.event_date).getTime()
-
-        const isPastA = dateA < now
-        const isPastB = dateB < now
-
-        if (!isPastA && !isPastB) return dateA - dateB
-        if (isPastA && isPastB) return dateB - dateA
-        return isPastA ? 1 : -1
-      })
-      
-      setEvents(sorted)
+      setEvents(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Event)))
       setLoading(false)
     })
 
@@ -49,8 +36,6 @@ export default function CalendarPage() {
           const lastVisitedStr = profile.last_visited?.kalender
           const lastVisited = lastVisitedStr ? new Date(lastVisitedStr) : new Date(0)
           
-          // Only update if it's been more than an hour since last update
-          // or if it hasn't been set yet
           if (!lastVisitedStr || (now.getTime() - lastVisited.getTime() > 60 * 60 * 1000)) {
             const userRef = doc(db, 'profiles', profile.id)
             await updateDoc(userRef, {
@@ -75,19 +60,49 @@ export default function CalendarPage() {
 
   const isPlanner = (profile?.role === 'planner' || profile?.role === 'admin_co' || profile?.role === 'admin_main' || profile?.role === 'admin') && profile?.is_approved
 
+  const filteredEvents = events.filter(event => 
+    event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    event.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    event.location?.toLowerCase().includes(searchQuery.toLowerCase())
+  )
+
+  const now = new Date().getTime()
+  const upcomingEvents = filteredEvents.filter(e => toDate(e.event_date).getTime() >= now)
+  const pastEvents = filteredEvents.filter(e => toDate(e.event_date).getTime() < now).sort((a, b) => toDate(b.event_date).getTime() - toDate(a.event_date).getTime())
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Kalender</h1>
           <p className="text-muted-foreground">Alle wichtigen Termine im Überblick.</p>
         </div>
-        {isPlanner && <AddEventDialog />}
+        <div className="flex items-center gap-2">
+          <div className="relative w-full md:w-64">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Suchen..."
+              className="pl-9"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+          {isPlanner && <AddEventDialog />}
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-6">
-        <CalendarEvents events={events || []} canManage={isPlanner} />
-      </div>
+      <Tabs defaultValue="upcoming" className="w-full">
+        <TabsList className="grid w-full max-w-[400px] grid-cols-2">
+          <TabsTrigger value="upcoming">Anstehend ({upcomingEvents.length})</TabsTrigger>
+          <TabsTrigger value="past">Vergangen ({pastEvents.length})</TabsTrigger>
+        </TabsList>
+        <TabsContent value="upcoming" className="mt-6">
+          <CalendarEvents events={upcomingEvents} canManage={isPlanner} useScrollContainer={false} />
+        </TabsContent>
+        <TabsContent value="past" className="mt-6">
+          <CalendarEvents events={pastEvents} canManage={isPlanner} useScrollContainer={false} />
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }
