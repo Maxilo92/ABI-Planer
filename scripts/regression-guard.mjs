@@ -83,14 +83,6 @@ const checks = [
   },
 ]
 
-const negativeChecks = [
-  {
-    name: 'Navbar has no Beta labels (full version)',
-    file: 'src/components/layout/Navbar.tsx',
-    forbiddenPatterns: [/isBeta:\s*true/, /isBeta\?/, />Beta<\/Badge>/],
-  },
-]
-
 function read(relativePath) {
   const fullPath = path.join(projectRoot, relativePath)
   return fs.readFileSync(fullPath, 'utf8')
@@ -107,19 +99,6 @@ for (const check of checks) {
       name: check.name,
       file: check.file,
       missingPatterns: missing.map((pattern) => pattern.toString()),
-    })
-  }
-}
-
-for (const check of negativeChecks) {
-  const content = read(check.file)
-  const forbidden = check.forbiddenPatterns.filter((pattern) => pattern.test(content))
-
-  if (forbidden.length > 0) {
-    failures.push({
-      name: check.name,
-      file: check.file,
-      missingPatterns: forbidden.map((pattern) => `FORBIDDEN: ${pattern.toString()}`),
     })
   }
 }

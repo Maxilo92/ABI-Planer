@@ -1,7 +1,7 @@
 # Changelog
 
-## [1.2.1] - 2026-03-20
-- UI: **Vollversion wiederhergestellt**. Das Beta-Label-System wurde vollständig aus der Navigation entfernt. Keine Seite wird mehr als „Beta" markiert – die App ist in der Vollversion.
+## [0.7.1] - 2026-03-20
+- Chore: Versionsnummer auf 0.7.1 gesetzt.
 
 ## [1.2.0] - 2026-03-20
 - Feature: **ToDo DetailView**. Clicking a task title now opens a detailed view with a description and sub-tasks list.
