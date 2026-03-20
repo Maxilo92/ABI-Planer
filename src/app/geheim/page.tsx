@@ -48,7 +48,8 @@ export default function SecretPage() {
 
   const triggerShake = () => {
     setShake(true)
-    setTimeout(() => setShake(false), 300)
+    const duration = currentRarityIndex === 4 ? 200 : currentRarityIndex === 3 ? 250 : 300
+    setTimeout(() => setShake(false), duration)
   }
 
   const handleBoxClick = () => {
@@ -63,14 +64,17 @@ export default function SecretPage() {
       const rand = Math.random()
       let upgradeSteps = 0
       
-      if (rand < 0.10) upgradeSteps = 2
-      else if (rand < 0.33) upgradeSteps = 1
+      // Upgrade probabilities
+      if (rand < 0.12) upgradeSteps = 2
+      else if (rand < 0.38) upgradeSteps = 1
 
       if (upgradeSteps > 0) {
+        // Upgrade animation is slightly longer to emphasize the rarity change
         setCurrentRarityIndex(prev => Math.min(prev + upgradeSteps, RARITY_ORDER.length - 1))
+        setTimeout(() => setIsAnimating(false), 500)
+      } else {
+        setTimeout(() => setIsAnimating(false), 300)
       }
-
-      setTimeout(() => setIsAnimating(false), 400)
     } else if (nextClick === 5) {
       revealLoot()
     }
@@ -78,7 +82,11 @@ export default function SecretPage() {
 
   const revealLoot = () => {
     setIsAnimating(true)
+    // Extra long shake for the reveal
+    setShake(true)
+    
     setTimeout(() => {
+      setShake(false)
       setGameState('revealed')
       setIsAnimating(false)
       const finalRarity = RARITY_ORDER[currentRarityIndex]
@@ -90,100 +98,148 @@ export default function SecretPage() {
       } else {
         setRevealedTeacher({ name: "Ein unbekannter Lehrer", rarity: finalRarity })
       }
-    }, 600)
+    }, 800)
   }
 
   const info = (rarity: TeacherRarity) => {
     switch (rarity) {
-      case 'common': return { label: 'Gewöhnlich', color: 'bg-slate-500', glow: 'shadow-slate-500/20' }
-      case 'rare': return { label: 'Selten', color: 'bg-emerald-500', glow: 'shadow-emerald-500/40' }
-      case 'epic': return { label: 'Episch', color: 'bg-purple-500', glow: 'shadow-purple-500/60' }
-      case 'mythic': return { label: 'Mythisch', color: 'bg-red-500', glow: 'shadow-red-500/80' }
-      case 'legendary': return { label: 'Legendär', color: 'bg-amber-500', glow: 'shadow-amber-500/100' }
+      case 'common': return { 
+        label: 'Gewöhnlich', 
+        color: 'bg-slate-500', 
+        glow: 'shadow-slate-500/20',
+        shake: 'animate-lootbox-shake-1'
+      }
+      case 'rare': return { 
+        label: 'Selten', 
+        color: 'bg-emerald-500', 
+        glow: 'shadow-emerald-500/40',
+        shake: 'animate-lootbox-shake-2'
+      }
+      case 'epic': return { 
+        label: 'Episch', 
+        color: 'bg-purple-500', 
+        glow: 'shadow-purple-500/60',
+        shake: 'animate-lootbox-shake-3'
+      }
+      case 'mythic': return { 
+        label: 'Mythisch', 
+        color: 'bg-red-500', 
+        glow: 'shadow-red-500/80',
+        shake: 'animate-lootbox-shake-4'
+      }
+      case 'legendary': return { 
+        label: 'Legendär', 
+        color: 'bg-amber-500', 
+        glow: 'shadow-amber-500/100',
+        shake: 'animate-lootbox-shake-5'
+      }
     }
   }
 
   const currentInfo = info(RARITY_ORDER[currentRarityIndex])
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[calc(100vh-12rem)] md:min-h-[calc(100vh-8rem)]">
+    <div className="flex flex-col items-center justify-center min-h-[calc(100vh-12rem)] md:min-h-[calc(100vh-8rem)] overflow-hidden">
       <div className="relative flex flex-col items-center space-y-12 w-full max-w-sm px-6">
         
+        {/* Background Flash Effect during reveal */}
+        {gameState === 'revealed' && (
+          <div className={cn(
+            "absolute inset-0 -z-10 w-[200%] h-[200%] blur-[120px] opacity-20 animate-pulse",
+            currentInfo.color
+          )} />
+        )}
+
         {/* Minimal Header */}
         <div className={cn(
-          "text-center space-y-2 transition-opacity duration-500",
-          gameState === 'revealed' ? "opacity-100" : "opacity-40"
+          "text-center space-y-2 transition-all duration-700",
+          gameState === 'revealed' ? "opacity-100 scale-110" : "opacity-40"
         )}>
           <h1 className="text-3xl font-black tracking-tighter font-mono flex items-center gap-3">
-            <Sparkles className="h-7 w-7 text-primary" />
+            <Sparkles className={cn("h-7 w-7", gameState === 'revealed' ? "text-white animate-spin" : "text-primary")} />
             LOOTBOX
           </h1>
         </div>
 
         {/* The Box Container */}
-        <div className="relative w-64 h-64 flex items-center justify-center">
+        <div className="relative w-72 h-72 flex items-center justify-center">
           {gameState === 'idle' ? (
             <div 
-              className="group relative w-56 h-56 rounded-3xl border-4 border-dashed border-primary/20 bg-primary/5 flex flex-col items-center justify-center cursor-pointer hover:scale-105 transition-all duration-300"
+              className="group relative w-64 h-64 rounded-[2.5rem] border-4 border-dashed border-primary/20 bg-primary/5 flex flex-col items-center justify-center cursor-pointer hover:scale-105 transition-all duration-500 hover:border-primary/40 hover:bg-primary/10"
               onClick={handleStart}
             >
-              <Gift className="h-20 w-20 text-primary/40 group-hover:text-primary transition-colors" />
-              <p className="mt-4 text-[10px] font-black uppercase tracking-widest text-primary/60">Starten</p>
+              <Gift className="h-24 w-24 text-primary/40 group-hover:text-primary transition-all duration-500 group-hover:rotate-12 group-hover:scale-110" />
+              <p className="mt-4 text-[10px] font-black uppercase tracking-[0.4em] text-primary/60 group-hover:text-primary transition-colors">Starten</p>
             </div>
           ) : (
             <div 
               className={cn(
-                "relative w-56 h-56 rounded-[2rem] flex flex-col items-center justify-center transition-all duration-500 border-[6px] shadow-2xl",
+                "relative w-64 h-64 rounded-[2.5rem] flex flex-col items-center justify-center transition-all duration-300 border-[8px] shadow-2xl",
                 currentInfo.color,
-                "border-white/30",
+                "border-white/40",
                 currentInfo.glow,
-                shake && "animate-bounce",
-                isAnimating && "scale-110 rotate-3",
+                shake && currentInfo.shake,
+                !shake && gameState === 'interacting' && "animate-float",
                 gameState === 'interacting' && "cursor-pointer active:scale-90",
-                gameState === 'revealed' && "scale-125 border-white shadow-[0_0_80px_rgba(255,255,255,0.3)]"
+                gameState === 'revealed' && "scale-125 border-white shadow-[0_0_100px_rgba(255,255,255,0.4)] animate-reveal-pop"
               )}
               onClick={handleBoxClick}
             >
               {gameState === 'interacting' ? (
                 <>
                   <Gift className={cn(
-                    "h-28 w-28 text-white transition-transform duration-300",
-                    isAnimating ? "scale-125" : "scale-100"
+                    "h-32 w-32 text-white transition-all duration-300",
+                    isAnimating ? "scale-125 rotate-6" : "scale-100"
                   )} />
                   
                   {/* Progress Indicators (Only 4 for upgrades) */}
-                  <div className="absolute -bottom-10 flex gap-1.5">
+                  <div className="absolute -bottom-14 flex gap-2">
                     {[1, 2, 3, 4].map(i => (
                       <div 
                         key={i} 
                         className={cn(
-                          "h-1.5 w-8 rounded-full transition-all duration-300",
-                          i <= clicksCount ? "bg-primary" : "bg-secondary"
+                          "h-2 w-10 rounded-full transition-all duration-500",
+                          i <= clicksCount 
+                            ? (i === clicksCount && isAnimating ? "bg-white scale-125 shadow-[0_0_15px_rgba(255,255,255,0.8)]" : "bg-primary") 
+                            : "bg-secondary/40"
                         )} 
                       />
                     ))}
                   </div>
 
-                  <div className="absolute top-3 font-black text-white/40 text-[8px] tracking-[0.3em] uppercase">
-                    {clicksCount < 4 ? "Upgrade Phase" : "Bereit"}
+                  <div className="absolute top-4 font-black text-white/40 text-[9px] tracking-[0.4em] uppercase">
+                    {clicksCount < 4 ? "Upgrade Phase" : "Bereit zum Öffnen"}
                   </div>
                   
-                  <div className="mt-2 text-white font-black text-xl tracking-tight uppercase drop-shadow-md">
+                  <div className={cn(
+                    "mt-3 text-white font-black text-2xl tracking-tighter uppercase drop-shadow-lg transition-all duration-300",
+                    isAnimating && "scale-110 blur-[1px]"
+                  )}>
                     {currentInfo.label}
                   </div>
 
                   {isAnimating && (
-                    <Zap className="absolute inset-0 m-auto h-full w-full text-white/40 animate-ping" />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <Zap className="h-full w-full text-white/40 animate-ping" />
+                      <div className="absolute w-full h-full rounded-full border-4 border-white/40 animate-ping opacity-0" style={{ animationDelay: '0.1s' }} />
+                    </div>
                   )}
                 </>
               ) : (
-                <div className="flex flex-col items-center animate-in zoom-in spin-in-12 duration-700">
-                  <GraduationCap className="h-24 w-24 text-white mb-3 drop-shadow-[0_8px_8px_rgba(0,0,0,0.3)]" />
-                  <div className="bg-black/80 backdrop-blur-xl rounded-2xl p-4 border-2 border-white/20 text-center max-w-[110%] shadow-2xl">
-                    <div className="text-[8px] font-black uppercase text-white/50 mb-1 tracking-[0.2em]">
+                <div className="flex flex-col items-center">
+                  <div className="relative mb-4">
+                    <GraduationCap className="h-28 w-28 text-white drop-shadow-[0_12px_12px_rgba(0,0,0,0.4)] animate-bounce" style={{ animationDuration: '3s' }} />
+                    <Sparkles className="absolute -top-4 -right-4 h-8 w-8 text-white animate-pulse" />
+                  </div>
+                  
+                  <div className="bg-black/90 backdrop-blur-2xl rounded-[2rem] p-5 border-2 border-white/30 text-center max-w-[120%] shadow-[0_20px_40px_rgba(0,0,0,0.5)]">
+                    <div className={cn(
+                      "text-[9px] font-black uppercase mb-1.5 tracking-[0.3em] transition-colors",
+                      currentRarityIndex >= 3 ? "text-amber-400" : "text-white/60"
+                    )}>
                       {currentInfo.label}
                     </div>
-                    <div className="text-white font-black text-lg tracking-tight whitespace-nowrap">
+                    <div className="text-white font-black text-xl tracking-tight whitespace-nowrap px-2">
                       {revealedTeacher?.name}
                     </div>
                   </div>
@@ -194,16 +250,16 @@ export default function SecretPage() {
         </div>
 
         {/* Reset Action */}
-        <div className="h-10">
+        <div className="h-12 mt-4">
           {gameState === 'revealed' && (
             <Button 
               onClick={handleStart}
-              variant="ghost"
-              size="sm"
-              className="gap-2 text-muted-foreground hover:text-primary animate-in fade-in slide-in-from-bottom-2 duration-700"
+              variant="outline"
+              size="lg"
+              className="rounded-full px-8 border-2 hover:bg-white hover:text-black transition-all duration-500 animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-500 shadow-xl"
             >
-              <RotateCcw className="h-3.5 w-3.5" />
-              Nochmal
+              <RotateCcw className="h-4 w-4 mr-2" />
+              Nochmal versuchen
             </Button>
           )}
         </div>

@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.18.5] - 2026-03-20
+- Fix: **Version Synchronization**. The version in `package.json` is now automatically synced with the `VERSION` file during build.
+- Automation: **Version Script**. Added `npm run sync:version -- patch` to automatically increment and sync the version.
+
+## [0.18.4] - 2026-03-20
+- UI: **Lootbox Animation Overhaul**. Die Lootbox-Animationen wurden grundlegend überarbeitet, um sie flüssiger und aufregender zu gestalten.
+- UI: **Rarity-Specific Shakes**. Jede Seltenheitsstufe (Common bis Legendary) hat nun einen eigenen, immer intensiver werdenden Shake-Effekt mit dynamischer Skalierung und Rotation.
+- UI: **Enhanced Visual Feedback**. Neue Idle-Animationen (Floating), Flash-Effekte beim Reveal und verbesserte Upgrade-Indikatoren sorgen für ein deutlich hochwertigeres "Gefühl" beim Öffnen der Boxen.
+
 ## [0.18.3] - 2026-03-20
 - UI: **Group Navigation Overhaul**. Internal page toggles in the Groups section have been removed in favor of the primary sidebar sub-menu for a cleaner, more integrated experience.
 - UI: **Widget Layout Fixes**. Resolved overlapping and glitching issues in the group workspace by optimizing the grid layout and removing problematic fixed heights.
