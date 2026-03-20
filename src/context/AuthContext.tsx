@@ -108,11 +108,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   // Heartbeat logic to track online status
   useEffect(() => {
-    if (!user || !profile) return
+    if (!user?.uid) return
+
+    const userId = user.uid
 
     const updateStatus = async (isOnline: boolean) => {
       try {
-        const docRef = doc(db, 'profiles', user.uid)
+        const docRef = doc(db, 'profiles', userId)
         await updateDoc(docRef, {
           isOnline,
           lastOnline: serverTimestamp(),
@@ -132,7 +134,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     // Handle tab close or navigation away
     const handleBeforeUnload = () => {
-      const docRef = doc(db, 'profiles', user.uid)
+      const docRef = doc(db, 'profiles', userId)
       // Note: updateDoc is async and might not complete in beforeunload,
       // but it's the requested method.
       updateDoc(docRef, {
@@ -149,7 +151,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // Set to offline on logout or unmount
       updateStatus(false)
     }
-  }, [user, profile])
+  }, [user?.uid])
 
   return (
     <AuthContext.Provider value={{ user, profile, loading }}>

@@ -88,10 +88,24 @@ export default function DatenschutzPage() {
 
           <section>
             <h3 className="text-lg font-semibold text-foreground border-l-4 border-primary pl-3 mb-4">7. Empfänger und Hosting</h3>
-            <p className="text-muted-foreground leading-relaxed">
-              Zur technischen Bereitstellung werden externe Dienstleister (z. B. Hosting- und Datenbankanbieter) eingesetzt. Mit entsprechenden
-              Dienstleistern werden, soweit erforderlich, Verträge zur Auftragsverarbeitung geschlossen.
-            </p>
+            <div className="space-y-3 text-muted-foreground leading-relaxed">
+              <p>
+                Diese App wird über Firebase betrieben. Dabei werden insbesondere folgende Dienste genutzt:
+              </p>
+              <ul className="list-disc pl-6 space-y-1">
+                <li>Firebase Hosting (Auslieferung der Website)</li>
+                <li>Firebase Authentication (Anmeldung/Benutzerkonto)</li>
+                <li>Cloud Firestore (Speicherung der App-Daten)</li>
+              </ul>
+              <p>
+                Anbieter ist Google Ireland Limited, Gordon House, Barrow Street, Dublin 4, Irland. Eine Verarbeitung durch
+                Google LLC (USA) kann nicht ausgeschlossen werden.
+              </p>
+              <p>
+                Soweit Daten in Drittländer (insbesondere die USA) übermittelt werden, erfolgt dies auf Grundlage der von der EU-Kommission
+                anerkannten Garantien (insbesondere Standardvertragsklauseln) sowie ggf. weiterer geeigneter Schutzmaßnahmen.
+              </p>
+            </div>
           </section>
 
           <section>

@@ -1,7 +1,12 @@
 # Changelog
 
 ## [Unreleased]
+- Fix: **Globales UI-Flackern & Navigations-Haenger behoben**. Der Presence-Heartbeat im `AuthContext` war an das gesamte `profile`-Objekt gekoppelt und erzeugte dadurch eine Re-Subscribe-/Write-Schleife (`isOnline`/`lastOnline`) mit permanenten Re-Renders.
+- Stability: **Auth-Heartbeat entkoppelt**. Online-Status-Updates laufen jetzt nur noch pro Benutzer-ID-Lifecycle statt bei jeder Profil-Aenderung, wodurch Dashboard, News, Feedback und Admin-Logs wieder stabil reagieren.
+
+## [0.18.12] - 2026-03-20
 - Legal: **Datenschutzerklärung hinzugefügt**. Neue Seite `/datenschutz` mit Verantwortlichem, Verarbeitungszwecken, Rechtsgrundlagen, Speicherdauer, Betroffenenrechten und Kontakt.
+- Legal: **Firebase/Firestore transparent gemacht**. Datenschutzerklärung nennt nun konkret Firebase Hosting, Firebase Authentication und Cloud Firestore inklusive Drittland-Hinweis.
 - Legal: **AGB und Impressum aktualisiert**. Mindestalter (16+) klargestellt, Hinweis auf privaten Betrieb (kein offizielles Schulangebot) ergänzt, Impressum auf `§ 5 DDG` aktualisiert.
 - Auth/Legal: **Verpflichtende Einwilligungen bei Registrierung**. Schritt 3 der Registrierung erfordert nun aktive Bestätigung von Mindestalter (16+), AGB und Datenschutzerklärung.
 - Compliance: **Consent-Nachweis gespeichert**. Bei Registrierung werden Zustimmungsmetadaten (`legal_consents`) inklusive Versionsstand und Zeitstempel im Profil dokumentiert.
