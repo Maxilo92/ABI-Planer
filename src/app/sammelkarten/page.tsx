@@ -357,18 +357,35 @@ function SammelkartenContent() {
               )}
             </div>
 
-            {/* Reset Action */}
-            <div className="h-12 mt-4">
+            {/* Actions */}
+            <div className="flex flex-col gap-3 mt-4 w-full">
               {gameState === 'revealed' && (
-                <Button 
-                  onClick={handleStart}
-                  variant="outline"
-                  size="lg"
-                  className="rounded-full px-8 border-2 hover:bg-white hover:text-black transition-all duration-500 animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-500 shadow-xl"
-                >
-                  <RotateCcw className="h-4 w-4 mr-2" />
-                  Nochmal versuchen
-                </Button>
+                <>
+                  <Button 
+                    onClick={handleStart}
+                    variant="outline"
+                    size="lg"
+                    className="rounded-full px-8 border-2 hover:bg-white hover:text-black transition-all duration-500 animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-500 shadow-xl"
+                  >
+                    <RotateCcw className="h-4 w-4 mr-2" />
+                    Nochmal versuchen
+                  </Button>
+                  
+                  <Button 
+                    onClick={() => {
+                      const url = new URL(window.location.href)
+                      url.searchParams.set('view', 'album')
+                      window.history.pushState({}, '', url)
+                      window.dispatchEvent(new PopStateEvent('popstate'))
+                    }}
+                    variant="ghost"
+                    size="sm"
+                    className="text-muted-foreground hover:text-primary transition-all duration-1000 animate-in fade-in slide-in-from-bottom-2 delay-700"
+                  >
+                    <Trophy className="h-3.5 w-3.5 mr-2" />
+                    Im Album anzeigen
+                  </Button>
+                </>
               )}
             </div>
           </div>

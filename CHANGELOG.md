@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.20.8] - 2026-03-22
+- UI: **"Im Album anzeigen" Button**. Nach dem Ziehen eines Lehrers gibt es nun einen direkten Link zum Sammelalbum.
+- Logic: **Überarbeitete Level-Berechnung**. Neu gezogene Lehrer starten nun korrekt bei Level 1.
+- Logic: **Balancing der Upgrade-Kosten**. Die benötigten Karten pro Level wurden angepasst (Level 2 benötigt nun 2 Karten statt 1).
+
+## [0.20.7] - 2026-03-22
+- Feature: **Unbegrenzte Lehrer im Lootpool**. Das Limit von 100 Lehrern in den globalen Einstellungen wurde aufgehoben. Die Verwaltung unterstützt nun eine unbegrenzte Anzahl von Lehrern für das Sammelkarten-System.
+- UI: **Optimierte Lehrer-Badge**. Zeigt nun die absolute Anzahl der lehrer ohne Limit-Angabe an.
+
 ## [0.20.6] - 2026-03-21
 - Fix: **Lehrer-Album Anzeige-Bug behoben**. Ein ID-Mismatch zwischen dem Ziehen von Lehrern und dem Album wurde durch eine robustere Prüfung (ID und Name) behoben. Zuvor wurden gezogene Lehrer fälschlicherweise als "nicht entdeckt" (grau) angezeigt.
 - UI: **Booster-Countdown Timer**. Wenn das tägliche Limit von 3 Boostern erreicht ist, wird nun ein Echtzeit-Countdown bis zum nächsten Reset (Mitternacht) auf dem Start-Button und im Badge oben angezeigt.

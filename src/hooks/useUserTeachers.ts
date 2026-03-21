@@ -7,8 +7,13 @@ import { useAuth } from '@/context/AuthContext'
 import { UserTeacher, Profile } from '@/types/database'
 
 export const calculateLevel = (count: number): number => {
-  if (count <= 0) return 1
-  return Math.floor(Math.sqrt(count)) + 1
+  if (count <= 1) return 1
+  // Level 1: 1 card
+  // Level 2: 2 cards
+  // Level 3: 4 cards
+  // Level 4: 9 cards
+  // Level 5: 16 cards
+  return Math.floor(Math.sqrt(count - 1)) + 1
 }
 
 export const useUserTeachers = () => {

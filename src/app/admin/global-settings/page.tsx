@@ -260,10 +260,7 @@ export default function GlobalSettingsPage() {
 
   const handleAddTeacher = () => {
     if (!newTeacherName.trim()) return
-    if ((settings.loot_teachers || []).length >= 100) {
-      toast.error('Limit von 100 Lehrern erreicht.')
-      return
-    }
+    
     const id = newTeacherName.trim().toLowerCase().replace(/[^a-z0-9]/g, '-') + '-' + Date.now()
     const updatedSettings = {
       ...settings,
@@ -679,7 +676,7 @@ export default function GlobalSettingsPage() {
                   Raritäten Sync
                 </Button>
                 <Badge variant="secondary">
-                  {(settings.loot_teachers || []).length} / 100
+                  {(settings.loot_teachers || []).length} Lehrer
                 </Badge>
               </div>
             </div>
@@ -715,7 +712,7 @@ export default function GlobalSettingsPage() {
                     <option value="legendary">Legendär (Gelb)</option>
                   </select>
                 </div>
-                <Button onClick={handleAddTeacher} disabled={!newTeacherName.trim() || (settings.loot_teachers || []).length >= 100} className="w-full sm:w-auto">
+                <Button onClick={handleAddTeacher} disabled={!newTeacherName.trim()} className="w-full sm:w-auto">
                   <Plus className="h-4 w-4 mr-2" /> Hinzufügen
                 </Button>
               </div>
@@ -790,7 +787,6 @@ export default function GlobalSettingsPage() {
               <Gift className="h-3 w-3" />
               Upgrade: 4 Klicks (33% +1, 10% +2) | Reveal: 5. Klick
             </div>
-            <span>Limit: 100 Lehrer</span>
           </CardFooter>
         </Card>
       </div>
