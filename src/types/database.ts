@@ -35,6 +35,10 @@ export interface Profile {
   last_visited?: Record<string, string> | null;
   isOnline: boolean;
   lastOnline: Timestamp | Date;
+  booster_stats?: {
+    last_reset: string; // ISO date string (YYYY-MM-DD)
+    count: number;      // Open count for that day
+  } | null;
 }
 
 export interface GroupMessage {

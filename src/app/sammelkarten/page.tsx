@@ -8,10 +8,12 @@ import { db } from '@/lib/firebase'
 import { doc, onSnapshot } from 'firebase/firestore'
 import { TeacherRarity, LootTeacher } from '@/types/database'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import { useUserTeachers } from '@/hooks/useUserTeachers'
 import { TeacherAlbum } from '@/components/dashboard/TeacherAlbum'
 import { logAction } from '@/lib/logging'
+import { toast } from 'sonner'
 
 const RARITY_ORDER: TeacherRarity[] = ['common', 'rare', 'epic', 'mythic', 'legendary']
 
@@ -19,7 +21,7 @@ function SammelkartenContent() {
   const searchParams = useSearchParams()
   const view = searchParams.get('view') || 'sammelkarten'
   const { user, profile, loading } = useAuth()
-  const { collectTeacher, teachers: userTeachers } = useUserTeachers()
+  const { collectTeacher, teachers: userTeachers, getRemainingBoosters } = useUserTeachers()
   const [globalSettings, setGlobalSettings] = useState<any>(null)
   const [currentRarityIndex, setCurrentRarityIndex] = useState(0)
   const [clicksCount, setClicksCount] = useState(0) // 0 to 5
@@ -47,6 +49,10 @@ function SammelkartenContent() {
   if (loading) return null
 
   const handleStart = () => {
+    if (getRemainingBoosters() <= 0) {
+      toast.error('Limit erreicht! Komm morgen wieder.')
+      return
+    }
     setGameState('interacting')
     setCurrentRarityIndex(0)
     setClicksCount(0)
@@ -111,20 +117,25 @@ function SammelkartenContent() {
 
       // Persist to collection
       if (teacher.id !== 'unknown') {
-        const isNew = !userTeachers?.[teacher.id]
-        const result = await collectTeacher(teacher.id)
-        setCollectionResult({
-          isNew,
-          newLevel: result.level,
-          count: result.count
-        })
-
-        if (user) {
-          logAction('LOOT_TEACHER', user.uid, profile?.full_name, { 
-            id: teacher.id, 
-            count: result.count, 
-            level: result.level 
+        try {
+          const isNew = !userTeachers?.[teacher.id]
+          const result = await collectTeacher(teacher.id)
+          setCollectionResult({
+            isNew,
+            newLevel: result.level,
+            count: result.count
           })
+
+          if (user) {
+            logAction('LOOT_TEACHER', user.uid, profile?.full_name, { 
+              id: teacher.id, 
+              count: result.count, 
+              level: result.level 
+            })
+          }
+        } catch (err: any) {
+          toast.error(err.message || 'Fehler beim Sammeln.')
+          setGameState('idle')
         }
       }
     }, 800)
@@ -190,17 +201,37 @@ function SammelkartenContent() {
                 <Sparkles className={cn("h-7 w-7", gameState === 'revealed' ? "text-white animate-pulse" : "text-primary")} />
                 SAMMELKARTEN
               </h1>
+              {gameState === 'idle' && (
+                <div className="flex items-center justify-center gap-2 mt-2">
+                  <Badge variant={getRemainingBoosters() > 0 ? "secondary" : "destructive"} className="px-3 py-1 text-[10px] font-black uppercase tracking-widest border-2 border-white/10">
+                    <Zap className="h-3 w-3 mr-1.5 fill-current" />
+                    {getRemainingBoosters()} / 3 Booster übrig
+                  </Badge>
+                </div>
+              )}
             </div>
 
             {/* The Box Container */}
             <div className="relative w-72 h-72 flex items-center justify-center">
               {gameState === 'idle' ? (
                 <div 
-                  className="group relative w-64 h-64 rounded-[2.5rem] border-4 border-dashed border-primary/20 bg-primary/5 flex flex-col items-center justify-center cursor-pointer hover:scale-105 transition-all duration-500 hover:border-primary/40 hover:bg-primary/10"
+                  className={cn(
+                    "group relative w-64 h-64 rounded-[2.5rem] border-4 border-dashed flex flex-col items-center justify-center transition-all duration-500",
+                    getRemainingBoosters() > 0 
+                      ? "border-primary/20 bg-primary/5 cursor-pointer hover:scale-105 hover:border-primary/40 hover:bg-primary/10" 
+                      : "border-muted/20 bg-muted/5 cursor-not-allowed opacity-60"
+                  )}
                   onClick={handleStart}
                 >
-                  <Gift className="h-24 w-24 text-primary/40 group-hover:text-primary transition-all duration-500 group-hover:rotate-12 group-hover:scale-110" />
-                  <p className="mt-4 text-[10px] font-black uppercase tracking-[0.4em] text-primary/60 group-hover:text-primary transition-colors">Starten</p>
+                  <Gift className={cn(
+                    "h-24 w-24 transition-all duration-500",
+                    getRemainingBoosters() > 0 
+                      ? "text-primary/40 group-hover:text-primary group-hover:rotate-12 group-hover:scale-110" 
+                      : "text-muted/40"
+                  )} />
+                  <p className="mt-4 text-[10px] font-black uppercase tracking-[0.4em] text-primary/60 group-hover:text-primary transition-colors">
+                    {getRemainingBoosters() > 0 ? "Starten" : "Limit erreicht"}
+                  </p>
                 </div>
               ) : (
                 <div 

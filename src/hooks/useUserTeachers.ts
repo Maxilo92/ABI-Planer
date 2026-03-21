@@ -2,25 +2,17 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { db } from '@/lib/firebase'
-import { doc, onSnapshot, setDoc, getDoc } from 'firebase/firestore'
+import { doc, onSnapshot, setDoc, getDoc, updateDoc } from 'firebase/firestore'
 import { useAuth } from '@/context/AuthContext'
-import { UserTeacher } from '@/types/database'
+import { UserTeacher, Profile } from '@/types/database'
 
-/**
- * Logarithmic leveling logic: Level = floor(sqrt(count)) + 1
- * 0 count -> Level 1
- * 1-3 counts -> Level 2
- * 4-8 counts -> Level 3
- * 9-15 counts -> Level 4
- * 16+ counts -> Level 5
- */
 export const calculateLevel = (count: number): number => {
   if (count <= 0) return 1
   return Math.floor(Math.sqrt(count)) + 1
 }
 
 export const useUserTeachers = () => {
-  const { user } = useAuth()
+  const { user, profile } = useAuth()
   const [teachers, setTeachers] = useState<UserTeacher | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
@@ -59,36 +51,68 @@ export const useUserTeachers = () => {
     async (teacherId: string) => {
       if (!user) throw new Error('User must be authenticated to collect teachers')
 
-      const docRef = doc(db, 'user_teachers', user.uid)
+      const userTeachersRef = doc(db, 'user_teachers', user.uid)
+      const profileRef = doc(db, 'profiles', user.uid)
       
       try {
-        const docSnap = await getDoc(docRef)
+        const today = new Date().toISOString().split('T')[0]
+        const currentStats = profile?.booster_stats || { last_reset: today, count: 0 }
+        
+        let newCount = currentStats.count
+        if (currentStats.last_reset !== today) {
+          newCount = 1
+        } else {
+          newCount += 1
+        }
+
+        if (newCount > 3) {
+          throw new Error('Tägliches Limit von 3 Boostern erreicht!')
+        }
+
+        const docSnap = await getDoc(userTeachersRef)
         const currentData = docSnap.exists() ? (docSnap.data() as UserTeacher) : {}
         
         const teacherData = currentData[teacherId] || { count: 0, level: 1 }
-        const newCount = teacherData.count + 1
-        const newLevel = calculateLevel(newCount)
+        const tCount = teacherData.count + 1
+        const tLevel = calculateLevel(tCount)
 
-        await setDoc(docRef, {
+        // Update profile stats and teachers in parallel/transactional (using two calls here for simplicity as we have merge: true)
+        await setDoc(userTeachersRef, {
           [teacherId]: {
-            count: newCount,
-            level: newLevel,
+            count: tCount,
+            level: tLevel,
           }
         }, { merge: true })
+
+        await updateDoc(profileRef, {
+          booster_stats: {
+            last_reset: today,
+            count: newCount
+          }
+        })
         
-        return { count: newCount, level: newLevel }
+        return { count: tCount, level: tLevel }
       } catch (err) {
         console.error('Error collecting teacher:', err)
         throw err
       }
     },
-    [user]
+    [user, profile]
   )
+
+  const getRemainingBoosters = useCallback(() => {
+    if (!profile) return 0
+    const today = new Date().toISOString().split('T')[0]
+    const stats = profile.booster_stats
+    if (!stats || stats.last_reset !== today) return 3
+    return Math.max(0, 3 - stats.count)
+  }, [profile])
 
   return {
     teachers,
     loading,
     error,
     collectTeacher,
+    getRemainingBoosters,
   }
 }

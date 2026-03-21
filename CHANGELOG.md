@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.20.3] - 2026-03-21
+- Balancing: **Booster-Limit eingeführt**. Nutzer können nun maximal 3 Booster pro Tag öffnen, um die Seltenheit der Karten zu wahren.
+- UI: **Verbleibende Booster**. Eine neue Anzeige über dem Booster zeigt an, wie viele Ziehungen für heute noch verfügbar sind.
+- Logic: **Automatischer Reset**. Das tägliche Limit wird automatisch um Mitternacht (beim ersten Öffnen am nächsten Tag) zurückgesetzt.
+
 ## [0.20.2] - 2026-03-21
 - Navigation: **Sammelkarten-Submenüs**. Der In-Page-Toggle auf der Sammelkarten-Seite wurde durch zwei dedizierte Menüeinträge ("Booster öffnen" und "Lehrer-Album") in der Navbar ersetzt.
 - UX: **Fokussiertes Album**. Gerade gezogene Lehrer werden im Album-View erst nach einem Reset oder Neuladen angezeigt, um den Fokus auf den aktuellen Fund zu halten.
