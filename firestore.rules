@@ -59,6 +59,9 @@ service cloud.firestore {
         (request.auth.uid == userId && !isAdmin() &&
          !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'is_approved', 'planning_group', 'class_name', 'timeout_until', 'timeout_reason', 'is_group_leader'])) ||
 
+        // Case 1b: Self-update for rated_teachers
+        (request.auth.uid == userId && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['rated_teachers'])) ||
+
         // Case 2: Self-update for admin users (can switch own course/group but not own timeout flags)
         (request.auth.uid == userId && isAdmin() &&
          !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'is_approved', 'timeout_until', 'timeout_reason', 'is_group_leader'])) ||
@@ -117,6 +120,17 @@ service cloud.firestore {
 
     match /user_teachers/{userId} {
       allow read, write: if isAuthenticated() && request.auth.uid == userId;
+    }
+
+    match /teachers/{teacherId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    match /teacher_ratings/{ratingId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && request.auth.uid == request.resource.data.userId;
+      allow update, delete: if isAdmin();
     }
 
     match /polls/{pollId} {
