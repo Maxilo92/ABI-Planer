@@ -22,7 +22,6 @@ export default function RegisterPage() {
   const [selectedCourse, setSelectedCourse] = useState('12A')
   const [isAtLeast16, setIsAtLeast16] = useState(false)
   const [acceptsTerms, setAcceptsTerms] = useState(false)
-  const [acceptsPrivacy, setAcceptsPrivacy] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
@@ -92,8 +91,8 @@ export default function RegisterPage() {
         return false
       }
 
-      if (!acceptsTerms || !acceptsPrivacy) {
-        setError('Bitte akzeptiere AGB und Datenschutzerklärung.')
+      if (!acceptsTerms) {
+        setError('Bitte akzeptiere die AGB.')
         return false
       }
 
@@ -149,8 +148,6 @@ export default function RegisterPage() {
           is_at_least_16: true,
           terms_accepted: true,
           terms_version: '2026-03-20',
-          privacy_accepted: true,
-          privacy_version: '2026-03-20',
           accepted_at: new Date().toISOString(),
         },
       })
@@ -302,28 +299,6 @@ export default function RegisterPage() {
                       .
                     </Label>
                   </div>
-
-                  <div className="grid grid-cols-[1.25rem_minmax(0,1fr)] items-start gap-x-3 gap-y-1">
-                    <Checkbox
-                      id="privacyAccepted"
-                      checked={acceptsPrivacy}
-                      onCheckedChange={(checked) => setAcceptsPrivacy(checked === true)}
-                      className="mt-0.5 shrink-0"
-                    />
-                    <Label htmlFor="privacyAccepted" className="!block text-xs leading-relaxed text-muted-foreground font-medium cursor-pointer">
-                      Ich habe die{' '}
-                      <Link
-                        href="/datenschutz"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={(e) => e.stopPropagation()}
-                        className="underline hover:text-primary"
-                      >
-                        Datenschutzerklärung
-                      </Link>{' '}
-                      gelesen und akzeptiere sie.
-                    </Label>
-                  </div>
                 </div>
               </div>
             )}
@@ -351,6 +326,12 @@ export default function RegisterPage() {
               <Link href="/login" className="text-primary hover:underline font-medium">
                 Anmelden
               </Link>
+              <br />
+              <span className="text-xs">
+                <Link href="/datenschutz" className="underline hover:text-primary" target="_blank" rel="noopener noreferrer">
+                  Datenschutzerklärung
+                </Link>
+              </span>
             </p>
           </CardFooter>
         </form>

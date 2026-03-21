@@ -1,3 +1,6 @@
+## 2026-03-21
+- Datenschutzerklärung-Checkbox aus Registrierung entfernt (nicht mehr erforderlich laut DSGVO).
+- Link zur Datenschutzerklärung unter 'Bereits einen Account? Anmelden' im letzten Schritt der Registrierung hinzugefügt.
 # Changelog
 
 ## [Unreleased]
