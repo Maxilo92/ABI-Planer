@@ -1,6 +1,6 @@
 'use client'
 
-import { useUserTeachers, calculateLevel } from '@/hooks/useUserTeachers'
+import { useUserTeachers } from '@/hooks/useUserTeachers'
 import { db } from '@/lib/firebase'
 import { doc, onSnapshot } from 'firebase/firestore'
 import { useEffect, useState } from 'react'
@@ -63,7 +63,11 @@ const getRarityLabel = (rarity: TeacherRarity) => {
   }
 }
 
-export function TeacherAlbum() {
+interface TeacherAlbumProps {
+  excludeIds?: string[]
+}
+
+export function TeacherAlbum({ excludeIds = [] }: TeacherAlbumProps) {
   const { teachers: userTeachers, loading: loadingUserTeachers } = useUserTeachers()
   const [globalTeachers, setGlobalTeachers] = useState<LootTeacher[]>([])
   const [loadingGlobal, setLoadingGlobal] = useState(true)
@@ -89,8 +93,9 @@ export function TeacherAlbum() {
     )
   }
 
-  // Sort teachers: Owned first, then by rarity, then by name
-  const sortedTeachers = [...globalTeachers].sort((a, b) => {
+  // Filter and Sort teachers: Owned first, then by rarity, then by name
+  const filteredGlobalTeachers = globalTeachers.filter(t => !excludeIds.includes(t.id || t.name))
+  const sortedTeachers = [...filteredGlobalTeachers].sort((a, b) => {
     const ownedA = userTeachers?.[a.id || a.name] ? 1 : 0
     const ownedB = userTeachers?.[b.id || b.name] ? 1 : 0
     

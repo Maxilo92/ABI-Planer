@@ -83,7 +83,15 @@ export function Navbar() {
   ]
 
   if (profile?.easter_egg_unlocked) {
-    navItems.push({ href: '/sammelkarten', label: 'Sammelkarten', icon: Sparkles })
+    navItems.push({
+      href: '/sammelkarten-root',
+      label: 'Sammelkarten',
+      icon: Sparkles,
+      subItems: [
+        { href: '/sammelkarten?view=sammelkarten', label: 'Booster öffnen', icon: Gift },
+        { href: '/sammelkarten?view=album', label: 'Lehrer-Album', icon: Trophy },
+      ]
+    })
   }
 
   navItems.push({ href: '/einstellungen', label: 'Einstellungen', icon: Settings })
@@ -120,6 +128,7 @@ export function Navbar() {
     if (href === '/') return pathname === '/'
     if (href === '/admin-root') return pathname.startsWith('/admin')
     if (href === '/gruppen-root') return pathname.startsWith('/gruppen')
+    if (href === '/sammelkarten-root') return pathname.startsWith('/sammelkarten')
 
     if (queryString) {
       if (pathname !== path) return false

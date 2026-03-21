@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.20.2] - 2026-03-21
+- Navigation: **Sammelkarten-Submenüs**. Der In-Page-Toggle auf der Sammelkarten-Seite wurde durch zwei dedizierte Menüeinträge ("Booster öffnen" und "Lehrer-Album") in der Navbar ersetzt.
+- UX: **Fokussiertes Album**. Gerade gezogene Lehrer werden im Album-View erst nach einem Reset oder Neuladen angezeigt, um den Fokus auf den aktuellen Fund zu halten.
+- UI: **Sammelkarten-Navigation**. Die `SammelkartenPage` reagiert nun auf den `view` Query-Parameter für nahtlose Navigation.
+
 ## [0.20.1] - 2026-03-21
 - Fix: **News-Interaktionen stabilisiert**. Berechtigungsfehler (`permission-denied`) bei Aufrufen, Bewertungen und Kommentaren behoben.
 - Security: **Firestore-Rules für News erweitert**. Zugelassene Felder für freigeschaltete Nutzer um `view_count`, `viewed_by` und robustere `ratings`-Logik ergänzt.
