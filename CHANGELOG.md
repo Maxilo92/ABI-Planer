@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.20.4] - 2026-03-21
+- Fix: **Build-Fehler in Navbar behoben**. Fehlende Icon-Imports (`Gift`, `Trophy`) für das Sammelkarten-Submenü ergänzt.
+
 ## [0.20.3] - 2026-03-21
 - Balancing: **Booster-Limit eingeführt**. Nutzer können nun maximal 3 Booster pro Tag öffnen, um die Seltenheit der Karten zu wahren.
 - UI: **Verbleibende Booster**. Eine neue Anzeige über dem Booster zeigt an, wie viele Ziehungen für heute noch verfügbar sind.
