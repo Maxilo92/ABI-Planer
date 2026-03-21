@@ -27,9 +27,11 @@ export function TeacherRarityVoting() {
   const [loading, setLoading] = useState(true)
   const [voting, setVoting] = useState(false)
   const [finished, setFinished] = useState(false)
+  const [initialized, setInitialized] = useState(false)
 
   useEffect(() => {
     const fetchTeachers = async () => {
+      if (initialized) return
       try {
         const querySnapshot = await getDocs(collection(db, 'teachers'))
         const allTeachers = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Teacher))
@@ -44,6 +46,7 @@ export function TeacherRarityVoting() {
         } else {
           setFinished(true)
         }
+        setInitialized(true)
       } catch (error) {
         console.error('Error fetching teachers for voting:', error)
       } finally {
@@ -51,20 +54,33 @@ export function TeacherRarityVoting() {
       }
     }
 
-    if (profile) {
+    if (profile && !initialized) {
       fetchTeachers()
     }
-  }, [profile])
+  }, [profile, initialized])
 
   const handleVote = async (rating: number) => {
-    if (!user || currentIndex === -1) return
+    if (!user || currentIndex === -1 || voting) return
     
     setVoting(true)
     const teacher = teachers[currentIndex]
     const voteId = `${user.uid}_${teacher.id}`
     
     try {
-      // 1. Save individual rating
+      // 1. Update local UI state immediately to prevent "jumping"
+      const nextTeachers = teachers.filter((_, i) => i !== currentIndex)
+      const nextIndex = nextTeachers.length > 0 ? Math.floor(Math.random() * nextTeachers.length) : -1
+      
+      // We keep the old state in case we need to rollback, but for UX we move on
+      const oldTeachers = [...teachers]
+      const oldIndex = currentIndex
+      
+      setTeachers(nextTeachers)
+      setCurrentIndex(nextIndex)
+      if (nextTeachers.length === 0) setFinished(true)
+
+      // 2. Perform DB operations in background
+      // Save individual rating
       await setDoc(doc(db, 'teacher_ratings', voteId), {
         userId: user.uid,
         teacherId: teacher.id,
@@ -72,14 +88,12 @@ export function TeacherRarityVoting() {
         created_at: new Date().toISOString()
       })
 
-      // 2. Update user profile (rated_teachers)
+      // Update user profile (rated_teachers)
       await updateDoc(doc(db, 'profiles', user.uid), {
         rated_teachers: arrayUnion(teacher.id)
       })
 
-      // 3. Update teacher aggregate (avg_rating, vote_count)
-      // Note: In a production app, this would be better handled by a Cloud Function 
-      // or a transaction to ensure consistency.
+      // Update teacher aggregate
       const newVoteCount = (teacher.vote_count || 0) + 1
       const currentTotal = (teacher.avg_rating || 0) * (teacher.vote_count || 0)
       const newAvg = (currentTotal + rating) / newVoteCount
@@ -98,19 +112,10 @@ export function TeacherRarityVoting() {
       }
 
       toast.success(`${teacher.name} bewertet!`)
-      
-      // Move to next random teacher
-      const nextTeachers = teachers.filter((_, i) => i !== currentIndex)
-      setTeachers(nextTeachers)
-      
-      if (nextTeachers.length > 0) {
-        setCurrentIndex(Math.floor(Math.random() * nextTeachers.length))
-      } else {
-        setFinished(true)
-      }
     } catch (error) {
       console.error('Error submitting teacher vote:', error)
       toast.error('Bewertung fehlgeschlagen.')
+      // No rollback for now to keep it simple, but we could restore oldTeachers/oldIndex here
     } finally {
       setVoting(false)
     }
