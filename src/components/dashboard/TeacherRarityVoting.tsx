@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { Star, Loader2, Sparkles, CheckCircle2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
+import { logAction } from '@/lib/logging'
 
 const RARITY_OPTIONS = [
   { label: 'Gewöhnlich', value: 0.0, color: 'bg-slate-500' },
@@ -87,6 +88,14 @@ export function TeacherRarityVoting() {
         avg_rating: newAvg,
         vote_count: newVoteCount
       })
+
+      if (user) {
+        await logAction('TEACHER_VOTE', user.uid, profile?.full_name, { 
+          teacher_id: teacher.id, 
+          teacher_name: teacher.name,
+          rating: rating 
+        })
+      }
 
       toast.success(`${teacher.name} bewertet!`)
       

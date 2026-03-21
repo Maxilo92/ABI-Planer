@@ -38,6 +38,9 @@ export type LogActionType =
   | 'LOOT_TEACHER'
   | 'NEWS_RATE'
   | 'NEWS_COMMENT'
+  | 'TEACHERS_BULK_IMPORT'
+  | 'TEACHERS_RARITY_SYNC'
+  | 'TEACHER_VOTE'
 
 export interface LogEntry {
   action: LogActionType
