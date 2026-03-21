@@ -1,4 +1,8 @@
 ## 2026-03-21
+- Globales Auto-Save für alle Einstellungen: Änderungen werden sofort gespeichert, manuelles Speichern entfällt. Bei Fehlern werden Änderungen zurückgesetzt.
+## 2026-03-21
+- Lehrer werden nach jedem Hinzufügen automatisch gespeichert (kein manueller Speichern-Button mehr nötig).
+## 2026-03-21
 - Datenschutzerklärung-Checkbox aus Registrierung entfernt (nicht mehr erforderlich laut DSGVO).
 - Link zur Datenschutzerklärung unter 'Bereits einen Account? Anmelden' im letzten Schritt der Registrierung hinzugefügt.
 # Changelog

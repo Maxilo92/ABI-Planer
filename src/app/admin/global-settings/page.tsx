@@ -183,34 +183,58 @@ export default function GlobalSettingsPage() {
 
   const handleAddMessage = () => {
     if (!newMessage.trim()) return
-    setSettings(prev => ({
-      ...prev,
-      cookie_messages: [...prev.cookie_messages, newMessage.trim()]
-    }))
+    const updatedSettings = {
+      ...settings,
+      cookie_messages: [...settings.cookie_messages, newMessage.trim()]
+    }
+    setSettings(updatedSettings)
     setNewMessage('')
+    setTimeout(async () => {
+      const old = settings
+      const ok = await handleSave()
+      if (!ok) setSettings(old)
+    }, 0)
   }
 
   const handleRemoveMessage = (index: number) => {
-    setSettings(prev => ({
-      ...prev,
-      cookie_messages: prev.cookie_messages.filter((_, i) => i !== index)
-    }))
+    const updatedSettings = {
+      ...settings,
+      cookie_messages: settings.cookie_messages.filter((_, i) => i !== index)
+    }
+    setSettings(updatedSettings)
+    setTimeout(async () => {
+      const old = settings
+      const ok = await handleSave()
+      if (!ok) setSettings(old)
+    }, 0)
   }
 
   const handleAddAdMessage = () => {
     if (!newAdMessage.trim()) return
-    setSettings(prev => ({
-      ...prev,
-      ad_messages: [...prev.ad_messages, newAdMessage.trim()]
-    }))
+    const updatedSettings = {
+      ...settings,
+      ad_messages: [...settings.ad_messages, newAdMessage.trim()]
+    }
+    setSettings(updatedSettings)
     setNewAdMessage('')
+    setTimeout(async () => {
+      const old = settings
+      const ok = await handleSave()
+      if (!ok) setSettings(old)
+    }, 0)
   }
 
   const handleRemoveAdMessage = (index: number) => {
-    setSettings(prev => ({
-      ...prev,
-      ad_messages: prev.ad_messages.filter((_, i) => i !== index)
-    }))
+    const updatedSettings = {
+      ...settings,
+      ad_messages: settings.ad_messages.filter((_, i) => i !== index)
+    }
+    setSettings(updatedSettings)
+    setTimeout(async () => {
+      const old = settings
+      const ok = await handleSave()
+      if (!ok) setSettings(old)
+    }, 0)
   }
 
   const handleAddTeacher = () => {
@@ -219,19 +243,30 @@ export default function GlobalSettingsPage() {
       toast.error('Limit von 100 Lehrern erreicht.')
       return
     }
-    setSettings(prev => ({
-      ...prev,
-      loot_teachers: [...(prev.loot_teachers || []), { name: newTeacherName.trim(), rarity: newTeacherRarity }]
-    }))
+    const updatedSettings = {
+      ...settings,
+      loot_teachers: [...(settings.loot_teachers || []), { name: newTeacherName.trim(), rarity: newTeacherRarity }]
+    }
+    setSettings(updatedSettings)
     setNewTeacherName('')
     setNewTeacherRarity('common')
+    // Nach dem Hinzufügen speichern
+    setTimeout(() => {
+      handleSave()
+    }, 0)
   }
 
   const handleRemoveTeacher = (index: number) => {
-    setSettings(prev => ({
-      ...prev,
-      loot_teachers: prev.loot_teachers.filter((_, i) => i !== index)
-    }))
+    const updatedSettings = {
+      ...settings,
+      loot_teachers: settings.loot_teachers.filter((_, i) => i !== index)
+    }
+    setSettings(updatedSettings)
+    setTimeout(async () => {
+      const old = settings
+      const ok = await handleSave()
+      if (!ok) setSettings(old)
+    }, 0)
   }
 
   const getRarityLabel = (rarity: TeacherRarity) => {
@@ -259,6 +294,11 @@ export default function GlobalSettingsPage() {
   const handleResetToDefault = () => {
     if (confirm('Möchtest du wirklich alle Einstellungen auf die Standardwerte zurücksetzen?')) {
       setSettings(DEFAULT_SETTINGS)
+      setTimeout(async () => {
+        const old = settings
+        const ok = await handleSave()
+        if (!ok) setSettings(old)
+      }, 0)
     }
   }
 
@@ -275,6 +315,7 @@ export default function GlobalSettingsPage() {
   )
 
   return (
+
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
@@ -285,36 +326,8 @@ export default function GlobalSettingsPage() {
           <Button variant="outline" onClick={handleResetToDefault} disabled={saving}>
             <RotateCcw className="mr-2 h-4 w-4" /> Zurücksetzen
           </Button>
-          <Button onClick={handleSave} disabled={saving}>
-            {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-            Speichern
-          </Button>
         </div>
       </div>
-
-      <Dialog open={isGuardOpen} onOpenChange={setIsGuardOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-destructive">
-              <AlertTriangle className="h-5 w-5" /> Ungespeicherte Änderungen
-            </DialogTitle>
-            <DialogDescription>
-              Du hast Änderungen vorgenommen, die noch nicht gespeichert wurden. Möchtest du diese jetzt speichern oder die Seite verlassen?
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="flex flex-col gap-2 sm:flex-col">
-            <Button variant="ghost" className="w-full" onClick={handleConfirmNavigation}>
-              Verwerfen & Verlassen
-            </Button>
-            <Button variant="outline" className="w-full" onClick={() => setIsGuardOpen(false)}>
-              Abbrechen
-            </Button>
-            <Button className="w-full" onClick={handleSaveAndContinue} disabled={saving}>
-              Speichern & Fortfahren
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       <div className="grid grid-cols-1 gap-6">
         <Card>

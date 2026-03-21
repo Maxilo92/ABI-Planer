@@ -76,7 +76,7 @@ export function Footer() {
               <div className="absolute -top-10 left-1/2 -translate-x-1/2 px-2 py-1 bg-primary text-primary-foreground rounded-md text-[10px] font-bold animate-bounce shadow-md whitespace-nowrap z-10">
                 {showFeedback === '?' ? (
                   <div className="flex items-center gap-1">
-                    <span>Was guckst du?</span>
+                    <span>Was suchst du?</span>
                   </div>
                 ) : showFeedback}
                 <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-primary rotate-45" />
