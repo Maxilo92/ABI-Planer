@@ -100,9 +100,12 @@ service cloud.firestore {
       allow write: if isPlanner(); 
       
       allow update: if isPlanner() || (isApproved() && (
-        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['ratings', 'comment_count']) &&
-        (request.resource.data.ratings == resource.data.ratings || 
-         request.resource.data.ratings.diff(resource.data.ratings).affectedKeys().hasOnly([request.auth.uid]))
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['ratings', 'comment_count', 'view_count', 'viewed_by']) &&
+        (
+          (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['ratings'])) ||
+          (resource.data.ratings == null && request.resource.data.ratings.keys().hasOnly([request.auth.uid])) ||
+          (resource.data.ratings != null && request.resource.data.ratings.diff(resource.data.ratings).affectedKeys().hasOnly([request.auth.uid]))
+        )
       ));
 
       match /comments/{commentId} {

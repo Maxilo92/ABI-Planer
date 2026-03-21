@@ -38,12 +38,14 @@ export default function NewsDetailPage({ params }: { params: Promise<{ id: strin
         setNews(data)
         
         // View count logic
-        if (user) {
+        if (user && profile?.is_approved) {
           const viewedBy = data.viewed_by || []
           if (!viewedBy.includes(user.uid)) {
             updateDoc(docRef, {
               view_count: increment(1),
               viewed_by: arrayUnion(user.uid)
+            }).catch(err => {
+              console.error('Error updating view count:', err)
             })
           }
         }
@@ -71,11 +73,16 @@ export default function NewsDetailPage({ params }: { params: Promise<{ id: strin
       unsubscribeNews()
       unsubscribeComments()
     }
-  }, [id, user, authLoading])
+  }, [id, user, profile, authLoading])
 
   const handleVote = async (type: 'up' | 'down') => {
     if (!user || !news) {
       toast.error('Du musst angemeldet sein, um abzustimmen.')
+      return
+    }
+
+    if (!profile?.is_approved) {
+      toast.error('Dein Account muss erst freigeschaltet werden.')
       return
     }
 
@@ -105,6 +112,11 @@ export default function NewsDetailPage({ params }: { params: Promise<{ id: strin
   const handleSubmitComment = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!user || !profile || !commentText.trim() || submittingComment) return
+
+    if (!profile.is_approved) {
+      toast.error('Dein Account muss erst freigeschaltet werden.')
+      return
+    }
 
     setSubmittingComment(true)
     try {
@@ -269,28 +281,34 @@ export default function NewsDetailPage({ params }: { params: Promise<{ id: strin
         </h3>
 
         {user ? (
-          <form onSubmit={handleSubmitComment} className="space-y-3">
-            <Textarea
-              placeholder="Schreibe einen Kommentar..."
-              value={commentText}
-              onChange={(e) => setCommentText(e.target.value)}
-              className="min-h-[100px] resize-none focus-visible:ring-primary"
-            />
-            <div className="flex justify-end">
-              <Button 
-                type="submit" 
-                disabled={!commentText.trim() || submittingComment}
-                className="gap-2"
-              >
-                {submittingComment ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Send className="h-4 w-4" />
-                )}
-                Kommentieren
-              </Button>
+          profile?.is_approved ? (
+            <form onSubmit={handleSubmitComment} className="space-y-3">
+              <Textarea
+                placeholder="Schreibe einen Kommentar..."
+                value={commentText}
+                onChange={(e) => setCommentText(e.target.value)}
+                className="min-h-[100px] resize-none focus-visible:ring-primary"
+              />
+              <div className="flex justify-end">
+                <Button 
+                  type="submit" 
+                  disabled={!commentText.trim() || submittingComment}
+                  className="gap-2"
+                >
+                  {submittingComment ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Send className="h-4 w-4" />
+                  )}
+                  Kommentieren
+                </Button>
+              </div>
+            </form>
+          ) : (
+            <div className="bg-muted p-6 rounded-xl text-center">
+              <p className="text-muted-foreground">Dein Account muss erst freigeschaltet werden, um kommentieren zu können.</p>
             </div>
-          </form>
+          )
         ) : (
           <div className="bg-muted p-6 rounded-xl text-center">
             <p className="text-muted-foreground mb-4">Du musst angemeldet sein, um zu kommentieren.</p>

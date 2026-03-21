@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.20.1] - 2026-03-21
+- Fix: **News-Interaktionen stabilisiert**. Berechtigungsfehler (`permission-denied`) bei Aufrufen, Bewertungen und Kommentaren behoben.
+- Security: **Firestore-Rules für News erweitert**. Zugelassene Felder für freigeschaltete Nutzer um `view_count`, `viewed_by` und robustere `ratings`-Logik ergänzt.
+- UX: **Gated News Interaction**. Interaktionen (Bewerten, Kommentieren) und Aufrufszählung werden im UI nun explizit nur für freigeschaltete Profile angeboten/ausgeführt, um Fehler bei neuen Accounts zu vermeiden.
+- UI: **Feedback für nicht freigeschaltete Nutzer**. Ein klarer Hinweis informiert nun darüber, dass der Account erst freigeschaltet werden muss, bevor Kommentare verfasst werden können.
+
 ## [0.20.0] - 2026-03-21
 - Rebranding: **Sammelkarten-System**. Die "Lootbox" und der "Top Secret"-Bereich wurden vollständig in "Sammelkarten" umbenannt.
 - Navigation: **Neue Route für Sammelkarten**. Der geheime Bereich ist nun offiziell unter `/sammelkarten` erreichbar (vorher `/geheim`).
