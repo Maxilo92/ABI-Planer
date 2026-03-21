@@ -76,7 +76,7 @@ export const useUserTeachers = () => {
         const tCount = teacherData.count + 1
         const tLevel = calculateLevel(tCount)
 
-        // Update profile stats and teachers in parallel/transactional (using two calls here for simplicity as we have merge: true)
+        // Update profile stats and teachers in parallel/transactional
         await setDoc(userTeachersRef, {
           [teacherId]: {
             count: tCount,

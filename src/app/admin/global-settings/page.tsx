@@ -19,9 +19,10 @@ import {
 import { useAuth } from '@/context/AuthContext'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { Loader2, Plus, Trash2, Save, RotateCcw, Cookie, Gift, GraduationCap, Search, AlertTriangle, Pencil } from 'lucide-react'
+import { Loader2, Plus, Trash2, Save, RotateCcw, Cookie, Gift, GraduationCap, Search, AlertTriangle, Pencil, Upload, RefreshCw } from 'lucide-react'
 import { logAction } from '@/lib/logging'
-import { TeacherRarity } from '@/types/database'
+import { TeacherRarity, Teacher } from '@/types/database'
+import { collection, getDocs, writeBatch } from 'firebase/firestore'
 import { Badge } from '@/components/ui/badge'
 
 interface LootTeacher {
@@ -77,6 +78,9 @@ export default function GlobalSettingsPage() {
   const [editingTeacher, setEditingTeacher] = useState<LootTeacher | null>(null)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [teacherSearch, setTeacherSearch] = useState('')
+  const [votingData, setVotingData] = useState<Record<string, { avg: number, count: number }>>({})
+  const [importing, setImporting] = useState(false)
+  const [syncing, setSyncing] = useState(false)
   const [isGuardOpen, setIsGuardOpen] = useState(false)
   const [nextPath, setNextPath] = useState<string | null>(null)
   const router = useRouter()
@@ -143,7 +147,20 @@ export default function GlobalSettingsPage() {
       setLoading(false)
     })
 
-    return () => unsubscribe()
+    // Fetch live voting data for display
+    const unsubscribeVoting = onSnapshot(collection(db, 'teachers'), (snapshot) => {
+      const data: Record<string, { avg: number, count: number }> = {}
+      snapshot.docs.forEach(doc => {
+        const d = doc.data()
+        data[doc.id] = { avg: d.avg_rating || 0, count: d.vote_count || 0 }
+      })
+      setVotingData(data)
+    })
+
+    return () => {
+      unsubscribe()
+      unsubscribeVoting()
+    }
   }, [profile, authLoading, isAdmin, router])
 
   const handleSave = async (settingsToSave?: GlobalSettings): Promise<boolean> => {
@@ -305,6 +322,175 @@ export default function GlobalSettingsPage() {
     }, 0)
   }
 
+  const handleBulkImport = async () => {
+    if (!isAdmin || importing) return
+    const confirmed = window.confirm('Möchtest du alle Lehrer aus der vordefinierten Liste importieren? Bestehende Lehrer in der Voting-Datenbank werden übersprungen.')
+    if (!confirmed) return
+
+    setImporting(true)
+    try {
+      // The list from the processed CSV
+      const teachersToImport = [
+        {"id":"herr-altenhenne","name":"Herr Altenhenne","avg_rating":0,"vote_count":0},
+        {"id":"frau-balling","name":"Frau Balling","avg_rating":0,"vote_count":0},
+        {"id":"frau-bau","name":"Frau Bau","avg_rating":0,"vote_count":0},
+        {"id":"frau-bennari","name":"Frau Bennari","avg_rating":0,"vote_count":0},
+        {"id":"frau-biastoch","name":"Frau Biastoch","avg_rating":0,"vote_count":0},
+        {"id":"frau-bien","name":"Frau Bien","avg_rating":0,"vote_count":0},
+        {"id":"frau-bley","name":"Frau Bley","avg_rating":0,"vote_count":0},
+        {"id":"frau-burckhardt","name":"Frau Burckhardt","avg_rating":0,"vote_count":0},
+        {"id":"frau-b-hler-grosa","name":"Frau Bähler-Grosa","avg_rating":0,"vote_count":0},
+        {"id":"frau-clemens","name":"Frau Clemens","avg_rating":0,"vote_count":0},
+        {"id":"frau-courant-fernandes","name":"Frau Courant Fernandes","avg_rating":0,"vote_count":0},
+        {"id":"herr-de-vivanco","name":"Herr de Vivanco","avg_rating":0,"vote_count":0},
+        {"id":"frau-deleske","name":"Frau Deleske","avg_rating":0,"vote_count":0},
+        {"id":"frau-drescher","name":"Frau Drescher","avg_rating":0,"vote_count":0},
+        {"id":"frau-ernst","name":"Frau Ernst","avg_rating":0,"vote_count":0},
+        {"id":"frau-feuerbach","name":"Frau Feuerbach","avg_rating":0,"vote_count":0},
+        {"id":"frau-fiedler","name":"Frau Fiedler","avg_rating":0,"vote_count":0},
+        {"id":"frau-franke","name":"Frau Franke","avg_rating":0,"vote_count":0},
+        {"id":"frau-friedrich","name":"Frau Friedrich","avg_rating":0,"vote_count":0},
+        {"id":"frau-fritzsch","name":"Frau Fritzsch","avg_rating":0,"vote_count":0},
+        {"id":"herr-fritzsch","name":"Herr Fritzsch","avg_rating":0,"vote_count":0},
+        {"id":"herr-fuchs","name":"Herr Fuchs","avg_rating":0,"vote_count":0},
+        {"id":"frau-galle","name":"Frau Galle","avg_rating":0,"vote_count":0},
+        {"id":"frau-gantumur","name":"Frau Gantumur","avg_rating":0,"vote_count":0},
+        {"id":"frau-ganzer","name":"Frau Ganzer","avg_rating":0,"vote_count":0},
+        {"id":"herr-grabowski","name":"Herr Grabowski","avg_rating":0,"vote_count":0},
+        {"id":"herr-gr-ler","name":"Herr Gräßler","avg_rating":0,"vote_count":0},
+        {"id":"frau-haase","name":"Frau Haase","avg_rating":0,"vote_count":0},
+        {"id":"frau-henker","name":"Frau Henker","avg_rating":0,"vote_count":0},
+        {"id":"frau-hoppe","name":"Frau Hoppe","avg_rating":0,"vote_count":0},
+        {"id":"frau-jerol","name":"Frau Jerol","avg_rating":0,"vote_count":0},
+        {"id":"frau-jurk","name":"Frau Jurk","avg_rating":0,"vote_count":0},
+        {"id":"herr-j-rg","name":"Herr Jörg","avg_rating":0,"vote_count":0},
+        {"id":"herr-kaiser","name":"Herr Kaiser","avg_rating":0,"vote_count":0},
+        {"id":"frau-kaule","name":"Frau Kaule","avg_rating":0,"vote_count":0},
+        {"id":"frau-kober","name":"Frau Kober","avg_rating":0,"vote_count":0},
+        {"id":"frau-kobisch","name":"Frau Kobisch","avg_rating":0,"vote_count":0},
+        {"id":"frau-krenzke","name":"Frau Krenzke","avg_rating":0,"vote_count":0},
+        {"id":"herr-kreye","name":"Herr Kreye","avg_rating":0,"vote_count":0},
+        {"id":"herr-kutschick","name":"Herr Kutschick","avg_rating":0,"vote_count":0},
+        {"id":"herr-k-nner","name":"Herr Känner","avg_rating":0,"vote_count":0},
+        {"id":"frau-k-gler","name":"Frau Kügler","avg_rating":0,"vote_count":0},
+        {"id":"frau-k-nzelmann","name":"Frau Künzelmann","avg_rating":0,"vote_count":0},
+        {"id":"frau-laber","name":"Frau Laber","avg_rating":0,"vote_count":0},
+        {"id":"herr-lange","name":"Herr Lange","avg_rating":0,"vote_count":0},
+        {"id":"frau-link","name":"Frau Link","avg_rating":0,"vote_count":0},
+        {"id":"frau-loitsch","name":"Frau Loitsch","avg_rating":0,"vote_count":0},
+        {"id":"herr-loitsch","name":"Herr Loitsch","avg_rating":0,"vote_count":0},
+        {"id":"herr-lory","name":"Herr Lory","avg_rating":0,"vote_count":0},
+        {"id":"frau-manuwald","name":"Frau Manuwald","avg_rating":0,"vote_count":0},
+        {"id":"frau-matz","name":"Frau Matz","avg_rating":0,"vote_count":0},
+        {"id":"frau-meinhold","name":"Frau Meinhold","avg_rating":0,"vote_count":0},
+        {"id":"frau-mey","name":"Frau Mey","avg_rating":0,"vote_count":0},
+        {"id":"herr-moch","name":"Herr Moch","avg_rating":0,"vote_count":0},
+        {"id":"herr-musiol","name":"Herr Musiol","avg_rating":0,"vote_count":0},
+        {"id":"frau-neufeldt","name":"Frau Neufeldt","avg_rating":0,"vote_count":0},
+        {"id":"frau-neugebauer","name":"Frau Neugebauer","avg_rating":0,"vote_count":0},
+        {"id":"frau-nims","name":"Frau Nims","avg_rating":0,"vote_count":0},
+        {"id":"frau-nobis","name":"Frau Nobis","avg_rating":0,"vote_count":0},
+        {"id":"frau-packheiser","name":"Frau Packheiser","avg_rating":0,"vote_count":0},
+        {"id":"frau-peucker","name":"Frau Peucker","avg_rating":0,"vote_count":0},
+        {"id":"frau-piwonka","name":"Frau Piwonka","avg_rating":0,"vote_count":0},
+        {"id":"herr-rehnolt","name":"Herr Rehnolt","avg_rating":0,"vote_count":0},
+        {"id":"frau-reichelt","name":"Frau Reichelt","avg_rating":0,"vote_count":0},
+        {"id":"herr-rentsch","name":"Herr Rentsch","avg_rating":0,"vote_count":0},
+        {"id":"herr-richter","name":"Herr Richter","avg_rating":0,"vote_count":0},
+        {"id":"herr-riedel","name":"Herr Riedel","avg_rating":0,"vote_count":0},
+        {"id":"herr-ritter","name":"Herr Ritter","avg_rating":0,"vote_count":0},
+        {"id":"frau-rosenthal","name":"Frau Rosenthal","avg_rating":0,"vote_count":0},
+        {"id":"frau-runge","name":"Frau Runge","avg_rating":0,"vote_count":0},
+        {"id":"frau-ruscher","name":"Frau Ruscher","avg_rating":0,"vote_count":0},
+        {"id":"frau-r-hling","name":"Frau Röhling","avg_rating":0,"vote_count":0},
+        {"id":"frau-r-mer","name":"Frau Römer","avg_rating":0,"vote_count":0},
+        {"id":"herr-sarodnik","name":"Herr Sarodnik","avg_rating":0,"vote_count":0},
+        {"id":"frau-schier","name":"Frau Schier","avg_rating":0,"vote_count":0},
+        {"id":"frau-schimek","name":"Frau Schimek","avg_rating":0,"vote_count":0},
+        {"id":"herr-schlegel","name":"Herr Schlegel","avg_rating":0,"vote_count":0},
+        {"id":"frau-schmidt","name":"Frau Schmidt","avg_rating":0,"vote_count":0},
+        {"id":"herr-schneider","name":"Herr Schneider","avg_rating":0,"vote_count":0},
+        {"id":"herr-scholz","name":"Herr Scholz","avg_rating":0,"vote_count":0},
+        {"id":"frau-schultz","name":"Frau Schultz","avg_rating":0,"vote_count":0},
+        {"id":"herr-schulze","name":"Herr Schulze","avg_rating":0,"vote_count":0},
+        {"id":"frau-schumann","name":"Frau Schumann","avg_rating":0,"vote_count":0},
+        {"id":"frau-schwarzer","name":"Frau Schwarzer","avg_rating":0,"vote_count":0},
+        {"id":"herr-stange","name":"Herr Stange","avg_rating":0,"vote_count":0},
+        {"id":"frau-stein","name":"Frau Stein","avg_rating":0,"vote_count":0},
+        {"id":"frau-stelzig","name":"Frau Stelzig","avg_rating":0,"vote_count":0},
+        {"id":"herr-stirner","name":"Herr Stirner","avg_rating":0,"vote_count":0},
+        {"id":"frau-strote","name":"Frau Strote","avg_rating":0,"vote_count":0},
+        {"id":"herr-stuhlmacher","name":"Herr Stuhlmacher","avg_rating":0,"vote_count":0},
+        {"id":"herr-trinczek","name":"Herr Trinczek","avg_rating":0,"vote_count":0},
+        {"id":"frau-t-th","name":"Frau Tóth","avg_rating":0,"vote_count":0},
+        {"id":"frau-unger","name":"Frau Unger","avg_rating":0,"vote_count":0},
+        {"id":"frau-vogel","name":"Frau Vogel","avg_rating":0,"vote_count":0},
+        {"id":"frau-wahl","name":"Frau Wahl","avg_rating":0,"vote_count":0},
+        {"id":"frau-weise","name":"Frau Weise","avg_rating":0,"vote_count":0},
+        {"id":"herr-wei-","name":"Herr Weiß","avg_rating":0,"vote_count":0},
+        {"id":"frau-wendorff","name":"Frau Wendorff","avg_rating":0,"vote_count":0},
+        {"id":"frau-wilke","name":"Frau Wilke","avg_rating":0,"vote_count":0},
+        {"id":"frau-wonneberger","name":"Frau Wonneberger","avg_rating":0,"vote_count":0},
+        {"id":"herr-zeiler","name":"Herr Zeiler","avg_rating":0,"vote_count":0}
+      ]
+
+      let batch = writeBatch(db)
+      let count = 0
+      for (const t of teachersToImport) {
+        const ref = doc(db, 'teachers', t.id)
+        batch.set(ref, t, { merge: true })
+        count++
+        if (count >= 400) {
+          await batch.commit()
+          batch = writeBatch(db)
+          count = 0
+        }
+      }
+      await batch.commit()
+      toast.success('Alle Lehrer erfolgreich importiert!')
+      if (user) await logAction('TEACHERS_BULK_IMPORT', user.uid, profile?.full_name, { count: teachersToImport.length })
+    } catch (error) {
+      console.error('Error in bulk import:', error)
+      toast.error('Fehler beim Importieren.')
+    } finally {
+      setImporting(false)
+    }
+  }
+
+  const handleSyncRarities = async () => {
+    if (!isAdmin || syncing) return
+    const confirmed = window.confirm('Möchtest du die Seltenheiten im Lehrer-Album basierend auf den aktuellen Voting-Durchschnitten aktualisieren? Dies überschreibt die aktuellen Seltenheiten.')
+    if (!confirmed) return
+
+    setSyncing(true)
+    try {
+      const querySnapshot = await getDocs(collection(db, 'teachers'))
+      const teachersData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Teacher))
+      
+      const newLootTeachers: LootTeacher[] = teachersData.map(t => {
+        const avg = t.avg_rating || 0
+        let rarity: TeacherRarity = 'common'
+        
+        if (avg >= 0.85) rarity = 'legendary'
+        else if (avg >= 0.65) rarity = 'mythic'
+        else if (avg >= 0.40) rarity = 'epic'
+        else if (avg >= 0.15) rarity = 'rare'
+        
+        return { id: t.id, name: t.name, rarity }
+      })
+
+      const updatedSettings = { ...settings, loot_teachers: newLootTeachers }
+      await handleSave(updatedSettings)
+      toast.success('Seltenheiten erfolgreich synchronisiert!')
+      if (user) await logAction('TEACHERS_RARITY_SYNC', user.uid, profile?.full_name, { count: newLootTeachers.length })
+    } catch (error) {
+      console.error('Error syncing rarities:', error)
+      toast.error('Fehler beim Synchronisieren.')
+    } finally {
+      setSyncing(false)
+    }
+  }
+
   const getRarityLabel = (rarity: TeacherRarity) => {
     switch (rarity) {
       case 'common': return 'Gewöhnlich'
@@ -359,6 +545,10 @@ export default function GlobalSettingsPage() {
           <p className="text-muted-foreground">Verwalte systemweite Parameter und Texte.</p>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" onClick={handleBulkImport} disabled={saving || importing}>
+            {importing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
+            Lehrer Importieren
+          </Button>
           <Button variant="outline" onClick={handleResetToDefault} disabled={saving}>
             <RotateCcw className="mr-2 h-4 w-4" /> Zurücksetzen
           </Button>
@@ -483,9 +673,15 @@ export default function GlobalSettingsPage() {
                 <GraduationCap className="h-5 w-5 text-primary" />
                 Lehrer-Sammelkarten (Easter Egg)
               </CardTitle>
-              <Badge variant="secondary">
-                {(settings.loot_teachers || []).length} / 100
-              </Badge>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={handleSyncRarities} disabled={syncing || saving}>
+                  {syncing ? <Loader2 className="h-3 w-3 animate-spin mr-2" /> : <RefreshCw className="h-3 w-3 mr-2" />}
+                  Raritäten Sync
+                </Button>
+                <Badge variant="secondary">
+                  {(settings.loot_teachers || []).length} / 100
+                </Badge>
+              </div>
             </div>
             <CardDescription>
               Verwalte die Lehrer, die aus den Sammelkarten-Packungen gezogen werden können.
@@ -545,10 +741,18 @@ export default function GlobalSettingsPage() {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                         {filteredTeachers.map((teacher) => {
                           const originalIndex = settings.loot_teachers.findIndex(t => t === teacher)
+                          const liveData = votingData[teacher.id]
                           return (
                             <div key={`${teacher.name}-${originalIndex}`} className="flex items-center justify-between p-2 rounded-lg border bg-background group">
                               <div className="flex flex-col min-w-0">
-                                <span className="font-semibold text-xs truncate">{teacher.name}</span>
+                                <div className="flex items-center gap-2">
+                                  <span className="font-semibold text-xs truncate">{teacher.name}</span>
+                                  {liveData && liveData.count > 0 && (
+                                    <Badge variant="outline" className="h-4 text-[8px] px-1 bg-primary/5 border-primary/10">
+                                      Ø {liveData.avg.toFixed(2)} ({liveData.count} 🗳️)
+                                    </Badge>
+                                  )}
+                                </div>
                                 <span className={`text-[9px] font-black uppercase ${getRarityColor(teacher.rarity)}`}>
                                   {getRarityLabel(teacher.rarity)}
                                 </span>

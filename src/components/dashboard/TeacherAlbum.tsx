@@ -94,8 +94,8 @@ export function TeacherAlbum() {
 
   // Sort teachers: Owned first, then by rarity, then by name
   const sortedTeachers = [...globalTeachers].sort((a, b) => {
-    const ownedA = userTeachers?.[a.id || a.name] ? 1 : 0
-    const ownedB = userTeachers?.[b.id || b.name] ? 1 : 0
+    const ownedA = (userTeachers?.[a.id] || userTeachers?.[a.name]) ? 1 : 0
+    const ownedB = (userTeachers?.[b.id] || userTeachers?.[b.name]) ? 1 : 0
     
     if (ownedA !== ownedB) return ownedB - ownedA
     
@@ -138,8 +138,7 @@ export function TeacherAlbum() {
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
           {sortedTeachers.map((teacher) => {
-            const teacherId = teacher.id || teacher.name
-            const userData = userTeachers?.[teacherId]
+            const userData = userTeachers?.[teacher.id] || userTeachers?.[teacher.name]
             const isOwned = !!userData
             const level = userData?.level || 1
             const count = userData?.count || 0

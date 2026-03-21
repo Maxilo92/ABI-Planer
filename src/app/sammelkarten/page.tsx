@@ -36,6 +36,24 @@ function SammelkartenContent() {
   const [collectionResult, setCollectionResult] = useState<{ isNew: boolean, newLevel: number, count: number } | null>(null)
   const [isAnimating, setIsAnimating] = useState(false)
   const [shake, setShake] = useState(false)
+  const [timeLeft, setTimeLeft] = useState<string>('')
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      const now = new Date()
+      const midnight = new Date(now)
+      midnight.setHours(24, 0, 0, 0)
+      const diff = midnight.getTime() - now.getTime()
+      
+      const h = Math.floor(diff / (1000 * 60 * 60))
+      const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
+      const s = Math.floor((diff % (1000 * 60)) / 1000)
+      
+      setTimeLeft(`${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`)
+    }, 1000)
+
+    return () => clearInterval(timer)
+  }, [])
 
   useEffect(() => {
     if (!loading && !profile?.easter_egg_unlocked) {
@@ -128,10 +146,11 @@ function SammelkartenContent() {
       setRevealedTeacher(teacher)
 
       // Persist to collection
-      if (teacher.id) {
+      const teacherId = teacher.id || teacher.name
+      if (teacherId) {
         try {
-          const isNew = !userTeachers?.[teacher.id]
-          const result = await collectTeacher(teacher.id)
+          const isNew = !(userTeachers?.[teacher.id] || userTeachers?.[teacher.name])
+          const result = await collectTeacher(teacherId)
           setCollectionResult({
             isNew,
             newLevel: result.level,
@@ -140,7 +159,7 @@ function SammelkartenContent() {
 
           if (user) {
             logAction('LOOT_TEACHER', user.uid, profile?.full_name, { 
-              id: teacher.id, 
+              id: teacherId, 
               count: result.count, 
               level: result.level 
             })
@@ -217,7 +236,7 @@ function SammelkartenContent() {
                 <div className="flex items-center justify-center gap-2 mt-2">
                   <Badge variant={getRemainingBoosters() > 0 ? "secondary" : "destructive"} className="px-3 py-1 text-[10px] font-black uppercase tracking-widest border-2 border-white/10">
                     <Zap className="h-3 w-3 mr-1.5 fill-current" />
-                    {getRemainingBoosters()} / 3 Booster übrig
+                    {getRemainingBoosters() > 0 ? `${getRemainingBoosters()} / 3 Booster übrig` : `Nächster Booster in ${timeLeft}`}
                   </Badge>
                 </div>
               )}
@@ -241,8 +260,8 @@ function SammelkartenContent() {
                       ? "text-primary/40 group-hover:text-primary group-hover:rotate-12 group-hover:scale-110" 
                       : "text-muted/40"
                   )} />
-                  <p className="mt-4 text-[10px] font-black uppercase tracking-[0.4em] text-primary/60 group-hover:text-primary transition-colors">
-                    {getRemainingBoosters() > 0 ? "Starten" : "Limit erreicht"}
+                  <p className="mt-4 text-[10px] font-black uppercase tracking-[0.4em] text-primary/60 group-hover:text-primary transition-colors text-center px-4">
+                    {getRemainingBoosters() > 0 ? "Starten" : `Nächster in ${timeLeft}`}
                   </p>
                 </div>
               ) : (

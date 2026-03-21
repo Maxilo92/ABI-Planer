@@ -7,6 +7,7 @@ import { useAuth } from '@/context/AuthContext'
 import { Card, CardContent } from '@/components/ui/card'
 import { BarChart2, Loader2 } from 'lucide-react'
 import { PollList } from '@/components/dashboard/PollList'
+import { TeacherRarityVoting } from '@/components/dashboard/TeacherRarityVoting'
 import { AddPollDialog } from '@/components/modals/AddPollDialog'
 import { Poll, PollOption, PollVote } from '@/types/database'
 
@@ -93,6 +94,8 @@ export default function PollsPage() {
         </div>
         {isPlanner && <AddPollDialog />}
       </div>
+
+      <TeacherRarityVoting />
 
       <div className="grid grid-cols-1 gap-6">
         {polls.length === 0 ? (

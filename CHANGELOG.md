@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.20.6] - 2026-03-21
+- Fix: **Lehrer-Album Anzeige-Bug behoben**. Ein ID-Mismatch zwischen dem Ziehen von Lehrern und dem Album wurde durch eine robustere Prüfung (ID und Name) behoben. Zuvor wurden gezogene Lehrer fälschlicherweise als "nicht entdeckt" (grau) angezeigt.
+- UI: **Booster-Countdown Timer**. Wenn das tägliche Limit von 3 Boostern erreicht ist, wird nun ein Echtzeit-Countdown bis zum nächsten Reset (Mitternacht) auf dem Start-Button und im Badge oben angezeigt.
+- Logic: **Verbesserte ID-Zuordnung**. Lehrer werden nun konsistent über ID oder Name in der Sammlung gespeichert, was Fehler bei unvollständigen Datenbankeinträgen verhindert.
+
 ## [0.20.5] - 2026-03-21
 - Fix: **Lehrer-Album Stabilität**. Fallback-Lehrer hinzugefügt, falls keine globalen Einstellungen in Firestore gefunden werden.
 - Fix: **Album-Anzeige korrigiert**. Die Logik zum Ausblenden des aktuell gezogenen Lehrers wurde entfernt, da sie in der neuen Navigationsstruktur (getrennte Views) zu Verwirrung führte und gezogene Lehrer fälschlicherweise permanent verstecken konnte.

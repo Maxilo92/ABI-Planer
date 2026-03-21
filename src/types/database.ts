@@ -35,10 +35,25 @@ export interface Profile {
   last_visited?: Record<string, string> | null;
   isOnline: boolean;
   lastOnline: Timestamp | Date;
+  rated_teachers?: string[]; // Array of teacher IDs already voted on
   booster_stats?: {
     last_reset: string; // ISO date string (YYYY-MM-DD)
     count: number;      // Open count for that day
   } | null;
+}
+
+export interface Teacher {
+  id: string;
+  name: string;
+  avg_rating: number; // 0.0 to 1.0
+  vote_count: number;
+}
+
+export interface TeacherRating {
+  userId: string;
+  teacherId: string;
+  rating: number; // 0.0, 0.25, 0.5, 0.75, 1.0
+  created_at: string;
 }
 
 export interface GroupMessage {
