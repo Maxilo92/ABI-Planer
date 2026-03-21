@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.20.5] - 2026-03-21
+- Fix: **Lehrer-Album Stabilität**. Fallback-Lehrer hinzugefügt, falls keine globalen Einstellungen in Firestore gefunden werden.
+- Fix: **Album-Anzeige korrigiert**. Die Logik zum Ausblenden des aktuell gezogenen Lehrers wurde entfernt, da sie in der neuen Navigationsstruktur (getrennte Views) zu Verwirrung führte und gezogene Lehrer fälschlicherweise permanent verstecken konnte.
+- UI: **Loading-State für Sammelkarten**. Bessere Suspense-Fallback Anzeige beim Laden der Sammelkarten-Seite.
+
 ## [0.20.4] - 2026-03-21
 - Fix: **Build-Fehler in Navbar behoben**. Fehlende Icon-Imports (`Gift`, `Trophy`) für das Sammelkarten-Submenü ergänzt.
 

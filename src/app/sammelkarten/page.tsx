@@ -15,6 +15,12 @@ import { TeacherAlbum } from '@/components/dashboard/TeacherAlbum'
 import { logAction } from '@/lib/logging'
 import { toast } from 'sonner'
 
+const DEFAULT_TEACHERS: LootTeacher[] = [
+  { id: 'max-mustermann', name: "Max Mustermann", rarity: "common" },
+  { id: 'erika-musterfrau', name: "Erika Musterfrau", rarity: "rare" },
+  { id: 'albert-einstein', name: "Albert Einstein", rarity: "legendary" }
+]
+
 const RARITY_ORDER: TeacherRarity[] = ['common', 'rare', 'epic', 'mythic', 'legendary']
 
 function SammelkartenContent() {
@@ -41,6 +47,8 @@ function SammelkartenContent() {
     const unsubscribe = onSnapshot(doc(db, 'settings', 'global'), (snapshot) => {
       if (snapshot.exists()) {
         setGlobalSettings(snapshot.data())
+      } else {
+        setGlobalSettings({ loot_teachers: DEFAULT_TEACHERS })
       }
     })
     return () => unsubscribe()
@@ -104,19 +112,23 @@ function SammelkartenContent() {
       setGameState('revealed')
       setIsAnimating(false)
       const finalRarity = RARITY_ORDER[currentRarityIndex]
-      const teachers = globalSettings?.loot_teachers || []
+      const teachers = Array.isArray(globalSettings?.loot_teachers) && globalSettings.loot_teachers.length > 0
+        ? globalSettings.loot_teachers
+        : DEFAULT_TEACHERS
+      
       const matchingTeachers = teachers.filter((t: any) => t.rarity === finalRarity)
       
       let teacher: LootTeacher
       if (matchingTeachers.length > 0) {
         teacher = matchingTeachers[Math.floor(Math.random() * matchingTeachers.length)]
       } else {
-        teacher = { id: 'unknown', name: "Ein unbekannter Lehrer", rarity: finalRarity }
+        // Fallback if no teacher of that rarity exists
+        teacher = teachers[Math.floor(Math.random() * teachers.length)]
       }
       setRevealedTeacher(teacher)
 
       // Persist to collection
-      if (teacher.id !== 'unknown') {
+      if (teacher.id) {
         try {
           const isNew = !userTeachers?.[teacher.id]
           const result = await collectTeacher(teacher.id)
@@ -344,7 +356,7 @@ function SammelkartenContent() {
         </div>
       ) : (
         <div className="max-w-6xl mx-auto px-4">
-          <TeacherAlbum excludeIds={revealedTeacher ? [revealedTeacher.id] : []} />
+          <TeacherAlbum />
         </div>
       )}
     </div>
@@ -353,7 +365,7 @@ function SammelkartenContent() {
 
 export default function SammelkartenPage() {
   return (
-    <Suspense fallback={<div className="container mx-auto py-8">Lade...</div>}>
+    <Suspense fallback={<div className="container mx-auto py-8 text-center"><Sparkles className="h-8 w-8 animate-pulse mx-auto text-primary" /></div>}>
       <SammelkartenContent />
     </Suspense>
   )
