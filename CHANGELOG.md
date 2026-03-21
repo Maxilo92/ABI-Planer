@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.20.9] - 2026-03-22
+- Fix: **Album-Progress Anzeige korrigiert**. Die Fortschrittsanzeige im Lehrer-Album wurde an die neue Level-Logik angepasst, sodass nun korrekt "Noch 1 bis Lvl 2" bei der ersten Karte angezeigt wird.
+
 ## [0.20.8] - 2026-03-22
 - UI: **"Im Album anzeigen" Button**. Nach dem Ziehen eines Lehrers gibt es nun einen direkten Link zum Sammelalbum.
 - Logic: **Überarbeitete Level-Berechnung**. Neu gezogene Lehrer starten nun korrekt bei Level 1.

@@ -19,14 +19,17 @@ const DEFAULT_TEACHERS: LootTeacher[] = [
 
 /**
  * Calculates the count needed for the next level.
+ * Formula matches hook: level = floor(sqrt(count - 1)) + 1
+ * So count = (level - 1)^2 + 1
  */
 const getNextLevelCount = (level: number): number => {
-  return Math.pow(level, 2)
+  // To reach level + 1, we need ( (level + 1) - 1 )^2 + 1 = level^2 + 1
+  return Math.pow(level, 2) + 1
 }
 
 const getPrevLevelCount = (level: number): number => {
-  if (level <= 1) return 0
-  return Math.pow(level - 1, 2)
+  if (level <= 1) return 1
+  return Math.pow(level - 1, 2) + 1
 }
 
 const getRarityColor = (rarity: TeacherRarity) => {
