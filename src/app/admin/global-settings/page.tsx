@@ -19,12 +19,13 @@ import {
 import { useAuth } from '@/context/AuthContext'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { Loader2, Plus, Trash2, Save, RotateCcw, Cookie, Gift, GraduationCap, Search, AlertTriangle } from 'lucide-react'
+import { Loader2, Plus, Trash2, Save, RotateCcw, Cookie, Gift, GraduationCap, Search, AlertTriangle, Pencil } from 'lucide-react'
 import { logAction } from '@/lib/logging'
 import { TeacherRarity } from '@/types/database'
 import { Badge } from '@/components/ui/badge'
 
 interface LootTeacher {
+  id: string
   name: string
   rarity: TeacherRarity
 }
@@ -57,9 +58,9 @@ const DEFAULT_SETTINGS: GlobalSettings = {
     'Werbeblock Ende: Wenn jeder im Team eine Mini-Aufgabe übernimmt, wird der Abiball plötzlich machbar.'
   ],
   loot_teachers: [
-    { name: "Max Mustermann", rarity: "common" },
-    { name: "Erika Musterfrau", rarity: "rare" },
-    { name: "Albert Einstein", rarity: "legendary" }
+    { id: 'max-mustermann', name: "Max Mustermann", rarity: "common" },
+    { id: 'erika-musterfrau', name: "Erika Musterfrau", rarity: "rare" },
+    { id: 'albert-einstein', name: "Albert Einstein", rarity: "legendary" }
   ]
 }
 
@@ -73,6 +74,8 @@ export default function GlobalSettingsPage() {
   const [newAdMessage, setNewAdMessage] = useState('')
   const [newTeacherName, setNewTeacherName] = useState('')
   const [newTeacherRarity, setNewTeacherRarity] = useState<TeacherRarity>('common')
+  const [editingTeacher, setEditingTeacher] = useState<LootTeacher | null>(null)
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [teacherSearch, setTeacherSearch] = useState('')
   const [isGuardOpen, setIsGuardOpen] = useState(false)
   const [nextPath, setNextPath] = useState<string | null>(null)
@@ -143,14 +146,15 @@ export default function GlobalSettingsPage() {
     return () => unsubscribe()
   }, [profile, authLoading, isAdmin, router])
 
-  const handleSave = async (): Promise<boolean> => {
+  const handleSave = async (settingsToSave?: GlobalSettings): Promise<boolean> => {
     if (!user || !isAdmin) return false
+    const data = settingsToSave || settings
     setSaving(true)
 
     try {
-      await setDoc(doc(db, 'settings', 'global'), settings)
-      await logAction('GLOBAL_SETTINGS_UPDATED', user.uid, profile?.full_name, { settings })
-      setInitialSettings(settings)
+      await setDoc(doc(db, 'settings', 'global'), data)
+      await logAction('GLOBAL_SETTINGS_UPDATED', user.uid, profile?.full_name, { settings: data })
+      setInitialSettings(data)
       toast.success('Einstellungen erfolgreich gespeichert.')
       return true
     } catch (error) {
@@ -187,11 +191,11 @@ export default function GlobalSettingsPage() {
       ...settings,
       cookie_messages: [...settings.cookie_messages, newMessage.trim()]
     }
+    const old = settings
     setSettings(updatedSettings)
     setNewMessage('')
     setTimeout(async () => {
-      const old = settings
-      const ok = await handleSave()
+      const ok = await handleSave(updatedSettings)
       if (!ok) setSettings(old)
     }, 0)
   }
@@ -201,10 +205,10 @@ export default function GlobalSettingsPage() {
       ...settings,
       cookie_messages: settings.cookie_messages.filter((_, i) => i !== index)
     }
+    const old = settings
     setSettings(updatedSettings)
     setTimeout(async () => {
-      const old = settings
-      const ok = await handleSave()
+      const ok = await handleSave(updatedSettings)
       if (!ok) setSettings(old)
     }, 0)
   }
@@ -215,11 +219,11 @@ export default function GlobalSettingsPage() {
       ...settings,
       ad_messages: [...settings.ad_messages, newAdMessage.trim()]
     }
+    const old = settings
     setSettings(updatedSettings)
     setNewAdMessage('')
     setTimeout(async () => {
-      const old = settings
-      const ok = await handleSave()
+      const ok = await handleSave(updatedSettings)
       if (!ok) setSettings(old)
     }, 0)
   }
@@ -229,10 +233,10 @@ export default function GlobalSettingsPage() {
       ...settings,
       ad_messages: settings.ad_messages.filter((_, i) => i !== index)
     }
+    const old = settings
     setSettings(updatedSettings)
     setTimeout(async () => {
-      const old = settings
-      const ok = await handleSave()
+      const ok = await handleSave(updatedSettings)
       if (!ok) setSettings(old)
     }, 0)
   }
@@ -243,16 +247,48 @@ export default function GlobalSettingsPage() {
       toast.error('Limit von 100 Lehrern erreicht.')
       return
     }
+    const id = newTeacherName.trim().toLowerCase().replace(/[^a-z0-9]/g, '-') + '-' + Date.now()
     const updatedSettings = {
       ...settings,
-      loot_teachers: [...(settings.loot_teachers || []), { name: newTeacherName.trim(), rarity: newTeacherRarity }]
+      loot_teachers: [...(settings.loot_teachers || []), { id, name: newTeacherName.trim(), rarity: newTeacherRarity }]
     }
+    const old = settings
     setSettings(updatedSettings)
     setNewTeacherName('')
     setNewTeacherRarity('common')
     // Nach dem Hinzufügen speichern
-    setTimeout(() => {
-      handleSave()
+    setTimeout(async () => {
+      const ok = await handleSave(updatedSettings)
+      if (!ok) setSettings(old)
+    }, 0)
+  }
+
+  const handleEditTeacher = (teacher: LootTeacher) => {
+    setEditingTeacher({ ...teacher })
+    setIsEditDialogOpen(true)
+  }
+
+  const handleUpdateTeacher = () => {
+    if (!editingTeacher || !editingTeacher.name.trim()) return
+    
+    const updatedTeachers = (settings.loot_teachers || []).map(t => 
+      t.id === editingTeacher.id ? editingTeacher : t
+    )
+    
+    const updatedSettings = {
+      ...settings,
+      loot_teachers: updatedTeachers
+    }
+    
+    const old = settings
+    setSettings(updatedSettings)
+    setIsEditDialogOpen(false)
+    setEditingTeacher(null)
+    
+    // Nach dem Update speichern
+    setTimeout(async () => {
+      const ok = await handleSave(updatedSettings)
+      if (!ok) setSettings(old)
     }, 0)
   }
 
@@ -261,10 +297,10 @@ export default function GlobalSettingsPage() {
       ...settings,
       loot_teachers: settings.loot_teachers.filter((_, i) => i !== index)
     }
+    const old = settings
     setSettings(updatedSettings)
     setTimeout(async () => {
-      const old = settings
-      const ok = await handleSave()
+      const ok = await handleSave(updatedSettings)
       if (!ok) setSettings(old)
     }, 0)
   }
@@ -293,10 +329,10 @@ export default function GlobalSettingsPage() {
 
   const handleResetToDefault = () => {
     if (confirm('Möchtest du wirklich alle Einstellungen auf die Standardwerte zurücksetzen?')) {
+      const old = settings
       setSettings(DEFAULT_SETTINGS)
       setTimeout(async () => {
-        const old = settings
-        const ok = await handleSave()
+        const ok = await handleSave(DEFAULT_SETTINGS)
         if (!ok) setSettings(old)
       }, 0)
     }
@@ -445,14 +481,14 @@ export default function GlobalSettingsPage() {
             <div className="flex items-center justify-between">
               <CardTitle className="flex items-center gap-2">
                 <GraduationCap className="h-5 w-5 text-primary" />
-                Lehrer-Lootbox (Easter Egg)
+                Lehrer-Sammelkarten (Easter Egg)
               </CardTitle>
               <Badge variant="secondary">
                 {(settings.loot_teachers || []).length} / 100
               </Badge>
             </div>
             <CardDescription>
-              Verwalte die Lehrer, die aus der geheimen Lootbox gezogen werden können.
+              Verwalte die Lehrer, die aus den Sammelkarten-Packungen gezogen werden können.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -517,14 +553,24 @@ export default function GlobalSettingsPage() {
                                   {getRarityLabel(teacher.rarity)}
                                 </span>
                               </div>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="text-destructive hover:bg-destructive/10 h-7 w-7 sm:opacity-0 group-hover:opacity-100 transition-opacity"
-                                onClick={() => handleRemoveTeacher(originalIndex)}
-                              >
-                                <Trash2 className="h-3.5 w-3.5" />
-                              </Button>
+                              <div className="flex gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="text-primary hover:bg-primary/10 h-7 w-7 sm:opacity-0 group-hover:opacity-100 transition-opacity"
+                                  onClick={() => handleEditTeacher(teacher)}
+                                >
+                                  <Pencil className="h-3.5 w-3.5" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="text-destructive hover:bg-destructive/10 h-7 w-7 sm:opacity-0 group-hover:opacity-100 transition-opacity"
+                                  onClick={() => handleRemoveTeacher(originalIndex)}
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </Button>
+                              </div>
                             </div>
                           )
                         })}
@@ -544,6 +590,50 @@ export default function GlobalSettingsPage() {
           </CardFooter>
         </Card>
       </div>
+
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Lehrer bearbeiten</DialogTitle>
+            <DialogDescription>
+              Ändere den Namen oder die Seltenheit des Lehrers.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-teacher-name">Name</Label>
+              <Input
+                id="edit-teacher-name"
+                value={editingTeacher?.name || ''}
+                onChange={(e) => setEditingTeacher(prev => prev ? { ...prev, name: e.target.value } : null)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-teacher-rarity">Seltenheit</Label>
+              <select
+                id="edit-teacher-rarity"
+                className="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                value={editingTeacher?.rarity || 'common'}
+                onChange={(e) => setEditingTeacher(prev => prev ? { ...prev, rarity: e.target.value as TeacherRarity } : null)}
+              >
+                <option value="common">Gewöhnlich (Grau)</option>
+                <option value="rare">Selten (Grün)</option>
+                <option value="epic">Episch (Lila)</option>
+                <option value="mythic">Mythisch (Rot)</option>
+                <option value="legendary">Legendär (Gelb)</option>
+              </select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+              Abbrechen
+            </Button>
+            <Button onClick={handleUpdateTeacher}>
+              Speichern
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

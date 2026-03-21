@@ -2,56 +2,135 @@
 
 import { useEffect, useState, use } from 'react'
 import { db } from '@/lib/firebase'
-import { doc, getDoc, updateDoc, increment, arrayUnion } from 'firebase/firestore'
-import { NewsEntry } from '@/types/database'
+import { doc, getDoc, updateDoc, increment, arrayUnion, collection, onSnapshot, query, orderBy, addDoc, serverTimestamp } from 'firebase/firestore'
+import { NewsEntry, Comment } from '@/types/database'
 import { CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Textarea } from '@/components/ui/textarea'
 import { format } from 'date-fns'
 import { de } from 'date-fns/locale'
-import { Loader2, ArrowLeft, Eye, Calendar, User as UserIcon } from 'lucide-react'
+import { Loader2, ArrowLeft, Eye, Calendar, User as UserIcon, ThumbsUp, ThumbsDown, MessageSquare, Send } from 'lucide-react'
 import { toDate } from '@/lib/utils'
 import Link from 'next/link'
 import { useAuth } from '@/context/AuthContext'
 import { EditNewsDialog } from '@/components/modals/EditNewsDialog'
+import { toast } from 'sonner'
+import { logAction } from '@/lib/logging'
 
 export default function NewsDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const { user, profile, loading: authLoading } = useAuth()
   const [news, setNews] = useState<NewsEntry | null>(null)
+  const [comments, setComments] = useState<Comment[]>([])
   const [loading, setLoading] = useState(true)
+  const [commentText, setCommentText] = useState('')
+  const [submittingComment, setSubmittingComment] = useState(false)
 
   useEffect(() => {
     if (authLoading) return
 
-    const fetchNews = async () => {
-      try {
-        const docRef = doc(db, 'news', id)
-        const docSnap = await getDoc(docRef)
+    const docRef = doc(db, 'news', id)
+    
+    // Subscribe to news document
+    const unsubscribeNews = onSnapshot(docRef, (docSnap) => {
+      if (docSnap.exists()) {
+        const data = { id: docSnap.id, ...docSnap.data() } as NewsEntry
+        setNews(data)
         
-        if (docSnap.exists()) {
-          const data = { id: docSnap.id, ...docSnap.data() } as NewsEntry
-          setNews(data)
-          
-          // One view per logged-in user logic; article still loads without auth.
-          if (user) {
-            const viewedBy = data.viewed_by || []
-            if (!viewedBy.includes(user.uid)) {
-              await updateDoc(docRef, {
-                view_count: increment(1),
-                viewed_by: arrayUnion(user.uid)
-              })
-            }
+        // View count logic
+        if (user) {
+          const viewedBy = data.viewed_by || []
+          if (!viewedBy.includes(user.uid)) {
+            updateDoc(docRef, {
+              view_count: increment(1),
+              viewed_by: arrayUnion(user.uid)
+            })
           }
         }
-      } catch (err) {
-        console.error('Error fetching news detail:', err)
-      } finally {
-        setLoading(false)
+      } else {
+        setNews(null)
       }
+      setLoading(false)
+    })
+
+    // Subscribe to comments sub-collection
+    const commentsQuery = query(
+      collection(db, 'news', id, 'comments'),
+      orderBy('created_at', 'desc')
+    )
+    
+    const unsubscribeComments = onSnapshot(commentsQuery, (snapshot) => {
+      const commentsData = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as Comment[]
+      setComments(commentsData)
+    })
+
+    return () => {
+      unsubscribeNews()
+      unsubscribeComments()
+    }
+  }, [id, user, authLoading])
+
+  const handleVote = async (type: 'up' | 'down') => {
+    if (!user || !news) {
+      toast.error('Du musst angemeldet sein, um abzustimmen.')
+      return
     }
 
-    fetchNews()
-  }, [id, user, authLoading])
+    try {
+      const currentVote = news.ratings?.[user.uid]
+      const newRatings = { ...(news.ratings || {}) }
+
+      if (currentVote === type) {
+        delete newRatings[user.uid]
+      } else {
+        newRatings[user.uid] = type
+      }
+
+      await updateDoc(doc(db, 'news', id), {
+        ratings: newRatings
+      })
+
+      if (currentVote !== type) {
+        logAction('NEWS_RATE', user.uid, profile?.full_name, { id, type })
+      }
+    } catch (err) {
+      console.error('Error voting:', err)
+      toast.error('Fehler beim Abstimmen.')
+    }
+  }
+
+  const handleSubmitComment = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!user || !profile || !commentText.trim() || submittingComment) return
+
+    setSubmittingComment(true)
+    try {
+      await addDoc(collection(db, 'news', id, 'comments'), {
+        content: commentText.trim(),
+        created_at: serverTimestamp(),
+        created_by: user.uid,
+        author_name: profile.full_name || 'Anonymer Nutzer'
+      })
+      
+      // Update comment count on main document
+      await updateDoc(doc(db, 'news', id), {
+        comment_count: increment(1)
+      })
+      
+      logAction('NEWS_COMMENT', user.uid, profile.full_name, { id, content: commentText.trim() })
+      
+      setCommentText('')
+      toast.success('Kommentar hinzugefügt.')
+    } catch (err) {
+      console.error('Error submitting comment:', err)
+      toast.error('Fehler beim Senden des Kommentars.')
+    } finally {
+      setSubmittingComment(false)
+    }
+  }
 
   if (loading) {
     return (
@@ -75,6 +154,10 @@ export default function NewsDetailPage({ params }: { params: Promise<{ id: strin
   }
 
   const isPlanner = (profile?.role === 'planner' || profile?.role === 'admin_co' || profile?.role === 'admin_main' || profile?.role === 'admin') && profile?.is_approved
+
+  const upVotes = Object.values(news.ratings || {}).filter(v => v === 'up').length
+  const downVotes = Object.values(news.ratings || {}).filter(v => v === 'down').length
+  const userVote = user ? news.ratings?.[user.uid] : null
 
   return (
     <div className="max-w-4xl mx-auto py-4 md:py-8 space-y-6">
@@ -144,8 +227,108 @@ export default function NewsDetailPage({ params }: { params: Promise<{ id: strin
           <div className="whitespace-pre-wrap text-base md:text-xl text-foreground/90 leading-relaxed max-w-none">
             {news.content.trim()}
           </div>
+
+          {/* Ratings Section */}
+          <div className="pt-8 flex items-center gap-4">
+            <div className="flex items-center gap-1">
+              <Button
+                variant={userVote === 'up' ? 'default' : 'outline'}
+                size="sm"
+                className="gap-2 rounded-full"
+                onClick={() => handleVote('up')}
+              >
+                <ThumbsUp className={`h-4 w-4 ${userVote === 'up' ? 'fill-current' : ''}`} />
+                <span>{upVotes}</span>
+              </Button>
+              <Button
+                variant={userVote === 'down' ? 'default' : 'outline'}
+                size="sm"
+                className="gap-2 rounded-full"
+                onClick={() => handleVote('down')}
+              >
+                <ThumbsDown className={`h-4 w-4 ${userVote === 'down' ? 'fill-current' : ''}`} />
+                <span>{downVotes}</span>
+              </Button>
+            </div>
+            <div className="h-4 w-px bg-border/50" />
+            <div className="flex items-center gap-2 text-muted-foreground text-sm">
+              <MessageSquare className="h-4 w-4" />
+              <span>{comments.length} {comments.length === 1 ? 'Kommentar' : 'Kommentare'}</span>
+            </div>
+          </div>
         </div>
       </article>
+
+      <div className="h-px bg-border/50 my-8" />
+
+      {/* Comments Section */}
+      <section className="space-y-8 pb-12">
+        <h3 className="text-2xl font-bold flex items-center gap-2">
+          <MessageSquare className="h-6 w-6 text-primary" />
+          Kommentare
+        </h3>
+
+        {user ? (
+          <form onSubmit={handleSubmitComment} className="space-y-3">
+            <Textarea
+              placeholder="Schreibe einen Kommentar..."
+              value={commentText}
+              onChange={(e) => setCommentText(e.target.value)}
+              className="min-h-[100px] resize-none focus-visible:ring-primary"
+            />
+            <div className="flex justify-end">
+              <Button 
+                type="submit" 
+                disabled={!commentText.trim() || submittingComment}
+                className="gap-2"
+              >
+                {submittingComment ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Send className="h-4 w-4" />
+                )}
+                Kommentieren
+              </Button>
+            </div>
+          </form>
+        ) : (
+          <div className="bg-muted p-6 rounded-xl text-center">
+            <p className="text-muted-foreground mb-4">Du musst angemeldet sein, um zu kommentieren.</p>
+            <Button variant="outline" render={<Link href="/login">Jetzt anmelden</Link>} />
+          </div>
+        )}
+
+        <div className="space-y-6">
+          {comments.length > 0 ? (
+            comments.map((comment) => (
+              <div key={comment.id} className="flex gap-4 group">
+                <div className="mt-1">
+                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
+                    {comment.author_name?.charAt(0) || '?'}
+                  </div>
+                </div>
+                <div className="flex-1 space-y-1">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-sm">{comment.author_name}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {comment.created_at ? format(toDate(comment.created_at), 'dd.MM.yyyy HH:mm', { locale: de }) : 'Gerade eben'}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="text-foreground/90 text-sm md:text-base whitespace-pre-wrap">
+                    {comment.content}
+                  </div>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="text-center py-12 text-muted-foreground italic">
+              Noch keine Kommentare. Sei der Erste!
+            </div>
+          )}
+        </div>
+      </section>
     </div>
   )
 }

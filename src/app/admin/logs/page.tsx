@@ -2,13 +2,20 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { collection, getDocs, limit, orderBy, query, startAfter, type DocumentData, type QueryDocumentSnapshot } from 'firebase/firestore'
-import { Activity } from 'lucide-react'
+import { Activity, Copy, FileJson } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
 import { db } from '@/lib/firebase'
 import { useAuth } from '@/context/AuthContext'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+} from '@/components/ui/context-menu'
 import { Input } from '@/components/ui/input'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { toDate } from '@/lib/utils'
@@ -200,6 +207,29 @@ export default function AdminLogsPage() {
     }
   }
 
+  const formatLogLine = (log: AdminLog) => {
+    const timestamp = toDate(log.timestamp).toLocaleString('de-DE')
+    const name = log.user_name || 'Unbekannt'
+    const action = log.action
+    const details = formatDetails(log.details)
+    // LogEntry usually doesn't have IP yet, but we'll include it as 'n/a' if missing
+    // or as any property named 'ip' if it exists on the record
+    const ip = (log as any).ip || 'n/a'
+    return `[${timestamp}] ${name}: ${action} - ${details} (IP: ${ip})`
+  }
+
+  const handleCopyRow = (log: AdminLog) => {
+    const line = formatLogLine(log)
+    navigator.clipboard.writeText(line)
+    toast.success('Zeile in die Zwischenablage kopiert')
+  }
+
+  const handleCopyJson = (log: AdminLog) => {
+    const json = JSON.stringify(log, null, 2)
+    navigator.clipboard.writeText(json)
+    toast.success('JSON in die Zwischenablage kopiert')
+  }
+
   if (authLoading || loading) {
     return <div className="flex items-center justify-center min-h-[50vh]">Lade Aktivitäts-Logs...</div>
   }
@@ -283,19 +313,33 @@ export default function AdminLogsPage() {
             <>
               <div className="space-y-3 lg:hidden">
                 {filteredLogs.map((entry) => (
-                  <div key={entry.id} className="rounded-xl border border-border/70 bg-card/70 p-3 space-y-2">
-                    <div className="flex items-center justify-between gap-3">
-                      <Badge variant="outline">{entry.action}</Badge>
-                      <span className="text-xs text-muted-foreground">
-                        {toDate(entry.timestamp).toLocaleString('de-DE')}
-                      </span>
-                    </div>
-                    <p className="text-sm">
-                      <span className="text-muted-foreground">Nutzer:</span>{' '}
-                      {entry.user_name || 'Unbekannt'} ({entry.user_id || 'n/a'})
-                    </p>
-                    <p className="text-xs text-muted-foreground break-words">{formatDetails(entry.details)}</p>
-                  </div>
+                  <ContextMenu key={entry.id}>
+                    <ContextMenuTrigger>
+                      <div className="rounded-xl border border-border/70 bg-card/70 p-3 space-y-2 cursor-pointer transition-colors active:bg-accent/10">
+                        <div className="flex items-center justify-between gap-3">
+                          <Badge variant="outline">{entry.action}</Badge>
+                          <span className="text-xs text-muted-foreground">
+                            {toDate(entry.timestamp).toLocaleString('de-DE')}
+                          </span>
+                        </div>
+                        <p className="text-sm">
+                          <span className="text-muted-foreground">Nutzer:</span>{' '}
+                          {entry.user_name || 'Unbekannt'} ({entry.user_id || 'n/a'})
+                        </p>
+                        <p className="text-xs text-muted-foreground break-words">{formatDetails(entry.details)}</p>
+                      </div>
+                    </ContextMenuTrigger>
+                    <ContextMenuContent>
+                      <ContextMenuItem onClick={() => handleCopyRow(entry)}>
+                        <Copy />
+                        <span>Zeile kopieren</span>
+                      </ContextMenuItem>
+                      <ContextMenuItem onClick={() => handleCopyJson(entry)}>
+                        <FileJson />
+                        <span>JSON kopieren</span>
+                      </ContextMenuItem>
+                    </ContextMenuContent>
+                  </ContextMenu>
                 ))}
               </div>
 
@@ -311,23 +355,37 @@ export default function AdminLogsPage() {
                   </TableHeader>
                   <TableBody>
                     {filteredLogs.map((entry) => (
-                      <TableRow key={entry.id}>
-                        <TableCell className="whitespace-nowrap text-sm">
-                          {toDate(entry.timestamp).toLocaleString('de-DE')}
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="outline">{entry.action}</Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className="text-sm font-medium">{entry.user_name || 'Unbekannt'}</div>
-                          <div className="text-xs text-muted-foreground">{entry.user_id || 'n/a'}</div>
-                        </TableCell>
-                        <TableCell className="max-w-[420px]">
-                          <p className="text-xs text-muted-foreground break-words line-clamp-3">
-                            {formatDetails(entry.details)}
-                          </p>
-                        </TableCell>
-                      </TableRow>
+                      <ContextMenu key={entry.id}>
+                        <ContextMenuTrigger>
+                          <TableRow className="cursor-pointer transition-colors hover:bg-muted/50">
+                            <TableCell className="whitespace-nowrap text-sm">
+                              {toDate(entry.timestamp).toLocaleString('de-DE')}
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="outline">{entry.action}</Badge>
+                            </TableCell>
+                            <TableCell>
+                              <div className="text-sm font-medium">{entry.user_name || 'Unbekannt'}</div>
+                              <div className="text-xs text-muted-foreground">{entry.user_id || 'n/a'}</div>
+                            </TableCell>
+                            <TableCell className="max-w-[420px]">
+                              <p className="text-xs text-muted-foreground break-words line-clamp-3">
+                                {formatDetails(entry.details)}
+                              </p>
+                            </TableCell>
+                          </TableRow>
+                        </ContextMenuTrigger>
+                        <ContextMenuContent>
+                          <ContextMenuItem onClick={() => handleCopyRow(entry)}>
+                            <Copy />
+                            <span>Zeile kopieren</span>
+                          </ContextMenuItem>
+                          <ContextMenuItem onClick={() => handleCopyJson(entry)}>
+                            <FileJson />
+                            <span>JSON kopieren</span>
+                          </ContextMenuItem>
+                        </ContextMenuContent>
+                      </ContextMenu>
                     ))}
                   </TableBody>
                 </Table>

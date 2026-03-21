@@ -29,7 +29,7 @@ export function Footer() {
           await updateDoc(doc(db, 'profiles', user.uid), {
             easter_egg_unlocked: true
           })
-          toast.success('Geheimnis freigeschaltet! Schau mal in dein Menü...', {
+          toast.success('Sammelkarten freigeschaltet! Schau mal in dein Menü...', {
             icon: '✨'
           })
         } catch (error) {

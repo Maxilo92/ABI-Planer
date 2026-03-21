@@ -53,6 +53,7 @@ export interface GroupMessage {
 export type TeacherRarity = 'common' | 'rare' | 'epic' | 'mythic' | 'legendary';
 
 export interface LootTeacher {
+  id: string;
   name: string;
   rarity: TeacherRarity;
 }
@@ -122,6 +123,40 @@ export interface NewsEntry {
   image_mime_type?: string | null;
   view_count?: number;
   viewed_by?: string[];
+  ratings?: { [uid: string]: 'up' | 'down' };
+  comment_count?: number;
+}
+
+export interface Comment {
+  id: string;
+  content: string;
+  created_at: string;
+  created_by: string;
+  author_name: string;
+}
+
+export type FeedbackType = 'bug' | 'feature' | 'other';
+export type FeedbackStatus = 'new' | 'in_progress' | 'implemented' | 'rejected';
+
+export interface Feedback {
+  id: string;
+  title: string;
+  description: string;
+  type: FeedbackType;
+  status: FeedbackStatus;
+  created_at: string;
+  created_by: string;
+  created_by_name?: string;
+  image_url?: string;
+  is_anonymous: boolean;
+  is_private: boolean;
+}
+
+export interface UserTeacher {
+  [teacherId: string]: {
+    count: number;
+    level: number;
+  };
 }
 
 export interface Poll {

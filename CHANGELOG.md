@@ -1,14 +1,21 @@
-## 2026-03-21
-- Globales Auto-Save für alle Einstellungen: Änderungen werden sofort gespeichert, manuelles Speichern entfällt. Bei Fehlern werden Änderungen zurückgesetzt.
-## 2026-03-21
-- Lehrer werden nach jedem Hinzufügen automatisch gespeichert (kein manueller Speichern-Button mehr nötig).
-## 2026-03-21
-- Datenschutzerklärung-Checkbox aus Registrierung entfernt (nicht mehr erforderlich laut DSGVO).
-- Link zur Datenschutzerklärung unter 'Bereits einen Account? Anmelden' im letzten Schritt der Registrierung hinzugefügt.
 # Changelog
 
-## [Unreleased]
-- _Noch keine Änderungen._
+## [0.20.0] - 2026-03-21
+- Rebranding: **Sammelkarten-System**. Die "Lootbox" und der "Top Secret"-Bereich wurden vollständig in "Sammelkarten" umbenannt.
+- Navigation: **Neue Route für Sammelkarten**. Der geheime Bereich ist nun offiziell unter `/sammelkarten` erreichbar (vorher `/geheim`).
+- Admin: **Lehrer-Pool Editor**. In den globalen Einstellungen können Lehrer nun bequem über einen Modal-Editor zum Sammelkarten-Pool hinzugefügt oder bearbeitet werden.
+- UI: **Konsistentes Branding**. Alle Texte, Icons und Hinweismeldungen wurden an das neue "Sammelkarten"-Design angepasst.
+
+## [0.19.0] - 2026-03-21
+- Feature: **Privatsphäre für Feedback**. Feedback kann nun anonym (Name wird versteckt) oder privat (nur für Admins sichtbar) gesendet werden.
+- Feature: **Lehrer-Album & Leveling**. Lehrer aus der Lootbox werden in einem Album gesammelt. Duplikate erhöhen das Level des jeweiligen Lehrers.
+- Feature: **Interaktive News**. News-Beiträge können nun bewertet (Daumen hoch/runter) und kommentiert werden.
+- Feature: **Detailliertes Audit-Logging**. Neue Aktionen (Looting, Feedback, News-Interaktionen) werden revisionssicher protokolliert.
+- UI: **Log-Kontextmenüs**. Verbesserte Darstellung und Bedienung der Admin-Logs.
+- UX: **Automatisches Speichern**. Änderungen an globalen Einstellungen und Lehrer-Loot werden nun sofort im Hintergrund gespeichert.
+- Compliance: **Datenschutz-Update**. Link zur Datenschutzerklärung in der Registrierung prominent platziert und Checkbox-Workflow optimiert.
+- Logging: Jeder Log-Eintrag enthält jetzt garantiert den Nutzernamen (wird ggf. aus Firestore geladen).
+- Logging: Neuer Log-Typ ACCOUNT_CREATED für erfolgreiche Account-Registrierungen.
 
 ## [0.18.13] - 2026-03-20
 - UX: **Rechtstexte in Registrierung zerstörungsfrei**. Links zu AGB und Datenschutz öffnen jetzt in einem neuen Tab, sodass der Registrierungsfortschritt beim Nachlesen erhalten bleibt.

@@ -123,7 +123,27 @@ service cloud.firestore {
     match /todos/{id} { allow read: if true; allow write: if isPlanner(); }
     match /events/{id} { allow read: if true; allow write: if isPlanner(); }
     match /finances/{id} { allow read: if true; allow write: if isPlanner(); }
-    match /news/{id} { allow read: if true; allow write: if isPlanner(); }
+    
+    match /news/{id} { 
+      allow read: if true; 
+      allow write: if isPlanner(); 
+      
+      // Bewertung und Kommentar-Zähler
+      allow update: if isPlanner() || (isApproved() && (
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['ratings', 'comment_count'])
+      ));
+
+      match /comments/{commentId} {
+        allow read: if true;
+        allow create: if isApproved();
+        allow update, delete: if isAdmin() || (isAuthenticated() && resource.data.created_by == request.auth.uid);
+      }
+    }
+
+    // Eigene Lehrer-Sammlung
+    match /user_teachers/{userId} {
+      allow read, write: if isAuthenticated() && request.auth.uid == userId;
+    }
     
     match /polls/{pollId} {
       allow read: if true;
@@ -144,7 +164,9 @@ service cloud.firestore {
     }
 
     match /feedback/{feedbackId} {
-        allow read: if isAdmin();
+        // Admins sehen alles. Ersteller sieht eigenes. 
+        // Andere sehen es nur, wenn es nicht privat ist.
+        allow read: if isAdmin() || (isAuthenticated() && resource.data.created_by == request.auth.uid) || (isApproved() && resource.data.is_private == false);
         allow create: if isApproved();
         allow update, delete: if isAdmin();
     }

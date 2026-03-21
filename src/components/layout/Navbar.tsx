@@ -83,7 +83,7 @@ export function Navbar() {
   ]
 
   if (profile?.easter_egg_unlocked) {
-    navItems.push({ href: '/geheim', label: 'Top Secret', icon: Sparkles })
+    navItems.push({ href: '/sammelkarten', label: 'Sammelkarten', icon: Sparkles })
   }
 
   navItems.push({ href: '/einstellungen', label: 'Einstellungen', icon: Settings })

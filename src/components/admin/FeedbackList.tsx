@@ -12,22 +12,9 @@ import { toast } from 'sonner'
 import { Trash2, Bug, Lightbulb, HelpCircle, ChevronsRight, CheckCircle, XCircle, Download } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { logAction } from '@/lib/logging'
+import { Feedback, FeedbackType, FeedbackStatus } from '@/types/database'
 
-type FeedbackStatus = 'new' | 'in_progress' | 'implemented' | 'rejected'
-type FeedbackType = 'bug' | 'feature' | 'other'
 type SortField = 'created_at' | 'title' | 'status' | 'type'
-
-type Feedback = {
-  id: string
-  title: string
-  description: string
-  type: FeedbackType
-  status: FeedbackStatus
-  created_at: string
-  created_by: string
-  created_by_name?: string
-  image_url?: string
-}
 
 interface FeedbackListProps {
   feedbackItems: Feedback[]
@@ -149,7 +136,7 @@ export function FeedbackList({ feedbackItems }: FeedbackListProps) {
       return
     }
 
-    const header = ['id', 'titel', 'beschreibung', 'typ', 'status', 'erstellt_am', 'erstellt_von']
+    const header = ['id', 'titel', 'beschreibung', 'typ', 'status', 'erstellt_am', 'erstellt_von', 'anonym', 'privat']
     const rows = visibleFeedback.map((item) => [
       item.id,
       item.title,
@@ -158,6 +145,8 @@ export function FeedbackList({ feedbackItems }: FeedbackListProps) {
       item.status,
       toDate(item.created_at).toISOString(),
       item.created_by_name || item.created_by || 'Unbekannt',
+      item.is_anonymous ? 'Ja' : 'Nein',
+      item.is_private ? 'Ja' : 'Nein',
     ])
 
     const csv = [header, ...rows].map((row) => row.map((value) => csvEscape(String(value))).join(',')).join('\n')
@@ -259,7 +248,11 @@ export function FeedbackList({ feedbackItems }: FeedbackListProps) {
                   {getIcon(item.type)}
                   <CardTitle className="text-lg">{item.title}</CardTitle>
                 </div>
-                {getStatusBadge(item.status)}
+                <div className="flex items-center gap-2">
+                  {item.is_private && <Badge variant="outline" className="border-warning/50 text-warning bg-warning/5">Privat</Badge>}
+                  {item.is_anonymous && <Badge variant="outline" className="border-muted-foreground/30 text-muted-foreground">Anonym</Badge>}
+                  {getStatusBadge(item.status)}
+                </div>
               </div>
               <CardDescription className="pt-1">
                 Eingereicht von {item.created_by_name || 'Unbekannt'} am {toDate(item.created_at).toLocaleString('de-DE')}

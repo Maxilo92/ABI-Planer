@@ -17,17 +17,19 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { Checkbox } from '@/components/ui/checkbox'
 import { MessageSquarePlus, Bug, Lightbulb, HelpCircle } from 'lucide-react'
 import { toast } from 'sonner'
 import { logAction } from '@/lib/logging'
-
-type FeedbackType = 'bug' | 'feature' | 'other'
+import { FeedbackType } from '@/types/database'
 
 // Extracted form component to isolate state-driven re-renders from the Dialog component
 function FeedbackForm({ onSuccess }: { onSuccess: () => void }) {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [type, setType] = useState<FeedbackType>('feature')
+  const [isAnonymous, setIsAnonymous] = useState(false)
+  const [isPrivate, setIsPrivate] = useState(false)
   const [loading, setLoading] = useState(false)
   const { user, profile } = useAuth()
 
@@ -40,7 +42,7 @@ function FeedbackForm({ onSuccess }: { onSuccess: () => void }) {
 
     setLoading(true)
     try {
-      await addDoc(collection(db, 'feedback'), {
+      const docRef = await addDoc(collection(db, 'feedback'), {
         title,
         description,
         type,
@@ -48,11 +50,16 @@ function FeedbackForm({ onSuccess }: { onSuccess: () => void }) {
         created_at: new Date().toISOString(),
         created_by: user.uid,
         created_by_name: profile?.full_name || user.displayName || 'Unbekannt',
+        is_anonymous: isAnonymous,
+        is_private: isPrivate,
       })
 
-      await logAction('FEEDBACK_CREATED', user.uid, profile?.full_name, {
+      await logAction('FEEDBACK_SUBMIT', user.uid, profile?.full_name, {
+        id: docRef.id,
         title,
         type,
+        is_anonymous: isAnonymous,
+        is_private: isPrivate,
       })
 
       toast.success('Danke für dein Feedback!')
@@ -123,6 +130,46 @@ function FeedbackForm({ onSuccess }: { onSuccess: () => void }) {
             required
             className="[field-sizing:fixed]" // Explicitly disable auto-sizing if it's causing lag
           />
+        </div>
+
+        <div className="space-y-3 pt-2">
+          <div className="flex items-start space-x-2">
+            <Checkbox 
+              id="fb-anonymous" 
+              checked={isAnonymous} 
+              onCheckedChange={(checked) => setIsAnonymous(checked === true)}
+            />
+            <div className="grid gap-1.5 leading-none">
+              <label
+                htmlFor="fb-anonymous"
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+              >
+                Anonym posten
+              </label>
+              <p className="text-xs text-muted-foreground">
+                Dein Name wird nicht öffentlich angezeigt.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-start space-x-2">
+            <Checkbox 
+              id="fb-private" 
+              checked={isPrivate} 
+              onCheckedChange={(checked) => setIsPrivate(checked === true)}
+            />
+            <div className="grid gap-1.5 leading-none">
+              <label
+                htmlFor="fb-private"
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+              >
+                Privat senden
+              </label>
+              <p className="text-xs text-muted-foreground">
+                Nur für Admins sichtbar.
+              </p>
+            </div>
+          </div>
         </div>
       </div>
       <DialogFooter>

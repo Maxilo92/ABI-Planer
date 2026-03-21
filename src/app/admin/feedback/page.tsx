@@ -6,18 +6,7 @@ import { useState, useEffect } from 'react'
 import { FeedbackList } from '@/components/admin/FeedbackList'
 import { useAuth } from '@/context/AuthContext'
 import { useRouter } from 'next/navigation'
-
-type Feedback = {
-  id: string
-  title: string
-  description: string
-  type: 'bug' | 'feature' | 'other'
-  status: 'new' | 'in_progress' | 'implemented' | 'rejected'
-  created_at: string
-  created_by: string
-  created_by_name?: string
-  image_url?: string
-}
+import { Feedback } from '@/types/database'
 
 export default function AdminFeedbackPage() {
   const { profile, loading: authLoading } = useAuth()

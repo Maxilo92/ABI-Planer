@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { collection, addDoc, query, orderBy, onSnapshot } from 'firebase/firestore'
+import { collection, addDoc, query, orderBy, onSnapshot, where } from 'firebase/firestore'
 import { MessageSquarePlus, Bug, Lightbulb, HelpCircle, Image as ImageIcon, X, Loader2 } from 'lucide-react'
 
 import { db } from '@/lib/firebase'
@@ -12,27 +12,14 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { Checkbox } from '@/components/ui/checkbox'
 import { toast } from 'sonner'
 import { NewsImageCropper } from '@/components/modals/NewsImageCropper'
 import { uploadNewsImage, validateNewsImageFile } from '@/lib/newsImageUpload'
 import { Badge } from '@/components/ui/badge'
 import { toDate } from '@/lib/utils'
 import { logAction } from '@/lib/logging'
-
-type FeedbackType = 'bug' | 'feature' | 'other'
-type FeedbackStatus = 'new' | 'in_progress' | 'implemented' | 'rejected'
-
-interface Feedback {
-  id: string
-  title: string
-  description: string
-  type: FeedbackType
-  status: FeedbackStatus
-  created_at: string
-  created_by: string
-  created_by_name?: string
-  image_url?: string
-}
+import { Feedback, FeedbackType, FeedbackStatus } from '@/types/database'
 
 export default function FeedbackPage() {
   const { user, profile, loading: authLoading } = useAuth()
@@ -41,6 +28,8 @@ export default function FeedbackPage() {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [type, setType] = useState<FeedbackType>('feature')
+  const [isAnonymous, setIsAnonymous] = useState(false)
+  const [isPrivate, setIsPrivate] = useState(false)
   const [loading, setLoading] = useState(false)
   const [feedbackItems, setFeedbackItems] = useState<Feedback[]>([])
   const [listLoading, setListLoading] = useState(true)
@@ -51,6 +40,8 @@ export default function FeedbackPage() {
   const [croppedFile, setCroppedFile] = useState<File | null>(null)
   const [isUploading, setIsUploading] = useState(false)
 
+  const isAdmin = profile?.role && ['admin', 'admin_main', 'admin_co'].includes(profile.role)
+
   useEffect(() => {
     if (!authLoading && !user) {
       router.push('/login?reason=unauthorized')
@@ -58,8 +49,12 @@ export default function FeedbackPage() {
   }, [authLoading, user, router])
 
   useEffect(() => {
+    if (authLoading) return
+
     const feedbackRef = collection(db, 'feedback')
-    const q = query(feedbackRef, orderBy('created_at', 'desc'))
+    const q = isAdmin 
+      ? query(feedbackRef, orderBy('created_at', 'desc'))
+      : query(feedbackRef, where('is_private', '==', false), orderBy('created_at', 'desc'))
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       setFeedbackItems(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Feedback)))
@@ -70,7 +65,7 @@ export default function FeedbackPage() {
     })
 
     return () => unsubscribe()
-  }, [])
+  }, [isAdmin, authLoading])
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -119,23 +114,29 @@ export default function FeedbackPage() {
         title,
         description,
         type,
-        status: 'new',
+        status: 'new' as FeedbackStatus,
         created_at: new Date().toISOString(),
         created_by: user.uid,
         created_by_name: profile?.full_name || user.displayName || 'Unbekannt',
-        image_url: imageUrl || null
+        image_url: imageUrl || null,
+        is_anonymous: isAnonymous,
+        is_private: isPrivate
       })
 
       await logAction('FEEDBACK_CREATED', user.uid, profile?.full_name, { 
         title,
         type,
-        has_image: !!imageUrl
+        has_image: !!imageUrl,
+        is_anonymous: isAnonymous,
+        is_private: isPrivate
       })
 
       toast.success('Danke für dein Feedback!')
       setTitle('')
       setDescription('')
       setType('feature')
+      setIsAnonymous(false)
+      setIsPrivate(false)
       setCroppedFile(null)
     } catch (error) {
       console.error('Error adding feedback:', error)
@@ -169,6 +170,11 @@ export default function FeedbackPage() {
   if (!user) {
     return null
   }
+
+  const filteredItems = feedbackItems.filter(item => {
+    if (isAdmin) return true
+    return !item.is_private
+  })
 
   return (
     <div className="max-w-4xl mx-auto space-y-10">
@@ -300,6 +306,46 @@ export default function FeedbackPage() {
                 )}
               </div>
 
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                <div className="flex items-start space-x-2">
+                  <Checkbox 
+                    id="anonymous" 
+                    checked={isAnonymous} 
+                    onCheckedChange={(checked) => setIsAnonymous(checked === true)}
+                  />
+                  <div className="grid gap-1.5 leading-none">
+                    <label
+                      htmlFor="anonymous"
+                      className="text-sm font-medium leading-none cursor-pointer"
+                    >
+                      Anonym posten
+                    </label>
+                    <p className="text-xs text-muted-foreground">
+                      Dein Name wird nicht öffentlich angezeigt.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start space-x-2">
+                  <Checkbox 
+                    id="private" 
+                    checked={isPrivate} 
+                    onCheckedChange={(checked) => setIsPrivate(checked === true)}
+                  />
+                  <div className="grid gap-1.5 leading-none">
+                    <label
+                      htmlFor="private"
+                      className="text-sm font-medium leading-none cursor-pointer"
+                    >
+                      Privat senden
+                    </label>
+                    <p className="text-xs text-muted-foreground">
+                      Nur für Admins sichtbar.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               <Button type="submit" disabled={loading || isUploading} className="w-full sm:w-auto">
                 {loading || isUploading ? (
                   <>
@@ -319,11 +365,11 @@ export default function FeedbackPage() {
           <div className="flex justify-center py-10">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
-        ) : feedbackItems.length === 0 ? (
+        ) : filteredItems.length === 0 ? (
           <p className="text-muted-foreground italic">Noch keine öffentlichen Meldungen vorhanden.</p>
         ) : (
           <div className="grid grid-cols-1 gap-4">
-            {feedbackItems.map((item) => (
+            {filteredItems.map((item) => (
               <Card key={item.id} className="overflow-hidden">
                 <CardHeader className="pb-3">
                   <div className="flex justify-between items-start">
@@ -334,7 +380,13 @@ export default function FeedbackPage() {
                     {getStatusBadge(item.status)}
                   </div>
                   <CardDescription>
-                    {item.created_by_name || 'Unbekannt'} • {toDate(item.created_at).toLocaleDateString('de-DE')}
+                    {(item.is_anonymous && !isAdmin) ? 'Anonym' : (item.created_by_name || 'Unbekannt')} • {toDate(item.created_at).toLocaleDateString('de-DE')}
+                    {isAdmin && item.is_anonymous && (
+                      <Badge variant="outline" className="ml-2 text-[10px] h-4 px-1">Anonym</Badge>
+                    )}
+                    {isAdmin && item.is_private && (
+                      <Badge variant="outline" className="ml-2 text-[10px] h-4 px-1 border-warning/50 text-warning">Privat</Badge>
+                    )}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">

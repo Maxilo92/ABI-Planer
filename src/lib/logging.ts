@@ -2,6 +2,7 @@ import { collection, addDoc, serverTimestamp } from 'firebase/firestore'
 import { db } from './firebase'
 
 export type LogActionType = 
+  | 'ACCOUNT_CREATED'
   | 'FEEDBACK_CREATED'
   | 'FEEDBACK_UPDATED'
   | 'FEEDBACK_DELETED'
@@ -33,6 +34,10 @@ export type LogActionType =
   | 'GROUP_MESSAGE_CREATED'
   | 'GROUP_MESSAGE_DELETED'
   | 'GROUP_MESSAGE_PINNED'
+  | 'FEEDBACK_SUBMIT'
+  | 'LOOT_TEACHER'
+  | 'NEWS_RATE'
+  | 'NEWS_COMMENT'
 
 export interface LogEntry {
   action: LogActionType
@@ -45,17 +50,31 @@ export interface LogEntry {
 /**
  * Logs a significant action to the Firestore 'logs' collection.
  */
+import { doc, getDoc } from 'firebase/firestore'
+
+/**
+ * Logs a significant action to the Firestore 'logs' collection.
+ * Falls userName nicht übergeben wird, wird er aus Firestore geladen.
+ */
 export const logAction = async (
   action: LogActionType,
   userId: string,
   userName?: string | null,
   details?: any
 ) => {
+  let resolvedName = userName
   try {
+    if (!resolvedName) {
+      // Versuche, den Namen aus Firestore zu laden
+      const profileSnap = await getDoc(doc(db, 'profiles', userId))
+      if (profileSnap.exists()) {
+        resolvedName = profileSnap.data().full_name || null
+      }
+    }
     await addDoc(collection(db, 'logs'), {
       action,
       user_id: userId,
-      user_name: userName || null,
+      user_name: resolvedName || null,
       details: details || null,
       timestamp: serverTimestamp(),
     })

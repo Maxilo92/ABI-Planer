@@ -152,6 +152,15 @@ export default function RegisterPage() {
         },
       })
 
+      // ACCOUNT_CREATED Log (garantiert mit Name)
+      await logAction('ACCOUNT_CREATED', user.uid, fullName, {
+        email: normalizedEmail,
+        role: isFirstUser ? 'admin' : 'viewer',
+        class_name: selectedCourse,
+        created_at: new Date().toISOString(),
+      })
+
+      // PROFILE_UPDATED Log (wie bisher)
       await logAction('PROFILE_UPDATED', user.uid, fullName, {
         action: 'profile_created',
         role: isFirstUser ? 'admin' : 'viewer',
