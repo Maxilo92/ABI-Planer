@@ -138,6 +138,7 @@ export function TeacherAlbum() {
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
           {sortedTeachers.map((teacher) => {
+            const teacherId = teacher.id || teacher.name
             const userData = userTeachers?.[teacher.id] || userTeachers?.[teacher.name]
             const isOwned = !!userData
             const level = userData?.level || 1
