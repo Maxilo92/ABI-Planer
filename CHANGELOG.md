@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.22.03] - 2026-03-22
+- Fix: **CORS-Sicherheitsrichtlinien verschärft**. Erlaubte Origins für MFA- und Danger-Funktionen wurden explizit festgelegt (`abi-planer-27.de`, `abi-planer-75319.web.app`, `abi-planer-75319.firebaseapp.app`), um robustere Cross-Origin Requests zu ermöglichen.
+
 ## [0.22.02] - 2026-03-22
 - Fix: **CORS-Fehler bei MFA/Danger Functions behoben**. Die Funktionen `setup2FA`, `verifyInitial2FA`, `disable2FA` und `authorizeDangerAction` haben nun explizit gesetzte CORS-Optionen und Regionen (`europe-west3`).
 - Fix: **Modul-Inkonsistenz in `cron.ts` behoben**. Der Export und Import von `emptyAllAlbums` wurde vereinheitlicht, um Build-Fehler zu vermeiden.

@@ -8,7 +8,7 @@ import * as QRCode from "qrcode";
  * Generates a TOTP secret and returns a QR code.
  */
 export const setup2FA = onCall({
-  cors: true,
+  cors: ["https://abi-planer-27.de", "https://abi-planer-75319.web.app", "https://abi-planer-75319.firebaseapp.app"],
   region: "europe-west3",
 }, async (request) => {
   if (!request.auth) {
@@ -46,7 +46,7 @@ export const setup2FA = onCall({
  * Verify the initial 2FA code and save the secret.
  */
 export const verifyInitial2FA = onCall({
-  cors: true,
+  cors: ["https://abi-planer-27.de", "https://abi-planer-75319.web.app", "https://abi-planer-75319.firebaseapp.app"],
   region: "europe-west3",
 }, async (request) => {
   if (!request.auth) {
@@ -95,7 +95,7 @@ export const verifyInitial2FA = onCall({
  * Disable 2FA for the current user.
  */
 export const disable2FA = onCall({
-  cors: true,
+  cors: ["https://abi-planer-27.de", "https://abi-planer-75319.web.app", "https://abi-planer-75319.firebaseapp.app"],
   region: "europe-west3",
 }, async (request) => {
   if (!request.auth) {

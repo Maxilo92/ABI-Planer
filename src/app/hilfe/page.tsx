@@ -283,7 +283,7 @@ export default function HilfePage() {
 
           <div className="pt-8 border-t space-y-2">
             <p className="text-xs text-muted-foreground italic">
-              Stand: März 2026 | v0.22.02
+              Stand: März 2026 | v0.22.03
             </p>
             <p className="text-xs text-muted-foreground">
               Noch Fragen? Klick hier um <strong>Feedback zu geben</strong> oder kontaktiert einen Admin.
