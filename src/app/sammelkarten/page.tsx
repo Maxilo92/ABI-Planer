@@ -147,7 +147,7 @@ function SammelkartenContent() {
       setTimeout(() => {
         setGameState('revealed')
         setIsAnimating(false)
-      }, 800) // Duration of the explosive rip animation
+      }, 400) // Faster transition
     } catch (err: any) {
       toast.error(err.message || 'Fehler beim Sammeln.')
       setGameState('idle')
@@ -233,10 +233,9 @@ function SammelkartenContent() {
               {/* Revealed Cards (Rendered behind the pack during ripping) */}
               {(gameState === 'ripping' || gameState === 'revealed') && revealedTeachers && (
                 <div className={cn(
-                  "flex flex-wrap justify-center gap-4 sm:gap-6 w-full max-w-5xl transition-all duration-1000",
-                  gameState === 'ripping' ? "opacity-0 scale-90" : "opacity-100 scale-100"
-                )}
-                style={{ transitionDelay: gameState === 'ripping' ? '0ms' : '200ms' }}>
+                  "flex flex-wrap justify-center gap-4 sm:gap-6 w-full max-w-5xl transition-all duration-700",
+                  gameState === 'ripping' ? "opacity-100 scale-75" : "opacity-100 scale-100"
+                )}>
                   {revealedTeachers.map((teacher, idx) => {
                     const isFlipped = flippedCards[idx]
                     const result = collectionResults?.[idx]
@@ -246,9 +245,15 @@ function SammelkartenContent() {
                       <div 
                         key={`${teacher.id}-${idx}`}
                         className={cn(
-                          "perspective-1000 w-40 h-56 sm:w-48 sm:h-64 cursor-pointer relative",
+                          "perspective-1000 w-40 h-56 sm:w-48 sm:h-64 cursor-pointer relative transition-all duration-700 ease-out",
                           isFlipped && result?.isNew && "animate-new-card-float z-10"
                         )}
+                        style={{ 
+                          transform: gameState === 'ripping' 
+                            ? `translate(${idx === 0 ? '120px' : idx === 2 ? '-120px' : '0'}, 0) rotate(${idx === 0 ? '-5deg' : idx === 2 ? '5deg' : '0'})` 
+                            : 'translate(0, 0) rotate(0deg)',
+                          zIndex: gameState === 'ripping' ? 10 : 20
+                        }}
                         onClick={() => !isFlipped && handleFlipCard(idx)}
                       >
                         <div className={cn(
