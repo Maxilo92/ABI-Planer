@@ -373,7 +373,7 @@ export function TeacherAlbum() {
         
         <div className="flex gap-2">
           <DropdownMenu>
-            <DropdownMenuTrigger asChild render={<Button variant="outline" className="gap-2 shrink-0" />}>
+            <DropdownMenuTrigger render={<Button variant="outline" className="gap-2 shrink-0" />}>
               <Filter className="h-4 w-4" />
               Filter
               {activeFilterCount > 0 && (

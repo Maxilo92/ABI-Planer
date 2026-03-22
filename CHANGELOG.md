@@ -2,6 +2,7 @@
 
 ## [0.20.15] - 2026-03-22
 - Feature: **Interaktives Lehrer-Album 2.0**.
+- Fix: **Progress-Build-Fehler behoben**. Korrektur eines TypeScript-Fehlers in der `Progress`-Komponente durch Double-Cast des Style-Objekts für CSS-Variablen.
 - UI: **Pokemon TCG-Style Detailansicht**. Karten können nun angeklickt werden, um eine 3D-Großansicht zu öffnen. Diese bietet einen dynamischen "Tilt"-Effekt bei Mausbewegung und kann durch Klicken umgedreht werden.
 - UI: **Such- & Filter-System**. Das Album verfügt nun über eine Echtzeit-Suche und einen erweiterten Filter für Seltenheit und Besitz-Status (Entdeckt/Fehlend).
 - UI: **Detaillierte Statistiken**. Die Detailansicht zeigt nun exakt an, wie oft eine Karte gesammelt wurde und wie viele Kopien bis zum nächsten Level fehlen.

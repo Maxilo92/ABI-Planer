@@ -19,7 +19,7 @@ function Progress({
       style={{
         "--value": value,
         ...style,
-      } as React.CSSProperties}
+      } as unknown as React.CSSProperties}
       {...props}
     >
       {children}
