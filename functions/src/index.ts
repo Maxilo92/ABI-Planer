@@ -1,4 +1,3 @@
-import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
 import { setGlobalOptions } from "firebase-functions/v2";
 
@@ -14,4 +13,3 @@ if (admin.apps.length === 0) {
 export * from "./mfa";
 export * from "./danger";
 export * from "./cron";
-export { functions, admin };
