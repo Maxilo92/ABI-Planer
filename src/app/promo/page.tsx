@@ -106,9 +106,6 @@ export default function PromoAuthPage() {
                 <CardTitle className="flex items-center gap-2 text-xl font-black uppercase tracking-wide text-primary">
                   Dein Account
                 </CardTitle>
-                <Badge className="bg-primary text-primary-foreground text-[8px] font-black uppercase tracking-widest px-2 py-0.5 animate-pulse">
-                  Kostenlos
-                </Badge>
               </div>
               <CardDescription className="text-[11px] font-bold uppercase tracking-wider text-primary/60">
                 Volle Kontrolle & Progress

@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.21.10] - 2026-03-22
+- UI: **Promo-Seite vereinfacht**. Jegliche Bezeichnungen wie "Premium" oder "Kostenlos" wurden entfernt, um klarzustellen, dass es nur einen Account-Typ für alle gibt.
+
 ## [0.21.09] - 2026-03-22
 - UI: **Promo-Seite korrigiert**. Bezeichnung "Premium Account" durch "Dein Account" ersetzt, um klarzustellen, dass alle Features mit einem einfachen, kostenlosen Konto verfügbar sind.
 
