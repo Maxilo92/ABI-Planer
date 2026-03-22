@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.21.02] - 2026-03-22
+- UI: **Sammelkarten-Lock-Icon verbessert**. Der drehende Pfeil bei gesperrten Packs wurde durch ein passenderes Uhr-Icon (`Clock`) ersetzt.
+
 ## [0.21.01] - 2026-03-22
 - Auth: **Sammelkarten-Zugriff eingeschränkt**. Das Feature ist nun nur noch für angemeldete Nutzer sichtbar und zugänglich. Nicht angemeldete Nutzer werden automatisch zum Login umgeleitet.
 

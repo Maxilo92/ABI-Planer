@@ -366,7 +366,7 @@ function SammelkartenContent() {
                 >
                   {getRemainingBoosters() <= 0 && gameState === 'idle' && (
                     <div className="absolute inset-0 flex flex-col items-center justify-center z-30 bg-black/60 rounded-3xl backdrop-blur-sm">
-                       <RotateCcw className="h-10 w-10 text-white mb-3 animate-spin-slow" />
+                       <Clock className="h-10 w-10 text-white mb-3" />
                        <p className="text-white font-black text-xs uppercase tracking-[0.2em]">{timeLeft}</p>
                     </div>
                   )}
