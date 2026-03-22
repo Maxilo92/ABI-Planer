@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.21.12] - 2026-03-22
+- Fix: **Vorschau für gesperrte Lehrer-Umfragen**. Gäste sehen nun wieder, welcher Lehrer gerade zur Abstimmung steht (Vorschau-Header), während nur die Abstimmungs-Buttons durch die Lock-UI ersetzt werden.
+
 ## [0.21.11] - 2026-03-22
 - UI: **Lock-UI für Umfragen verfeinert**. Die Sperr-Anzeige für Lehrer-Seltenheiten und allgemeine Umfragen wurde überarbeitet, um dem neuen Design mit dem Schloss-Icon auf der oberen Begrenzung zu entsprechen.
 - UI: **Pinned Section auf Umfragen-Seite**. Die Lehrer-Seltenheits-Umfrage wird nun in einem hervorgehobenen "Featured"-Layout mit angedeutetem Karussell-Effekt präsentiert.
