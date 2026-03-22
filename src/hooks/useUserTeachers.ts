@@ -204,22 +204,3 @@ export const useUserTeachers = () => {
     getRemainingBoosters,
   }
 }
-
-
-  const getRemainingBoosters = useCallback(() => {
-    if (!profile) return 0
-    const today = new Date().toISOString().split('T')[0]
-    const stats = profile.booster_stats
-    if (!stats || stats.last_reset !== today) return 2
-    return Math.max(0, 2 - stats.count)
-  }, [profile])
-
-  return {
-    teachers,
-    loading,
-    error,
-    collectTeacher,
-    collectBooster,
-    getRemainingBoosters,
-  }
-}
