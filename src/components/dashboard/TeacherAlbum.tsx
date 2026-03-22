@@ -442,7 +442,7 @@ export function TeacherAlbum() {
                 <DropdownMenuRadioItem value="level" className="flex items-center gap-2">
                   <ArrowUp10 className="h-4 w-4" />
                   Nach Level
-                </DropdownMenuRadioRadioItem>
+                </DropdownMenuRadioItem>
                 <DropdownMenuRadioItem value="upgrade" className="flex items-center gap-2">
                   <Star className="h-4 w-4" />
                   Nächstes Upgrade
