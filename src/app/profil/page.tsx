@@ -198,165 +198,167 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto space-y-8 pb-20">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Mein Konto</h1>
-        <p className="text-muted-foreground">
-          Verwalte deine persönlichen Informationen und Einstellungen.
-        </p>
-      </div>
+    <div className="space-y-12 pb-20">
+      <div className="max-w-2xl mx-auto space-y-8">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Mein Konto</h1>
+          <p className="text-muted-foreground">
+            Verwalte deine persönlichen Informationen und Einstellungen.
+          </p>
+        </div>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center gap-4 space-y-0 border-b pb-6">
-          <Avatar size="lg" className="h-16 w-16">
-            <AvatarFallback className="bg-primary/10 text-primary text-xl font-bold">
-              {userInitial}
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex flex-col">
-            <CardTitle className="text-2xl">{profile.full_name}</CardTitle>
-            <CardDescription className="flex items-center gap-1.5 mt-1">
-              <Badge variant={profile.role.includes('admin') ? 'default' : 'secondary'} className="uppercase text-[10px]">
-                {getRoleLabel(profile.role)}
-              </Badge>
-              {userCourse && (
-                <Badge variant="outline" className="uppercase text-[10px] font-bold">
-                  Kurs {userCourse}
+        <Card>
+          <CardHeader className="flex flex-row items-center gap-4 space-y-0 border-b pb-6">
+            <Avatar size="lg" className="h-16 w-16">
+              <AvatarFallback className="bg-primary/10 text-primary text-xl font-bold">
+                {userInitial}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex flex-col">
+              <CardTitle className="text-2xl">{profile.full_name}</CardTitle>
+              <CardDescription className="flex items-center gap-1.5 mt-1">
+                <Badge variant={profile.role.includes('admin') ? 'default' : 'secondary'} className="uppercase text-[10px]">
+                  {getRoleLabel(profile.role)}
                 </Badge>
-              )}
-            </CardDescription>
-          </div>
-        </CardHeader>
-        <CardContent className="grid gap-6 py-6">
-          <div className="flex items-center gap-4">
-            <div className="bg-muted p-2 rounded-full">
-              <User className="h-5 w-5 text-muted-foreground" />
+                {userCourse && (
+                  <Badge variant="outline" className="uppercase text-[10px] font-bold">
+                    Kurs {userCourse}
+                  </Badge>
+                )}
+              </CardDescription>
             </div>
-            <div className="flex-1">
-              <p className="text-sm font-medium leading-none">Vollständiger Name</p>
-              <p className="text-sm text-muted-foreground mt-1">{profile.full_name}</p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <div className="bg-muted p-2 rounded-full">
-              <Mail className="h-5 w-5 text-muted-foreground" />
-            </div>
-            <div className="flex-1">
-              <p className="text-sm font-medium leading-none">E-Mail Adresse</p>
-              <p className="text-sm text-muted-foreground mt-1">{user.email}</p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <div className="bg-muted p-2 rounded-full">
-              <Shield className="h-5 w-5 text-muted-foreground" />
-            </div>
-            <div className="flex-1">
-              <p className="text-sm font-medium leading-none">Mitglied-Status</p>
-              <p className="text-sm text-muted-foreground mt-1">
-                {profile.is_approved ? 'Verifiziertes Mitglied' : 'Wartet auf Freischaltung'}
-              </p>
-            </div>
-          </div>
-
-          {profile.role === 'planner' && (
-            <div className="flex items-center gap-4 border-t pt-4">
-              <div className="bg-primary/10 p-2 rounded-full">
-                <Users className="h-5 w-5 text-primary" />
+          </CardHeader>
+          <CardContent className="grid gap-6 py-6">
+            <div className="flex items-center gap-4">
+              <div className="bg-muted p-2 rounded-full">
+                <User className="h-5 w-5 text-muted-foreground" />
               </div>
               <div className="flex-1">
-                <p className="text-sm font-medium leading-none">Planungsgruppe</p>
-                <p className="text-sm text-primary font-bold mt-1">
-                  {plannerGroup || 'Noch keiner Gruppe zugewiesen'}
+                <p className="text-sm font-medium leading-none">Vollständiger Name</p>
+                <p className="text-sm text-muted-foreground mt-1">{profile.full_name}</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-4">
+              <div className="bg-muted p-2 rounded-full">
+                <Mail className="h-5 w-5 text-muted-foreground" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-medium leading-none">E-Mail Adresse</p>
+                <p className="text-sm text-muted-foreground mt-1">{user.email}</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-4">
+              <div className="bg-muted p-2 rounded-full">
+                <Shield className="h-5 w-5 text-muted-foreground" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-medium leading-none">Mitglied-Status</p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {profile.is_approved ? 'Verifiziertes Mitglied' : 'Wartet auf Freischaltung'}
                 </p>
               </div>
             </div>
-          )}
 
-          <div className="flex items-center gap-4 border-t pt-4">
-            <div className="bg-muted p-2 rounded-full">
-              <Calendar className="h-5 w-5 text-muted-foreground" />
+            {profile.role === 'planner' && (
+              <div className="flex items-center gap-4 border-t pt-4">
+                <div className="bg-primary/10 p-2 rounded-full">
+                  <Users className="h-5 w-5 text-primary" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium leading-none">Planungsgruppe</p>
+                  <p className="text-sm text-primary font-bold mt-1">
+                    {plannerGroup || 'Noch keiner Gruppe zugewiesen'}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            <div className="flex items-center gap-4 border-t pt-4">
+              <div className="bg-muted p-2 rounded-full">
+                <Calendar className="h-5 w-5 text-muted-foreground" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-medium leading-none">Mitglied seit</p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {profile.created_at ? format(toDate(profile.created_at), 'PPP', { locale: de }) : 'Unbekannt'}
+                </p>
+              </div>
             </div>
-            <div className="flex-1">
-              <p className="text-sm font-medium leading-none">Mitglied seit</p>
-              <p className="text-sm text-muted-foreground mt-1">
-                {profile.created_at ? format(toDate(profile.created_at), 'PPP', { locale: de }) : 'Unbekannt'}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Kontoverwaltung</CardTitle>
+            <CardDescription>
+              Verwalte hier deinen Namen, dein Passwort und auf Wunsch dein komplettes Konto.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <form onSubmit={handleUpdateName} className="space-y-3">
+              <Label htmlFor="profile-full-name">Name ändern</Label>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Input
+                  id="profile-full-name"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  placeholder="Dein vollständiger Name"
+                  required
+                />
+                <Button type="submit" disabled={savingName}>
+                  {savingName ? 'Speichere...' : 'Name speichern'}
+                </Button>
+              </div>
+            </form>
+
+            <form onSubmit={handleUpdateCourse} className="space-y-3 border-t pt-4">
+              <Label htmlFor="profile-course">Kurs ändern</Label>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <select
+                  id="profile-course"
+                  value={selectedCourse}
+                  onChange={(e) => setSelectedCourse(e.target.value)}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  required
+                >
+                  {courses.map((course) => (
+                    <option key={course} value={course}>
+                      {course}
+                    </option>
+                  ))}
+                </select>
+                <Button type="submit" disabled={savingCourse}>
+                  {savingCourse ? 'Speichere...' : 'Kurs speichern'}
+                </Button>
+              </div>
+            </form>
+
+            <div className="space-y-3 border-t pt-4">
+              <Label>Passwort ändern</Label>
+              <p className="text-sm text-muted-foreground">
+                Wir schicken dir eine E-Mail mit einem sicheren Link zum Ändern deines Passworts.
               </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Kontoverwaltung</CardTitle>
-          <CardDescription>
-            Verwalte hier deinen Namen, dein Passwort und auf Wunsch dein komplettes Konto.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <form onSubmit={handleUpdateName} className="space-y-3">
-            <Label htmlFor="profile-full-name">Name ändern</Label>
-            <div className="flex flex-col sm:flex-row gap-2">
-              <Input
-                id="profile-full-name"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                placeholder="Dein vollständiger Name"
-                required
-              />
-              <Button type="submit" disabled={savingName}>
-                {savingName ? 'Speichere...' : 'Name speichern'}
+              <Button variant="outline" onClick={handlePasswordReset} disabled={sendingReset}>
+                {sendingReset ? 'Sende E-Mail...' : 'Passwort ändern'}
               </Button>
             </div>
-          </form>
 
-          <form onSubmit={handleUpdateCourse} className="space-y-3 border-t pt-4">
-            <Label htmlFor="profile-course">Kurs ändern</Label>
-            <div className="flex flex-col sm:flex-row gap-2">
-              <select
-                id="profile-course"
-                value={selectedCourse}
-                onChange={(e) => setSelectedCourse(e.target.value)}
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                required
-              >
-                {courses.map((course) => (
-                  <option key={course} value={course}>
-                    {course}
-                  </option>
-                ))}
-              </select>
-              <Button type="submit" disabled={savingCourse}>
-                {savingCourse ? 'Speichere...' : 'Kurs speichern'}
+            <div className="space-y-3 border-t pt-4">
+              <Label className="text-destructive">Konto löschen</Label>
+              <p className="text-sm text-muted-foreground">
+                Das löscht dein Profil und deinen Login dauerhaft. Dieser Schritt kann nicht rückgängig gemacht werden.
+              </p>
+              <Button variant="destructive" onClick={handleDeleteAccount} disabled={deletingAccount}>
+                {deletingAccount ? 'Lösche Konto...' : 'Konto löschen'}
               </Button>
             </div>
-          </form>
+          </CardContent>
+        </Card>
+      </div>
 
-          <div className="space-y-3 border-t pt-4">
-            <Label>Passwort ändern</Label>
-            <p className="text-sm text-muted-foreground">
-              Wir schicken dir eine E-Mail mit einem sicheren Link zum Ändern deines Passworts.
-            </p>
-            <Button variant="outline" onClick={handlePasswordReset} disabled={sendingReset}>
-              {sendingReset ? 'Sende E-Mail...' : 'Passwort ändern'}
-            </Button>
-          </div>
-
-          <div className="space-y-3 border-t pt-4">
-            <Label className="text-destructive">Konto löschen</Label>
-            <p className="text-sm text-muted-foreground">
-              Das löscht dein Profil und deinen Login dauerhaft. Dieser Schritt kann nicht rückgängig gemacht werden.
-            </p>
-            <Button variant="destructive" onClick={handleDeleteAccount} disabled={deletingAccount}>
-              {deletingAccount ? 'Lösche Konto...' : 'Konto löschen'}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      <div className="pt-4">
+      <div className="max-w-6xl mx-auto px-4">
         <TeacherAlbum />
       </div>
     </div>

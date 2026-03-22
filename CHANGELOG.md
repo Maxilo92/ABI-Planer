@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.21.22] - 2026-03-22
+- Fix: **Layout der Profilseiten optimiert**. Das Lehrer-Album wird auf Profilseiten nun nicht mehr horizontal gequetscht, sondern nutzt die volle verfügbare Breite (max-w-6xl), während die Profil-Informationen weiterhin kompakt (max-w-2xl) dargestellt werden.
+
 ## [0.21.21] - 2026-03-22
 - Fix: **TypeScript Build-Fehler behoben**. Fehlender Import des `Profile`-Typs in `TeacherAlbum.tsx` hinzugefügt, der den Produktions-Build verhinderte.
 
