@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.21.09] - 2026-03-22
+- UI: **Promo-Seite korrigiert**. Bezeichnung "Premium Account" durch "Dein Account" ersetzt, um klarzustellen, dass alle Features mit einem einfachen, kostenlosen Konto verfügbar sind.
+
 ## [0.21.08] - 2026-03-22
 - Fix: **Lehrer-Seltenheit Umfrage für Gäste**. Die Crowdsourced Rarity Umfrage auf dem Dashboard hängt nun nicht mehr in der Ladeschleife für Gäste. Sie zeigt nun den aktuellen Lehrer an, sperrt jedoch die Abstimmung mit einem Hinweis auf den benötigten Account.
 - UI: **Promo-Seite aktualisiert**. Die Liste der Vorteile wurde präzisiert, um klarzustellen, dass Gäste Umfragen zwar einsehen, aber nicht aktiv mitbestimmen können.

@@ -104,10 +104,10 @@ export default function PromoAuthPage() {
             <CardHeader>
               <div className="flex justify-between items-start">
                 <CardTitle className="flex items-center gap-2 text-xl font-black uppercase tracking-wide text-primary">
-                  Premium Account
+                  Dein Account
                 </CardTitle>
                 <Badge className="bg-primary text-primary-foreground text-[8px] font-black uppercase tracking-widest px-2 py-0.5 animate-pulse">
-                  Empfohlen
+                  Kostenlos
                 </Badge>
               </div>
               <CardDescription className="text-[11px] font-bold uppercase tracking-wider text-primary/60">
