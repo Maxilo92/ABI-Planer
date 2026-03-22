@@ -20,28 +20,28 @@ const DANGER_ACTIONS = [
   {
     id: 'SYSTEM_TEST_DRY_RUN',
     title: 'System-Test (Keine Auswirkung)',
-    description: 'Testet den kompletten Danger Zone Workflow (24h Delay, Banner, 2FA, Logging), ohne Daten zu verändern.',
+    description: 'Testet den kompletten Sicherheits-Workflow inklusive 2FA-Validierung, 24h-Warteschlange und globalem Countdown-Banner, ohne Änderungen an der Datenbank vorzunehmen.',
     confirmationString: 'RUN SYSTEM TEST',
     severity: 'low'
   },
   {
     id: 'WIPE_ALL_CARDS',
-    title: 'Alle Sammelkarten löschen',
-    description: 'Dies löscht alle gesammelten Karten von ALLEN Benutzern. Dieser Vorgang kann nicht rückgängig gemacht werden.',
+    title: 'Alle Alben & Sammelkarten leeren',
+    description: 'Löscht unwiderruflich alle "user_teachers" Einträge in der Datenbank. Das bedeutet: Alle Benutzer verlieren JEDE gesammelte Karte und alle Alben werden komplett auf 0 gesetzt.',
     confirmationString: 'DELETE ALL CARDS',
     severity: 'high'
   },
   {
     id: 'RESET_ALL_VOTES',
-    title: 'Alle Lehrer-Bewertungen zurücksetzen',
-    description: 'Setzt alle Bewertungen und Stimmen für Lehrer auf Null zurück.',
+    title: 'Alle Lehrer-Bewertungen löschen',
+    description: 'Setzt alle "votes" Dokumente zurück. Alle bisherigen Stimmen für Lehrer-Seltenheiten werden gelöscht und die globalen Statistiken auf den Ursprungszustand gesetzt.',
     confirmationString: 'RESET ALL VOTES',
     severity: 'medium'
   },
   {
     id: 'DELETE_ALL_FEEDBACK',
-    title: 'Sämtliches Feedback löschen',
-    description: 'Löscht alle eingereichten Feedback-Einträge aus der Datenbank.',
+    title: 'Sämtliches Feedback unwiderruflich löschen',
+    description: 'Löscht alle Dokumente aus der "feedback" Collection. Eingereichte Fehlerberichte, Wünsche und Nachrichten von Nutzern gehen vollständig verloren.',
     confirmationString: 'DELETE ALL FEEDBACK',
     severity: 'low'
   }
