@@ -13,6 +13,7 @@ import { de } from 'date-fns/locale'
 import { toDate, getOnlineStatus, cn } from '@/lib/utils'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
+import { TeacherAlbum } from '@/components/dashboard/TeacherAlbum'
 
 export default function PublicProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
@@ -71,7 +72,7 @@ export default function PublicProfilePage({ params }: { params: Promise<{ id: st
   }
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div className="max-w-2xl mx-auto space-y-6 pb-20">
       <Button
         variant="ghost"
         size="sm"
@@ -170,6 +171,10 @@ export default function PublicProfilePage({ params }: { params: Promise<{ id: st
           </div>
         </CardContent>
       </Card>
+
+      <div className="pt-4">
+        <TeacherAlbum userId={id} targetProfile={targetProfile} />
+      </div>
     </div>
   )
 }

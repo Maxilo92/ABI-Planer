@@ -18,6 +18,7 @@ import { deleteUser, sendPasswordResetEmail, updateProfile } from 'firebase/auth
 import { doc, deleteDoc, setDoc, updateDoc, getDoc } from 'firebase/firestore'
 import { toast } from 'sonner'
 import { logAction } from '@/lib/logging'
+import { TeacherAlbum } from '@/components/dashboard/TeacherAlbum'
 
 export default function ProfilePage() {
   const { user, profile, loading } = useAuth()
@@ -197,7 +198,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto space-y-8">
+    <div className="max-w-2xl mx-auto space-y-8 pb-20">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Mein Konto</h1>
         <p className="text-muted-foreground">
@@ -354,6 +355,10 @@ export default function ProfilePage() {
           </div>
         </CardContent>
       </Card>
+
+      <div className="pt-4">
+        <TeacherAlbum />
+      </div>
     </div>
   )
 }

@@ -47,21 +47,24 @@ export const getCurrentBoosterDay = (): string => {
   return boosterDate.toISOString().split('T')[0]
 }
 
-export const useUserTeachers = () => {
-  const { user, profile } = useAuth()
+export const useUserTeachers = (userId?: string) => {
+  const { user: currentUser, profile: currentProfile } = useAuth()
+  const activeUserId = userId || currentUser?.uid
+  const isOwnProfile = !userId || userId === currentUser?.uid
+  
   const [teachers, setTeachers] = useState<UserTeacher | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
 
   useEffect(() => {
-    if (!user) {
+    if (!activeUserId) {
       setTeachers(null)
       setLoading(false)
       return
     }
 
     setLoading(true)
-    const docRef = doc(db, 'user_teachers', user.uid)
+    const docRef = doc(db, 'user_teachers', activeUserId)
 
     const unsubscribe = onSnapshot(
       docRef,
@@ -81,17 +84,17 @@ export const useUserTeachers = () => {
     )
 
     return () => unsubscribe()
-  }, [user])
+  }, [activeUserId])
 
   const collectBooster = useCallback(
     async (teacherIds: string[]) => {
-      if (!user) throw new Error('User must be authenticated to collect teachers')
+      if (!isOwnProfile || !currentUser) throw new Error('Action not allowed')
       if (teacherIds.length !== 3) {
         throw new Error('Ein Kartenpack muss genau 3 Karten enthalten.')
       }
 
-      const userTeachersRef = doc(db, 'user_teachers', user.uid)
-      const profileRef = doc(db, 'profiles', user.uid)
+      const userTeachersRef = doc(db, 'user_teachers', currentUser.uid)
+      const profileRef = doc(db, 'profiles', currentUser.uid)
       
       try {
         const results = await runTransaction(db, async (transaction) => {
@@ -99,8 +102,8 @@ export const useUserTeachers = () => {
           if (!profileDoc.exists()) throw new Error('User profile not found')
           
           const today = getCurrentBoosterDay()
-          const currentProfile = profileDoc.data() as Profile
-          const currentStats = currentProfile.booster_stats || { last_reset: today, count: 0 }
+          const currentProfileData = profileDoc.data() as Profile
+          const currentStats = currentProfileData.booster_stats || { last_reset: today, count: 0 }
           
           let dailyCount = currentStats.count
           let extraAvailable = currentStats.extra_available || 0
@@ -159,15 +162,15 @@ export const useUserTeachers = () => {
         throw err
       }
     },
-    [user]
+    [currentUser, isOwnProfile]
   )
 
   const collectTeacher = useCallback(
     async (teacherId: string) => {
-      if (!user) throw new Error('User must be authenticated to collect teachers')
+      if (!isOwnProfile || !currentUser) throw new Error('Action not allowed')
 
-      const userTeachersRef = doc(db, 'user_teachers', user.uid)
-      const profileRef = doc(db, 'profiles', user.uid)
+      const userTeachersRef = doc(db, 'user_teachers', currentUser.uid)
+      const profileRef = doc(db, 'profiles', currentUser.uid)
       
       try {
         const result = await runTransaction(db, async (transaction) => {
@@ -175,8 +178,8 @@ export const useUserTeachers = () => {
           if (!profileDoc.exists()) throw new Error('User profile not found')
 
           const today = getCurrentBoosterDay()
-          const currentProfile = profileDoc.data() as Profile
-          const currentStats = currentProfile.booster_stats || { last_reset: today, count: 0 }
+          const currentProfileData = profileDoc.data() as Profile
+          const currentStats = currentProfileData.booster_stats || { last_reset: today, count: 0 }
           
           let dailyCount = currentStats.count
           let extraAvailable = currentStats.extra_available || 0
@@ -225,24 +228,24 @@ export const useUserTeachers = () => {
         throw err
       }
     },
-    [user]
+    [currentUser, isOwnProfile]
   )
 
   const claimExtraBoosters = useCallback(async () => {
-    if (!user) throw new Error('User must be authenticated to claim boosters')
+    if (!isOwnProfile || !currentUser) throw new Error('Action not allowed')
 
-    const profileRef = doc(db, 'profiles', user.uid)
+    const profileRef = doc(db, 'profiles', currentUser.uid)
     
     try {
       await runTransaction(db, async (transaction) => {
         const profileDoc = await transaction.get(profileRef)
         if (!profileDoc.exists()) throw new Error('User profile not found')
 
-        const currentProfile = profileDoc.data() as Profile
+        const currentProfileData = profileDoc.data() as Profile
         const today = getCurrentBoosterDay()
         
         // Handle null or missing stats
-        const currentStats = currentProfile.booster_stats || { last_reset: today, count: 0 }
+        const currentStats = currentProfileData.booster_stats || { last_reset: today, count: 0 }
         
         if (currentStats.extra_boosters_claimed) {
           throw new Error('Belohnung bereits abgeholt!')
@@ -262,12 +265,12 @@ export const useUserTeachers = () => {
       console.error('Error claiming extra boosters:', err)
       throw err
     }
-  }, [user])
+  }, [currentUser, isOwnProfile])
 
   const getRemainingBoosters = useCallback(() => {
-    if (!profile) return 0
+    if (!isOwnProfile || !currentProfile) return 0
     const today = getCurrentBoosterDay()
-    const stats = profile.booster_stats
+    const stats = currentProfile.booster_stats
     const dailyLimit = 2
     
     if (!stats) return dailyLimit
@@ -276,7 +279,7 @@ export const useUserTeachers = () => {
     if (stats.last_reset !== today) return dailyLimit + extra
     
     return Math.max(0, dailyLimit - stats.count) + extra
-  }, [profile])
+  }, [currentProfile, isOwnProfile])
 
   return {
     teachers,

@@ -253,9 +253,10 @@ function TeacherCardDetail({ teacher, userData, onClose }: { teacher: LootTeache
   )
 }
 
-export function TeacherAlbum() {
-  const { profile } = useAuth()
-  const { teachers: userTeachers, loading: loadingUserTeachers } = useUserTeachers()
+export function TeacherAlbum({ userId, targetProfile }: { userId?: string, targetProfile?: Profile | null }) {
+  const { profile: currentProfile } = useAuth()
+  const activeProfile = targetProfile !== undefined ? targetProfile : currentProfile
+  const { teachers: userTeachers, loading: loadingUserTeachers } = useUserTeachers(userId)
   const [globalTeachers, setGlobalTeachers] = useState<LootTeacher[]>([])
   const [loadingGlobal, setLoadingGlobal] = useState(true)
   
@@ -344,7 +345,7 @@ export function TeacherAlbum() {
   const totalTeachers = globalTeachers.length
   const ownedCount = Object.keys(userTeachers || {}).length
   const totalCardsCollected = Object.values(userTeachers || {}).reduce((acc, curr) => acc + (curr.count || 0), 0)
-  const packsOpened = profile?.booster_stats?.total_opened || 0
+  const packsOpened = activeProfile?.booster_stats?.total_opened || 0
 
   const toggleRarity = (rarity: TeacherRarity) => {
     setRarityFilters(prev => 
@@ -370,7 +371,7 @@ export function TeacherAlbum() {
             Lehrer-Album
           </h2>
           <p className="text-sm text-muted-foreground">
-            Sammle Lehrer aus den Sammelkarten-Packungen und verbessere sie!
+            {userId ? `Sammlung von ${activeProfile?.full_name || 'diesem Nutzer'}` : 'Sammle Lehrer aus den Sammelkarten-Packungen und verbessere sie!'}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
