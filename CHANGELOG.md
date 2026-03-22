@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.21.26] - 2026-03-22
+- Security: **Firestore Rules aktualisiert**. Authentifizierte Nutzer dürfen nun die Lehrer-Sammlungen anderer Nutzer lesen, um diese auf den Profilseiten anzuzeigen. Schreibrechte bleiben weiterhin auf den jeweiligen Besitzer beschränkt.
+
 ## [0.21.25] - 2026-03-22
 - Fix: **Anzeige der Lehrer-Sammlung auf Profilen korrigiert**. Ein Filterfehler verhinderte, dass Karten in der Profil-Vorschau angezeigt wurden. Der Standard-Filter wurde für Profile auf "Nur Entdeckte" angepasst, um die eigene Sammlung korrekt darzustellen.
 
