@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.21.07] - 2026-03-22
+- Fix: **Weitere Permission-Errors behoben**. Fehlerbehandlung für Firestore-Listener in den Globalen Einstellungen (`Settings`) und im `CountdownHeader` hinzugefügt, um `permission-denied` Meldungen in der Konsole für Gäste zu minimieren.
+
 ## [0.21.06] - 2026-03-22
 - Fix: **Dashboard-Ladehänger behoben**. Die Lade-Logik auf der Startseite wurde robuster gestaltet, sodass Fehler beim Abrufen von Umfragen-Details (Optionen/Stimmen) für nicht angemeldete Nutzer nicht mehr die gesamte Seite blockieren ("Lade Dashboard...").
 

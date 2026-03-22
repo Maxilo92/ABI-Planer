@@ -57,6 +57,14 @@ export default function Dashboard() {
         })
       }
       markLoaded('settings')
+    }, (error) => {
+      console.error('Error listening to settings:', error)
+      // Provide fallback values on error too
+      setSettings({ 
+        ball_date: '2027-06-19T18:00:00Z', 
+        funding_goal: 10000 
+      })
+      markLoaded('settings')
     })
 
     // 2. Listen to Todos (top 5 most relevant tasks total)

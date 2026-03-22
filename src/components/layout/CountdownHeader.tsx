@@ -28,6 +28,9 @@ export function CountdownHeader() {
       } else {
         setTargetDate('2027-06-19T18:00:00Z')
       }
+    }, (error) => {
+      console.error('Error fetching countdown settings:', error)
+      setTargetDate('2027-06-19T18:00:00Z')
     })
     return () => unsubscribe()
   }, [])
