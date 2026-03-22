@@ -1,12 +1,13 @@
 'use client'
 
 import { useUserTeachers } from '@/hooks/useUserTeachers'
+import { useAuth } from '@/context/AuthContext'
 import { db } from '@/lib/firebase'
 import { doc, onSnapshot } from 'firebase/firestore'
 import { useEffect, useState, useRef, useMemo } from 'react'
 import { LootTeacher, TeacherRarity } from '@/types/database'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
-import { GraduationCap, Trophy, Star, Lock, Search, Filter, X, ChevronRight, Rotate3d, ArrowDownAZ, ArrowDownZA, ArrowUp10, LayoutGrid } from 'lucide-react'
+import { GraduationCap, Trophy, Star, Lock, Search, Filter, X, ChevronRight, Rotate3d, ArrowDownAZ, ArrowDownZA, ArrowUp10, LayoutGrid, Package } from 'lucide-react'
 import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
@@ -253,6 +254,7 @@ function TeacherCardDetail({ teacher, userData, onClose }: { teacher: LootTeache
 }
 
 export function TeacherAlbum() {
+  const { profile } = useAuth()
   const { teachers: userTeachers, loading: loadingUserTeachers } = useUserTeachers()
   const [globalTeachers, setGlobalTeachers] = useState<LootTeacher[]>([])
   const [loadingGlobal, setLoadingGlobal] = useState(true)
@@ -341,6 +343,8 @@ export function TeacherAlbum() {
 
   const totalTeachers = globalTeachers.length
   const ownedCount = Object.keys(userTeachers || {}).length
+  const totalCardsCollected = Object.values(userTeachers || {}).reduce((acc, curr) => acc + (curr.count || 0), 0)
+  const packsOpened = profile?.booster_stats?.total_opened || 0
 
   const toggleRarity = (rarity: TeacherRarity) => {
     setRarityFilters(prev => 
@@ -369,11 +373,25 @@ export function TeacherAlbum() {
             Sammle Lehrer aus den Sammelkarten-Packungen und verbessere sie!
           </p>
         </div>
-        <div className="flex items-center gap-2 bg-muted/50 px-4 py-2 rounded-full border">
-          <GraduationCap className="h-4 w-4 text-primary" />
-          <span className="text-sm font-bold">
-            {ownedCount} / {totalTeachers} Gefunden
-          </span>
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-2 bg-muted/50 px-3 py-1.5 rounded-full border">
+            <Trophy className="h-3.5 w-3.5 text-amber-500" />
+            <span className="text-xs font-bold">
+              {ownedCount} / {totalTeachers} Entdeckt
+            </span>
+          </div>
+          <div className="flex items-center gap-2 bg-muted/50 px-3 py-1.5 rounded-full border">
+            <Package className="h-3.5 w-3.5 text-blue-500" />
+            <span className="text-xs font-bold">
+              {packsOpened} Packs
+            </span>
+          </div>
+          <div className="flex items-center gap-2 bg-muted/50 px-3 py-1.5 rounded-full border">
+            <LayoutGrid className="h-3.5 w-3.5 text-purple-500" />
+            <span className="text-xs font-bold">
+              {totalCardsCollected} Karten
+            </span>
+          </div>
         </div>
       </div>
 

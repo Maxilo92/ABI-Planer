@@ -145,7 +145,8 @@ export const useUserTeachers = () => {
               ...currentStats,
               last_reset: today,
               count: dailyCount,
-              extra_available: extraAvailable
+              extra_available: extraAvailable,
+              total_opened: (currentStats.total_opened || 0) + 1
             }
           })
 

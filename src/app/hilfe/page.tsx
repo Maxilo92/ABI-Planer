@@ -68,6 +68,28 @@ export default function HilfePage() {
       ]
     },
     {
+      id: 'sammelkarten',
+      category: 'Sammelkarten & Lehrer',
+      items: [
+        {
+          q: 'Was sind die Lehrer-Sammelkarten?',
+          a: 'Das ist ein Mini-Game in der App! Du kannst Booster-Packs öffnen und digitale Karten deiner Lehrer sammeln. Jede Karte hat eine Seltenheit, die von euch als Community festgelegt wird.'
+        },
+        {
+          q: 'Wie funktioniert die Seltenheits-Abstimmung?',
+          a: 'Unter "Umfragen" findest du die Lehrer-Seltenheit-Abstimmung. Dort kannst du für jeden Lehrer abstimmen, wie selten er sein sollte. Die Durchschnittswerte helfen dabei, die Seltenheiten im Album festzulegen.'
+        },
+        {
+          q: 'Warum sehe ich nur einen Lehrer nach dem anderen?',
+          a: 'Die Umfrage zeigt dir die Lehrer nacheinander an, damit alle Lehrer gleichmäßig viele Stimmen bekommen und wir ein faires Ergebnis für das Sammelalbum erhalten. Neue Lehrer werden sofort in den Pool aufgenommen.'
+        },
+        {
+          q: 'Wo finde ich mein Lehrer-Album?',
+          a: 'Klicke im Menü auf "Sammelkarten" → "Lehrer-Album". Dort siehst du deine gesammelten Karten und deinen Fortschritt. Booster kannst du unter "Booster öffnen" ziehen.'
+        }
+      ]
+    },
+    {
       id: 'finanzen',
       category: 'Finanzen & Kontostand',
       items: [
@@ -261,7 +283,7 @@ export default function HilfePage() {
 
           <div className="pt-8 border-t space-y-2">
             <p className="text-xs text-muted-foreground italic">
-              Stand: März 2026 | v1.0.0
+              Stand: März 2026 | v0.21.17
             </p>
             <p className="text-xs text-muted-foreground">
               Noch Fragen? Klick hier um <strong>Feedback zu geben</strong> oder kontaktiert einen Admin.

@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from 'react'
 import { db } from '@/lib/firebase'
-import { collection, doc, getDocs, updateDoc, arrayUnion, setDoc, serverTimestamp } from 'firebase/firestore'
+import { collection, doc, getDocs, updateDoc, arrayUnion, setDoc, serverTimestamp, getDoc } from 'firebase/firestore'
 import { useAuth } from '@/context/AuthContext'
-import { Teacher } from '@/types/database'
+import { Teacher, LootTeacher } from '@/types/database'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Star, Loader2, Sparkles, CheckCircle2, Lock } from 'lucide-react'
@@ -36,12 +36,36 @@ export function TeacherRarityVoting({ onStatusChange }: { onStatusChange?: (fini
     const fetchTeachers = async () => {
       if (initialized) return
       try {
+        // Fetch candidates from global settings
+        const settingsDoc = await getDoc(doc(db, 'settings', 'global'))
+        const lootTeachers = (settingsDoc.data()?.loot_teachers || []) as LootTeacher[]
+        
+        if (lootTeachers.length === 0) {
+          setLoading(false)
+          setInitialized(true)
+          return
+        }
+
+        // Fetch current aggregates from teachers collection
         const querySnapshot = await getDocs(collection(db, 'teachers'))
-        const allTeachers = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Teacher))
+        const teacherAggregates = new Map(
+          querySnapshot.docs.map(doc => [doc.id, doc.data() as Partial<Teacher>])
+        )
         
         // Filter out already rated teachers
         const ratedIds = new Set(profile?.rated_teachers || [])
-        const unrated = allTeachers.filter(t => !ratedIds.has(t.id))
+        
+        const unrated = lootTeachers
+          .filter(lt => !ratedIds.has(lt.id))
+          .map(lt => {
+            const aggregate = teacherAggregates.get(lt.id) || {}
+            return {
+              id: lt.id,
+              name: lt.name,
+              avg_rating: aggregate.avg_rating || 0,
+              vote_count: aggregate.vote_count || 0,
+            } as Teacher
+          })
         
         setTeachers(unrated)
         if (unrated.length > 0) {
@@ -112,10 +136,11 @@ export function TeacherRarityVoting({ onStatusChange }: { onStatusChange?: (fini
       const currentTotal = (teacher.avg_rating || 0) * (teacher.vote_count || 0)
       const newAvg = (currentTotal + rating) / newVoteCount
 
-      await updateDoc(doc(db, 'teachers', teacher.id), {
+      await setDoc(doc(db, 'teachers', teacher.id), {
+        name: teacher.name,
         avg_rating: newAvg,
         vote_count: newVoteCount
-      })
+      }, { merge: true })
 
       if (user) {
         await logAction('TEACHER_VOTE', user.uid, profile?.full_name, { 

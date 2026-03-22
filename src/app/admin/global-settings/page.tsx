@@ -259,23 +259,37 @@ export default function GlobalSettingsPage() {
     }, 0)
   }
 
-  const handleAddTeacher = () => {
+  const handleAddTeacher = async () => {
     if (!newTeacherName.trim()) return
     
     const id = newTeacherName.trim().toLowerCase().replace(/[^a-z0-9]/g, '-') + '-' + Date.now()
+    const name = newTeacherName.trim()
+    const rarity = newTeacherRarity
+    
     const updatedSettings = {
       ...settings,
-      loot_teachers: [...(settings.loot_teachers || []), { id, name: newTeacherName.trim(), rarity: newTeacherRarity }]
+      loot_teachers: [...(settings.loot_teachers || []), { id, name, rarity }]
     }
     const old = settings
     setSettings(updatedSettings)
     setNewTeacherName('')
     setNewTeacherRarity('common')
-    // Nach dem Hinzufügen speichern
-    setTimeout(async () => {
+    
+    try {
+      // Initialize teacher in voting pool
+      await setDoc(doc(db, 'teachers', id), {
+        name,
+        avg_rating: 0,
+        vote_count: 0
+      })
+      
       const ok = await handleSave(updatedSettings)
       if (!ok) setSettings(old)
-    }, 0)
+    } catch (error) {
+      console.error('Error adding teacher:', error)
+      toast.error('Fehler beim Hinzufügen des Lehrers.')
+      setSettings(old)
+    }
   }
 
   const handleEditTeacher = (teacher: LootTeacher) => {
@@ -445,8 +459,27 @@ export default function GlobalSettingsPage() {
         }
       }
       await batch.commit()
+      
+      // Update global settings as well
+      const newLootTeachers = [...(settings.loot_teachers || [])]
+      let addedToSettingsCount = 0
+      teachersToImport.forEach(t => {
+        if (!newLootTeachers.some(lt => lt.id === t.id)) {
+          newLootTeachers.push({ id: t.id, name: t.name, rarity: 'common' })
+          addedToSettingsCount++
+        }
+      })
+      
+      if (addedToSettingsCount > 0) {
+        const updatedSettings = { ...settings, loot_teachers: newLootTeachers }
+        await handleSave(updatedSettings)
+      }
+      
       toast.success('Alle Lehrer erfolgreich importiert!')
-      if (user) await logAction('TEACHERS_BULK_IMPORT', user.uid, profile?.full_name, { count: teachersToImport.length })
+      if (user) await logAction('TEACHERS_BULK_IMPORT', user.uid, profile?.full_name, { 
+        count: teachersToImport.length,
+        added_to_settings: addedToSettingsCount
+      })
     } catch (error) {
       console.error('Error in bulk import:', error)
       toast.error('Fehler beim Importieren.')

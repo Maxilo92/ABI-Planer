@@ -230,11 +230,11 @@ function SammelkartenContent() {
                 <Sparkles className={cn("h-7 w-7", gameState === 'revealed' ? "text-primary animate-pulse" : "text-muted-foreground")} />
                 SAMMELKARTEN
               </h1>
-              {gameState === 'idle' && (
+              {(gameState === 'idle' || gameState === 'revealed') && (
                 <div className="flex items-center justify-center gap-2 mt-2">
                   <Badge variant={getRemainingBoosters() > 0 ? "secondary" : "destructive"} className="px-3 py-1 text-[10px] font-black uppercase tracking-widest border-2 border-white/10">
                     <Zap className="h-3 w-3 mr-1.5 fill-current" />
-                    {getRemainingBoosters() > 0 ? `${getRemainingBoosters()} / 2 Booster übrig` : `Nächster Booster in ${timeLeft}`}
+                    {getRemainingBoosters() > 0 ? `${getRemainingBoosters()} Booster übrig` : `Nächster Booster in ${timeLeft}`}
                   </Badge>
                 </div>
               )}
@@ -435,7 +435,7 @@ function SammelkartenContent() {
                     {getRemainingBoosters() > 0 ? (
                       <>
                         <RotateCcw className="h-4 w-4 mr-2" />
-                        Nochmal versuchen
+                        Noch einmal versuchen ({getRemainingBoosters()})
                       </>
                     ) : (
                       <>
