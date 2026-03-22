@@ -250,21 +250,35 @@ export function PollList({
               })}
               
               {!userId && (
-                <div className="bg-muted/50 p-4 rounded-md mt-4 border border-border flex flex-col items-center text-center">
-                  <div className="bg-background p-2 rounded-full mb-3 shadow-sm">
-                    <Lock className="h-4 w-4 text-muted-foreground" />
-                  </div>
-                  <p className="text-xs font-bold uppercase tracking-wider mb-1">Login erforderlich</p>
-                  <p className="text-[10px] text-muted-foreground mb-4 leading-relaxed italic">
-                    Um Manipulationen zu verhindern, ist eine Abstimmung nur mit verifiziertem Konto möglich.
-                  </p>
-                  <div className="flex flex-col w-full gap-2">
-                    <Button size="sm" className="h-8 text-[10px] font-black uppercase tracking-widest" onClick={() => router.push('/login')}>
-                      Jetzt Anmelden
-                    </Button>
-                    <Button variant="ghost" size="sm" className="h-8 text-[10px] font-bold uppercase tracking-widest text-primary hover:text-primary hover:bg-primary/5" onClick={() => router.push('/promo')}>
-                      Vorteile entdecken →
-                    </Button>
+                <div className="relative mt-8 mb-4 animate-in fade-in slide-in-from-bottom-2 duration-500 w-full">
+                  <div className="bg-muted/30 p-8 rounded-xl border border-border flex flex-col items-center text-center relative shadow-sm">
+                    {/* Floating Lock Icon on Border */}
+                    <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-background p-2 rounded-full shadow-sm border border-border">
+                      <Lock className="h-4 w-4 text-muted-foreground" />
+                    </div>
+                    
+                    <p className="text-sm font-black uppercase tracking-widest mb-2 mt-2">Login erforderlich</p>
+                    <p className="text-[10px] text-muted-foreground mb-6 leading-relaxed italic max-w-[320px]">
+                      Um Manipulationen zu verhindern, ist eine Abstimmung nur mit verifiziertem Konto möglich.
+                    </p>
+                    
+                    <div className="flex flex-col w-full max-w-[280px] gap-2">
+                      <Button 
+                        size="sm" 
+                        className="h-10 text-[10px] font-black uppercase tracking-[0.2em] shadow-lg shadow-primary/20" 
+                        onClick={() => router.push('/login')}
+                      >
+                        Jetzt Anmelden
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="h-10 text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground hover:text-primary hover:bg-primary/5" 
+                        onClick={() => router.push('/promo')}
+                      >
+                        Vorteile entdecken
+                      </Button>
+                    </div>
                   </div>
                 </div>
               )}

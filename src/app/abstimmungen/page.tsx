@@ -95,7 +95,32 @@ export default function PollsPage() {
         {isPlanner && <AddPollDialog />}
       </div>
 
-      <TeacherRarityVoting />
+      {/* Featured/Pinned Section */}
+      <div className="relative -mx-4 px-4 sm:mx-0 sm:px-0 py-8 mb-8 overflow-hidden">
+        {/* Background ambient glow */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-full bg-primary/5 blur-3xl rounded-full -z-10" />
+        
+        <div className="relative max-w-5xl mx-auto">
+          {/* Faded placeholders to left/right for carousel effect if needed, 
+              or just clean focus on the pinned lehrer poll */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-center">
+            {/* Left Placeholder (Faded) */}
+            <div className="hidden lg:block opacity-20 scale-90 blur-[1px] pointer-events-none select-none grayscale">
+               <Card className="border-border/40 bg-muted/20 h-[200px]" />
+            </div>
+
+            {/* Pinned Teacher Poll (Main Focus) */}
+            <div className="lg:col-span-1 lg:scale-110 lg:z-10 transition-transform">
+              <TeacherRarityVoting />
+            </div>
+
+            {/* Right Placeholder (Faded) */}
+            <div className="hidden lg:block opacity-20 scale-90 blur-[1px] pointer-events-none select-none grayscale">
+               <Card className="border-border/40 bg-muted/20 h-[200px]" />
+            </div>
+          </div>
+        </div>
+      </div>
 
       <div className="grid grid-cols-1 gap-6">
         {polls.length === 0 ? (
