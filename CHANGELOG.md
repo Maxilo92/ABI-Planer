@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.20.23] - 2026-03-22
+- Fix: **Sammelkarten-Clipping behoben**. Die Namen der Lehrer werden nun nicht mehr von den abgerundeten Ecken der Karten abgeschnitten (verbesserte Abstände und `mb-2`/`mb-4` für den Namens-Container).
+- UI: **Layout-Optimierung**. Der Icon-Bereich wurde verkleinert, um mehr vertikalen Platz für Text und Badges zu schaffen.
+
 ## [0.20.22] - 2026-03-22
 - UI: **Sammelkarten-Redesign**. `overflow-hidden` wurde wieder auf die Kartenvorderseite angewendet, um sicherzustellen, dass alle Glitch-Effekte an den Ecken abgeschnitten werden.
 - UI: **Optimiertes Padding**. Padding wurde reduziert (`p-3` bis `p-5`), um den Platz in den kleinen Karten-Containern besser zu nutzen und alle Elemente (Name, Badge, Icon) sicher zu platzieren.

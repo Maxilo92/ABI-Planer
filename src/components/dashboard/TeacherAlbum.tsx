@@ -181,11 +181,11 @@ function TeacherCardDetail({ teacher, userData, onClose }: { teacher: LootTeache
               LVL {level}
             </div>
 
-            <div className="w-full aspect-square rounded-2xl bg-white/10 flex items-center justify-center mb-4 mt-8 shadow-inner border border-white/5 relative z-20">
+            <div className="w-full aspect-square rounded-2xl bg-white/10 flex items-center justify-center mb-2 mt-6 shadow-inner border border-white/5 relative z-20">
                <GraduationCap className="h-20 w-20 text-white drop-shadow-2xl relative z-10" />
             </div>
             
-            <div className="mt-auto w-full bg-black/40 rounded-2xl p-4 border border-white/10 shadow-lg text-center relative z-20 min-h-[5.5rem] flex flex-col justify-center">
+            <div className="mt-auto mb-4 w-full bg-black/40 rounded-2xl p-4 border border-white/10 shadow-lg text-center relative z-20 min-h-[5.5rem] flex flex-col justify-center">
               <div className="text-[10px] font-black uppercase text-white/50 tracking-widest mb-1">
                 {rarityInfo.label}
               </div>
