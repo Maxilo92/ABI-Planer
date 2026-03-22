@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.21.25] - 2026-03-22
+- Fix: **Anzeige der Lehrer-Sammlung auf Profilen korrigiert**. Ein Filterfehler verhinderte, dass Karten in der Profil-Vorschau angezeigt wurden. Der Standard-Filter wurde für Profile auf "Nur Entdeckte" angepasst, um die eigene Sammlung korrekt darzustellen.
+
 ## [0.21.24] - 2026-03-22
 - UI: **Design der Karten-Rückseiten verbessert**. Die Rückseiten der Lehrer-Sammelkarten haben nun deutlich mehr Kontrast, einen subtilen Leuchteffekt im Zentrum und eine besser lesbare Beschriftung, um die Benutzerfreundlichkeit auf mobilen Geräten zu erhöhen.
 

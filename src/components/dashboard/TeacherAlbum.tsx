@@ -275,8 +275,8 @@ export function TeacherAlbum({
   // Filters state
   const [search, setSearch] = useState('')
   const [rarityFilters, setRarityFilters] = useState<TeacherRarity[]>([])
-  const [ownershipFilter, setOwnershipFilter] = useState<'all' | 'owned' | 'missing'>('all')
-  const [sortBy, setSortBy] = useState<'rarity' | 'name' | 'level' | 'upgrade'>('rarity')
+  const [ownershipFilter, setOwnershipFilter] = useState<'all' | 'owned' | 'missing'>(initialLimit ? 'owned' : 'all')
+  const [sortBy, setSortBy] = useState<'rarity' | 'name' | 'level' | 'upgrade'>(initialLimit ? 'level' : 'rarity')
   
   // Selection state
   const [selectedTeacher, setSelectedTeacher] = useState<LootTeacher | null>(null)
@@ -318,7 +318,7 @@ export function TeacherAlbum({
       const ownedB = (userTeachers?.[b.id] || userTeachers?.[b.name])
       
       // If we have an initialLimit and are not expanded, we PRIORITIZE level/rarity for the preview
-      if (initialLimit && !isExpanded && !search && rarityFilters.length === 0 && ownershipFilter === 'all') {
+      if (initialLimit && !isExpanded && !search && rarityFilters.length === 0 && (ownershipFilter === 'all' || ownershipFilter === 'owned')) {
         const lvlA = ownedA?.level || 0
         const lvlB = ownedB?.level || 0
         if (lvlA !== lvlB) return lvlB - lvlA
