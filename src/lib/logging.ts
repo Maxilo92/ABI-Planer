@@ -36,6 +36,7 @@ export type LogActionType =
   | 'GROUP_MESSAGE_PINNED'
   | 'FEEDBACK_SUBMIT'
   | 'LOOT_TEACHER'
+  | 'LOOT_BOOSTER'
   | 'NEWS_RATE'
   | 'NEWS_COMMENT'
   | 'TEACHERS_BULK_IMPORT'
