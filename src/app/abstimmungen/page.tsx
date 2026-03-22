@@ -15,6 +15,7 @@ export default function PollsPage() {
   const { user, profile, loading: authLoading } = useAuth()
   const [polls, setPolls] = useState<Poll[]>([])
   const [loading, setLoading] = useState(true)
+  const [teacherPollFinished, setTeacherPollFinished] = useState(false)
 
   useEffect(() => {
     if (authLoading) return
@@ -47,6 +48,13 @@ export default function PollsPage() {
 
     return () => unsubscribe()
   }, [authLoading])
+
+  const sortedPolls = [...polls].sort((a, b) => {
+    const aVoted = a.votes?.some(v => v.user_id === user?.uid)
+    const bVoted = b.votes?.some(v => v.user_id === user?.uid)
+    if (aVoted !== bVoted) return aVoted ? 1 : -1
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+  })
 
   useEffect(() => {
     if (!authLoading && profile) {
@@ -95,33 +103,18 @@ export default function PollsPage() {
         {isPlanner && <AddPollDialog />}
       </div>
 
-      {/* Featured/Pinned Section */}
-      <div className="relative -mx-4 px-4 sm:mx-0 sm:px-0 py-8 mb-8 overflow-hidden">
-        {/* Background ambient glow */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-full bg-primary/5 blur-3xl rounded-full -z-10" />
-        
-        <div className="relative max-w-6xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
-            {/* Left Placeholder (Faded) */}
-            <div className="hidden lg:block lg:col-span-2 opacity-10 scale-90 blur-[2px] pointer-events-none select-none grayscale -translate-x-12">
-               <Card className="border-border/40 bg-muted/20 h-[240px]" />
-            </div>
-
-            {/* Pinned Teacher Poll (Main Focus - Now Wider) */}
-            <div className="lg:col-span-8 lg:z-10 transition-transform">
-              <TeacherRarityVoting />
-            </div>
-
-            {/* Right Placeholder (Faded) */}
-            <div className="hidden lg:block lg:col-span-2 opacity-10 scale-90 blur-[2px] pointer-events-none select-none grayscale translate-x-12">
-               <Card className="border-border/40 bg-muted/20 h-[240px]" />
-            </div>
+      <div className="grid grid-cols-1 gap-8">
+        {/* Featured Teacher Poll at the top if not finished */}
+        {!teacherPollFinished && (
+          <div className="relative group">
+             {/* Background ambient glow matching standard width */}
+             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[110%] h-[120%] bg-primary/5 blur-3xl rounded-full -z-10 opacity-60" />
+             <TeacherRarityVoting onStatusChange={setTeacherPollFinished} />
           </div>
-        </div>
-      </div>
+        )}
 
-      <div className="grid grid-cols-1 gap-6">
-        {polls.length === 0 ? (
+        {/* Regular Polls (Sorted) */}
+        {sortedPolls.length === 0 ? (
           <Card className="border-dashed border-2">
             <CardContent className="flex flex-col items-center justify-center py-12 text-center">
               <BarChart2 className="h-12 w-12 text-muted-foreground mb-4 opacity-20" />
@@ -132,7 +125,14 @@ export default function PollsPage() {
             </CardContent>
           </Card>
         ) : (
-          <PollList polls={polls} userId={user?.uid || ''} canVote={canVote} canManage={isPlanner} />
+          <PollList polls={sortedPolls} userId={user?.uid || ''} canVote={canVote} canManage={isPlanner} />
+        )}
+
+        {/* Finished Teacher Poll at the very bottom */}
+        {teacherPollFinished && (
+          <div className="opacity-80 scale-[0.98] transition-all hover:scale-100">
+             <TeacherRarityVoting onStatusChange={setTeacherPollFinished} />
+          </div>
         )}
       </div>
     </div>

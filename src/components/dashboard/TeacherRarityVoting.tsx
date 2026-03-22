@@ -22,7 +22,7 @@ const RARITY_OPTIONS = [
   { label: 'Legendär', value: 1.0, color: 'bg-amber-500' },
 ]
 
-export function TeacherRarityVoting() {
+export function TeacherRarityVoting({ onStatusChange }: { onStatusChange?: (finished: boolean) => void }) {
   const router = useRouter()
   const { user, profile, loading: authLoading } = useAuth()
   const [teachers, setTeachers] = useState<Teacher[]>([])
@@ -46,8 +46,10 @@ export function TeacherRarityVoting() {
         setTeachers(unrated)
         if (unrated.length > 0) {
           setCurrentIndex(Math.floor(Math.random() * unrated.length))
+          if (onStatusChange) onStatusChange(false)
         } else {
           setFinished(true)
+          if (onStatusChange) onStatusChange(true)
         }
         setInitialized(true)
       } catch (error) {
@@ -60,7 +62,7 @@ export function TeacherRarityVoting() {
     if (!authLoading && !initialized) {
       fetchTeachers()
     }
-  }, [profile, initialized, authLoading])
+  }, [profile, initialized, authLoading, onStatusChange])
 
   const handleVote = async (rating: number) => {
     if (!user) {
@@ -86,7 +88,10 @@ export function TeacherRarityVoting() {
       
       setTeachers(nextTeachers)
       setCurrentIndex(nextIndex)
-      if (nextTeachers.length === 0) setFinished(true)
+      if (nextTeachers.length === 0) {
+        setFinished(true)
+        if (onStatusChange) onStatusChange(true)
+      }
 
       // 2. Perform DB operations in background
       // Save individual rating
