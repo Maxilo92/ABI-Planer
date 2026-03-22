@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.20.19] - 2026-03-22
+- Animation: **Explosives Pack-Opening**. Das Wackeln wurde durch eine explosive "Fly-Apart"-Animation ersetzt, bei der die Packungshälften sofort auseinanderfliegen.
+- Fix: **Badge-Clipping korrigiert**. "NEW" und "LEVEL UP" Badges wurden weiter nach unten verschoben (`top-3`), um nicht mehr von den abgerundeten Ecken der Karten abgeschnitten zu werden.
+- UI: **Icon-Positionierung**. Icons innerhalb der Karten wurden leicht nach unten verschoben, um mehr Platz für die Badges zu schaffen.
+
 ## [0.20.18] - 2026-03-22
 - Fix: **Mobile Glitch Fix (Transparenz)**. Die Rückseite der Sammelkarten schimmert auf mobilen Geräten nun nicht mehr durch die Vorderseite hindurch (verbesserte backface-visibility und translateZ Separation).
 - UI: **Layout-Korrektur (PC/Namen)**. Lange Lehrernamen werden nun über zwei Zeilen (line-clamp-2) korrekt dargestellt und nicht mehr abgeschnitten.

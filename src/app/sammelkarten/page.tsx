@@ -114,46 +114,44 @@ function SammelkartenContent() {
     const pack = generatePack()
     setRevealedTeachers(pack)
 
-    // Simulate shake then rip
-    setTimeout(async () => {
-      try {
-        const teacherIds = pack.map(t => t.id || t.name)
-        const initialTeachers = { ...userTeachers }
-        const results = await collectBooster(teacherIds)
+    // Trigger explosive fly-apart immediately
+    try {
+      const teacherIds = pack.map(t => t.id || t.name)
+      const initialTeachers = { ...userTeachers }
+      const results = await collectBooster(teacherIds)
+      
+      const processedResults = results.map(r => {
+        const isNew = !initialTeachers[r.teacherId]
+        const oldLevel = initialTeachers[r.teacherId]?.level || 1
+        const isLevelUp = !isNew && r.level > oldLevel
         
-        const processedResults = results.map(r => {
-          const isNew = !initialTeachers[r.teacherId]
-          const oldLevel = initialTeachers[r.teacherId]?.level || 1
-          const isLevelUp = !isNew && r.level > oldLevel
-          
-          initialTeachers[r.teacherId] = { count: r.count, level: r.level }
-          return {
-            isNew,
-            isLevelUp,
-            newLevel: r.level,
-            count: r.count
-          }
-        })
-
-        setCollectionResults(processedResults)
-
-        if (user) {
-          logAction('LOOT_BOOSTER', user.uid, profile?.full_name, { 
-            teachers: pack.map(t => t.id || t.name),
-            results: processedResults
-          })
+        initialTeachers[r.teacherId] = { count: r.count, level: r.level }
+        return {
+          isNew,
+          isLevelUp,
+          newLevel: r.level,
+          count: r.count
         }
+      })
 
-        // Final transition to revealed
-        setTimeout(() => {
-          setGameState('revealed')
-          setIsAnimating(false)
-        }, 600) // Duration of the rip animation (shortened)
-      } catch (err: any) {
-        toast.error(err.message || 'Fehler beim Sammeln.')
-        setGameState('idle')
+      setCollectionResults(processedResults)
+
+      if (user) {
+        logAction('LOOT_BOOSTER', user.uid, profile?.full_name, { 
+          teachers: pack.map(t => t.id || t.name),
+          results: processedResults
+        })
       }
-    }, 400) // Duration of the shaking before rip starts (shortened)
+
+      // Final transition to revealed
+      setTimeout(() => {
+        setGameState('revealed')
+        setIsAnimating(false)
+      }, 800) // Duration of the explosive rip animation
+    } catch (err: any) {
+      toast.error(err.message || 'Fehler beim Sammeln.')
+      setGameState('idle')
+    }
   }
 
   const handleFlipCard = (index: number) => {
@@ -226,7 +224,6 @@ function SammelkartenContent() {
                   className={cn(
                     "relative w-64 h-96 cursor-pointer group transition-all duration-500",
                     getRemainingBoosters() <= 0 && "opacity-50 cursor-not-allowed",
-                    gameState === 'ripping' && "animate-[pack-shake_0.5s_infinite]",
                     gameState === 'idle' && getRemainingBoosters() > 0 && "hover:scale-105 active:scale-95"
                   )}
                   onClick={getRemainingBoosters() > 0 && gameState === 'idle' ? handleOpenPack : undefined}
@@ -240,7 +237,7 @@ function SammelkartenContent() {
                   {/* Top Part */}
                   <div className={cn(
                     "absolute top-0 left-0 w-full h-1/3 bg-transparent z-20 flex items-end justify-center pb-4 transition-transform duration-500",
-                    gameState === 'ripping' && "animate-rip-top delay-500"
+                    gameState === 'ripping' && "animate-rip-top"
                   )}>
                     <div className="absolute inset-0 bg-gradient-to-b from-blue-600 to-blue-800 rounded-t-3xl border-x-4 border-t-4 border-white/20 shadow-inner" />
                     <Zap className="h-12 w-12 text-white/60 drop-shadow-[0_0_10px_rgba(255,255,255,0.5)] relative z-10" />
@@ -249,7 +246,7 @@ function SammelkartenContent() {
                   {/* Bottom Part */}
                   <div className={cn(
                     "absolute bottom-0 left-0 w-full h-2/3 z-10 flex flex-col items-center pt-8 transition-transform duration-500",
-                    gameState === 'ripping' && "animate-rip-bottom delay-500"
+                    gameState === 'ripping' && "animate-rip-bottom"
                   )}>
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-blue-900 to-blue-800 rounded-b-3xl border-x-4 border-b-4 border-white/20 shadow-2xl" />
                     <div className="relative z-10 flex flex-col items-center h-full w-full">
@@ -336,7 +333,7 @@ function SammelkartenContent() {
                              )}
 
                             {isFlipped && result && (
-                              <div className="absolute top-2 left-1/2 -translate-x-1/2 z-30">
+                              <div className="absolute top-3 left-1/2 -translate-x-1/2 z-30">
                                 {result.isNew ? (
                                   <Badge className="bg-amber-500 border-2 border-white text-[10px] font-black px-2 shadow-lg animate-in zoom-in duration-500">NEW</Badge>
                                 ) : result.isLevelUp ? (
@@ -347,7 +344,7 @@ function SammelkartenContent() {
                               </div>
                             )}
 
-                            <div className="w-full aspect-square rounded-xl bg-white/10 flex items-center justify-center mb-3 mt-4 sm:mt-6 shadow-inner border border-white/5 relative z-20">
+                            <div className="w-full aspect-square rounded-xl bg-white/10 flex items-center justify-center mb-3 mt-5 sm:mt-7 shadow-inner border border-white/5 relative z-20">
                                <GraduationCap className="h-14 w-14 sm:h-20 sm:w-20 text-white drop-shadow-2xl relative z-10" />
                             </div>
 

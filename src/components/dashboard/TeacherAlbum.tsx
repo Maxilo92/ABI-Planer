@@ -177,11 +177,11 @@ function TeacherCardDetail({ teacher, userData, onClose }: { teacher: LootTeache
               </div>
             )}
 
-            <div className="absolute top-4 right-4 bg-black/40 rounded-full px-3 py-1 text-[10px] font-black text-white border border-white/20 z-20">
+            <div className="absolute top-3 right-3 bg-black/40 rounded-full px-3 py-1 text-[10px] font-black text-white border border-white/20 z-20">
               LVL {level}
             </div>
 
-            <div className="w-full aspect-square rounded-2xl bg-white/10 flex items-center justify-center mb-6 mt-6 shadow-inner border border-white/5 relative z-20">
+            <div className="w-full aspect-square rounded-2xl bg-white/10 flex items-center justify-center mb-6 mt-8 shadow-inner border border-white/5 relative z-20">
                <GraduationCap className="h-24 w-24 text-white drop-shadow-2xl relative z-10" />
             </div>
             
