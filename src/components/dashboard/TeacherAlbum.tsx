@@ -177,19 +177,19 @@ function TeacherCardDetail({ teacher, userData, onClose }: { teacher: LootTeache
               </div>
             )}
 
-            <div className="absolute top-6 right-6 bg-black/40 rounded-full px-3 py-1 text-[10px] font-black text-white border border-white/20 z-20">
+            <div className="absolute top-4 right-4 bg-black/60 backdrop-blur-md rounded-full px-2.5 py-1 text-[9px] sm:text-[10px] font-black text-white border border-white/20 z-30 shadow-lg">
               LVL {level}
             </div>
 
-            <div className="w-full aspect-square rounded-2xl bg-white/10 flex items-center justify-center mb-2 mt-6 shadow-inner border border-white/5 relative z-20">
+            <div className="w-full aspect-square rounded-2xl bg-white/10 flex items-center justify-center mb-2 mt-8 shadow-inner border border-white/5 relative z-20">
                <GraduationCap className="h-20 w-20 text-white drop-shadow-2xl relative z-10" />
             </div>
             
-            <div className="mt-auto mb-4 w-full bg-black/40 rounded-2xl p-4 border border-white/10 shadow-lg text-center relative z-20 min-h-[5.5rem] flex flex-col justify-center">
+            <div className="mt-auto mb-4 w-full bg-black/40 rounded-2xl p-3 sm:p-4 border border-white/10 shadow-lg text-center relative z-20 min-h-[5.5rem] flex flex-col justify-center">
               <div className="text-[10px] font-black uppercase text-white/50 tracking-widest mb-1">
                 {rarityInfo.label}
               </div>
-              <div className="text-white font-black text-xl leading-tight italic line-clamp-2">
+              <div className="text-white font-black text-base sm:text-lg md:text-xl leading-tight italic break-words hyphens-auto">
                 {teacher.name}
               </div>
             </div>
@@ -486,32 +486,32 @@ export function TeacherAlbum() {
                     )}
                   </div>
                 </CardHeader>
-                <CardContent className="p-3 pt-4 flex flex-col items-center text-center space-y-3">
+                <CardContent className="p-2.5 sm:p-3 pt-3 sm:pt-4 flex flex-col items-center text-center space-y-2.5 sm:space-y-3">
                   <div className={cn(
-                    "w-16 h-16 rounded-full flex items-center justify-center border-2 transition-transform group-hover:rotate-12",
+                    "w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center border-2 transition-transform group-hover:rotate-12",
                     isOwned ? "bg-background border-primary" : "bg-muted border-muted-foreground/20"
                   )}>
                     {isOwned ? (
-                      <GraduationCap className={cn("h-8 w-8", getRarityColor(teacher.rarity))} />
+                      <GraduationCap className={cn("h-7 w-7 sm:w-8 sm:h-8", getRarityColor(teacher.rarity))} />
                     ) : (
-                      <Lock className="h-6 w-6 text-muted-foreground/40" />
+                      <Lock className="h-5 w-5 sm:w-6 sm:h-6 text-muted-foreground/40" />
                     )}
                   </div>
                   
-                  <div>
-                    <h3 className="font-bold text-sm leading-tight line-clamp-2 min-h-[2.5rem] flex items-center justify-center">
+                  <div className="w-full">
+                    <h3 className="font-bold text-[10px] sm:text-xs leading-tight line-clamp-3 min-h-[2.75rem] flex items-center justify-center break-words hyphens-auto">
                       {isOwned ? teacher.name : "???"}
                     </h3>
                     {isOwned && (
-                      <p className="text-[10px] text-muted-foreground mt-1">
+                      <p className="text-[9px] sm:text-[10px] text-muted-foreground mt-1">
                         {count}x gesammelt
                       </p>
                     )}
                   </div>
 
                   {isOwned && level < 10 && (
-                    <div className="w-full space-y-1.5 pt-1">
-                      <div className="flex justify-between text-[9px] font-medium px-0.5">
+                    <div className="w-full space-y-1.5 pt-0.5 sm:pt-1">
+                      <div className="flex justify-between text-[8px] sm:text-[9px] font-medium px-0.5">
                         <span>Lvl {level}</span>
                         <span className="text-muted-foreground">Noch {needed}</span>
                       </div>

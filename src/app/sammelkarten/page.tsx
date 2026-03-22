@@ -278,7 +278,7 @@ function SammelkartenContent() {
                              )}
 
                             {isFlipped && result && (
-                              <div className="absolute top-6 left-1/2 -translate-x-1/2 z-30">
+                              <div className="absolute top-2 left-1/2 -translate-x-1/2 z-30">
                                 {result.isNew ? (
                                   <Badge className="bg-amber-500 border-2 border-white text-[10px] font-black px-2 shadow-lg animate-in zoom-in duration-500">NEW</Badge>
                                 ) : result.isLevelUp ? (
@@ -293,11 +293,11 @@ function SammelkartenContent() {
                                <GraduationCap className="h-12 w-12 sm:h-16 sm:w-16 text-white drop-shadow-2xl relative z-10" />
                             </div>
 
-                            <div className="mt-auto mb-2 w-full bg-black/40 rounded-xl p-2 sm:p-3 border border-white/10 relative z-20 min-h-[3.5rem] sm:min-h-[4.5rem] flex flex-col justify-center">
-                              <div className="text-[8px] font-black uppercase text-white/50 tracking-widest mb-0.5">
+                            <div className="mt-auto mb-2 w-full bg-black/40 rounded-xl p-1.5 sm:p-2 border border-white/10 relative z-20 min-h-[3.25rem] sm:min-h-[4rem] flex flex-col justify-center">
+                              <div className="text-[7px] sm:text-[8px] font-black uppercase text-white/50 tracking-widest mb-0.5">
                                 {cardInfo?.label}
                               </div>
-                              <div className="text-white font-bold text-xs sm:text-sm leading-tight line-clamp-2">
+                              <div className="text-white font-bold text-[10px] sm:text-xs md:text-sm leading-tight break-words hyphens-auto">
                                 {teacher.name}
                               </div>
                             </div>

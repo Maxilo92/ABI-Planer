@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.20.24] - 2026-03-22
+- UI: **Sammelkarten Layout-Überarbeitung**. Behebung von Text-Überläufen und abgeschnittenen Elementen durch optimierte Abstände und reaktives Design.
+- Cleanup: Testdaten aus dem Lehrer-Pool entfernt.
+
 ## [0.20.23] - 2026-03-22
 - Fix: **Sammelkarten-Clipping behoben**. Die Namen der Lehrer werden nun nicht mehr von den abgerundeten Ecken der Karten abgeschnitten (verbesserte Abstände und `mb-2`/`mb-4` für den Namens-Container).
 - UI: **Layout-Optimierung**. Der Icon-Bereich wurde verkleinert, um mehr vertikalen Platz für Text und Badges zu schaffen.
