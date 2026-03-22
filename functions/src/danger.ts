@@ -1,5 +1,6 @@
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import * as admin from "firebase-admin";
+import { getFirestore } from "firebase-admin/firestore";
 import { authenticator } from "otplib";
 
 /**
@@ -20,7 +21,7 @@ export const authorizeDangerAction = onCall({
   const uid = request.auth.uid;
 
   // 2. Verify Role (admin_main only)
-  const profileSnap = await admin.firestore().collection("profiles").doc(uid).get();
+  const profileSnap = await getFirestore("abi-data").collection("profiles").doc(uid).get();
   const profile = profileSnap.data();
   if (!profile || profile.role !== "admin_main") {
     throw new HttpsError(
@@ -39,7 +40,7 @@ export const authorizeDangerAction = onCall({
   }
 
   // 3. Verify TOTP Code
-  const secretSnap = await admin.firestore().collection("user_secrets").doc(uid).get();
+  const secretSnap = await getFirestore("abi-data").collection("user_secrets").doc(uid).get();
   const secretData = secretSnap.data();
   if (!secretData || !secretData.secret) {
     throw new HttpsError(
@@ -110,7 +111,7 @@ export const authorizeDangerAction = onCall({
   }
 
   // 6. Create Delayed Action
-  const delayedActionRef = admin.firestore().collection("delayed_actions").doc();
+  const delayedActionRef = getFirestore("abi-data").collection("delayed_actions").doc();
   const now = admin.firestore.Timestamp.now();
   const executableAt = admin.firestore.Timestamp.fromMillis(now.toMillis() + 24 * 60 * 60 * 1000);
 
@@ -127,7 +128,7 @@ export const authorizeDangerAction = onCall({
   });
 
   // Log action
-  await admin.firestore().collection("logs").add({
+  await getFirestore("abi-data").collection("logs").add({
     action: "DANGER_ACTION_QUEUED",
     user_id: uid,
     user_name: profile.full_name || "Admin",

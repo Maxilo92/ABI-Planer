@@ -1,5 +1,6 @@
 import { onSchedule } from "firebase-functions/v2/scheduler";
 import * as admin from "firebase-admin";
+import { getFirestore } from "firebase-admin/firestore";
 import { emptyAllAlbums } from "./actions/emptyAllAlbums";
 import { wipeUserCards } from "./actions/wipeUserCards";
 import { wipeTeacherDatabase } from "./actions/wipeTeacherDatabase";
@@ -11,7 +12,7 @@ export const executeDangerActions = onSchedule("every 15 minutes", async (event)
   console.log("Starting execution of pending danger actions...");
   const now = admin.firestore.Timestamp.now();
   
-  const actionsRef = admin.firestore().collection("delayed_actions");
+  const actionsRef = getFirestore("abi-data").collection("delayed_actions");
   const query = actionsRef
     .where("status", "==", "pending")
     .where("executableAt", "<=", now);
@@ -56,7 +57,7 @@ export const executeDangerActions = onSchedule("every 15 minutes", async (event)
             completedAt: admin.firestore.Timestamp.now()
           });
           
-          await admin.firestore().collection("logs").add({
+          await getFirestore("abi-data").collection("logs").add({
             action: "DANGER_ACTION_FAILED",
             user_id: actionData.triggeredBy || "SYSTEM",
             user_name: actionData.triggeredByName || "System/Cron",
@@ -77,7 +78,7 @@ export const executeDangerActions = onSchedule("every 15 minutes", async (event)
       });
 
       // Log success
-      await admin.firestore().collection("logs").add({
+      await getFirestore("abi-data").collection("logs").add({
         action: "DANGER_ACTION_EXECUTED",
         user_id: actionData.triggeredBy || "SYSTEM",
         user_name: actionData.triggeredByName || "System/Cron",
@@ -100,7 +101,7 @@ export const executeDangerActions = onSchedule("every 15 minutes", async (event)
       });
 
       // Log failure
-      await admin.firestore().collection("logs").add({
+      await getFirestore("abi-data").collection("logs").add({
         action: "DANGER_ACTION_FAILED",
         user_id: actionData.triggeredBy || "SYSTEM",
         user_name: actionData.triggeredByName || "System/Cron",

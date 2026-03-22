@@ -1,4 +1,4 @@
-import * as admin from "firebase-admin";
+import { getFirestore } from "firebase-admin/firestore";
 
 /**
  * Wipe all teacher cards for a specific user.
@@ -9,7 +9,7 @@ export async function wipeUserCards(uid: string) {
     throw new Error("UID is required for wipeUserCards action.");
   }
 
-  const userTeachersRef = admin.firestore().collection("user_teachers").doc(uid);
+  const userTeachersRef = getFirestore("abi-data").collection("user_teachers").doc(uid);
   
   await userTeachersRef.delete();
 

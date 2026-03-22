@@ -1,4 +1,4 @@
-import * as admin from "firebase-admin";
+import { getFirestore } from "firebase-admin/firestore";
 
 /**
  * Wipe the entire teacher database (the card pool).
@@ -10,13 +10,13 @@ export async function wipeTeacherDatabase() {
   const collections = ["teachers", "user_teachers"]; // Cannot have cards for non-existent teachers
   
   for (const collectionName of collections) {
-    const collectionRef = admin.firestore().collection(collectionName);
+    const collectionRef = getFirestore("abi-data").collection(collectionName);
     const snapshot = await collectionRef.get();
     
     if (snapshot.empty) continue;
 
     const batchSize = 500;
-    let batch = admin.firestore().batch();
+    let batch = getFirestore("abi-data").batch();
     let count = 0;
 
     for (const doc of snapshot.docs) {
@@ -25,7 +25,7 @@ export async function wipeTeacherDatabase() {
 
       if (count % batchSize === 0) {
         await batch.commit();
-        batch = admin.firestore().batch();
+        batch = getFirestore("abi-data").batch();
       }
     }
 
@@ -36,7 +36,7 @@ export async function wipeTeacherDatabase() {
   }
 
   // Also clear the pool in settings/config
-  const settingsRef = admin.firestore().collection("settings").doc("config");
+  const settingsRef = getFirestore("abi-data").collection("settings").doc("config");
   await settingsRef.update({
     teachers: []
   });

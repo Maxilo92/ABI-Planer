@@ -1,11 +1,11 @@
-import * as admin from "firebase-admin";
+import { getFirestore } from "firebase-admin/firestore";
 
 /**
  * Wipe all teacher cards from all users.
  * Deletes all documents in the 'user_teachers' collection.
  */
 export async function emptyAllAlbums() {
-  const collectionRef = admin.firestore().collection("user_teachers");
+  const collectionRef = getFirestore("abi-data").collection("user_teachers");
   
   // Use recursiveDelete if available, or batch delete
   // For simplicity and safety with small-to-medium datasets, we use a batch delete pattern.
@@ -17,7 +17,7 @@ export async function emptyAllAlbums() {
   }
 
   const batchSize = 500;
-  let batch = admin.firestore().batch();
+  let batch = getFirestore("abi-data").batch();
   let count = 0;
 
   for (const doc of snapshot.docs) {
@@ -26,7 +26,7 @@ export async function emptyAllAlbums() {
 
     if (count % batchSize === 0) {
       await batch.commit();
-      batch = admin.firestore().batch();
+      batch = getFirestore("abi-data").batch();
     }
   }
 

@@ -1,5 +1,6 @@
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import * as admin from "firebase-admin";
+import { getFirestore } from "firebase-admin/firestore";
 import { authenticator } from "otplib";
 import * as QRCode from "qrcode";
 
@@ -23,7 +24,7 @@ export const setup2FA = onCall({
   const email = userRecord.email || "user@example.com";
 
   // Check if user is admin
-  const profileSnap = await admin.firestore().collection("profiles").doc(uid).get();
+  const profileSnap = await getFirestore("abi-data").collection("profiles").doc(uid).get();
   const profile = profileSnap.data();
   if (!profile || !["admin", "admin_main", "admin_co"].includes(profile.role)) {
     throw new HttpsError(
@@ -76,14 +77,14 @@ export const verifyInitial2FA = onCall({
   }
 
   // Save the secret securely
-  await admin.firestore().collection("user_secrets").doc(uid).set({
+  await getFirestore("abi-data").collection("user_secrets").doc(uid).set({
     secret,
     backup_codes: [],
     created_at: admin.firestore.FieldValue.serverTimestamp(),
   });
 
   // Update profile
-  await admin.firestore().collection("profiles").doc(uid).update({
+  await getFirestore("abi-data").collection("profiles").doc(uid).update({
     is_2fa_enabled: true,
     two_factor_secret_id: uid,
   });
@@ -116,7 +117,7 @@ export const disable2FA = onCall({
   const uid = request.auth.uid;
 
   // Get the secret to verify the code
-  const secretSnap = await admin.firestore().collection("user_secrets").doc(uid).get();
+  const secretSnap = await getFirestore("abi-data").collection("user_secrets").doc(uid).get();
   const secretData = secretSnap.data();
   if (!secretData || !secretData.secret) {
     throw new HttpsError(
@@ -134,8 +135,8 @@ export const disable2FA = onCall({
   }
 
   // Remove secret and update profile
-  await admin.firestore().collection("user_secrets").doc(uid).delete();
-  await admin.firestore().collection("profiles").doc(uid).update({
+  await getFirestore("abi-data").collection("user_secrets").doc(uid).delete();
+  await getFirestore("abi-data").collection("profiles").doc(uid).update({
     is_2fa_enabled: false,
     two_factor_secret_id: null,
   });
