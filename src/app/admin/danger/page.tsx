@@ -25,10 +25,17 @@ const DANGER_ACTIONS = [
     severity: 'low'
   },
   {
-    id: 'WIPE_ALL_CARDS',
-    title: 'Alle Alben & Sammelkarten leeren',
-    description: 'Löscht unwiderruflich alle "user_teachers" Einträge in der Datenbank. Das bedeutet: Alle Benutzer verlieren JEDE gesammelte Karte und alle Alben werden komplett auf 0 gesetzt.',
-    confirmationString: 'DELETE ALL CARDS',
+    id: 'EMPTY_ALL_ALBUMS',
+    title: 'Alle Alben leeren (Progression Reset)',
+    description: 'Löscht alle "user_teachers" Einträge. Alle Nutzer verlieren ihre Karten, aber die registrierten Lehrer bleiben in der Datenbank ("teachers" Collection) und können weiterhin gezogen werden.',
+    confirmationString: 'EMPTY ALL ALBUMS',
+    severity: 'medium'
+  },
+  {
+    id: 'WIPE_TEACHER_DB',
+    title: 'Lehrer-Datenbank löschen (Total Reset)',
+    description: 'Löscht die gesamte Lehrer-Basis ("teachers" Collection) UND alle Nutzer-Karten. Danach können keine Karten mehr gezogen werden, bis neue Lehrer importiert wurden.',
+    confirmationString: 'WIPE TEACHER DATABASE',
     severity: 'high'
   },
   {

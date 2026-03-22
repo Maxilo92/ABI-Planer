@@ -55,9 +55,17 @@ export const authorizeDangerAction = onCall({ cors: true }, async (request) => {
 
   // 4. Validate Confirmation String
   const actionConfigs: Record<string, { expectedConfirmation: string, description: string }> = {
-    "WIPE_ALL_CARDS": {
-      expectedConfirmation: "DELETE ALL CARDS",
-      description: "Alle Sammelkarten aller Benutzer werden unwiderruflich gelöscht."
+    "SYSTEM_TEST_DRY_RUN": {
+      expectedConfirmation: "RUN SYSTEM TEST",
+      description: "Testet den Sicherheits-Workflow ohne Änderungen."
+    },
+    "EMPTY_ALL_ALBUMS": {
+      expectedConfirmation: "EMPTY ALL ALBUMS",
+      description: "Alle Alben der Nutzer werden geleert. Die registrierten Lehrer bleiben im Pool bestehen."
+    },
+    "WIPE_TEACHER_DB": {
+      expectedConfirmation: "WIPE TEACHER DATABASE",
+      description: "Die gesamte Lehrer-Datenbank wird gelöscht. Keine Karten mehr verfügbar, bis neu importiert wird."
     },
     "WIPE_USER_CARDS": {
       expectedConfirmation: "DELETE USER CARDS",

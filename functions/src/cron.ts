@@ -1,7 +1,8 @@
 import { onSchedule } from "firebase-functions/v2/scheduler";
 import * as admin from "firebase-admin";
-import { wipeAllCards } from "./actions/wipeAllCards";
+import { emptyAllAlbums } from "./actions/emptyAllAlbums";
 import { wipeUserCards } from "./actions/wipeUserCards";
+import { wipeTeacherDatabase } from "./actions/wipeTeacherDatabase";
 
 /**
  * Scheduled function to execute pending danger actions every 15 minutes.
@@ -37,8 +38,11 @@ export const executeDangerActions = onSchedule("every 15 minutes", async (event)
         case "SYSTEM_TEST_DRY_RUN":
           console.log("System Test Dry Run executed successfully. No data changed.");
           break;
-        case "WIPE_ALL_CARDS":
-          await wipeAllCards();
+        case "EMPTY_ALL_ALBUMS":
+          await emptyAllAlbums();
+          break;
+        case "WIPE_TEACHER_DB":
+          await wipeTeacherDatabase();
           break;
         case "WIPE_USER_CARDS":
           await wipeUserCards(payload.uid);
