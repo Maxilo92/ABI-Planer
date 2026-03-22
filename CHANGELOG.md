@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.20.17] - 2026-03-22
+- Fix: **Build-Fehler behoben**. Korrektur eines Syntaxfehlers (doppeltes Map-Statement) in der Sammelkarten-Komponente, der den Produktions-Build verhinderte.
+
 ## [0.20.16] - 2026-03-22
 - Performance: **CardDetailView Optimierung**. Der 3D-Tilt-Effekt wurde drastisch optimiert (weniger Repaints, einfachere Berechnungen, Verzicht auf schwere CSS-Filter während der Bewegung), um Performance-Probleme in Chrome auf Mac zu beheben.
 - UI: **Minimalistisches Karten-Backdesign**. Die Kartenrückseiten wurden vereinfacht: Fokus auf eine klare, dunkle Optik mit dezentem Logo statt futuristischer Muster.

@@ -354,13 +354,6 @@ function SammelkartenContent() {
                               </div>
                             </div>
                           </div>
-                          </div>
-                          </div>
-                          )
-                          })}
-                          </div>
-                          )}
-                          </div>
                         </div>
                       </div>
                     )
