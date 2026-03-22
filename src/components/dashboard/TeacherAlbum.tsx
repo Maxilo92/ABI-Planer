@@ -6,7 +6,7 @@ import { doc, onSnapshot } from 'firebase/firestore'
 import { useEffect, useState, useRef, useMemo } from 'react'
 import { LootTeacher, TeacherRarity } from '@/types/database'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
-import { GraduationCap, Trophy, Star, Lock, Search, Filter, X, ChevronRight, Rotate3d } from 'lucide-react'
+import { GraduationCap, Trophy, Star, Lock, Search, Filter, X, ChevronRight, Rotate3d, ArrowDownAZ, ArrowDownZA, ArrowUp10, LayoutGrid } from 'lucide-react'
 import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
@@ -24,6 +24,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuCheckboxItem,
   DropdownMenuTrigger,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
 } from "@/components/ui/dropdown-menu"
 import { Button } from '@/components/ui/button'
 
@@ -161,7 +163,7 @@ function TeacherCardDetail({ teacher, userData, onClose }: { teacher: LootTeache
           {/* Front of Card */}
           <div 
             className={cn(
-              "absolute inset-0 backface-hidden rounded-3xl border-[6px] border-white flex flex-col p-2 shadow-2xl transition-all duration-500 overflow-hidden",
+              "absolute inset-0 backface-hidden rounded-3xl border-[6px] border-white flex flex-col items-center p-5 sm:p-6 shadow-2xl transition-all duration-500 overflow-hidden",
               rarityInfo.color,
               isFlipped ? "" : rarityInfo.glow
             )}
@@ -177,26 +179,19 @@ function TeacherCardDetail({ teacher, userData, onClose }: { teacher: LootTeache
               </div>
             )}
 
-            {/* Top Layout: Rarity and Level Badge */}
-            <div className="flex justify-between items-start w-full px-1.5 pt-1 relative z-30">
-              <div className="text-[10px] font-black uppercase text-white/90 tracking-widest drop-shadow-md">
-                {rarityInfo.label}
-              </div>
-              <div className="bg-black/60 backdrop-blur-md rounded-full px-2.5 py-1 text-[9px] sm:text-[10px] font-black text-white border border-white/20 shadow-lg">
-                LVL {level}
-              </div>
+            <div className="absolute top-6 right-6 bg-black/40 rounded-full px-3 py-1 text-[10px] font-black text-white border border-white/20 z-20">
+              LVL {level}
             </div>
 
-            {/* Middle Section: Flexible Icon Container */}
-            <div className="flex-1 min-h-0 w-full flex items-center justify-center relative z-20 py-2">
-              <div className="h-full aspect-square max-h-[160px] rounded-2xl bg-white/10 flex items-center justify-center shadow-inner border border-white/5 relative">
-                <GraduationCap className="h-1/2 w-1/2 text-white drop-shadow-2xl relative z-10" />
-              </div>
+            <div className="w-full aspect-square rounded-2xl bg-white/10 flex items-center justify-center mb-2 mt-6 shadow-inner border border-white/5 relative z-20">
+               <GraduationCap className="h-20 w-20 text-white drop-shadow-2xl relative z-10" />
             </div>
             
-            {/* Bottom Layout: Fixed Name Container */}
-            <div className="mt-auto w-full bg-black/40 rounded-2xl p-3 sm:p-4 border border-white/10 shadow-lg text-center relative z-20 flex flex-col-reverse justify-center">
-              <div className="text-white font-black text-base sm:text-lg md:text-xl leading-tight italic break-words hyphens-auto [text-wrap:balance]">
+            <div className="mt-auto mb-4 w-full bg-black/40 rounded-2xl p-4 border border-white/10 shadow-lg text-center relative z-20 min-h-[5.5rem] flex flex-col justify-center">
+              <div className="text-[10px] font-black uppercase text-white/50 tracking-widest mb-1">
+                {rarityInfo.label}
+              </div>
+              <div className="text-white font-black text-xl leading-tight italic line-clamp-2">
                 {teacher.name}
               </div>
             </div>
@@ -265,6 +260,7 @@ export function TeacherAlbum() {
   const [search, setSearch] = useState('')
   const [rarityFilters, setRarityFilters] = useState<TeacherRarity[]>([])
   const [ownershipFilter, setOwnershipFilter] = useState<'all' | 'owned' | 'missing'>('all')
+  const [sortBy, setSortBy] = useState<'rarity' | 'name' | 'level' | 'upgrade'>('rarity')
   
   // Selection state
   const [selectedTeacher, setSelectedTeacher] = useState<LootTeacher | null>(null)
@@ -299,20 +295,38 @@ export function TeacherAlbum() {
       
       return true
     }).sort((a, b) => {
-      const ownedA = (userTeachers?.[a.id] || userTeachers?.[a.name]) ? 1 : 0
-      const ownedB = (userTeachers?.[b.id] || userTeachers?.[b.name]) ? 1 : 0
+      const ownedA = (userTeachers?.[a.id] || userTeachers?.[a.name])
+      const ownedB = (userTeachers?.[b.id] || userTeachers?.[b.name])
       
-      if (ownedA !== ownedB) return ownedB - ownedA
+      // Ownership always comes first in sorting
+      if (!!ownedA !== !!ownedB) return ownedB ? 1 : -1
       
-      const rarityOrder: TeacherRarity[] = ['legendary', 'mythic', 'epic', 'rare', 'common']
-      const rarityA = rarityOrder.indexOf(a.rarity)
-      const rarityB = rarityOrder.indexOf(b.rarity)
+      // Secondary sorting based on user selection
+      if (sortBy === 'level') {
+        const lvlA = ownedA?.level || 0
+        const lvlB = ownedB?.level || 0
+        if (lvlA !== lvlB) return lvlB - lvlA
+      } else if (sortBy === 'upgrade') {
+        const getNeeded = (owned: any) => {
+          if (!owned) return 1000
+          const level = owned.level || 1
+          const count = owned.count || 0
+          return getNextLevelCount(level) - count
+        }
+        const neededA = getNeeded(ownedA)
+        const neededB = getNeeded(ownedB)
+        if (neededA !== neededB) return neededA - neededB
+      } else if (sortBy === 'rarity') {
+        const rarityOrder: TeacherRarity[] = ['legendary', 'mythic', 'epic', 'rare', 'common']
+        const rarityA = rarityOrder.indexOf(a.rarity)
+        const rarityB = rarityOrder.indexOf(b.rarity)
+        if (rarityA !== rarityB) return rarityA - rarityB
+      }
       
-      if (rarityA !== rarityB) return rarityA - rarityB
-      
+      // Default: sort by name
       return a.name.localeCompare(b.name)
     })
-  }, [globalTeachers, userTeachers, search, rarityFilters, ownershipFilter])
+  }, [globalTeachers, userTeachers, search, rarityFilters, ownershipFilter, sortBy])
 
   if (loadingUserTeachers || loadingGlobal) {
     return (
@@ -337,9 +351,10 @@ export function TeacherAlbum() {
     setSearch('')
     setRarityFilters([])
     setOwnershipFilter('all')
+    setSortBy('rarity')
   }
 
-  const activeFilterCount = (search ? 1 : 0) + rarityFilters.length + (ownershipFilter !== 'all' ? 1 : 0)
+  const activeFilterCount = (search ? 1 : 0) + rarityFilters.length + (ownershipFilter !== 'all' ? 1 : 0) + (sortBy !== 'rarity' ? 1 : 0)
 
   return (
     <div className="space-y-6">
@@ -385,7 +400,7 @@ export function TeacherAlbum() {
           <DropdownMenu>
             <DropdownMenuTrigger render={<Button variant="outline" className="gap-2 shrink-0" />}>
               <Filter className="h-4 w-4" />
-              Filter
+              Filter & Sortierung
               {activeFilterCount > 0 && (
                 <Badge variant="secondary" className="ml-1 h-5 w-5 rounded-full p-0 flex items-center justify-center bg-primary text-primary-foreground">
                   {activeFilterCount}
@@ -414,6 +429,27 @@ export function TeacherAlbum() {
               </DropdownMenuCheckboxItem>
               
               <DropdownMenuSeparator />
+              <DropdownMenuLabel>Sortierung</DropdownMenuLabel>
+              <DropdownMenuRadioGroup value={sortBy} onValueChange={(v) => setSortBy(v as any)}>
+                <DropdownMenuRadioItem value="rarity" className="flex items-center gap-2">
+                  <LayoutGrid className="h-4 w-4" />
+                  Nach Seltenheit
+                </DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="name" className="flex items-center gap-2">
+                  <ArrowDownAZ className="h-4 w-4" />
+                  Alphabetisch (A-Z)
+                </DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="level" className="flex items-center gap-2">
+                  <ArrowUp10 className="h-4 w-4" />
+                  Nach Level
+                </DropdownMenuRadioRadioItem>
+                <DropdownMenuRadioItem value="upgrade" className="flex items-center gap-2">
+                  <Star className="h-4 w-4" />
+                  Nächstes Upgrade
+                </DropdownMenuRadioItem>
+              </DropdownMenuRadioGroup>
+
+              <DropdownMenuSeparator />
               <DropdownMenuLabel>Seltenheit</DropdownMenuLabel>
               {(['legendary', 'mythic', 'epic', 'rare', 'common'] as TeacherRarity[]).map((rarity) => (
                 <DropdownMenuCheckboxItem 
@@ -432,7 +468,7 @@ export function TeacherAlbum() {
                 <>
                   <DropdownMenuSeparator />
                   <DropdownMenuCheckboxItem onCheckedChange={clearFilters} className="text-destructive focus:text-destructive">
-                    Filter zurücksetzen
+                    Alles zurücksetzen
                   </DropdownMenuCheckboxItem>
                 </>
               )}
