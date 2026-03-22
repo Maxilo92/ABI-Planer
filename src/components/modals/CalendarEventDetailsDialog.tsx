@@ -34,7 +34,9 @@ const ROLE_LABELS: Record<string, string> = {
 export function CalendarEventDetailsDialog({ event, children }: CalendarEventDetailsDialogProps) {
   const [open, setOpen] = useState(false)
   const [profiles, setProfiles] = useState<Profile[]>([])
-  const eventDate = toDate(event.event_date)
+  const startDate = toDate(event.start_date)
+  const endDate = toDate(event.end_date)
+  const isSameDay = startDate.toDateString() === endDate.toDateString()
 
   useEffect(() => {
     if (!open) return
@@ -66,7 +68,9 @@ export function CalendarEventDetailsDialog({ event, children }: CalendarEventDet
           <DialogTitle className="text-2xl font-bold">{event.title}</DialogTitle>
           <DialogDescription className="flex items-center gap-1.5 text-muted-foreground mt-1">
             <Clock className="h-4 w-4" />
-            {format(eventDate, 'EEEE, dd. MMMM yyyy', { locale: de })} um {format(eventDate, 'HH:mm', { locale: de })} Uhr
+            {isSameDay
+              ? `${format(startDate, 'EEEE, dd. MMMM yyyy', { locale: de })} ${format(startDate, 'HH:mm', { locale: de })} - ${format(endDate, 'HH:mm', { locale: de })} Uhr`
+              : `${format(startDate, 'dd.MM. HH:mm', { locale: de })} - ${format(endDate, 'dd.MM. HH:mm', { locale: de })} Uhr`}
           </DialogDescription>
         </DialogHeader>
 
@@ -133,8 +137,8 @@ export function CalendarEventDetailsDialog({ event, children }: CalendarEventDet
                 <CalendarIcon className="h-4 w-4 text-primary" />
               </div>
               <div>
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-tight">Datum</p>
-                <p className="text-sm font-semibold">{format(eventDate, 'dd.MM.yyyy', { locale: de })}</p>
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-tight">Start</p>
+                <p className="text-sm font-semibold">{format(startDate, 'dd.MM.yyyy HH:mm', { locale: de })} Uhr</p>
               </div>
             </div>
             <div className="flex items-start gap-3">
@@ -142,8 +146,8 @@ export function CalendarEventDetailsDialog({ event, children }: CalendarEventDet
                 <Clock className="h-4 w-4 text-primary" />
               </div>
               <div>
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-tight">Uhrzeit</p>
-                <p className="text-sm font-semibold">{format(eventDate, 'HH:mm', { locale: de })} Uhr</p>
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-tight">Ende</p>
+                <p className="text-sm font-semibold">{format(endDate, 'dd.MM.yyyy HH:mm', { locale: de })} Uhr</p>
               </div>
             </div>
           </div>

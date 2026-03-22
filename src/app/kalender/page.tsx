@@ -19,7 +19,7 @@ export default function CalendarPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const q = query(collection(db, 'events'), orderBy('event_date', 'asc'))
+    const q = query(collection(db, 'events'), orderBy('start_date', 'asc'))
     const unsubscribe = onSnapshot(q, (snapshot) => {
       setEvents(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Event)))
       setLoading(false)
@@ -67,8 +67,8 @@ export default function CalendarPage() {
   )
 
   const now = new Date().getTime()
-  const upcomingEvents = filteredEvents.filter(e => toDate(e.event_date).getTime() >= now)
-  const pastEvents = filteredEvents.filter(e => toDate(e.event_date).getTime() < now).sort((a, b) => toDate(b.event_date).getTime() - toDate(a.event_date).getTime())
+  const upcomingEvents = filteredEvents.filter(e => toDate(e.start_date).getTime() >= now)
+  const pastEvents = filteredEvents.filter(e => toDate(e.start_date).getTime() < now).sort((a, b) => toDate(b.start_date).getTime() - toDate(a.start_date).getTime())
 
   return (
     <div className="space-y-6">

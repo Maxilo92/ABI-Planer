@@ -38,7 +38,10 @@ export function EditEventDialog({ event }: EditEventDialogProps) {
   const [title, setTitle] = useState(event.title)
   const [description, setDescription] = useState(event.description || '')
   const [location, setLocation] = useState(event.location || '')
-  const [date, setDate] = useState(format(toDate(event.event_date), "yyyy-MM-dd'T'HH:mm"))
+    const [startDate, setStartDate] = useState(format(toDate(event.start_date), "yyyy-MM-dd'T'HH:mm"))
+  const [endDate, setEndDate] = useState(
+    event.end_date ? format(toDate(event.end_date), "yyyy-MM-dd'T'HH:mm") : format(toDate(event.start_date), "yyyy-MM-dd'T'HH:mm")
+  )
   const [mentionedUserIds, setMentionedUserIds] = useState<string[]>(event.mentioned_user_ids || [])
   const [mentionedRoles, setMentionedRoles] = useState<string[]>(event.mentioned_roles || [])
   const [mentionedGroups, setMentionedGroups] = useState<string[]>(event.mentioned_groups || [])
@@ -90,7 +93,8 @@ export function EditEventDialog({ event }: EditEventDialogProps) {
         title,
         description,
         location,
-        event_date: new Date(date).toISOString(),
+        start_date: new Date(startDate).toISOString(),
+        end_date: endDate ? new Date(endDate).toISOString() : new Date(startDate).toISOString(),
         mentioned_user_ids: mentionedUserIds,
         mentioned_roles: mentionedRoles,
         mentioned_groups: mentionedGroups,
@@ -101,7 +105,8 @@ export function EditEventDialog({ event }: EditEventDialogProps) {
           event_id: event.id,
           title,
           location,
-          event_date: new Date(date).toISOString(),
+          start_date: new Date(startDate).toISOString(),
+          end_date: endDate ? new Date(endDate).toISOString() : new Date(startDate).toISOString(),
           mentions_users_count: mentionedUserIds.length,
           mentions_roles_count: mentionedRoles.length,
           mentions_groups_count: mentionedGroups.length,
@@ -167,9 +172,15 @@ export function EditEventDialog({ event }: EditEventDialogProps) {
               <Label htmlFor="edit-location">Ort</Label>
               <Input id="edit-location" value={location} onChange={(e) => setLocation(e.target.value)} placeholder="z.B. Aula, Sportplatz..." />
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="edit-date">Datum & Uhrzeit</Label>
-              <Input id="edit-date" type="datetime-local" value={date} onChange={(e) => setDate(e.target.value)} required />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="edit-start-date">Startdatum & Uhrzeit</Label>
+                <Input id="edit-start-date" type="datetime-local" value={startDate} onChange={(e) => setStartDate(e.target.value)} required />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="edit-end-date">Enddatum & Uhrzeit</Label>
+                <Input id="edit-end-date" type="datetime-local" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+              </div>
             </div>
 
             <div className="grid gap-2">

@@ -42,7 +42,8 @@ export function CalendarEvents({
         await logAction('EVENT_DELETED', user.uid, profile?.full_name, {
           event_id: id,
           title: eventToDelete?.title,
-          event_date: eventToDelete?.event_date,
+          start_date: eventToDelete?.start_date,
+          end_date: eventToDelete?.end_date,
         })
       }
 
@@ -55,8 +56,8 @@ export function CalendarEvents({
 
   const now = new Date().getTime()
   const sortedEvents = [...events].sort((a, b) => {
-    const dateA = toDate(a.event_date).getTime()
-    const dateB = toDate(b.event_date).getTime()
+    const dateA = toDate(a.start_date).getTime()
+    const dateB = toDate(b.start_date).getTime()
 
     const isPastA = dateA < now
     const isPastB = dateB < now
@@ -91,20 +92,24 @@ export function CalendarEvents({
             </p>
           ) : (
             displayedEvents.map((event) => {
-              const eventDate = toDate(event.event_date)
+              const startDate = toDate(event.start_date)
+              const endDate = toDate(event.end_date)
+              const isSameDay = startDate.toDateString() === endDate.toDateString()
               return (
                 <div key={event.id} className="group flex items-center justify-between gap-4 pb-3 border-b last:border-0">
                   <CalendarEventDetailsDialog event={event}>
                     <div className="flex gap-4 cursor-pointer hover:opacity-80 transition-all flex-1">
                       <div className="flex flex-col items-center justify-center bg-primary text-primary-foreground rounded-lg p-2 min-w-[50px] h-[50px]">
-                        <span className="text-xs uppercase font-medium">{format(eventDate, 'MMM', { locale: de })}</span>
-                        <span className="text-xl font-bold leading-none">{format(eventDate, 'dd')}</span>
+                        <span className="text-xs uppercase font-medium">{format(startDate, 'MMM', { locale: de })}</span>
+                        <span className="text-xl font-bold leading-none">{format(startDate, 'dd')}</span>
                       </div>
                       <div className="flex flex-col justify-center space-y-1">
                         <h4 className="text-sm font-semibold">{event.title}</h4>
                         <div className="flex items-center text-[10px] md:text-xs text-muted-foreground gap-1">
                           <Clock className="h-3 w-3" />
-                          {format(eventDate, 'EEEE, HH:mm', { locale: de })} Uhr
+                          {isSameDay
+                            ? `${format(startDate, 'HH:mm', { locale: de })} - ${format(endDate, 'HH:mm', { locale: de })} Uhr`
+                            : `${format(startDate, 'dd.MM. HH:mm', { locale: de })} - ${format(endDate, 'dd.MM. HH:mm', { locale: de })} Uhr`}
                         </div>
                         {event.location && (
                           <div className="flex items-center text-[10px] md:text-xs text-muted-foreground gap-1">

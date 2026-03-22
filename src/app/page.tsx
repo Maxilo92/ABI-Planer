@@ -131,7 +131,7 @@ export default function Dashboard() {
     // 3. Listen to Events (next 3)
     const eventsRef = collection(db, 'events')
     const now = new Date().toISOString()
-    const qEvents = query(eventsRef, where('event_date', '>=', now), orderBy('event_date', 'asc'), limit(3))
+    const qEvents = query(eventsRef, where('start_date', '>=', now), orderBy('start_date', 'asc'), limit(3))
     const unsubscribeEvents = onSnapshot(qEvents, (snapshot) => {
       setEvents(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })))
       markLoaded('events')

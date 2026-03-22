@@ -81,7 +81,7 @@ function GroupsPageContent() {
     })
 
     // 4. Listen to Events
-    const qEvents = query(collection(db, 'events'), orderBy('event_date', 'asc'))
+    const qEvents = query(collection(db, 'events'), orderBy('start_date', 'asc'))
     const unsubscribeEvents = onSnapshot(qEvents, (snapshot) => {
       setEvents(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Event)))
       setLoading(false)

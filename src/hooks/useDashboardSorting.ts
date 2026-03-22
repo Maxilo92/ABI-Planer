@@ -46,8 +46,8 @@ export function useDashboardSorting(
     const now = new Date();
 
     const hasUpcomingEvent = events.some(event => {
-      const eventDate = new Date(event.event_date);
-      return eventDate >= now && eventDate <= threeDaysFromNow;
+      const startDate = new Date(event.start_date);
+      return startDate >= now && startDate <= threeDaysFromNow;
     });
     if (hasUpcomingEvent) scores.events = 80;
 

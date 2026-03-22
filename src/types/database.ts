@@ -147,7 +147,8 @@ export interface Event {
   title: string;
   description: string | null;
   location: string | null;
-  event_date: string;
+    start_date: string;
+  end_date: string;
   created_at: string;
   created_by: string;
   mentioned_user_ids?: string[];

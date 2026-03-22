@@ -29,7 +29,8 @@ export function AddEventDialog() {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [location, setLocation] = useState('')
-  const [date, setDate] = useState('')
+    const [startDate, setStartDate] = useState('')
+  const [endDate, setEndDate] = useState('')
   const [mentionedUserIds, setMentionedUserIds] = useState<string[]>([])
   const [mentionedRoles, setMentionedRoles] = useState<string[]>([])
   const [mentionedGroups, setMentionedGroups] = useState<string[]>([])
@@ -81,7 +82,8 @@ export function AddEventDialog() {
         title,
         description,
         location,
-        event_date: new Date(date).toISOString(),
+        start_date: new Date(startDate).toISOString(),
+        end_date: endDate ? new Date(endDate).toISOString() : new Date(startDate).toISOString(),
         created_at: new Date().toISOString(),
         created_by: user.uid,
         mentioned_user_ids: mentionedUserIds,
@@ -92,7 +94,8 @@ export function AddEventDialog() {
       await logAction('EVENT_CREATED', user.uid, null, {
         title,
         location,
-        event_date: new Date(date).toISOString(),
+        start_date: new Date(startDate).toISOString(),
+        end_date: endDate ? new Date(endDate).toISOString() : new Date(startDate).toISOString(),
         mentions_users_count: mentionedUserIds.length,
         mentions_roles_count: mentionedRoles.length,
         mentions_groups_count: mentionedGroups.length,
@@ -102,7 +105,8 @@ export function AddEventDialog() {
       setTitle('')
       setDescription('')
       setLocation('')
-      setDate('')
+      setStartDate('')
+      setEndDate('')
       setMentionedUserIds([])
       setMentionedRoles([])
       setMentionedGroups([])
@@ -161,9 +165,15 @@ export function AddEventDialog() {
               <Label htmlFor="location">Ort</Label>
               <Input id="location" value={location} onChange={(e) => setLocation(e.target.value)} placeholder="z.B. Aula, Sportplatz..." />
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="date">Datum & Uhrzeit</Label>
-              <Input id="date" type="datetime-local" value={date} onChange={(e) => setDate(e.target.value)} required />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="start-date">Startdatum & Uhrzeit</Label>
+                <Input id="start-date" type="datetime-local" value={startDate} onChange={(e) => setStartDate(e.target.value)} required />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="end-date">Enddatum & Uhrzeit</Label>
+                <Input id="end-date" type="datetime-local" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+              </div>
             </div>
 
             <div className="grid gap-2">
