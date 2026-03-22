@@ -161,7 +161,7 @@ function TeacherCardDetail({ teacher, userData, onClose }: { teacher: LootTeache
           {/* Front of Card */}
           <div 
             className={cn(
-              "absolute inset-0 backface-hidden rounded-3xl border-[6px] border-white flex flex-col items-center p-5 sm:p-6 shadow-2xl transition-all duration-500 overflow-hidden",
+              "absolute inset-0 backface-hidden rounded-3xl border-[6px] border-white flex flex-col p-2 shadow-2xl transition-all duration-500 overflow-hidden",
               rarityInfo.color,
               isFlipped ? "" : rarityInfo.glow
             )}
@@ -177,19 +177,26 @@ function TeacherCardDetail({ teacher, userData, onClose }: { teacher: LootTeache
               </div>
             )}
 
-            <div className="absolute top-4 right-4 bg-black/60 backdrop-blur-md rounded-full px-2.5 py-1 text-[9px] sm:text-[10px] font-black text-white border border-white/20 z-30 shadow-lg">
-              LVL {level}
-            </div>
-
-            <div className="w-full aspect-square rounded-2xl bg-white/10 flex items-center justify-center mb-2 mt-8 shadow-inner border border-white/5 relative z-20">
-               <GraduationCap className="h-20 w-20 text-white drop-shadow-2xl relative z-10" />
-            </div>
-            
-            <div className="mt-auto mb-4 w-full bg-black/40 rounded-2xl p-3 sm:p-4 border border-white/10 shadow-lg text-center relative z-20 min-h-[5.5rem] flex flex-col justify-center">
-              <div className="text-[10px] font-black uppercase text-white/50 tracking-widest mb-1">
+            {/* Top Layout: Rarity and Level Badge */}
+            <div className="flex justify-between items-start w-full px-1.5 pt-1 relative z-30">
+              <div className="text-[10px] font-black uppercase text-white/90 tracking-widest drop-shadow-md">
                 {rarityInfo.label}
               </div>
-              <div className="text-white font-black text-base sm:text-lg md:text-xl leading-tight italic break-words hyphens-auto">
+              <div className="bg-black/60 backdrop-blur-md rounded-full px-2.5 py-1 text-[9px] sm:text-[10px] font-black text-white border border-white/20 shadow-lg">
+                LVL {level}
+              </div>
+            </div>
+
+            {/* Middle Section: Flexible Icon Container */}
+            <div className="flex-1 min-h-0 w-full flex items-center justify-center relative z-20 py-2">
+              <div className="h-full aspect-square max-h-[160px] rounded-2xl bg-white/10 flex items-center justify-center shadow-inner border border-white/5 relative">
+                <GraduationCap className="h-1/2 w-1/2 text-white drop-shadow-2xl relative z-10" />
+              </div>
+            </div>
+            
+            {/* Bottom Layout: Fixed Name Container */}
+            <div className="mt-auto w-full bg-black/40 rounded-2xl p-3 sm:p-4 border border-white/10 shadow-lg text-center relative z-20 flex flex-col-reverse justify-center">
+              <div className="text-white font-black text-base sm:text-lg md:text-xl leading-tight italic break-words hyphens-auto [text-wrap:balance]">
                 {teacher.name}
               </div>
             </div>

@@ -261,7 +261,7 @@ function SammelkartenContent() {
                           {/* Front of Card */}
                           <div 
                             className={cn(
-                              "absolute inset-0 backface-hidden rotate-y-180 rounded-2xl border-4 border-white flex flex-col items-center p-3 sm:p-4 transition-all duration-500 shadow-xl overflow-hidden",
+                              "absolute inset-0 backface-hidden rotate-y-180 rounded-2xl border-4 border-white flex flex-col items-center p-2 transition-all duration-500 shadow-xl overflow-hidden",
                               cardInfo?.color,
                               isFlipped && cardInfo?.glow
                             )}
@@ -277,28 +277,37 @@ function SammelkartenContent() {
                                </div>
                              )}
 
-                            {isFlipped && result && (
-                              <div className="absolute top-2 left-1/2 -translate-x-1/2 z-30">
-                                {result.isNew ? (
-                                  <Badge className="bg-amber-500 border-2 border-white text-[10px] font-black px-2 shadow-lg animate-in zoom-in duration-500">NEW</Badge>
-                                ) : result.isLevelUp ? (
-                                  <Badge className="bg-purple-500 border-2 border-white text-[10px] font-black px-2 shadow-lg animate-in zoom-in duration-500">LEVEL UP</Badge>
-                                ) : (
-                                  <Badge className="bg-emerald-500 border-2 border-white text-[10px] font-black px-2 shadow-lg animate-in zoom-in duration-500">LVL {result.newLevel}</Badge>
-                                )}
-                              </div>
-                            )}
-
-                            <div className="w-full aspect-square rounded-xl bg-white/10 flex items-center justify-center mb-2 mt-4 sm:mt-6 shadow-inner border border-white/5 relative z-20">
-                               <GraduationCap className="h-12 w-12 sm:h-16 sm:w-16 text-white drop-shadow-2xl relative z-10" />
-                            </div>
-
-                            <div className="mt-auto mb-2 w-full bg-black/40 rounded-xl p-1.5 sm:p-2 border border-white/10 relative z-20 min-h-[3.25rem] sm:min-h-[4rem] flex flex-col justify-center">
-                              <div className="text-[7px] sm:text-[8px] font-black uppercase text-white/50 tracking-widest mb-0.5">
+                            {/* Top Layout: Badges & Label */}
+                            <div className="w-full flex flex-col items-center gap-1 z-30 pt-1">
+                              {isFlipped && result && (
+                                <div className="flex justify-center">
+                                  {result.isNew ? (
+                                    <Badge className="bg-amber-500 border-2 border-white text-[9px] font-black px-1.5 shadow-lg animate-in zoom-in duration-500">NEW</Badge>
+                                  ) : result.isLevelUp ? (
+                                    <Badge className="bg-purple-500 border-2 border-white text-[9px] font-black px-1.5 shadow-lg animate-in zoom-in duration-500">LEVEL UP</Badge>
+                                  ) : (
+                                    <Badge className="bg-emerald-500 border-2 border-white text-[9px] font-black px-1.5 shadow-lg animate-in zoom-in duration-500">LVL {result.newLevel}</Badge>
+                                  )}
+                                </div>
+                              )}
+                              <div className="text-[7px] sm:text-[8px] font-black uppercase text-white/60 tracking-[0.2em] text-center drop-shadow-sm">
                                 {cardInfo?.label}
                               </div>
-                              <div className="text-white font-bold text-[10px] sm:text-xs md:text-sm leading-tight break-words hyphens-auto">
-                                {teacher.name}
+                            </div>
+
+                            {/* Middle (Icon): Flexible container */}
+                            <div className="flex-1 w-full min-h-0 flex items-center justify-center p-2 relative z-20">
+                              <div className="w-full h-full aspect-square max-h-[120px] rounded-xl bg-white/10 flex items-center justify-center shadow-inner border border-white/5">
+                                 <GraduationCap className="h-1/2 w-1/2 text-white drop-shadow-2xl opacity-90 relative z-10" />
+                              </div>
+                            </div>
+
+                            {/* Bottom Layout: Fixed name container growing upwards */}
+                            <div className="w-full mt-auto z-20">
+                              <div className="w-full bg-black/40 rounded-xl p-2 border border-white/10 flex flex-col-reverse">
+                                <div className="text-white font-bold text-[10px] sm:text-xs md:text-sm leading-tight text-center break-words hyphens-auto [text-wrap:balance]">
+                                  {teacher.name}
+                                </div>
                               </div>
                             </div>
                           </div>

@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.20.25] - 2026-03-22
+- UI: **Sammelkarten Layout-Überarbeitung v2 (Bottom-Up)**. Badge oben fixiert, Name am Boden fixiert und wächst nach oben, Icon schrumpft bei Platzmangel.
+- Cleanup: Test-Lehrer "Frau Courant-Fernandes" aus dem Standard-Pool entfernt.
+
 ## [0.20.24] - 2026-03-22
 - UI: **Sammelkarten Layout-Überarbeitung**. Behebung von Text-Überläufen und abgeschnittenen Elementen durch optimierte Abstände und reaktives Design.
 - Cleanup: Testdaten aus dem Lehrer-Pool entfernt.
