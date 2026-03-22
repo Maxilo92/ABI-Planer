@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.20.20] - 2026-03-22
+- Fix: **Systematische Layout-Korrektur**. `overflow-hidden` wurde von der Kartenvorderseite entfernt, um Clipping bei Badges zu verhindern.
+- UI: **Erhöhtes Padding**. Das Padding innerhalb der Karten wurde auf `p-5` (Pack) bzw. `p-8` (Detail) erhöht, um alle Elemente sicher innerhalb der abgerundeten Ecken zu platzieren.
+- UI: **Hintergrund-Rendering**. Hintergrund-Divs nutzen nun `rounded-[inherit]`, um exakt der Form der Karte zu folgen, ohne Inhalte abzuschneiden.
+- Fix: **Text-Sichtbarkeit**. Der Name und die Seltenheit am unteren Kartenrand haben nun zusätzlichen Abstand (`mb-2`), um nicht mehr von der unteren Rundung erfasst zu werden.
+
 ## [0.20.19] - 2026-03-22
 - Animation: **Explosives Pack-Opening**. Das Wackeln wurde durch eine explosive "Fly-Apart"-Animation ersetzt, bei der die Packungshälften sofort auseinanderfliegen.
 - Fix: **Badge-Clipping korrigiert**. "NEW" und "LEVEL UP" Badges wurden weiter nach unten verschoben (`top-3`), um nicht mehr von den abgerundeten Ecken der Karten abgeschnitten zu werden.
