@@ -11,6 +11,42 @@ export const calculateLevel = (count: number): number => {
   return Math.floor(Math.sqrt(count - 1)) + 1
 }
 
+/**
+ * Calculates the current "booster day" identifier.
+ * A new day starts at 09:00:00 Europe/Berlin time.
+ */
+export const getCurrentBoosterDay = (): string => {
+  const now = new Date()
+  
+  // Convert current time to Europe/Berlin
+  const formatter = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Europe/Berlin',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false
+  })
+  
+  const parts = formatter.formatToParts(now)
+  const map = new Map(parts.map(p => [p.type, p.value]))
+  
+  const year = parseInt(map.get('year')!)
+  const month = parseInt(map.get('month')!) - 1
+  const day = parseInt(map.get('day')!)
+  const hour = parseInt(map.get('hour')!)
+  
+  // If it's before 9:00 AM in Berlin, it's still the "previous" booster day
+  const boosterDate = new Date(year, month, day)
+  if (hour < 9) {
+    boosterDate.setDate(boosterDate.getDate() - 1)
+  }
+  
+  return boosterDate.toISOString().split('T')[0]
+}
+
 export const useUserTeachers = () => {
   const { user, profile } = useAuth()
   const [teachers, setTeachers] = useState<UserTeacher | null>(null)
@@ -62,7 +98,7 @@ export const useUserTeachers = () => {
           const profileDoc = await transaction.get(profileRef)
           if (!profileDoc.exists()) throw new Error('User profile not found')
           
-          const today = new Date().toISOString().split('T')[0]
+          const today = getCurrentBoosterDay()
           const currentProfile = profileDoc.data() as Profile
           const currentStats = currentProfile.booster_stats || { last_reset: today, count: 0 }
           
@@ -137,7 +173,7 @@ export const useUserTeachers = () => {
           const profileDoc = await transaction.get(profileRef)
           if (!profileDoc.exists()) throw new Error('User profile not found')
 
-          const today = new Date().toISOString().split('T')[0]
+          const today = getCurrentBoosterDay()
           const currentProfile = profileDoc.data() as Profile
           const currentStats = currentProfile.booster_stats || { last_reset: today, count: 0 }
           
@@ -202,7 +238,7 @@ export const useUserTeachers = () => {
         if (!profileDoc.exists()) throw new Error('User profile not found')
 
         const currentProfile = profileDoc.data() as Profile
-        const today = new Date().toISOString().split('T')[0]
+        const today = getCurrentBoosterDay()
         
         // Handle null or missing stats
         const currentStats = currentProfile.booster_stats || { last_reset: today, count: 0 }
@@ -229,7 +265,7 @@ export const useUserTeachers = () => {
 
   const getRemainingBoosters = useCallback(() => {
     if (!profile) return 0
-    const today = new Date().toISOString().split('T')[0]
+    const today = getCurrentBoosterDay()
     const stats = profile.booster_stats
     const dailyLimit = 2
     

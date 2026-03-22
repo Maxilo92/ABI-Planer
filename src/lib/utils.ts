@@ -61,3 +61,4 @@ export function normalizeChars(str: string): string {
   }
   return str.replace(/[äöüßÄÖÜ]/g, match => charMap[match])
 }
+

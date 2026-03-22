@@ -149,7 +149,9 @@ service cloud.firestore {
           get(/databases/$(database)/documents/polls/$(pollId)).data.allow_vote_change == true;
         allow delete: if isPlanner() || (isAuthenticated() && resource.data.user_id == request.auth.uid);
       }
+
     }
+
 
     match /votes/{voteId} {
       allow read: if true;

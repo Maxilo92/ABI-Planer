@@ -37,9 +37,19 @@ function SammelkartenContent() {
   useEffect(() => {
     const timer = setInterval(() => {
       const now = new Date()
-      const midnight = new Date(now)
-      midnight.setHours(24, 0, 0, 0)
-      const diff = midnight.getTime() - now.getTime()
+      
+      // Calculate next 9:00 AM in Europe/Berlin
+      const berlinNowStr = now.toLocaleString("en-US", { timeZone: "Europe/Berlin" })
+      const berlinNow = new Date(berlinNowStr)
+      
+      const target = new Date(berlinNowStr)
+      target.setHours(9, 0, 0, 0)
+      
+      if (berlinNow >= target) {
+        target.setDate(target.getDate() + 1)
+      }
+      
+      const diff = target.getTime() - berlinNow.getTime()
       
       const h = Math.floor(diff / (1000 * 60 * 60))
       const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))

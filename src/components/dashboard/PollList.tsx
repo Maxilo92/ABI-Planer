@@ -9,12 +9,12 @@ import { collection, deleteDoc, doc, getDocs, setDoc, serverTimestamp, writeBatc
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
-import { Trash2 } from 'lucide-react'
+import { Trash2, Lock } from 'lucide-react'
 import { logAction } from '@/lib/logging'
 
 interface PollListProps {
   polls: Poll[]
-  userId: string
+  userId?: string
   canVote?: boolean
   canManage?: boolean
   limit?: number
@@ -50,7 +50,14 @@ export function PollList({
   }
 
   const handleVote = async (pollId: string, optionId: string) => {
-    if (!userId || !canVote) return
+    if (!userId) {
+      toast.error('Du musst angemeldet sein, um abzustimmen.')
+      router.push('/promo')
+      return
+    }
+
+    if (!canVote) return
+
     const poll = polls.find((entry) => entry.id === pollId)
     const pollVotes = votesByPoll[pollId] || poll?.votes || []
     const existingVote = pollVotes.find((vote) => vote.user_id === userId)
@@ -184,7 +191,7 @@ export function PollList({
   const pollCards = displayedPolls.map((poll) => {
         const pollVotes = votesByPoll[poll.id] || poll.votes || []
         const totalVotes = pollVotes.length
-        const userVote = pollVotes.find(v => v.user_id === userId)
+        const userVote = userId ? pollVotes.find(v => v.user_id === userId) : null
 
         return (
           <Card key={poll.id}>
@@ -227,7 +234,7 @@ export function PollList({
                       <span className="font-medium">{percentage}%</span>
                     </div>
                     <Progress value={percentage} className={isSelected ? 'bg-primary/20' : ''} />
-                    {(!userVote || poll.allow_vote_change === true) && userId && canVote && (
+                    {userId && (!userVote || poll.allow_vote_change === true) && (
                       <Button 
                         variant="outline" 
                         size="sm" 
@@ -243,9 +250,22 @@ export function PollList({
               })}
               
               {!userId && (
-                <div className="bg-muted p-3 rounded-md mt-4 text-center">
-                  <p className="text-xs text-muted-foreground mb-2">Du musst angemeldet sein, um abzustimmen.</p>
-                  <Button variant="outline" size="sm" onClick={() => router.push('/login')}>Jetzt anmelden</Button>
+                <div className="bg-muted/50 p-4 rounded-md mt-4 border border-border flex flex-col items-center text-center">
+                  <div className="bg-background p-2 rounded-full mb-3 shadow-sm">
+                    <Lock className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                  <p className="text-xs font-bold uppercase tracking-wider mb-1">Login erforderlich</p>
+                  <p className="text-[10px] text-muted-foreground mb-4 leading-relaxed italic">
+                    Um Manipulationen zu verhindern, ist eine Abstimmung nur mit verifiziertem Konto möglich.
+                  </p>
+                  <div className="flex flex-col w-full gap-2">
+                    <Button size="sm" className="h-8 text-[10px] font-black uppercase tracking-widest" onClick={() => router.push('/login')}>
+                      Jetzt Anmelden
+                    </Button>
+                    <Button variant="ghost" size="sm" className="h-8 text-[10px] font-bold uppercase tracking-widest text-primary hover:text-primary hover:bg-primary/5" onClick={() => router.push('/promo')}>
+                      Vorteile entdecken →
+                    </Button>
+                  </div>
                 </div>
               )}
 
@@ -271,6 +291,8 @@ export function PollList({
           </Card>
         )
       })
+
+
 
   if (!useScrollContainer) {
     return <div className="space-y-6">{pollCards}</div>

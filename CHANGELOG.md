@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.21.05] - 2026-03-22
+- Fix: **Umfragen-Hänger behoben**. Nicht angemeldete Nutzer sehen nun eine klare "Login erforderlich"-Sperre statt einer Endlos-Ladeanzeige bei Umfragen.
+- Refactor: **Gast-Voting entfernt**. Um Manipulationen zu verhindern, bleibt die Abstimmung exklusiv für registrierte Nutzer.
+
+## [0.21.04] - 2026-03-22
+- Feature: **Promo-Auth Seite**. Eine neue Seite unter `/promo` vergleicht die Vorteile eines registrierten Kontos (Sammelkarten-Progress, Gruppenplanung, To-Dos) mit einem Gast-Zugang.
+- Feature: **Booster-Reset auf 09:00 Uhr verschoben**. Der tägliche Reset der Kartenpacks findet nun immer um 09:00 Uhr Mitteleuropäischer Zeit (Berlin) statt, statt wie bisher um Mitternacht UTC.
+- UI: **Countdown angepasst**. Der Timer auf der Sammelkarten-Seite zeigt nun präzise die verbleibende Zeit bis zum nächsten 9-Uhr-Reset an.
+
 ## [0.21.02] - 2026-03-22
 - UI: **Sammelkarten-Lock-Icon verbessert**. Der drehende Pfeil bei gesperrten Packs wurde durch ein passenderes Uhr-Icon (`Clock`) ersetzt.
 
