@@ -4,7 +4,7 @@ import * as admin from "firebase-admin";
  * Wipe all teacher cards from all users.
  * Deletes all documents in the 'user_teachers' collection.
  */
-export async function wipeAllCards() {
+export async function emptyAllAlbums() {
   const collectionRef = admin.firestore().collection("user_teachers");
   
   // Use recursiveDelete if available, or batch delete

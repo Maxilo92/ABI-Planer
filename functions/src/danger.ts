@@ -5,7 +5,10 @@ import { authenticator } from "otplib";
 /**
  * Authorize a danger action with 2FA and create a delayed action.
  */
-export const authorizeDangerAction = onCall({ cors: true }, async (request) => {
+export const authorizeDangerAction = onCall({
+  cors: true,
+  region: "europe-west3",
+}, async (request) => {
   // 1. Verify Authentication
   if (!request.auth) {
     throw new HttpsError(

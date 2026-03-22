@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.22.02] - 2026-03-22
+- Fix: **CORS-Fehler bei MFA/Danger Functions behoben**. Die Funktionen `setup2FA`, `verifyInitial2FA`, `disable2FA` und `authorizeDangerAction` haben nun explizit gesetzte CORS-Optionen und Regionen (`europe-west3`).
+- Fix: **Modul-Inkonsistenz in `cron.ts` behoben**. Der Export und Import von `emptyAllAlbums` wurde vereinheitlicht, um Build-Fehler zu vermeiden.
+
 ## [0.22.01] - 2026-03-22
 - Fix: **Registrierungs-Prozess & Kurssystem optimiert**. Ladezustand für die Kursauswahl hinzugefügt und robustere Fallbacks ("Kurs 1" bis "Kurs 7") im gesamten System implementiert.
 - UI: **Feedback-Sortierung verbessert**. Neue und unbearbeitete Meldungen werden nun priorisiert oben angezeigt.
