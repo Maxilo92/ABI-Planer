@@ -115,6 +115,9 @@ export default function Dashboard() {
 
       setTodos(finalTodos)
       markLoaded('todos')
+    }, (error) => {
+      console.error('Error listening to todos:', error)
+      markLoaded('todos')
     })
 
     // 3. Listen to Events (next 3)
@@ -123,6 +126,9 @@ export default function Dashboard() {
     const qEvents = query(eventsRef, where('event_date', '>=', now), orderBy('event_date', 'asc'), limit(3))
     const unsubscribeEvents = onSnapshot(qEvents, (snapshot) => {
       setEvents(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })))
+      markLoaded('events')
+    }, (error) => {
+      console.error('Error listening to events:', error)
       markLoaded('events')
     })
 
@@ -138,6 +144,9 @@ export default function Dashboard() {
 
       setCurrentFunding(incomeTotal - expenseTotal)
       markLoaded('finances')
+    }, (error) => {
+      console.error('Error listening to finances:', error)
+      markLoaded('finances')
     })
 
     // 5. Listen to News (last 2)
@@ -146,22 +155,47 @@ export default function Dashboard() {
     const unsubscribeNews = onSnapshot(qNews, (snapshot) => {
       setNews(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })))
       markLoaded('news')
+    }, (error) => {
+      console.error('Error listening to news:', error)
+      markLoaded('news')
     })
 
     // 6. Listen to Polls (last 5)
     const pollsRef = collection(db, 'polls')
     const qPolls = query(pollsRef, where('is_active', '==', true), orderBy('created_at', 'desc'), limit(5))
     const unsubscribePolls = onSnapshot(qPolls, async (snapshot) => {
-      const pollsData: Poll[] = []
-      for (const doc of snapshot.docs) {
-        const poll = { id: doc.id, ...doc.data() } as Poll
-        const optionsSnap = await getDocs(collection(db, 'polls', doc.id, 'options'))
-        const options = optionsSnap.docs.map(d => ({ id: d.id, ...d.data() } as PollOption))
-        const votesSnap = await getDocs(collection(db, 'polls', doc.id, 'votes'))
-        const votes = votesSnap.docs.map(d => ({ id: d.id, ...d.data() } as PollVote))
-        pollsData.push({ ...poll, options, votes })
+      try {
+        const pollsData: Poll[] = []
+        for (const doc of snapshot.docs) {
+          const poll = { id: doc.id, ...doc.data() } as Poll
+          
+          // These might fail for unauthenticated users if rules are tricky
+          let options: PollOption[] = []
+          try {
+            const optionsSnap = await getDocs(collection(db, 'polls', doc.id, 'options'))
+            options = optionsSnap.docs.map(d => ({ id: d.id, ...d.data() } as PollOption))
+          } catch (e) {
+            console.error(`Error fetching options for poll ${doc.id}:`, e)
+          }
+
+          let votes: PollVote[] = []
+          try {
+            const votesSnap = await getDocs(collection(db, 'polls', doc.id, 'votes'))
+            votes = votesSnap.docs.map(d => ({ id: d.id, ...d.data() } as PollVote))
+          } catch (e) {
+            console.error(`Error fetching votes for poll ${doc.id}:`, e)
+          }
+
+          pollsData.push({ ...poll, options, votes })
+        }
+        setPolls(pollsData)
+      } catch (err) {
+        console.error('Error processing polls snapshot:', err)
+      } finally {
+        markLoaded('polls')
       }
-      setPolls(pollsData)
+    }, (error) => {
+      console.error('Error listening to polls:', error)
       markLoaded('polls')
     })
 

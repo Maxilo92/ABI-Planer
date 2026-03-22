@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.21.06] - 2026-03-22
+- Fix: **Dashboard-Ladehänger behoben**. Die Lade-Logik auf der Startseite wurde robuster gestaltet, sodass Fehler beim Abrufen von Umfragen-Details (Optionen/Stimmen) für nicht angemeldete Nutzer nicht mehr die gesamte Seite blockieren ("Lade Dashboard...").
+
 ## [0.21.05] - 2026-03-22
 - Fix: **Umfragen-Hänger behoben**. Nicht angemeldete Nutzer sehen nun eine klare "Login erforderlich"-Sperre statt einer Endlos-Ladeanzeige bei Umfragen.
 - Refactor: **Gast-Voting entfernt**. Um Manipulationen zu verhindern, bleibt die Abstimmung exklusiv für registrierte Nutzer.
