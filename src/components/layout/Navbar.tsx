@@ -82,15 +82,17 @@ export function Navbar() {
     { href: '/abstimmungen', label: 'Umfragen', icon: BarChart2, notify: notifications.umfragen },
   ]
 
-  navItems.push({
-    href: '/sammelkarten-root',
-    label: 'Sammelkarten',
-    icon: Sparkles,
-    subItems: [
-      { href: '/sammelkarten?view=sammelkarten', label: 'Booster öffnen', icon: Gift },
-      { href: '/sammelkarten?view=album', label: 'Lehrer-Album', icon: Trophy },
-    ]
-  })
+  if (profile) {
+    navItems.push({
+      href: '/sammelkarten-root',
+      label: 'Sammelkarten',
+      icon: Sparkles,
+      subItems: [
+        { href: '/sammelkarten?view=sammelkarten', label: 'Booster öffnen', icon: Gift },
+        { href: '/sammelkarten?view=album', label: 'Lehrer-Album', icon: Trophy },
+      ]
+    })
+  }
 
   navItems.push({ href: '/einstellungen', label: 'Einstellungen', icon: Settings })
 

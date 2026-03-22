@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.21.01] - 2026-03-22
+- Auth: **Sammelkarten-Zugriff eingeschränkt**. Das Feature ist nun nur noch für angemeldete Nutzer sichtbar und zugänglich. Nicht angemeldete Nutzer werden automatisch zum Login umgeleitet.
+
 ## [0.21.00] - 2026-03-22
 - Feature: **Sammelkarten-Release**. Das Sammelkarten-Feature ist nun für alle Nutzer permanent freigeschaltet und direkt über die Navbar erreichbar.
 - UX: **Easter Egg Toggle entfernt**. Die Option, Sammelkarten in den Einstellungen zu verstecken, wurde entfernt, da es sich nun um ein Kern-Feature handelt.

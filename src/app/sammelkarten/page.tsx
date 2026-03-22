@@ -54,6 +54,12 @@ function SammelkartenContent() {
 
 
   useEffect(() => {
+    if (!loading && !user) {
+      redirect('/login?reason=unauthorized')
+    }
+  }, [user, loading])
+
+  useEffect(() => {
     const unsubscribe = onSnapshot(doc(db, 'settings', 'global'), (snapshot) => {
       if (snapshot.exists()) {
         setGlobalSettings(snapshot.data())
