@@ -4,6 +4,7 @@ import { usePathname } from 'next/navigation'
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
 import { RandomCookieBanner } from '@/components/layout/RandomCookieBanner'
+import { DangerAlertBanner } from '@/components/layout/DangerAlertBanner'
 
 interface AppShellProps {
   children: React.ReactNode
@@ -18,6 +19,7 @@ export function AppShell({ children }: AppShellProps) {
   if (isAuthRoute) {
     return (
       <div className="min-h-screen bg-background">
+        <DangerAlertBanner />
         <main className="min-h-screen">{children}</main>
         <RandomCookieBanner />
       </div>
@@ -28,6 +30,7 @@ export function AppShell({ children }: AppShellProps) {
     <div className="min-h-[100dvh] bg-background md:flex">
       <Navbar />
       <div className="flex-1 flex flex-col min-h-[100dvh]">
+        <DangerAlertBanner />
         <main className="flex-1 px-4 py-8 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-7xl">{children}</div>
         </main>

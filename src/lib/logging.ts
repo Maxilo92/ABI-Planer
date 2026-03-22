@@ -42,6 +42,10 @@ export type LogActionType =
   | 'TEACHERS_BULK_IMPORT'
   | 'TEACHERS_RARITY_SYNC'
   | 'TEACHER_VOTE'
+  | 'DANGER_ACTION_QUEUED'
+  | 'DANGER_ACTION_CANCELLED'
+  | 'DANGER_ACTION_EXECUTED'
+  | 'DANGER_ACTION_FAILED'
 
 export interface LogEntry {
   action: LogActionType

@@ -182,6 +182,10 @@ service cloud.firestore {
         allow update, delete: if isAdmin();
     }
 
+    match /user_secrets/{userId} {
+      allow read, write: if false; // Only accessible via Admin SDK
+    }
+
     match /group_messages/{id} {
         allow read: if isApproved();
         allow create: if isApproved() && (
@@ -189,6 +193,13 @@ service cloud.firestore {
           (request.resource.data.type == 'hub')
         );
         allow update, delete: if isAdmin() || isGroupLeader(resource.data.group_name) || (isAuthenticated() && resource.data.created_by == request.auth.uid);
+    }
+
+    match /delayed_actions/{id} {
+      allow read: if isMainAdmin();
+      allow create: if false; // Only via Cloud Function
+      allow update: if isMainAdmin() && request.resource.data.status == 'cancelled' && resource.data.status == 'pending';
+      allow delete: if isMainAdmin();
     }
   }
 }

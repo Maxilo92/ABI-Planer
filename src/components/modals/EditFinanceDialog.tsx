@@ -31,7 +31,7 @@ export function EditFinanceDialog({ entry }: EditFinanceDialogProps) {
   const [amount, setAmount] = useState(entry.amount.toString())
   const [description, setDescription] = useState(entry.description || '')
   const [responsibleClass, setResponsibleClass] = useState<ClassName | 'Allgemein'>(entry.responsible_class || 'Allgemein')
-  const [courses, setCourses] = useState<string[]>(['12A', '12B', '12C', '12D'])
+  const [courses, setCourses] = useState<string[]>(['Kurs 1', 'Kurs 2', 'Kurs 3', 'Kurs 4', 'Kurs 5', 'Kurs 6', 'Kurs 7'])
   const [loading, setLoading] = useState(false)
   const [loadingCourses, setLoadingCourses] = useState(true)
   const [open, setOpen] = useState(false)

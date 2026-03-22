@@ -2,6 +2,7 @@ import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
+import { getFunctions } from "firebase/functions";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -23,5 +24,6 @@ const app = isConfigValid ? (getApps().length > 0 ? getApp() : initializeApp(fir
 const auth = app ? getAuth(app) : ({} as any);
 const db = app ? getFirestore(app, 'abi-data') : ({} as any);
 const storage = app ? getStorage(app) : ({} as any);
+const functions = app ? getFunctions(app, 'europe-west3') : ({} as any);
 
-export { app, auth, db, storage };
+export { app, auth, db, storage, functions };

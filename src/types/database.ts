@@ -23,6 +23,8 @@ export interface Profile {
   is_approved: boolean;
   is_group_leader?: boolean | null;
   easter_egg_unlocked?: boolean;
+  is_2fa_enabled?: boolean;
+  two_factor_secret_id?: string | null;
   legal_consents?: {
     is_at_least_16: boolean;
     terms_accepted: boolean;
@@ -43,6 +45,27 @@ export interface Profile {
     extra_boosters_claimed?: boolean;
     total_opened?: number;
   } | null;
+}
+
+export interface UserSecret {
+  id: string;
+  secret: string;
+  backup_codes: string[];
+  created_at: string;
+}
+
+export interface DelayedAction {
+  id: string;
+  actionType: string;
+  description: string;
+  payload: any;
+  createdAt: string;
+  executableAt: string;
+  status: 'pending' | 'completed' | 'cancelled' | 'failed';
+  error?: string;
+  triggeredBy: string; // admin UID
+  triggeredByName: string;
+  completedAt?: string | Timestamp | Date;
 }
 
 export interface Teacher {

@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.22.0] - 2026-03-22
+- Security: **Super Danger Zone Framework**. Einführung eines mehrstufigen Sicherheitssystems für kritische Admin-Aktionen (z.B. Karten-Wipes).
+- Security: **2FA (TOTP) Support**. Admins können nun die Zwei-Faktor-Authentisierung (Google/Apple Authenticator) in ihrem Profil aktivieren, um Zugriff auf die Danger Zone zu erhalten.
+- Feature: **24h Delay & Reversibility**. Kritische Aktionen treten erst nach einer 24-stündigen Wartezeit in Kraft. Während dieser Zeit können Admins die Aktion jederzeit über den neuen "STOPP (Abbrechen)" Button rückgängig machen.
+- UI: **Globaler Countdown-Banner**. Ein neuer Banner informiert alle Nutzer transparent über bevorstehende System-Operationen mit einem Live-Countdown.
+- Backend: **Automated Execution via Cloud Functions**. Ein neuer Cron-Job prüft alle 15 Minuten auf fällige Aktionen und führt diese automatisch aus.
+- Feature: **System-Test (Dry Run)**. Eine neue Test-Aktion in der Danger Zone erlaubt es Admins, den kompletten Sicherheitsworkflow gefahrlos zu testen.
+- Security: **Audit-Logging**. Alle Phasen einer Danger-Action (Planung, Abbruch, Ausführung, Fehler) werden lückenlos im System-Log protokolliert.
+
+## [0.21.28] - 2026-03-22
+- Fix: **Fallback-Kursnamen korrigiert**. Die Standardkurse wurden von 12A-12G auf "Kurs 1" bis "Kurs 7" umgestellt, um der tatsächlichen Kursstruktur besser zu entsprechen.
+
+## [0.21.27] - 2026-03-22
+- Fix: **Kursauswahl in der Registrierung verbessert**. Ein Ladezustand für Kurse wurde hinzugefügt und die Fallback-Liste auf 7 Kurse erweitert, um sicherzustellen, dass Nutzer auch bei langsamer Firestore-Verbindung auf mobilen Geräten alle Kurse zur Auswahl haben.
+
 ## [0.21.26] - 2026-03-22
 - Security: **Firestore Rules aktualisiert**. Authentifizierte Nutzer dürfen nun die Lehrer-Sammlungen anderer Nutzer lesen, um diese auf den Profilseiten anzuzeigen. Schreibrechte bleiben weiterhin auf den jeweiligen Besitzer beschränkt.
 

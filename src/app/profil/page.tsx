@@ -19,12 +19,13 @@ import { doc, deleteDoc, setDoc, updateDoc, getDoc } from 'firebase/firestore'
 import { toast } from 'sonner'
 import { logAction } from '@/lib/logging'
 import { TeacherAlbum } from '@/components/dashboard/TeacherAlbum'
+import { TOTPSetup } from '@/components/admin/TOTPSetup'
 
 export default function ProfilePage() {
   const { user, profile, loading } = useAuth()
   const [fullName, setFullName] = useState('')
   const [savingName, setSavingName] = useState(false)
-  const [courses, setCourses] = useState<string[]>(['12A', '12B', '12C', '12D'])
+  const [courses, setCourses] = useState<string[]>(['Kurs 1', 'Kurs 2', 'Kurs 3', 'Kurs 4', 'Kurs 5', 'Kurs 6', 'Kurs 7'])
   const [selectedCourse, setSelectedCourse] = useState('')
   const [savingCourse, setSavingCourse] = useState(false)
   const [sendingReset, setSendingReset] = useState(false)
@@ -340,10 +341,22 @@ export default function ProfilePage() {
               <p className="text-sm text-muted-foreground">
                 Wir schicken dir eine E-Mail mit einem sicheren Link zum Ändern deines Passworts.
               </p>
-              <Button variant="outline" onClick={handlePasswordReset} disabled={sendingReset}>
+              <Button variant="outline" className="w-full sm:w-auto" onClick={handlePasswordReset} disabled={sendingReset}>
                 {sendingReset ? 'Sende E-Mail...' : 'Passwort ändern'}
               </Button>
             </div>
+
+            {['admin', 'admin_main', 'admin_co'].includes(profile.role) && (
+              <div className="space-y-3 border-t pt-4">
+                <Label>Zwei-Faktor-Authentisierung (2FA)</Label>
+                <p className="text-sm text-muted-foreground">
+                  Schützen Sie Ihr Administratorkonto zusätzlich mit einer Authenticator-App.
+                </p>
+                <div className="w-full sm:w-auto">
+                  <TOTPSetup profile={profile} />
+                </div>
+              </div>
+            )}
 
             <div className="space-y-3 border-t pt-4">
               <Label className="text-destructive">Konto löschen</Label>

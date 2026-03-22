@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { LayoutDashboard, CheckSquare, Calendar, Euro, Megaphone, BarChart2, LogOut, Menu, X, ShieldCheck, User, MessageSquareHeart, Settings, Users, ChevronDown, ChevronRight, Sparkles, HelpCircle, Gift, Trophy } from 'lucide-react'
+import { LayoutDashboard, CheckSquare, Calendar, Euro, Megaphone, BarChart2, LogOut, Menu, X, ShieldCheck, User, MessageSquareHeart, Settings, Users, ChevronDown, ChevronRight, Sparkles, HelpCircle, Gift, Trophy, AlertTriangle } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -97,16 +97,22 @@ export function Navbar() {
   navItems.push({ href: '/einstellungen', label: 'Einstellungen', icon: Settings })
 
   if (isAdmin) {
+    const adminSubItems = [
+      { href: '/admin', label: 'Benutzer', icon: Users },
+      { href: '/admin/global-settings', label: 'Globale Einstellungen', icon: Settings },
+      { href: '/admin/logs', label: 'Logs', icon: BarChart2, isBeta: false },
+      { href: '/admin/feedback', label: 'Feedback Admin', icon: MessageSquareHeart },
+    ]
+
+    if (profile?.role === 'admin_main') {
+      adminSubItems.push({ href: '/admin/danger', label: 'Danger Zone', icon: AlertTriangle })
+    }
+
     navItems.push({ 
       href: '/admin-root', 
       label: 'Admin Bereich', 
       icon: ShieldCheck,
-      subItems: [
-        { href: '/admin', label: 'Benutzer', icon: Users },
-        { href: '/admin/global-settings', label: 'Globale Einstellungen', icon: Settings },
-        { href: '/admin/logs', label: 'Logs', icon: BarChart2, isBeta: false },
-        { href: '/admin/feedback', label: 'Feedback Admin', icon: MessageSquareHeart },
-      ]
+      subItems: adminSubItems
     })
   }
 

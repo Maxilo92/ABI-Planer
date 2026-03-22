@@ -126,7 +126,7 @@ export default function SettingsPage() {
     const unsubscribe = onSnapshot(settingsRef, (settingsDoc) => {
       const courses = settingsDoc.exists() ? settingsDoc.data().courses : undefined
       const planningGroups = settingsDoc.exists() ? settingsDoc.data().planning_groups : undefined
-      const normalizedCourses = Array.isArray(courses) && courses.length > 0 ? courses : ['12A', '12B', '12C', '12D']
+      const normalizedCourses = Array.isArray(courses) && courses.length > 0 ? courses : ['Kurs 1', 'Kurs 2', 'Kurs 3', 'Kurs 4', 'Kurs 5', 'Kurs 6', 'Kurs 7']
       const normalizedGroups = Array.isArray(planningGroups) && planningGroups.length > 0
         ? planningGroups
         : [{ name: 'Ballplanung', leader_user_id: null }, { name: 'Gelder sammeln', leader_user_id: null }]
@@ -495,7 +495,7 @@ export default function SettingsPage() {
                 <Input
                   value={row.after}
                   onChange={(e) => updateCourseRow(row.id, e.target.value)}
-                  placeholder="z.B. 12A"
+                  placeholder="z.B. Kurs 1"
                   disabled={!canManageCourses}
                 />
                 <Button

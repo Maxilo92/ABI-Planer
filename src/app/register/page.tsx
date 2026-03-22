@@ -18,8 +18,9 @@ export default function RegisterPage() {
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [courses, setCourses] = useState<string[]>(['12A', '12B', '12C', '12D'])
-  const [selectedCourse, setSelectedCourse] = useState('12A')
+  const [courses, setCourses] = useState<string[]>(['Kurs 1', 'Kurs 2', 'Kurs 3', 'Kurs 4', 'Kurs 5', 'Kurs 6', 'Kurs 7'])
+  const [selectedCourse, setSelectedCourse] = useState('Kurs 1')
+  const [isCoursesLoading, setIsCoursesLoading] = useState(true)
   const [isAtLeast16, setIsAtLeast16] = useState(false)
   const [acceptsTerms, setAcceptsTerms] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -28,18 +29,23 @@ export default function RegisterPage() {
 
   useEffect(() => {
     const loadCourses = async () => {
+      setIsCoursesLoading(true)
       try {
         const settingsSnap = await getDoc(doc(db, 'settings', 'config'))
-        const configuredCourses = settingsSnap.exists() ? settingsSnap.data().courses : undefined
-        if (Array.isArray(configuredCourses) && configuredCourses.length > 0) {
-          const normalizedCourses = configuredCourses.filter((entry: unknown): entry is string => typeof entry === 'string' && entry.trim().length > 0)
-          if (normalizedCourses.length > 0) {
-            setCourses(normalizedCourses)
-            setSelectedCourse(normalizedCourses[0])
+        if (settingsSnap.exists()) {
+          const configuredCourses = settingsSnap.data().courses
+          if (Array.isArray(configuredCourses) && configuredCourses.length > 0) {
+            const normalizedCourses = configuredCourses.filter((entry: unknown): entry is string => typeof entry === 'string' && entry.trim().length > 0)
+            if (normalizedCourses.length > 0) {
+              setCourses(normalizedCourses)
+              setSelectedCourse(normalizedCourses[0])
+            }
           }
         }
       } catch (loadError) {
         console.error('Error loading courses:', loadError)
+      } finally {
+        setIsCoursesLoading(false)
       }
     }
 
@@ -81,6 +87,10 @@ export default function RegisterPage() {
     }
 
     if (step === 3) {
+      if (isCoursesLoading) {
+        setError('Kurse werden noch geladen. Bitte warte einen Moment.')
+        return false
+      }
       if (!selectedCourse) {
         setError('Bitte wähle einen Kurs aus.')
         return false
@@ -259,19 +269,31 @@ export default function RegisterPage() {
               <div className="space-y-5 mb-1 sm:mb-2">
                 <div className="space-y-2">
                   <Label htmlFor="course" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Kurs</Label>
-                  <select
-                    id="course"
-                    value={selectedCourse}
-                    onChange={(e) => setSelectedCourse(e.target.value)}
-                    className="flex h-12 w-full rounded-md border border-input bg-background/70 px-3 py-2 text-base"
-                    required
-                  >
-                    {courses.map((course) => (
-                      <option key={course} value={course}>
-                        {course}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="relative">
+                    <select
+                      id="course"
+                      value={selectedCourse}
+                      onChange={(e) => setSelectedCourse(e.target.value)}
+                      className="flex h-12 w-full rounded-md border border-input bg-background/70 px-3 py-2 text-base disabled:opacity-50"
+                      required
+                      disabled={isCoursesLoading}
+                    >
+                      {isCoursesLoading ? (
+                        <option value="">Lade Kurse...</option>
+                      ) : (
+                        courses.map((course) => (
+                          <option key={course} value={course}>
+                            {course}
+                          </option>
+                        ))
+                      )}
+                    </select>
+                    {isCoursesLoading && (
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <div className="space-y-3 rounded-lg border border-border/70 bg-muted/20 p-3">
