@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.21.13] - 2026-03-22
+- UI: **Desktop-Optimierung für Lehrer-Umfrage**. Die hervorgehobene Lehrer-Seltenheits-Umfrage nutzt auf großen Bildschirmen nun ein Querformat (Horizontal-Layout), um den Platz besser zu nutzen und professioneller zu wirken.
+
 ## [0.21.12] - 2026-03-22
 - Fix: **Vorschau für gesperrte Lehrer-Umfragen**. Gäste sehen nun wieder, welcher Lehrer gerade zur Abstimmung steht (Vorschau-Header), während nur die Abstimmungs-Buttons durch die Lock-UI ersetzt werden.
 

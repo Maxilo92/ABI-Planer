@@ -178,76 +178,84 @@ export function TeacherRarityVoting() {
         <Sparkles className="h-12 w-12 text-primary" />
       </div>
       
-      <CardHeader className="pb-3">
-        <div className="flex justify-between items-center">
-          <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 font-black tracking-tighter uppercase text-[10px]">
-            Crowdsourced Rarity
-          </Badge>
-          <span className="text-[10px] font-medium text-muted-foreground">
-            Noch {teachers.length} übrig
-          </span>
+      <div className="flex flex-col lg:flex-row">
+        {/* Left Side: Question & Info */}
+        <div className="lg:w-1/2 p-6 lg:border-r border-border/50 flex flex-col justify-center">
+          <div className="flex justify-between items-center mb-4 lg:mb-6">
+            <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 font-black tracking-tighter uppercase text-[10px]">
+              Crowdsourced Rarity
+            </Badge>
+            <span className="text-[10px] font-medium text-muted-foreground lg:bg-muted/50 lg:px-2 lg:py-0.5 lg:rounded">
+              Noch {teachers.length} übrig
+            </span>
+          </div>
+          <CardTitle className="text-2xl lg:text-3xl font-black tracking-tight leading-tight">
+            Wie selten ist <span className="text-primary">{currentTeacher.name}</span>?
+          </CardTitle>
+          <CardDescription className="mt-3 lg:mt-4 lg:text-sm lg:leading-relaxed">
+            Deine Stimme hilft dabei, die offizielle Seltenheit im Lehrer-Album festzulegen. Wähle die Kategorie, die am besten passt!
+          </CardDescription>
         </div>
-        <CardTitle className="text-2xl font-black tracking-tight mt-2">
-          Wie selten ist {currentTeacher.name}?
-        </CardTitle>
-        <CardDescription>
-          Deine Stimme hilft dabei, die offizielle Seltenheit im Lehrer-Album festzulegen.
-        </CardDescription>
-      </CardHeader>
-      
-      <CardContent className="pt-2">
-        {!user ? (
-          <div className="relative mt-4 mb-2 animate-in fade-in slide-in-from-bottom-2 duration-500">
-            <div className="bg-muted/30 p-6 rounded-xl border border-border flex flex-col items-center text-center relative shadow-sm">
-              {/* Floating Lock Icon on Border */}
-              <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-background p-2 rounded-full shadow-sm border border-border">
-                <Lock className="h-4 w-4 text-muted-foreground" />
-              </div>
-              
-              <p className="text-xs font-black uppercase tracking-widest mb-1 mt-1">Bewertung Gesperrt</p>
-              <p className="text-[9px] text-muted-foreground mb-4 leading-relaxed italic max-w-[280px]">
-                Um Manipulationen zu verhindern, ist eine Mitbestimmung bei den Seltenheiten nur mit verifiziertem Konto möglich.
-              </p>
-              
-              <div className="flex flex-col w-full max-w-[240px] gap-2">
-                <Button 
-                  size="sm" 
-                  className="h-9 text-[10px] font-black uppercase tracking-[0.2em] shadow-lg shadow-primary/20" 
-                  onClick={() => router.push('/login')}
-                >
-                  Jetzt Anmelden
-                </Button>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className="h-9 text-[9px] font-black uppercase tracking-[0.2em] text-muted-foreground hover:text-primary hover:bg-primary/5" 
-                  onClick={() => router.push('/promo')}
-                >
-                  Vorteile entdecken
-                </Button>
+
+        {/* Right Side: Voting or Lock */}
+        <div className="lg:w-1/2 p-6 bg-muted/5 lg:bg-transparent flex flex-col justify-center min-h-[220px]">
+          {!user ? (
+            <div className="relative mt-4 mb-2 animate-in fade-in slide-in-from-bottom-2 duration-500 w-full">
+              <div className="bg-muted/30 p-6 lg:p-8 rounded-xl border border-border flex flex-col items-center text-center relative shadow-sm">
+                {/* Floating Lock Icon on Border */}
+                <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-background p-2 rounded-full shadow-sm border border-border">
+                  <Lock className="h-4 w-4 text-muted-foreground" />
+                </div>
+                
+                <p className="text-xs font-black uppercase tracking-widest mb-1 mt-1">Bewertung Gesperrt</p>
+                <p className="text-[9px] lg:text-[10px] text-muted-foreground mb-4 leading-relaxed italic max-w-[280px]">
+                  Um Manipulationen zu verhindern, ist eine Mitbestimmung bei den Seltenheiten nur mit verifiziertem Konto möglich.
+                </p>
+                
+                <div className="flex flex-col w-full max-w-[240px] gap-2">
+                  <Button 
+                    size="sm" 
+                    className="h-9 lg:h-10 text-[10px] font-black uppercase tracking-[0.2em] shadow-lg shadow-primary/20" 
+                    onClick={() => router.push('/login')}
+                  >
+                    Jetzt Anmelden
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="h-9 lg:h-10 text-[9px] lg:text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground hover:text-primary hover:bg-primary/5" 
+                    onClick={() => router.push('/promo')}
+                  >
+                    Vorteile entdecken
+                  </Button>
+                </div>
               </div>
             </div>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-5 gap-2">
-            {RARITY_OPTIONS.map((opt) => (
-              <Button
-                key={opt.label}
-                variant="outline"
-                disabled={voting}
-                onClick={() => handleVote(opt.value)}
-                className={cn(
-                  "h-auto py-4 flex flex-col gap-2 border-2 transition-all hover:scale-105 active:scale-95 group/btn",
-                  voting && "opacity-50"
-                )}
-              >
-                <div className={cn("w-3 h-3 rounded-full", opt.color)} />
-                <span className="font-bold text-[11px] uppercase tracking-wider">{opt.label}</span>
-              </Button>
-            ))}
-          </div>
-        )}
-      </CardContent>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-5 lg:grid-cols-1 gap-2">
+              {RARITY_OPTIONS.map((opt) => (
+                <Button
+                  key={opt.label}
+                  variant="outline"
+                  disabled={voting}
+                  onClick={() => handleVote(opt.value)}
+                  className={cn(
+                    "h-auto py-4 lg:py-3 flex flex-col lg:flex-row items-center lg:justify-start gap-2 lg:gap-4 border-2 transition-all hover:scale-[1.02] active:scale-95 group/btn",
+                    voting && "opacity-50"
+                  )}
+                >
+                  <div className={cn("w-3 h-3 rounded-full shrink-0", opt.color)} />
+                  <span className="font-bold text-[11px] lg:text-[12px] uppercase tracking-wider">{opt.label}</span>
+                  {/* Subtle Indicator for PC row */}
+                  <div className="hidden lg:block ml-auto opacity-0 group-hover/btn:opacity-100 transition-opacity">
+                     <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
+                  </div>
+                </Button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
     </Card>
   )
 }

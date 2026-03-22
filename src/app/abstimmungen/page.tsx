@@ -100,23 +100,21 @@ export default function PollsPage() {
         {/* Background ambient glow */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-full bg-primary/5 blur-3xl rounded-full -z-10" />
         
-        <div className="relative max-w-5xl mx-auto">
-          {/* Faded placeholders to left/right for carousel effect if needed, 
-              or just clean focus on the pinned lehrer poll */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-center">
+        <div className="relative max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
             {/* Left Placeholder (Faded) */}
-            <div className="hidden lg:block opacity-20 scale-90 blur-[1px] pointer-events-none select-none grayscale">
-               <Card className="border-border/40 bg-muted/20 h-[200px]" />
+            <div className="hidden lg:block lg:col-span-2 opacity-10 scale-90 blur-[2px] pointer-events-none select-none grayscale -translate-x-12">
+               <Card className="border-border/40 bg-muted/20 h-[240px]" />
             </div>
 
-            {/* Pinned Teacher Poll (Main Focus) */}
-            <div className="lg:col-span-1 lg:scale-110 lg:z-10 transition-transform">
+            {/* Pinned Teacher Poll (Main Focus - Now Wider) */}
+            <div className="lg:col-span-8 lg:z-10 transition-transform">
               <TeacherRarityVoting />
             </div>
 
             {/* Right Placeholder (Faded) */}
-            <div className="hidden lg:block opacity-20 scale-90 blur-[1px] pointer-events-none select-none grayscale">
-               <Card className="border-border/40 bg-muted/20 h-[200px]" />
+            <div className="hidden lg:block lg:col-span-2 opacity-10 scale-90 blur-[2px] pointer-events-none select-none grayscale translate-x-12">
+               <Card className="border-border/40 bg-muted/20 h-[240px]" />
             </div>
           </div>
         </div>
