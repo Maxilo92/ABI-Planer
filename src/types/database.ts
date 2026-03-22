@@ -41,6 +41,7 @@ export interface Profile {
     count: number;      // Open count for that day
     extra_available?: number;
     extra_boosters_claimed?: boolean;
+    total_opened?: number;
   } | null;
 }
 
