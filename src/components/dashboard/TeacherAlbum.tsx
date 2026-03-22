@@ -212,14 +212,17 @@ function TeacherCardDetail({ teacher, userData, onClose }: { teacher: LootTeache
 
           {/* Minimalist Back of Card */}
           <div 
-            className="absolute inset-0 backface-hidden rotate-y-180 rounded-3xl bg-slate-900 border-[10px] border-white/10 flex flex-col items-center justify-center shadow-2xl overflow-hidden"
+            className="absolute inset-0 backface-hidden rotate-y-180 rounded-3xl bg-slate-900 border-[8px] border-white/20 flex flex-col items-center justify-center shadow-2xl overflow-hidden"
             style={{ transform: 'rotateY(180deg) translateZ(1px)' }}
           >
+             {/* Subtle Background Pattern/Glow */}
+             <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.1)_0%,transparent_70%)]" />
+             
              <div className="relative z-10 flex flex-col items-center">
-               <div className="p-5 rounded-full bg-white/5 mb-5">
-                 <GraduationCap className="h-16 w-16 text-white/20" />
+               <div className="p-5 rounded-full bg-white/10 mb-5 shadow-[0_0_20px_rgba(255,255,255,0.1)]">
+                 <GraduationCap className="h-16 w-16 text-white/50" />
                </div>
-               <div className="text-white/20 font-black text-2xl tracking-tighter italic px-4 text-center">ABI PLANER</div>
+               <div className="text-white/60 font-black text-2xl tracking-tighter italic px-4 text-center drop-shadow-sm">ABI PLANER</div>
              </div>
           </div>
         </div>

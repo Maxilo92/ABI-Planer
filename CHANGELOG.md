@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.21.24] - 2026-03-22
+- UI: **Design der Karten-Rückseiten verbessert**. Die Rückseiten der Lehrer-Sammelkarten haben nun deutlich mehr Kontrast, einen subtilen Leuchteffekt im Zentrum und eine besser lesbare Beschriftung, um die Benutzerfreundlichkeit auf mobilen Geräten zu erhöhen.
+
 ## [0.21.23] - 2026-03-22
 - Feature: **Lehrer-Album Vorschau-Modus**. Auf Profilseiten wird nun standardmäßig nur eine Vorschau der 5 besten Karten (nach Level/Seltenheit) angezeigt. Ein "Mehr anzeigen"-Button ermöglicht das vollständige Ausklappen der Sammlung, um die Übersichtlichkeit der Profilseiten zu verbessern.
 

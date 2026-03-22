@@ -276,16 +276,19 @@ function SammelkartenContent() {
                         )}>
                           {/* Minimalist Back of Card */}
                           <div 
-                            className="absolute inset-0 backface-hidden rounded-2xl bg-slate-900 border-[6px] border-white/10 flex flex-col items-center justify-center shadow-xl overflow-hidden"
+                            className="absolute inset-0 backface-hidden rounded-2xl bg-slate-900 border-[6px] border-white/20 flex flex-col items-center justify-center shadow-xl overflow-hidden"
                             style={{ transform: 'translateZ(1px)' }}
                           >
+                             {/* Subtle Background Pattern/Glow */}
+                             <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.1)_0%,transparent_70%)]" />
+                             
                              <div className="relative z-10 flex flex-col items-center">
-                               <div className="p-3 rounded-full bg-white/5 mb-3">
-                                 <GraduationCap className="h-10 w-10 sm:h-12 sm:w-12 text-white/20" />
+                               <div className="p-3 rounded-full bg-white/10 mb-3 shadow-[0_0_15px_rgba(255,255,255,0.1)]">
+                                 <GraduationCap className="h-10 w-10 sm:h-12 sm:w-12 text-white/50" />
                                </div>
-                               <div className="text-white/20 font-black text-base sm:text-lg tracking-tighter italic text-center px-2">ABI PLANER</div>
+                               <div className="text-white/60 font-black text-base sm:text-lg tracking-tighter italic text-center px-2 drop-shadow-sm">ABI PLANER</div>
                                {!isFlipped && (
-                                 <div className="mt-4 animate-pulse text-[8px] text-white/30 font-bold uppercase tracking-[0.2em]">Tippen zum Umdrehen</div>
+                                 <div className="mt-4 animate-pulse text-[10px] text-white/50 font-black uppercase tracking-[0.2em]">Tippen zum Umdrehen</div>
                                )}
                              </div>
                           </div>
