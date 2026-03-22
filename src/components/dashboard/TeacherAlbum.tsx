@@ -253,12 +253,21 @@ function TeacherCardDetail({ teacher, userData, onClose }: { teacher: LootTeache
   )
 }
 
-export function TeacherAlbum({ userId, targetProfile }: { userId?: string, targetProfile?: Profile | null }) {
+export function TeacherAlbum({ 
+  userId, 
+  targetProfile, 
+  initialLimit 
+}: { 
+  userId?: string, 
+  targetProfile?: Profile | null,
+  initialLimit?: number
+}) {
   const { profile: currentProfile } = useAuth()
   const activeProfile = targetProfile !== undefined ? targetProfile : currentProfile
   const { teachers: userTeachers, loading: loadingUserTeachers } = useUserTeachers(userId)
   const [globalTeachers, setGlobalTeachers] = useState<LootTeacher[]>([])
   const [loadingGlobal, setLoadingGlobal] = useState(true)
+  const [isExpanded, setIsExpanded] = useState(false)
   
   // Filters state
   const [search, setSearch] = useState('')
@@ -285,7 +294,7 @@ export function TeacherAlbum({ userId, targetProfile }: { userId?: string, targe
   }, [])
 
   const filteredTeachers = useMemo(() => {
-    return globalTeachers.filter(t => {
+    let result = globalTeachers.filter(t => {
       // Search filter
       if (search && !t.name.toLowerCase().includes(search.toLowerCase())) return false
       
@@ -298,11 +307,28 @@ export function TeacherAlbum({ userId, targetProfile }: { userId?: string, targe
       if (ownershipFilter === 'missing' && isOwned) return false
       
       return true
-    }).sort((a, b) => {
+    })
+
+    // Sorting logic
+    result.sort((a, b) => {
       const ownedA = (userTeachers?.[a.id] || userTeachers?.[a.name])
       const ownedB = (userTeachers?.[b.id] || userTeachers?.[b.name])
       
-      // Ownership always comes first in sorting
+      // If we have an initialLimit and are not expanded, we PRIORITIZE level/rarity for the preview
+      if (initialLimit && !isExpanded && !search && rarityFilters.length === 0 && ownershipFilter === 'all') {
+        const lvlA = ownedA?.level || 0
+        const lvlB = ownedB?.level || 0
+        if (lvlA !== lvlB) return lvlB - lvlA
+
+        const rarityOrder: TeacherRarity[] = ['legendary', 'mythic', 'epic', 'rare', 'common']
+        const rarityA = rarityOrder.indexOf(a.rarity)
+        const rarityB = rarityOrder.indexOf(b.rarity)
+        if (rarityA !== rarityB) return rarityA - rarityB
+
+        return a.name.localeCompare(b.name)
+      }
+
+      // Ownership always comes first in normal sorting
       if (!!ownedA !== !!ownedB) return ownedB ? 1 : -1
       
       // Secondary sorting based on user selection
@@ -330,7 +356,9 @@ export function TeacherAlbum({ userId, targetProfile }: { userId?: string, targe
       // Default: sort by name
       return a.name.localeCompare(b.name)
     })
-  }, [globalTeachers, userTeachers, search, rarityFilters, ownershipFilter, sortBy])
+
+    return result
+  }, [globalTeachers, userTeachers, search, rarityFilters, ownershipFilter, sortBy, initialLimit, isExpanded])
 
   if (loadingUserTeachers || loadingGlobal) {
     return (
@@ -361,6 +389,11 @@ export function TeacherAlbum({ userId, targetProfile }: { userId?: string, targe
   }
 
   const activeFilterCount = (search ? 1 : 0) + rarityFilters.length + (ownershipFilter !== 'all' ? 1 : 0) + (sortBy !== 'rarity' ? 1 : 0)
+
+  // Determine which teachers to show based on expansion state
+  const displayedTeachers = initialLimit && !isExpanded 
+    ? filteredTeachers.slice(0, initialLimit) 
+    : filteredTeachers
 
   return (
     <div className="space-y-6">
@@ -509,89 +542,104 @@ export function TeacherAlbum({ userId, targetProfile }: { userId?: string, targe
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-          {filteredTeachers.map((teacher) => {
-            const teacherId = teacher.id || teacher.name
-            const userData = userTeachers?.[teacher.id] || userTeachers?.[teacher.name]
-            const isOwned = !!userData
-            const level = userData?.level || 1
-            const count = userData?.count || 0
-            
-            const nextCount = getNextLevelCount(level)
-            const prevCount = getPrevLevelCount(level)
-            const progress = isOwned ? ((count - prevCount) / (nextCount - prevCount)) * 100 : 0
-            const needed = nextCount - count
+        <>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+            {displayedTeachers.map((teacher) => {
+              const teacherId = teacher.id || teacher.name
+              const userData = userTeachers?.[teacher.id] || userTeachers?.[teacher.name]
+              const isOwned = !!userData
+              const level = userData?.level || 1
+              const count = userData?.count || 0
+              
+              const nextCount = getNextLevelCount(level)
+              const prevCount = getPrevLevelCount(level)
+              const progress = isOwned ? ((count - prevCount) / (nextCount - prevCount)) * 100 : 0
+              const needed = nextCount - count
 
-            return (
-              <Card 
-                key={teacherId}
-                onClick={() => isOwned && setSelectedTeacher(teacher)}
-                className={cn(
-                  "relative overflow-hidden transition-all duration-300 group",
-                  !isOwned && "opacity-60 grayscale brightness-75",
-                  isOwned && "border-2 cursor-pointer hover:scale-[1.04] hover:shadow-xl",
-                  isOwned && teacher.rarity === 'legendary' && "border-amber-500/50 bg-amber-500/5 shadow-lg shadow-amber-500/10",
-                  isOwned && teacher.rarity === 'mythic' && "border-red-500/50 bg-red-500/5 shadow-lg shadow-red-500/10",
-                  isOwned && teacher.rarity === 'epic' && "border-purple-500/50 bg-purple-500/5 shadow-lg shadow-purple-500/10",
-                  isOwned && teacher.rarity === 'rare' && "border-emerald-500/50 bg-emerald-500/5 shadow-lg shadow-emerald-500/10"
-                )}
+              return (
+                <Card 
+                  key={teacherId}
+                  onClick={() => isOwned && setSelectedTeacher(teacher)}
+                  className={cn(
+                    "relative overflow-hidden transition-all duration-300 group",
+                    !isOwned && "opacity-60 grayscale brightness-75",
+                    isOwned && "border-2 cursor-pointer hover:scale-[1.04] hover:shadow-xl",
+                    isOwned && teacher.rarity === 'legendary' && "border-amber-500/50 bg-amber-500/5 shadow-lg shadow-amber-500/10",
+                    isOwned && teacher.rarity === 'mythic' && "border-red-500/50 bg-red-500/5 shadow-lg shadow-red-500/10",
+                    isOwned && teacher.rarity === 'epic' && "border-purple-500/50 bg-purple-500/5 shadow-lg shadow-purple-500/10",
+                    isOwned && teacher.rarity === 'rare' && "border-emerald-500/50 bg-emerald-500/5 shadow-lg shadow-emerald-500/10"
+                  )}
+                >
+                  <CardHeader className="p-3 pb-0">
+                    <div className="flex justify-between items-start">
+                      <Badge variant="secondary" className={cn("text-[9px] px-1.5 h-4 font-black uppercase tracking-tighter", isOwned ? getRarityBadge(teacher.rarity) : "bg-slate-500", "text-white")}>
+                        {getRarityLabel(teacher.rarity)}
+                      </Badge>
+                      {isOwned && (
+                        <div className="flex items-center gap-0.5 bg-black/80 text-white rounded-full px-1.5 py-0.5 text-[9px] font-bold">
+                          <Star className="h-2.5 w-2.5 text-amber-400 fill-amber-400" />
+                          Lvl {level}
+                        </div>
+                      )}
+                    </div>
+                  </CardHeader>
+                  <CardContent className="p-2.5 sm:p-3 pt-3 sm:pt-4 flex flex-col items-center text-center space-y-2.5 sm:space-y-3">
+                    <div className={cn(
+                      "w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center border-2 transition-transform group-hover:rotate-12",
+                      isOwned ? "bg-background border-primary" : "bg-muted border-muted-foreground/20"
+                    )}>
+                      {isOwned ? (
+                        <GraduationCap className={cn("h-7 w-7 sm:w-8 sm:h-8", getRarityColor(teacher.rarity))} />
+                      ) : (
+                        <Lock className="h-5 w-5 sm:w-6 sm:h-6 text-muted-foreground/40" />
+                      )}
+                    </div>
+                    
+                    <div className="w-full">
+                      <h3 className="font-bold text-[10px] sm:text-xs leading-tight line-clamp-3 min-h-[2.75rem] flex items-center justify-center break-words hyphens-auto">
+                        {isOwned ? teacher.name : "???"}
+                      </h3>
+                      {isOwned && (
+                        <p className="text-[9px] sm:text-[10px] text-muted-foreground mt-1">
+                          {count}x gesammelt
+                        </p>
+                      )}
+                    </div>
+
+                    {isOwned && level < 10 && (
+                      <div className="w-full space-y-1.5 pt-0.5 sm:pt-1">
+                        <div className="flex justify-between text-[8px] sm:text-[9px] font-medium px-0.5">
+                          <span>Lvl {level}</span>
+                          <span className="text-muted-foreground">Noch {needed}</span>
+                        </div>
+                        <Progress value={progress} className="h-1" />
+                      </div>
+                    )}
+                    
+                    {!isOwned && (
+                      <div className="text-[9px] font-medium text-muted-foreground/60 italic pt-2">
+                        Noch nicht entdeckt
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )
+            })}
+          </div>
+
+          {initialLimit && filteredTeachers.length > initialLimit && (
+            <div className="flex justify-center pt-4">
+              <Button 
+                variant="outline" 
+                onClick={() => setIsExpanded(!isExpanded)}
+                className="gap-2"
               >
-                <CardHeader className="p-3 pb-0">
-                  <div className="flex justify-between items-start">
-                    <Badge variant="secondary" className={cn("text-[9px] px-1.5 h-4 font-black uppercase tracking-tighter", isOwned ? getRarityBadge(teacher.rarity) : "bg-slate-500", "text-white")}>
-                      {getRarityLabel(teacher.rarity)}
-                    </Badge>
-                    {isOwned && (
-                      <div className="flex items-center gap-0.5 bg-black/80 text-white rounded-full px-1.5 py-0.5 text-[9px] font-bold">
-                        <Star className="h-2.5 w-2.5 text-amber-400 fill-amber-400" />
-                        Lvl {level}
-                      </div>
-                    )}
-                  </div>
-                </CardHeader>
-                <CardContent className="p-2.5 sm:p-3 pt-3 sm:pt-4 flex flex-col items-center text-center space-y-2.5 sm:space-y-3">
-                  <div className={cn(
-                    "w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center border-2 transition-transform group-hover:rotate-12",
-                    isOwned ? "bg-background border-primary" : "bg-muted border-muted-foreground/20"
-                  )}>
-                    {isOwned ? (
-                      <GraduationCap className={cn("h-7 w-7 sm:w-8 sm:h-8", getRarityColor(teacher.rarity))} />
-                    ) : (
-                      <Lock className="h-5 w-5 sm:w-6 sm:h-6 text-muted-foreground/40" />
-                    )}
-                  </div>
-                  
-                  <div className="w-full">
-                    <h3 className="font-bold text-[10px] sm:text-xs leading-tight line-clamp-3 min-h-[2.75rem] flex items-center justify-center break-words hyphens-auto">
-                      {isOwned ? teacher.name : "???"}
-                    </h3>
-                    {isOwned && (
-                      <p className="text-[9px] sm:text-[10px] text-muted-foreground mt-1">
-                        {count}x gesammelt
-                      </p>
-                    )}
-                  </div>
-
-                  {isOwned && level < 10 && (
-                    <div className="w-full space-y-1.5 pt-0.5 sm:pt-1">
-                      <div className="flex justify-between text-[8px] sm:text-[9px] font-medium px-0.5">
-                        <span>Lvl {level}</span>
-                        <span className="text-muted-foreground">Noch {needed}</span>
-                      </div>
-                      <Progress value={progress} className="h-1" />
-                    </div>
-                  )}
-                  
-                  {!isOwned && (
-                    <div className="text-[9px] font-medium text-muted-foreground/60 italic pt-2">
-                      Noch nicht entdeckt
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            )
-          })}
-        </div>
+                {isExpanded ? "Weniger anzeigen" : `Alle ${filteredTeachers.length} Lehrer anzeigen`}
+                <ChevronRight className={cn("h-4 w-4 transition-transform", isExpanded && "rotate-90")} />
+              </Button>
+            </div>
+          )}
+        </>
       )}
 
       {/* Detail Dialog */}

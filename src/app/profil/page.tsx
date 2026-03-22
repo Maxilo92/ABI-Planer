@@ -359,7 +359,7 @@ export default function ProfilePage() {
       </div>
 
       <div className="max-w-6xl mx-auto px-4">
-        <TeacherAlbum />
+        <TeacherAlbum initialLimit={5} />
       </div>
     </div>
   )

@@ -175,7 +175,7 @@ export default function PublicProfilePage({ params }: { params: Promise<{ id: st
       </div>
 
       <div className="max-w-6xl mx-auto px-4">
-        <TeacherAlbum userId={id} targetProfile={targetProfile} />
+        <TeacherAlbum userId={id} targetProfile={targetProfile} initialLimit={5} />
       </div>
     </div>
   )
