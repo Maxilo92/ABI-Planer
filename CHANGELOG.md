@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.20.22] - 2026-03-22
+- UI: **Sammelkarten-Redesign**. `overflow-hidden` wurde wieder auf die Kartenvorderseite angewendet, um sicherzustellen, dass alle Glitch-Effekte an den Ecken abgeschnitten werden.
+- UI: **Optimiertes Padding**. Padding wurde reduziert (`p-3` bis `p-5`), um den Platz in den kleinen Karten-Containern besser zu nutzen und alle Elemente (Name, Badge, Icon) sicher zu platzieren.
+- Fix: **Badge-Positionierung**. Die "NEW" / "LEVEL UP" Badges wurden präzise positioniert, um weder am Rand noch an den Ecken anzustoßen.
+
 ## [0.20.21] - 2026-03-22
 - Animation: **Nahtloser Übergang**. Die Karten sind nun bereits während des Aufreißens hinter dem Booster-Pack sichtbar, anstatt erst verzögert mit einer Einblend-Animation zu erscheinen.
 - UI: **Blinker-Effekt entfernt**. Die blinkende Platzhalter-Animation beim Übergang wurde entfernt, um ein flüssigeres Nutzererlebnis zu ermöglichen.

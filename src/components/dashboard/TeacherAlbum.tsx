@@ -161,7 +161,7 @@ function TeacherCardDetail({ teacher, userData, onClose }: { teacher: LootTeache
           {/* Front of Card */}
           <div 
             className={cn(
-              "absolute inset-0 backface-hidden rounded-3xl border-[6px] border-white flex flex-col items-center p-8 shadow-2xl transition-all duration-500",
+              "absolute inset-0 backface-hidden rounded-3xl border-[6px] border-white flex flex-col items-center p-5 sm:p-6 shadow-2xl transition-all duration-500 overflow-hidden",
               rarityInfo.color,
               isFlipped ? "" : rarityInfo.glow
             )}
@@ -177,15 +177,15 @@ function TeacherCardDetail({ teacher, userData, onClose }: { teacher: LootTeache
               </div>
             )}
 
-            <div className="absolute top-4 right-4 bg-black/40 rounded-full px-3 py-1 text-[10px] font-black text-white border border-white/20 z-20">
+            <div className="absolute top-6 right-6 bg-black/40 rounded-full px-3 py-1 text-[10px] font-black text-white border border-white/20 z-20">
               LVL {level}
             </div>
 
-            <div className="w-full aspect-square rounded-2xl bg-white/10 flex items-center justify-center mb-6 mt-8 shadow-inner border border-white/5 relative z-20">
+            <div className="w-full aspect-square rounded-2xl bg-white/10 flex items-center justify-center mb-4 mt-8 shadow-inner border border-white/5 relative z-20">
                <GraduationCap className="h-20 w-20 text-white drop-shadow-2xl relative z-10" />
             </div>
             
-            <div className="mt-auto mb-2 w-full bg-black/40 rounded-2xl p-4 border border-white/10 shadow-lg text-center relative z-20 min-h-[5.5rem] flex flex-col justify-center">
+            <div className="mt-auto w-full bg-black/40 rounded-2xl p-4 border border-white/10 shadow-lg text-center relative z-20 min-h-[5.5rem] flex flex-col justify-center">
               <div className="text-[10px] font-black uppercase text-white/50 tracking-widest mb-1">
                 {rarityInfo.label}
               </div>

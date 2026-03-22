@@ -261,7 +261,7 @@ function SammelkartenContent() {
                           {/* Front of Card */}
                           <div 
                             className={cn(
-                              "absolute inset-0 backface-hidden rotate-y-180 rounded-2xl border-4 border-white flex flex-col items-center p-5 sm:p-6 transition-all duration-500 shadow-xl",
+                              "absolute inset-0 backface-hidden rotate-y-180 rounded-2xl border-4 border-white flex flex-col items-center p-3 sm:p-4 transition-all duration-500 shadow-xl overflow-hidden",
                               cardInfo?.color,
                               isFlipped && cardInfo?.glow
                             )}
@@ -278,7 +278,7 @@ function SammelkartenContent() {
                              )}
 
                             {isFlipped && result && (
-                              <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30">
+                              <div className="absolute top-6 left-1/2 -translate-x-1/2 z-30">
                                 {result.isNew ? (
                                   <Badge className="bg-amber-500 border-2 border-white text-[10px] font-black px-2 shadow-lg animate-in zoom-in duration-500">NEW</Badge>
                                 ) : result.isLevelUp ? (
@@ -289,11 +289,11 @@ function SammelkartenContent() {
                               </div>
                             )}
 
-                            <div className="w-full aspect-square rounded-xl bg-white/10 flex items-center justify-center mb-4 mt-6 sm:mt-8 shadow-inner border border-white/5 relative z-20">
+                            <div className="w-full aspect-square rounded-xl bg-white/10 flex items-center justify-center mb-2 mt-6 sm:mt-8 shadow-inner border border-white/5 relative z-20">
                                <GraduationCap className="h-12 w-12 sm:h-16 sm:w-16 text-white drop-shadow-2xl relative z-10" />
                             </div>
 
-                            <div className="mt-auto mb-2 w-full bg-black/40 rounded-xl p-2 sm:p-3 border border-white/10 relative z-20 min-h-[3.5rem] sm:min-h-[4.5rem] flex flex-col justify-center">
+                            <div className="mt-auto w-full bg-black/40 rounded-xl p-2 sm:p-3 border border-white/10 relative z-20 min-h-[3.5rem] sm:min-h-[4.5rem] flex flex-col justify-center">
                               <div className="text-[8px] font-black uppercase text-white/50 tracking-widest mb-0.5">
                                 {cardInfo?.label}
                               </div>
