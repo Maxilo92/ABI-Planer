@@ -218,71 +218,16 @@ function SammelkartenContent() {
             </div>
 
             {/* The Pack/Card Container */}
-            <div className="relative w-full min-h-[400px] flex items-center justify-center">
-              {gameState === 'idle' || gameState === 'ripping' ? (
-                <div 
-                  className={cn(
-                    "relative w-64 h-96 cursor-pointer group transition-all duration-500",
-                    getRemainingBoosters() <= 0 && "opacity-50 cursor-not-allowed",
-                    gameState === 'idle' && getRemainingBoosters() > 0 && "hover:scale-105 active:scale-95"
-                  )}
-                  onClick={getRemainingBoosters() > 0 && gameState === 'idle' ? handleOpenPack : undefined}
-                >
-                  {/* Premium Booster Design */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-indigo-950 via-blue-900 to-slate-950 rounded-3xl border-4 border-white/20 shadow-[0_0_50px_rgba(0,0,0,0.5)] overflow-hidden">
-                    <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.2)_0%,transparent_100%)]" />
-                    <div className="absolute top-0 left-0 w-full h-full opacity-5 bg-[linear-gradient(45deg,transparent_25%,rgba(255,255,255,0.4)_50%,transparent_75%)] bg-[length:250%_250%] animate-shimmer" />
-                  </div>
-
-                  {/* Top Part */}
-                  <div className={cn(
-                    "absolute top-0 left-0 w-full h-1/3 bg-transparent z-20 flex items-end justify-center pb-4 transition-transform duration-500",
-                    gameState === 'ripping' && "animate-rip-top"
-                  )}>
-                    <div className="absolute inset-0 bg-gradient-to-b from-blue-600 to-blue-800 rounded-t-3xl border-x-4 border-t-4 border-white/20 shadow-inner" />
-                    <Zap className="h-12 w-12 text-white/60 drop-shadow-[0_0_10px_rgba(255,255,255,0.5)] relative z-10" />
-                  </div>
-                  
-                  {/* Bottom Part */}
-                  <div className={cn(
-                    "absolute bottom-0 left-0 w-full h-2/3 z-10 flex flex-col items-center pt-8 transition-transform duration-500",
-                    gameState === 'ripping' && "animate-rip-bottom"
-                  )}>
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-blue-900 to-blue-800 rounded-b-3xl border-x-4 border-b-4 border-white/20 shadow-2xl" />
-                    <div className="relative z-10 flex flex-col items-center h-full w-full">
-                      <div className="w-16 h-1 bg-white/20 rounded-full mb-8" />
-                      <h2 className="text-white font-black text-3xl tracking-tighter mb-1 italic drop-shadow-md">ABI PLANER</h2>
-                      <p className="text-blue-200/60 text-[10px] font-black uppercase tracking-[0.4em]">Booster Pack</p>
-                      
-                      <div className="mt-auto mb-12">
-                         <div className="relative">
-                            <Gift className={cn(
-                              "h-16 w-16 transition-all duration-500",
-                              gameState === 'idle' ? "text-white/30 group-hover:text-white/60 group-hover:scale-110" : "text-white/50 scale-110"
-                            )} />
-                            <div className="absolute inset-0 bg-white/20 blur-xl rounded-full scale-150 animate-pulse" />
-                         </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Ripping serrated edge effect */}
-                  <div className="absolute top-1/3 left-0 w-full h-4 z-15 flex overflow-hidden opacity-40">
-                    {Array.from({ length: 12 }).map((_, i) => (
-                      <div key={i} className="w-8 h-8 bg-blue-800 transform rotate-45 translate-y-2 border-t-2 border-l-2 border-white/20" />
-                    ))}
-                  </div>
-
-                  {getRemainingBoosters() <= 0 && gameState === 'idle' && (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center z-30 bg-black/60 rounded-3xl backdrop-blur-sm">
-                       <RotateCcw className="h-10 w-10 text-white mb-3 animate-spin-slow" />
-                       <p className="text-white font-black text-xs uppercase tracking-[0.2em]">{timeLeft}</p>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="flex flex-wrap justify-center gap-4 sm:gap-6 w-full max-w-5xl animate-in fade-in zoom-in duration-700">
-                  {revealedTeachers?.map((teacher, idx) => {
+            <div className="relative w-full min-h-[400px] flex items-center justify-center overflow-visible">
+              
+              {/* Revealed Cards (Rendered behind the pack during ripping) */}
+              {(gameState === 'ripping' || gameState === 'revealed') && revealedTeachers && (
+                <div className={cn(
+                  "flex flex-wrap justify-center gap-4 sm:gap-6 w-full max-w-5xl transition-all duration-1000",
+                  gameState === 'ripping' ? "opacity-0 scale-90" : "opacity-100 scale-100"
+                )}
+                style={{ transitionDelay: gameState === 'ripping' ? '0ms' : '200ms' }}>
+                  {revealedTeachers.map((teacher, idx) => {
                     const isFlipped = flippedCards[idx]
                     const result = collectionResults?.[idx]
                     const cardInfo = info(teacher.rarity)
@@ -361,6 +306,70 @@ function SammelkartenContent() {
                       </div>
                     )
                   })}
+                </div>
+              )}
+
+              {/* Booster Pack (Rendered on top during idle/ripping) */}
+              {(gameState === 'idle' || gameState === 'ripping') && (
+                <div 
+                  className={cn(
+                    "absolute z-50 w-64 h-96 cursor-pointer group transition-all duration-500",
+                    getRemainingBoosters() <= 0 && "opacity-50 cursor-not-allowed",
+                    gameState === 'idle' && getRemainingBoosters() > 0 && "hover:scale-105 active:scale-95"
+                  )}
+                  onClick={getRemainingBoosters() > 0 && gameState === 'idle' ? handleOpenPack : undefined}
+                >
+                  {/* Premium Booster Design */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-indigo-950 via-blue-900 to-slate-950 rounded-3xl border-4 border-white/20 shadow-[0_0_50px_rgba(0,0,0,0.5)] overflow-hidden">
+                    <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.2)_0%,transparent_100%)]" />
+                    <div className="absolute top-0 left-0 w-full h-full opacity-5 bg-[linear-gradient(45deg,transparent_25%,rgba(255,255,255,0.4)_50%,transparent_75%)] bg-[length:250%_250%] animate-shimmer" />
+                  </div>
+
+                  {/* Top Part */}
+                  <div className={cn(
+                    "absolute top-0 left-0 w-full h-1/3 bg-transparent z-20 flex items-end justify-center pb-4 transition-transform duration-500",
+                    gameState === 'ripping' && "animate-rip-top"
+                  )}>
+                    <div className="absolute inset-0 bg-gradient-to-b from-blue-600 to-blue-800 rounded-t-3xl border-x-4 border-t-4 border-white/20 shadow-inner" />
+                    <Zap className="h-12 w-12 text-white/60 drop-shadow-[0_0_10px_rgba(255,255,255,0.5)] relative z-10" />
+                  </div>
+                  
+                  {/* Bottom Part */}
+                  <div className={cn(
+                    "absolute bottom-0 left-0 w-full h-2/3 z-10 flex flex-col items-center pt-8 transition-transform duration-500",
+                    gameState === 'ripping' && "animate-rip-bottom"
+                  )}>
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-blue-900 to-blue-800 rounded-b-3xl border-x-4 border-b-4 border-white/20 shadow-2xl" />
+                    <div className="relative z-10 flex flex-col items-center h-full w-full">
+                      <div className="w-16 h-1 bg-white/20 rounded-full mb-8" />
+                      <h2 className="text-white font-black text-3xl tracking-tighter mb-1 italic drop-shadow-md">ABI PLANER</h2>
+                      <p className="text-blue-200/60 text-[10px] font-black uppercase tracking-[0.4em]">Booster Pack</p>
+                      
+                      <div className="mt-auto mb-12">
+                         <div className="relative">
+                            <Gift className={cn(
+                              "h-16 w-16 transition-all duration-500",
+                              gameState === 'idle' ? "text-white/30 group-hover:text-white/60 group-hover:scale-110" : "text-white/50 scale-110"
+                            )} />
+                            <div className="absolute inset-0 bg-white/20 blur-xl rounded-full scale-150 animate-pulse" />
+                         </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Ripping serrated edge effect */}
+                  <div className="absolute top-1/3 left-0 w-full h-4 z-15 flex overflow-hidden opacity-40">
+                    {Array.from({ length: 12 }).map((_, i) => (
+                      <div key={i} className="w-8 h-8 bg-blue-800 transform rotate-45 translate-y-2 border-t-2 border-l-2 border-white/20" />
+                    ))}
+                  </div>
+
+                  {getRemainingBoosters() <= 0 && gameState === 'idle' && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center z-30 bg-black/60 rounded-3xl backdrop-blur-sm">
+                       <RotateCcw className="h-10 w-10 text-white mb-3 animate-spin-slow" />
+                       <p className="text-white font-black text-xs uppercase tracking-[0.2em]">{timeLeft}</p>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

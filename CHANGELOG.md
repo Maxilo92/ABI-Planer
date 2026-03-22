@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.20.21] - 2026-03-22
+- Animation: **Nahtloser Übergang**. Die Karten sind nun bereits während des Aufreißens hinter dem Booster-Pack sichtbar, anstatt erst verzögert mit einer Einblend-Animation zu erscheinen.
+- UI: **Blinker-Effekt entfernt**. Die blinkende Platzhalter-Animation beim Übergang wurde entfernt, um ein flüssigeres Nutzererlebnis zu ermöglichen.
+- Fix: **Stacking-Order**. Korrekte Überlagerung der Packungshälften über den Karten während der Explosions-Animation.
+
 ## [0.20.20] - 2026-03-22
 - Fix: **Systematische Layout-Korrektur**. `overflow-hidden` wurde von der Kartenvorderseite entfernt, um Clipping bei Badges zu verhindern.
 - UI: **Erhöhtes Padding**. Das Padding innerhalb der Karten wurde auf `p-5` (Pack) bzw. `p-8` (Detail) erhöht, um alle Elemente sicher innerhalb der abgerundeten Ecken zu platzieren.
