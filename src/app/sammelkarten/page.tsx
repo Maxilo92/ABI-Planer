@@ -148,12 +148,12 @@ function SammelkartenContent() {
         setTimeout(() => {
           setGameState('revealed')
           setIsAnimating(false)
-        }, 1000) // Duration of the rip animation
+        }, 600) // Duration of the rip animation (shortened)
       } catch (err: any) {
         toast.error(err.message || 'Fehler beim Sammeln.')
         setGameState('idle')
       }
-    }, 600) // Duration of the shaking before rip starts
+    }, 400) // Duration of the shaking before rip starts (shortened)
   }
 
   const handleFlipCard = (index: number) => {
@@ -297,16 +297,19 @@ function SammelkartenContent() {
                         onClick={() => !isFlipped && handleFlipCard(idx)}
                       >
                         <div className={cn(
-                          "relative w-full h-full transition-all duration-700 preserve-3d",
+                          "relative w-full h-full transition-all duration-700 preserve-3d will-change-transform",
                           isFlipped && "rotate-y-180"
                         )}>
                           {/* Minimalist Back of Card */}
-                          <div className="absolute inset-0 backface-hidden rounded-2xl bg-slate-900 border-[6px] border-white/10 flex flex-col items-center justify-center shadow-xl">
+                          <div 
+                            className="absolute inset-0 backface-hidden rounded-2xl bg-slate-900 border-[6px] border-white/10 flex flex-col items-center justify-center shadow-xl overflow-hidden"
+                            style={{ transform: 'translateZ(1px)' }}
+                          >
                              <div className="relative z-10 flex flex-col items-center">
                                <div className="p-3 rounded-full bg-white/5 mb-3">
                                  <GraduationCap className="h-10 w-10 sm:h-12 sm:w-12 text-white/20" />
                                </div>
-                               <div className="text-white/20 font-black text-base sm:text-lg tracking-tighter italic">ABI PLANER</div>
+                               <div className="text-white/20 font-black text-base sm:text-lg tracking-tighter italic text-center px-2">ABI PLANER</div>
                                {!isFlipped && (
                                  <div className="mt-4 animate-pulse text-[8px] text-white/30 font-bold uppercase tracking-[0.2em]">Tippen zum Umdrehen</div>
                                )}
@@ -314,11 +317,14 @@ function SammelkartenContent() {
                           </div>
 
                           {/* Front of Card */}
-                          <div className={cn(
-                            "absolute inset-0 backface-hidden rotate-y-180 rounded-2xl border-4 border-white flex flex-col items-center p-3 sm:p-4 transition-all duration-500 shadow-xl overflow-hidden",
-                            cardInfo?.color,
-                            isFlipped && cardInfo?.glow
-                          )}>
+                          <div 
+                            className={cn(
+                              "absolute inset-0 backface-hidden rotate-y-180 rounded-2xl border-4 border-white flex flex-col items-center p-3 sm:p-4 transition-all duration-500 shadow-xl overflow-hidden",
+                              cardInfo?.color,
+                              isFlipped && cardInfo?.glow
+                            )}
+                            style={{ transform: 'rotateY(180deg) translateZ(1px)' }}
+                          >
                              {/* Solid background to prevent bleed through */}
                              <div className={cn("absolute inset-0 z-0", cardInfo?.color)} />
 
@@ -341,15 +347,15 @@ function SammelkartenContent() {
                               </div>
                             )}
 
-                            <div className="w-full aspect-square rounded-xl bg-white/10 flex items-center justify-center mb-4 mt-6 shadow-inner border border-white/5 relative z-20">
-                               <GraduationCap className="h-16 w-16 sm:h-20 sm:w-20 text-white drop-shadow-2xl relative z-10" />
+                            <div className="w-full aspect-square rounded-xl bg-white/10 flex items-center justify-center mb-3 mt-4 sm:mt-6 shadow-inner border border-white/5 relative z-20">
+                               <GraduationCap className="h-14 w-14 sm:h-20 sm:w-20 text-white drop-shadow-2xl relative z-10" />
                             </div>
 
-                            <div className="mt-auto w-full bg-black/40 rounded-xl p-2 sm:p-3 border border-white/10 relative z-20">
+                            <div className="mt-auto w-full bg-black/40 rounded-xl p-2 sm:p-3 border border-white/10 relative z-20 min-h-[3.5rem] sm:min-h-[4.5rem] flex flex-col justify-center">
                               <div className="text-[8px] font-black uppercase text-white/50 tracking-widest mb-0.5">
                                 {cardInfo?.label}
                               </div>
-                              <div className="text-white font-bold text-xs sm:text-sm leading-tight line-clamp-1">
+                              <div className="text-white font-bold text-xs sm:text-sm leading-tight line-clamp-2">
                                 {teacher.name}
                               </div>
                             </div>

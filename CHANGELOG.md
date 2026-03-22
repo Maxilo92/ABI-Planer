@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.20.18] - 2026-03-22
+- Fix: **Mobile Glitch Fix (Transparenz)**. Die Rückseite der Sammelkarten schimmert auf mobilen Geräten nun nicht mehr durch die Vorderseite hindurch (verbesserte backface-visibility und translateZ Separation).
+- UI: **Layout-Korrektur (PC/Namen)**. Lange Lehrernamen werden nun über zwei Zeilen (line-clamp-2) korrekt dargestellt und nicht mehr abgeschnitten.
+- Animation: **Schnelleres Pack-Opening**. Die Gesamtdauer der Booster-Animation wurde auf unter 1 Sekunde verkürzt (400ms Shake + 600ms Rip) für einen schnelleren Spielfluss.
+
 ## [0.20.17] - 2026-03-22
 - Fix: **Build-Fehler behoben**. Korrektur eines Syntaxfehlers (doppeltes Map-Statement) in der Sammelkarten-Komponente, der den Produktions-Build verhinderte.
 

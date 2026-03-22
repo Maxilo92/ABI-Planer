@@ -149,7 +149,7 @@ function TeacherCardDetail({ teacher, userData, onClose }: { teacher: LootTeache
       >
         <div 
           className={cn(
-            "relative w-full h-full transition-all duration-700 preserve-3d shadow-2xl rounded-3xl",
+            "relative w-full h-full transition-all duration-700 preserve-3d shadow-2xl rounded-3xl will-change-transform",
             isFlipped && "rotate-y-180"
           )}
           style={{ 
@@ -159,11 +159,14 @@ function TeacherCardDetail({ teacher, userData, onClose }: { teacher: LootTeache
           }}
         >
           {/* Front of Card */}
-          <div className={cn(
-            "absolute inset-0 backface-hidden rounded-3xl border-[6px] border-white flex flex-col items-center p-6 shadow-2xl overflow-hidden",
-            rarityInfo.color,
-            isFlipped ? "" : rarityInfo.glow
-          )}>
+          <div 
+            className={cn(
+              "absolute inset-0 backface-hidden rounded-3xl border-[6px] border-white flex flex-col items-center p-6 shadow-2xl overflow-hidden",
+              rarityInfo.color,
+              isFlipped ? "" : rarityInfo.glow
+            )}
+            style={{ transform: 'translateZ(1px)' }}
+          >
             {/* Performance: Solid background to prevent back-face bleeding */}
             <div className={cn("absolute inset-0 z-0", rarityInfo.color)} />
 
@@ -182,11 +185,11 @@ function TeacherCardDetail({ teacher, userData, onClose }: { teacher: LootTeache
                <GraduationCap className="h-24 w-24 text-white drop-shadow-2xl relative z-10" />
             </div>
             
-            <div className="mt-auto w-full bg-black/40 rounded-2xl p-4 border border-white/10 shadow-lg text-center relative z-20">
+            <div className="mt-auto w-full bg-black/40 rounded-2xl p-4 border border-white/10 shadow-lg text-center relative z-20 min-h-[5.5rem] flex flex-col justify-center">
               <div className="text-[10px] font-black uppercase text-white/50 tracking-widest mb-1">
                 {rarityInfo.label}
               </div>
-              <div className="text-white font-black text-xl leading-tight italic">
+              <div className="text-white font-black text-xl leading-tight italic line-clamp-2">
                 {teacher.name}
               </div>
             </div>
@@ -204,12 +207,15 @@ function TeacherCardDetail({ teacher, userData, onClose }: { teacher: LootTeache
           </div>
 
           {/* Minimalist Back of Card */}
-          <div className="absolute inset-0 backface-hidden rotate-y-180 rounded-3xl bg-slate-900 border-[10px] border-white/10 flex flex-col items-center justify-center shadow-2xl overflow-hidden">
+          <div 
+            className="absolute inset-0 backface-hidden rotate-y-180 rounded-3xl bg-slate-900 border-[10px] border-white/10 flex flex-col items-center justify-center shadow-2xl overflow-hidden"
+            style={{ transform: 'rotateY(180deg) translateZ(1px)' }}
+          >
              <div className="relative z-10 flex flex-col items-center">
                <div className="p-5 rounded-full bg-white/5 mb-5">
                  <GraduationCap className="h-16 w-16 text-white/20" />
                </div>
-               <div className="text-white/20 font-black text-2xl tracking-tighter italic">ABI PLANER</div>
+               <div className="text-white/20 font-black text-2xl tracking-tighter italic px-4 text-center">ABI PLANER</div>
              </div>
           </div>
         </div>
