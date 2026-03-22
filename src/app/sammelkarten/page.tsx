@@ -1,7 +1,7 @@
 'use client'
 
 import { useAuth } from '@/context/AuthContext'
-import { Sparkles, Gift, GraduationCap, RotateCcw, Zap, Trophy } from 'lucide-react'
+import { Sparkles, Gift, GraduationCap, RotateCcw, Zap, Trophy, Clock } from 'lucide-react'
 import { useEffect, useState, Suspense } from 'react'
 import { redirect, useSearchParams } from 'next/navigation'
 import { db } from '@/lib/firebase'
@@ -29,7 +29,7 @@ function SammelkartenContent() {
   const [globalSettings, setGlobalSettings] = useState<any>(null)
   const [gameState, setGameState] = useState<'idle' | 'ripping' | 'revealed'>('idle')
   const [revealedTeachers, setRevealedTeachers] = useState<LootTeacher[] | null>(null)
-  const [collectionResults, setCollectionResults] = useState<Array<{ isNew: boolean, newLevel: number, count: number } | null> | null>(null)
+  const [collectionResults, setCollectionResults] = useState<Array<{ isNew: boolean, isLevelUp: boolean, newLevel: number, count: number } | null> | null>(null)
   const [flippedCards, setFlippedCards] = useState<boolean[]>([false, false, false])
   const [isAnimating, setIsAnimating] = useState(false)
   const [timeLeft, setTimeLeft] = useState<string>('')
@@ -114,11 +114,8 @@ function SammelkartenContent() {
     const pack = generatePack()
     setRevealedTeachers(pack)
 
-    // Simulate rip duration
+    // Simulate shake then rip
     setTimeout(async () => {
-      setGameState('revealed')
-      setIsAnimating(false)
-
       try {
         const teacherIds = pack.map(t => t.id || t.name)
         const initialTeachers = { ...userTeachers }
@@ -126,9 +123,13 @@ function SammelkartenContent() {
         
         const processedResults = results.map(r => {
           const isNew = !initialTeachers[r.teacherId]
+          const oldLevel = initialTeachers[r.teacherId]?.level || 1
+          const isLevelUp = !isNew && r.level > oldLevel
+          
           initialTeachers[r.teacherId] = { count: r.count, level: r.level }
           return {
             isNew,
+            isLevelUp,
             newLevel: r.level,
             count: r.count
           }
@@ -142,11 +143,17 @@ function SammelkartenContent() {
             results: processedResults
           })
         }
+
+        // Final transition to revealed
+        setTimeout(() => {
+          setGameState('revealed')
+          setIsAnimating(false)
+        }, 1000) // Duration of the rip animation
       } catch (err: any) {
         toast.error(err.message || 'Fehler beim Sammeln.')
         setGameState('idle')
       }
-    }, 800)
+    }, 600) // Duration of the shaking before rip starts
   }
 
   const handleFlipCard = (index: number) => {
@@ -219,51 +226,65 @@ function SammelkartenContent() {
                   className={cn(
                     "relative w-64 h-96 cursor-pointer group transition-all duration-500",
                     getRemainingBoosters() <= 0 && "opacity-50 cursor-not-allowed",
-                    gameState !== 'ripping' && getRemainingBoosters() > 0 && "hover:scale-105 active:scale-95"
+                    gameState === 'ripping' && "animate-[pack-shake_0.5s_infinite]",
+                    gameState === 'idle' && getRemainingBoosters() > 0 && "hover:scale-105 active:scale-95"
                   )}
                   onClick={getRemainingBoosters() > 0 && gameState === 'idle' ? handleOpenPack : undefined}
                 >
+                  {/* Premium Booster Design */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-indigo-950 via-blue-900 to-slate-950 rounded-3xl border-4 border-white/20 shadow-[0_0_50px_rgba(0,0,0,0.5)] overflow-hidden">
+                    <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.2)_0%,transparent_100%)]" />
+                    <div className="absolute top-0 left-0 w-full h-full opacity-5 bg-[linear-gradient(45deg,transparent_25%,rgba(255,255,255,0.4)_50%,transparent_75%)] bg-[length:250%_250%] animate-shimmer" />
+                  </div>
+
                   {/* Top Part */}
                   <div className={cn(
-                    "absolute top-0 left-0 w-full h-1/3 bg-primary rounded-t-3xl border-x-8 border-t-8 border-white/20 z-20 flex items-end justify-center pb-4 transition-transform duration-500",
-                    gameState === 'ripping' && "animate-rip-top"
+                    "absolute top-0 left-0 w-full h-1/3 bg-transparent z-20 flex items-end justify-center pb-4 transition-transform duration-500",
+                    gameState === 'ripping' && "animate-rip-top delay-500"
                   )}>
-                    <Zap className="h-12 w-12 text-white/40" />
+                    <div className="absolute inset-0 bg-gradient-to-b from-blue-600 to-blue-800 rounded-t-3xl border-x-4 border-t-4 border-white/20 shadow-inner" />
+                    <Zap className="h-12 w-12 text-white/60 drop-shadow-[0_0_10px_rgba(255,255,255,0.5)] relative z-10" />
                   </div>
                   
                   {/* Bottom Part */}
                   <div className={cn(
-                    "absolute bottom-0 left-0 w-full h-2/3 bg-primary rounded-b-3xl border-x-8 border-b-8 border-white/20 z-10 flex flex-col items-center pt-8 shadow-2xl transition-transform duration-500",
-                    gameState === 'ripping' && "animate-rip-bottom"
+                    "absolute bottom-0 left-0 w-full h-2/3 z-10 flex flex-col items-center pt-8 transition-transform duration-500",
+                    gameState === 'ripping' && "animate-rip-bottom delay-500"
                   )}>
-                    <div className="w-16 h-1 bg-white/20 rounded-full mb-8" />
-                    <h2 className="text-white font-black text-2xl tracking-tighter mb-1">ABI PLANER</h2>
-                    <p className="text-white/60 text-[10px] font-bold uppercase tracking-[0.3em]">Booster Pack</p>
-                    
-                    <div className="mt-auto mb-12">
-                       <Gift className={cn(
-                         "h-16 w-16 transition-colors",
-                         gameState === 'idle' ? "text-white/20 group-hover:text-white/40" : "text-white/40"
-                       )} />
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-blue-900 to-blue-800 rounded-b-3xl border-x-4 border-b-4 border-white/20 shadow-2xl" />
+                    <div className="relative z-10 flex flex-col items-center h-full w-full">
+                      <div className="w-16 h-1 bg-white/20 rounded-full mb-8" />
+                      <h2 className="text-white font-black text-3xl tracking-tighter mb-1 italic drop-shadow-md">ABI PLANER</h2>
+                      <p className="text-blue-200/60 text-[10px] font-black uppercase tracking-[0.4em]">Booster Pack</p>
+                      
+                      <div className="mt-auto mb-12">
+                         <div className="relative">
+                            <Gift className={cn(
+                              "h-16 w-16 transition-all duration-500",
+                              gameState === 'idle' ? "text-white/30 group-hover:text-white/60 group-hover:scale-110" : "text-white/50 scale-110"
+                            )} />
+                            <div className="absolute inset-0 bg-white/20 blur-xl rounded-full scale-150 animate-pulse" />
+                         </div>
+                      </div>
                     </div>
                   </div>
 
                   {/* Ripping serrated edge effect */}
                   <div className="absolute top-1/3 left-0 w-full h-4 z-15 flex overflow-hidden opacity-40">
                     {Array.from({ length: 12 }).map((_, i) => (
-                      <div key={i} className="w-8 h-8 bg-primary transform rotate-45 translate-y-2 border-t-2 border-l-2 border-white/20" />
+                      <div key={i} className="w-8 h-8 bg-blue-800 transform rotate-45 translate-y-2 border-t-2 border-l-2 border-white/20" />
                     ))}
                   </div>
 
                   {getRemainingBoosters() <= 0 && gameState === 'idle' && (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center z-30 bg-black/40 rounded-3xl backdrop-blur-[2px]">
-                       <RotateCcw className="h-8 w-8 text-white mb-2 animate-spin-slow" />
-                       <p className="text-white font-black text-[10px] uppercase tracking-widest">{timeLeft}</p>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center z-30 bg-black/60 rounded-3xl backdrop-blur-sm">
+                       <RotateCcw className="h-10 w-10 text-white mb-3 animate-spin-slow" />
+                       <p className="text-white font-black text-xs uppercase tracking-[0.2em]">{timeLeft}</p>
                     </div>
                   )}
                 </div>
               ) : (
-                <div className="flex flex-wrap justify-center gap-6 w-full max-w-5xl animate-in fade-in zoom-in duration-700">
+                <div className="flex flex-wrap justify-center gap-4 sm:gap-6 w-full max-w-5xl animate-in fade-in zoom-in duration-700">
                   {revealedTeachers?.map((teacher, idx) => {
                     const isFlipped = flippedCards[idx]
                     const result = collectionResults?.[idx]
@@ -272,31 +293,47 @@ function SammelkartenContent() {
                     return (
                       <div 
                         key={`${teacher.id}-${idx}`}
-                        className="perspective-1000 w-48 h-64 cursor-pointer"
+                        className="perspective-1000 w-40 h-56 sm:w-48 sm:h-64 cursor-pointer"
                         onClick={() => !isFlipped && handleFlipCard(idx)}
                       >
                         <div className={cn(
                           "relative w-full h-full transition-all duration-700 preserve-3d",
                           isFlipped && "rotate-y-180"
                         )}>
-                          {/* Back of Card */}
-                          <div className="absolute inset-0 backface-hidden rounded-2xl bg-primary border-8 border-white/10 flex flex-col items-center justify-center shadow-xl">
-                             <div className="w-full h-full opacity-10 absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white via-transparent to-transparent" />
-                             <GraduationCap className="h-16 w-16 text-white/20 mb-2" />
-                             <div className="text-white/20 font-black text-xl tracking-tighter">ABI PLANER</div>
-                             {!isFlipped && (
-                               <div className="mt-4 animate-pulse text-[8px] text-white/40 font-black uppercase tracking-widest">Klicken zum Umdrehen</div>
-                             )}
+                          {/* Premium Back of Card */}
+                          <div className="absolute inset-0 backface-hidden rounded-2xl bg-gradient-to-br from-slate-900 via-blue-950 to-indigo-950 border-[6px] sm:border-8 border-white/10 flex flex-col items-center justify-center shadow-2xl overflow-hidden">
+                             {/* Background Pattern */}
+                             <div className="absolute inset-0 opacity-10" style={{ 
+                               backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)',
+                               backgroundSize: '20px 20px' 
+                             }} />
+                             <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(255,255,255,0.1)_0%,_transparent_70%)]" />
+                             
+                             <div className="relative z-10 flex flex-col items-center">
+                               <div className="p-4 rounded-full bg-white/5 border border-white/10 mb-4 shadow-inner">
+                                 <GraduationCap className="h-12 w-12 sm:h-16 sm:w-16 text-blue-200/40" />
+                               </div>
+                               <div className="text-blue-100/30 font-black text-lg sm:text-xl tracking-tighter italic">ABI PLANER</div>
+                               {!isFlipped && (
+                                 <div className="mt-6 animate-pulse text-[8px] sm:text-[10px] text-white/40 font-black uppercase tracking-[0.3em] bg-white/5 px-3 py-1 rounded-full border border-white/5">Tap to flip</div>
+                               )}
+                             </div>
+
+                             {/* Corner accents */}
+                             <div className="absolute top-2 left-2 w-4 h-4 border-t-2 border-l-2 border-white/20 rounded-tl-sm" />
+                             <div className="absolute top-2 right-2 w-4 h-4 border-t-2 border-r-2 border-white/20 rounded-tr-sm" />
+                             <div className="absolute bottom-2 left-2 w-4 h-4 border-b-2 border-l-2 border-white/20 rounded-bl-sm" />
+                             <div className="absolute bottom-2 right-2 w-4 h-4 border-b-2 border-r-2 border-white/20 rounded-br-sm" />
                           </div>
 
                           {/* Front of Card */}
                           <div className={cn(
-                            "absolute inset-0 backface-hidden rotate-y-180 rounded-2xl border-4 border-white flex flex-col items-center p-4 transition-all duration-500",
+                            "absolute inset-0 backface-hidden rotate-y-180 rounded-2xl border-4 border-white flex flex-col items-center p-3 sm:p-4 transition-all duration-500 shadow-xl",
                             cardInfo?.color,
                             isFlipped && cardInfo?.glow
                           )}>
                              {/* Rarity Effects */}
-                             {isFlipped && teacher.rarity === 'legendary' && (
+                             {isFlipped && (teacher.rarity === 'legendary' || teacher.rarity === 'mythic') && (
                                <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none">
                                  <div className="absolute inset-[-100%] bg-[linear-gradient(45deg,transparent_25%,rgba(255,255,255,0.4)_50%,transparent_75%)] bg-[length:250%_250%] animate-shimmer" />
                                </div>
@@ -306,19 +343,24 @@ function SammelkartenContent() {
                               <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-20">
                                 {result.isNew ? (
                                   <Badge className="bg-amber-500 border-2 border-white text-[10px] font-black px-2 shadow-lg animate-in zoom-in duration-500">NEW</Badge>
+                                ) : result.isLevelUp ? (
+                                  <Badge className="bg-purple-500 border-2 border-white text-[10px] font-black px-2 shadow-lg animate-in zoom-in duration-500">LEVEL UP</Badge>
                                 ) : (
                                   <Badge className="bg-emerald-500 border-2 border-white text-[10px] font-black px-2 shadow-lg animate-in zoom-in duration-500">LVL {result.newLevel}</Badge>
                                 )}
                               </div>
                             )}
 
-                            <GraduationCap className="h-20 w-20 text-white mb-4 mt-2 drop-shadow-lg" />
+                            <div className="w-full aspect-square rounded-xl bg-white/20 flex items-center justify-center mb-4 mt-2 shadow-inner border border-white/10 overflow-hidden relative">
+                               <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_center,_white_0%,_transparent_70%)]" />
+                               <GraduationCap className="h-16 w-16 sm:h-20 sm:w-20 text-white drop-shadow-2xl relative z-10" />
+                            </div>
                             
-                            <div className="mt-auto w-full bg-black/60 backdrop-blur-md rounded-xl p-3 border border-white/20">
+                            <div className="mt-auto w-full bg-black/60 backdrop-blur-md rounded-xl p-2 sm:p-3 border border-white/20 shadow-lg">
                               <div className="text-[8px] font-black uppercase text-white/60 tracking-widest mb-1">
                                 {cardInfo?.label}
                               </div>
-                              <div className="text-white font-bold text-sm leading-tight">
+                              <div className="text-white font-bold text-xs sm:text-sm leading-tight line-clamp-1">
                                 {teacher.name}
                               </div>
                             </div>
@@ -336,14 +378,27 @@ function SammelkartenContent() {
               {gameState === 'revealed' && allFlipped && (
                 <div className="flex flex-col gap-3 w-full max-w-sm animate-in fade-in slide-in-from-bottom-4 duration-1000">
                   <Button 
-                    onClick={handleOpenPack}
+                    onClick={getRemainingBoosters() > 0 ? handleOpenPack : () => setGameState('idle')}
                     variant="outline"
                     size="lg"
-                    className="rounded-full px-8 border-2 hover:bg-white hover:text-black transition-all duration-500 shadow-xl w-full"
-                    disabled={getRemainingBoosters() <= 0}
+                    className={cn(
+                      "rounded-full px-8 border-2 transition-all duration-500 shadow-xl w-full",
+                      getRemainingBoosters() > 0 
+                        ? "hover:bg-white hover:text-black border-white/20" 
+                        : "border-destructive/30 text-destructive/80 hover:bg-destructive hover:text-white"
+                    )}
                   >
-                    <RotateCcw className="h-4 w-4 mr-2" />
-                    Nochmal versuchen
+                    {getRemainingBoosters() > 0 ? (
+                      <>
+                        <RotateCcw className="h-4 w-4 mr-2" />
+                        Nochmal versuchen
+                      </>
+                    ) : (
+                      <>
+                        <Clock className="h-4 w-4 mr-2" />
+                        Pack-Reset in {timeLeft}
+                      </>
+                    )}
                   </Button>
                   
                   <Button 

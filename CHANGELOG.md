@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.20.14] - 2026-03-22
+- UI: **Level-Up Indikator**. Wenn eine Karte durch das Ziehen eines Duplikats ein neues Level erreicht, wird dies nun prominent mit einem violetten "LEVEL UP"-Badge über der Karte markiert.
+
+## [0.20.13] - 2026-03-22
+- UI: **Dynamischer Reset-Button**. Der "Nochmal versuchen"-Button verwandelt sich nun in einen Countdown-Button (`Pack-Reset in HH:MM:SS`), wenn das tägliche Limit erreicht ist. Ein Klick führt zurück zur Pack-Übersicht.
+- UX: **Farbliche Indikatoren**. Der Reset-Button wird rot markiert, wenn keine Booster mehr übrig sind, um den Status klarer zu kommunizieren.
+
+## [0.20.12] - 2026-03-22
+- UI: **Premium Booster & Card Design**. Boosterpacks und Kartenrückseiten komplett redesigned mit edlen Farbverläufen, Mustern und Gold-Akzenten für ein hochwertigeres "Sammelgefühl".
+- UI: **Verbesserte Öffnungs-Animation**. Das Öffnen der Packs wurde durch einen vorgeschalteten "Shake"-Effekt und optimiertes Timing der Reiß-Animation (600ms Tension + 600ms Rip) deutlich dynamischer gestaltet.
+- Fix: **Progress-Indikatoren korrigiert**. Ein technischer Fehler in der `Progress`-Komponente wurde behoben, durch den die Fortschrittsbalken im Lehrer-Album oft leer blieben.
+- UI: **Mobile-First Optimierung**. Die Kartengrößen und Abstände wurden für kleine Displays optimiert, um eine bessere Übersicht beim Öffnen der Packs zu gewährleisten.
+
 ## [0.20.11] - 2026-03-22
 - Feature: **Kartenpack-Overhaul**. Die einzelne Lehrer-Lootbox wurde in ein professionelles 3-Karten-Boosterpack-Erlebnis umgewandelt.
 - UI: **Foil-Pack Rip & 3D Flip**. Neue "Rip"-Animation zum Öffnen der Packs und interaktive 3D-Flip-Effekte für die einzelnen Kartenenthüllungen.

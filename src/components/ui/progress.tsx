@@ -8,6 +8,7 @@ function Progress({
   className,
   children,
   value,
+  style,
   ...props
 }: ProgressPrimitive.Root.Props) {
   return (
@@ -15,6 +16,10 @@ function Progress({
       value={value}
       data-slot="progress"
       className={cn("w-full", className)}
+      style={{
+        "--value": value,
+        ...style,
+      } as React.CSSProperties}
       {...props}
     >
       {children}
@@ -40,13 +45,17 @@ function ProgressTrack({ className, ...props }: ProgressPrimitive.Track.Props) {
 
 function ProgressIndicator({
   className,
+  style,
   ...props
 }: ProgressPrimitive.Indicator.Props) {
   return (
     <ProgressPrimitive.Indicator
       data-slot="progress-indicator"
       className={cn("h-full bg-primary transition-all", className)}
-      style={{ width: "calc(var(--value) * 1%)" }}
+      style={{ 
+        width: "calc(var(--value) * 1%)",
+        ...style 
+      }}
       {...props}
     />
   )
