@@ -1,6 +1,10 @@
 # Changelog
 
-## [0.22.0] - 2026-03-22
+## [0.22.01] - 2026-03-22
+- Fix: **Registrierungs-Prozess & Kurssystem optimiert**. Ladezustand für die Kursauswahl hinzugefügt und robustere Fallbacks ("Kurs 1" bis "Kurs 7") im gesamten System implementiert.
+- UI: **Feedback-Sortierung verbessert**. Neue und unbearbeitete Meldungen werden nun priorisiert oben angezeigt.
+
+## [0.21.28] - 2026-03-22
 - Security: **Super Danger Zone Framework**. Einführung eines mehrstufigen Sicherheitssystems für kritische Admin-Aktionen (z.B. Karten-Wipes).
 - Security: **2FA (TOTP) Support**. Admins können nun die Zwei-Faktor-Authentisierung (Google/Apple Authenticator) in ihrem Profil aktivieren, um Zugriff auf die Danger Zone zu erhalten.
 - Feature: **24h Delay & Reversibility**. Kritische Aktionen treten erst nach einer 24-stündigen Wartezeit in Kraft. Während dieser Zeit können Admins die Aktion jederzeit über den neuen "STOPP (Abbrechen)" Button rückgängig machen.
@@ -9,7 +13,7 @@
 - Feature: **System-Test (Dry Run)**. Eine neue Test-Aktion in der Danger Zone erlaubt es Admins, den kompletten Sicherheitsworkflow gefahrlos zu testen.
 - Security: **Audit-Logging**. Alle Phasen einer Danger-Action (Planung, Abbruch, Ausführung, Fehler) werden lückenlos im System-Log protokolliert.
 
-## [0.21.28] - 2026-03-22
+## [0.21.26] - 2026-03-22
 - Fix: **Fallback-Kursnamen korrigiert**. Die Standardkurse wurden von 12A-12G auf "Kurs 1" bis "Kurs 7" umgestellt, um der tatsächlichen Kursstruktur besser zu entsprechen.
 
 ## [0.21.27] - 2026-03-22

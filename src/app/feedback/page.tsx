@@ -171,7 +171,26 @@ export default function FeedbackPage() {
     return null
   }
 
-  const filteredItems = feedbackItems.filter(item => {
+  const sortedItems = [...feedbackItems].sort((a, b) => {
+    const statusOrder: Record<FeedbackStatus, number> = {
+      'new': 0,
+      'in_progress': 0,
+      'implemented': 1,
+      'rejected': 1
+    }
+
+    const orderA = statusOrder[a.status] ?? 2
+    const orderB = statusOrder[b.status] ?? 2
+
+    if (orderA !== orderB) {
+      return orderA - orderB
+    }
+
+    // Secondary sort by date (newest first)
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+  })
+
+  const filteredItems = sortedItems.filter(item => {
     if (isAdmin) return true
     return !item.is_private
   })

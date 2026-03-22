@@ -59,6 +59,7 @@ export default function DangerZonePage() {
   const router = useRouter()
 
   const isMainAdmin = profile?.role === 'admin_main'
+  const is2FAEnabled = profile?.is_2fa_enabled
 
   useEffect(() => {
     if (!authLoading && (!profile || !isMainAdmin)) {
@@ -118,9 +119,14 @@ export default function DangerZonePage() {
   }
 
   const handleTriggerAction = async () => {
+    if (!is2FAEnabled) {
+      toast.error('Zwei-Faktor-Authentisierung ist erforderlich.')
+      return
+    }
+
     if (!selectedAction) return
 
-    if (confirmText !== selectedAction.confirmationString) {
+    if (confirmText.toLowerCase() !== selectedAction.confirmationString.toLowerCase()) {
       toast.error('Bestätigungstext stimmt nicht überein.')
       return
     }
@@ -202,21 +208,43 @@ export default function DangerZonePage() {
         </p>
       </div>
 
+      {!is2FAEnabled && (
+        <Card className="border-amber-500 bg-amber-50 dark:bg-amber-950/20">
+          <CardHeader className="flex flex-row items-center gap-4 space-y-0">
+            <div className="bg-amber-100 dark:bg-amber-900/40 p-2 rounded-full">
+              <AlertCircle className="h-6 w-6 text-amber-600 dark:text-amber-500" />
+            </div>
+            <div>
+              <CardTitle className="text-amber-800 dark:text-amber-400 text-lg">2FA Erforderlich</CardTitle>
+              <CardDescription className="text-amber-700 dark:text-amber-500">
+                Um Aktionen in der Danger Zone auszuführen, musst du zuerst die Zwei-Faktor-Authentisierung in deinem Profil aktivieren.
+              </CardDescription>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <Button variant="outline" className="border-amber-500 text-amber-700 dark:text-amber-500 hover:bg-amber-100 dark:hover:bg-amber-900/40" onClick={() => router.push('/profil')}>
+              Jetzt 2FA einrichten
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {DANGER_ACTIONS.map((action) => (
-          <Card key={action.id} className="border-destructive/20 bg-destructive/5 hover:bg-destructive/10 transition-colors">
+          <Card key={action.id} className={`border-destructive/20 bg-destructive/5 hover:bg-destructive/10 transition-colors ${!is2FAEnabled ? 'opacity-60 grayscale' : ''}`}>
             <CardHeader>
               <CardTitle className="text-lg">{action.title}</CardTitle>
               <CardDescription>{action.description}</CardDescription>
             </CardHeader>
             <CardFooter>
               <Dialog open={dialogOpen && selectedAction?.id === action.id} onOpenChange={(open) => {
+                if (!is2FAEnabled) return
                 setDialogOpen(open)
                 if (open) setSelectedAction(action)
               }}>
                 <DialogTrigger 
                   render={
-                    <Button variant="destructive" className="w-full gap-2">
+                    <Button variant="destructive" className="w-full gap-2" disabled={!is2FAEnabled}>
                       <AlertTriangle className="h-4 w-4" />
                       Aktion planen
                     </Button>

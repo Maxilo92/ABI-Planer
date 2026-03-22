@@ -7,7 +7,7 @@ import * as QRCode from "qrcode";
  * Setup 2FA for an admin.
  * Generates a TOTP secret and returns a QR code.
  */
-export const setup2FA = onCall(async (request) => {
+export const setup2FA = onCall({ cors: true }, async (request) => {
   if (!request.auth) {
     throw new HttpsError(
       "unauthenticated",
@@ -42,7 +42,7 @@ export const setup2FA = onCall(async (request) => {
 /**
  * Verify the initial 2FA code and save the secret.
  */
-export const verifyInitial2FA = onCall(async (request) => {
+export const verifyInitial2FA = onCall({ cors: true }, async (request) => {
   if (!request.auth) {
     throw new HttpsError(
       "unauthenticated",
@@ -88,7 +88,7 @@ export const verifyInitial2FA = onCall(async (request) => {
 /**
  * Disable 2FA for the current user.
  */
-export const disable2FA = onCall(async (request) => {
+export const disable2FA = onCall({ cors: true }, async (request) => {
   if (!request.auth) {
     throw new HttpsError(
       "unauthenticated",
