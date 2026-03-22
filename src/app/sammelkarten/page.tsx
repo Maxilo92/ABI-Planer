@@ -18,6 +18,7 @@ import { toast } from 'sonner'
 const DEFAULT_TEACHERS: LootTeacher[] = [
   { id: 'max-mustermann', name: "Max Mustermann", rarity: "common" },
   { id: 'erika-musterfrau', name: "Erika Musterfrau", rarity: "rare" },
+  { id: 'marie-curie', name: "Marie Curie", rarity: "mythic" },
   { id: 'albert-einstein', name: "Albert Einstein", rarity: "legendary" }
 ]
 
@@ -98,9 +99,9 @@ function SammelkartenContent() {
     }
 
     const slotWeights = [
-      { common: 0.8, rare: 0.15, epic: 0.045, legendary: 0.005 },
-      { common: 0.6, rare: 0.25, epic: 0.13, legendary: 0.02 },
-      { common: 0.4, rare: 0.35, epic: 0.20, legendary: 0.05 }
+      { common: 0.8, rare: 0.15, epic: 0.035, mythic: 0.01, legendary: 0.005 },
+      { common: 0.6, rare: 0.25, epic: 0.10, mythic: 0.03, legendary: 0.02 },
+      { common: 0.4, rare: 0.35, epic: 0.15, mythic: 0.05, legendary: 0.05 }
     ]
 
     return slotWeights.map(weights => {

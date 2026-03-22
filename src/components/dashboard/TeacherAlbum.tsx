@@ -32,6 +32,7 @@ import { Button } from '@/components/ui/button'
 const DEFAULT_TEACHERS: LootTeacher[] = [
   { id: 'max-mustermann', name: "Max Mustermann", rarity: "common" },
   { id: 'erika-musterfrau', name: "Erika Musterfrau", rarity: "rare" },
+  { id: 'marie-curie', name: "Marie Curie", rarity: "mythic" },
   { id: 'albert-einstein', name: "Albert Einstein", rarity: "legendary" }
 ]
 

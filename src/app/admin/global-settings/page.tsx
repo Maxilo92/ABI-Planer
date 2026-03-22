@@ -61,6 +61,7 @@ const DEFAULT_SETTINGS: GlobalSettings = {
   loot_teachers: [
     { id: 'max-mustermann', name: "Max Mustermann", rarity: "common" },
     { id: 'erika-musterfrau', name: "Erika Musterfrau", rarity: "rare" },
+    { id: 'marie-curie', name: "Marie Curie", rarity: "mythic" },
     { id: 'albert-einstein', name: "Albert Einstein", rarity: "legendary" }
   ]
 }

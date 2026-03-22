@@ -70,7 +70,7 @@ export default function PromoAuthPage() {
             </div>
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-xl font-bold uppercase tracking-wide">
-                Gast-Besuch
+                Ohne Konto
               </CardTitle>
               <CardDescription className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground/80">
                 Nur das Nötigste
@@ -104,7 +104,7 @@ export default function PromoAuthPage() {
             <CardHeader>
               <div className="flex justify-between items-start">
                 <CardTitle className="flex items-center gap-2 text-xl font-black uppercase tracking-wide text-primary">
-                  Dein Account
+                  Mit Konto
                 </CardTitle>
               </div>
               <CardDescription className="text-[11px] font-bold uppercase tracking-wider text-primary/60">
