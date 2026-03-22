@@ -51,11 +51,7 @@ function SammelkartenContent() {
     return () => clearInterval(timer)
   }, [])
 
-  useEffect(() => {
-    if (!loading && !profile?.easter_egg_unlocked) {
-      redirect('/')
-    }
-  }, [profile, loading])
+
 
   useEffect(() => {
     const unsubscribe = onSnapshot(doc(db, 'settings', 'global'), (snapshot) => {

@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.21.00] - 2026-03-22
+- Feature: **Sammelkarten-Release**. Das Sammelkarten-Feature ist nun für alle Nutzer permanent freigeschaltet und direkt über die Navbar erreichbar.
+- UX: **Easter Egg Toggle entfernt**. Die Option, Sammelkarten in den Einstellungen zu verstecken, wurde entfernt, da es sich nun um ein Kern-Feature handelt.
+- Feature: **Neues Easter Egg im Footer**. Durch 3-maliges Klicken auf die Versionsnummer im Footer erhält man einmalig 5 kostenlose Booster-Packs (und eine genervte Nachricht vom System).
+- Refactor: **Booster-Logik erweitert**. Unterstützung für "Extra-Booster", die über das tägliche Limit von 2 Packs hinausgehen.
+
 ## [0.20.25] - 2026-03-22
 - UI: **Sammelkarten Layout-Überarbeitung v2 (Bottom-Up)**. Badge oben fixiert, Name am Boden fixiert und wächst nach oben, Icon schrumpft bei Platzmangel.
 - Cleanup: Test-Lehrer "Frau Courant-Fernandes" aus dem Standard-Pool entfernt.

@@ -39,6 +39,8 @@ export interface Profile {
   booster_stats?: {
     last_reset: string; // ISO date string (YYYY-MM-DD)
     count: number;      // Open count for that day
+    extra_available?: number;
+    extra_boosters_claimed?: boolean;
   } | null;
 }
 

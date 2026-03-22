@@ -465,38 +465,7 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
-      {profile?.easter_egg_unlocked && (
-        <Card className="border-primary/20 bg-primary/5">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-xl">
-              <Sparkles className="h-5 w-5 text-primary" /> Sammelkarten
-            </CardTitle>
-            <CardDescription>Du hast die Sammelkarten freigeschaltet. Hier kannst du sie wieder verstecken.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button 
-              variant="outline" 
-              className="w-full sm:w-auto border-primary/20 hover:bg-primary/10"
-              onClick={async () => {
-                if (user) {
-                  try {
-                    await updateDoc(doc(db, 'profiles', user.uid), {
-                      easter_egg_unlocked: false
-                    })
-                    toast.success('Sammelkarten wurden wieder versteckt.')
-                    router.push('/')
-                  } catch (error) {
-                    console.error('Error resetting easter egg:', error)
-                    toast.error('Konnte Sammelkarten nicht verstecken.')
-                  }
-                }
-              }}
-            >
-              Sammelkarten zurücksetzen & verstecken
-            </Button>
-          </CardContent>
-        </Card>
-      )}
+
 
       <Card>
         <CardHeader>

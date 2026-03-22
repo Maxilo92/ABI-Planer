@@ -3,18 +3,18 @@
 import Link from 'next/link'
 import { useState } from 'react'
 import { useAuth } from '@/context/AuthContext'
-import { db } from '@/lib/firebase'
-import { doc, updateDoc } from 'firebase/firestore'
 import { toast } from 'sonner'
+import { useUserTeachers } from '@/hooks/useUserTeachers'
 
 export function Footer() {
   const version = process.env.NEXT_PUBLIC_APP_VERSION ?? '0.0.0'
   const { profile, user } = useAuth()
+  const { claimExtraBoosters } = useUserTeachers()
   const [clickCount, setClickCount] = useState(0)
   const [showFeedback, setShowFeedback] = useState<string | null>(null)
 
   const handleVersionClick = async () => {
-    if (profile?.easter_egg_unlocked) return
+    const alreadyClaimed = profile?.booster_stats?.extra_boosters_claimed
 
     const newCount = clickCount + 1
     setClickCount(newCount)
@@ -24,19 +24,24 @@ export function Footer() {
     } else if (newCount === 2) {
       setShowFeedback('😠')
     } else if (newCount === 3) {
-      if (user) {
+      if (user && !alreadyClaimed) {
         try {
-          await updateDoc(doc(db, 'profiles', user.uid), {
-            easter_egg_unlocked: true
+          await claimExtraBoosters()
+          toast.success('Hör auf zu klicken! Hier hast du 5 Booster, jetzt lass mich in Ruhe!', {
+            icon: '🎁',
+            duration: 5000
           })
-          toast.success('Sammelkarten freigeschaltet! Schau mal in dein Menü...', {
-            icon: '✨'
-          })
-        } catch (error) {
-          console.error('Error unlocking easter egg:', error)
+          setShowFeedback('🎉')
+        } catch (error: any) {
+          if (error.message === 'Belohnung bereits abgeholt!') {
+            setShowFeedback('🙄')
+          } else {
+            console.error('Error claiming boosters:', error)
+          }
         }
+      } else if (alreadyClaimed) {
+        setShowFeedback('🙄')
       }
-      setShowFeedback('🎉')
       setClickCount(0)
     }
 
