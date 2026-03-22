@@ -235,12 +235,16 @@ function SammelkartenContent() {
                     return (
                       <div 
                         key={`${teacher.id}-${idx}`}
-                        className="perspective-1000 w-40 h-56 sm:w-48 sm:h-64 cursor-pointer"
+                        className={cn(
+                          "perspective-1000 w-40 h-56 sm:w-48 sm:h-64 cursor-pointer relative",
+                          isFlipped && result?.isNew && "animate-new-card-float z-10"
+                        )}
                         onClick={() => !isFlipped && handleFlipCard(idx)}
                       >
                         <div className={cn(
                           "relative w-full h-full transition-all duration-700 preserve-3d will-change-transform",
-                          isFlipped && "rotate-y-180"
+                          isFlipped && !result?.isLevelUp && "rotate-y-180",
+                          isFlipped && result?.isLevelUp && "animate-level-up-spin"
                         )}>
                           {/* Minimalist Back of Card */}
                           <div 
@@ -269,6 +273,15 @@ function SammelkartenContent() {
                           >
                              {/* Solid background to prevent bleed through */}
                              <div className={cn("absolute inset-0 z-0 rounded-[inherit]", cardInfo?.color)} />
+
+                             {/* Special "NEW" card highlight */}
+                             {isFlipped && result?.isNew && (
+                               <div className="absolute inset-0 z-10 pointer-events-none overflow-hidden rounded-[inherit]">
+                                 <div className="absolute inset-[-50%] bg-[radial-gradient(circle,rgba(255,215,0,0.4)_0%,transparent_70%)] animate-pulse" />
+                                 <div className="absolute top-0 left-0 w-full h-full bg-[linear-gradient(45deg,transparent_25%,rgba(255,255,255,0.3)_50%,transparent_75%)] bg-[length:250%_250%] animate-shimmer opacity-50" />
+                                 <div className="absolute inset-0 border-4 border-amber-400/50 rounded-[inherit] animate-pulse" />
+                               </div>
+                             )}
 
                              {/* Rarity Effects */}
                              {isFlipped && (teacher.rarity === 'legendary' || teacher.rarity === 'mythic') && (
