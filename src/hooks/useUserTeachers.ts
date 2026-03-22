@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { db } from '@/lib/firebase'
-import { doc, onSnapshot, setDoc, getDoc, updateDoc } from 'firebase/firestore'
+import { doc, onSnapshot, setDoc, getDoc, updateDoc, writeBatch, runTransaction } from 'firebase/firestore'
 import { useAuth } from '@/context/AuthContext'
 import { UserTeacher, Profile } from '@/types/database'
 
@@ -52,6 +52,81 @@ export const useUserTeachers = () => {
     return () => unsubscribe()
   }, [user])
 
+  const collectBooster = useCallback(
+    async (teacherIds: string[]) => {
+      if (!user) throw new Error('User must be authenticated to collect teachers')
+      if (teacherIds.length !== 3) {
+        throw new Error('Ein Kartenpack muss genau 3 Karten enthalten.')
+      }
+
+      const userTeachersRef = doc(db, 'user_teachers', user.uid)
+      const profileRef = doc(db, 'profiles', user.uid)
+      
+      try {
+        const results = await runTransaction(db, async (transaction) => {
+          const profileDoc = await transaction.get(profileRef)
+          if (!profileDoc.exists()) throw new Error('User profile not found')
+          
+          const today = new Date().toISOString().split('T')[0]
+          const currentProfile = profileDoc.data() as Profile
+          const currentStats = currentProfile.booster_stats || { last_reset: today, count: 0 }
+          
+          let newCount = currentStats.count
+          if (currentStats.last_reset !== today) {
+            newCount = 1
+          } else {
+            newCount += 1
+          }
+
+          if (newCount > 2) {
+            throw new Error('Tägliches Limit von 2 Kartenpacks erreicht!')
+          }
+
+          const teachersDoc = await transaction.get(userTeachersRef)
+          const currentData = teachersDoc.exists() ? (teachersDoc.data() as UserTeacher) : {}
+          
+          // Track updates locally to handle duplicates in the pack
+          const tempData = { ...currentData }
+          const packResults = teacherIds.map(teacherId => {
+            const teacherData = tempData[teacherId] || { count: 0, level: 1 }
+            const tCount = teacherData.count + 1
+            const tLevel = calculateLevel(tCount)
+            
+            tempData[teacherId] = {
+              count: tCount,
+              level: tLevel
+            }
+            
+            return { teacherId, count: tCount, level: tLevel }
+          })
+
+          // Prepare updates object
+          const updates = teacherIds.reduce((acc, id) => {
+            acc[id] = tempData[id]
+            return acc
+          }, {} as any)
+
+          // Execute updates in transaction
+          transaction.set(userTeachersRef, updates, { merge: true })
+          transaction.update(profileRef, {
+            booster_stats: {
+              last_reset: today,
+              count: newCount
+            }
+          })
+
+          return packResults
+        })
+        
+        return results
+      } catch (err) {
+        console.error('Error collecting booster pack:', err)
+        throw err
+      }
+    },
+    [user]
+  )
+
   const collectTeacher = useCallback(
     async (teacherId: string) => {
       if (!user) throw new Error('User must be authenticated to collect teachers')
@@ -60,57 +135,64 @@ export const useUserTeachers = () => {
       const profileRef = doc(db, 'profiles', user.uid)
       
       try {
-        const today = new Date().toISOString().split('T')[0]
-        const currentStats = profile?.booster_stats || { last_reset: today, count: 0 }
-        
-        let newCount = currentStats.count
-        if (currentStats.last_reset !== today) {
-          newCount = 1
-        } else {
-          newCount += 1
-        }
+        const result = await runTransaction(db, async (transaction) => {
+          const profileDoc = await transaction.get(profileRef)
+          if (!profileDoc.exists()) throw new Error('User profile not found')
 
-        if (newCount > 3) {
-          throw new Error('Tägliches Limit von 3 Boostern erreicht!')
-        }
-
-        const docSnap = await getDoc(userTeachersRef)
-        const currentData = docSnap.exists() ? (docSnap.data() as UserTeacher) : {}
-        
-        const teacherData = currentData[teacherId] || { count: 0, level: 1 }
-        const tCount = teacherData.count + 1
-        const tLevel = calculateLevel(tCount)
-
-        // Update profile stats and teachers in parallel/transactional
-        await setDoc(userTeachersRef, {
-          [teacherId]: {
-            count: tCount,
-            level: tLevel,
+          const today = new Date().toISOString().split('T')[0]
+          const currentProfile = profileDoc.data() as Profile
+          const currentStats = currentProfile.booster_stats || { last_reset: today, count: 0 }
+          
+          let newCount = currentStats.count
+          if (currentStats.last_reset !== today) {
+            newCount = 1
+          } else {
+            newCount += 1
           }
-        }, { merge: true })
 
-        await updateDoc(profileRef, {
-          booster_stats: {
-            last_reset: today,
-            count: newCount
+          if (newCount > 2) {
+            throw new Error('Tägliches Limit von 2 Kartenpacks erreicht!')
           }
+
+          const teachersDoc = await transaction.get(userTeachersRef)
+          const currentData = teachersDoc.exists() ? (teachersDoc.data() as UserTeacher) : {}
+          
+          const teacherData = currentData[teacherId] || { count: 0, level: 1 }
+          const tCount = teacherData.count + 1
+          const tLevel = calculateLevel(tCount)
+
+          transaction.set(userTeachersRef, {
+            [teacherId]: {
+              count: tCount,
+              level: tLevel,
+            }
+          }, { merge: true })
+
+          transaction.update(profileRef, {
+            booster_stats: {
+              last_reset: today,
+              count: newCount
+            }
+          })
+
+          return { count: tCount, level: tLevel }
         })
         
-        return { count: tCount, level: tLevel }
+        return result
       } catch (err) {
         console.error('Error collecting teacher:', err)
         throw err
       }
     },
-    [user, profile]
+    [user]
   )
 
   const getRemainingBoosters = useCallback(() => {
     if (!profile) return 0
     const today = new Date().toISOString().split('T')[0]
     const stats = profile.booster_stats
-    if (!stats || stats.last_reset !== today) return 3
-    return Math.max(0, 3 - stats.count)
+    if (!stats || stats.last_reset !== today) return 2
+    return Math.max(0, 2 - stats.count)
   }, [profile])
 
   return {
@@ -118,6 +200,26 @@ export const useUserTeachers = () => {
     loading,
     error,
     collectTeacher,
+    collectBooster,
+    getRemainingBoosters,
+  }
+}
+
+
+  const getRemainingBoosters = useCallback(() => {
+    if (!profile) return 0
+    const today = new Date().toISOString().split('T')[0]
+    const stats = profile.booster_stats
+    if (!stats || stats.last_reset !== today) return 2
+    return Math.max(0, 2 - stats.count)
+  }, [profile])
+
+  return {
+    teachers,
+    loading,
+    error,
+    collectTeacher,
+    collectBooster,
     getRemainingBoosters,
   }
 }

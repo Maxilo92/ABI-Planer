@@ -21,21 +21,17 @@ const DEFAULT_TEACHERS: LootTeacher[] = [
   { id: 'albert-einstein', name: "Albert Einstein", rarity: "legendary" }
 ]
 
-const RARITY_ORDER: TeacherRarity[] = ['common', 'rare', 'epic', 'mythic', 'legendary']
-
 function SammelkartenContent() {
   const searchParams = useSearchParams()
   const view = searchParams.get('view') || 'sammelkarten'
   const { user, profile, loading } = useAuth()
-  const { collectTeacher, teachers: userTeachers, getRemainingBoosters } = useUserTeachers()
+  const { collectBooster, teachers: userTeachers, getRemainingBoosters } = useUserTeachers()
   const [globalSettings, setGlobalSettings] = useState<any>(null)
-  const [currentRarityIndex, setCurrentRarityIndex] = useState(0)
-  const [clicksCount, setClicksCount] = useState(0) // 0 to 5
-  const [gameState, setGameState] = useState<'idle' | 'interacting' | 'revealed'>('idle')
-  const [revealedTeacher, setRevealedTeacher] = useState<LootTeacher | null>(null)
-  const [collectionResult, setCollectionResult] = useState<{ isNew: boolean, newLevel: number, count: number } | null>(null)
+  const [gameState, setGameState] = useState<'idle' | 'ripping' | 'revealed'>('idle')
+  const [revealedTeachers, setRevealedTeachers] = useState<LootTeacher[] | null>(null)
+  const [collectionResults, setCollectionResults] = useState<Array<{ isNew: boolean, newLevel: number, count: number } | null> | null>(null)
+  const [flippedCards, setFlippedCards] = useState<boolean[]>([false, false, false])
   const [isAnimating, setIsAnimating] = useState(false)
-  const [shake, setShake] = useState(false)
   const [timeLeft, setTimeLeft] = useState<string>('')
 
   useEffect(() => {
@@ -74,298 +70,277 @@ function SammelkartenContent() {
 
   if (loading) return null
 
-  const handleStart = () => {
+  const generatePack = (): LootTeacher[] => {
+    const teachers = Array.isArray(globalSettings?.loot_teachers) && globalSettings.loot_teachers.length > 0
+      ? globalSettings.loot_teachers
+      : DEFAULT_TEACHERS
+
+    const getWeightedRarity = (weights: Record<string, number>): TeacherRarity => {
+      const rand = Math.random()
+      let cumulative = 0
+      for (const [rarity, weight] of Object.entries(weights)) {
+        cumulative += weight
+        if (rand < cumulative) return rarity as TeacherRarity
+      }
+      return 'common'
+    }
+
+    const slotWeights = [
+      { common: 0.8, rare: 0.15, epic: 0.045, legendary: 0.005 },
+      { common: 0.6, rare: 0.25, epic: 0.13, legendary: 0.02 },
+      { common: 0.4, rare: 0.35, epic: 0.20, legendary: 0.05 }
+    ]
+
+    return slotWeights.map(weights => {
+      const targetRarity = getWeightedRarity(weights)
+      const matching = teachers.filter((t: any) => t.rarity === targetRarity)
+      if (matching.length > 0) {
+        return matching[Math.floor(Math.random() * matching.length)]
+      }
+      return teachers[Math.floor(Math.random() * teachers.length)]
+    })
+  }
+
+  const handleOpenPack = async () => {
     if (getRemainingBoosters() <= 0) {
       toast.error('Limit erreicht! Komm morgen wieder.')
       return
     }
-    setGameState('interacting')
-    setCurrentRarityIndex(0)
-    setClicksCount(0)
-    setRevealedTeacher(null)
-    setCollectionResult(null)
-  }
 
-  const triggerShake = () => {
-    setShake(true)
-    const duration = currentRarityIndex === 4 ? 200 : currentRarityIndex === 3 ? 250 : 300
-    setTimeout(() => setShake(false), duration)
-  }
-
-  const handleBoxClick = () => {
-    if (gameState !== 'interacting' || isAnimating) return
-
-    const nextClick = clicksCount + 1
-    setClicksCount(nextClick)
-    triggerShake()
-
-    if (nextClick <= 4) {
-      setIsAnimating(true)
-      const rand = Math.random()
-      let upgradeSteps = 0
-      
-      // Upgrade probabilities
-      if (rand < 0.12) upgradeSteps = 2
-      else if (rand < 0.38) upgradeSteps = 1
-
-      if (upgradeSteps > 0) {
-        // Upgrade animation is slightly longer to emphasize the rarity change
-        setCurrentRarityIndex(prev => Math.min(prev + upgradeSteps, RARITY_ORDER.length - 1))
-        setTimeout(() => setIsAnimating(false), 500)
-      } else {
-        setTimeout(() => setIsAnimating(false), 300)
-      }
-    } else if (nextClick === 5) {
-      revealLoot()
-    }
-  }
-
-  const revealLoot = async () => {
+    setGameState('ripping')
     setIsAnimating(true)
-    // Extra long shake for the reveal
-    setShake(true)
-    
+    setFlippedCards([false, false, false])
+
+    const pack = generatePack()
+    setRevealedTeachers(pack)
+
+    // Simulate rip duration
     setTimeout(async () => {
-      setShake(false)
       setGameState('revealed')
       setIsAnimating(false)
-      const finalRarity = RARITY_ORDER[currentRarityIndex]
-      const teachers = Array.isArray(globalSettings?.loot_teachers) && globalSettings.loot_teachers.length > 0
-        ? globalSettings.loot_teachers
-        : DEFAULT_TEACHERS
-      
-      const matchingTeachers = teachers.filter((t: any) => t.rarity === finalRarity)
-      
-      let teacher: LootTeacher
-      if (matchingTeachers.length > 0) {
-        teacher = matchingTeachers[Math.floor(Math.random() * matchingTeachers.length)]
-      } else {
-        // Fallback if no teacher of that rarity exists
-        teacher = teachers[Math.floor(Math.random() * teachers.length)]
-      }
-      setRevealedTeacher(teacher)
 
-      // Persist to collection
-      const teacherId = teacher.id || teacher.name
-      if (teacherId) {
-        try {
-          const isNew = !(userTeachers?.[teacher.id] || userTeachers?.[teacher.name])
-          const result = await collectTeacher(teacherId)
-          setCollectionResult({
+      try {
+        const teacherIds = pack.map(t => t.id || t.name)
+        const initialTeachers = { ...userTeachers }
+        const results = await collectBooster(teacherIds)
+        
+        const processedResults = results.map(r => {
+          const isNew = !initialTeachers[r.teacherId]
+          initialTeachers[r.teacherId] = { count: r.count, level: r.level }
+          return {
             isNew,
-            newLevel: result.level,
-            count: result.count
-          })
-
-          if (user) {
-            logAction('LOOT_TEACHER', user.uid, profile?.full_name, { 
-              id: teacherId, 
-              count: result.count, 
-              level: result.level 
-            })
+            newLevel: r.level,
+            count: r.count
           }
-        } catch (err: any) {
-          toast.error(err.message || 'Fehler beim Sammeln.')
-          setGameState('idle')
+        })
+
+        setCollectionResults(processedResults)
+
+        if (user) {
+          logAction('LOOT_BOOSTER', user.uid, profile?.full_name, { 
+            teachers: pack.map(t => t.id || t.name),
+            results: processedResults
+          })
         }
+      } catch (err: any) {
+        toast.error(err.message || 'Fehler beim Sammeln.')
+        setGameState('idle')
       }
     }, 800)
   }
+
+  const handleFlipCard = (index: number) => {
+    const newFlipped = [...flippedCards]
+    newFlipped[index] = true
+    setFlippedCards(newFlipped)
+  }
+
+  const allFlipped = flippedCards.every(v => v === true)
 
   const info = (rarity: TeacherRarity) => {
     switch (rarity) {
       case 'common': return { 
         label: 'Gewöhnlich', 
         color: 'bg-slate-500', 
-        glow: 'shadow-slate-500/20',
-        shake: 'animate-sammelkarten-shake-1'
+        glow: 'shadow-[0_0_20px_rgba(100,116,139,0.4)]',
       }
       case 'rare': return { 
         label: 'Selten', 
         color: 'bg-emerald-500', 
-        glow: 'shadow-emerald-500/40',
-        shake: 'animate-sammelkarten-shake-2'
+        glow: 'shadow-[0_0_25px_rgba(16,185,129,0.6)]',
       }
       case 'epic': return { 
         label: 'Episch', 
-        color: 'bg-purple-500', 
-        glow: 'shadow-purple-500/60',
-        shake: 'animate-sammelkarten-shake-3'
+        color: 'bg-purple-600', 
+        glow: 'shadow-[0_0_30px_rgba(147,51,234,0.7)]',
       }
       case 'mythic': return { 
         label: 'Mythisch', 
-        color: 'bg-red-500', 
-        glow: 'shadow-red-500/80',
-        shake: 'animate-sammelkarten-shake-4'
+        color: 'bg-red-600', 
+        glow: 'shadow-[0_0_35px_rgba(220,38,38,0.8)]',
       }
       case 'legendary': return { 
         label: 'Legendär', 
         color: 'bg-amber-500', 
-        glow: 'shadow-amber-500/100',
-        shake: 'animate-sammelkarten-shake-5'
+        glow: 'shadow-[0_0_40px_rgba(245,158,11,1)]',
       }
     }
   }
-
-  const currentInfo = info(RARITY_ORDER[currentRarityIndex])
 
   return (
     <div className="container mx-auto py-8">
       {view === 'sammelkarten' ? (
         <div className="flex flex-col items-center justify-center min-h-[calc(100vh-20rem)] overflow-hidden">
-          <div className="relative flex flex-col items-center space-y-12 w-full max-w-sm px-6">
+          <div className="relative flex flex-col items-center space-y-12 w-full max-w-4xl px-6">
             
-            {/* Lightweight reveal glow */}
-            {gameState === 'revealed' && (
-              <div className={cn(
-                "absolute inset-0 -z-10 w-[140%] h-[140%] blur-3xl opacity-25",
-                currentInfo.color
-              )} />
-            )}
-
             {/* Minimal Header */}
             <div className={cn(
               "text-center space-y-2 transition-all duration-700",
-              gameState === 'revealed' ? "opacity-100 scale-110" : "opacity-40"
+              gameState === 'revealed' ? "opacity-100 scale-105" : "opacity-40"
             )}>
-              <h1 className="text-3xl font-black tracking-tighter font-mono flex items-center gap-3">
-                <Sparkles className={cn("h-7 w-7", gameState === 'revealed' ? "text-white animate-pulse" : "text-primary")} />
+              <h1 className="text-3xl font-black tracking-tighter font-mono flex items-center gap-3 justify-center">
+                <Sparkles className={cn("h-7 w-7", gameState === 'revealed' ? "text-primary animate-pulse" : "text-muted-foreground")} />
                 SAMMELKARTEN
               </h1>
               {gameState === 'idle' && (
                 <div className="flex items-center justify-center gap-2 mt-2">
                   <Badge variant={getRemainingBoosters() > 0 ? "secondary" : "destructive"} className="px-3 py-1 text-[10px] font-black uppercase tracking-widest border-2 border-white/10">
                     <Zap className="h-3 w-3 mr-1.5 fill-current" />
-                    {getRemainingBoosters() > 0 ? `${getRemainingBoosters()} / 3 Booster übrig` : `Nächster Booster in ${timeLeft}`}
+                    {getRemainingBoosters() > 0 ? `${getRemainingBoosters()} / 2 Booster übrig` : `Nächster Booster in ${timeLeft}`}
                   </Badge>
                 </div>
               )}
             </div>
 
-            {/* The Box Container */}
-            <div className="relative w-72 h-72 flex items-center justify-center">
-              {gameState === 'idle' ? (
+            {/* The Pack/Card Container */}
+            <div className="relative w-full min-h-[400px] flex items-center justify-center">
+              {gameState === 'idle' || gameState === 'ripping' ? (
                 <div 
                   className={cn(
-                    "group relative w-64 h-64 rounded-[2.5rem] border-4 border-dashed flex flex-col items-center justify-center transition-all duration-500",
-                    getRemainingBoosters() > 0 
-                      ? "border-primary/20 bg-primary/5 cursor-pointer hover:scale-105 hover:border-primary/40 hover:bg-primary/10" 
-                      : "border-muted/20 bg-muted/5 cursor-not-allowed opacity-60"
+                    "relative w-64 h-96 cursor-pointer group transition-all duration-500",
+                    getRemainingBoosters() <= 0 && "opacity-50 cursor-not-allowed",
+                    gameState !== 'ripping' && getRemainingBoosters() > 0 && "hover:scale-105 active:scale-95"
                   )}
-                  onClick={handleStart}
+                  onClick={getRemainingBoosters() > 0 && gameState === 'idle' ? handleOpenPack : undefined}
                 >
-                  <Gift className={cn(
-                    "h-24 w-24 transition-all duration-500",
-                    getRemainingBoosters() > 0 
-                      ? "text-primary/40 group-hover:text-primary group-hover:rotate-12 group-hover:scale-110" 
-                      : "text-muted/40"
-                  )} />
-                  <p className="mt-4 text-[10px] font-black uppercase tracking-[0.4em] text-primary/60 group-hover:text-primary transition-colors text-center px-4">
-                    {getRemainingBoosters() > 0 ? "Starten" : `Nächster in ${timeLeft}`}
-                  </p>
-                </div>
-              ) : (
-                <div 
-                  className={cn(
-                    "relative w-64 h-64 rounded-[2.5rem] flex flex-col items-center justify-center transition-all duration-300 border-[8px] shadow-xl will-change-transform",
-                    currentInfo.color,
-                    "border-white/40",
-                    currentInfo.glow,
-                    shake && currentInfo.shake,
-                    !shake && gameState === 'interacting' && "animate-float",
-                    gameState === 'interacting' && "cursor-pointer active:scale-90",
-                    gameState === 'revealed' && "scale-[1.12] border-white shadow-[0_0_36px_rgba(255,255,255,0.28)] animate-reveal-pop"
-                  )}
-                  onClick={handleBoxClick}
-                >
-                  {gameState === 'interacting' ? (
-                    <>
-                      <Gift className={cn(
-                        "h-32 w-32 text-white transition-all duration-300",
-                        isAnimating ? "scale-125 rotate-6" : "scale-100"
-                      )} />
-                      
-                      {/* Progress Indicators (Only 4 for upgrades) */}
-                      <div className="absolute -bottom-14 flex gap-2">
-                        {[1, 2, 3, 4].map(i => (
-                          <div 
-                            key={i} 
-                            className={cn(
-                              "h-2 w-10 rounded-full transition-all duration-500",
-                              i <= clicksCount 
-                                ? (i === clicksCount && isAnimating ? "bg-white scale-125 shadow-[0_0_15px_rgba(255,255,255,0.8)]" : "bg-primary") 
-                                : "bg-secondary/40"
-                            )} 
-                          />
-                        ))}
-                      </div>
+                  {/* Top Part */}
+                  <div className={cn(
+                    "absolute top-0 left-0 w-full h-1/3 bg-primary rounded-t-3xl border-x-8 border-t-8 border-white/20 z-20 flex items-end justify-center pb-4 transition-transform duration-500",
+                    gameState === 'ripping' && "animate-rip-top"
+                  )}>
+                    <Zap className="h-12 w-12 text-white/40" />
+                  </div>
+                  
+                  {/* Bottom Part */}
+                  <div className={cn(
+                    "absolute bottom-0 left-0 w-full h-2/3 bg-primary rounded-b-3xl border-x-8 border-b-8 border-white/20 z-10 flex flex-col items-center pt-8 shadow-2xl transition-transform duration-500",
+                    gameState === 'ripping' && "animate-rip-bottom"
+                  )}>
+                    <div className="w-16 h-1 bg-white/20 rounded-full mb-8" />
+                    <h2 className="text-white font-black text-2xl tracking-tighter mb-1">ABI PLANER</h2>
+                    <p className="text-white/60 text-[10px] font-bold uppercase tracking-[0.3em]">Booster Pack</p>
+                    
+                    <div className="mt-auto mb-12">
+                       <Gift className={cn(
+                         "h-16 w-16 transition-colors",
+                         gameState === 'idle' ? "text-white/20 group-hover:text-white/40" : "text-white/40"
+                       )} />
+                    </div>
+                  </div>
 
-                      <div className="absolute top-4 font-black text-white/40 text-[9px] tracking-[0.4em] uppercase">
-                        {clicksCount < 4 ? "Upgrade Phase" : "Bereit zum Öffnen"}
-                      </div>
-                      
-                      <div className={cn(
-                        "mt-3 text-white font-black text-2xl tracking-tighter uppercase drop-shadow-lg transition-all duration-300",
-                        isAnimating && "scale-110 blur-[1px]"
-                      )}>
-                        {currentInfo.label}
-                      </div>
+                  {/* Ripping serrated edge effect */}
+                  <div className="absolute top-1/3 left-0 w-full h-4 z-15 flex overflow-hidden opacity-40">
+                    {Array.from({ length: 12 }).map((_, i) => (
+                      <div key={i} className="w-8 h-8 bg-primary transform rotate-45 translate-y-2 border-t-2 border-l-2 border-white/20" />
+                    ))}
+                  </div>
 
-                      {isAnimating && (
-                        <div className="absolute -top-2 right-4 rounded-full bg-white/30 px-2 py-1 text-[10px] font-black uppercase tracking-wider text-white">
-                          <Zap className="h-3.5 w-3.5" />
-                        </div>
-                      )}
-                    </>
-                  ) : (
-                    <div className="flex flex-col items-center">
-                      {collectionResult && (
-                        <div className="absolute -top-12 animate-in fade-in slide-in-from-bottom-2 duration-500">
-                          {collectionResult.isNew ? (
-                            <div className="bg-amber-500 text-white text-[10px] font-black px-3 py-1 rounded-full shadow-lg flex items-center gap-1.5 uppercase tracking-widest border-2 border-white">
-                              <Sparkles className="h-3 w-3" />
-                              NEU ENTDECKT!
-                            </div>
-                          ) : (
-                            <div className="bg-emerald-500 text-white text-[10px] font-black px-3 py-1 rounded-full shadow-lg flex items-center gap-1.5 uppercase tracking-widest border-2 border-white">
-                              <RotateCcw className="h-3 w-3" />
-                              DUPLIKAT! (Lvl {collectionResult.newLevel})
-                            </div>
-                          )}
-                        </div>
-                      )}
-
-                      <div className="relative mb-4">
-                        <GraduationCap className="h-28 w-28 text-white drop-shadow-[0_12px_12px_rgba(0,0,0,0.35)] animate-float" />
-                        <Sparkles className="absolute -top-4 -right-4 h-8 w-8 text-white animate-pulse" />
-                      </div>
-                      
-                      <div className="bg-black/90 backdrop-blur-2xl rounded-[2rem] p-5 border-2 border-white/30 text-center max-w-[120%] shadow-[0_20px_40px_rgba(0,0,0,0.5)]">
-                        <div className={cn(
-                          "text-[9px] font-black uppercase mb-1.5 tracking-[0.3em] transition-colors",
-                          currentRarityIndex >= 3 ? "text-amber-400" : "text-white/60"
-                        )}>
-                          {currentInfo.label}
-                        </div>
-                        <div className="text-white font-black text-xl tracking-tight whitespace-nowrap px-2">
-                          {revealedTeacher?.name}
-                        </div>
-                      </div>
+                  {getRemainingBoosters() <= 0 && gameState === 'idle' && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center z-30 bg-black/40 rounded-3xl backdrop-blur-[2px]">
+                       <RotateCcw className="h-8 w-8 text-white mb-2 animate-spin-slow" />
+                       <p className="text-white font-black text-[10px] uppercase tracking-widest">{timeLeft}</p>
                     </div>
                   )}
+                </div>
+              ) : (
+                <div className="flex flex-wrap justify-center gap-6 w-full max-w-5xl animate-in fade-in zoom-in duration-700">
+                  {revealedTeachers?.map((teacher, idx) => {
+                    const isFlipped = flippedCards[idx]
+                    const result = collectionResults?.[idx]
+                    const cardInfo = info(teacher.rarity)
+                    
+                    return (
+                      <div 
+                        key={`${teacher.id}-${idx}`}
+                        className="perspective-1000 w-48 h-64 cursor-pointer"
+                        onClick={() => !isFlipped && handleFlipCard(idx)}
+                      >
+                        <div className={cn(
+                          "relative w-full h-full transition-all duration-700 preserve-3d",
+                          isFlipped && "rotate-y-180"
+                        )}>
+                          {/* Back of Card */}
+                          <div className="absolute inset-0 backface-hidden rounded-2xl bg-primary border-8 border-white/10 flex flex-col items-center justify-center shadow-xl">
+                             <div className="w-full h-full opacity-10 absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white via-transparent to-transparent" />
+                             <GraduationCap className="h-16 w-16 text-white/20 mb-2" />
+                             <div className="text-white/20 font-black text-xl tracking-tighter">ABI PLANER</div>
+                             {!isFlipped && (
+                               <div className="mt-4 animate-pulse text-[8px] text-white/40 font-black uppercase tracking-widest">Klicken zum Umdrehen</div>
+                             )}
+                          </div>
+
+                          {/* Front of Card */}
+                          <div className={cn(
+                            "absolute inset-0 backface-hidden rotate-y-180 rounded-2xl border-4 border-white flex flex-col items-center p-4 transition-all duration-500",
+                            cardInfo?.color,
+                            isFlipped && cardInfo?.glow
+                          )}>
+                             {/* Rarity Effects */}
+                             {isFlipped && teacher.rarity === 'legendary' && (
+                               <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none">
+                                 <div className="absolute inset-[-100%] bg-[linear-gradient(45deg,transparent_25%,rgba(255,255,255,0.4)_50%,transparent_75%)] bg-[length:250%_250%] animate-shimmer" />
+                               </div>
+                             )}
+
+                            {isFlipped && result && (
+                              <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-20">
+                                {result.isNew ? (
+                                  <Badge className="bg-amber-500 border-2 border-white text-[10px] font-black px-2 shadow-lg animate-in zoom-in duration-500">NEW</Badge>
+                                ) : (
+                                  <Badge className="bg-emerald-500 border-2 border-white text-[10px] font-black px-2 shadow-lg animate-in zoom-in duration-500">LVL {result.newLevel}</Badge>
+                                )}
+                              </div>
+                            )}
+
+                            <GraduationCap className="h-20 w-20 text-white mb-4 mt-2 drop-shadow-lg" />
+                            
+                            <div className="mt-auto w-full bg-black/60 backdrop-blur-md rounded-xl p-3 border border-white/20">
+                              <div className="text-[8px] font-black uppercase text-white/60 tracking-widest mb-1">
+                                {cardInfo?.label}
+                              </div>
+                              <div className="text-white font-bold text-sm leading-tight">
+                                {teacher.name}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
                 </div>
               )}
             </div>
 
             {/* Actions */}
-            <div className="flex flex-col gap-3 mt-4 w-full">
-              {gameState === 'revealed' && (
-                <>
+            <div className="flex flex-col gap-3 mt-4 w-full items-center">
+              {gameState === 'revealed' && allFlipped && (
+                <div className="flex flex-col gap-3 w-full max-w-sm animate-in fade-in slide-in-from-bottom-4 duration-1000">
                   <Button 
-                    onClick={handleStart}
+                    onClick={handleOpenPack}
                     variant="outline"
                     size="lg"
-                    className="rounded-full px-8 border-2 hover:bg-white hover:text-black transition-all duration-500 animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-500 shadow-xl"
+                    className="rounded-full px-8 border-2 hover:bg-white hover:text-black transition-all duration-500 shadow-xl w-full"
+                    disabled={getRemainingBoosters() <= 0}
                   >
                     <RotateCcw className="h-4 w-4 mr-2" />
                     Nochmal versuchen
@@ -380,12 +355,12 @@ function SammelkartenContent() {
                     }}
                     variant="ghost"
                     size="sm"
-                    className="text-muted-foreground hover:text-primary transition-all duration-1000 animate-in fade-in slide-in-from-bottom-2 delay-700"
+                    className="text-muted-foreground hover:text-primary transition-all duration-1000"
                   >
                     <Trophy className="h-3.5 w-3.5 mr-2" />
                     Im Album anzeigen
                   </Button>
-                </>
+                </div>
               )}
             </div>
           </div>

@@ -28,7 +28,7 @@ const getNextLevelCount = (level: number): number => {
 }
 
 const getPrevLevelCount = (level: number): number => {
-  if (level <= 1) return 1
+  if (level <= 1) return 0
   return Math.pow(level - 1, 2) + 1
 }
 

@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.20.11] - 2026-03-22
+- Feature: **Kartenpack-Overhaul**. Die einzelne Lehrer-Lootbox wurde in ein professionelles 3-Karten-Boosterpack-Erlebnis umgewandelt.
+- UI: **Foil-Pack Rip & 3D Flip**. Neue "Rip"-Animation zum Öffnen der Packs und interaktive 3D-Flip-Effekte für die einzelnen Kartenenthüllungen.
+- Logic: **Positionsbasierte Seltenheit**. Jede der 3 Karten im Pack hat spezifische Wahrscheinlichkeiten: Die 3. Karte bietet die höchste Chance auf eine legendäre Karte (5%).
+- Logic: **Neues tägliches Limit**. Das tägliche Limit wurde von 3 auf 2 Packs angepasst (insgesamt nun 6 Karten pro Tag).
+- Logic: **Batch-Collection**. Optimierte Firestore-Updates, die alle 3 Karten in einer einzigen atomaren Transaktion/Batch verarbeiten.
+
+## [0.20.10] - 2026-03-22
+- Fix: **Progress-Bar Rendering behoben**. Die technische Umsetzung der Fortschrittsanzeige (Base UI) wurde korrigiert, sodass die Balken nun tatsächlich gefüllt werden (Album, Abstimmungen, Finanzen).
+- UI: **Album-Progress Optimierung**. Karten auf Level 1 zeigen nun initial einen Fortschritt von 50% an, um den Weg zum nächsten Level (2 Karten benötigt) visuell besser darzustellen.
+
 ## [0.20.9] - 2026-03-22
 - Fix: **Album-Progress Anzeige korrigiert**. Die Fortschrittsanzeige im Lehrer-Album wurde an die neue Level-Logik angepasst, sodass nun korrekt "Noch 1 bis Lvl 2" bei der ersten Karte angezeigt wird.
 
