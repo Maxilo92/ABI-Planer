@@ -118,9 +118,15 @@ function TeacherCardDetail({ teacher, userData, onClose }: { teacher: LootTeache
     const y = e.clientY - rect.top
     const centerX = rect.width / 2
     const centerY = rect.height / 2
-    const rotateX = (y - centerY) / 10
-    const rotateY = (centerX - x) / 10
-    setRotate({ x: rotateX, y: rotateY })
+    
+    // Performance: Limit rotation to 8 degrees and simplify math
+    const rotateX = Math.max(-8, Math.min(8, (y - centerY) / 12))
+    const rotateY = Math.max(-8, Math.min(8, (centerX - x) / 12))
+    
+    // Performance: Only update if change is significant to reduce paint frequency
+    if (Math.abs(rotateX - rotate.x) > 0.5 || Math.abs(rotateY - rotate.y) > 0.5) {
+       setRotate({ x: rotateX, y: rotateY })
+    }
   }
 
   const handleMouseLeave = () => {
@@ -156,26 +162,28 @@ function TeacherCardDetail({ teacher, userData, onClose }: { teacher: LootTeache
           <div className={cn(
             "absolute inset-0 backface-hidden rounded-3xl border-[6px] border-white flex flex-col items-center p-6 shadow-2xl overflow-hidden",
             rarityInfo.color,
-            rarityInfo.glow
+            isFlipped ? "" : rarityInfo.glow
           )}>
+            {/* Performance: Solid background to prevent back-face bleeding */}
+            <div className={cn("absolute inset-0 z-0", rarityInfo.color)} />
+
             {/* Rarity Effects */}
             {(teacher.rarity === 'legendary' || teacher.rarity === 'mythic') && (
-              <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none">
+              <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none z-10">
                 <div className="absolute inset-[-100%] bg-[linear-gradient(45deg,transparent_25%,rgba(255,255,255,0.4)_50%,transparent_75%)] bg-[length:250%_250%] animate-shimmer" />
               </div>
             )}
 
-            <div className="absolute top-4 right-4 bg-black/40 backdrop-blur-md rounded-full px-3 py-1 text-[10px] font-black text-white border border-white/20">
+            <div className="absolute top-4 right-4 bg-black/40 rounded-full px-3 py-1 text-[10px] font-black text-white border border-white/20 z-20">
               LVL {level}
             </div>
 
-            <div className="w-full aspect-square rounded-2xl bg-white/20 flex items-center justify-center mb-6 mt-4 shadow-inner border border-white/10 relative">
-               <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_center,_white_0%,_transparent_70%)]" />
+            <div className="w-full aspect-square rounded-2xl bg-white/10 flex items-center justify-center mb-6 mt-6 shadow-inner border border-white/5 relative z-20">
                <GraduationCap className="h-24 w-24 text-white drop-shadow-2xl relative z-10" />
             </div>
             
-            <div className="mt-auto w-full bg-black/60 backdrop-blur-md rounded-2xl p-4 border border-white/20 shadow-lg text-center">
-              <div className="text-[10px] font-black uppercase text-white/60 tracking-widest mb-1">
+            <div className="mt-auto w-full bg-black/40 rounded-2xl p-4 border border-white/10 shadow-lg text-center relative z-20">
+              <div className="text-[10px] font-black uppercase text-white/50 tracking-widest mb-1">
                 {rarityInfo.label}
               </div>
               <div className="text-white font-black text-xl leading-tight italic">
@@ -183,37 +191,26 @@ function TeacherCardDetail({ teacher, userData, onClose }: { teacher: LootTeache
               </div>
             </div>
 
-            {/* Reflection effect */}
+            {/* Performance: Simplified reflection (no blur) */}
             {!isFlipped && (
               <div 
-                className="absolute inset-0 pointer-events-none opacity-30 bg-[radial-gradient(circle_at_var(--x)_var(--y),_rgba(255,255,255,0.4)_0%,_transparent_50%)]"
+                className="absolute inset-0 pointer-events-none opacity-20 bg-[radial-gradient(circle_at_var(--x)_var(--y),_white_0%,_transparent_60%)] z-15"
                 style={{ 
-                  '--x': `${50 + rotate.y * 2}%`,
-                  '--y': `${50 + rotate.x * 2}%`
+                  '--x': `${50 + rotate.y * 3}%`,
+                  '--y': `${50 + rotate.x * 3}%`
                 } as any}
               />
             )}
           </div>
 
-          {/* Premium Back of Card */}
-          <div className="absolute inset-0 backface-hidden rotate-y-180 rounded-3xl bg-gradient-to-br from-slate-900 via-blue-950 to-indigo-950 border-[10px] border-white/10 flex flex-col items-center justify-center shadow-2xl overflow-hidden">
-             <div className="absolute inset-0 opacity-10" style={{ 
-               backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)',
-               backgroundSize: '24px 24px' 
-             }} />
-             <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(255,255,255,0.1)_0%,_transparent_70%)]" />
-             
+          {/* Minimalist Back of Card */}
+          <div className="absolute inset-0 backface-hidden rotate-y-180 rounded-3xl bg-slate-900 border-[10px] border-white/10 flex flex-col items-center justify-center shadow-2xl overflow-hidden">
              <div className="relative z-10 flex flex-col items-center">
-               <div className="p-6 rounded-full bg-white/5 border border-white/10 mb-6 shadow-inner">
-                 <GraduationCap className="h-20 w-20 text-blue-200/40" />
+               <div className="p-5 rounded-full bg-white/5 mb-5">
+                 <GraduationCap className="h-16 w-16 text-white/20" />
                </div>
-               <div className="text-blue-100/30 font-black text-3xl tracking-tighter italic">ABI PLANER</div>
+               <div className="text-white/20 font-black text-2xl tracking-tighter italic">ABI PLANER</div>
              </div>
-
-             <div className="absolute top-4 left-4 w-8 h-8 border-t-4 border-l-4 border-white/20 rounded-tl-md" />
-             <div className="absolute top-4 right-4 w-8 h-8 border-t-4 border-r-4 border-white/20 rounded-tr-md" />
-             <div className="absolute bottom-4 left-4 w-8 h-8 border-b-4 border-l-4 border-white/20 rounded-bl-md" />
-             <div className="absolute bottom-4 right-4 w-8 h-8 border-b-4 border-r-4 border-white/20 rounded-br-md" />
           </div>
         </div>
       </div>

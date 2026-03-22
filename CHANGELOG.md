@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.20.16] - 2026-03-22
+- Performance: **CardDetailView Optimierung**. Der 3D-Tilt-Effekt wurde drastisch optimiert (weniger Repaints, einfachere Berechnungen, Verzicht auf schwere CSS-Filter während der Bewegung), um Performance-Probleme in Chrome auf Mac zu beheben.
+- UI: **Minimalistisches Karten-Backdesign**. Die Kartenrückseiten wurden vereinfacht: Fokus auf eine klare, dunkle Optik mit dezentem Logo statt futuristischer Muster.
+- Fix: **Rendering-Korrektur (Mobile)**. Ein Problem wurde behoben, bei dem die Rückseite der Karte (gespiegelter Text) auf einigen Geräten durch die Vorderseite hindurchschimmerte.
+- UI: **Verbessertes Card-Layout**. Optimierte Abstände für Namen, Seltenheit und Badges in der Pack-Ansicht für eine bessere mobile Darstellung.
+
 ## [0.20.15] - 2026-03-22
 - Feature: **Interaktives Lehrer-Album 2.0**.
 - Fix: **Progress-Build-Fehler behoben**. Korrektur eines TypeScript-Fehlers in der `Progress`-Komponente durch Double-Cast des Style-Objekts für CSS-Variablen.

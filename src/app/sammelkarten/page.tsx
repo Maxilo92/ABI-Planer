@@ -300,47 +300,37 @@ function SammelkartenContent() {
                           "relative w-full h-full transition-all duration-700 preserve-3d",
                           isFlipped && "rotate-y-180"
                         )}>
-                          {/* Premium Back of Card */}
-                          <div className="absolute inset-0 backface-hidden rounded-2xl bg-gradient-to-br from-slate-900 via-blue-950 to-indigo-950 border-[6px] sm:border-8 border-white/10 flex flex-col items-center justify-center shadow-2xl overflow-hidden">
-                             {/* Background Pattern */}
-                             <div className="absolute inset-0 opacity-10" style={{ 
-                               backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)',
-                               backgroundSize: '20px 20px' 
-                             }} />
-                             <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(255,255,255,0.1)_0%,_transparent_70%)]" />
-                             
+                          {/* Minimalist Back of Card */}
+                          <div className="absolute inset-0 backface-hidden rounded-2xl bg-slate-900 border-[6px] border-white/10 flex flex-col items-center justify-center shadow-xl">
                              <div className="relative z-10 flex flex-col items-center">
-                               <div className="p-4 rounded-full bg-white/5 border border-white/10 mb-4 shadow-inner">
-                                 <GraduationCap className="h-12 w-12 sm:h-16 sm:w-16 text-blue-200/40" />
+                               <div className="p-3 rounded-full bg-white/5 mb-3">
+                                 <GraduationCap className="h-10 w-10 sm:h-12 sm:w-12 text-white/20" />
                                </div>
-                               <div className="text-blue-100/30 font-black text-lg sm:text-xl tracking-tighter italic">ABI PLANER</div>
+                               <div className="text-white/20 font-black text-base sm:text-lg tracking-tighter italic">ABI PLANER</div>
                                {!isFlipped && (
-                                 <div className="mt-6 animate-pulse text-[8px] sm:text-[10px] text-white/40 font-black uppercase tracking-[0.3em] bg-white/5 px-3 py-1 rounded-full border border-white/5">Tap to flip</div>
+                                 <div className="mt-4 animate-pulse text-[8px] text-white/30 font-bold uppercase tracking-[0.2em]">Tippen zum Umdrehen</div>
                                )}
                              </div>
-
-                             {/* Corner accents */}
-                             <div className="absolute top-2 left-2 w-4 h-4 border-t-2 border-l-2 border-white/20 rounded-tl-sm" />
-                             <div className="absolute top-2 right-2 w-4 h-4 border-t-2 border-r-2 border-white/20 rounded-tr-sm" />
-                             <div className="absolute bottom-2 left-2 w-4 h-4 border-b-2 border-l-2 border-white/20 rounded-bl-sm" />
-                             <div className="absolute bottom-2 right-2 w-4 h-4 border-b-2 border-r-2 border-white/20 rounded-br-sm" />
                           </div>
 
                           {/* Front of Card */}
                           <div className={cn(
-                            "absolute inset-0 backface-hidden rotate-y-180 rounded-2xl border-4 border-white flex flex-col items-center p-3 sm:p-4 transition-all duration-500 shadow-xl",
+                            "absolute inset-0 backface-hidden rotate-y-180 rounded-2xl border-4 border-white flex flex-col items-center p-3 sm:p-4 transition-all duration-500 shadow-xl overflow-hidden",
                             cardInfo?.color,
                             isFlipped && cardInfo?.glow
                           )}>
+                             {/* Solid background to prevent bleed through */}
+                             <div className={cn("absolute inset-0 z-0", cardInfo?.color)} />
+
                              {/* Rarity Effects */}
                              {isFlipped && (teacher.rarity === 'legendary' || teacher.rarity === 'mythic') && (
-                               <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none">
+                               <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none z-10">
                                  <div className="absolute inset-[-100%] bg-[linear-gradient(45deg,transparent_25%,rgba(255,255,255,0.4)_50%,transparent_75%)] bg-[length:250%_250%] animate-shimmer" />
                                </div>
                              )}
 
                             {isFlipped && result && (
-                              <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-20">
+                              <div className="absolute top-2 left-1/2 -translate-x-1/2 z-30">
                                 {result.isNew ? (
                                   <Badge className="bg-amber-500 border-2 border-white text-[10px] font-black px-2 shadow-lg animate-in zoom-in duration-500">NEW</Badge>
                                 ) : result.isLevelUp ? (
@@ -351,19 +341,25 @@ function SammelkartenContent() {
                               </div>
                             )}
 
-                            <div className="w-full aspect-square rounded-xl bg-white/20 flex items-center justify-center mb-4 mt-2 shadow-inner border border-white/10 overflow-hidden relative">
-                               <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_center,_white_0%,_transparent_70%)]" />
+                            <div className="w-full aspect-square rounded-xl bg-white/10 flex items-center justify-center mb-4 mt-6 shadow-inner border border-white/5 relative z-20">
                                <GraduationCap className="h-16 w-16 sm:h-20 sm:w-20 text-white drop-shadow-2xl relative z-10" />
                             </div>
-                            
-                            <div className="mt-auto w-full bg-black/60 backdrop-blur-md rounded-xl p-2 sm:p-3 border border-white/20 shadow-lg">
-                              <div className="text-[8px] font-black uppercase text-white/60 tracking-widest mb-1">
+
+                            <div className="mt-auto w-full bg-black/40 rounded-xl p-2 sm:p-3 border border-white/10 relative z-20">
+                              <div className="text-[8px] font-black uppercase text-white/50 tracking-widest mb-0.5">
                                 {cardInfo?.label}
                               </div>
                               <div className="text-white font-bold text-xs sm:text-sm leading-tight line-clamp-1">
                                 {teacher.name}
                               </div>
                             </div>
+                          </div>
+                          </div>
+                          </div>
+                          )
+                          })}
+                          </div>
+                          )}
                           </div>
                         </div>
                       </div>
