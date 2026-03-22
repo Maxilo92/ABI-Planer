@@ -34,8 +34,9 @@ export default function PromoAuthPage() {
 
   const features = [
     { name: 'Aktuelle News & Termine lesen', guest: true, user: true, icon: <Calendar className="h-4 w-4" /> },
-    { name: 'Öffentliche Umfragen & Pinned Polls', guest: true, user: true, icon: <MessageSquare className="h-4 w-4" /> },
+    { name: 'Umfragen einsehen (ohne Abstimmung)', guest: true, user: true, icon: <MessageSquare className="h-4 w-4" /> },
     { name: 'Finanzstatus einsehen', guest: true, user: true, icon: <Clock className="h-4 w-4" /> },
+    { name: 'An Umfragen teilnehmen & mitbestimmen', guest: false, user: true, icon: <CheckCircle2 className="h-4 w-4" /> },
     { name: 'Sammelkarten-Spielfortschritt', guest: false, user: true, icon: <Gift className="h-4 w-4" /> },
     { name: 'Eigene To-Do Listen & Checklisten', guest: false, user: true, icon: <CheckCircle2 className="h-4 w-4" /> },
     { name: 'Teilnahme an Planungsgruppen', guest: false, user: true, icon: <Users className="h-4 w-4" /> },

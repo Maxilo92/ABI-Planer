@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.21.08] - 2026-03-22
+- Fix: **Lehrer-Seltenheit Umfrage für Gäste**. Die Crowdsourced Rarity Umfrage auf dem Dashboard hängt nun nicht mehr in der Ladeschleife für Gäste. Sie zeigt nun den aktuellen Lehrer an, sperrt jedoch die Abstimmung mit einem Hinweis auf den benötigten Account.
+- UI: **Promo-Seite aktualisiert**. Die Liste der Vorteile wurde präzisiert, um klarzustellen, dass Gäste Umfragen zwar einsehen, aber nicht aktiv mitbestimmen können.
+- Security: **Firestore-Regeln angepasst**. Die Lehrer-Liste (`teachers`) ist nun für alle (auch Gäste) lesbar, damit die Seltenheits-Umfrage korrekt angezeigt werden kann.
+
 ## [0.21.07] - 2026-03-22
 - Fix: **Weitere Permission-Errors behoben**. Fehlerbehandlung für Firestore-Listener in den Globalen Einstellungen (`Settings`) und im `CountdownHeader` hinzugefügt, um `permission-denied` Meldungen in der Konsole für Gäste zu minimieren.
 
