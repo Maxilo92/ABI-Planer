@@ -168,26 +168,36 @@ function SammelkartenContent() {
         label: 'Gewöhnlich', 
         color: 'bg-slate-500', 
         glow: 'shadow-[0_0_20px_rgba(100,116,139,0.4)]',
+        highlight: 'rgba(100, 116, 139, 0.4)',
+        border: 'rgba(100, 116, 139, 0.5)'
       }
       case 'rare': return { 
         label: 'Selten', 
         color: 'bg-emerald-500', 
         glow: 'shadow-[0_0_25px_rgba(16,185,129,0.6)]',
+        highlight: 'rgba(16, 185, 129, 0.4)',
+        border: 'rgba(16, 185, 129, 0.5)'
       }
       case 'epic': return { 
         label: 'Episch', 
         color: 'bg-purple-600', 
         glow: 'shadow-[0_0_30px_rgba(147,51,234,0.7)]',
+        highlight: 'rgba(147, 51, 234, 0.4)',
+        border: 'rgba(147, 51, 234, 0.5)'
       }
       case 'mythic': return { 
         label: 'Mythisch', 
         color: 'bg-red-600', 
         glow: 'shadow-[0_0_35px_rgba(220,38,38,0.8)]',
+        highlight: 'rgba(220, 38, 38, 0.4)',
+        border: 'rgba(220, 38, 38, 0.5)'
       }
       case 'legendary': return { 
         label: 'Legendär', 
         color: 'bg-amber-500', 
         glow: 'shadow-[0_0_40px_rgba(245,158,11,1)]',
+        highlight: 'rgba(245, 158, 11, 0.4)',
+        border: 'rgba(245, 158, 11, 0.5)'
       }
     }
   }
@@ -277,9 +287,15 @@ function SammelkartenContent() {
                              {/* Special "NEW" card highlight */}
                              {isFlipped && result?.isNew && (
                                <div className="absolute inset-0 z-10 pointer-events-none overflow-hidden rounded-[inherit]">
-                                 <div className="absolute inset-[-50%] bg-[radial-gradient(circle,rgba(255,215,0,0.4)_0%,transparent_70%)] animate-pulse" />
+                                 <div 
+                                   className="absolute inset-[-50%] animate-pulse" 
+                                   style={{ background: `radial-gradient(circle, ${cardInfo?.highlight} 0%, transparent 70%)` }}
+                                 />
                                  <div className="absolute top-0 left-0 w-full h-full bg-[linear-gradient(45deg,transparent_25%,rgba(255,255,255,0.3)_50%,transparent_75%)] bg-[length:250%_250%] animate-shimmer opacity-50" />
-                                 <div className="absolute inset-0 border-4 border-amber-400/50 rounded-[inherit] animate-pulse" />
+                                 <div 
+                                   className="absolute inset-0 border-4 rounded-[inherit] animate-pulse" 
+                                   style={{ borderColor: cardInfo?.border }}
+                                 />
                                </div>
                              )}
 
