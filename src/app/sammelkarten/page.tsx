@@ -5,13 +5,15 @@ import { Sparkles, Gift, GraduationCap, RotateCcw, Zap, Trophy, Clock, Star, Loc
 import { useEffect, useState, Suspense } from 'react'
 import { redirect, useSearchParams } from 'next/navigation'
 import { db } from '@/lib/firebase'
-import { collection, deleteDoc, doc, onSnapshot, orderBy, query } from 'firebase/firestore'
+import { doc, onSnapshot } from 'firebase/firestore'
 import { TeacherRarity, LootTeacher } from '@/types/database'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import { useUserTeachers } from '@/hooks/useUserTeachers'
 import { TeacherAlbum } from '@/components/dashboard/TeacherAlbum'
+import { GiftNoticeBanner } from '@/components/dashboard/GiftNoticeBanner'
+import { useGiftNotices } from '@/hooks/useGiftNotices'
 import { logAction } from '@/lib/logging'
 import { toast } from 'sonner'
 
@@ -21,12 +23,6 @@ const DEFAULT_TEACHERS: LootTeacher[] = [
   { id: 'marie-curie', name: "Marie Curie", rarity: "mythic" },
   { id: 'albert-einstein', name: "Albert Einstein", rarity: "legendary" }
 ]
-
-type GiftNotice = {
-  id: string
-  packCount: number
-  customMessage?: string
-}
 
 function SammelkartenContent() {
   const searchParams = useSearchParams()
@@ -40,7 +36,7 @@ function SammelkartenContent() {
   const [flippedCards, setFlippedCards] = useState<boolean[]>([false, false, false])
   const [isAnimating, setIsAnimating] = useState(false)
   const [timeLeft, setTimeLeft] = useState<string>('')
-  const [giftNotices, setGiftNotices] = useState<GiftNotice[]>([])
+  const { giftNotices, totalGiftPacks, dismissGiftNotices } = useGiftNotices(user?.uid)
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -77,41 +73,9 @@ function SammelkartenContent() {
     }
   }, [user, loading])
 
-  useEffect(() => {
-    if (!user) {
-      setGiftNotices([])
-      return
-    }
-
-    const giftsQuery = query(
-      collection(db, 'profiles', user.uid, 'unseen_gifts'),
-      orderBy('createdAt', 'desc')
-    )
-
-    const unsubscribe = onSnapshot(giftsQuery, (snapshot) => {
-      const notices = snapshot.docs.map((giftDoc) => {
-        const data = giftDoc.data() as { packCount?: number; customMessage?: string }
-        return {
-          id: giftDoc.id,
-          packCount: typeof data.packCount === 'number' ? data.packCount : 0,
-          customMessage: data.customMessage,
-        }
-      }).filter((entry) => entry.packCount > 0)
-
-      setGiftNotices(notices)
-    })
-
-    return () => unsubscribe()
-  }, [user])
-
-  const dismissGiftNotices = async () => {
-    if (!user || giftNotices.length === 0) return
-
+  const handleDismissGiftNotices = async () => {
     try {
-      await Promise.all(
-        giftNotices.map((notice) => deleteDoc(doc(db, 'profiles', user.uid, 'unseen_gifts', notice.id)))
-      )
-      setGiftNotices([])
+      await dismissGiftNotices()
     } catch (error) {
       console.error('Error dismissing gift notices:', error)
       toast.error('Geschenk-Hinweis konnte nicht geschlossen werden.')
@@ -266,25 +230,12 @@ function SammelkartenContent() {
   return (
     <div className="container mx-auto py-8">
       {giftNotices.length > 0 && (
-        <div className="mb-4 rounded-xl border border-emerald-400/40 bg-emerald-500/10 p-4">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="space-y-1">
-              <p className="text-sm font-bold flex items-center gap-2 text-emerald-700 dark:text-emerald-300">
-                <Gift className="h-4 w-4" />
-                Neue Pack-Schenkung
-              </p>
-              <p className="text-sm text-foreground/90">
-                Du hast insgesamt {giftNotices.reduce((sum, notice) => sum + notice.packCount, 0)} zusätzliche Packs erhalten.
-              </p>
-              {giftNotices[0]?.customMessage && (
-                <p className="text-xs text-muted-foreground italic">{giftNotices[0].customMessage}</p>
-              )}
-            </div>
-            <Button size="sm" variant="outline" onClick={dismissGiftNotices}>
-              Gelesen
-            </Button>
-          </div>
-        </div>
+        <GiftNoticeBanner
+          className="mb-4"
+          totalGiftPacks={totalGiftPacks}
+          customMessage={giftNotices[0]?.customMessage}
+          onDismiss={handleDismissGiftNotices}
+        />
       )}
 
       {view === 'sammelkarten' ? (

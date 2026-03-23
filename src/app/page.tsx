@@ -13,8 +13,10 @@ import { Badge } from '@/components/ui/badge'
 import { EditSettingsDialog } from '@/components/modals/EditSettingsDialog'
 import { useAuth } from '@/context/AuthContext'
 import { useDashboardSorting } from '@/hooks/useDashboardSorting'
+import { useGiftNotices } from '@/hooks/useGiftNotices'
 import { toDate } from '@/lib/utils'
 import { DashboardComponentKey, Poll, PollOption, PollVote, FinanceEntry } from '@/types/database'
+import { GiftNoticeBanner } from '@/components/dashboard/GiftNoticeBanner'
 import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
 import { useRouter } from 'next/navigation'
@@ -242,6 +244,7 @@ export default function Dashboard() {
   }
 
   const sortedComponents = useDashboardSorting(profile, todos, events, polls, news)
+  const { giftNotices, totalGiftPacks, dismissGiftNotices } = useGiftNotices(user?.uid)
   const currentUserId = user?.uid || profile?.id || ''
   const unvotedPolls = polls.filter((poll) => {
     if (!poll.is_active) return false
@@ -444,6 +447,14 @@ export default function Dashboard() {
         </div>
         <p className="text-muted-foreground">Willkommen zurück! Hier ist der aktuelle Stand der Dinge.</p>
       </div>
+
+      {giftNotices.length > 0 && (
+        <GiftNoticeBanner
+          totalGiftPacks={totalGiftPacks}
+          customMessage={giftNotices[0]?.customMessage}
+          onDismiss={dismissGiftNotices}
+        />
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
         <div className="flex flex-col gap-6">
