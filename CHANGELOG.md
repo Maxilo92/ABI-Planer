@@ -2,6 +2,7 @@
 
 ## [0.22.07] - 2026-03-23
 - Feature: **Benutzerverwaltung Mehrfachauswahl erweitert**. Ausgewählte Nutzer können jetzt nicht nur Packs erhalten, sondern auch per Massenaktion freigeschaltet/gesperrt, Kursen/Planungsgruppen zugewiesen sowie mit Timeouts versehen oder davon befreit werden.
+- Fix: **CORS für Geschenk-Funktion korrigiert**. `giftBoosterPack` antwortet jetzt mit gültigen `Access-Control-Allow-Origin` Headern für Produktions- und Firebase-Domains.
 
 ## [0.22.06] - 2026-03-23
 - Feature: **News unterstützt Markdown durchgängig**. News-Inhalte werden in der Übersicht formatiert gerendert, und die Editor-Dialoge weisen explizit auf Markdown-Syntax hin.

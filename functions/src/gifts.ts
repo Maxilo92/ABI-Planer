@@ -16,7 +16,14 @@ const isAdminRole = (role: unknown): boolean => {
     return role === "admin" || role === "admin_main" || role === "admin_co";
 };
 
+const ALLOWED_ORIGINS = [
+    "https://abi-planer-27.de",
+    "https://abi-planer-75319.web.app",
+    "https://abi-planer-75319.firebaseapp.app",
+];
+
 export const giftBoosterPack = onCall({
+    cors: ALLOWED_ORIGINS,
     region: "europe-west3",
 }, async (request) => {
     if (!request.auth?.uid) {
