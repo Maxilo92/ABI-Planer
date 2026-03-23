@@ -21,7 +21,11 @@ const calculateRarityFromAverage = (avgRating: number): TeacherRarity => {
     return "common";
 };
 
-export const calculateTeacherRarity = onDocumentWritten("teacher_ratings/{ratingId}", async (event) => {
+export const calculateTeacherRarity = onDocumentWritten({
+    document: "teacher_ratings/{ratingId}",
+    database: "abi-data",
+    region: "europe-west3",
+}, async (event) => {
     const db = admin.firestore();
     const ratingData = event.data?.after.data();
     const teacherId = ratingData?.teacherId;
@@ -66,7 +70,11 @@ export const calculateTeacherRarity = onDocumentWritten("teacher_ratings/{rating
     }
 });
 
-export const syncLootTeacherRarity = onDocumentWritten("teachers/{teacherId}", async (event) => {
+export const syncLootTeacherRarity = onDocumentWritten({
+    document: "teachers/{teacherId}",
+    database: "abi-data",
+    region: "europe-west3",
+}, async (event) => {
     const db = admin.firestore();
     const teacherId = event.params.teacherId;
     const teacherData = event.data?.after.data();
