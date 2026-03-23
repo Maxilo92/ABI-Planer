@@ -231,7 +231,6 @@ function SammelkartenContent() {
     <div className="container mx-auto py-8">
       {giftNotices.length > 0 && (
         <GiftNoticeBanner
-          className="mb-4"
           totalGiftPacks={totalGiftPacks}
           customMessage={giftNotices[0]?.customMessage}
           onDismiss={handleDismissGiftNotices}

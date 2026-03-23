@@ -23,8 +23,8 @@ export function GiftNoticeBanner({
   return (
     <UniversalBanner
       tone="success"
-      layout="inline"
-      className={className}
+      layout="floating"
+      className={`fixed z-[95] left-4 right-4 bottom-20 md:left-auto md:right-6 md:top-20 md:bottom-auto md:max-w-md ${className ?? ''}`}
       icon={<Gift className="h-4 w-4" />}
       title="Neue Pack-Schenkung"
       message={

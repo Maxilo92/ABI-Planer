@@ -63,7 +63,7 @@ export function UniversalBanner({
       className={cn(
         'rounded-xl border p-4',
         styles.container,
-        layout === 'floating' && 'backdrop-blur-sm shadow-2xl',
+        layout === 'floating' && 'backdrop-blur-sm shadow-2xl animate-in slide-in-from-bottom-6 duration-300',
         className
       )}
     >

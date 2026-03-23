@@ -3,6 +3,7 @@
 ## [0.22.08] - 2026-03-23
 - UI: **Geschenk-Banner jetzt auch auf der Startseite**. Neue Pack-Schenkungen werden zusätzlich im Dashboard angezeigt, inklusive Direktlink zur Sammelkarten-Seite.
 - Refactor: **Universelle Banner-Basis eingeführt**. Geschenk-, Cookie- und Werbe-Banner nutzen jetzt eine gemeinsame `UniversalBanner`-Komponente für einheitliches Verhalten und Styling.
+- UI: **Banner als Popup-Nachrichten**. Geschenk-Banner werden jetzt als schwebende Benachrichtigung angezeigt (statt im Layoutfluss), inklusive Animation und fixer Position.
 
 ## [0.22.07] - 2026-03-23
 - Feature: **Benutzerverwaltung Mehrfachauswahl erweitert**. Ausgewählte Nutzer können jetzt nicht nur Packs erhalten, sondern auch per Massenaktion freigeschaltet/gesperrt, Kursen/Planungsgruppen zugewiesen sowie mit Timeouts versehen oder davon befreit werden.
