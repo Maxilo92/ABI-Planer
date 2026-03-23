@@ -73,15 +73,44 @@ const DEFAULT_SETTINGS: GlobalSettings = {
   ],
   custom_popup_messages: [
     {
-      id: 'promo-dashboard',
-      title: 'Mini-Promo: Finanzplan checken',
-      body: 'Kurzer Budget-Check heute spart Stress kurz vor dem Ball.',
+      id: 'info-welcome',
+      title: 'Willkommen im ABI Planer!',
+      body: 'Hier kannst du alles rund um Abi-Events, Finanzen und Organisation verwalten. Viel Erfolg beim Planen!',
+      dismissLabel: 'Schließen',
+      chance: 1,
+      enabled: true,
+      routes: ['*'],
+    },
+    {
+      id: 'cta-finance',
+      title: 'Finanzen im Blick behalten',
+      body: 'Denkt daran, regelmäßig eure Einnahmen und Ausgaben zu prüfen, damit am Ende alles passt.',
       ctaLabel: 'Zu den Finanzen',
       ctaUrl: '/finanzen',
       dismissLabel: 'Später',
-      chance: 0.25,
+      chance: 0.5,
       enabled: true,
-      routes: ['/'],
+      routes: ['/', '/finanzen'],
+    },
+    {
+      id: 'warn-deadline',
+      title: 'Wichtige Frist steht an!',
+      body: 'Vergesst nicht, eure Deadlines für Location, Musik und Catering rechtzeitig zu setzen.',
+      dismissLabel: 'Verstanden',
+      chance: 0.3,
+      enabled: true,
+      routes: ['/', '/kalender'],
+    },
+    {
+      id: 'success-packs',
+      title: 'Neues Feature: Sammelkarten-Packs!',
+      body: 'Ab sofort könnt ihr Lehrer als Sammelkarten in Packs ziehen. Probiert es gleich aus!',
+      ctaLabel: 'Zu den Packs',
+      ctaUrl: '/sammelkarten',
+      dismissLabel: 'Später',
+      chance: 0.7,
+      enabled: true,
+      routes: ['/', '/sammelkarten'],
     },
   ],
   loot_teachers: [
@@ -98,6 +127,8 @@ export default function GlobalSettingsPage() {
   const [initialSettings, setInitialSettings] = useState<GlobalSettings>(DEFAULT_SETTINGS)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [autosaveTimeout, setAutosaveTimeout] = useState<NodeJS.Timeout | null>(null)
+  const [autosaveStatus, setAutosaveStatus] = useState<'idle' | 'saving' | 'success' | 'error'>('idle')
   const [newMessage, setNewMessage] = useState('')
   const [newAdMessage, setNewAdMessage] = useState('')
   const [newCustomPopup, setNewCustomPopup] = useState<CustomPopupMessage>({
@@ -126,6 +157,21 @@ export default function GlobalSettingsPage() {
   const isAdmin = profile?.role === 'admin_main' || profile?.role === 'admin_co' || profile?.role === 'admin'
 
   const hasUnsavedChanges = JSON.stringify(settings) !== JSON.stringify(initialSettings)
+  // Autosave bei Settings-Änderung
+  useEffect(() => {
+    if (JSON.stringify(settings) === JSON.stringify(initialSettings)) return
+    if (saving) return
+    setAutosaveStatus('idle')
+    if (autosaveTimeout) clearTimeout(autosaveTimeout)
+    const timeout = setTimeout(async () => {
+      setAutosaveStatus('saving')
+      const ok = await handleSave(settings)
+      setAutosaveStatus(ok ? 'success' : 'error')
+    }, 1200)
+    setAutosaveTimeout(timeout)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    return () => { if (timeout) clearTimeout(timeout) }
+  }, [settings])
 
   useEffect(() => {
     const handleAnchorClick = (e: MouseEvent) => {
@@ -719,6 +765,11 @@ export default function GlobalSettingsPage() {
   return (
 
     <div className="space-y-6">
+      <div className="fixed top-4 right-4 z-50">
+        {autosaveStatus === 'saving' && <span className="px-3 py-1 rounded bg-muted text-xs text-muted-foreground">Speichere...</span>}
+        {autosaveStatus === 'success' && <span className="px-3 py-1 rounded bg-green-100 text-xs text-green-800">Gespeichert ✓</span>}
+        {autosaveStatus === 'error' && <span className="px-3 py-1 rounded bg-red-100 text-xs text-red-800">Fehler beim Speichern!</span>}
+      </div>
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Globale Einstellungen</h1>
@@ -1034,7 +1085,7 @@ export default function GlobalSettingsPage() {
               </div>
             </div>
             <CardDescription>
-              Verwalte die Lehrer, die aus den Sammelkarten-Packungen gezogen werden können.
+              Verwalte die Lehrer, die du aus Sammelkarten-Packs ziehen kannst.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">

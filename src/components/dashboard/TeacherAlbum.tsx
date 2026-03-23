@@ -411,7 +411,7 @@ export function TeacherAlbum({
             Lehrer-Album
           </h2>
           <p className="text-sm text-muted-foreground">
-            {userId ? `Sammlung von ${activeProfile?.full_name || 'diesem Nutzer'}` : 'Sammle Lehrer aus den Sammelkarten-Packungen und verbessere sie!'}
+            {userId ? `Sammlung von ${activeProfile?.full_name || 'diesem Nutzer'}` : 'Sammle Lehrer aus Packs und vervollständige dein Album!'}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -515,10 +515,7 @@ export function TeacherAlbum({
                   <ArrowDownAZ className="h-4 w-4" />
                   Level (aufsteigend)
                 </DropdownMenuRadioItem>
-                <DropdownMenuRadioItem value="upgrade" className="flex items-center gap-2">
-                  <Star className="h-4 w-4" />
-                  Nächstes Upgrade
-                </DropdownMenuRadioItem>
+                {/* Upgrade-Logik entfernt, da Packs-System */}
               </DropdownMenuRadioGroup>
 
               <DropdownMenuSeparator />

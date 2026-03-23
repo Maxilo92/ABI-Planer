@@ -15,3 +15,4 @@ export * from "./danger";
 export * from "./cron";
 export * from "./gifts";
 export * from "./rarity";
+export * from "./giftUtils";
