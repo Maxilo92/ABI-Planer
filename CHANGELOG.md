@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.22.07] - 2026-03-23
+- Feature: **Benutzerverwaltung Mehrfachauswahl erweitert**. Ausgewählte Nutzer können jetzt nicht nur Packs erhalten, sondern auch per Massenaktion freigeschaltet/gesperrt, Kursen/Planungsgruppen zugewiesen sowie mit Timeouts versehen oder davon befreit werden.
+
 ## [0.22.06] - 2026-03-23
 - Feature: **News unterstützt Markdown durchgängig**. News-Inhalte werden in der Übersicht formatiert gerendert, und die Editor-Dialoge weisen explizit auf Markdown-Syntax hin.
 - Feature: **Schenkungen für mehrere ausgewählte Nutzer**. In der Benutzerverwaltung können nun mehrere Personen markiert und mit Packs + individueller Nachricht beschenkt werden.

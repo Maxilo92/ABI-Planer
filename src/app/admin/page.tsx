@@ -30,6 +30,16 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 
+type BulkActionType =
+  | 'approve'
+  | 'unapprove'
+  | 'set_course'
+  | 'set_group'
+  | 'clear_group'
+  | 'timeout_24h'
+  | 'timeout_7d'
+  | 'clear_timeout'
+
 export default function AdminPage() {
   const { user, profile, loading: authLoading } = useAuth()
   const [profiles, setProfiles] = useState<Profile[]>([])
@@ -39,6 +49,11 @@ export default function AdminPage() {
   const [giftMessage, setGiftMessage] = useState('Ihr habt neue Packs geschenkt bekommen. Viel Spaß beim Öffnen!')
   const [isGiftDialogOpen, setIsGiftDialogOpen] = useState(false)
   const [giftSending, setGiftSending] = useState(false)
+  const [isBulkDialogOpen, setIsBulkDialogOpen] = useState(false)
+  const [bulkAction, setBulkAction] = useState<BulkActionType>('approve')
+  const [bulkCourse, setBulkCourse] = useState('')
+  const [bulkGroup, setBulkGroup] = useState('')
+  const [bulkProcessing, setBulkProcessing] = useState(false)
   const [courses, setCourses] = useState<string[]>([])
   const [planningGroups, setPlanningGroups] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
@@ -265,6 +280,101 @@ export default function AdminPage() {
     }
   }
 
+  const handleBulkAction = async () => {
+    if (!user || selectedGiftRecipients.length === 0) return
+
+    const selectedProfiles = profiles.filter((entry) => selectedGiftRecipients.includes(entry.id) && entry.id !== profile.id)
+    if (selectedProfiles.length === 0) {
+      toast.error('Keine gültigen Nutzer ausgewählt.')
+      return
+    }
+
+    if (bulkAction === 'set_course' && !bulkCourse) {
+      toast.error('Bitte einen Kurs auswählen.')
+      return
+    }
+
+    if (bulkAction === 'set_group' && !bulkGroup) {
+      toast.error('Bitte eine Gruppe auswählen.')
+      return
+    }
+
+    setBulkProcessing(true)
+    try {
+      const isMainAdminActor = profile.role === 'admin' || profile.role === 'admin_main'
+      const successIds: string[] = []
+      const failedIds: string[] = []
+      const skippedIds: string[] = []
+
+      for (const target of selectedProfiles) {
+        const targetIsMainAdmin = target.role === 'admin' || target.role === 'admin_main'
+        const isAssignmentAction = bulkAction === 'set_course' || bulkAction === 'set_group' || bulkAction === 'clear_group'
+
+        if (!isMainAdminActor && targetIsMainAdmin && !isAssignmentAction) {
+          skippedIds.push(target.id)
+          continue
+        }
+
+        const targetRef = doc(db, 'profiles', target.id)
+        try {
+          if (bulkAction === 'approve') {
+            await updateDoc(targetRef, { is_approved: true })
+          } else if (bulkAction === 'unapprove') {
+            await updateDoc(targetRef, { is_approved: false })
+          } else if (bulkAction === 'set_course') {
+            await updateDoc(targetRef, { class_name: bulkCourse })
+          } else if (bulkAction === 'set_group') {
+            await updateDoc(targetRef, { planning_group: bulkGroup })
+          } else if (bulkAction === 'clear_group') {
+            await updateDoc(targetRef, { planning_group: null })
+          } else if (bulkAction === 'timeout_24h') {
+            await updateDoc(targetRef, {
+              timeout_until: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+              timeout_reason: 'Admin-Timeout (24h)',
+            })
+          } else if (bulkAction === 'timeout_7d') {
+            await updateDoc(targetRef, {
+              timeout_until: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+              timeout_reason: 'Admin-Timeout (7 Tage)',
+            })
+          } else if (bulkAction === 'clear_timeout') {
+            await updateDoc(targetRef, {
+              timeout_until: null,
+              timeout_reason: null,
+            })
+          }
+
+          successIds.push(target.id)
+        } catch {
+          failedIds.push(target.id)
+        }
+      }
+
+      await logAction('PROFILE_UPDATED', user.uid, profile?.full_name, {
+        bulk_action: bulkAction,
+        course: bulkCourse || null,
+        group: bulkGroup || null,
+        success_ids: successIds,
+        skipped_ids: skippedIds,
+        failed_ids: failedIds,
+      })
+
+      if (successIds.length > 0) {
+        toast.success(`Massenaktion abgeschlossen: ${successIds.length} erfolgreich.`)
+      }
+      if (skippedIds.length > 0) {
+        toast.warning(`${skippedIds.length} Nutzer übersprungen (Berechtigungsschutz).`)
+      }
+      if (failedIds.length > 0) {
+        toast.error(`${failedIds.length} Nutzer konnten nicht aktualisiert werden.`)
+      }
+
+      setIsBulkDialogOpen(false)
+    } finally {
+      setBulkProcessing(false)
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -287,10 +397,10 @@ export default function AdminPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Gift className="h-5 w-5 text-primary" />
-            Packs schenken
+            Mehrfachauswahl & Massenaktionen
           </CardTitle>
           <CardDescription>
-            Wähle Nutzer aus der Liste und sende ihnen Packs mit einer Banner-Nachricht.
+            Die Auswahl kann für Schenkungen und Massenänderungen genutzt werden.
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
@@ -304,6 +414,13 @@ export default function AdminPage() {
               disabled={selectedGiftRecipients.length === 0}
             >
               Auswahl leeren
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setIsBulkDialogOpen(true)}
+              disabled={selectedGiftRecipients.length === 0}
+            >
+              Massenaktion
             </Button>
             <Button
               onClick={() => setIsGiftDialogOpen(true)}
@@ -596,6 +713,81 @@ export default function AdminPage() {
             </Button>
             <Button onClick={handleGiftPacks} disabled={giftSending || selectedGiftRecipients.length === 0}>
               {giftSending ? 'Sende...' : 'Jetzt schenken'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isBulkDialogOpen} onOpenChange={setIsBulkDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Massenaktion ausführen</DialogTitle>
+            <DialogDescription>
+              Führt dieselbe Änderung für alle ausgewählten Nutzer aus.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="bulk-action">Aktion</Label>
+              <select
+                id="bulk-action"
+                className="h-10 w-full rounded-md border bg-background px-3 text-sm"
+                value={bulkAction}
+                onChange={(e) => setBulkAction(e.target.value as BulkActionType)}
+              >
+                <option value="approve">Accounts freischalten</option>
+                <option value="unapprove">Freischaltung entfernen</option>
+                <option value="set_course">Kurs setzen</option>
+                <option value="set_group">Planungsgruppe setzen</option>
+                <option value="clear_group">Planungsgruppe entfernen</option>
+                <option value="timeout_24h">Timeout 24h setzen</option>
+                <option value="timeout_7d">Timeout 7 Tage setzen</option>
+                <option value="clear_timeout">Timeout aufheben</option>
+              </select>
+            </div>
+
+            {bulkAction === 'set_course' && (
+              <div className="space-y-2">
+                <Label htmlFor="bulk-course">Kurs</Label>
+                <select
+                  id="bulk-course"
+                  className="h-10 w-full rounded-md border bg-background px-3 text-sm"
+                  value={bulkCourse}
+                  onChange={(e) => setBulkCourse(e.target.value)}
+                >
+                  <option value="">Kurs auswählen</option>
+                  {courses.map((course) => (
+                    <option key={course} value={course}>{course}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {bulkAction === 'set_group' && (
+              <div className="space-y-2">
+                <Label htmlFor="bulk-group">Planungsgruppe</Label>
+                <select
+                  id="bulk-group"
+                  className="h-10 w-full rounded-md border bg-background px-3 text-sm"
+                  value={bulkGroup}
+                  onChange={(e) => setBulkGroup(e.target.value)}
+                >
+                  <option value="">Gruppe auswählen</option>
+                  {planningGroups.map((groupName) => (
+                    <option key={groupName} value={groupName}>{groupName}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            <p className="text-xs text-muted-foreground">Betroffene Nutzer: {selectedGiftRecipients.length}</p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsBulkDialogOpen(false)} disabled={bulkProcessing}>
+              Abbrechen
+            </Button>
+            <Button onClick={handleBulkAction} disabled={bulkProcessing || selectedGiftRecipients.length === 0}>
+              {bulkProcessing ? 'Wird ausgeführt...' : 'Massenaktion starten'}
             </Button>
           </DialogFooter>
         </DialogContent>
