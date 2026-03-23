@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { db } from '@/lib/firebase'
-import { collection, doc, getDocs, updateDoc, arrayUnion, setDoc, serverTimestamp, getDoc } from 'firebase/firestore'
+import { collection, doc, getDocs, updateDoc, arrayUnion, setDoc, getDoc, runTransaction } from 'firebase/firestore'
 import { useAuth } from '@/context/AuthContext'
 import { Teacher, LootTeacher } from '@/types/database'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
@@ -131,16 +131,23 @@ export function TeacherRarityVoting({ onStatusChange }: { onStatusChange?: (fini
         rated_teachers: arrayUnion(teacher.id)
       })
 
-      // Update teacher aggregate
-      const newVoteCount = (teacher.vote_count || 0) + 1
-      const currentTotal = (teacher.avg_rating || 0) * (teacher.vote_count || 0)
-      const newAvg = (currentTotal + rating) / newVoteCount
+      // Update teacher aggregate transaction-safe to avoid race conditions between multiple voters.
+      await runTransaction(db, async (transaction) => {
+        const teacherRef = doc(db, 'teachers', teacher.id)
+        const teacherSnap = await transaction.get(teacherRef)
 
-      await setDoc(doc(db, 'teachers', teacher.id), {
-        name: teacher.name,
-        avg_rating: newAvg,
-        vote_count: newVoteCount
-      }, { merge: true })
+        const currentVoteCount = teacherSnap.exists() ? (teacherSnap.data().vote_count || 0) : 0
+        const currentAvg = teacherSnap.exists() ? (teacherSnap.data().avg_rating || 0) : 0
+        const currentTotal = currentAvg * currentVoteCount
+        const newVoteCount = currentVoteCount + 1
+        const newAvg = (currentTotal + rating) / newVoteCount
+
+        transaction.set(teacherRef, {
+          name: teacher.name,
+          avg_rating: newAvg,
+          vote_count: newVoteCount,
+        }, { merge: true })
+      })
 
       if (user) {
         await logAction('TEACHER_VOTE', user.uid, profile?.full_name, { 

@@ -495,15 +495,30 @@ export default function GlobalSettingsPage() {
 
     setSyncing(true)
     try {
-      const querySnapshot = await getDocs(collection(db, 'teachers'))
+      const ratingsSnapshot = await getDocs(collection(db, 'teacher_ratings'))
+      const ratingAggregateByTeacher = new Map<string, { total: number, count: number }>()
+
+      ratingsSnapshot.docs.forEach((ratingDoc) => {
+        const data = ratingDoc.data() as { teacherId?: string, rating?: number }
+        if (!data.teacherId || typeof data.rating !== 'number') return
+
+        const current = ratingAggregateByTeacher.get(data.teacherId) || { total: 0, count: 0 }
+        ratingAggregateByTeacher.set(data.teacherId, {
+          total: current.total + data.rating,
+          count: current.count + 1,
+        })
+      })
+
+      const teacherSnapshot = await getDocs(collection(db, 'teachers'))
       const teacherById = new Map(
-        querySnapshot.docs.map((teacherDoc) => [teacherDoc.id, ({ id: teacherDoc.id, ...teacherDoc.data() } as Teacher)])
+        teacherSnapshot.docs.map((teacherDoc) => [teacherDoc.id, ({ id: teacherDoc.id, ...teacherDoc.data() } as Teacher)])
       )
 
       const currentLootTeachers = Array.isArray(settings.loot_teachers) ? settings.loot_teachers : []
       const newLootTeachers: LootTeacher[] = currentLootTeachers.map((lootTeacher) => {
-        const aggregate = teacherById.get(lootTeacher.id)
-        const avg = aggregate?.avg_rating || 0
+        const ratingAggregate = ratingAggregateByTeacher.get(lootTeacher.id)
+        const count = ratingAggregate?.count || 0
+        const avg = count > 0 ? (ratingAggregate!.total / count) : 0
         let rarity: TeacherRarity = 'common'
         
         if (avg >= 0.85) rarity = 'legendary'
@@ -513,15 +528,36 @@ export default function GlobalSettingsPage() {
         
         return {
           id: lootTeacher.id,
-          name: aggregate?.name || lootTeacher.name,
+          name: teacherById.get(lootTeacher.id)?.name || lootTeacher.name,
           rarity,
         }
       })
 
+      // Persist rebuilt aggregates back to teachers collection.
+      const batch = writeBatch(db)
+      newLootTeachers.forEach((lootTeacher) => {
+        const ratingAggregate = ratingAggregateByTeacher.get(lootTeacher.id)
+        const count = ratingAggregate?.count || 0
+        const avg = count > 0 ? (ratingAggregate!.total / count) : 0
+
+        batch.set(doc(db, 'teachers', lootTeacher.id), {
+          name: lootTeacher.name,
+          avg_rating: avg,
+          vote_count: count,
+          rarity: lootTeacher.rarity,
+        }, { merge: true })
+      })
+      await batch.commit()
+
       const updatedSettings = { ...settings, loot_teachers: newLootTeachers }
       await handleSave(updatedSettings)
-      toast.success(`Seltenheiten erfolgreich synchronisiert (${newLootTeachers.length} Lehrer).`)
-      if (user) await logAction('TEACHERS_RARITY_SYNC', user.uid, profile?.full_name, { count: newLootTeachers.length })
+      toast.success(`Seltenheiten und Stimmenzahlen erfolgreich synchronisiert (${newLootTeachers.length} Lehrer).`)
+      if (user) {
+        await logAction('TEACHERS_RARITY_SYNC', user.uid, profile?.full_name, {
+          count: newLootTeachers.length,
+          ratings_count: ratingsSnapshot.size,
+        })
+      }
     } catch (error) {
       console.error('Error syncing rarities:', error)
       toast.error('Fehler beim Synchronisieren.')
