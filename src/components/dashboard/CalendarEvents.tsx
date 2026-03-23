@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { Event } from '@/types/database'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Calendar as CalendarIcon, Clock, Trash2, MapPin, User } from 'lucide-react'
@@ -9,18 +10,19 @@ import { de } from 'date-fns/locale'
 import { toDate } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { EditEventDialog } from '@/components/modals/EditEventDialog'
-import { CalendarEventDetailsDialog } from '@/components/modals/CalendarEventDetailsDialog'
 import { db } from '@/lib/firebase'
 import { collection, doc, deleteDoc, onSnapshot } from 'firebase/firestore'
 import { toast } from 'sonner'
 import { useAuth } from '@/context/AuthContext'
 import { logAction } from '@/lib/logging'
+import { ShareResourceButton } from '@/components/ui/share-resource-button'
 
 interface CalendarEventsProps {
   events: Event[]
   canManage?: boolean
   maxItems?: number
   useScrollContainer?: boolean
+  showShareButton?: boolean
 }
 
 export function CalendarEvents({
@@ -28,6 +30,7 @@ export function CalendarEvents({
   canManage = false,
   maxItems,
   useScrollContainer = true,
+  showShareButton = false,
 }: CalendarEventsProps) {
   const { user, profile } = useAuth()
   const [profileNamesById, setProfileNamesById] = useState<Record<string, string>>({})
@@ -114,35 +117,40 @@ export function CalendarEvents({
               const isSameDay = startDate.toDateString() === endDate.toDateString()
               return (
                 <div key={event.id} className="group flex items-center justify-between gap-4 pb-3 border-b last:border-0">
-                  <CalendarEventDetailsDialog event={event}>
-                    <div className="flex gap-4 cursor-pointer hover:opacity-80 transition-all flex-1">
-                      <div className="flex flex-col items-center justify-center bg-primary text-primary-foreground rounded-lg p-2 min-w-[50px] h-[50px]">
-                        <span className="text-xs uppercase font-medium">{format(startDate, 'MMM', { locale: de })}</span>
-                        <span className="text-xl font-bold leading-none">{format(startDate, 'dd')}</span>
+                  <Link href={`/kalender/${event.id}`} className="flex gap-4 cursor-pointer hover:opacity-80 transition-all flex-1">
+                    <div className="flex flex-col items-center justify-center bg-primary text-primary-foreground rounded-lg p-2 min-w-[50px] h-[50px]">
+                      <span className="text-xs uppercase font-medium">{format(startDate, 'MMM', { locale: de })}</span>
+                      <span className="text-xl font-bold leading-none">{format(startDate, 'dd')}</span>
+                    </div>
+                    <div className="flex flex-col justify-center space-y-1">
+                      <h4 className="text-sm font-semibold">{event.title}</h4>
+                      <div className="flex items-center text-[10px] md:text-xs text-muted-foreground gap-1">
+                        <Clock className="h-3 w-3" />
+                        {isSameDay
+                          ? `${format(startDate, 'HH:mm', { locale: de })} - ${format(endDate, 'HH:mm', { locale: de })} Uhr`
+                          : `${format(startDate, 'dd.MM. HH:mm', { locale: de })} - ${format(endDate, 'dd.MM. HH:mm', { locale: de })} Uhr`}
                       </div>
-                      <div className="flex flex-col justify-center space-y-1">
-                        <h4 className="text-sm font-semibold">{event.title}</h4>
+                      {event.location && (
                         <div className="flex items-center text-[10px] md:text-xs text-muted-foreground gap-1">
-                          <Clock className="h-3 w-3" />
-                          {isSameDay
-                            ? `${format(startDate, 'HH:mm', { locale: de })} - ${format(endDate, 'HH:mm', { locale: de })} Uhr`
-                            : `${format(startDate, 'dd.MM. HH:mm', { locale: de })} - ${format(endDate, 'dd.MM. HH:mm', { locale: de })} Uhr`}
+                          <MapPin className="h-3 w-3" />
+                          {event.location}
                         </div>
-                        {event.location && (
-                          <div className="flex items-center text-[10px] md:text-xs text-muted-foreground gap-1">
-                            <MapPin className="h-3 w-3" />
-                            {event.location}
-                          </div>
-                        )}
-                        <div className="flex items-center text-[10px] md:text-xs text-muted-foreground gap-1">
-                          <User className="h-3 w-3" />
-                          {event.created_by_name || profileNamesById[event.created_by] || 'Unbekannt'}
-                        </div>
+                      )}
+                      <div className="flex items-center text-[10px] md:text-xs text-muted-foreground gap-1">
+                        <User className="h-3 w-3" />
+                        {event.created_by_name || profileNamesById[event.created_by] || 'Unbekannt'}
                       </div>
                     </div>
-                  </CalendarEventDetailsDialog>
+                  </Link>
 
                   <div className="flex items-center gap-1 transition-opacity">
+                    {showShareButton && (
+                      <ShareResourceButton
+                        resourcePath={`/kalender/${event.id}`}
+                        title={event.title}
+                        text="Schau dir diesen Termin im ABI Planer an."
+                      />
+                    )}
                     {canManage && (
                       <>
                         <EditEventDialog event={event} />

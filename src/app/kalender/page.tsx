@@ -7,7 +7,7 @@ import { useAuth } from '@/context/AuthContext'
 import { CalendarEvents } from '@/components/dashboard/CalendarEvents'
 import { AddEventDialog } from '@/components/modals/AddEventDialog'
 import { Event } from '@/types/database'
-import { Loader2, Search, Filter } from 'lucide-react'
+import { Loader2, Search } from 'lucide-react'
 import { toDate } from '@/lib/utils'
 import { Input } from '@/components/ui/input'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -97,10 +97,10 @@ export default function CalendarPage() {
           <TabsTrigger value="past" className="px-4">Vergangen ({pastEvents.length})</TabsTrigger>
         </TabsList>
         <TabsContent value="upcoming">
-          <CalendarEvents events={upcomingEvents} canManage={isPlanner} useScrollContainer={false} />
+          <CalendarEvents events={upcomingEvents} canManage={isPlanner} useScrollContainer={false} showShareButton />
         </TabsContent>
         <TabsContent value="past">
-          <CalendarEvents events={pastEvents} canManage={isPlanner} useScrollContainer={false} />
+          <CalendarEvents events={pastEvents} canManage={isPlanner} useScrollContainer={false} showShareButton />
         </TabsContent>
       </Tabs>
     </div>

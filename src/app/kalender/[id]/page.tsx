@@ -5,27 +5,15 @@ import Link from 'next/link'
 import { doc, getDoc, onSnapshot } from 'firebase/firestore'
 import { format } from 'date-fns'
 import { de } from 'date-fns/locale'
-import { ArrowLeft, Calendar as CalendarIcon, Clock, Download, ExternalLink, FileText, Loader2, MapPin, User } from 'lucide-react'
+import { ArrowLeft, Calendar as CalendarIcon, Clock, ExternalLink, FileText, Loader2, MapPin, User } from 'lucide-react'
 import { db } from '@/lib/firebase'
 import { toDate } from '@/lib/utils'
 import { Event } from '@/types/database'
 import { Button } from '@/components/ui/button'
 import { ShareResourceButton } from '@/components/ui/share-resource-button'
 
-function toIcsDate(date: Date) {
-  return date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z')
-}
-
 function toGoogleDate(date: Date) {
   return date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z')
-}
-
-function escapeIcsText(value: string) {
-  return value
-    .replace(/\\/g, '\\\\')
-    .replace(/\n/g, '\\n')
-    .replace(/,/g, '\\,')
-    .replace(/;/g, '\\;')
 }
 
 export default function CalendarEventPage({ params }: { params: Promise<{ id: string }> }) {
@@ -68,42 +56,12 @@ export default function CalendarEventPage({ params }: { params: Promise<{ id: st
     loadCreatorName()
   }, [event?.created_by])
 
-  const handleExportAppleCalendar = () => {
+  const openAppleCalendar = () => {
     if (!event) return
 
     const startDate = toDate(event.start_date)
-    const endDate = toDate(event.end_date)
-    const locationLine = event.location ? `LOCATION:${escapeIcsText(event.location)}\n` : ''
-    const descriptionLine = event.description ? `DESCRIPTION:${escapeIcsText(event.description)}\n` : ''
-
-    const ics = [
-      'BEGIN:VCALENDAR',
-      'VERSION:2.0',
-      'PRODID:-//ABI Planer//Kalender//DE',
-      'CALSCALE:GREGORIAN',
-      'BEGIN:VEVENT',
-      `UID:${event.id}@abi-planer`,
-      `DTSTAMP:${toIcsDate(new Date())}`,
-      `DTSTART:${toIcsDate(startDate)}`,
-      `DTEND:${toIcsDate(endDate)}`,
-      `SUMMARY:${escapeIcsText(event.title)}`,
-      descriptionLine.trimEnd(),
-      locationLine.trimEnd(),
-      'END:VEVENT',
-      'END:VCALENDAR',
-    ]
-      .filter(Boolean)
-      .join('\n')
-
-    const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' })
-    const url = URL.createObjectURL(blob)
-    const anchor = document.createElement('a')
-    anchor.href = url
-    anchor.download = `${event.title.replace(/[^a-z0-9-_]+/gi, '-').toLowerCase() || 'termin'}.ics`
-    document.body.appendChild(anchor)
-    anchor.click()
-    document.body.removeChild(anchor)
-    URL.revokeObjectURL(url)
+    const referenceFrom2001 = Math.floor(startDate.getTime() / 1000 - 978307200)
+    window.open(`calshow:${referenceFrom2001}`, '_blank')
   }
 
   const openGoogleCalendar = () => {
@@ -191,14 +149,6 @@ export default function CalendarEventPage({ params }: { params: Promise<{ id: st
             <User className="h-4 w-4 text-primary/70" />
             <span>Erstellt von: {event.created_by_name || creatorName || 'Unbekannt'}</span>
           </div>
-          <div className="flex flex-wrap items-center gap-2 pt-2">
-            <Button variant="outline" size="sm" className="gap-2" onClick={openGoogleCalendar}>
-              <ExternalLink className="h-4 w-4" /> In Google Kalender
-            </Button>
-            <Button variant="outline" size="sm" className="gap-2" onClick={handleExportAppleCalendar}>
-              <Download className="h-4 w-4" /> Für Apple Kalender (.ics)
-            </Button>
-          </div>
         </header>
 
         <div className="h-px bg-border/50" />
@@ -246,6 +196,17 @@ export default function CalendarEventPage({ params }: { params: Promise<{ id: st
                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-tight">Ende</p>
                 <p className="text-sm font-semibold">{format(endDate, 'dd.MM.yyyy HH:mm', { locale: de })} Uhr</p>
               </div>
+            </div>
+          </div>
+
+          <div className="pt-5 border-t border-border/50">
+            <div className="flex flex-wrap items-center gap-2">
+              <Button variant="outline" size="sm" className="gap-2" onClick={openGoogleCalendar}>
+                <ExternalLink className="h-4 w-4" /> In Google Kalender öffnen
+              </Button>
+              <Button variant="outline" size="sm" className="gap-2" onClick={openAppleCalendar}>
+                <ExternalLink className="h-4 w-4" /> In Apple Kalender öffnen
+              </Button>
             </div>
           </div>
         </section>

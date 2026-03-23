@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.22.12] - 2026-03-23
+- UX: **Nur noch eine Kalender-Detailansicht**. Termine öffnen jetzt konsistent über die Route `/kalender/[id]`; die separate Modal-Detailansicht wurde entfernt.
+- UX: **Teilen direkt auf der Kalenderseite**. In der Terminliste auf `/kalender` ist die Teilen-Funktion wieder verfügbar; auf dem Dashboard bleibt sie ausgeblendet.
+- Feature: **Externer Kalender-Export ohne Dateidownload**. Google- und Apple-Buttons öffnen jetzt direkt den externen Kalender statt eine `.ics`-Datei zu laden.
+- UI: **Export-Aktionen nach unten verlagert**. Die Kalender-Buttons stehen jetzt unterhalb der Termininhalte und stören den Header nicht mehr.
+
 ## [0.22.11] - 2026-03-23
 - Feature: **Kalender-Einträge de-anonymisiert**. Termine zeigen jetzt den Namen der erstellenden Person in Übersicht und Detailansicht.
 - Feature: **Kalender-Export für Google und Apple**. In der Termin-Detailansicht können Termine direkt nach Google Kalender übertragen oder als `.ics` für Apple Kalender exportiert werden.
