@@ -99,7 +99,8 @@ const sanitizeBoosterStats = (stats: BoosterStats | null | undefined, today: str
 const calculateCarryoverExtras = (lastReset: string, today: string, dailyAllowance: number): number => {
   const daysMissed = daysBetween(lastReset, today)
   if (daysMissed <= 0) return 0
-  return daysMissed * dailyAllowance
+  // Maximal 1 Tag nachholen (2 Packs), egal wie viele Tage verpasst wurden
+  return Math.min(daysMissed, 1) * dailyAllowance
 }
 
 /**
