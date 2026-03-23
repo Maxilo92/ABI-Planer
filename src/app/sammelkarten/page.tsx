@@ -232,7 +232,12 @@ function SammelkartenContent() {
       {giftNotices.length > 0 && (
         <GiftNoticeBanner
           totalGiftPacks={totalGiftPacks}
+          titleText={giftNotices[0]?.popupTitle}
+          bodyText={giftNotices[0]?.popupBody}
           customMessage={giftNotices[0]?.customMessage}
+          ctaLabel={giftNotices[0]?.ctaLabel}
+          ctaUrl={giftNotices[0]?.ctaUrl}
+          dismissLabel={giftNotices[0]?.dismissLabel}
           onDismiss={handleDismissGiftNotices}
         />
       )}

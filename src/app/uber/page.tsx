@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation'
 
 export default function UberPage() {
   const router = useRouter()
+  const version = process.env.NEXT_PUBLIC_APP_VERSION ?? '0.0.0'
 
   return (
     <div className="max-w-3xl mx-auto space-y-8 py-8 px-4">
@@ -165,7 +166,7 @@ export default function UberPage() {
               Gebaut mit Passion für den Abiturjahrgang 2027
             </p>
             <p className="text-xs text-muted-foreground">
-              Version 1.0.0 | März 2026
+              Version {version} | März 2026
             </p>
           </div>
         </CardContent>

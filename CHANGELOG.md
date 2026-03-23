@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.22.09] - 2026-03-23
+- UI: **Popups unten rechts vereinheitlicht**. Geschenk-Popups erscheinen jetzt konsistent als schwebende Nachricht unten rechts.
+- Feature: **Schenkender kann alle Geschenk-Popup-Texte bearbeiten**. Titel, Haupttext, Zusatznachricht, Link-Label, Link-Ziel und Schließen-Text sind beim Verschenken frei konfigurierbar.
+- Feature: **Custom Popup Messages für verschiedene Anwendungsfälle**. In den globalen Einstellungen können route-basierte, aktivierbare Popup-Nachrichten mit eigener Wahrscheinlichkeit und CTA gepflegt werden.
+
 ## [0.22.08] - 2026-03-23
 - UI: **Geschenk-Banner jetzt auch auf der Startseite**. Neue Pack-Schenkungen werden zusätzlich im Dashboard angezeigt, inklusive Direktlink zur Sammelkarten-Seite.
 - Refactor: **Universelle Banner-Basis eingeführt**. Geschenk-, Cookie- und Werbe-Banner nutzen jetzt eine gemeinsame `UniversalBanner`-Komponente für einheitliches Verhalten und Styling.

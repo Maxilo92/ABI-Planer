@@ -103,6 +103,18 @@ export interface LootTeacher {
   rarity: TeacherRarity;
 }
 
+export interface CustomPopupMessage {
+  id: string;
+  title: string;
+  body: string;
+  ctaLabel?: string;
+  ctaUrl?: string;
+  dismissLabel?: string;
+  chance?: number;
+  enabled?: boolean;
+  routes?: string[];
+}
+
 export interface Settings {
   id: number;
   ball_date: string;
@@ -111,6 +123,7 @@ export interface Settings {
   expected_ticket_sales?: number;
   planning_groups?: PlanningGroup[];
   loot_teachers?: LootTeacher[];
+  custom_popup_messages?: CustomPopupMessage[];
 }
 
 export interface Todo {

@@ -47,6 +47,11 @@ export default function AdminPage() {
   const [selectedGiftRecipients, setSelectedGiftRecipients] = useState<string[]>([])
   const [giftPackCount, setGiftPackCount] = useState(1)
   const [giftMessage, setGiftMessage] = useState('Ihr habt neue Packs geschenkt bekommen. Viel Spaß beim Öffnen!')
+  const [giftPopupTitle, setGiftPopupTitle] = useState('Neue Pack-Schenkung')
+  const [giftPopupBody, setGiftPopupBody] = useState('Du hast zusätzliche Packs erhalten.')
+  const [giftCtaLabel, setGiftCtaLabel] = useState('Zu den Packs')
+  const [giftCtaUrl, setGiftCtaUrl] = useState('/sammelkarten')
+  const [giftDismissLabel, setGiftDismissLabel] = useState('Gelesen')
   const [isGiftDialogOpen, setIsGiftDialogOpen] = useState(false)
   const [giftSending, setGiftSending] = useState(false)
   const [isBulkDialogOpen, setIsBulkDialogOpen] = useState(false)
@@ -237,6 +242,22 @@ export default function AdminPage() {
       return
     }
 
+    const normalizedPopupTitle = giftPopupTitle.trim()
+    const normalizedPopupBody = giftPopupBody.trim()
+    const normalizedCtaLabel = giftCtaLabel.trim()
+    const normalizedCtaUrl = giftCtaUrl.trim()
+    const normalizedDismissLabel = giftDismissLabel.trim()
+
+    if (!normalizedPopupTitle || !normalizedPopupBody || !normalizedCtaLabel || !normalizedDismissLabel) {
+      toast.error('Bitte alle Popup-Texte ausfüllen.')
+      return
+    }
+
+    if (!normalizedCtaUrl.startsWith('/')) {
+      toast.error('Der Link muss mit "/" beginnen, z.B. /sammelkarten')
+      return
+    }
+
     const normalizedPackCount = Math.floor(giftPackCount)
     if (normalizedPackCount < 1) {
       toast.error('Bitte mindestens 1 Pack auswählen.')
@@ -250,6 +271,11 @@ export default function AdminPage() {
         userIds: selectedGiftRecipients,
         packCount: normalizedPackCount,
         customMessage: trimmedMessage,
+        popupTitle: normalizedPopupTitle,
+        popupBody: normalizedPopupBody,
+        ctaLabel: normalizedCtaLabel,
+        ctaUrl: normalizedCtaUrl,
+        dismissLabel: normalizedDismissLabel,
       })
 
       const payload = (response.data || {}) as { giftedCount?: number; failedUserIds?: string[] }
@@ -260,6 +286,11 @@ export default function AdminPage() {
         recipients: selectedGiftRecipients,
         pack_count: normalizedPackCount,
         message: trimmedMessage,
+        popup_title: normalizedPopupTitle,
+        popup_body: normalizedPopupBody,
+        cta_label: normalizedCtaLabel,
+        cta_url: normalizedCtaUrl,
+        dismiss_label: normalizedDismissLabel,
         gifted_count: giftedCount,
         failed_count: failedCount,
       })
@@ -701,6 +732,54 @@ export default function AdminPage() {
                 value={giftMessage}
                 onChange={(e) => setGiftMessage(e.target.value)}
                 maxLength={200}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="gift-popup-title">Popup-Titel</Label>
+              <Input
+                id="gift-popup-title"
+                value={giftPopupTitle}
+                onChange={(e) => setGiftPopupTitle(e.target.value)}
+                maxLength={80}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="gift-popup-body">Popup-Haupttext</Label>
+              <Input
+                id="gift-popup-body"
+                value={giftPopupBody}
+                onChange={(e) => setGiftPopupBody(e.target.value)}
+                maxLength={200}
+              />
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label htmlFor="gift-popup-cta-label">Link-Text</Label>
+                <Input
+                  id="gift-popup-cta-label"
+                  value={giftCtaLabel}
+                  onChange={(e) => setGiftCtaLabel(e.target.value)}
+                  maxLength={40}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="gift-popup-dismiss-label">Schließen-Text</Label>
+                <Input
+                  id="gift-popup-dismiss-label"
+                  value={giftDismissLabel}
+                  onChange={(e) => setGiftDismissLabel(e.target.value)}
+                  maxLength={30}
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="gift-popup-cta-url">Link-Ziel</Label>
+              <Input
+                id="gift-popup-cta-url"
+                value={giftCtaUrl}
+                onChange={(e) => setGiftCtaUrl(e.target.value)}
+                placeholder="/sammelkarten"
+                maxLength={120}
               />
             </div>
             <p className="text-xs text-muted-foreground">

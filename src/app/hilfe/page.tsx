@@ -10,6 +10,7 @@ import { ChevronDown } from 'lucide-react'
 export default function HilfePage() {
   const router = useRouter()
   const [openAccordions, setOpenAccordions] = useState<Record<string, boolean>>({})
+  const version = process.env.NEXT_PUBLIC_APP_VERSION ?? '0.0.0'
 
   const toggleAccordion = (id: string) => {
     setOpenAccordions(prev => ({
@@ -283,7 +284,7 @@ export default function HilfePage() {
 
           <div className="pt-8 border-t space-y-2">
             <p className="text-xs text-muted-foreground italic">
-              Stand: März 2026 | v0.22.03
+              Stand: März 2026 | v{version}
             </p>
             <p className="text-xs text-muted-foreground">
               Noch Fragen? Klick hier um <strong>Feedback zu geben</strong> oder kontaktiert einen Admin.

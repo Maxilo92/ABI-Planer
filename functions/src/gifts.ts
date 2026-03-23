@@ -11,6 +11,11 @@ interface GiftBoosterPackData {
     userIds?: string[];
     packCount: number;
     customMessage?: string;
+    popupTitle?: string;
+    popupBody?: string;
+    ctaLabel?: string;
+    ctaUrl?: string;
+    dismissLabel?: string;
 }
 
 const isAdminRole = (role: unknown): boolean => {
@@ -43,19 +48,48 @@ export const giftBoosterPack = onCall({
         );
     }
 
-    const { userId, userIds, packCount, customMessage } = request.data as GiftBoosterPackData;
-    const message = (customMessage || "Du hast ein Geschenk erhalten!").trim();
+    const {
+        userId,
+        userIds,
+        packCount,
+        customMessage,
+        popupTitle,
+        popupBody,
+        ctaLabel,
+        ctaUrl,
+        dismissLabel,
+    } = request.data as GiftBoosterPackData;
+
+    const message = (customMessage || popupBody || "Du hast ein Geschenk erhalten!").trim();
+    const normalizedPopupTitle = (popupTitle || "Neue Pack-Schenkung").trim();
+    const normalizedPopupBody = (popupBody || message).trim();
+    const normalizedCtaLabel = (ctaLabel || "Zu den Packs").trim();
+    const normalizedDismissLabel = (dismissLabel || "Gelesen").trim();
+    const normalizedCtaUrl = (ctaUrl || "/sammelkarten").trim();
 
     const recipients = Array.from(new Set([
         ...(Array.isArray(userIds) ? userIds : []),
         ...(userId ? [userId] : []),
     ]));
 
-    if (recipients.length === 0 || !Number.isFinite(packCount) || packCount <= 0 || message.length === 0) {
+    if (
+        recipients.length === 0 ||
+        !Number.isFinite(packCount) ||
+        packCount <= 0 ||
+        message.length === 0 ||
+        normalizedPopupTitle.length === 0 ||
+        normalizedPopupBody.length === 0 ||
+        normalizedCtaLabel.length === 0 ||
+        normalizedDismissLabel.length === 0
+    ) {
         throw new HttpsError(
             "invalid-argument",
-            "The function must be called with valid 'userId' or 'userIds', 'packCount', and 'customMessage'.",
+            "The function must be called with valid 'userId' or 'userIds', 'packCount', and popup text values.",
         );
+    }
+
+    if (!normalizedCtaUrl.startsWith("/")) {
+        throw new HttpsError("invalid-argument", "ctaUrl must start with '/'.");
     }
 
     const safePackCount = Math.floor(packCount);
@@ -95,6 +129,11 @@ export const giftBoosterPack = onCall({
                     transaction.set(giftRef, {
                         packCount: safePackCount,
                         customMessage: message,
+                        popupTitle: normalizedPopupTitle,
+                        popupBody: normalizedPopupBody,
+                        ctaLabel: normalizedCtaLabel,
+                        ctaUrl: normalizedCtaUrl,
+                        dismissLabel: normalizedDismissLabel,
                         createdAt: admin.firestore.FieldValue.serverTimestamp(),
                         createdBy: request.auth?.uid,
                     });

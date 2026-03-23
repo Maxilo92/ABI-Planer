@@ -8,6 +8,11 @@ export type GiftNotice = {
   id: string
   packCount: number
   customMessage?: string
+  popupTitle?: string
+  popupBody?: string
+  ctaLabel?: string
+  ctaUrl?: string
+  dismissLabel?: string
 }
 
 export function useGiftNotices(userId?: string) {
@@ -27,11 +32,24 @@ export function useGiftNotices(userId?: string) {
     const unsubscribe = onSnapshot(giftsQuery, (snapshot) => {
       const notices = snapshot.docs
         .map((giftDoc) => {
-          const data = giftDoc.data() as { packCount?: number; customMessage?: string }
+          const data = giftDoc.data() as {
+            packCount?: number
+            customMessage?: string
+            popupTitle?: string
+            popupBody?: string
+            ctaLabel?: string
+            ctaUrl?: string
+            dismissLabel?: string
+          }
           return {
             id: giftDoc.id,
             packCount: typeof data.packCount === 'number' ? data.packCount : 0,
             customMessage: data.customMessage,
+            popupTitle: data.popupTitle,
+            popupBody: data.popupBody,
+            ctaLabel: data.ctaLabel,
+            ctaUrl: data.ctaUrl,
+            dismissLabel: data.dismissLabel,
           }
         })
         .filter((entry) => entry.packCount > 0)

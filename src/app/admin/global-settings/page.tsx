@@ -31,10 +31,23 @@ interface LootTeacher {
   rarity: TeacherRarity
 }
 
+interface CustomPopupMessage {
+  id: string
+  title: string
+  body: string
+  ctaLabel?: string
+  ctaUrl?: string
+  dismissLabel?: string
+  chance?: number
+  enabled?: boolean
+  routes?: string[]
+}
+
 interface GlobalSettings {
   cookie_banner_chance: number
   cookie_messages: string[]
   ad_messages: string[]
+  custom_popup_messages: CustomPopupMessage[]
   loot_teachers: LootTeacher[]
 }
 
@@ -58,6 +71,19 @@ const DEFAULT_SETTINGS: GlobalSettings = {
     'Abi-Gag mit Mehrwert: Plant den DJ früh, bevor nur noch die Schützenkapelle frei ist.',
     'Werbeblock Ende: Wenn jeder im Team eine Mini-Aufgabe übernimmt, wird der Abiball plötzlich machbar.'
   ],
+  custom_popup_messages: [
+    {
+      id: 'promo-dashboard',
+      title: 'Mini-Promo: Finanzplan checken',
+      body: 'Kurzer Budget-Check heute spart Stress kurz vor dem Ball.',
+      ctaLabel: 'Zu den Finanzen',
+      ctaUrl: '/finanzen',
+      dismissLabel: 'Später',
+      chance: 0.25,
+      enabled: true,
+      routes: ['/'],
+    },
+  ],
   loot_teachers: [
     { id: 'max-mustermann', name: "Max Mustermann", rarity: "common" },
     { id: 'erika-musterfrau', name: "Erika Musterfrau", rarity: "rare" },
@@ -74,6 +100,17 @@ export default function GlobalSettingsPage() {
   const [saving, setSaving] = useState(false)
   const [newMessage, setNewMessage] = useState('')
   const [newAdMessage, setNewAdMessage] = useState('')
+  const [newCustomPopup, setNewCustomPopup] = useState<CustomPopupMessage>({
+    id: '',
+    title: '',
+    body: '',
+    ctaLabel: '',
+    ctaUrl: '',
+    dismissLabel: 'Schließen',
+    chance: 0.35,
+    enabled: true,
+    routes: ['*'],
+  })
   const [newTeacherName, setNewTeacherName] = useState('')
   const [newTeacherRarity, setNewTeacherRarity] = useState<TeacherRarity>('common')
   const [editingTeacher, setEditingTeacher] = useState<LootTeacher | null>(null)
@@ -137,6 +174,7 @@ export default function GlobalSettingsPage() {
           ...DEFAULT_SETTINGS,
           ...data,
           ad_messages: data.ad_messages || DEFAULT_SETTINGS.ad_messages,
+          custom_popup_messages: data.custom_popup_messages || DEFAULT_SETTINGS.custom_popup_messages,
           loot_teachers: data.loot_teachers || DEFAULT_SETTINGS.loot_teachers
         }
         setSettings(loadedSettings)
@@ -240,6 +278,73 @@ export default function GlobalSettingsPage() {
     const old = settings
     setSettings(updatedSettings)
     setNewAdMessage('')
+    setTimeout(async () => {
+      const ok = await handleSave(updatedSettings)
+      if (!ok) setSettings(old)
+    }, 0)
+  }
+
+  const handleAddCustomPopupMessage = () => {
+    const title = newCustomPopup.title.trim()
+    const body = newCustomPopup.body.trim()
+    const id = (newCustomPopup.id.trim() || `popup-${Date.now()}`).toLowerCase().replace(/[^a-z0-9-_]/g, '-')
+
+    if (!title || !body) return
+    if ((newCustomPopup.ctaUrl || '').trim() && !(newCustomPopup.ctaUrl || '').trim().startsWith('/')) {
+      toast.error('CTA-Link muss mit "/" beginnen.')
+      return
+    }
+
+    const updatedSettings = {
+      ...settings,
+      custom_popup_messages: [
+        ...(settings.custom_popup_messages || []),
+        {
+          id,
+          title,
+          body,
+          ctaLabel: (newCustomPopup.ctaLabel || '').trim() || undefined,
+          ctaUrl: (newCustomPopup.ctaUrl || '').trim() || undefined,
+          dismissLabel: (newCustomPopup.dismissLabel || '').trim() || 'Schließen',
+          chance: typeof newCustomPopup.chance === 'number' ? newCustomPopup.chance : 0.35,
+          enabled: newCustomPopup.enabled !== false,
+          routes: Array.isArray(newCustomPopup.routes) ? newCustomPopup.routes : ['*'],
+        }
+      ]
+    }
+
+    const old = settings
+    setSettings(updatedSettings)
+    setNewCustomPopup({
+      id: '',
+      title: '',
+      body: '',
+      ctaLabel: '',
+      ctaUrl: '',
+      dismissLabel: 'Schließen',
+      chance: 0.35,
+      enabled: true,
+      routes: ['*'],
+    })
+    setTimeout(async () => {
+      const ok = await handleSave(updatedSettings)
+      if (!ok) setSettings(old)
+    }, 0)
+  }
+
+  const handleUpdateCustomPopupMessage = <K extends keyof CustomPopupMessage>(index: number, key: K, value: CustomPopupMessage[K]) => {
+    const updated = [...(settings.custom_popup_messages || [])]
+    updated[index] = { ...updated[index], [key]: value }
+    setSettings((prev) => ({ ...prev, custom_popup_messages: updated }))
+  }
+
+  const handleRemoveCustomPopupMessage = (index: number) => {
+    const updatedSettings = {
+      ...settings,
+      custom_popup_messages: (settings.custom_popup_messages || []).filter((_, i) => i !== index)
+    }
+    const old = settings
+    setSettings(updatedSettings)
     setTimeout(async () => {
       const ok = await handleSave(updatedSettings)
       if (!ok) setSettings(old)
@@ -735,6 +840,176 @@ export default function GlobalSettingsPage() {
                 />
                 <Button onClick={handleAddAdMessage} disabled={!newAdMessage.trim()} className="shrink-0">
                   <Plus className="h-4 w-4 mr-2" /> Hinzufügen
+                </Button>
+              </div>
+            </div>
+
+            <div className="space-y-4 pt-4 border-t">
+              <Label>Custom Popup-Nachrichten (verschiedene Fälle)</Label>
+              <p className="text-xs text-muted-foreground">
+                Diese Popups erscheinen als Benachrichtigung unten rechts. Du kannst sie pro Route, Chance und CTA konfigurieren.
+              </p>
+
+              <div className="space-y-3">
+                {(settings.custom_popup_messages || []).map((entry, index) => (
+                  <div key={`${entry.id}-${index}`} className="rounded-lg border p-3 space-y-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <Label className="text-xs">ID</Label>
+                        <Input
+                          value={entry.id}
+                          onChange={(e) => handleUpdateCustomPopupMessage(index, 'id', e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Aktiv</Label>
+                        <select
+                          className="h-10 w-full rounded-md border bg-background px-3 text-sm"
+                          value={entry.enabled === false ? 'off' : 'on'}
+                          onChange={(e) => handleUpdateCustomPopupMessage(index, 'enabled', e.target.value === 'on')}
+                        >
+                          <option value="on">Ja</option>
+                          <option value="off">Nein</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="space-y-1">
+                      <Label className="text-xs">Titel</Label>
+                      <Input
+                        value={entry.title}
+                        onChange={(e) => handleUpdateCustomPopupMessage(index, 'title', e.target.value)}
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <Label className="text-xs">Text</Label>
+                      <Textarea
+                        value={entry.body}
+                        onChange={(e) => handleUpdateCustomPopupMessage(index, 'body', e.target.value)}
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div className="space-y-1">
+                        <Label className="text-xs">CTA Label</Label>
+                        <Input
+                          value={entry.ctaLabel || ''}
+                          onChange={(e) => handleUpdateCustomPopupMessage(index, 'ctaLabel', e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">CTA Link</Label>
+                        <Input
+                          value={entry.ctaUrl || ''}
+                          onChange={(e) => handleUpdateCustomPopupMessage(index, 'ctaUrl', e.target.value)}
+                          placeholder="/finanzen"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Dismiss Text</Label>
+                        <Input
+                          value={entry.dismissLabel || ''}
+                          onChange={(e) => handleUpdateCustomPopupMessage(index, 'dismissLabel', e.target.value)}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <Label className="text-xs">Chance (0-1)</Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          max="1"
+                          step="0.05"
+                          value={typeof entry.chance === 'number' ? entry.chance : 0.35}
+                          onChange={(e) => handleUpdateCustomPopupMessage(index, 'chance', parseFloat(e.target.value) || 0)}
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Routen (CSV)</Label>
+                        <Input
+                          value={(entry.routes || ['*']).join(', ')}
+                          onChange={(e) => {
+                            const routes = e.target.value.split(',').map((r) => r.trim()).filter(Boolean)
+                            handleUpdateCustomPopupMessage(index, 'routes', routes.length > 0 ? routes : ['*'])
+                          }}
+                          placeholder="*, /, /sammelkarten"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-destructive hover:bg-destructive/10"
+                        onClick={() => handleRemoveCustomPopupMessage(index)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="rounded-lg border p-3 space-y-3 bg-muted/30">
+                <Label className="text-xs">Neue Custom Popup-Nachricht</Label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <Input
+                    placeholder="ID (optional)"
+                    value={newCustomPopup.id}
+                    onChange={(e) => setNewCustomPopup((prev) => ({ ...prev, id: e.target.value }))}
+                  />
+                  <Input
+                    placeholder="Titel"
+                    value={newCustomPopup.title}
+                    onChange={(e) => setNewCustomPopup((prev) => ({ ...prev, title: e.target.value }))}
+                  />
+                </div>
+                <Textarea
+                  placeholder="Popup Text"
+                  value={newCustomPopup.body}
+                  onChange={(e) => setNewCustomPopup((prev) => ({ ...prev, body: e.target.value }))}
+                />
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <Input
+                    placeholder="CTA Label"
+                    value={newCustomPopup.ctaLabel || ''}
+                    onChange={(e) => setNewCustomPopup((prev) => ({ ...prev, ctaLabel: e.target.value }))}
+                  />
+                  <Input
+                    placeholder="CTA Link (/seite)"
+                    value={newCustomPopup.ctaUrl || ''}
+                    onChange={(e) => setNewCustomPopup((prev) => ({ ...prev, ctaUrl: e.target.value }))}
+                  />
+                  <Input
+                    placeholder="Dismiss Text"
+                    value={newCustomPopup.dismissLabel || ''}
+                    onChange={(e) => setNewCustomPopup((prev) => ({ ...prev, dismissLabel: e.target.value }))}
+                  />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <Input
+                    type="number"
+                    min="0"
+                    max="1"
+                    step="0.05"
+                    value={newCustomPopup.chance ?? 0.35}
+                    onChange={(e) => setNewCustomPopup((prev) => ({ ...prev, chance: parseFloat(e.target.value) || 0 }))}
+                  />
+                  <Input
+                    placeholder="Routen CSV (*, /, /sammelkarten)"
+                    value={(newCustomPopup.routes || ['*']).join(', ')}
+                    onChange={(e) => {
+                      const routes = e.target.value.split(',').map((r) => r.trim()).filter(Boolean)
+                      setNewCustomPopup((prev) => ({ ...prev, routes: routes.length > 0 ? routes : ['*'] }))
+                    }}
+                  />
+                </div>
+                <Button onClick={handleAddCustomPopupMessage} disabled={!newCustomPopup.title.trim() || !newCustomPopup.body.trim()}>
+                  <Plus className="h-4 w-4 mr-2" /> Custom Popup hinzufügen
                 </Button>
               </div>
             </div>

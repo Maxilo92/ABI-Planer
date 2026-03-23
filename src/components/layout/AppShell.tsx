@@ -5,6 +5,7 @@ import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
 import { RandomCookieBanner } from '@/components/layout/RandomCookieBanner'
 import { DangerAlertBanner } from '@/components/layout/DangerAlertBanner'
+import { CustomPopupBanner } from '@/components/layout/CustomPopupBanner'
 
 interface AppShellProps {
   children: React.ReactNode
@@ -22,6 +23,7 @@ export function AppShell({ children }: AppShellProps) {
         <DangerAlertBanner />
         <main className="min-h-screen">{children}</main>
         <RandomCookieBanner />
+        <CustomPopupBanner />
       </div>
     )
   }
@@ -37,6 +39,7 @@ export function AppShell({ children }: AppShellProps) {
         <Footer />
       </div>
       <RandomCookieBanner />
+      <CustomPopupBanner />
     </div>
   )
 }
