@@ -14,6 +14,7 @@ import { doc, deleteDoc } from 'firebase/firestore'
 import { toast } from 'sonner'
 import { useAuth } from '@/context/AuthContext'
 import { logAction } from '@/lib/logging'
+import { ShareResourceButton } from '@/components/ui/share-resource-button'
 
 interface CalendarEventsProps {
   events: Event[]
@@ -121,23 +122,30 @@ export function CalendarEvents({
                     </div>
                   </CalendarEventDetailsDialog>
 
-                  {canManage && (
-                    <div className="flex items-center gap-1 transition-opacity">
-                      <EditEventDialog event={event} />
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDelete(event.id);
-                        }}
-                        title="Löschen"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  )}
+                  <div className="flex items-center gap-1 transition-opacity">
+                    <ShareResourceButton
+                      resourcePath={`/kalender/${event.id}`}
+                      title={event.title}
+                      text="Schau dir diesen Termin im ABI Planer an."
+                    />
+                    {canManage && (
+                      <>
+                        <EditEventDialog event={event} />
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDelete(event.id);
+                          }}
+                          title="Löschen"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </>
+                    )}
+                  </div>
                 </div>
               )
             })

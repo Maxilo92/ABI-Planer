@@ -17,6 +17,7 @@ import { de } from 'date-fns/locale'
 import { toDate } from '@/lib/utils'
 import { db } from '@/lib/firebase'
 import { collection, query, onSnapshot, orderBy } from 'firebase/firestore'
+import { ShareResourceButton } from '@/components/ui/share-resource-button'
 
 interface CalendarEventDetailsDialogProps {
   event: Event
@@ -61,9 +62,18 @@ export function CalendarEventDetailsDialog({ event, children }: CalendarEventDet
       <DialogTrigger render={children} />
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <div className="flex items-center gap-2 text-primary mb-2">
-            <CalendarIcon className="h-5 w-5" />
-            <span className="text-sm font-semibold uppercase tracking-wider">Termin-Details</span>
+          <div className="flex items-center justify-between gap-2 mb-2">
+            <div className="flex items-center gap-2 text-primary">
+              <CalendarIcon className="h-5 w-5" />
+              <span className="text-sm font-semibold uppercase tracking-wider">Termin-Details</span>
+            </div>
+            <ShareResourceButton
+              resourcePath={`/kalender/${event.id}`}
+              title={event.title}
+              text="Schau dir diesen Termin im ABI Planer an."
+              variant="outline"
+              size="icon-sm"
+            />
           </div>
           <DialogTitle className="text-2xl font-bold">{event.title}</DialogTitle>
           <DialogDescription className="flex items-center gap-1.5 text-muted-foreground mt-1">

@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.22.10] - 2026-03-23
+- Feature: **Teilen-Buttons für News und Termine**. News-Einträge und Termine besitzen jetzt direkte Share-Aktionen zum Teilen des jeweiligen Resource-Links.
+- Feature: **Direkte Termin-Detailseite**. Termine sind zusätzlich über eigene URLs erreichbar (`/kalender/[id]`), damit geteilte Links direkt zur Ressource führen.
+
 ## [0.22.09] - 2026-03-23
 - UI: **Popups unten rechts vereinheitlicht**. Geschenk-Popups erscheinen jetzt konsistent als schwebende Nachricht unten rechts.
 - Feature: **Schenkender kann alle Geschenk-Popup-Texte bearbeiten**. Titel, Haupttext, Zusatznachricht, Link-Label, Link-Ziel und Schließen-Text sind beim Verschenken frei konfigurierbar.

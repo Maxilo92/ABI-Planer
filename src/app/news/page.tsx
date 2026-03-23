@@ -18,6 +18,7 @@ import Link from 'next/link'
 import { deleteNewsImageByPath } from '@/lib/newsImageUpload'
 import { logAction } from '@/lib/logging'
 import ReactMarkdown from 'react-markdown'
+import { ShareResourceButton } from '@/components/ui/share-resource-button'
 
 export default function NewsPage() {
   const { profile, loading: authLoading } = useAuth()
@@ -136,6 +137,11 @@ export default function NewsPage() {
                       <CardTitle className="text-2xl font-black leading-tight tracking-tight">{item.title}</CardTitle>
                     </Link>
                     <div className="flex items-center gap-2 shrink-0">
+                      <ShareResourceButton
+                        resourcePath={`/news/${item.id}`}
+                        title={item.title}
+                        text="Schau dir diese News im ABI Planer an."
+                      />
                       {isPlanner && (
                         <div className="flex items-center gap-1">
                           <EditNewsDialog news={item} />

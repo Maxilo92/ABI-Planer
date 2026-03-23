@@ -17,6 +17,7 @@ import { EditNewsDialog } from '@/components/modals/EditNewsDialog'
 import { toast } from 'sonner'
 import { logAction } from '@/lib/logging'
 import ReactMarkdown from 'react-markdown'
+import { ShareResourceButton } from '@/components/ui/share-resource-button'
 
 export default function NewsDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
@@ -208,11 +209,14 @@ export default function NewsDetailPage({ params }: { params: Promise<{ id: strin
             <CardTitle className="text-3xl md:text-5xl font-black tracking-tight leading-[1.12] text-foreground">
               {news.title}
             </CardTitle>
-            {isPlanner && (
-              <div className="shrink-0 mt-1">
-                <EditNewsDialog news={news} />
-              </div>
-            )}
+            <div className="shrink-0 mt-1 flex items-center gap-1">
+              <ShareResourceButton
+                resourcePath={`/news/${news.id}`}
+                title={news.title}
+                text="Schau dir diese News im ABI Planer an."
+              />
+              {isPlanner && <EditNewsDialog news={news} />}
+            </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-y-3 gap-x-6 text-sm md:text-base text-muted-foreground font-medium">
