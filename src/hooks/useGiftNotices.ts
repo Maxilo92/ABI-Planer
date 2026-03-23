@@ -52,7 +52,10 @@ export function useGiftNotices(userId?: string) {
             dismissLabel: data.dismissLabel,
           }
         })
-        .filter((entry) => entry.packCount > 0)
+        .filter((entry) => {
+          if (entry.packCount > 0) return true
+          return !!entry.popupTitle?.trim() || !!entry.popupBody?.trim() || !!entry.customMessage?.trim()
+        })
 
       setGiftNotices(notices)
     })

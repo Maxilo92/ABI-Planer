@@ -75,7 +75,7 @@ export const giftBoosterPack = onCall({
     if (
         recipients.length === 0 ||
         !Number.isFinite(packCount) ||
-        packCount <= 0 ||
+        packCount < 0 ||
         message.length === 0 ||
         normalizedPopupTitle.length === 0 ||
         normalizedPopupBody.length === 0 ||
@@ -93,8 +93,8 @@ export const giftBoosterPack = onCall({
     }
 
     const safePackCount = Math.floor(packCount);
-    if (safePackCount < 1) {
-        throw new HttpsError("invalid-argument", "packCount must be at least 1.");
+    if (safePackCount < 0) {
+        throw new HttpsError("invalid-argument", "packCount must be at least 0.");
     }
 
     const failedUserIds: string[] = [];
@@ -119,11 +119,13 @@ export const giftBoosterPack = onCall({
                         continue;
                     }
 
-                    transaction.set(profileRef, {
-                        booster_stats: {
-                            extra_available: admin.firestore.FieldValue.increment(safePackCount),
-                        },
-                    }, { merge: true });
+                    if (safePackCount > 0) {
+                        transaction.set(profileRef, {
+                            booster_stats: {
+                                extra_available: admin.firestore.FieldValue.increment(safePackCount),
+                            },
+                        }, { merge: true });
+                    }
 
                     const giftRef = profileRef.collection("unseen_gifts").doc();
                     transaction.set(giftRef, {

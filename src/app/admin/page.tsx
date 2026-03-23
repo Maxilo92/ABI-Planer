@@ -236,17 +236,12 @@ export default function AdminPage() {
   const handleGiftPacks = async () => {
     if (!user || selectedGiftRecipients.length === 0) return
 
-    const trimmedMessage = giftMessage.trim()
-    if (!trimmedMessage) {
-      toast.error('Bitte eine Nachricht für den Geschenk-Banner eingeben.')
-      return
-    }
-
     const normalizedPopupTitle = giftPopupTitle.trim()
     const normalizedPopupBody = giftPopupBody.trim()
     const normalizedCtaLabel = giftCtaLabel.trim()
     const normalizedCtaUrl = giftCtaUrl.trim()
     const normalizedDismissLabel = giftDismissLabel.trim()
+    const trimmedMessage = giftMessage.trim() || normalizedPopupBody
 
     if (!normalizedPopupTitle || !normalizedPopupBody || !normalizedCtaLabel || !normalizedDismissLabel) {
       toast.error('Bitte alle Popup-Texte ausfüllen.')
@@ -259,8 +254,8 @@ export default function AdminPage() {
     }
 
     const normalizedPackCount = Math.floor(giftPackCount)
-    if (normalizedPackCount < 1) {
-      toast.error('Bitte mindestens 1 Pack auswählen.')
+    if (normalizedPackCount < 0) {
+      toast.error('Packs pro Person darf nicht negativ sein.')
       return
     }
 
@@ -296,9 +291,13 @@ export default function AdminPage() {
       })
 
       if (failedCount > 0) {
-        toast.warning(`${giftedCount} Nutzer beschenkt, ${failedCount} fehlgeschlagen.`)
+        toast.warning(`${giftedCount} Nutzer benachrichtigt, ${failedCount} fehlgeschlagen.`)
       } else {
-        toast.success(`${giftedCount} Nutzer erfolgreich beschenkt.`)
+        toast.success(
+          normalizedPackCount > 0
+            ? `${giftedCount} Nutzer erfolgreich beschenkt.`
+            : `${giftedCount} Nutzer erfolgreich benachrichtigt.`
+        )
       }
 
       setSelectedGiftRecipients([])
@@ -710,7 +709,7 @@ export default function AdminPage() {
           <DialogHeader>
             <DialogTitle>Packs verschenken</DialogTitle>
             <DialogDescription>
-              Die ausgewählten Nutzer sehen die Nachricht als Banner auf der Sammelkarten-Seite.
+              Die ausgewählten Nutzer sehen die Nachricht als Popup. Mit 0 Packs wird nur eine Nachricht versendet.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-2">
@@ -719,14 +718,17 @@ export default function AdminPage() {
               <Input
                 id="gift-pack-count"
                 type="number"
-                min={1}
+                min={0}
                 max={50}
                 value={giftPackCount}
-                onChange={(e) => setGiftPackCount(Number(e.target.value) || 1)}
+                onChange={(e) => {
+                  const parsed = Number(e.target.value)
+                  setGiftPackCount(Number.isFinite(parsed) ? parsed : 0)
+                }}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="gift-message">Banner-Nachricht</Label>
+              <Label htmlFor="gift-message">Zusatznachricht (optional)</Label>
               <Input
                 id="gift-message"
                 value={giftMessage}

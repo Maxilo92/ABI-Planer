@@ -2,8 +2,9 @@
 
 import Link from 'next/link'
 import { Gift } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { Button, buttonVariants } from '@/components/ui/button'
 import { UniversalBanner } from '@/components/layout/UniversalBanner'
+import { cn } from '@/lib/utils'
 
 type GiftNoticeBannerProps = {
   totalGiftPacks: number
@@ -28,10 +29,10 @@ export function GiftNoticeBanner({
   onDismiss,
   className,
 }: GiftNoticeBannerProps) {
-  if (totalGiftPacks <= 0) return null
-
   const resolvedTitle = titleText?.trim() || 'Neue Pack-Schenkung'
-  const resolvedBody = bodyText?.trim() || `Du hast insgesamt ${totalGiftPacks} zusätzliche Packs erhalten.`
+  const resolvedBody = bodyText?.trim() || (totalGiftPacks > 0
+    ? `Du hast insgesamt ${totalGiftPacks} zusätzliche Packs erhalten.`
+    : 'Du hast eine neue Nachricht erhalten.')
   const resolvedCtaLabel = ctaLabel?.trim() || 'Zu den Packs'
   const resolvedCtaUrl = ctaUrl?.trim() || '/sammelkarten'
   const resolvedDismissLabel = dismissLabel?.trim() || 'Gelesen'
@@ -40,21 +41,21 @@ export function GiftNoticeBanner({
     <UniversalBanner
       tone="success"
       layout="floating"
-      className={`fixed z-[95] right-4 bottom-20 w-[min(24rem,calc(100vw-2rem))] ${className ?? ''}`}
+      className={`fixed z-[95] right-4 bottom-4 w-[min(24rem,calc(100vw-2rem))] ${className ?? ''}`}
       icon={<Gift className="h-4 w-4" />}
       title={resolvedTitle}
       message={
         <div className="space-y-1">
           <p>{resolvedBody}</p>
           {customMessage && <p className="text-xs italic">{customMessage}</p>}
-          <Link href={resolvedCtaUrl} className="inline-flex text-xs font-semibold hover:underline">
-            {resolvedCtaLabel}
-          </Link>
         </div>
       }
       actions={
         onDismiss ? (
-          <div className="flex justify-end">
+          <div className="flex justify-end gap-2">
+            <Link href={resolvedCtaUrl} className={cn(buttonVariants({ size: 'sm' }))}>
+              {resolvedCtaLabel}
+            </Link>
             <Button size="sm" variant="outline" onClick={onDismiss}>
               {resolvedDismissLabel}
             </Button>

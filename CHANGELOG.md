@@ -4,6 +4,9 @@
 - UI: **Popups unten rechts vereinheitlicht**. Geschenk-Popups erscheinen jetzt konsistent als schwebende Nachricht unten rechts.
 - Feature: **Schenkender kann alle Geschenk-Popup-Texte bearbeiten**. Titel, Haupttext, Zusatznachricht, Link-Label, Link-Ziel und Schließen-Text sind beim Verschenken frei konfigurierbar.
 - Feature: **Custom Popup Messages für verschiedene Anwendungsfälle**. In den globalen Einstellungen können route-basierte, aktivierbare Popup-Nachrichten mit eigener Wahrscheinlichkeit und CTA gepflegt werden.
+- UI: **Geschenk-Popup exakt in der Ecke**. Abstand zum rechten und unteren Rand ist jetzt identisch.
+- UI: **CTA als eigener Button**. "Zu den Packs" steht jetzt als Button direkt neben "Gelesen".
+- Feature: **Popup ohne Geschenk möglich**. Admins können jetzt auch reine Benachrichtigungen ohne Packs versenden (`Packs pro Person = 0`).
 
 ## [0.22.08] - 2026-03-23
 - UI: **Geschenk-Banner jetzt auch auf der Startseite**. Neue Pack-Schenkungen werden zusätzlich im Dashboard angezeigt, inklusive Direktlink zur Sammelkarten-Seite.
