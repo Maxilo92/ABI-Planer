@@ -1,0 +1,114 @@
+import { onCall, HttpsError } from "firebase-functions/v2/https";
+import * as admin from "firebase-admin";
+
+if (admin.apps.length === 0) {
+    admin.initializeApp();
+}
+
+interface GiftBoosterPackData {
+    userId?: string;
+    userIds?: string[];
+    packCount: number;
+    customMessage?: string;
+}
+
+const isAdminRole = (role: unknown): boolean => {
+    return role === "admin" || role === "admin_main" || role === "admin_co";
+};
+
+export const giftBoosterPack = onCall({
+    region: "europe-west3",
+}, async (request) => {
+    if (!request.auth?.uid) {
+        throw new HttpsError("unauthenticated", "Authentication is required.");
+    }
+
+    const db = admin.firestore();
+
+    const callerProfileRef = db.collection("profiles").doc(request.auth.uid);
+    const callerProfileDoc = await callerProfileRef.get();
+
+    if (!isAdminRole(callerProfileDoc.data()?.role)) {
+        throw new HttpsError(
+            "permission-denied",
+            "Must be an administrative user to call this function.",
+        );
+    }
+
+    const { userId, userIds, packCount, customMessage } = request.data as GiftBoosterPackData;
+    const message = (customMessage || "Du hast ein Geschenk erhalten!").trim();
+
+    const recipients = Array.from(new Set([
+        ...(Array.isArray(userIds) ? userIds : []),
+        ...(userId ? [userId] : []),
+    ]));
+
+    if (recipients.length === 0 || !Number.isFinite(packCount) || packCount <= 0 || message.length === 0) {
+        throw new HttpsError(
+            "invalid-argument",
+            "The function must be called with valid 'userId' or 'userIds', 'packCount', and 'customMessage'.",
+        );
+    }
+
+    const safePackCount = Math.floor(packCount);
+    if (safePackCount < 1) {
+        throw new HttpsError("invalid-argument", "packCount must be at least 1.");
+    }
+
+    const failedUserIds: string[] = [];
+    let giftedCount = 0;
+    const chunkSize = 50;
+
+    try {
+        for (let i = 0; i < recipients.length; i += chunkSize) {
+            const chunk = recipients.slice(i, i + chunkSize);
+
+            await db.runTransaction(async (transaction) => {
+                const refs = chunk.map((targetUserId) => db.collection("profiles").doc(targetUserId));
+                const docs = await Promise.all(refs.map((ref) => transaction.get(ref)));
+
+                for (let index = 0; index < refs.length; index += 1) {
+                    const profileRef = refs[index];
+                    const profileDoc = docs[index];
+                    const targetUserId = chunk[index];
+
+                    if (!profileDoc.exists) {
+                        failedUserIds.push(targetUserId);
+                        continue;
+                    }
+
+                    transaction.set(profileRef, {
+                        booster_stats: {
+                            extra_available: admin.firestore.FieldValue.increment(safePackCount),
+                        },
+                    }, { merge: true });
+
+                    const giftRef = profileRef.collection("unseen_gifts").doc();
+                    transaction.set(giftRef, {
+                        packCount: safePackCount,
+                        customMessage: message,
+                        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+                        createdBy: request.auth?.uid,
+                    });
+
+                    giftedCount += 1;
+                }
+            });
+        }
+
+        return {
+            success: true,
+            giftedCount,
+            failedUserIds,
+        };
+    } catch (error) {
+        console.error("Error gifting booster pack:", error);
+        if (error instanceof HttpsError) {
+            throw error;
+        }
+        throw new HttpsError(
+            "internal",
+            "An internal error occurred while gifting the booster pack.",
+        );
+    }
+});

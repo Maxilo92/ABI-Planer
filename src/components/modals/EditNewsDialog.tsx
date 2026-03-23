@@ -178,6 +178,7 @@ export function EditNewsDialog({ news }: EditNewsDialogProps) {
                 rows={8}
                 required 
               />
+              <p className="text-xs text-muted-foreground">Markdown wird unterstützt, z.B. `**fett**`, `_kursiv_` oder `- Listenpunkte`.</p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="edit-image">Titelbild</Label>

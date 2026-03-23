@@ -9,9 +9,11 @@ interface NewsImageCropperProps {
   file: File
   onCancel: () => void
   onConfirm: (croppedFile: File) => void
+  aspect?: number
+  title?: string
 }
 
-export function NewsImageCropper({ file, onCancel, onConfirm }: NewsImageCropperProps) {
+export function NewsImageCropper({ file, onCancel, onConfirm, aspect = 16 / 9, title = 'Bild zuschneiden (16:9)' }: NewsImageCropperProps) {
   const [crop, setCrop] = useState({ x: 0, y: 0 })
   const [zoom, setZoom] = useState(1)
   const [cropping, setCropping] = useState(false)
@@ -47,13 +49,13 @@ export function NewsImageCropper({ file, onCancel, onConfirm }: NewsImageCropper
 
   return (
     <div className="space-y-3 rounded-lg border bg-muted/20 p-3">
-      <p className="text-sm font-medium">Bild zuschneiden (16:9)</p>
+      <p className="text-sm font-medium">{title}</p>
       <div className="relative h-56 w-full overflow-hidden rounded-md bg-black/80">
         <Cropper
           image={imageUrl}
           crop={crop}
           zoom={zoom}
-          aspect={16 / 9}
+          aspect={aspect}
           onCropChange={setCrop}
           onZoomChange={setZoom}
           onCropComplete={onCropComplete}

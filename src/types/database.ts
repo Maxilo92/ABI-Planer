@@ -228,3 +228,8 @@ export interface PollVote {
   user_id: string;
   option_id: string;
 }
+
+export interface NewsImage {
+  url: string;
+  path: string;
+}

@@ -496,10 +496,14 @@ export default function GlobalSettingsPage() {
     setSyncing(true)
     try {
       const querySnapshot = await getDocs(collection(db, 'teachers'))
-      const teachersData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Teacher))
-      
-      const newLootTeachers: LootTeacher[] = teachersData.map(t => {
-        const avg = t.avg_rating || 0
+      const teacherById = new Map(
+        querySnapshot.docs.map((teacherDoc) => [teacherDoc.id, ({ id: teacherDoc.id, ...teacherDoc.data() } as Teacher)])
+      )
+
+      const currentLootTeachers = Array.isArray(settings.loot_teachers) ? settings.loot_teachers : []
+      const newLootTeachers: LootTeacher[] = currentLootTeachers.map((lootTeacher) => {
+        const aggregate = teacherById.get(lootTeacher.id)
+        const avg = aggregate?.avg_rating || 0
         let rarity: TeacherRarity = 'common'
         
         if (avg >= 0.85) rarity = 'legendary'
@@ -507,12 +511,16 @@ export default function GlobalSettingsPage() {
         else if (avg >= 0.40) rarity = 'epic'
         else if (avg >= 0.15) rarity = 'rare'
         
-        return { id: t.id, name: t.name, rarity }
+        return {
+          id: lootTeacher.id,
+          name: aggregate?.name || lootTeacher.name,
+          rarity,
+        }
       })
 
       const updatedSettings = { ...settings, loot_teachers: newLootTeachers }
       await handleSave(updatedSettings)
-      toast.success('Seltenheiten erfolgreich synchronisiert!')
+      toast.success(`Seltenheiten erfolgreich synchronisiert (${newLootTeachers.length} Lehrer).`)
       if (user) await logAction('TEACHERS_RARITY_SYNC', user.uid, profile?.full_name, { count: newLootTeachers.length })
     } catch (error) {
       console.error('Error syncing rarities:', error)

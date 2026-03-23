@@ -21,6 +21,8 @@ import { toDate } from '@/lib/utils'
 import { logAction } from '@/lib/logging'
 import { Feedback, FeedbackType, FeedbackStatus } from '@/types/database'
 
+type FeedbackImageCropMode = 'landscape' | 'portrait'
+
 export default function FeedbackPage() {
   const { user, profile, loading: authLoading } = useAuth()
   const router = useRouter()
@@ -38,7 +40,11 @@ export default function FeedbackPage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [showCropper, setShowCropper] = useState(false)
   const [croppedFile, setCroppedFile] = useState<File | null>(null)
+  const [croppedPreviewUrl, setCroppedPreviewUrl] = useState<string | null>(null)
+  const [cropMode, setCropMode] = useState<FeedbackImageCropMode>('landscape')
   const [isUploading, setIsUploading] = useState(false)
+  const [preparedImageUpload, setPreparedImageUpload] = useState<{ url: string } | null>(null)
+  const [isPreparingImageUpload, setIsPreparingImageUpload] = useState(false)
 
   const isAdmin = profile?.role && ['admin', 'admin_main', 'admin_co'].includes(profile.role)
 
@@ -67,12 +73,54 @@ export default function FeedbackPage() {
     return () => unsubscribe()
   }, [isAdmin, authLoading])
 
+  useEffect(() => {
+    return () => {
+      if (croppedPreviewUrl) {
+        URL.revokeObjectURL(croppedPreviewUrl)
+      }
+    }
+  }, [croppedPreviewUrl])
+
+  useEffect(() => {
+    let isActive = true
+
+    const uploadInBackground = async () => {
+      if (!user || !croppedFile) {
+        setPreparedImageUpload(null)
+        setIsPreparingImageUpload(false)
+        return
+      }
+
+      setIsPreparingImageUpload(true)
+      try {
+        const uploadResult = await uploadNewsImage(user.uid, croppedFile)
+        if (!isActive) return
+        setPreparedImageUpload({ url: uploadResult.url })
+      } catch (error) {
+        if (!isActive) return
+        console.error('Error uploading feedback image in background:', error)
+        setPreparedImageUpload(null)
+      } finally {
+        if (isActive) {
+          setIsPreparingImageUpload(false)
+        }
+      }
+    }
+
+    uploadInBackground()
+
+    return () => {
+      isActive = false
+    }
+  }, [croppedFile, user])
+
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
 
     try {
       await validateNewsImageFile(file)
+      setPreparedImageUpload(null)
       setSelectedFile(file)
       setShowCropper(true)
     } catch (err: any) {
@@ -82,13 +130,23 @@ export default function FeedbackPage() {
   }
 
   const handleCropConfirm = (file: File) => {
+    if (croppedPreviewUrl) {
+      URL.revokeObjectURL(croppedPreviewUrl)
+    }
     setCroppedFile(file)
+    setCroppedPreviewUrl(URL.createObjectURL(file))
     setShowCropper(false)
     setSelectedFile(null)
   }
 
   const handleRemoveImage = () => {
+    if (croppedPreviewUrl) {
+      URL.revokeObjectURL(croppedPreviewUrl)
+    }
     setCroppedFile(null)
+    setCroppedPreviewUrl(null)
+    setPreparedImageUpload(null)
+    setIsPreparingImageUpload(false)
     setSelectedFile(null)
     setShowCropper(false)
   }
@@ -104,7 +162,9 @@ export default function FeedbackPage() {
     setLoading(true)
     try {
       let imageUrl = ''
-      if (croppedFile) {
+      if (croppedFile && preparedImageUpload?.url) {
+        imageUrl = preparedImageUpload.url
+      } else if (croppedFile) {
         setIsUploading(true)
         const uploadResult = await uploadNewsImage(user.uid, croppedFile)
         imageUrl = uploadResult.url
@@ -137,7 +197,7 @@ export default function FeedbackPage() {
       setType('feature')
       setIsAnonymous(false)
       setIsPrivate(false)
-      setCroppedFile(null)
+      handleRemoveImage()
     } catch (error) {
       console.error('Error adding feedback:', error)
       toast.error('Fehler beim Senden des Feedbacks.')
@@ -275,6 +335,26 @@ export default function FeedbackPage() {
               <div className="space-y-2">
                 <Label>Bild (optional, z.B. Screenshot vom Fehler)</Label>
                 {!croppedFile && !showCropper && (
+                  <div className="grid grid-cols-2 gap-2 max-w-xs">
+                    <Button
+                      type="button"
+                      variant={cropMode === 'landscape' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setCropMode('landscape')}
+                    >
+                      Querformat (16:9)
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={cropMode === 'portrait' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setCropMode('portrait')}
+                    >
+                      Hochkant (3:4)
+                    </Button>
+                  </div>
+                )}
+                {!croppedFile && !showCropper && (
                   <div className="flex items-center gap-2">
                     <Button
                       type="button"
@@ -297,6 +377,8 @@ export default function FeedbackPage() {
                 {showCropper && selectedFile && (
                   <NewsImageCropper
                     file={selectedFile}
+                    aspect={cropMode === 'portrait' ? 3 / 4 : 16 / 9}
+                    title={cropMode === 'portrait' ? 'Bild zuschneiden (3:4 Hochkant)' : 'Bild zuschneiden (16:9 Querformat)'}
                     onCancel={() => {
                       setShowCropper(false)
                       setSelectedFile(null)
@@ -308,7 +390,7 @@ export default function FeedbackPage() {
                 {croppedFile && (
                   <div className="relative inline-block mt-2">
                     <img
-                      src={URL.createObjectURL(croppedFile)}
+                      src={croppedPreviewUrl || ''}
                       alt="Vorschau"
                       className="h-32 w-auto rounded-md border"
                     />
@@ -321,6 +403,11 @@ export default function FeedbackPage() {
                     >
                       <X className="h-3 w-3" />
                     </Button>
+                    {(isPreparingImageUpload || preparedImageUpload) && (
+                      <p className="mt-2 text-xs text-muted-foreground">
+                        {isPreparingImageUpload ? 'Bild wird im Hintergrund hochgeladen...' : 'Bild ist bereits hochgeladen und bereit zum Senden.'}
+                      </p>
+                    )}
                   </div>
                 )}
               </div>

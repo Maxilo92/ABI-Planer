@@ -11,40 +11,122 @@ export const calculateLevel = (count: number): number => {
   return Math.floor(Math.sqrt(count - 1)) + 1
 }
 
-/**
- * Calculates the current "booster day" identifier.
- * A new day starts at 09:00:00 Europe/Berlin time.
- */
-export const getCurrentBoosterDay = (): string => {
-  const now = new Date()
-  
-  // Convert current time to Europe/Berlin
+type BoosterStats = {
+  last_reset?: string
+  count?: number
+  extra_available?: number
+  extra_boosters_claimed?: boolean
+  total_opened?: number
+}
+
+const BERLIN_TIMEZONE = 'Europe/Berlin'
+const DAILY_PACK_ALLOWANCE = 2
+
+const toBerlinParts = (date: Date) => {
   const formatter = new Intl.DateTimeFormat('en-GB', {
-    timeZone: 'Europe/Berlin',
+    timeZone: BERLIN_TIMEZONE,
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
     hour: '2-digit',
     minute: '2-digit',
     second: '2-digit',
-    hour12: false
+    hour12: false,
   })
-  
-  const parts = formatter.formatToParts(now)
-  const map = new Map(parts.map(p => [p.type, p.value]))
-  
-  const year = parseInt(map.get('year')!)
-  const month = parseInt(map.get('month')!) - 1
-  const day = parseInt(map.get('day')!)
-  const hour = parseInt(map.get('hour')!)
-  
-  // If it's before 9:00 AM in Berlin, it's still the "previous" booster day
-  const boosterDate = new Date(year, month, day)
-  if (hour < 9) {
-    boosterDate.setDate(boosterDate.getDate() - 1)
+
+  const parts = formatter.formatToParts(date)
+  const map = new Map(parts.map((part) => [part.type, part.value]))
+
+  return {
+    year: Number(map.get('year')),
+    month: Number(map.get('month')),
+    day: Number(map.get('day')),
+    hour: Number(map.get('hour')),
   }
-  
-  return boosterDate.toISOString().split('T')[0]
+}
+
+const formatDatePart = (value: number) => value.toString().padStart(2, '0')
+
+const fromDayStringToUtcMs = (value: string): number | null => {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value)
+  if (!match) return null
+
+  const year = Number(match[1])
+  const month = Number(match[2])
+  const day = Number(match[3])
+  const timestamp = Date.UTC(year, month - 1, day)
+
+  return Number.isNaN(timestamp) ? null : timestamp
+}
+
+const addDaysToDayString = (value: string, delta: number): string => {
+  const base = fromDayStringToUtcMs(value)
+  if (base === null) return value
+
+  const next = new Date(base + delta * 24 * 60 * 60 * 1000)
+  const year = next.getUTCFullYear()
+  const month = formatDatePart(next.getUTCMonth() + 1)
+  const day = formatDatePart(next.getUTCDate())
+  return `${year}-${month}-${day}`
+}
+
+const sanitizeBoosterStats = (stats: BoosterStats | null | undefined, today: string) => {
+  const count = typeof stats?.count === 'number' && Number.isFinite(stats.count)
+    ? Math.max(0, Math.floor(stats.count))
+    : 0
+
+  const extraAvailable = typeof stats?.extra_available === 'number' && Number.isFinite(stats.extra_available)
+    ? Math.max(0, Math.floor(stats.extra_available))
+    : 0
+
+  const totalOpened = typeof stats?.total_opened === 'number' && Number.isFinite(stats.total_opened)
+    ? Math.max(0, Math.floor(stats.total_opened))
+    : 0
+
+  const lastReset = typeof stats?.last_reset === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(stats.last_reset)
+    ? stats.last_reset
+    : today
+
+  return {
+    ...stats,
+    last_reset: lastReset,
+    count,
+    extra_available: extraAvailable,
+    total_opened: totalOpened,
+  }
+}
+
+const calculateCarryoverExtras = (lastReset: string, today: string, dailyAllowance: number): number => {
+  const daysMissed = daysBetween(lastReset, today)
+  if (daysMissed <= 0) return 0
+  return daysMissed * dailyAllowance
+}
+
+/**
+ * Calculates the current "booster day" identifier.
+ * A new day starts at 09:00:00 Europe/Berlin time.
+ */
+export const getCurrentBoosterDay = (): string => {
+  const now = new Date()
+  const berlin = toBerlinParts(now)
+  const baseDay = `${berlin.year}-${formatDatePart(berlin.month)}-${formatDatePart(berlin.day)}`
+
+  // If it's before 9:00 AM in Berlin, it still belongs to the previous booster day.
+  if (berlin.hour < 9) {
+    return addDaysToDayString(baseDay, -1)
+  }
+
+  return baseDay
+}
+
+const daysBetween = (from: string, to: string): number => {
+  const fromMs = fromDayStringToUtcMs(from)
+  const toMs = fromDayStringToUtcMs(to)
+  if (fromMs === null || toMs === null) return 0
+
+  const msInDay = 24 * 60 * 60 * 1000
+  const diff = toMs - fromMs
+  return Math.max(0, Math.floor(diff / msInDay))
 }
 
 export const useUserTeachers = (userId?: string) => {
@@ -95,6 +177,7 @@ export const useUserTeachers = (userId?: string) => {
 
       const userTeachersRef = doc(db, 'user_teachers', currentUser.uid)
       const profileRef = doc(db, 'profiles', currentUser.uid)
+      const dailyPackAllowance = DAILY_PACK_ALLOWANCE
       
       try {
         const results = await runTransaction(db, async (transaction) => {
@@ -103,16 +186,17 @@ export const useUserTeachers = (userId?: string) => {
           
           const today = getCurrentBoosterDay()
           const currentProfileData = profileDoc.data() as Profile
-          const currentStats = currentProfileData.booster_stats || { last_reset: today, count: 0 }
+          const currentStats = sanitizeBoosterStats(currentProfileData.booster_stats, today)
           
           let dailyCount = currentStats.count
           let extraAvailable = currentStats.extra_available || 0
           
           if (currentStats.last_reset !== today) {
+            extraAvailable += calculateCarryoverExtras(currentStats.last_reset, today, dailyPackAllowance)
             dailyCount = 0
           }
 
-          if (dailyCount < 2) {
+          if (dailyCount < dailyPackAllowance) {
             dailyCount += 1
           } else if (extraAvailable > 0) {
             extraAvailable -= 1
@@ -171,6 +255,7 @@ export const useUserTeachers = (userId?: string) => {
 
       const userTeachersRef = doc(db, 'user_teachers', currentUser.uid)
       const profileRef = doc(db, 'profiles', currentUser.uid)
+      const dailyPackAllowance = DAILY_PACK_ALLOWANCE
       
       try {
         const result = await runTransaction(db, async (transaction) => {
@@ -179,16 +264,17 @@ export const useUserTeachers = (userId?: string) => {
 
           const today = getCurrentBoosterDay()
           const currentProfileData = profileDoc.data() as Profile
-          const currentStats = currentProfileData.booster_stats || { last_reset: today, count: 0 }
+          const currentStats = sanitizeBoosterStats(currentProfileData.booster_stats, today)
           
           let dailyCount = currentStats.count
           let extraAvailable = currentStats.extra_available || 0
           
           if (currentStats.last_reset !== today) {
+            extraAvailable += calculateCarryoverExtras(currentStats.last_reset, today, dailyPackAllowance)
             dailyCount = 0
           }
 
-          if (dailyCount < 2) {
+          if (dailyCount < dailyPackAllowance) {
             dailyCount += 1
           } else if (extraAvailable > 0) {
             extraAvailable -= 1
@@ -215,7 +301,8 @@ export const useUserTeachers = (userId?: string) => {
               ...currentStats,
               last_reset: today,
               count: dailyCount,
-              extra_available: extraAvailable
+              extra_available: extraAvailable,
+              total_opened: (currentStats.total_opened || 0) + 1
             }
           })
 
@@ -245,7 +332,7 @@ export const useUserTeachers = (userId?: string) => {
         const today = getCurrentBoosterDay()
         
         // Handle null or missing stats
-        const currentStats = currentProfileData.booster_stats || { last_reset: today, count: 0 }
+        const currentStats = sanitizeBoosterStats(currentProfileData.booster_stats, today)
         
         if (currentStats.extra_boosters_claimed) {
           throw new Error('Belohnung bereits abgeholt!')
@@ -271,14 +358,22 @@ export const useUserTeachers = (userId?: string) => {
     if (!isOwnProfile || !currentProfile) return 0
     const today = getCurrentBoosterDay()
     const stats = currentProfile.booster_stats
-    const dailyLimit = 2
+    const dailyLimit = DAILY_PACK_ALLOWANCE
     
     if (!stats) return dailyLimit
     
-    const extra = stats.extra_available || 0
-    if (stats.last_reset !== today) return dailyLimit + extra
+    const normalizedStats = sanitizeBoosterStats(stats, today)
+    let extra = normalizedStats.extra_available || 0
+
+    if (normalizedStats.last_reset !== today) {
+      extra += calculateCarryoverExtras(normalizedStats.last_reset, today, dailyLimit)
+    }
+
+    if (normalizedStats.last_reset !== today) {
+      return dailyLimit + extra
+    }
     
-    return Math.max(0, dailyLimit - stats.count) + extra
+    return Math.max(0, dailyLimit - normalizedStats.count) + extra
   }, [currentProfile, isOwnProfile])
 
   return {

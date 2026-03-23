@@ -17,6 +17,7 @@ import { toast } from 'sonner'
 import Link from 'next/link'
 import { deleteNewsImageByPath } from '@/lib/newsImageUpload'
 import { logAction } from '@/lib/logging'
+import ReactMarkdown from 'react-markdown'
 
 export default function NewsPage() {
   const { profile, loading: authLoading } = useAuth()
@@ -162,8 +163,18 @@ export default function NewsPage() {
                     </span>
                   </div>
 
-                  <div className="whitespace-pre-wrap text-foreground/80 leading-relaxed line-clamp-4 text-sm md:text-base">
-                    {item.content}
+                  <div className="text-foreground/80 leading-relaxed line-clamp-4 text-sm md:text-base">
+                    <ReactMarkdown
+                      components={{
+                        p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
+                        strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
+                        em: ({ children }) => <em className="italic">{children}</em>,
+                        ul: ({ children }) => <ul className="list-disc pl-5 mb-2">{children}</ul>,
+                        ol: ({ children }) => <ol className="list-decimal pl-5 mb-2">{children}</ol>,
+                      }}
+                    >
+                      {item.content}
+                    </ReactMarkdown>
                   </div>
 
                   <div className="flex justify-end mt-4">

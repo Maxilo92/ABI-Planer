@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.22.06] - 2026-03-23
+- Feature: **News unterstützt Markdown durchgängig**. News-Inhalte werden in der Übersicht formatiert gerendert, und die Editor-Dialoge weisen explizit auf Markdown-Syntax hin.
+- Feature: **Schenkungen für mehrere ausgewählte Nutzer**. In der Benutzerverwaltung können nun mehrere Personen markiert und mit Packs + individueller Nachricht beschenkt werden.
+- UI: **Geschenk-Banner auf Sammelkarten-Seite**. Neue Schenkungen werden als Banner angezeigt und können vom Nutzer als gelesen markiert werden.
+- Fix: **Gift-Cloud-Function korrigiert**. Schenkungen schreiben jetzt in die richtige Collection (`profiles`) und prüfen Adminrechte zuverlässig über die Profilrolle.
+- Feature: **Album-Sortierung erweitert**. Neue Sortieroptionen für A-Z, Z-A, Seltenheit auf-/absteigend sowie Level auf-/absteigend.
+- Fix: **Raritäten-Sync automatisiert**. Bei neuen Lehrerbewertungen werden Seltenheiten automatisch in `teachers` und im Loot-Pool (`settings/global.loot_teachers`) synchron gehalten.
+- Fix: **Manueller Raritäten-Sync stabilisiert**. Der Sync berücksichtigt nun zuverlässig bestehende Lehrer und ersetzt keine Einträge mehr unbeabsichtigt.
+- Fix: **Pack-Carryover verbessert**. Verpasste Tages-Packs werden robuster übernommen; Booster-Tag-Berechnung wurde zeitzonensicher gemacht.
+- Fix: **Sammelkarten-Mobile-Rendering verbessert**. Pack-Ansicht respektiert Safe-Area auf Mobilgeräten und überdeckt die UI-Leisten nicht mehr.
+- Feature: **Feedback-Bilder schneller**. Nach dem Zuschnitt startet der Upload im Hintergrund; zusätzlich gibt es eine Hochkant-Zuschnitt-Option (3:4).
+
 ## [0.22.03] - 2026-03-22
 - Fix: **CORS-Sicherheitsrichtlinien verschärft**. Erlaubte Origins für MFA- und Danger-Funktionen wurden explizit festgelegt (`abi-planer-27.de`, `abi-planer-75319.web.app`, `abi-planer-75319.firebaseapp.app`), um robustere Cross-Origin Requests zu ermöglichen.
 

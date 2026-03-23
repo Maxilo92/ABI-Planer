@@ -177,6 +177,7 @@ export function AddNewsDialog() {
                 rows={5}
                 required 
               />
+              <p className="text-xs text-muted-foreground">Markdown wird unterstützt, z.B. <strong>fett</strong> mit `**Text**` oder Listen mit `- Punkt`.</p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="image">Titelbild (optional)</Label>

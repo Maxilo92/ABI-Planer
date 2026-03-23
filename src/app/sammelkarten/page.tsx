@@ -5,7 +5,7 @@ import { Sparkles, Gift, GraduationCap, RotateCcw, Zap, Trophy, Clock, Star, Loc
 import { useEffect, useState, Suspense } from 'react'
 import { redirect, useSearchParams } from 'next/navigation'
 import { db } from '@/lib/firebase'
-import { doc, onSnapshot } from 'firebase/firestore'
+import { collection, deleteDoc, doc, onSnapshot, orderBy, query } from 'firebase/firestore'
 import { TeacherRarity, LootTeacher } from '@/types/database'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -22,6 +22,12 @@ const DEFAULT_TEACHERS: LootTeacher[] = [
   { id: 'albert-einstein', name: "Albert Einstein", rarity: "legendary" }
 ]
 
+type GiftNotice = {
+  id: string
+  packCount: number
+  customMessage?: string
+}
+
 function SammelkartenContent() {
   const searchParams = useSearchParams()
   const view = searchParams.get('view') || 'sammelkarten'
@@ -34,6 +40,7 @@ function SammelkartenContent() {
   const [flippedCards, setFlippedCards] = useState<boolean[]>([false, false, false])
   const [isAnimating, setIsAnimating] = useState(false)
   const [timeLeft, setTimeLeft] = useState<string>('')
+  const [giftNotices, setGiftNotices] = useState<GiftNotice[]>([])
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -69,6 +76,47 @@ function SammelkartenContent() {
       redirect('/login?reason=unauthorized')
     }
   }, [user, loading])
+
+  useEffect(() => {
+    if (!user) {
+      setGiftNotices([])
+      return
+    }
+
+    const giftsQuery = query(
+      collection(db, 'profiles', user.uid, 'unseen_gifts'),
+      orderBy('createdAt', 'desc')
+    )
+
+    const unsubscribe = onSnapshot(giftsQuery, (snapshot) => {
+      const notices = snapshot.docs.map((giftDoc) => {
+        const data = giftDoc.data() as { packCount?: number; customMessage?: string }
+        return {
+          id: giftDoc.id,
+          packCount: typeof data.packCount === 'number' ? data.packCount : 0,
+          customMessage: data.customMessage,
+        }
+      }).filter((entry) => entry.packCount > 0)
+
+      setGiftNotices(notices)
+    })
+
+    return () => unsubscribe()
+  }, [user])
+
+  const dismissGiftNotices = async () => {
+    if (!user || giftNotices.length === 0) return
+
+    try {
+      await Promise.all(
+        giftNotices.map((notice) => deleteDoc(doc(db, 'profiles', user.uid, 'unseen_gifts', notice.id)))
+      )
+      setGiftNotices([])
+    } catch (error) {
+      console.error('Error dismissing gift notices:', error)
+      toast.error('Geschenk-Hinweis konnte nicht geschlossen werden.')
+    }
+  }
 
   useEffect(() => {
     const unsubscribe = onSnapshot(doc(db, 'settings', 'global'), (snapshot) => {
@@ -217,8 +265,30 @@ function SammelkartenContent() {
 
   return (
     <div className="container mx-auto py-8">
+      {giftNotices.length > 0 && (
+        <div className="mb-4 rounded-xl border border-emerald-400/40 bg-emerald-500/10 p-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-1">
+              <p className="text-sm font-bold flex items-center gap-2 text-emerald-700 dark:text-emerald-300">
+                <Gift className="h-4 w-4" />
+                Neue Pack-Schenkung
+              </p>
+              <p className="text-sm text-foreground/90">
+                Du hast insgesamt {giftNotices.reduce((sum, notice) => sum + notice.packCount, 0)} zusätzliche Packs erhalten.
+              </p>
+              {giftNotices[0]?.customMessage && (
+                <p className="text-xs text-muted-foreground italic">{giftNotices[0].customMessage}</p>
+              )}
+            </div>
+            <Button size="sm" variant="outline" onClick={dismissGiftNotices}>
+              Gelesen
+            </Button>
+          </div>
+        </div>
+      )}
+
       {view === 'sammelkarten' ? (
-        <div className="flex flex-col items-center justify-center min-h-[calc(100vh-20rem)] overflow-hidden">
+        <div className="flex flex-col items-center justify-center min-h-[calc(100vh-20rem)] overflow-hidden pb-[calc(env(safe-area-inset-bottom)+1rem)]">
           <div className="relative flex flex-col items-center space-y-12 w-full max-w-4xl px-6">
             
             {/* Minimal Header */}
@@ -372,7 +442,7 @@ function SammelkartenContent() {
               {(gameState === 'idle' || gameState === 'ripping') && (
                 <div 
                   className={cn(
-                    "absolute z-50 w-64 h-96 cursor-pointer group transition-all duration-500",
+                    "absolute z-20 w-64 h-96 cursor-pointer group transition-all duration-500",
                     getRemainingBoosters() <= 0 && "opacity-50 cursor-not-allowed",
                     gameState === 'idle' && getRemainingBoosters() > 0 && "hover:scale-105 active:scale-95"
                   )}

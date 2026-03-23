@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
-import { MoreVertical, Shield, User, Trash2, Clock3, Undo2, Search } from 'lucide-react'
+import { MoreVertical, Shield, User, Trash2, Clock3, Undo2, Search, Gift } from 'lucide-react'
 import { ResetPasswordDialog } from '@/components/modals/ResetPasswordDialog'
 import { useAuth } from '@/context/AuthContext'
 import { useRouter } from 'next/navigation'
@@ -17,11 +17,27 @@ import Link from 'next/link'
 import { toast } from 'sonner'
 import { logAction } from '@/lib/logging'
 import { Input } from '@/components/ui/input'
+import { Checkbox } from '@/components/ui/checkbox'
+import { functions } from '@/lib/firebase'
+import { httpsCallable } from 'firebase/functions'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 
 export default function AdminPage() {
   const { user, profile, loading: authLoading } = useAuth()
   const [profiles, setProfiles] = useState<Profile[]>([])
   const [userSearch, setUserSearch] = useState('')
+  const [selectedGiftRecipients, setSelectedGiftRecipients] = useState<string[]>([])
+  const [giftPackCount, setGiftPackCount] = useState(1)
+  const [giftMessage, setGiftMessage] = useState('Ihr habt neue Packs geschenkt bekommen. Viel Spaß beim Öffnen!')
+  const [isGiftDialogOpen, setIsGiftDialogOpen] = useState(false)
+  const [giftSending, setGiftSending] = useState(false)
   const [courses, setCourses] = useState<string[]>([])
   const [planningGroups, setPlanningGroups] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
@@ -173,6 +189,81 @@ export default function AdminPage() {
     p.email?.toLowerCase().includes(userSearch.toLowerCase())
   )
 
+  const selectableProfiles = filteredProfiles.filter((entry) => entry.id !== profile.id)
+  const allVisibleSelected = selectableProfiles.length > 0 && selectableProfiles.every((entry) => selectedGiftRecipients.includes(entry.id))
+
+  const toggleRecipient = (userId: string, checked: boolean) => {
+    setSelectedGiftRecipients((prev) => {
+      if (checked) {
+        if (prev.includes(userId)) return prev
+        return [...prev, userId]
+      }
+      return prev.filter((id) => id !== userId)
+    })
+  }
+
+  const toggleSelectAllVisible = (checked: boolean) => {
+    if (checked) {
+      setSelectedGiftRecipients((prev) => Array.from(new Set([...prev, ...selectableProfiles.map((entry) => entry.id)])))
+      return
+    }
+
+    const visibleIds = new Set(selectableProfiles.map((entry) => entry.id))
+    setSelectedGiftRecipients((prev) => prev.filter((id) => !visibleIds.has(id)))
+  }
+
+  const handleGiftPacks = async () => {
+    if (!user || selectedGiftRecipients.length === 0) return
+
+    const trimmedMessage = giftMessage.trim()
+    if (!trimmedMessage) {
+      toast.error('Bitte eine Nachricht für den Geschenk-Banner eingeben.')
+      return
+    }
+
+    const normalizedPackCount = Math.floor(giftPackCount)
+    if (normalizedPackCount < 1) {
+      toast.error('Bitte mindestens 1 Pack auswählen.')
+      return
+    }
+
+    setGiftSending(true)
+    try {
+      const giftBoosterPack = httpsCallable(functions, 'giftBoosterPack')
+      const response = await giftBoosterPack({
+        userIds: selectedGiftRecipients,
+        packCount: normalizedPackCount,
+        customMessage: trimmedMessage,
+      })
+
+      const payload = (response.data || {}) as { giftedCount?: number; failedUserIds?: string[] }
+      const giftedCount = payload.giftedCount || 0
+      const failedCount = (payload.failedUserIds || []).length
+
+      await logAction('BOOSTER_GIFT_SENT', user.uid, profile?.full_name, {
+        recipients: selectedGiftRecipients,
+        pack_count: normalizedPackCount,
+        message: trimmedMessage,
+        gifted_count: giftedCount,
+        failed_count: failedCount,
+      })
+
+      if (failedCount > 0) {
+        toast.warning(`${giftedCount} Nutzer beschenkt, ${failedCount} fehlgeschlagen.`)
+      } else {
+        toast.success(`${giftedCount} Nutzer erfolgreich beschenkt.`)
+      }
+
+      setSelectedGiftRecipients([])
+      setIsGiftDialogOpen(false)
+    } catch (error) {
+      console.error('Error gifting booster packs:', error)
+      toast.error('Schenkung konnte nicht ausgeführt werden.')
+    } finally {
+      setGiftSending(false)
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -193,6 +284,40 @@ export default function AdminPage() {
 
       <Card>
         <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Gift className="h-5 w-5 text-primary" />
+            Packs schenken
+          </CardTitle>
+          <CardDescription>
+            Wähle Nutzer aus der Liste und sende ihnen Packs mit einer Banner-Nachricht.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+          <p className="text-sm text-muted-foreground">
+            Ausgewählt: <span className="font-semibold text-foreground">{selectedGiftRecipients.length}</span>
+          </p>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setSelectedGiftRecipients([])}
+              disabled={selectedGiftRecipients.length === 0}
+            >
+              Auswahl leeren
+            </Button>
+            <Button
+              onClick={() => setIsGiftDialogOpen(true)}
+              disabled={selectedGiftRecipients.length === 0}
+              className="gap-2"
+            >
+              <Gift className="h-4 w-4" />
+              Schenkung starten
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
           <CardTitle>Registrierte Profile</CardTitle>
           <CardDescription>Kurs- und Gruppenzuweisungen sowie Systemrollen konfigurieren.</CardDescription>
         </CardHeader>
@@ -202,6 +327,13 @@ export default function AdminPage() {
             <Table className="min-w-[860px]">
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-12">
+                    <Checkbox
+                      checked={allVisibleSelected}
+                      onCheckedChange={(checked) => toggleSelectAllVisible(checked === true)}
+                      aria-label="Alle sichtbaren Nutzer auswählen"
+                    />
+                  </TableHead>
                   <TableHead>Name</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Rolle</TableHead>
@@ -213,6 +345,14 @@ export default function AdminPage() {
               <TableBody>
                 {filteredProfiles.map((p) => (
                   <TableRow key={p.id}>
+                    <TableCell>
+                      <Checkbox
+                        checked={selectedGiftRecipients.includes(p.id)}
+                        onCheckedChange={(checked) => toggleRecipient(p.id, checked === true)}
+                        aria-label={`Nutzer ${p.full_name || p.email} auswählen`}
+                        disabled={p.id === profile.id}
+                      />
+                    </TableCell>
                     <TableCell className="font-medium">
                       <Link href={`/profil/${p.id}`} className="hover:underline focus-visible:underline">
                         {p.full_name || 'Unbekannt'}
@@ -317,11 +457,20 @@ export default function AdminPage() {
               return (
                 <div key={p.id} className="border rounded-xl p-4 space-y-4 bg-card/50">
                   <div className="flex justify-between items-start gap-2">
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex items-start gap-3">
+                      <Checkbox
+                        checked={selectedGiftRecipients.includes(p.id)}
+                        onCheckedChange={(checked) => toggleRecipient(p.id, checked === true)}
+                        aria-label={`Nutzer ${p.full_name || p.email} auswählen`}
+                        disabled={p.id === profile.id}
+                        className="mt-1"
+                      />
+                      <div>
                       <Link href={`/profil/${p.id}`} className="font-bold hover:underline truncate block">
                         {p.full_name || 'Unbekannt'}
                       </Link>
                       <p className="text-xs text-muted-foreground break-all">{p.email}</p>
+                      </div>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                       <Badge variant="outline" className="capitalize">
@@ -406,6 +555,50 @@ export default function AdminPage() {
           </div>
         </CardContent>
       </Card>
+
+      <Dialog open={isGiftDialogOpen} onOpenChange={setIsGiftDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Packs verschenken</DialogTitle>
+            <DialogDescription>
+              Die ausgewählten Nutzer sehen die Nachricht als Banner auf der Sammelkarten-Seite.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="gift-pack-count">Packs pro Person</Label>
+              <Input
+                id="gift-pack-count"
+                type="number"
+                min={1}
+                max={50}
+                value={giftPackCount}
+                onChange={(e) => setGiftPackCount(Number(e.target.value) || 1)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="gift-message">Banner-Nachricht</Label>
+              <Input
+                id="gift-message"
+                value={giftMessage}
+                onChange={(e) => setGiftMessage(e.target.value)}
+                maxLength={200}
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Empfänger: {selectedGiftRecipients.length}
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsGiftDialogOpen(false)} disabled={giftSending}>
+              Abbrechen
+            </Button>
+            <Button onClick={handleGiftPacks} disabled={giftSending || selectedGiftRecipients.length === 0}>
+              {giftSending ? 'Sende...' : 'Jetzt schenken'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

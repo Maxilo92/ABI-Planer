@@ -276,7 +276,9 @@ export function TeacherAlbum({
   const [search, setSearch] = useState('')
   const [rarityFilters, setRarityFilters] = useState<TeacherRarity[]>([])
   const [ownershipFilter, setOwnershipFilter] = useState<'all' | 'owned' | 'missing'>(initialLimit ? 'owned' : 'all')
-  const [sortBy, setSortBy] = useState<'rarity' | 'name' | 'level' | 'upgrade'>(initialLimit ? 'level' : 'rarity')
+  const [sortBy, setSortBy] = useState<'rarity_desc' | 'rarity_asc' | 'name_asc' | 'name_desc' | 'level_desc' | 'level_asc' | 'upgrade'>(
+    initialLimit ? 'level_desc' : 'rarity_desc'
+  )
   
   // Selection state
   const [selectedTeacher, setSelectedTeacher] = useState<LootTeacher | null>(null)
@@ -335,10 +337,10 @@ export function TeacherAlbum({
       if (!!ownedA !== !!ownedB) return ownedB ? 1 : -1
       
       // Secondary sorting based on user selection
-      if (sortBy === 'level') {
+      if (sortBy === 'level_desc' || sortBy === 'level_asc') {
         const lvlA = ownedA?.level || 0
         const lvlB = ownedB?.level || 0
-        if (lvlA !== lvlB) return lvlB - lvlA
+        if (lvlA !== lvlB) return sortBy === 'level_desc' ? (lvlB - lvlA) : (lvlA - lvlB)
       } else if (sortBy === 'upgrade') {
         const getNeeded = (owned: any) => {
           if (!owned) return 1000
@@ -349,11 +351,13 @@ export function TeacherAlbum({
         const neededA = getNeeded(ownedA)
         const neededB = getNeeded(ownedB)
         if (neededA !== neededB) return neededA - neededB
-      } else if (sortBy === 'rarity') {
+      } else if (sortBy === 'rarity_desc' || sortBy === 'rarity_asc') {
         const rarityOrder: TeacherRarity[] = ['legendary', 'mythic', 'epic', 'rare', 'common']
         const rarityA = rarityOrder.indexOf(a.rarity)
         const rarityB = rarityOrder.indexOf(b.rarity)
-        if (rarityA !== rarityB) return rarityA - rarityB
+        if (rarityA !== rarityB) return sortBy === 'rarity_desc' ? (rarityA - rarityB) : (rarityB - rarityA)
+      } else if (sortBy === 'name_desc') {
+        return b.name.localeCompare(a.name)
       }
       
       // Default: sort by name
@@ -388,10 +392,10 @@ export function TeacherAlbum({
     setSearch('')
     setRarityFilters([])
     setOwnershipFilter('all')
-    setSortBy('rarity')
+    setSortBy('rarity_desc')
   }
 
-  const activeFilterCount = (search ? 1 : 0) + rarityFilters.length + (ownershipFilter !== 'all' ? 1 : 0) + (sortBy !== 'rarity' ? 1 : 0)
+  const activeFilterCount = (search ? 1 : 0) + rarityFilters.length + (ownershipFilter !== 'all' ? 1 : 0) + (sortBy !== 'rarity_desc' ? 1 : 0)
 
   // Determine which teachers to show based on expansion state
   const displayedTeachers = initialLimit && !isExpanded 
@@ -487,17 +491,29 @@ export function TeacherAlbum({
               <DropdownMenuSeparator />
               <DropdownMenuLabel>Sortierung</DropdownMenuLabel>
               <DropdownMenuRadioGroup value={sortBy} onValueChange={(v) => setSortBy(v as any)}>
-                <DropdownMenuRadioItem value="rarity" className="flex items-center gap-2">
+                <DropdownMenuRadioItem value="rarity_desc" className="flex items-center gap-2">
                   <LayoutGrid className="h-4 w-4" />
-                  Nach Seltenheit
+                  Seltenheit (hoch nach niedrig)
                 </DropdownMenuRadioItem>
-                <DropdownMenuRadioItem value="name" className="flex items-center gap-2">
+                <DropdownMenuRadioItem value="rarity_asc" className="flex items-center gap-2">
+                  <LayoutGrid className="h-4 w-4" />
+                  Seltenheit (niedrig nach hoch)
+                </DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="name_asc" className="flex items-center gap-2">
                   <ArrowDownAZ className="h-4 w-4" />
                   Alphabetisch (A-Z)
                 </DropdownMenuRadioItem>
-                <DropdownMenuRadioItem value="level" className="flex items-center gap-2">
+                <DropdownMenuRadioItem value="name_desc" className="flex items-center gap-2">
+                  <ArrowDownZA className="h-4 w-4" />
+                  Alphabetisch (Z-A)
+                </DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="level_desc" className="flex items-center gap-2">
                   <ArrowUp10 className="h-4 w-4" />
-                  Nach Level
+                  Level (absteigend)
+                </DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="level_asc" className="flex items-center gap-2">
+                  <ArrowDownAZ className="h-4 w-4" />
+                  Level (aufsteigend)
                 </DropdownMenuRadioItem>
                 <DropdownMenuRadioItem value="upgrade" className="flex items-center gap-2">
                   <Star className="h-4 w-4" />

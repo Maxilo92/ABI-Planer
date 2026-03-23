@@ -16,6 +16,7 @@ import { useAuth } from '@/context/AuthContext'
 import { EditNewsDialog } from '@/components/modals/EditNewsDialog'
 import { toast } from 'sonner'
 import { logAction } from '@/lib/logging'
+import ReactMarkdown from 'react-markdown'
 
 export default function NewsDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
@@ -236,9 +237,9 @@ export default function NewsDetailPage({ params }: { params: Promise<{ id: strin
             </div>
           </div>
           <div className="h-px bg-border/50" />
-          <div className="whitespace-pre-wrap text-base md:text-xl text-foreground/90 leading-relaxed max-w-none">
-            {news.content.trim()}
-          </div>
+          <ReactMarkdown className="text-base md:text-xl text-foreground/90 leading-relaxed max-w-none">
+            {news.content}
+          </ReactMarkdown>
 
           {/* Ratings Section */}
           <div className="pt-8 flex items-center gap-4">

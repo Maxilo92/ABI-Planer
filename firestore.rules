@@ -88,6 +88,13 @@ service cloud.firestore {
       );
       
       allow delete: if isMainAdmin() && resource.data.role != 'admin_main' && resource.data.role != 'admin';
+
+      match /unseen_gifts/{giftId} {
+        allow read: if isAuthenticated() && request.auth.uid == userId;
+        allow create: if false;
+        allow update: if false;
+        allow delete: if isAuthenticated() && request.auth.uid == userId;
+      }
     }
 
     match /settings/{docId} {
