@@ -160,10 +160,11 @@ export interface Event {
   title: string;
   description: string | null;
   location: string | null;
-    start_date: string;
+  start_date: string;
   end_date: string;
   created_at: string;
   created_by: string;
+  created_by_name?: string | null;
   mentioned_user_ids?: string[];
   mentioned_roles?: string[];
   mentioned_groups?: string[];

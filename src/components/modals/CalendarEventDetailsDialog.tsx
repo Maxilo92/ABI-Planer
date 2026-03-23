@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Event, Profile, UserRole } from '@/types/database'
+import Link from 'next/link'
+import { Event, Profile } from '@/types/database'
 import {
   Dialog,
   DialogContent,
@@ -11,13 +12,13 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { Badge } from '@/components/ui/badge'
-import { Calendar as CalendarIcon, Clock, User, FileText, Users, Shield, Group as GroupIcon, MapPin } from 'lucide-react'
+import { Calendar as CalendarIcon, Clock, User, FileText, Users, Shield, Group as GroupIcon, MapPin, ExternalLink } from 'lucide-react'
 import { format } from 'date-fns'
 import { de } from 'date-fns/locale'
 import { toDate } from '@/lib/utils'
 import { db } from '@/lib/firebase'
 import { collection, query, onSnapshot, orderBy } from 'firebase/firestore'
-import { ShareResourceButton } from '@/components/ui/share-resource-button'
+import { Button } from '@/components/ui/button'
 
 interface CalendarEventDetailsDialogProps {
   event: Event
@@ -67,12 +68,15 @@ export function CalendarEventDetailsDialog({ event, children }: CalendarEventDet
               <CalendarIcon className="h-5 w-5" />
               <span className="text-sm font-semibold uppercase tracking-wider">Termin-Details</span>
             </div>
-            <ShareResourceButton
-              resourcePath={`/kalender/${event.id}`}
-              title={event.title}
-              text="Schau dir diesen Termin im ABI Planer an."
+            <Button
               variant="outline"
-              size="icon-sm"
+              size="sm"
+              className="gap-1.5"
+              render={
+                <Link href={`/kalender/${event.id}`}>
+                  <ExternalLink className="h-3.5 w-3.5" /> Detailansicht
+                </Link>
+              }
             />
           </div>
           <DialogTitle className="text-2xl font-bold">{event.title}</DialogTitle>

@@ -11,7 +11,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Plus, X, Users, Shield, Group, MapPin } from 'lucide-react'
+import { Plus, X, Users, Shield, Group } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { Profile, UserRole } from '@/types/database'
 import { logAction } from '@/lib/logging'
@@ -38,7 +38,7 @@ export function AddEventDialog() {
   
   const [profiles, setProfiles] = useState<Profile[]>([])
   const [availableGroups, setAvailableGroups] = useState<string[]>([])
-  const { user } = useAuth()
+  const { user, profile } = useAuth()
 
   useEffect(() => {
     if (!open) return
@@ -86,6 +86,7 @@ export function AddEventDialog() {
         end_date: endDate ? new Date(endDate).toISOString() : new Date(startDate).toISOString(),
         created_at: new Date().toISOString(),
         created_by: user.uid,
+        created_by_name: profile?.full_name || user.displayName || null,
         mentioned_user_ids: mentionedUserIds,
         mentioned_roles: mentionedRoles,
         mentioned_groups: mentionedGroups,

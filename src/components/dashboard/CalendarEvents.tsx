@@ -1,8 +1,9 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import { Event } from '@/types/database'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Calendar as CalendarIcon, Clock, Trash2, MapPin } from 'lucide-react'
+import { Calendar as CalendarIcon, Clock, Trash2, MapPin, User } from 'lucide-react'
 import { format } from 'date-fns'
 import { de } from 'date-fns/locale'
 import { toDate } from '@/lib/utils'
@@ -10,11 +11,10 @@ import { Button } from '@/components/ui/button'
 import { EditEventDialog } from '@/components/modals/EditEventDialog'
 import { CalendarEventDetailsDialog } from '@/components/modals/CalendarEventDetailsDialog'
 import { db } from '@/lib/firebase'
-import { doc, deleteDoc } from 'firebase/firestore'
+import { collection, doc, deleteDoc, onSnapshot } from 'firebase/firestore'
 import { toast } from 'sonner'
 import { useAuth } from '@/context/AuthContext'
 import { logAction } from '@/lib/logging'
-import { ShareResourceButton } from '@/components/ui/share-resource-button'
 
 interface CalendarEventsProps {
   events: Event[]
@@ -30,6 +30,22 @@ export function CalendarEvents({
   useScrollContainer = true,
 }: CalendarEventsProps) {
   const { user, profile } = useAuth()
+  const [profileNamesById, setProfileNamesById] = useState<Record<string, string>>({})
+
+  useEffect(() => {
+    const unsubscribe = onSnapshot(collection(db, 'profiles'), (snapshot) => {
+      const profileMap: Record<string, string> = {}
+      snapshot.docs.forEach((entry) => {
+        const data = entry.data() as { full_name?: string | null }
+        if (data.full_name) {
+          profileMap[entry.id] = data.full_name
+        }
+      })
+      setProfileNamesById(profileMap)
+    })
+
+    return () => unsubscribe()
+  }, [])
 
   const handleDelete = async (id: string) => {
     if (!window.confirm('Möchtest du diesen Termin wirklich löschen?')) return
@@ -118,16 +134,15 @@ export function CalendarEvents({
                             {event.location}
                           </div>
                         )}
+                        <div className="flex items-center text-[10px] md:text-xs text-muted-foreground gap-1">
+                          <User className="h-3 w-3" />
+                          {event.created_by_name || profileNamesById[event.created_by] || 'Unbekannt'}
+                        </div>
                       </div>
                     </div>
                   </CalendarEventDetailsDialog>
 
                   <div className="flex items-center gap-1 transition-opacity">
-                    <ShareResourceButton
-                      resourcePath={`/kalender/${event.id}`}
-                      title={event.title}
-                      text="Schau dir diesen Termin im ABI Planer an."
-                    />
                     {canManage && (
                       <>
                         <EditEventDialog event={event} />

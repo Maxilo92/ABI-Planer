@@ -2,19 +2,36 @@
 
 import { use, useEffect, useState } from 'react'
 import Link from 'next/link'
-import { doc, onSnapshot } from 'firebase/firestore'
+import { doc, getDoc, onSnapshot } from 'firebase/firestore'
 import { format } from 'date-fns'
 import { de } from 'date-fns/locale'
-import { ArrowLeft, Calendar as CalendarIcon, Clock, FileText, Loader2, MapPin } from 'lucide-react'
+import { ArrowLeft, Calendar as CalendarIcon, Clock, Download, ExternalLink, FileText, Loader2, MapPin, User } from 'lucide-react'
 import { db } from '@/lib/firebase'
 import { toDate } from '@/lib/utils'
 import { Event } from '@/types/database'
 import { Button } from '@/components/ui/button'
 import { ShareResourceButton } from '@/components/ui/share-resource-button'
 
+function toIcsDate(date: Date) {
+  return date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z')
+}
+
+function toGoogleDate(date: Date) {
+  return date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z')
+}
+
+function escapeIcsText(value: string) {
+  return value
+    .replace(/\\/g, '\\\\')
+    .replace(/\n/g, '\\n')
+    .replace(/,/g, '\\,')
+    .replace(/;/g, '\\;')
+}
+
 export default function CalendarEventPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const [event, setEvent] = useState<Event | null>(null)
+  const [creatorName, setCreatorName] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -30,6 +47,83 @@ export default function CalendarEventPage({ params }: { params: Promise<{ id: st
 
     return () => unsubscribe()
   }, [id])
+
+  useEffect(() => {
+    if (!event?.created_by) {
+      return
+    }
+
+    const loadCreatorName = async () => {
+      try {
+        const profileRef = doc(db, 'profiles', event.created_by)
+        const profileSnapshot = await getDoc(profileRef)
+        const fullName = profileSnapshot.exists() ? (profileSnapshot.data().full_name as string | undefined) : undefined
+        setCreatorName(fullName || null)
+      } catch (error) {
+        console.error('Error loading creator profile:', error)
+        setCreatorName(null)
+      }
+    }
+
+    loadCreatorName()
+  }, [event?.created_by])
+
+  const handleExportAppleCalendar = () => {
+    if (!event) return
+
+    const startDate = toDate(event.start_date)
+    const endDate = toDate(event.end_date)
+    const locationLine = event.location ? `LOCATION:${escapeIcsText(event.location)}\n` : ''
+    const descriptionLine = event.description ? `DESCRIPTION:${escapeIcsText(event.description)}\n` : ''
+
+    const ics = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//ABI Planer//Kalender//DE',
+      'CALSCALE:GREGORIAN',
+      'BEGIN:VEVENT',
+      `UID:${event.id}@abi-planer`,
+      `DTSTAMP:${toIcsDate(new Date())}`,
+      `DTSTART:${toIcsDate(startDate)}`,
+      `DTEND:${toIcsDate(endDate)}`,
+      `SUMMARY:${escapeIcsText(event.title)}`,
+      descriptionLine.trimEnd(),
+      locationLine.trimEnd(),
+      'END:VEVENT',
+      'END:VCALENDAR',
+    ]
+      .filter(Boolean)
+      .join('\n')
+
+    const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const anchor = document.createElement('a')
+    anchor.href = url
+    anchor.download = `${event.title.replace(/[^a-z0-9-_]+/gi, '-').toLowerCase() || 'termin'}.ics`
+    document.body.appendChild(anchor)
+    anchor.click()
+    document.body.removeChild(anchor)
+    URL.revokeObjectURL(url)
+  }
+
+  const openGoogleCalendar = () => {
+    if (!event) return
+
+    const startDate = toDate(event.start_date)
+    const endDate = toDate(event.end_date)
+    const detailsText = event.description || ''
+
+    const googleUrl = new URL('https://calendar.google.com/calendar/render')
+    googleUrl.searchParams.set('action', 'TEMPLATE')
+    googleUrl.searchParams.set('text', event.title)
+    googleUrl.searchParams.set('dates', `${toGoogleDate(startDate)}/${toGoogleDate(endDate)}`)
+    googleUrl.searchParams.set('details', detailsText)
+    if (event.location) {
+      googleUrl.searchParams.set('location', event.location)
+    }
+
+    window.open(googleUrl.toString(), '_blank', 'noopener,noreferrer')
+  }
 
   if (loading) {
     return (
@@ -92,6 +186,18 @@ export default function CalendarEventPage({ params }: { params: Promise<{ id: st
                 ? `${format(startDate, 'EEEE, dd. MMMM yyyy', { locale: de })} ${format(startDate, 'HH:mm', { locale: de })} - ${format(endDate, 'HH:mm', { locale: de })} Uhr`
                 : `${format(startDate, 'dd.MM. HH:mm', { locale: de })} - ${format(endDate, 'dd.MM. HH:mm', { locale: de })} Uhr`}
             </span>
+          </div>
+          <div className="flex items-center gap-2 text-muted-foreground text-sm">
+            <User className="h-4 w-4 text-primary/70" />
+            <span>Erstellt von: {event.created_by_name || creatorName || 'Unbekannt'}</span>
+          </div>
+          <div className="flex flex-wrap items-center gap-2 pt-2">
+            <Button variant="outline" size="sm" className="gap-2" onClick={openGoogleCalendar}>
+              <ExternalLink className="h-4 w-4" /> In Google Kalender
+            </Button>
+            <Button variant="outline" size="sm" className="gap-2" onClick={handleExportAppleCalendar}>
+              <Download className="h-4 w-4" /> Für Apple Kalender (.ics)
+            </Button>
           </div>
         </header>
 

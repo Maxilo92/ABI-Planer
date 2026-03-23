@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.22.11] - 2026-03-23
+- Feature: **Kalender-Einträge de-anonymisiert**. Termine zeigen jetzt den Namen der erstellenden Person in Übersicht und Detailansicht.
+- Feature: **Kalender-Export für Google und Apple**. In der Termin-Detailansicht können Termine direkt nach Google Kalender übertragen oder als `.ics` für Apple Kalender exportiert werden.
+- UX: **Termin-Teilen nur über Detailansicht**. Die Teilen-Aktion für Termine läuft jetzt gezielt über die Detailansicht statt über das Dashboard-Listing.
+
 ## [0.22.10] - 2026-03-23
 - Feature: **Teilen-Buttons für News und Termine**. News-Einträge und Termine besitzen jetzt direkte Share-Aktionen zum Teilen des jeweiligen Resource-Links.
 - Feature: **Direkte Termin-Detailseite**. Termine sind zusätzlich über eigene URLs erreichbar (`/kalender/[id]`), damit geteilte Links direkt zur Ressource führen.
