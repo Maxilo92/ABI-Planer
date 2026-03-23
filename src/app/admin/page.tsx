@@ -437,11 +437,12 @@ export default function AdminPage() {
           <p className="text-sm text-muted-foreground">
             Ausgewählt: <span className="font-semibold text-foreground">{selectedGiftRecipients.length}</span>
           </p>
-          <div className="flex items-center gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 w-full md:w-auto">
             <Button
               variant="outline"
               onClick={() => setSelectedGiftRecipients([])}
               disabled={selectedGiftRecipients.length === 0}
+              className="w-full"
             >
               Auswahl leeren
             </Button>
@@ -449,16 +450,17 @@ export default function AdminPage() {
               variant="outline"
               onClick={() => setIsBulkDialogOpen(true)}
               disabled={selectedGiftRecipients.length === 0}
+              className="w-full"
             >
               Massenaktion
             </Button>
             <Button
               onClick={() => setIsGiftDialogOpen(true)}
               disabled={selectedGiftRecipients.length === 0}
-              className="gap-2"
+              className="gap-2 w-full"
             >
               <Gift className="h-4 w-4" />
-              Schenkung starten
+              Popup senden
             </Button>
           </div>
         </CardContent>
@@ -707,7 +709,7 @@ export default function AdminPage() {
       <Dialog open={isGiftDialogOpen} onOpenChange={setIsGiftDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Packs verschenken</DialogTitle>
+            <DialogTitle>Popup senden</DialogTitle>
             <DialogDescription>
               Die ausgewählten Nutzer sehen die Nachricht als Popup. Mit 0 Packs wird nur eine Nachricht versendet.
             </DialogDescription>
@@ -793,7 +795,7 @@ export default function AdminPage() {
               Abbrechen
             </Button>
             <Button onClick={handleGiftPacks} disabled={giftSending || selectedGiftRecipients.length === 0}>
-              {giftSending ? 'Sende...' : 'Jetzt schenken'}
+              {giftSending ? 'Sende...' : 'Jetzt senden'}
             </Button>
           </DialogFooter>
         </DialogContent>

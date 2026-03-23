@@ -120,7 +120,7 @@ export function CustomPopupBanner() {
       actions={
         <div className="flex items-center justify-end gap-2">
           {ctaLabel && ctaUrl && ctaUrl.startsWith('/') && (
-            <Link href={ctaUrl} className={cn(buttonVariants({ size: 'sm' }))}>
+            <Link href={ctaUrl} onClick={closePopup} className={cn(buttonVariants({ size: 'sm' }))}>
               {ctaLabel}
             </Link>
           )}

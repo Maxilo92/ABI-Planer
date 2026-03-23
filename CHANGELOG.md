@@ -7,6 +7,8 @@
 - UI: **Geschenk-Popup exakt in der Ecke**. Abstand zum rechten und unteren Rand ist jetzt identisch.
 - UI: **CTA als eigener Button**. "Zu den Packs" steht jetzt als Button direkt neben "Gelesen".
 - Feature: **Popup ohne Geschenk möglich**. Admins können jetzt auch reine Benachrichtigungen ohne Packs versenden (`Packs pro Person = 0`).
+- UX: **Popup-Interaktion schließt Popup sofort**. Beim Folgen des CTA-Links wird das Popup automatisch geschlossen.
+- UX: **Swipe-to-dismiss auf Mobile**. Schwebende Popups lassen sich per Wisch nach rechts schließen.
 
 ## [0.22.08] - 2026-03-23
 - UI: **Geschenk-Banner jetzt auch auf der Startseite**. Neue Pack-Schenkungen werden zusätzlich im Dashboard angezeigt, inklusive Direktlink zur Sammelkarten-Seite.

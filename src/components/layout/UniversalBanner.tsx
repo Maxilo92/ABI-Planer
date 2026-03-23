@@ -1,6 +1,6 @@
 'use client'
 
-import { ReactNode } from 'react'
+import { ReactNode, TouchEvent, useRef } from 'react'
 import { X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -57,9 +57,37 @@ export function UniversalBanner({
   className,
 }: UniversalBannerProps) {
   const styles = toneStyles[tone]
+  const touchStartX = useRef<number | null>(null)
+  const touchStartY = useRef<number | null>(null)
+
+  const handleTouchStart = (event: TouchEvent<HTMLDivElement>) => {
+    if (layout !== 'floating' || !onClose) return
+    touchStartX.current = event.changedTouches[0]?.clientX ?? null
+    touchStartY.current = event.changedTouches[0]?.clientY ?? null
+  }
+
+  const handleTouchEnd = (event: TouchEvent<HTMLDivElement>) => {
+    if (layout !== 'floating' || !onClose) return
+    if (touchStartX.current === null || touchStartY.current === null) return
+
+    const endX = event.changedTouches[0]?.clientX ?? touchStartX.current
+    const endY = event.changedTouches[0]?.clientY ?? touchStartY.current
+    const deltaX = endX - touchStartX.current
+    const deltaY = Math.abs(endY - touchStartY.current)
+
+    touchStartX.current = null
+    touchStartY.current = null
+
+    // Horizontal swipe to the right closes popup notifications.
+    if (deltaX > 70 && deltaY < 60) {
+      onClose()
+    }
+  }
 
   return (
     <div
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
       className={cn(
         'rounded-xl border p-4',
         styles.container,
