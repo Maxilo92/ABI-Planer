@@ -1,5 +1,6 @@
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import * as admin from "firebase-admin";
+import { getFirestore } from "firebase-admin/firestore";
 
 if (admin.apps.length === 0) {
     admin.initializeApp();
@@ -30,7 +31,7 @@ export const giftBoosterPack = onCall({
         throw new HttpsError("unauthenticated", "Authentication is required.");
     }
 
-    const db = admin.firestore();
+    const db = getFirestore("abi-data");
 
     const callerProfileRef = db.collection("profiles").doc(request.auth.uid);
     const callerProfileDoc = await callerProfileRef.get();
