@@ -241,7 +241,36 @@ export default function NewsDetailPage({ params }: { params: Promise<{ id: strin
             </div>
           </div>
           <div className="h-px bg-border/50" />
-          <ReactMarkdown className="text-base md:text-xl text-foreground/90 leading-relaxed max-w-none">
+          <ReactMarkdown
+            className="text-base md:text-xl text-foreground/90 leading-relaxed max-w-none prose dark:prose-invert"
+            components={{
+              p: ({ children }) => <p className="mb-4 last:mb-0">{children}</p>,
+              strong: ({ children }) => <strong className="font-bold text-foreground">{children}</strong>,
+              em: ({ children }) => <em className="italic">{children}</em>,
+              ul: ({ children }) => <ul className="list-disc pl-6 mb-4 space-y-2">{children}</ul>,
+              ol: ({ children }) => <ol className="list-decimal pl-6 mb-4 space-y-2">{children}</ol>,
+              li: ({ children }) => <li className="pl-1">{children}</li>,
+              h1: ({ children }) => <h1 className="text-3xl font-black mb-4 mt-8">{children}</h1>,
+              h2: ({ children }) => <h2 className="text-2xl font-bold mb-3 mt-6">{children}</h2>,
+              h3: ({ children }) => <h3 className="text-xl font-bold mb-2 mt-4">{children}</h3>,
+              blockquote: ({ children }) => (
+                <blockquote className="border-l-4 border-primary/50 pl-4 italic my-4 text-muted-foreground">
+                  {children}
+                </blockquote>
+              ),
+              hr: () => <hr className="my-8 border-border/50" />,
+              a: ({ href, children }) => (
+                <a 
+                  href={href} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="text-primary underline decoration-primary/30 underline-offset-4 hover:decoration-primary transition-all"
+                >
+                  {children}
+                </a>
+              ),
+            }}
+          >
             {news.content}
           </ReactMarkdown>
 

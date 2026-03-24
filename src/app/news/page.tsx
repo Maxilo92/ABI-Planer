@@ -169,7 +169,7 @@ export default function NewsPage() {
                     </span>
                   </div>
 
-                  <div className="text-foreground/80 leading-relaxed line-clamp-4 text-sm md:text-base">
+                  <div className={`text-foreground/80 leading-relaxed text-sm md:text-base ${!item.is_small_update ? 'line-clamp-4' : ''}`}>
                     <ReactMarkdown
                       components={{
                         p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
@@ -183,11 +183,13 @@ export default function NewsPage() {
                     </ReactMarkdown>
                   </div>
 
-                  <div className="flex justify-end mt-4">
-                    <Button render={<Link href={`/news/${item.id}`} />} variant="link" size="sm" className="gap-1 p-0 h-auto text-primary">
-                      <>Weiterlesen <ArrowRight className="h-4 w-4" /></>
-                    </Button>
-                  </div>
+                  {!item.is_small_update && (
+                    <div className="flex justify-end mt-4">
+                      <Button render={<Link href={`/news/${item.id}`} />} variant="link" size="sm" className="gap-1 p-0 h-auto text-primary">
+                        <>Weiterlesen <ArrowRight className="h-4 w-4" /></>
+                      </Button>
+                    </div>
+                  )}
                 </div>
             </article>
           ))

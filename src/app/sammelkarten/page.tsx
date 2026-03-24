@@ -6,7 +6,7 @@ import { useEffect, useState, Suspense } from 'react'
 import { redirect, useSearchParams } from 'next/navigation'
 import { db } from '@/lib/firebase'
 import { doc, onSnapshot } from 'firebase/firestore'
-import { TeacherRarity, LootTeacher } from '@/types/database'
+import { TeacherRarity, LootTeacher, CardVariant } from '@/types/database'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
@@ -32,8 +32,9 @@ function SammelkartenContent() {
   const [globalSettings, setGlobalSettings] = useState<any>(null)
   const [gameState, setGameState] = useState<'idle' | 'ripping' | 'revealed'>('idle')
   const [revealedTeachers, setRevealedTeachers] = useState<LootTeacher[] | null>(null)
-  const [collectionResults, setCollectionResults] = useState<Array<{ isNew: boolean, isLevelUp: boolean, newLevel: number, count: number } | null> | null>(null)
+  const [collectionResults, setCollectionResults] = useState<Array<{ isNew: boolean, isLevelUp: boolean, newLevel: number, count: number, variant: CardVariant } | null> | null>(null)
   const [flippedCards, setFlippedCards] = useState<boolean[]>([false, false, false])
+  const [isGodpack, setIsGodpack] = useState(false)
   const [isAnimating, setIsAnimating] = useState(false)
   const [timeLeft, setTimeLeft] = useState<string>('')
   const { giftNotices, totalGiftPacks, dismissGiftNotices } = useGiftNotices(user?.uid)
@@ -95,7 +96,7 @@ function SammelkartenContent() {
 
   if (loading) return null
 
-  const generatePack = (): LootTeacher[] => {
+  const generatePack = (isGodpack: boolean): LootTeacher[] => {
     const teachers = Array.isArray(globalSettings?.loot_teachers) && globalSettings.loot_teachers.length > 0
       ? globalSettings.loot_teachers
       : DEFAULT_TEACHERS
@@ -110,11 +111,19 @@ function SammelkartenContent() {
       return 'common'
     }
 
-    const slotWeights = [
-      { common: 0.8, rare: 0.15, epic: 0.035, mythic: 0.01, legendary: 0.005 },
-      { common: 0.6, rare: 0.25, epic: 0.10, mythic: 0.03, legendary: 0.02 },
-      { common: 0.4, rare: 0.35, epic: 0.15, mythic: 0.05, legendary: 0.05 }
+    const regularWeights = [
+      { common: 0.8, rare: 0.15, epic: 0.04, mythic: 0.008, legendary: 0.002 },
+      { common: 0.6, rare: 0.25, epic: 0.11, mythic: 0.03, legendary: 0.01 },
+      { common: 0.4, rare: 0.35, epic: 0.17, mythic: 0.06, legendary: 0.02 }
     ]
+
+    const godpackWeights = [
+      { common: 0, rare: 0.4, epic: 0.35, mythic: 0.15, legendary: 0.10 },
+      { common: 0, rare: 0.2, epic: 0.4, mythic: 0.25, legendary: 0.15 },
+      { common: 0, rare: 0, epic: 0.4, mythic: 0.4, legendary: 0.2 }
+    ]
+
+    const slotWeights = isGodpack ? godpackWeights : regularWeights
 
     return slotWeights.map(weights => {
       const targetRarity = getWeightedRarity(weights)
@@ -136,26 +145,43 @@ function SammelkartenContent() {
     setIsAnimating(true)
     setFlippedCards([false, false, false])
 
-    const pack = generatePack()
+    const godpack = Math.random() < (1 / 2000)
+    setIsGodpack(godpack)
+    const pack = generatePack(godpack)
     setRevealedTeachers(pack)
+
+    if (godpack) {
+      toast("✨ GODPACK GEFUNDEN! ✨", {
+        description: "Alle Karten sind besonders selten!",
+        duration: 5000,
+      })
+    }
 
     // Trigger explosive fly-apart immediately
     try {
       const teacherIds = pack.map(t => t.id || t.name)
       const initialTeachers = { ...userTeachers }
-      const results = await collectBooster(teacherIds)
+      const results = await collectBooster(teacherIds, { isGodpack: godpack })
       
       const processedResults = results.map(r => {
         const isNew = !initialTeachers[r.teacherId]
         const oldLevel = initialTeachers[r.teacherId]?.level || 1
         const isLevelUp = !isNew && r.level > oldLevel
         
-        initialTeachers[r.teacherId] = { count: r.count, level: r.level }
+        initialTeachers[r.teacherId] = { 
+          count: r.count, 
+          level: r.level,
+          variants: {
+            ...initialTeachers[r.teacherId]?.variants,
+            [r.variant]: (initialTeachers[r.teacherId]?.variants?.[r.variant] || 0) + 1
+          }
+        }
         return {
           isNew,
           isLevelUp,
           newLevel: r.level,
-          count: r.count
+          count: r.count,
+          variant: r.variant
         }
       })
 
@@ -187,7 +213,17 @@ function SammelkartenContent() {
 
   const allFlipped = flippedCards.every(v => v === true)
 
-  const info = (rarity: TeacherRarity) => {
+  const info = (rarity: TeacherRarity, variant?: CardVariant) => {
+    if (variant === 'black_shiny_holo') {
+      return {
+        label: 'Secret Rare',
+        color: 'bg-slate-950',
+        glow: 'shadow-[0_0_40px_rgba(147,51,234,0.8),0_0_60px_rgba(236,72,153,0.5)]',
+        highlight: 'rgba(147, 51, 234, 0.5)',
+        border: 'rgba(236, 72, 153, 0.8)'
+      }
+    }
+
     switch (rarity) {
       case 'common': return { 
         label: 'Gewöhnlich', 
@@ -256,11 +292,29 @@ function SammelkartenContent() {
                 SAMMELKARTEN
               </h1>
               {(gameState === 'idle' || gameState === 'revealed') && (
-                <div className="flex items-center justify-center gap-2 mt-2">
-                  <Badge variant={getRemainingBoosters() > 0 ? "secondary" : "destructive"} className="px-3 py-1 text-[10px] font-black uppercase tracking-widest border-2 border-white/10">
-                    <Zap className="h-3 w-3 mr-1.5 fill-current" />
-                    {getRemainingBoosters() > 0 ? `${getRemainingBoosters()} Booster übrig` : `Nächster Booster in ${timeLeft}`}
-                  </Badge>
+                <div className="flex flex-col items-center gap-2 mt-2">
+                  <div className="flex items-center justify-center gap-2">
+                    <Badge variant={getRemainingBoosters() > 0 ? "secondary" : "destructive"} className="px-3 py-1 text-[10px] font-black uppercase tracking-widest border-2 border-white/10">
+                      <Zap className="h-3 w-3 mr-1.5 fill-current" />
+                      {getRemainingBoosters() > 0 ? `${getRemainingBoosters()} Booster übrig` : `Nächster Booster in ${timeLeft}`}
+                    </Badge>
+                  </div>
+                  {gameState === 'idle' && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-muted-foreground hover:text-primary mt-1 gap-2"
+                      onClick={() => {
+                        const url = new URL(window.location.href)
+                        url.searchParams.set('view', 'album')
+                        window.history.pushState({}, '', url)
+                        window.dispatchEvent(new PopStateEvent('popstate'))
+                      }}
+                    >
+                      <Trophy className="h-4 w-4" />
+                      Zum Album
+                    </Button>
+                  )}
                 </div>
               )}
             </div>
@@ -277,7 +331,7 @@ function SammelkartenContent() {
                   {revealedTeachers.map((teacher, idx) => {
                     const isFlipped = flippedCards[idx]
                     const result = collectionResults?.[idx]
-                    const cardInfo = info(teacher.rarity)
+                    const cardInfo = info(teacher.rarity, result?.variant)
                     
                     return (
                       <div 
@@ -346,22 +400,40 @@ function SammelkartenContent() {
                              )}
 
                              {/* Rarity Effects */}
-                             {isFlipped && (teacher.rarity === 'legendary' || teacher.rarity === 'mythic') && (
+                             {isFlipped && (teacher.rarity === 'legendary' || teacher.rarity === 'mythic' || result?.variant === 'shiny' || result?.variant === 'holo') && (
                                <div className="absolute inset-0 rounded-[inherit] overflow-hidden pointer-events-none z-10">
-                                 <div className="absolute inset-[-100%] bg-[linear-gradient(45deg,transparent_25%,rgba(255,255,255,0.4)_50%,transparent_75%)] bg-[length:250%_250%] animate-shimmer" />
+                                 {result?.variant === 'shiny' && (
+                                   <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,215,0,0.4)_0%,transparent_70%)] animate-pulse" />
+                                 )}
+                                 {result?.variant === 'holo' && (
+                                   <div className="absolute inset-0 bg-[linear-gradient(45deg,transparent_25%,rgba(255,255,255,0.3)_50%,transparent_75%)] bg-[length:250%_250%] animate-shimmer opacity-80" />
+                                 )}
+                                 {(teacher.rarity === 'legendary' || teacher.rarity === 'mythic') && (
+                                   <div className="absolute inset-[-100%] bg-[linear-gradient(45deg,transparent_25%,rgba(255,255,255,0.4)_50%,transparent_75%)] bg-[length:250%_250%] animate-shimmer" />
+                                 )}
                                </div>
                              )}
 
                             {/* Top Layout: Badges & Label */}
                             <div className="w-full flex flex-col items-center gap-1 z-30 pt-1">
                               {isFlipped && result && (
-                                <div className="flex justify-center">
-                                  {result.isNew ? (
-                                    <Badge className="bg-amber-500 border-2 border-white text-[9px] font-black px-1.5 shadow-lg animate-in zoom-in duration-500">NEW</Badge>
-                                  ) : result.isLevelUp ? (
-                                    <Badge className="bg-purple-500 border-2 border-white text-[9px] font-black px-1.5 shadow-lg animate-in zoom-in duration-500">LEVEL UP</Badge>
-                                  ) : (
-                                    <Badge className="bg-emerald-500 border-2 border-white text-[9px] font-black px-1.5 shadow-lg animate-in zoom-in duration-500">LVL {result.newLevel}</Badge>
+                                <div className="flex flex-col items-center gap-1">
+                                  <div className="flex justify-center gap-1">
+                                    {result.isNew ? (
+                                      <Badge className="bg-amber-500 border-2 border-white text-[9px] font-black px-1.5 shadow-lg animate-in zoom-in duration-500">NEW</Badge>
+                                    ) : result.isLevelUp ? (
+                                      <Badge className="bg-purple-500 border-2 border-white text-[9px] font-black px-1.5 shadow-lg animate-in zoom-in duration-500">LEVEL UP</Badge>
+                                    ) : (
+                                      <Badge className="bg-emerald-500 border-2 border-white text-[9px] font-black px-1.5 shadow-lg animate-in zoom-in duration-500">LVL {result.newLevel}</Badge>
+                                    )}
+                                  </div>
+                                  {result.variant !== 'normal' && (
+                                    <Badge className={cn(
+                                      "text-[8px] font-black px-1.5 border border-white/20",
+                                      result.variant === 'shiny' ? "bg-gradient-to-r from-yellow-400 to-orange-500 text-white" : "bg-gradient-to-r from-blue-400 to-purple-500 text-white"
+                                    )}>
+                                      {result.variant === 'shiny' ? 'SHINY' : 'HOLO'}
+                                    </Badge>
                                   )}
                                 </div>
                               )}
@@ -415,8 +487,11 @@ function SammelkartenContent() {
                     "absolute top-0 left-0 w-full h-1/3 bg-transparent z-20 flex items-end justify-center pb-4 transition-transform duration-500",
                     gameState === 'ripping' && "animate-rip-top"
                   )}>
-                    <div className="absolute inset-0 bg-gradient-to-b from-blue-600 to-blue-800 rounded-t-3xl border-x-4 border-t-4 border-white/20 shadow-inner" />
-                    <Zap className="h-12 w-12 text-white/60 drop-shadow-[0_0_10px_rgba(255,255,255,0.5)] relative z-10" />
+                    <div className={cn(
+                      "absolute inset-0 bg-gradient-to-b rounded-t-3xl border-x-4 border-t-4 border-white/20 shadow-inner",
+                      isGodpack ? "from-yellow-400 to-amber-600" : "from-blue-600 to-blue-800"
+                    )} />
+                    <Zap className={cn("h-12 w-12 text-white/60 drop-shadow-[0_0_10px_rgba(255,255,255,0.5)] relative z-10", isGodpack && "animate-pulse text-white")} />
                   </div>
                   
                   {/* Bottom Part */}
@@ -424,19 +499,23 @@ function SammelkartenContent() {
                     "absolute bottom-0 left-0 w-full h-2/3 z-10 flex flex-col items-center pt-8 transition-transform duration-500",
                     gameState === 'ripping' && "animate-rip-bottom"
                   )}>
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-blue-900 to-blue-800 rounded-b-3xl border-x-4 border-b-4 border-white/20 shadow-2xl" />
+                    <div className={cn(
+                      "absolute inset-0 bg-gradient-to-t rounded-b-3xl border-x-4 border-b-4 border-white/20 shadow-2xl",
+                      isGodpack ? "from-amber-900 via-amber-700 to-amber-600" : "from-slate-900 via-blue-900 to-blue-800"
+                    )} />
                     <div className="relative z-10 flex flex-col items-center h-full w-full">
                       <div className="w-16 h-1 bg-white/20 rounded-full mb-8" />
                       <h2 className="text-white font-black text-3xl tracking-tighter mb-1 italic drop-shadow-md">ABI PLANER</h2>
-                      <p className="text-blue-200/60 text-[10px] font-black uppercase tracking-[0.4em]">Booster Pack</p>
+                      <p className={cn("text-[10px] font-black uppercase tracking-[0.4em]", isGodpack ? "text-amber-200/80" : "text-blue-200/60")}>{isGodpack ? "✨ GODPACK ✨" : "Booster Pack"}</p>
                       
                       <div className="mt-auto mb-12">
                          <div className="relative">
                             <Gift className={cn(
                               "h-16 w-16 transition-all duration-500",
-                              gameState === 'idle' ? "text-white/30 group-hover:text-white/60 group-hover:scale-110" : "text-white/50 scale-110"
+                              gameState === 'idle' ? "text-white/30 group-hover:text-white/60 group-hover:scale-110" : "text-white/50 scale-110",
+                              isGodpack && "text-amber-300 drop-shadow-[0_0_15px_rgba(251,191,36,0.8)]"
                             )} />
-                            <div className="absolute inset-0 bg-white/20 blur-xl rounded-full scale-150 animate-pulse" />
+                            <div className={cn("absolute inset-0 blur-xl rounded-full scale-150 animate-pulse", isGodpack ? "bg-amber-400/40" : "bg-white/20")} />
                          </div>
                       </div>
                     </div>

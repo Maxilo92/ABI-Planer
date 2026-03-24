@@ -210,16 +210,24 @@ export const useUserTeachers = (userId?: string) => {
           
           const tempData = { ...currentData }
           const packResults = teacherIds.map(teacherId => {
-            const teacherData = tempData[teacherId] || { count: 0, level: 1 }
+            const variant = getRandomVariant(teacherId, isGodpack)
+            const teacherData = tempData[teacherId] || { count: 0, level: 1, variants: {} }
             const tCount = teacherData.count + 1
             const tLevel = calculateLevel(tCount)
             
+            const variants = teacherData.variants || {}
+            const vCount = (variants[variant] || 0) + 1
+            
             tempData[teacherId] = {
               count: tCount,
-              level: tLevel
+              level: tLevel,
+              variants: {
+                ...variants,
+                [variant]: vCount
+              }
             }
             
-            return { teacherId, count: tCount, level: tLevel }
+            return { teacherId, count: tCount, level: tLevel, variant }
           })
 
           const updates = teacherIds.reduce((acc, id) => {
@@ -250,13 +258,14 @@ export const useUserTeachers = (userId?: string) => {
     [currentUser, isOwnProfile]
   )
 
-  const collectTeacher = useCallback(
-    async (teacherId: string) => {
+  const collectBooster = useCallback(
+    async (teacherIds: string[], options?: { isGodpack?: boolean }) => {
       if (!isOwnProfile || !currentUser) throw new Error('Action not allowed')
 
       const userTeachersRef = doc(db, 'user_teachers', currentUser.uid)
       const profileRef = doc(db, 'profiles', currentUser.uid)
       const dailyPackAllowance = DAILY_PACK_ALLOWANCE
+      const isGodpack = !!options?.isGodpack
       
       try {
         const result = await runTransaction(db, async (transaction) => {

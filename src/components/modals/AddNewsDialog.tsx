@@ -17,6 +17,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Plus, ImagePlus } from 'lucide-react'
 import { toast } from 'sonner'
 import { getNewsUploadErrorMessage, uploadNewsImage, validateNewsImageFile } from '@/lib/newsImageUpload'
@@ -26,6 +27,7 @@ import { logAction } from '@/lib/logging'
 export function AddNewsDialog() {
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
+  const [isSmallUpdate, setIsSmallUpdate] = useState(false)
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [pendingCropFile, setPendingCropFile] = useState<File | null>(null)
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null)
@@ -37,6 +39,7 @@ export function AddNewsDialog() {
   const resetForm = () => {
     setTitle('')
     setContent('')
+    setIsSmallUpdate(false)
     setImageFile(null)
     setPendingCropFile(null)
     setImageInputKey((prev) => prev + 1)
@@ -115,6 +118,7 @@ export function AddNewsDialog() {
         await addDoc(collection(db, 'news'), {
           title: trimmedTitle,
           content: trimmedContent,
+          is_small_update: isSmallUpdate,
           created_by: user.uid,
           author_name: profile?.full_name || user.displayName || 'Unbekannt',
           view_count: 0,
@@ -156,6 +160,24 @@ export function AddNewsDialog() {
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="space-y-4 py-4">
+            <div className="flex items-center space-x-2 bg-primary/5 p-3 rounded-lg border border-primary/10">
+              <Checkbox 
+                id="isSmallUpdate" 
+                checked={isSmallUpdate}
+                onCheckedChange={(checked) => setIsSmallUpdate(!!checked)}
+              />
+              <div className="grid gap-1.5 leading-none">
+                <Label
+                  htmlFor="isSmallUpdate"
+                  className="text-sm font-bold leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                >
+                  Kleines Update (Quick-News)
+                </Label>
+                <p className="text-[11px] text-muted-foreground">
+                  Keine eigene Detailseite, voller Text wird in der Liste angezeigt.
+                </p>
+              </div>
+            </div>
             <div className="space-y-2">
               <Label htmlFor="title">Überschrift</Label>
               <Input 

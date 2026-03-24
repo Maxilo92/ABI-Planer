@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.22.14] - 2026-03-24
+- Feature: **Card Progression & Rarity Overhaul**. Komplettes Rebalancing der Zieh-Wahrscheinlichkeiten für ein belohnenderes Langzeit-Erlebnis.
+- Feature: **Ultra Secret Variant (Black Shiny Holo)**. Einführung einer extrem seltenen Variante (1:1000 Packs) für einen geheimen Lehrer mit speziellen visuellen Effekten.
+- Feature: **Godpacks**. Seltene Chance (1:2000) auf ein goldenes Booster-Pack, das ausschließlich Spezial-Varianten und höhere Seltenheiten enthält.
+- UI: **Enhanced Card Visuals**. Überarbeitete visuelle Effekte für Holo, Shiny und die neue Secret Rare Variante inklusive Shimmer, Partikel-Effekten und adaptiven Rahmen.
+- Logic: **Booster Rebalancing**. Mythische und Legendäre Karten wurden seltener gemacht, während die Verteilung so angepasst wurde, dass man nach ca. 900 Packs (ein Schuljahr) alle normalen Karten und die meisten Holos besitzt.
+
+## [0.22.13] - 2026-03-24
+- Feature: **Card Variants (Holo/Shiny)**. Lehrer-Karten können nun in den Varianten "Normal", "Holo" und "Shiny" gezogen und im Album gesammelt werden.
+- Feature: **Small Updates für News**. Kurze Neuigkeiten können als "Small Update" markiert werden, um direkt in der Übersicht vollständig (ohne "Weiterlesen") angezeigt zu werden.
+- Fix: **Booster Balancing & Navigation**. Mythische Karten sind nun seltener als Legendäre; zudem wurde die Navigation zwischen Booster-Pack und Album durch direkte Buttons verbessert.
+- Fix: **Super Danger Zone Stabilität**. Die `SYSTEM_TEST_DRY_RUN` Aktion wurde korrigiert und durchläuft nun den vollständigen Protokoll-Zyklus.
+- Fix: **Kalender-Creator Sichtbarkeit**. Gäste können nun korrekt sehen, wer einen Termin erstellt hat, da der Name direkt im Termin-Dokument gespeichert wird.
+- Fix: **Apple Calendar Integration**. Die Referenzzeit für den Apple Kalender-Export wurde auf den Standard (2001) korrigiert.
+- UI: **Finanz-Ranking Ziel-Erklärung**. Im Kurs-Ranking wurde eine Erläuterung zum individuellen Kurs-Spendenziel hinzugefügt.
+- Fix: **News Markdown Detailview**. Die Markdown-Formatierung wird nun auch in der Detailansicht von News-Beiträgen korrekt gerendert.
+
 ## [0.22.12] - 2026-03-23
 - UX: **Nur noch eine Kalender-Detailansicht**. Termine öffnen jetzt konsistent über die Route `/kalender/[id]`; die separate Modal-Detailansicht wurde entfernt.
 - UX: **Teilen direkt auf der Kalenderseite**. In der Terminliste auf `/kalender` ist die Teilen-Funktion wieder verfügbar; auf dem Dashboard bleibt sie ausgeblendet.

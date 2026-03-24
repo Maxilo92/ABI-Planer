@@ -103,7 +103,10 @@ service cloud.firestore {
     }
 
     match /todos/{id} { allow read: if true; allow write: if isPlanner(); }
-    match /events/{id} { allow read: if true; allow write: if isPlanner(); }
+    match /events/{id} { 
+      allow read: if true; // Guests can read calendar event details (including created_by_name)
+      allow write: if isPlanner(); 
+    }
     match /finances/{id} { allow read: if true; allow write: if isPlanner(); }
     match /news/{id} { 
       allow read: if true; 

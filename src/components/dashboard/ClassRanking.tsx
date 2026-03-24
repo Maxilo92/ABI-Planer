@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react'
 import { db } from '@/lib/firebase'
 import { doc, onSnapshot } from 'firebase/firestore'
 import { Badge } from '@/components/ui/badge'
-import { BarChart3, Lightbulb, Loader2 } from 'lucide-react'
+import { BarChart3, Info, Lightbulb, Loader2 } from 'lucide-react'
 
 interface ClassStats {
   className: ClassName
@@ -121,7 +121,7 @@ export function ClassRanking({
         </div>
 
         {/* Tip section - sticky at bottom */}
-        <div className="p-3 bg-muted/20 border-t border-border/40 shrink-0">
+        <div className="p-3 bg-muted/20 border-t border-border/40 shrink-0 space-y-2">
           <div className="flex items-start gap-2.5 bg-background/50 rounded-xl p-2.5 border border-border/40">
             <div className="mt-0.5 bg-primary/10 p-1 rounded-lg shrink-0">
               <Lightbulb className="h-3.5 w-3.5 text-primary" />
@@ -130,6 +130,17 @@ export function ClassRanking({
               <p className="text-[10px] font-extrabold text-primary uppercase tracking-[0.1em] leading-tight mb-0.5">Ranking-Tipp</p>
               <p className="text-[11px] text-muted-foreground leading-normal">
                 Kurs <span className="font-bold text-foreground">{lastPlace.className}</span> ist aktuell das Schlusslicht.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-start gap-2.5 bg-background/50 rounded-xl p-2.5 border border-border/40">
+            <div className="mt-0.5 bg-primary/10 p-1 rounded-lg shrink-0">
+              <Info className="h-3.5 w-3.5 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] font-extrabold text-primary uppercase tracking-[0.1em] leading-tight mb-0.5">Kurs-Ziel</p>
+              <p className="text-[11px] text-muted-foreground leading-normal">
+                Jeder Kurs hat ein Ziel von <span className="font-bold text-foreground">{(goal / Math.max(courses.length, 1)).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}</span> ({goal.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })} Gesamtziel / {courses.length} Kurse).
               </p>
             </div>
           </div>

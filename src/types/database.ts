@@ -185,6 +185,7 @@ export interface NewsEntry {
   viewed_by?: string[];
   ratings?: { [uid: string]: 'up' | 'down' };
   comment_count?: number;
+  is_small_update?: boolean;
 }
 
 export interface Comment {
@@ -212,10 +213,15 @@ export interface Feedback {
   is_private: boolean;
 }
 
+export type CardVariant = 'normal' | 'holo' | 'shiny' | 'black_shiny_holo';
+
 export interface UserTeacher {
   [teacherId: string]: {
     count: number;
     level: number;
+    variants?: {
+      [key in CardVariant]?: number;
+    };
   };
 }
 

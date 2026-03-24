@@ -46,6 +46,26 @@ const getPrevLevelCount = (level: number): number => {
   return Math.pow(level - 1, 2) + 1
 }
 
+const getVariantLabel = (variant: CardVariant) => {
+  switch (variant) {
+    case 'normal': return 'Normal'
+    case 'holo': return 'Holo'
+    case 'shiny': return 'Shiny'
+    case 'black_shiny_holo': return 'Secret Rare'
+    default: return variant
+  }
+}
+
+const getVariantBadge = (variant: CardVariant) => {
+  switch (variant) {
+    case 'normal': return 'bg-slate-500'
+    case 'holo': return 'bg-gradient-to-r from-blue-400 to-purple-500'
+    case 'shiny': return 'bg-gradient-to-r from-yellow-400 to-orange-500'
+    case 'black_shiny_holo': return 'bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600'
+    default: return 'bg-slate-500'
+  }
+}
+
 const getRarityColor = (rarity: TeacherRarity) => {
   switch (rarity) {
     case 'common': return 'text-slate-500'
@@ -109,10 +129,12 @@ function TeacherCardDetail({ teacher, userData, onClose }: { teacher: LootTeache
   const isOwned = !!userData
   const level = userData?.level || 1
   const count = userData?.count || 0
+  const isBlackShiny = (userData?.variants?.black_shiny_holo || 0) > 0
+  
   const rarityInfo = {
-    color: getRarityBg(teacher.rarity),
-    label: getRarityLabel(teacher.rarity),
-    glow: getRarityGlow(teacher.rarity)
+    color: isBlackShiny ? 'bg-slate-950' : getRarityBg(teacher.rarity),
+    label: isBlackShiny ? 'Secret Rare' : getRarityLabel(teacher.rarity),
+    glow: isBlackShiny ? 'shadow-[0_0_40px_rgba(147,51,234,0.8),0_0_60px_rgba(236,72,153,0.5)]' : getRarityGlow(teacher.rarity)
   }
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -174,15 +196,45 @@ function TeacherCardDetail({ teacher, userData, onClose }: { teacher: LootTeache
             {/* Performance: Solid background to prevent back-face bleeding */}
             <div className={cn("absolute inset-0 z-0 rounded-[inherit]", rarityInfo.color)} />
 
-            {/* Rarity Effects */}
-            {(teacher.rarity === 'legendary' || teacher.rarity === 'mythic') && (
+            {/* Rarity/Variant Effects */}
+            {(teacher.rarity === 'legendary' || teacher.rarity === 'mythic' || (userData?.variants && Object.keys(userData.variants).some(v => v !== 'normal' && (userData.variants[v] || 0) > 0))) && (
               <div className="absolute inset-0 rounded-[inherit] overflow-hidden pointer-events-none z-10">
-                <div className="absolute inset-[-100%] bg-[linear-gradient(45deg,transparent_25%,rgba(255,255,255,0.4)_50%,transparent_75%)] bg-[length:250%_250%] animate-shimmer" />
+                {(userData?.variants?.black_shiny_holo || 0) > 0 && (
+                  <>
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(147,51,234,0.6)_0%,rgba(236,72,153,0.4)_50%,transparent_100%)] animate-pulse" />
+                    <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(147,51,234,0.3)_0%,transparent_50%,rgba(236,72,153,0.3)_100%)] animate-shimmer mix-blend-overlay" />
+                    <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-40 mix-blend-screen animate-pulse" />
+                  </>
+                )}
+                {(userData?.variants?.shiny || 0) > 0 && (
+                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,215,0,0.4)_0%,transparent_70%)] animate-pulse" />
+                )}
+                {(userData?.variants?.holo || 0) > 0 && (
+                  <div className="absolute inset-0 bg-[linear-gradient(45deg,transparent_25%,rgba(255,255,255,0.3)_50%,transparent_75%)] bg-[length:250%_250%] animate-shimmer opacity-80" />
+                )}
+                {(teacher.rarity === 'legendary' || teacher.rarity === 'mythic') && (
+                  <div className="absolute inset-[-100%] bg-[linear-gradient(45deg,transparent_25%,rgba(255,255,255,0.4)_50%,transparent_75%)] bg-[length:250%_250%] animate-shimmer" />
+                )}
               </div>
             )}
 
-            <div className="absolute top-6 right-6 bg-black/40 rounded-full px-3 py-1 text-[10px] font-black text-white border border-white/20 z-20">
-              LVL {level}
+            <div className="absolute top-6 right-6 flex flex-col items-end gap-1 z-20">
+              <div className="bg-black/40 rounded-full px-3 py-1 text-[10px] font-black text-white border border-white/20">
+                LVL {level}
+              </div>
+              {userData?.variants && Object.entries(userData.variants).some(([v, c]) => v !== 'normal' && (c as number) > 0) && (
+                <div className="flex gap-1">
+                  {(userData.variants.black_shiny_holo || 0) > 0 && (
+                    <Badge className="bg-gradient-to-r from-purple-600 to-pink-600 text-white text-[8px] font-black px-1.5 border-none h-4 shadow-[0_0_10px_rgba(236,72,153,0.5)]">SECRET</Badge>
+                  )}
+                  {(userData.variants.shiny || 0) > 0 && (
+                    <Badge className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white text-[8px] font-black px-1.5 border-none h-4">SHINY</Badge>
+                  )}
+                  {(userData.variants.holo || 0) > 0 && (
+                    <Badge className="bg-gradient-to-r from-blue-400 to-purple-500 text-white text-[8px] font-black px-1.5 border-none h-4">HOLO</Badge>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="w-full aspect-square rounded-2xl bg-white/10 flex items-center justify-center mb-2 mt-6 shadow-inner border border-white/5 relative z-20">
@@ -572,6 +624,8 @@ export function TeacherAlbum({
               const progress = isOwned ? ((count - prevCount) / (nextCount - prevCount)) * 100 : 0
               const needed = nextCount - count
 
+              const isBlackShiny = (userData?.variants?.black_shiny_holo || 0) > 0
+
               return (
                 <Card 
                   key={teacherId}
@@ -580,16 +634,17 @@ export function TeacherAlbum({
                     "relative overflow-hidden transition-all duration-300 group",
                     !isOwned && "opacity-60 grayscale brightness-75",
                     isOwned && "border-2 cursor-pointer hover:scale-[1.04] hover:shadow-xl",
-                    isOwned && teacher.rarity === 'legendary' && "border-amber-500/50 bg-amber-500/5 shadow-lg shadow-amber-500/10",
-                    isOwned && teacher.rarity === 'mythic' && "border-red-500/50 bg-red-500/5 shadow-lg shadow-red-500/10",
-                    isOwned && teacher.rarity === 'epic' && "border-purple-500/50 bg-purple-500/5 shadow-lg shadow-purple-500/10",
-                    isOwned && teacher.rarity === 'rare' && "border-emerald-500/50 bg-emerald-500/5 shadow-lg shadow-emerald-500/10"
+                    isOwned && isBlackShiny && "border-purple-500 bg-slate-950 shadow-2xl shadow-purple-500/20",
+                    isOwned && !isBlackShiny && teacher.rarity === 'legendary' && "border-amber-500/50 bg-amber-500/5 shadow-lg shadow-amber-500/10",
+                    isOwned && !isBlackShiny && teacher.rarity === 'mythic' && "border-red-500/50 bg-red-500/5 shadow-lg shadow-red-500/10",
+                    isOwned && !isBlackShiny && teacher.rarity === 'epic' && "border-purple-500/50 bg-purple-500/5 shadow-lg shadow-purple-500/10",
+                    isOwned && !isBlackShiny && teacher.rarity === 'rare' && "border-emerald-500/50 bg-emerald-500/5 shadow-lg shadow-emerald-500/10"
                   )}
                 >
                   <CardHeader className="p-3 pb-0">
                     <div className="flex justify-between items-start">
-                      <Badge variant="secondary" className={cn("text-[9px] px-1.5 h-4 font-black uppercase tracking-tighter", isOwned ? getRarityBadge(teacher.rarity) : "bg-slate-500", "text-white")}>
-                        {getRarityLabel(teacher.rarity)}
+                      <Badge variant="secondary" className={cn("text-[9px] px-1.5 h-4 font-black uppercase tracking-tighter", isOwned ? (isBlackShiny ? "bg-gradient-to-r from-purple-600 to-pink-600" : getRarityBadge(teacher.rarity)) : "bg-slate-500", "text-white")}>
+                        {isBlackShiny ? "Secret Rare" : getRarityLabel(teacher.rarity)}
                       </Badge>
                       {isOwned && (
                         <div className="flex items-center gap-0.5 bg-black/80 text-white rounded-full px-1.5 py-0.5 text-[9px] font-bold">
@@ -602,10 +657,10 @@ export function TeacherAlbum({
                   <CardContent className="p-2.5 sm:p-3 pt-3 sm:pt-4 flex flex-col items-center text-center space-y-2.5 sm:space-y-3">
                     <div className={cn(
                       "w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center border-2 transition-transform group-hover:rotate-12",
-                      isOwned ? "bg-background border-primary" : "bg-muted border-muted-foreground/20"
+                      isOwned ? (isBlackShiny ? "bg-slate-900 border-purple-500/50 shadow-[0_0_15px_rgba(147,51,234,0.3)]" : "bg-background border-primary") : "bg-muted border-muted-foreground/20"
                     )}>
                       {isOwned ? (
-                        <GraduationCap className={cn("h-7 w-7 sm:w-8 sm:h-8", getRarityColor(teacher.rarity))} />
+                        <GraduationCap className={cn("h-7 w-7 sm:w-8 sm:h-8", isBlackShiny ? "text-purple-400" : getRarityColor(teacher.rarity))} />
                       ) : (
                         <Lock className="h-5 w-5 sm:w-6 sm:h-6 text-muted-foreground/40" />
                       )}

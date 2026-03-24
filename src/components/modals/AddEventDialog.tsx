@@ -86,7 +86,7 @@ export function AddEventDialog() {
         end_date: endDate ? new Date(endDate).toISOString() : new Date(startDate).toISOString(),
         created_at: new Date().toISOString(),
         created_by: user.uid,
-        created_by_name: profile?.full_name || user.displayName || null,
+        created_by_name: profile?.full_name || user.displayName || user.email || 'Unbekannt',
         mentioned_user_ids: mentionedUserIds,
         mentioned_roles: mentionedRoles,
         mentioned_groups: mentionedGroups,

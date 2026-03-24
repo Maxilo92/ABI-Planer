@@ -61,7 +61,7 @@ export default function CalendarEventPage({ params }: { params: Promise<{ id: st
 
     const startDate = toDate(event.start_date)
     const referenceFrom2001 = Math.floor(startDate.getTime() / 1000 - 978307200)
-    window.open(`calshow:${referenceFrom2001}`, '_blank')
+    window.location.assign(`calshow:${referenceFrom2001}`)
   }
 
   const openGoogleCalendar = () => {

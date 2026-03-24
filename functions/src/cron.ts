@@ -37,7 +37,8 @@ export const executeDangerActions = onSchedule("every 15 minutes", async (event)
     try {
       switch (actionType) {
         case "SYSTEM_TEST_DRY_RUN":
-          console.log("System Test Dry Run executed successfully. No data changed.");
+          console.log(`System Test Dry Run (Action ID: ${actionId}) executed successfully. No data changed.`);
+          // This will fall through to the success section below
           break;
         case "EMPTY_ALL_ALBUMS":
           await emptyAllAlbums();
