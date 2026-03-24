@@ -37,10 +37,12 @@ const getRarityHex = (rarity: TeacherRarity) => {
   }
 }
 
-const mapToCardData = (teacher: LootTeacher, variant: CardVariant | NewCardVariant, index: number): CardData => {
+const mapToCardData = (teacher: LootTeacher, variant: CardVariant | NewCardVariant, globalTeachers: LootTeacher[]): CardData => {
   const newVariant: NewCardVariant = variant === 'black_shiny_holo' ? 'blckshiny' :
                    (variant === 'shiny' ? 'shiny-v2' : 
                    (variant === 'holo' ? 'holo' : 'normal'))
+  
+  const globalIndex = globalTeachers.findIndex(t => (t.id || t.name) === (teacher.id || teacher.name))
   
   return {
     id: teacher.id || teacher.name,
@@ -48,7 +50,7 @@ const mapToCardData = (teacher: LootTeacher, variant: CardVariant | NewCardVaria
     rarity: teacher.rarity,
     variant: newVariant,
     color: getRarityHex(teacher.rarity),
-    cardNumber: (index + 1).toString().padStart(3, '0'),
+    cardNumber: (globalIndex + 1).toString().padStart(3, '0'),
   }
 }
 
@@ -359,7 +361,7 @@ function SammelkartenContent() {
                   {revealedTeachers.map((teacher, idx) => {
                     const isFlipped = flippedCards[idx]
                     const result = collectionResults?.[idx]
-                    const cardData = mapToCardData(teacher, result?.variant || 'normal', idx)
+                    const cardData = mapToCardData(teacher, result?.variant || 'normal', globalSettings?.loot_teachers || DEFAULT_TEACHERS)
                     
                     return (
                       <div 

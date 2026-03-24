@@ -123,10 +123,12 @@ const getRarityHex = (rarity: TeacherRarity) => {
   }
 }
 
-const mapToCardData = (teacher: LootTeacher, userData: any, index: number): CardData => {
+const mapToCardData = (teacher: LootTeacher, userData: any, globalTeachers: LootTeacher[]): CardData => {
   const variant: NewCardVariant = userData?.variants?.black_shiny_holo ? 'blckshiny' :
                    (userData?.variants?.shiny ? 'shiny-v2' : 
                    (userData?.variants?.holo ? 'holo' : 'normal'))
+  
+  const globalIndex = globalTeachers.findIndex(t => (t.id || t.name) === (teacher.id || teacher.name))
   
   return {
     id: teacher.id || teacher.name,
@@ -134,16 +136,16 @@ const mapToCardData = (teacher: LootTeacher, userData: any, index: number): Card
     rarity: teacher.rarity,
     variant,
     color: getRarityHex(teacher.rarity),
-    cardNumber: (index + 1).toString().padStart(3, '0'),
+    cardNumber: (globalIndex + 1).toString().padStart(3, '0'),
   }
 }
 
-function TeacherCardDetail({ teacher, userData, onClose, index = 0 }: { teacher: LootTeacher, userData: any, onClose: () => void, index?: number }) {
+function TeacherCardDetail({ teacher, userData, onClose, globalTeachers }: { teacher: LootTeacher, userData: any, onClose: () => void, globalTeachers: LootTeacher[] }) {
   const isOwned = !!userData
   const level = userData?.level || 1
   const count = userData?.count || 0
   
-  const cardData = mapToCardData(teacher, userData, index)
+  const cardData = mapToCardData(teacher, userData, globalTeachers)
 
   return (
     <div className="flex flex-col items-center space-y-8 py-4">
@@ -484,11 +486,11 @@ export function TeacherAlbum({
       ) : (
         <>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4 md:gap-6">
-            {displayedTeachers.map((teacher, idx) => {
+            {displayedTeachers.map((teacher) => {
               const teacherId = teacher.id || teacher.name
               const userData = userTeachers?.[teacher.id] || userTeachers?.[teacher.name]
               const isOwned = !!userData
-              const cardData = mapToCardData(teacher, userData, idx)
+              const cardData = mapToCardData(teacher, userData, globalTeachers)
 
               return (
                 <div 
@@ -567,6 +569,7 @@ export function TeacherAlbum({
                 teacher={selectedTeacher} 
                 userData={userTeachers?.[selectedTeacher.id] || userTeachers?.[selectedTeacher.name]}
                 onClose={() => setSelectedTeacher(null)}
+                globalTeachers={globalTeachers}
               />
             )}
           </div>

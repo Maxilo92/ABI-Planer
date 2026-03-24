@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.23.02] - 2026-03-24
+- UI: **Static Card Numbers**. Die Karten-Nummer (z. B. "005") ist nun fest an die Position des Lehrers in der globalen Liste gekoppelt und dient als eindeutige Album-ID.
+
 ## [0.23.01] - 2026-03-24
 - UI: **Mobile Optimization for Cards**. Karten-Sizing und Border-Radius wurden für Mobile optimiert, um das "Pillen"-Aussehen zu beheben.
 - UI: **Card Draw Logic**. Karten werden nun standardmäßig mit der Rückseite zuerst angezeigt und erst beim Umdrehen enthüllt.
