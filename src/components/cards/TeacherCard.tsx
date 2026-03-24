@@ -32,26 +32,26 @@ export const TeacherCard: React.FC<TeacherCardProps> = ({
       case 'modern-flat':
         return {
           card: cn(
-            "transition-all [@container]:rounded-[10cqw]",
+            "transition-all rounded-[10cqw]",
             !isGlass && !isBlckShiny && "border-black shadow-[2cqw_2cqw_0px_0px_rgba(0,0,0,1)] hover:shadow-[3cqw_3cqw_0px_0px_rgba(0,0,0,1)] border-[0.8cqw]",
             isBlckShiny && "shadow-[0_0_4cqw_rgba(255,255,255,0.15)] border-white/20 border-[0.8cqw]",
             isGlass && "shadow-[0_4cqw_10cqw_-2cqw_rgba(0,0,0,0.15)] ring-[0.2cqw] ring-white/90"
           ),
           iconWrapper: cn(
-            "bg-white border-[0.8cqw] border-black rounded-[4cqw] -rotate-2 shadow-[1cqw_1cqw_0px_0px_rgba(0,0,0,1)] flex items-center justify-center [@container]:w-[35cqw] [@container]:h-[35cqw]",
+            "bg-white border-[0.8cqw] border-black rounded-[4cqw] -rotate-2 shadow-[1cqw_1cqw_0px_0px_rgba(0,0,0,1)] flex items-center justify-center w-[35cqw] h-[35cqw]",
             isBlckShiny && "bg-neutral-800 border-white/20 shadow-none",
             isGlass && "bg-white/40 border-white/30 backdrop-blur-md shadow-none"
           ),
-          headerIcon: "[@container]:w-[18cqw] [@container]:h-[18cqw]",
+          headerIcon: "w-[18cqw] h-[18cqw]",
           header: (isBlckShiny || isGlass) ? "text-white" : "text-black",
           text: cn(
-            "font-sans uppercase font-black tracking-tighter [@container]:text-[12cqw] leading-[0.85] break-words w-full",
+            "font-sans uppercase font-black tracking-tighter text-[12cqw] leading-[0.85] break-words w-full",
             (isBlckShiny || isGlass) ? "text-white drop-shadow-[0_0_2cqw_rgba(255,255,255,0.4)]" : "text-black"
           ),
           border: "", 
           bgOverlay: isBlckShiny ? "bg-neutral-950" : (isGlass ? "bg-transparent" : "bg-white/5"),
           numberTag: cn(
-            "[@container]:px-[2cqw] [@container]:py-[0.5cqw] [@container]:text-[3.5cqw] font-black rounded-[0.5cqw] transform rotate-1 border-[0.3cqw] border-black shadow-[0.5cqw_0.5cqw_0px_0px_rgba(0,0,0,1)]",
+            "px-[2cqw] py-[0.5cqw] text-[3.5cqw] font-black rounded-[0.5cqw] transform rotate-1 border-[0.3cqw] border-black shadow-[0.5cqw_0.5cqw_0px_0px_rgba(0,0,0,1)]",
             (isBlckShiny || isGlass) ? "bg-white text-black" : "bg-black text-white"
           ),
           numberPos: "bottom-[8cqw] left-[8cqw]",
@@ -61,14 +61,14 @@ export const TeacherCard: React.FC<TeacherCardProps> = ({
       
       default:
         return {
-          card: "border-white/40 shadow-2xl backdrop-blur-xl border-[2cqw] [@container]:rounded-[10cqw]",
-          iconWrapper: "bg-white/30 rounded-full [@container]:w-[35cqw] [@container]:h-[35cqw] flex items-center justify-center",
-          headerIcon: "[@container]:w-[18cqw] [@container]:h-[18cqw]",
+          card: "border-white/40 shadow-2xl backdrop-blur-xl border-[2cqw] rounded-[10cqw]",
+          iconWrapper: "bg-white/30 rounded-full w-[35cqw] h-[35cqw] flex items-center justify-center",
+          headerIcon: "w-[18cqw] h-[18cqw]",
           header: "text-white",
-          text: "text-white font-sans font-black [@container]:text-[12cqw]",
+          text: "text-white font-sans font-black text-[12cqw]",
           border: "border-[2cqw]",
           bgOverlay: "bg-white/10",
-          numberTag: "bg-white/20 text-white [@container]:px-[2cqw] [@container]:py-[0.5cqw] [@container]:text-[3cqw] font-black rounded-full",
+          numberTag: "bg-white/20 text-white px-[2cqw] py-[0.5cqw] text-[3cqw] font-black rounded-full",
           numberPos: "top-[8cqw] right-[8cqw]",
           rarityPos: "bottom-[8cqw] right-[8cqw]",
           raritySize: "14cqw"
@@ -100,8 +100,8 @@ export const TeacherCard: React.FC<TeacherCardProps> = ({
           {isGlass && <CardEffectOverlay variant={data.variant} tintColor={data.color} />}
           
           <div className="relative z-10 flex flex-col items-center">
-            <Zap className="text-white mb-[4cqw] [@container]:w-[20cqw] [@container]:h-[20cqw]" />
-            <div className="text-white font-black tracking-[0.3em] [@container]:text-[4cqw] uppercase opacity-80">
+            <Zap className="text-white mb-[4cqw] w-[20cqw] h-[20cqw]" />
+            <div className="text-white font-black tracking-[0.3em] text-[4cqw] uppercase opacity-80">
                ABI Planer
             </div>
           </div>
@@ -142,7 +142,7 @@ export const TeacherCard: React.FC<TeacherCardProps> = ({
               rarity={data.rarity} 
               variant={data.variant}
               size={0} // Controlled by className in RaritySymbol now
-              className={cn("[@container]:w-[14cqw] [@container]:h-[14cqw]")}
+              className={cn("w-[14cqw] h-[14cqw]")}
               color={isBlckShiny ? 'white' : (styleVariant === 'modern-flat' ? 'black' : 'white')} 
             />
           </div>

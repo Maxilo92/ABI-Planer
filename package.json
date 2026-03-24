@@ -1,6 +1,6 @@
 {
   "name": "abi-planer",
-  "version": "0.22.15",
+  "version": "0.23.04",
   "private": true,
   "scripts": {
     "dev": "next dev",

@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.23.04] - 2026-03-24
+- Bugfix: **Tailwind v4 CSS Parsing Error**. Fix für den "Unexpected end of input" Fehler durch Entfernung ungültiger `[@container]:` Varianten in `TeacherCard.tsx`. Die `cqw`-Einheiten funktionieren in v4 nativ ohne diesen Präfix.
+
 ## [0.23.03] - 2026-03-24
 - UI: **Proportional Card Scaling**. Implementierung von Container-Query-Units (`cqw`), wodurch alle Kartenelemente (Icons, Schriften, Abstände) proportional zur Kartengröße skalieren. Die Karten sehen nun auf jeder Skalierung identisch aus.
 
