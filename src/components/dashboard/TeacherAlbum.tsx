@@ -12,6 +12,8 @@ import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
+import { TeacherCard } from '@/components/cards/TeacherCard'
+import { CardData, CardVariant as NewCardVariant } from '@/types/cards'
 import {
   Dialog,
   DialogContent,
@@ -110,196 +112,66 @@ const getRarityGlow = (rarity: TeacherRarity) => {
   }
 }
 
-const getRarityBg = (rarity: TeacherRarity) => {
+const getRarityHex = (rarity: TeacherRarity) => {
   switch (rarity) {
-    case 'common': return 'bg-slate-500'
-    case 'rare': return 'bg-emerald-500'
-    case 'epic': return 'bg-purple-600'
-    case 'mythic': return 'bg-red-600'
-    case 'legendary': return 'bg-amber-500'
-    default: return ''
+    case 'common': return '#64748b'
+    case 'rare': return '#10b981'
+    case 'epic': return '#9333ea'
+    case 'mythic': return '#dc2626'
+    case 'legendary': return '#f59e0b'
+    default: return '#64748b'
   }
 }
 
-function TeacherCardDetail({ teacher, userData, onClose }: { teacher: LootTeacher, userData: any, onClose: () => void }) {
-  const [isFlipped, setIsFlipped] = useState(false)
-  const [rotate, setRotate] = useState({ x: 0, y: 0 })
-  const cardRef = useRef<HTMLDivElement>(null)
+const mapToCardData = (teacher: LootTeacher, userData: any, index: number): CardData => {
+  const variant: NewCardVariant = userData?.variants?.black_shiny_holo ? 'blckshiny' :
+                   (userData?.variants?.shiny ? 'shiny-v2' : 
+                   (userData?.variants?.holo ? 'holo' : 'normal'))
   
+  return {
+    id: teacher.id || teacher.name,
+    name: teacher.name,
+    rarity: teacher.rarity,
+    variant,
+    color: getRarityHex(teacher.rarity),
+    cardNumber: (index + 1).toString().padStart(3, '0'),
+  }
+}
+
+function TeacherCardDetail({ teacher, userData, onClose, index = 0 }: { teacher: LootTeacher, userData: any, onClose: () => void, index?: number }) {
   const isOwned = !!userData
   const level = userData?.level || 1
   const count = userData?.count || 0
-  const isBlackShiny = (userData?.variants?.black_shiny_holo || 0) > 0
   
-  const rarityInfo = {
-    color: isBlackShiny ? 'bg-slate-950' : getRarityBg(teacher.rarity),
-    label: isBlackShiny ? 'Secret Rare' : getRarityLabel(teacher.rarity),
-    glow: isBlackShiny ? 'shadow-[0_0_40px_rgba(147,51,234,0.8),0_0_60px_rgba(236,72,153,0.5)]' : getRarityGlow(teacher.rarity)
-  }
-
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!cardRef.current || isFlipped) return
-    const rect = cardRef.current.getBoundingClientRect()
-    const x = e.clientX - rect.left
-    const y = e.clientY - rect.top
-    const centerX = rect.width / 2
-    const centerY = rect.height / 2
-    
-    // Performance: Limit rotation to 8 degrees and simplify math
-    const rotateX = Math.max(-8, Math.min(8, (y - centerY) / 12))
-    const rotateY = Math.max(-8, Math.min(8, (centerX - x) / 12))
-    
-    // Performance: Only update if change is significant to reduce paint frequency
-    if (Math.abs(rotateX - rotate.x) > 0.5 || Math.abs(rotateY - rotate.y) > 0.5) {
-       setRotate({ x: rotateX, y: rotateY })
-    }
-  }
-
-  const handleMouseLeave = () => {
-    setRotate({ x: 0, y: 0 })
-  }
-
-  const handleFlip = () => {
-    setIsFlipped(!isFlipped)
-    setRotate({ x: 0, y: 0 })
-  }
+  const cardData = mapToCardData(teacher, userData, index)
 
   return (
     <div className="flex flex-col items-center space-y-8 py-4">
-      <div 
-        ref={cardRef}
-        className="perspective-1000 w-64 h-96 cursor-pointer relative group"
-        onMouseMove={handleMouseMove}
-        onMouseLeave={handleMouseLeave}
-        onClick={handleFlip}
-      >
-        <div 
-          className={cn(
-            "relative w-full h-full transition-all duration-700 preserve-3d shadow-2xl rounded-3xl will-change-transform",
-            isFlipped && "rotate-y-180"
-          )}
-          style={{ 
-            transform: isFlipped 
-              ? 'rotateY(180deg)' 
-              : `rotateX(${rotate.x}deg) rotateY(${rotate.y}deg)` 
-          }}
-        >
-          {/* Front of Card */}
-          <div 
-            className={cn(
-              "absolute inset-0 backface-hidden rounded-3xl border-[6px] border-white flex flex-col items-center p-5 sm:p-6 shadow-2xl transition-all duration-500 overflow-hidden",
-              rarityInfo.color,
-              isFlipped ? "" : rarityInfo.glow
-            )}
-            style={{ transform: 'translateZ(1px)' }}
-          >
-            {/* Performance: Solid background to prevent back-face bleeding */}
-            <div className={cn("absolute inset-0 z-0 rounded-[inherit]", rarityInfo.color)} />
+      <TeacherCard 
+        data={cardData}
+        className="scale-110 sm:scale-125"
+      />
 
-            {/* Rarity/Variant Effects */}
-            {(teacher.rarity === 'legendary' || teacher.rarity === 'mythic' || (userData?.variants && Object.keys(userData.variants).some(v => v !== 'normal' && (userData.variants[v] || 0) > 0))) && (
-              <div className="absolute inset-0 rounded-[inherit] overflow-hidden pointer-events-none z-10">
-                {(userData?.variants?.black_shiny_holo || 0) > 0 && (
-                  <>
-                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(147,51,234,0.6)_0%,rgba(236,72,153,0.4)_50%,transparent_100%)] animate-pulse" />
-                    <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(147,51,234,0.3)_0%,transparent_50%,rgba(236,72,153,0.3)_100%)] animate-shimmer mix-blend-overlay" />
-                    <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-40 mix-blend-screen animate-pulse" />
-                  </>
-                )}
-                {(userData?.variants?.shiny || 0) > 0 && (
-                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,215,0,0.4)_0%,transparent_70%)] animate-pulse" />
-                )}
-                {(userData?.variants?.holo || 0) > 0 && (
-                  <div className="absolute inset-0 bg-[linear-gradient(45deg,transparent_25%,rgba(255,255,255,0.3)_50%,transparent_75%)] bg-[length:250%_250%] animate-shimmer opacity-80" />
-                )}
-                {(teacher.rarity === 'legendary' || teacher.rarity === 'mythic') && (
-                  <div className="absolute inset-[-100%] bg-[linear-gradient(45deg,transparent_25%,rgba(255,255,255,0.4)_50%,transparent_75%)] bg-[length:250%_250%] animate-shimmer" />
-                )}
-              </div>
-            )}
-
-            <div className="absolute top-6 right-6 flex flex-col items-end gap-1 z-20">
-              <div className="bg-black/40 rounded-full px-3 py-1 text-[10px] font-black text-white border border-white/20">
-                LVL {level}
-              </div>
-              {userData?.variants && Object.entries(userData.variants).some(([v, c]) => v !== 'normal' && (c as number) > 0) && (
-                <div className="flex gap-1">
-                  {(userData.variants.black_shiny_holo || 0) > 0 && (
-                    <Badge className="bg-gradient-to-r from-purple-600 to-pink-600 text-white text-[8px] font-black px-1.5 border-none h-4 shadow-[0_0_10px_rgba(236,72,153,0.5)]">SECRET</Badge>
-                  )}
-                  {(userData.variants.shiny || 0) > 0 && (
-                    <Badge className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white text-[8px] font-black px-1.5 border-none h-4">SHINY</Badge>
-                  )}
-                  {(userData.variants.holo || 0) > 0 && (
-                    <Badge className="bg-gradient-to-r from-blue-400 to-purple-500 text-white text-[8px] font-black px-1.5 border-none h-4">HOLO</Badge>
-                  )}
-                </div>
-              )}
-            </div>
-
-            <div className="w-full aspect-square rounded-2xl bg-white/10 flex items-center justify-center mb-2 mt-6 shadow-inner border border-white/5 relative z-20">
-               <GraduationCap className="h-20 w-20 text-white drop-shadow-2xl relative z-10" />
-            </div>
-            
-            <div className="mt-auto mb-4 w-full bg-black/40 rounded-2xl p-4 border border-white/10 shadow-lg text-center relative z-20 min-h-[5.5rem] flex flex-col justify-center">
-              <div className="text-[10px] font-black uppercase text-white/50 tracking-widest mb-1">
-                {rarityInfo.label}
-              </div>
-              <div className="text-white font-black text-xl leading-tight italic line-clamp-2">
-                {teacher.name}
-              </div>
-            </div>
-
-            {/* Performance: Simplified reflection (no blur) */}
-            {!isFlipped && (
-              <div 
-                className="absolute inset-0 pointer-events-none opacity-20 bg-[radial-gradient(circle_at_var(--x)_var(--y),_white_0%,_transparent_60%)] z-15"
-                style={{ 
-                  '--x': `${50 + rotate.y * 3}%`,
-                  '--y': `${50 + rotate.x * 3}%`
-                } as any}
-              />
-            )}
-          </div>
-
-          {/* Minimalist Back of Card */}
-          <div 
-            className="absolute inset-0 backface-hidden rotate-y-180 rounded-3xl bg-slate-900 border-[8px] border-white/20 flex flex-col items-center justify-center shadow-2xl overflow-hidden"
-            style={{ transform: 'rotateY(180deg) translateZ(1px)' }}
-          >
-             {/* Subtle Background Pattern/Glow */}
-             <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.1)_0%,transparent_70%)]" />
-             
-             <div className="relative z-10 flex flex-col items-center">
-               <div className="p-5 rounded-full bg-white/10 mb-5 shadow-[0_0_20px_rgba(255,255,255,0.1)]">
-                 <GraduationCap className="h-16 w-16 text-white/50" />
-               </div>
-               <div className="text-white/60 font-black text-2xl tracking-tighter italic px-4 text-center drop-shadow-sm">ABI PLANER</div>
-             </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="text-center animate-pulse flex items-center gap-2 text-muted-foreground text-sm font-medium">
+      <div className="text-center animate-pulse flex items-center gap-2 text-white/50 text-sm font-medium">
         <Rotate3d className="h-4 w-4" />
         Klicken zum Umdrehen
       </div>
 
-      <div className="w-full max-w-xs bg-muted/50 rounded-2xl p-6 space-y-4 border">
+      <div className="w-full max-w-xs bg-black/40 backdrop-blur-xl rounded-2xl p-6 space-y-4 border border-white/10 shadow-2xl">
         <div className="flex justify-between items-center">
-          <span className="text-sm font-bold">Statistiken</span>
-          <Badge variant="outline" className="text-[10px]">{count}x gesammelt</Badge>
+          <span className="text-sm font-bold text-white">Statistiken</span>
+          <Badge variant="outline" className="text-[10px] text-white/70 border-white/20">{count}x gesammelt</Badge>
         </div>
         <div className="space-y-2">
-          <div className="flex justify-between text-xs font-bold px-1">
+          <div className="flex justify-between text-xs font-bold px-1 text-white/80">
             <span>Level {level}</span>
             <span>Fortschritt</span>
           </div>
           <Progress 
             value={((count - getPrevLevelCount(level)) / (getNextLevelCount(level) - getPrevLevelCount(level))) * 100} 
-            className="h-2" 
+            className="h-2 bg-white/10" 
           />
-          <p className="text-[10px] text-center text-muted-foreground pt-1">
+          <p className="text-[10px] text-center text-white/40 pt-1">
             Noch {getNextLevelCount(level) - count} Karten bis Level {level + 1}
           </p>
         </div>
@@ -431,7 +303,7 @@ export function TeacherAlbum({
 
   const totalTeachers = globalTeachers.length
   const ownedCount = Object.keys(userTeachers || {}).length
-  const totalCardsCollected = Object.values(userTeachers || {}).reduce((acc, curr) => acc + (curr.count || 0), 0)
+  const totalCardsCollected = Object.values(userTeachers || {}).reduce((acc: number, curr: any) => acc + (curr.count || 0), 0)
   const packsOpened = activeProfile?.booster_stats?.total_opened || 0
 
   const toggleRarity = (rarity: TeacherRarity) => {
@@ -482,7 +354,7 @@ export function TeacherAlbum({
           <div className="flex items-center gap-2 bg-muted/50 px-3 py-1.5 rounded-full border">
             <LayoutGrid className="h-3.5 w-3.5 text-purple-500" />
             <span className="text-xs font-bold">
-              {totalCardsCollected} Karten
+              {(totalCardsCollected as number)} Karten
             </span>
           </div>
         </div>
@@ -612,88 +484,62 @@ export function TeacherAlbum({
       ) : (
         <>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-            {displayedTeachers.map((teacher) => {
+            {displayedTeachers.map((teacher, idx) => {
               const teacherId = teacher.id || teacher.name
               const userData = userTeachers?.[teacher.id] || userTeachers?.[teacher.name]
               const isOwned = !!userData
-              const level = userData?.level || 1
-              const count = userData?.count || 0
-              
-              const nextCount = getNextLevelCount(level)
-              const prevCount = getPrevLevelCount(level)
-              const progress = isOwned ? ((count - prevCount) / (nextCount - prevCount)) * 100 : 0
-              const needed = nextCount - count
-
-              const isBlackShiny = (userData?.variants?.black_shiny_holo || 0) > 0
+              const cardData = mapToCardData(teacher, userData, idx)
 
               return (
-                <Card 
+                <div 
                   key={teacherId}
-                  onClick={() => isOwned && setSelectedTeacher(teacher)}
-                  className={cn(
-                    "relative overflow-hidden transition-all duration-300 group",
-                    !isOwned && "opacity-60 grayscale brightness-75",
-                    isOwned && "border-2 cursor-pointer hover:scale-[1.04] hover:shadow-xl",
-                    isOwned && isBlackShiny && "border-purple-500 bg-slate-950 shadow-2xl shadow-purple-500/20",
-                    isOwned && !isBlackShiny && teacher.rarity === 'legendary' && "border-amber-500/50 bg-amber-500/5 shadow-lg shadow-amber-500/10",
-                    isOwned && !isBlackShiny && teacher.rarity === 'mythic' && "border-red-500/50 bg-red-500/5 shadow-lg shadow-red-500/10",
-                    isOwned && !isBlackShiny && teacher.rarity === 'epic' && "border-purple-500/50 bg-purple-500/5 shadow-lg shadow-purple-500/10",
-                    isOwned && !isBlackShiny && teacher.rarity === 'rare' && "border-emerald-500/50 bg-emerald-500/5 shadow-lg shadow-emerald-500/10"
-                  )}
+                  className="flex flex-col items-center space-y-3"
                 >
-                  <CardHeader className="p-3 pb-0">
-                    <div className="flex justify-between items-start">
-                      <Badge variant="secondary" className={cn("text-[9px] px-1.5 h-4 font-black uppercase tracking-tighter", isOwned ? (isBlackShiny ? "bg-gradient-to-r from-purple-600 to-pink-600" : getRarityBadge(teacher.rarity)) : "bg-slate-500", "text-white")}>
-                        {isBlackShiny ? "Secret Rare" : getRarityLabel(teacher.rarity)}
-                      </Badge>
-                      {isOwned && (
-                        <div className="flex items-center gap-0.5 bg-black/80 text-white rounded-full px-1.5 py-0.5 text-[9px] font-bold">
-                          <Star className="h-2.5 w-2.5 text-amber-400 fill-amber-400" />
-                          Lvl {level}
-                        </div>
-                      )}
-                    </div>
-                  </CardHeader>
-                  <CardContent className="p-2.5 sm:p-3 pt-3 sm:pt-4 flex flex-col items-center text-center space-y-2.5 sm:space-y-3">
-                    <div className={cn(
-                      "w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center border-2 transition-transform group-hover:rotate-12",
-                      isOwned ? (isBlackShiny ? "bg-slate-900 border-purple-500/50 shadow-[0_0_15px_rgba(147,51,234,0.3)]" : "bg-background border-primary") : "bg-muted border-muted-foreground/20"
-                    )}>
-                      {isOwned ? (
-                        <GraduationCap className={cn("h-7 w-7 sm:w-8 sm:h-8", isBlackShiny ? "text-purple-400" : getRarityColor(teacher.rarity))} />
-                      ) : (
-                        <Lock className="h-5 w-5 sm:w-6 sm:h-6 text-muted-foreground/40" />
-                      )}
-                    </div>
-                    
-                    <div className="w-full">
-                      <h3 className="font-bold text-[10px] sm:text-xs leading-tight line-clamp-3 min-h-[2.75rem] flex items-center justify-center break-words hyphens-auto">
-                        {isOwned ? teacher.name : "???"}
-                      </h3>
-                      {isOwned && (
-                        <p className="text-[9px] sm:text-[10px] text-muted-foreground mt-1">
-                          {count}x gesammelt
-                        </p>
-                      )}
-                    </div>
-
-                    {isOwned && level < 10 && (
-                      <div className="w-full space-y-1.5 pt-0.5 sm:pt-1">
-                        <div className="flex justify-between text-[8px] sm:text-[9px] font-medium px-0.5">
-                          <span>Lvl {level}</span>
-                          <span className="text-muted-foreground">Noch {needed}</span>
-                        </div>
-                        <Progress value={progress} className="h-1" />
-                      </div>
+                  <div 
+                    onClick={() => isOwned && setSelectedTeacher(teacher)}
+                    className={cn(
+                      "relative transition-all duration-300 transform group",
+                      !isOwned && "opacity-40 grayscale cursor-not-allowed",
+                      isOwned && "cursor-pointer hover:scale-[1.05] hover:-rotate-1 active:scale-95"
                     )}
+                  >
+                    <TeacherCard 
+                      data={cardData}
+                      className="w-full scale-[0.6] sm:scale-[0.7] md:scale-[0.8] origin-top"
+                      styleVariant="modern-flat"
+                    />
                     
                     {!isOwned && (
-                      <div className="text-[9px] font-medium text-muted-foreground/60 italic pt-2">
-                        Noch nicht entdeckt
+                      <div className="absolute inset-0 flex items-center justify-center z-50">
+                        <Lock className="h-12 w-12 text-white/40 drop-shadow-lg" />
                       </div>
                     )}
-                  </CardContent>
-                </Card>
+                  </div>
+
+                  {isOwned && (
+                    <div className="w-full px-2 -mt-16 sm:-mt-12 md:-mt-8 relative z-10 text-center">
+                      <h3 className="font-black text-[10px] uppercase tracking-tighter line-clamp-1 opacity-80 mb-1">
+                        {teacher.name}
+                      </h3>
+                      <div className="flex items-center justify-center gap-2">
+                        <div className="bg-black/80 text-white rounded-full px-2 py-0.5 text-[8px] font-black border border-white/10">
+                          LVL {userData.level || 1}
+                        </div>
+                        <div className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest">
+                          {userData.count || 0}x
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {!isOwned && (
+                    <div className="w-full px-2 -mt-16 sm:-mt-12 md:-mt-8 relative z-10 text-center">
+                      <h3 className="font-black text-[10px] uppercase tracking-tighter line-clamp-1 opacity-20 italic">
+                        Unbekannt
+                      </h3>
+                    </div>
+                  )}
+                </div>
               )
             })}
           </div>

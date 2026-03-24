@@ -13,6 +13,8 @@ import { cn } from '@/lib/utils'
 import { useUserTeachers } from '@/hooks/useUserTeachers'
 import { TeacherAlbum } from '@/components/dashboard/TeacherAlbum'
 import { GiftNoticeBanner } from '@/components/dashboard/GiftNoticeBanner'
+import { TeacherCard } from '@/components/cards/TeacherCard'
+import { CardData, CardVariant as NewCardVariant } from '@/types/cards'
 import { useGiftNotices } from '@/hooks/useGiftNotices'
 import { logAction } from '@/lib/logging'
 import { toast } from 'sonner'
@@ -23,6 +25,32 @@ const DEFAULT_TEACHERS: LootTeacher[] = [
   { id: 'marie-curie', name: "Marie Curie", rarity: "mythic" },
   { id: 'albert-einstein', name: "Albert Einstein", rarity: "legendary" }
 ]
+
+const getRarityHex = (rarity: TeacherRarity) => {
+  switch (rarity) {
+    case 'common': return '#64748b'
+    case 'rare': return '#10b981'
+    case 'epic': return '#9333ea'
+    case 'mythic': return '#dc2626'
+    case 'legendary': return '#f59e0b'
+    default: return '#64748b'
+  }
+}
+
+const mapToCardData = (teacher: LootTeacher, variant: CardVariant | NewCardVariant, index: number): CardData => {
+  const newVariant: NewCardVariant = variant === 'black_shiny_holo' ? 'blckshiny' :
+                   (variant === 'shiny' ? 'shiny-v2' : 
+                   (variant === 'holo' ? 'holo' : 'normal'))
+  
+  return {
+    id: teacher.id || teacher.name,
+    name: teacher.name,
+    rarity: teacher.rarity,
+    variant: newVariant,
+    color: getRarityHex(teacher.rarity),
+    cardNumber: (index + 1).toString().padStart(3, '0'),
+  }
+}
 
 function SammelkartenContent() {
   const searchParams = useSearchParams()
@@ -331,13 +359,13 @@ function SammelkartenContent() {
                   {revealedTeachers.map((teacher, idx) => {
                     const isFlipped = flippedCards[idx]
                     const result = collectionResults?.[idx]
-                    const cardInfo = info(teacher.rarity, result?.variant)
+                    const cardData = mapToCardData(teacher, result?.variant || 'normal', idx)
                     
                     return (
                       <div 
                         key={`${teacher.id}-${idx}`}
                         className={cn(
-                          "perspective-1000 w-40 h-56 sm:w-48 sm:h-64 cursor-pointer relative transition-all duration-700 ease-out",
+                          "relative transition-all duration-700 ease-out",
                           isFlipped && result?.isNew && "animate-new-card-float z-10"
                         )}
                         style={{ 
@@ -348,116 +376,34 @@ function SammelkartenContent() {
                         }}
                         onClick={() => !isFlipped && handleFlipCard(idx)}
                       >
-                        <div className={cn(
-                          "relative w-full h-full transition-all duration-700 preserve-3d will-change-transform",
-                          isFlipped && !result?.isLevelUp && "rotate-y-180",
-                          isFlipped && result?.isLevelUp && "animate-level-up-spin"
-                        )}>
-                          {/* Minimalist Back of Card */}
-                          <div 
-                            className="absolute inset-0 backface-hidden rounded-2xl bg-slate-900 border-[6px] border-white/20 flex flex-col items-center justify-center shadow-xl overflow-hidden"
-                            style={{ transform: 'translateZ(1px)' }}
-                          >
-                             {/* Subtle Background Pattern/Glow */}
-                             <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.1)_0%,transparent_70%)]" />
-                             
-                             <div className="relative z-10 flex flex-col items-center">
-                               <div className="p-3 rounded-full bg-white/10 mb-3 shadow-[0_0_15px_rgba(255,255,255,0.1)]">
-                                 <GraduationCap className="h-10 w-10 sm:h-12 sm:w-12 text-white/50" />
-                               </div>
-                               <div className="text-white/60 font-black text-base sm:text-lg tracking-tighter italic text-center px-2 drop-shadow-sm">ABI PLANER</div>
-                               {!isFlipped && (
-                                 <div className="mt-4 animate-pulse text-[10px] text-white/50 font-black uppercase tracking-[0.2em]">Tippen zum Umdrehen</div>
-                               )}
-                             </div>
-                          </div>
-
-                          {/* Front of Card */}
-                          <div 
-                            className={cn(
-                              "absolute inset-0 backface-hidden rotate-y-180 rounded-2xl border-4 border-white flex flex-col items-center p-2 transition-all duration-500 shadow-xl overflow-hidden",
-                              cardInfo?.color,
-                              isFlipped && cardInfo?.glow
+                        <div className="flex flex-col items-center">
+                          {/* Badges for status */}
+                          <div className="h-12 flex flex-col items-center justify-center mb-2 z-30">
+                            {isFlipped && result && (
+                              <div className="flex flex-col items-center gap-1">
+                                {result.isNew ? (
+                                  <Badge className="bg-amber-500 border-2 border-white text-[9px] font-black px-1.5 shadow-lg animate-in zoom-in duration-500">NEW</Badge>
+                                ) : result.isLevelUp ? (
+                                  <Badge className="bg-purple-500 border-2 border-white text-[9px] font-black px-1.5 shadow-lg animate-in zoom-in duration-500">LEVEL UP</Badge>
+                                ) : (
+                                  <Badge className="bg-emerald-500 border-2 border-white text-[9px] font-black px-1.5 shadow-lg animate-in zoom-in duration-500">LVL {result.newLevel}</Badge>
+                                )}
+                              </div>
                             )}
-                            style={{ transform: 'rotateY(180deg) translateZ(1px)' }}
-                          >
-                             {/* Solid background to prevent bleed through */}
-                             <div className={cn("absolute inset-0 z-0 rounded-[inherit]", cardInfo?.color)} />
-
-                             {/* Special "NEW" card highlight */}
-                             {isFlipped && result?.isNew && (
-                               <div className="absolute inset-0 z-10 pointer-events-none overflow-hidden rounded-[inherit]">
-                                 <div 
-                                   className="absolute inset-[-50%] animate-pulse" 
-                                   style={{ background: `radial-gradient(circle, ${cardInfo?.highlight} 0%, transparent 70%)` }}
-                                 />
-                                 <div className="absolute top-0 left-0 w-full h-full bg-[linear-gradient(45deg,transparent_25%,rgba(255,255,255,0.3)_50%,transparent_75%)] bg-[length:250%_250%] animate-shimmer opacity-50" />
-                                 <div 
-                                   className="absolute inset-0 border-4 rounded-[inherit] animate-pulse" 
-                                   style={{ borderColor: cardInfo?.border }}
-                                 />
-                               </div>
-                             )}
-
-                             {/* Rarity Effects */}
-                             {isFlipped && (teacher.rarity === 'legendary' || teacher.rarity === 'mythic' || result?.variant === 'shiny' || result?.variant === 'holo') && (
-                               <div className="absolute inset-0 rounded-[inherit] overflow-hidden pointer-events-none z-10">
-                                 {result?.variant === 'shiny' && (
-                                   <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,215,0,0.4)_0%,transparent_70%)] animate-pulse" />
-                                 )}
-                                 {result?.variant === 'holo' && (
-                                   <div className="absolute inset-0 bg-[linear-gradient(45deg,transparent_25%,rgba(255,255,255,0.3)_50%,transparent_75%)] bg-[length:250%_250%] animate-shimmer opacity-80" />
-                                 )}
-                                 {(teacher.rarity === 'legendary' || teacher.rarity === 'mythic') && (
-                                   <div className="absolute inset-[-100%] bg-[linear-gradient(45deg,transparent_25%,rgba(255,255,255,0.4)_50%,transparent_75%)] bg-[length:250%_250%] animate-shimmer" />
-                                 )}
-                               </div>
-                             )}
-
-                            {/* Top Layout: Badges & Label */}
-                            <div className="w-full flex flex-col items-center gap-1 z-30 pt-1">
-                              {isFlipped && result && (
-                                <div className="flex flex-col items-center gap-1">
-                                  <div className="flex justify-center gap-1">
-                                    {result.isNew ? (
-                                      <Badge className="bg-amber-500 border-2 border-white text-[9px] font-black px-1.5 shadow-lg animate-in zoom-in duration-500">NEW</Badge>
-                                    ) : result.isLevelUp ? (
-                                      <Badge className="bg-purple-500 border-2 border-white text-[9px] font-black px-1.5 shadow-lg animate-in zoom-in duration-500">LEVEL UP</Badge>
-                                    ) : (
-                                      <Badge className="bg-emerald-500 border-2 border-white text-[9px] font-black px-1.5 shadow-lg animate-in zoom-in duration-500">LVL {result.newLevel}</Badge>
-                                    )}
-                                  </div>
-                                  {result.variant !== 'normal' && (
-                                    <Badge className={cn(
-                                      "text-[8px] font-black px-1.5 border border-white/20",
-                                      result.variant === 'shiny' ? "bg-gradient-to-r from-yellow-400 to-orange-500 text-white" : "bg-gradient-to-r from-blue-400 to-purple-500 text-white"
-                                    )}>
-                                      {result.variant === 'shiny' ? 'SHINY' : 'HOLO'}
-                                    </Badge>
-                                  )}
-                                </div>
-                              )}
-                              <div className="text-[7px] sm:text-[8px] font-black uppercase text-white/60 tracking-[0.2em] text-center drop-shadow-sm">
-                                {cardInfo?.label}
-                              </div>
-                            </div>
-
-                            {/* Middle (Icon): Flexible container */}
-                            <div className="flex-1 w-full min-h-0 flex items-center justify-center p-2 relative z-20">
-                              <div className="w-full h-full aspect-square max-h-[120px] rounded-xl bg-white/10 flex items-center justify-center shadow-inner border border-white/5">
-                                 <GraduationCap className="h-1/2 w-1/2 text-white drop-shadow-2xl opacity-90 relative z-10" />
-                              </div>
-                            </div>
-
-                            {/* Bottom Layout: Fixed name container growing upwards */}
-                            <div className="w-full mt-auto z-20">
-                              <div className="w-full bg-black/40 rounded-xl p-2 border border-white/10 flex flex-col-reverse">
-                                <div className="text-white font-bold text-[10px] sm:text-xs md:text-sm leading-tight text-center break-words hyphens-auto [text-wrap:balance]">
-                                  {teacher.name}
-                                </div>
-                              </div>
-                            </div>
                           </div>
+
+                          <TeacherCard 
+                            data={cardData}
+                            isFlippedExternally={isFlipped}
+                            className={cn(
+                              "w-44 h-[calc(44*3.5/2.5)] sm:w-56 sm:h-[calc(56*3.5/2.5)]",
+                              isFlipped && result?.isLevelUp && "animate-level-up-spin"
+                            )}
+                          />
+                          
+                          {!isFlipped && (
+                            <div className="mt-4 animate-pulse text-[10px] text-white/50 font-black uppercase tracking-[0.2em]">Tippen zum Umdrehen</div>
+                          )}
                         </div>
                       </div>
                     )

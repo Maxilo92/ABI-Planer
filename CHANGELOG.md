@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.23.00] - 2026-03-24
+- Feature: **Modern Card Redesign**. Komplettes visuelles Redesign der Lehrer-Sammelkarten mit neuen 3D-Effekten, Glasmorphismus und interaktiven Animationen.
+- Feature: **Rarity-Specific Designs**. Jede Seltenheitsstufe (Common bis Legendary) besitzt nun ein eigenes, einzigartiges Design-Pattern und Farbschema.
+- Feature: **Enhanced Card Variants**. Überarbeitete visuelle Overlays für Holo, Shiny-v2 und Secret Rare (Blckshiny) Varianten mit komplexen Shadern und Lichteffekten.
+- UI: **Responsive Card Layout**. Optimierte Darstellung der Karten im Lehrer-Album und beim Öffnen von Booster-Packs für Mobile und Desktop.
+- Refactor: **Card Component Architecture**. Einführung einer modularen `TeacherCard` Komponente mit dedizierten `RaritySymbol` und `CardEffectOverlay` Sub-Komponenten.
+- Dependency: **Framer Motion Integration**. Hinzufügen von `framer-motion` für flüssige 3D-Rotationen und interaktive Karten-Interaktionen.
+
 ## [0.22.15] - 2026-03-24
 - Fix: **Build Error: Duplicate `collectBooster`**. Behoben: Mehrfache Definition von `collectBooster` in `useUserTeachers.ts` wurde zusammengeführt.
 - Fix: **Missing `CardVariant` Imports**. Fehlende Typ-Importe in `useUserTeachers.ts` und `TeacherAlbum.tsx` wurden hinzugefügt.
