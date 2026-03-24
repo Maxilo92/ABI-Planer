@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.22.15] - 2026-03-24
+- Fix: **Build Error: Duplicate `collectBooster`**. Behoben: Mehrfache Definition von `collectBooster` in `useUserTeachers.ts` wurde zusammengeführt.
+- Fix: **Missing `CardVariant` Imports**. Fehlende Typ-Importe in `useUserTeachers.ts` und `TeacherAlbum.tsx` wurden hinzugefügt.
+- Logic: **`getRandomVariant` Implementation**. Die fehlende Hilfsfunktion zur Generierung von Karten-Varianten (Holo, Shiny, Secret Rare) wurde implementiert und in den Zieh-Prozess integriert.
+- Refactor: **Cleanup `useUserTeachers`**. Die ungenutzte und undefinierte `collectTeacher` Referenz wurde aus dem Hook-Return entfernt.
+
 ## [0.22.14] - 2026-03-24
 - Feature: **Card Progression & Rarity Overhaul**. Komplettes Rebalancing der Zieh-Wahrscheinlichkeiten für ein belohnenderes Langzeit-Erlebnis.
 - Feature: **Ultra Secret Variant (Black Shiny Holo)**. Einführung einer extrem seltenen Variante (1:1000 Packs) für einen geheimen Lehrer mit speziellen visuellen Effekten.
