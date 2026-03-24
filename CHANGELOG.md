@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.23.03] - 2026-03-24
+- UI: **Proportional Card Scaling**. Implementierung von Container-Query-Units (`cqw`), wodurch alle Kartenelemente (Icons, Schriften, Abstände) proportional zur Kartengröße skalieren. Die Karten sehen nun auf jeder Skalierung identisch aus.
+
 ## [0.23.02] - 2026-03-24
 - UI: **Static Card Numbers**. Die Karten-Nummer (z. B. "005") ist nun fest an die Position des Lehrers in der globalen Liste gekoppelt und dient als eindeutige Album-ID.
 

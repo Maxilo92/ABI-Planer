@@ -32,40 +32,46 @@ export const TeacherCard: React.FC<TeacherCardProps> = ({
       case 'modern-flat':
         return {
           card: cn(
-            "transition-all",
-            !isGlass && !isBlckShiny && "border-black shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] hover:shadow-[14px_14px_0px_0px_rgba(0,0,0,1)] border-[3px]",
-            isBlckShiny && "shadow-[0_0_20px_rgba(255,255,255,0.15)] border-white/20 border-[3px]",
-            isGlass && "shadow-[0_20px_50px_-12px_rgba(0,0,0,0.15)] ring-1 ring-white/90"
+            "transition-all [@container]:rounded-[10cqw]",
+            !isGlass && !isBlckShiny && "border-black shadow-[2cqw_2cqw_0px_0px_rgba(0,0,0,1)] hover:shadow-[3cqw_3cqw_0px_0px_rgba(0,0,0,1)] border-[0.8cqw]",
+            isBlckShiny && "shadow-[0_0_4cqw_rgba(255,255,255,0.15)] border-white/20 border-[0.8cqw]",
+            isGlass && "shadow-[0_4cqw_10cqw_-2cqw_rgba(0,0,0,0.15)] ring-[0.2cqw] ring-white/90"
           ),
-          icon: cn(
-            "bg-white border-[3px] border-black p-3.5 rounded-2xl -rotate-2 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]",
+          iconWrapper: cn(
+            "bg-white border-[0.8cqw] border-black rounded-[4cqw] -rotate-2 shadow-[1cqw_1cqw_0px_0px_rgba(0,0,0,1)] flex items-center justify-center [@container]:w-[35cqw] [@container]:h-[35cqw]",
             isBlckShiny && "bg-neutral-800 border-white/20 shadow-none",
             isGlass && "bg-white/40 border-white/30 backdrop-blur-md shadow-none"
           ),
+          headerIcon: "[@container]:w-[18cqw] [@container]:h-[18cqw]",
           header: (isBlckShiny || isGlass) ? "text-white" : "text-black",
           text: cn(
-            "font-sans uppercase font-black tracking-tighter text-4xl leading-[0.85]",
-            (isBlckShiny || isGlass) ? "text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.4)]" : "text-black"
+            "font-sans uppercase font-black tracking-tighter [@container]:text-[12cqw] leading-[0.85] break-words w-full",
+            (isBlckShiny || isGlass) ? "text-white drop-shadow-[0_0_2cqw_rgba(255,255,255,0.4)]" : "text-black"
           ),
-          border: "", // already handled in card
+          border: "", 
           bgOverlay: isBlckShiny ? "bg-neutral-950" : (isGlass ? "bg-transparent" : "bg-white/5"),
           numberTag: cn(
-            "px-2 py-0.5 text-[9px] font-black rounded-xs transform rotate-1",
+            "[@container]:px-[2cqw] [@container]:py-[0.5cqw] [@container]:text-[3.5cqw] font-black rounded-[0.5cqw] transform rotate-1 border-[0.3cqw] border-black shadow-[0.5cqw_0.5cqw_0px_0px_rgba(0,0,0,1)]",
             (isBlckShiny || isGlass) ? "bg-white text-black" : "bg-black text-white"
           ),
-          numberPos: "bottom-7 left-7",
+          numberPos: "bottom-[8cqw] left-[8cqw]",
+          rarityPos: "bottom-[8cqw] right-[8cqw]",
+          raritySize: "14cqw"
         };
       
       default:
         return {
-          card: "border-white/40 shadow-2xl backdrop-blur-xl border-8",
-          icon: "bg-white/30 p-5 rounded-full",
+          card: "border-white/40 shadow-2xl backdrop-blur-xl border-[2cqw] [@container]:rounded-[10cqw]",
+          iconWrapper: "bg-white/30 rounded-full [@container]:w-[35cqw] [@container]:h-[35cqw] flex items-center justify-center",
+          headerIcon: "[@container]:w-[18cqw] [@container]:h-[18cqw]",
           header: "text-white",
-          text: "text-white font-sans font-black",
-          border: "border-8",
+          text: "text-white font-sans font-black [@container]:text-[12cqw]",
+          border: "border-[2cqw]",
           bgOverlay: "bg-white/10",
-          numberTag: "bg-white/20 text-white px-2 py-0.5 text-[8px] font-black rounded-full",
-          numberPos: "top-7 right-7",
+          numberTag: "bg-white/20 text-white [@container]:px-[2cqw] [@container]:py-[0.5cqw] [@container]:text-[3cqw] font-black rounded-full",
+          numberPos: "top-[8cqw] right-[8cqw]",
+          rarityPos: "bottom-[8cqw] right-[8cqw]",
+          raritySize: "14cqw"
         };
     }
   };
@@ -74,7 +80,7 @@ export const TeacherCard: React.FC<TeacherCardProps> = ({
 
   return (
     <div 
-      className={cn("relative aspect-[2.5/3.5] cursor-pointer perspective-1000", className)}
+      className={cn("relative aspect-[2.5/3.5] cursor-pointer perspective-1000 @container", className)}
       onClick={() => setIsFlippedInternally(!isFlippedInternally)}
     >
       <motion.div
@@ -83,30 +89,29 @@ export const TeacherCard: React.FC<TeacherCardProps> = ({
         style={{ transformStyle: "preserve-3d" }}
         className="w-full h-full relative will-change-transform"
       >
-        {/* BACK SIDE (Shown when isFlipped is false) */}
+        {/* BACK SIDE */}
         <div 
           className={cn(
-            "absolute inset-0 backface-hidden rounded-3xl p-8 flex flex-col items-center justify-center overflow-hidden rotate-y-180",
-            isGlass ? styleClasses.card : "border-8 border-white/20 bg-neutral-950"
+            "absolute inset-0 backface-hidden p-[8cqw] flex flex-col items-center justify-center overflow-hidden rotate-y-180",
+            isGlass ? styleClasses.card : "border-[2cqw] border-white/20 bg-neutral-950 rounded-[10cqw]"
           )}
           style={isGlass ? { backgroundColor: `${data.color}99` } : undefined}
         >
           {isGlass && <CardEffectOverlay variant={data.variant} tintColor={data.color} />}
           
           <div className="relative z-10 flex flex-col items-center">
-            <Zap size={56} className="text-white mb-4" />
-            <div className="text-white font-black tracking-[0.3em] text-sm uppercase opacity-80">
+            <Zap className="text-white mb-[4cqw] [@container]:w-[20cqw] [@container]:h-[20cqw]" />
+            <div className="text-white font-black tracking-[0.3em] [@container]:text-[4cqw] uppercase opacity-80">
                ABI Planer
             </div>
           </div>
         </div>
 
-        {/* FRONT SIDE (Shown when isFlipped is true) */}
+        {/* FRONT SIDE */}
         <div 
           className={cn(
-            "absolute inset-0 backface-hidden rounded-3xl p-7 flex flex-col items-center overflow-hidden transition-all duration-300",
-            styleClasses.card,
-            styleClasses.border
+            "absolute inset-0 backface-hidden p-[7cqw] flex flex-col items-center overflow-hidden transition-all duration-300",
+            styleClasses.card
           )}
           style={{ 
             backgroundColor: isBlckShiny ? '#0a0a0a' : (isGlass ? `${data.color}99` : data.color) 
@@ -116,11 +121,11 @@ export const TeacherCard: React.FC<TeacherCardProps> = ({
 
           <div className={cn("absolute inset-0 pointer-events-none", styleClasses.bgOverlay)} />
           
-          <div className={cn("relative z-30 mb-4", styleClasses.icon)}>
-            <GraduationCap size={44} className={styleClasses.header} />
+          <div className={cn("relative z-30 mb-[4cqw] mt-[4cqw]", styleClasses.iconWrapper)}>
+            <GraduationCap className={cn(styleClasses.header, styleClasses.headerIcon)} />
           </div>
 
-          <div className="flex-1 flex flex-col items-center justify-center text-center relative z-30 w-full px-2">
+          <div className="flex-1 flex flex-col items-center justify-center text-center relative z-30 w-full px-[2cqw]">
             <h2 className={cn("drop-shadow-sm", styleClasses.text)}>
               {data.name}
             </h2>
@@ -132,11 +137,12 @@ export const TeacherCard: React.FC<TeacherCardProps> = ({
             </div>
           </div>
 
-          <div className="absolute bottom-7 right-7 z-30">
+          <div className={cn("absolute z-30", styleClasses.rarityPos)}>
             <RaritySymbol 
               rarity={data.rarity} 
               variant={data.variant}
-              size={36} 
+              size={0} // Controlled by className in RaritySymbol now
+              className={cn("[@container]:w-[14cqw] [@container]:h-[14cqw]")}
               color={isBlckShiny ? 'white' : (styleVariant === 'modern-flat' ? 'black' : 'white')} 
             />
           </div>

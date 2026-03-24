@@ -378,7 +378,7 @@ function SammelkartenContent() {
                         }}
                         onClick={() => !isFlipped && handleFlipCard(idx)}
                       >
-                        <div className="relative w-40 sm:w-56">
+                        <div className="relative w-48 sm:w-64 aspect-[2.5/3.5]">
                           {/* Floating Status Badge (shown after flip) */}
                           {isFlipped && result && (
                             <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-40 animate-in zoom-in duration-500">

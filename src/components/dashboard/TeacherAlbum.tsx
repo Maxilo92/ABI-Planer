@@ -495,12 +495,12 @@ export function TeacherAlbum({
               return (
                 <div 
                   key={teacherId}
-                  className="flex flex-col items-center"
+                  className="flex flex-col items-center w-full max-w-[200px] mx-auto"
                 >
                   <div 
                     onClick={() => isOwned && setSelectedTeacher(teacher)}
                     className={cn(
-                      "relative transition-all duration-300 transform group w-full",
+                      "relative transition-all duration-300 transform group w-full aspect-[2.5/3.5]",
                       !isOwned && "opacity-40 grayscale cursor-not-allowed",
                       isOwned && "cursor-pointer hover:scale-[1.05] hover:-rotate-1 active:scale-95"
                     )}

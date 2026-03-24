@@ -7,17 +7,18 @@ interface RaritySymbolProps {
   variant?: CardVariant;
   color?: string;
   size?: number;
+  className?: string;
 }
 
 export const RaritySymbol: React.FC<RaritySymbolProps> = ({ 
   rarity, 
   variant = 'normal',
   color = "white",
-  size = 32
+  size = 32,
+  className
 }) => {
   const renderShape = () => {
     const isHolo = variant === 'holo';
-    const isShiny = variant?.includes('shiny');
     const isBlck = variant === 'blckshiny';
 
     const commonProps = {
@@ -55,12 +56,12 @@ export const RaritySymbol: React.FC<RaritySymbolProps> = ({
   };
 
   return (
-    <div className="flex items-center justify-center">
+    <div className={cn("flex items-center justify-center", className)}>
       <svg 
         viewBox="0 0 100 100" 
-        style={{ width: size, height: size }}
+        style={size > 0 ? { width: size, height: size } : undefined}
         className={cn(
-          "drop-shadow-[0_2px_4px_rgba(0,0,0,0.4)]",
+          "w-full h-full drop-shadow-[0_2px_4px_rgba(0,0,0,0.4)]",
           variant?.includes('shiny') && "drop-shadow-[0_0_12px_rgba(255,255,255,0.9)]" // Aura Glow
         )}
       >
