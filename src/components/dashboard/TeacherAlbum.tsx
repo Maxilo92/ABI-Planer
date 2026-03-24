@@ -483,7 +483,7 @@ export function TeacherAlbum({
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4 md:gap-6">
             {displayedTeachers.map((teacher, idx) => {
               const teacherId = teacher.id || teacher.name
               const userData = userTeachers?.[teacher.id] || userTeachers?.[teacher.name]
@@ -493,50 +493,40 @@ export function TeacherAlbum({
               return (
                 <div 
                   key={teacherId}
-                  className="flex flex-col items-center space-y-3"
+                  className="flex flex-col items-center"
                 >
                   <div 
                     onClick={() => isOwned && setSelectedTeacher(teacher)}
                     className={cn(
-                      "relative transition-all duration-300 transform group",
+                      "relative transition-all duration-300 transform group w-full",
                       !isOwned && "opacity-40 grayscale cursor-not-allowed",
                       isOwned && "cursor-pointer hover:scale-[1.05] hover:-rotate-1 active:scale-95"
                     )}
                   >
                     <TeacherCard 
                       data={cardData}
-                      className="w-full scale-[0.6] sm:scale-[0.7] md:scale-[0.8] origin-top"
+                      className="w-full h-auto"
                       styleVariant="modern-flat"
+                      isFlippedExternally={isOwned}
                     />
                     
                     {!isOwned && (
                       <div className="absolute inset-0 flex items-center justify-center z-50">
-                        <Lock className="h-12 w-12 text-white/40 drop-shadow-lg" />
+                        <Lock className="h-10 w-10 text-white/40 drop-shadow-lg" />
                       </div>
                     )}
                   </div>
 
                   {isOwned && (
-                    <div className="w-full px-2 -mt-16 sm:-mt-12 md:-mt-8 relative z-10 text-center">
-                      <h3 className="font-black text-[10px] uppercase tracking-tighter line-clamp-1 opacity-80 mb-1">
+                    <div className="w-full mt-2 text-center">
+                      <h3 className="font-black text-[9px] sm:text-[10px] uppercase tracking-tighter line-clamp-1 opacity-80">
                         {teacher.name}
                       </h3>
-                      <div className="flex items-center justify-center gap-2">
-                        <div className="bg-black/80 text-white rounded-full px-2 py-0.5 text-[8px] font-black border border-white/10">
+                      <div className="flex items-center justify-center gap-1.5 mt-1">
+                        <div className="bg-black text-white rounded-full px-1.5 py-0 text-[8px] font-black border border-white/10">
                           LVL {userData.level || 1}
                         </div>
-                        <div className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest">
-                          {userData.count || 0}x
-                        </div>
                       </div>
-                    </div>
-                  )}
-                  
-                  {!isOwned && (
-                    <div className="w-full px-2 -mt-16 sm:-mt-12 md:-mt-8 relative z-10 text-center">
-                      <h3 className="font-black text-[10px] uppercase tracking-tighter line-clamp-1 opacity-20 italic">
-                        Unbekannt
-                      </h3>
                     </div>
                   )}
                 </div>

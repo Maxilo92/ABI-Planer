@@ -365,46 +365,44 @@ function SammelkartenContent() {
                       <div 
                         key={`${teacher.id}-${idx}`}
                         className={cn(
-                          "relative transition-all duration-700 ease-out",
+                          "relative transition-all duration-700 ease-out flex flex-col items-center",
                           isFlipped && result?.isNew && "animate-new-card-float z-10"
                         )}
                         style={{ 
                           transform: gameState === 'ripping' 
-                            ? `translate(${idx === 0 ? '120px' : idx === 2 ? '-120px' : '0'}, 0) rotate(${idx === 0 ? '-5deg' : idx === 2 ? '5deg' : '0'})` 
+                            ? `translate(${idx === 0 ? '80px' : idx === 2 ? '-80px' : '0'}, 0) rotate(${idx === 0 ? '-5deg' : idx === 2 ? '5deg' : '0'})` 
                             : 'translate(0, 0) rotate(0deg)',
                           zIndex: gameState === 'ripping' ? 10 : 20
                         }}
                         onClick={() => !isFlipped && handleFlipCard(idx)}
                       >
-                        <div className="flex flex-col items-center">
-                          {/* Badges for status */}
-                          <div className="h-12 flex flex-col items-center justify-center mb-2 z-30">
-                            {isFlipped && result && (
-                              <div className="flex flex-col items-center gap-1">
-                                {result.isNew ? (
-                                  <Badge className="bg-amber-500 border-2 border-white text-[9px] font-black px-1.5 shadow-lg animate-in zoom-in duration-500">NEW</Badge>
-                                ) : result.isLevelUp ? (
-                                  <Badge className="bg-purple-500 border-2 border-white text-[9px] font-black px-1.5 shadow-lg animate-in zoom-in duration-500">LEVEL UP</Badge>
-                                ) : (
-                                  <Badge className="bg-emerald-500 border-2 border-white text-[9px] font-black px-1.5 shadow-lg animate-in zoom-in duration-500">LVL {result.newLevel}</Badge>
-                                )}
-                              </div>
-                            )}
-                          </div>
+                        <div className="relative w-40 sm:w-56">
+                          {/* Floating Status Badge (shown after flip) */}
+                          {isFlipped && result && (
+                            <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-40 animate-in zoom-in duration-500">
+                              {result.isNew ? (
+                                <Badge className="bg-amber-500 border-2 border-white text-[10px] font-black px-2 py-0 shadow-xl whitespace-nowrap uppercase">NEW</Badge>
+                              ) : result.isLevelUp ? (
+                                <Badge className="bg-purple-500 border-2 border-white text-[10px] font-black px-2 py-0 shadow-xl whitespace-nowrap uppercase">LEVEL UP</Badge>
+                              ) : (
+                                <Badge className="bg-emerald-500 border-2 border-white text-[10px] font-black px-2 py-0 shadow-xl whitespace-nowrap uppercase">LVL {result.newLevel}</Badge>
+                              )}
+                            </div>
+                          )}
 
                           <TeacherCard 
                             data={cardData}
                             isFlippedExternally={isFlipped}
                             className={cn(
-                              "w-44 h-[calc(44*3.5/2.5)] sm:w-56 sm:h-[calc(56*3.5/2.5)]",
+                              "w-full h-auto",
                               isFlipped && result?.isLevelUp && "animate-level-up-spin"
                             )}
                           />
-                          
-                          {!isFlipped && (
-                            <div className="mt-4 animate-pulse text-[10px] text-white/50 font-black uppercase tracking-[0.2em]">Tippen zum Umdrehen</div>
-                          )}
                         </div>
+                        
+                        {!isFlipped && (
+                          <div className="mt-4 animate-pulse text-[10px] text-white/50 font-black uppercase tracking-[0.2em]">Tippen zum Umdrehen</div>
+                        )}
                       </div>
                     )
                   })}

@@ -74,19 +74,37 @@ export const TeacherCard: React.FC<TeacherCardProps> = ({
 
   return (
     <div 
-      className={cn("relative w-64 aspect-[2.5/3.5] cursor-pointer perspective-1000", className)}
+      className={cn("relative aspect-[2.5/3.5] cursor-pointer perspective-1000", className)}
       onClick={() => setIsFlippedInternally(!isFlippedInternally)}
     >
       <motion.div
-        animate={{ rotateY: isFlipped ? 180 : 0 }}
+        animate={{ rotateY: isFlipped ? 0 : 180 }}
         transition={{ duration: 0.6 }}
         style={{ transformStyle: "preserve-3d" }}
         className="w-full h-full relative will-change-transform"
       >
-        {/* FRONT SIDE */}
+        {/* BACK SIDE (Shown when isFlipped is false) */}
         <div 
           className={cn(
-            "absolute inset-0 backface-hidden rounded-[2.5rem] p-7 flex flex-col items-center overflow-hidden transition-all duration-300",
+            "absolute inset-0 backface-hidden rounded-3xl p-8 flex flex-col items-center justify-center overflow-hidden rotate-y-180",
+            isGlass ? styleClasses.card : "border-8 border-white/20 bg-neutral-950"
+          )}
+          style={isGlass ? { backgroundColor: `${data.color}99` } : undefined}
+        >
+          {isGlass && <CardEffectOverlay variant={data.variant} tintColor={data.color} />}
+          
+          <div className="relative z-10 flex flex-col items-center">
+            <Zap size={56} className="text-white mb-4" />
+            <div className="text-white font-black tracking-[0.3em] text-sm uppercase opacity-80">
+               ABI Planer
+            </div>
+          </div>
+        </div>
+
+        {/* FRONT SIDE (Shown when isFlipped is true) */}
+        <div 
+          className={cn(
+            "absolute inset-0 backface-hidden rounded-3xl p-7 flex flex-col items-center overflow-hidden transition-all duration-300",
             styleClasses.card,
             styleClasses.border
           )}
@@ -121,24 +139,6 @@ export const TeacherCard: React.FC<TeacherCardProps> = ({
               size={36} 
               color={isBlckShiny ? 'white' : (styleVariant === 'modern-flat' ? 'black' : 'white')} 
             />
-          </div>
-        </div>
-
-        {/* BACK SIDE */}
-        <div 
-          className={cn(
-            "absolute inset-0 backface-hidden rounded-[2.5rem] p-8 flex flex-col items-center justify-center overflow-hidden rotate-y-180",
-            isGlass ? styleClasses.card : "border-8 border-white/20 bg-neutral-950"
-          )}
-          style={isGlass ? { backgroundColor: `${data.color}99` } : undefined}
-        >
-          {isGlass && <CardEffectOverlay variant={data.variant} tintColor={data.color} />}
-          
-          <div className="relative z-10 flex flex-col items-center">
-            <Zap size={56} className="text-white mb-4" />
-            <div className="text-white font-black tracking-[0.3em] text-sm uppercase opacity-80">
-               ABI Planer
-            </div>
           </div>
         </div>
       </motion.div>

@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.23.01] - 2026-03-24
+- UI: **Mobile Optimization for Cards**. Karten-Sizing und Border-Radius wurden für Mobile optimiert, um das "Pillen"-Aussehen zu beheben.
+- UI: **Card Draw Logic**. Karten werden nun standardmäßig mit der Rückseite zuerst angezeigt und erst beim Umdrehen enthüllt.
+- UI: **Label Cleanup**. Redundante Varianten-Labels wurden entfernt; Status-Badges (NEW/LEVEL UP) werden jetzt subtiler und nur nach dem Umdrehen angezeigt.
+
 ## [0.23.00] - 2026-03-24
 - Feature: **Modern Card Redesign**. Komplettes visuelles Redesign der Lehrer-Sammelkarten mit neuen 3D-Effekten, Glasmorphismus und interaktiven Animationen.
 - Feature: **Rarity-Specific Designs**. Jede Seltenheitsstufe (Common bis Legendary) besitzt nun ein eigenes, einzigartiges Design-Pattern und Farbschema.
