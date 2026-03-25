@@ -535,7 +535,6 @@ function SammelkartenContent() {
                               upgradeInfo={isFlipped && result?.isLevelUp ? { oldLevel: result.oldLevel!, newLevel: result.newLevel } : undefined}
                               className="w-full h-auto"
                             />
-                            />
                           </div>
                           
                           {isFlipped && showDebug && packProbs && (

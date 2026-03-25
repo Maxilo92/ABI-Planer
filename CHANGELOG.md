@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.26.24] - 2026-03-25
+- Fix: **Build-Fehler behoben**. Ein doppelter schließender Tag (`/>`) in der `sammelkarten`-Seite, der zu einem Parsing-Fehler im Build-Prozess führte, wurde entfernt.
+
 ## [0.26.23] - 2026-03-25
 - Fix: **Stabiles Karten-Reveal beim Booster-Opening**. Ein Fehler wurde behoben, durch den aufgedeckte Karten in der Booster-Ansicht wieder verdeckt werden konnten, was das Erscheinen der Navigations-Buttons verhinderte. Karten bleiben nun nach dem ersten Klick permanent aufgedeckt, was für einen zuverlässigen und klaren Ablauf sorgt.
 
