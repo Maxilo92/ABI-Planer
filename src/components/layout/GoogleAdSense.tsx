@@ -3,10 +3,10 @@
 import { useAuth } from '@/context/AuthContext'
 
 export function GoogleAdSense() {
-  const { user, loading } = useAuth()
+  const { user } = useAuth()
 
-  // Only show ads if user is NOT logged in and loading is finished
-  if (loading || user) {
+  // Only hide ads if user is definitively logged in
+  if (user) {
     return null
   }
 

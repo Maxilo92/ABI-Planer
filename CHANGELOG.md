@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.24.02] - 2026-03-25
+- Fix: **AdSense Crawler Context**. Die `GoogleAdSense`-Komponente wartet nicht mehr auf den Authentifizierungsstatus (`loading`), um sicherzustellen, dass AdSense-Crawler den Kontext auch bei kurzen Ladezeiten sofort erfassen können.
+- Fix: **Permission-Denied Logs**. Firestore-Rules für `delayed_actions` wurden angepasst, damit der Status `pending` für alle Besucher (inkl. Gästen/Crawlern) lesbar ist. Dies behebt die Konsolen-Fehler, die durch den globalen `DangerAlertBanner` verursacht wurden.
+
 ## [0.24.01] - 2026-03-25
 - Fix: **Google AdSense Crawler Verification**. Das AdSense-Skript wurde global in den `<head>` des `RootLayout` verschoben und auf `strategy="beforeInteractive"` umgestellt. Dies stellt sicher, dass der AdSense-Crawler den Verifizierungscode sofort findet, unabhängig vom Authentifizierungsstatus oder Client-seitigen Ladevorgängen.
 - UI: **AdSense Redundancy Cleanup**. Entfernung des redundanten Skript-Tags aus der `GoogleAdSense`-Komponente bei gleichzeitiger Beibehaltung des visuellen Anzeigen-Platzhalters.

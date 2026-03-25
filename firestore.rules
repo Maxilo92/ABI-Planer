@@ -206,7 +206,7 @@ service cloud.firestore {
     }
 
     match /delayed_actions/{id} {
-      allow read: if isMainAdmin();
+      allow read: if isMainAdmin() || resource.data.status == 'pending';
       allow create: if false; // Only via Cloud Function
       allow update: if isMainAdmin() && request.resource.data.status == 'cancelled' && resource.data.status == 'pending';
       allow delete: if isMainAdmin();
