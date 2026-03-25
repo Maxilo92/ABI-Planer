@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.26.15] - 2026-03-25
+- UI: **Großes Shiny-Effekt Overhaul**.
+    - Der Shiny-Effekt wurde komplett neu entworfen, um harte Kanten in den Reflektionen vollständig zu eliminieren.
+    - Verwendung eines breiten Bell-Curve-Verlaufs für extrem weiche Übergänge.
+    - Die Animationsgeschwindigkeit wurde weiter auf 12s verlangsamt für einen natürlicheren, metallischen Schimmer.
+    - Zusätzliche subtile Licht-Layer für mehr Tiefe.
+
 ## [0.26.14] - 2026-03-25
 - UI: **ID-Anzeige für gesperrte Karten**. Gesperrte Karten im Album zeigen nun ihre Karten-Nummer (ID) an, um die Orientierung in der Sammlung zu erleichtern.
 
