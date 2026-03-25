@@ -69,15 +69,23 @@ function SammelkartenContent() {
   const searchParams = useSearchParams()
   const view = searchParams.get('view') || 'sammelkarten'
   const { user, profile, loading } = useAuth()
-  const { collectBooster, teachers: userTeachers, getRemainingBoosters } = useUserTeachers()
+  const { collectBooster, collectMassBoosters, teachers: userTeachers, getRemainingBoosters } = useUserTeachers()
   const [config, setConfig] = useState<SammelkartenConfig | null>(null)
   const [gameState, setGameState] = useState<'idle' | 'ripping' | 'revealed'>('idle')
+  const [isMassOpening, setIsMassOpening] = useState(false)
+  
+  // Single Pack Results
   const [revealedTeachers, setRevealedTeachers] = useState<LootTeacher[] | null>(null)
   const [collectionResults, setCollectionResults] = useState<Array<{ isNew: boolean, isLevelUp: boolean, oldLevel?: number, newLevel: number, count: number, variant: CardVariant } | null> | null>(null)
+  
+  // Mass Opening Results (10 Packs)
+  const [massRevealedTeachers, setMassRevealedTeachers] = useState<Array<{ teachers: LootTeacher[], isGodpack: boolean }> | null>(null)
+  const [massCollectionResults, setMassCollectionResults] = useState<Array<Array<{ isNew: boolean, isLevelUp: boolean, oldLevel?: number, newLevel: number, count: number, variant: CardVariant } | null>> | null>(null)
   const [flippedCards, setFlippedCards] = useState<boolean[]>([false, false, false])
   const [isGodpack, setIsGodpack] = useState(false)
   const [isAnimating, setIsAnimating] = useState(false)
   const [timeLeft, setTimeLeft] = useState<string>('')
+  const [showDebug, setShowDebug] = useState(false)
   const { giftNotices, totalGiftPacks, dismissGiftNotices } = useGiftNotices(user?.uid)
 
   useEffect(() => {
@@ -180,6 +188,86 @@ function SammelkartenContent() {
     })
   }
 
+  const handleOpenTenPacks = async () => {
+    if (getRemainingBoosters() < 10) {
+      toast.error('Du brauchst mindestens 10 Booster für diese Aktion!')
+      return
+    }
+
+    setGameState('ripping')
+    setIsAnimating(true)
+    setIsMassOpening(true)
+    setRevealedTeachers(null)
+    setCollectionResults(null)
+    setMassRevealedTeachers(null)
+    setMassCollectionResults(null)
+
+    const godpackChance = config?.global_limits?.godpack_chance ?? 0.005
+    const packsData = Array.from({ length: 10 }).map(() => {
+      const godpack = Math.random() < godpackChance
+      return {
+        isGodpack: godpack,
+        teachers: generatePack(godpack)
+      }
+    })
+
+    try {
+      const initialTeachers = { ...userTeachers }
+      const massPacks = packsData.map(p => ({
+        teacherIds: p.teachers.map(t => t.id || t.name),
+        isGodpack: p.isGodpack
+      }))
+
+      const allResults = await collectMassBoosters(massPacks)
+      
+      const processedMassResults = allResults.map((packResults) => {
+        return packResults.map(r => {
+          const isNew = !initialTeachers[r.teacherId]
+          const oldLevel = initialTeachers[r.teacherId]?.level || 1
+          const isLevelUp = !isNew && r.level > oldLevel
+          
+          initialTeachers[r.teacherId] = { 
+            count: r.count, 
+            level: r.level,
+            variants: {
+              ...initialTeachers[r.teacherId]?.variants,
+              [r.variant]: (initialTeachers[r.teacherId]?.variants?.[r.variant] || 0) + 1
+            }
+          }
+          return {
+            isNew,
+            isLevelUp,
+            oldLevel,
+            newLevel: r.level,
+            count: r.count,
+            variant: r.variant
+          }
+        })
+      })
+
+      setTimeout(() => {
+        setMassRevealedTeachers(packsData)
+        setMassCollectionResults(processedMassResults)
+        
+        if (user) {
+          logAction('LOOT_MASS_BOOSTER', user.uid, profile?.full_name, { 
+            packsCount: 10,
+            isAnyGodpack: packsData.some(p => p.isGodpack)
+          })
+        }
+      }, 300)
+
+      setTimeout(() => {
+        setGameState('revealed')
+        setIsAnimating(false)
+      }, 700)
+    } catch (err: any) {
+      toast.error(err.message || 'Fehler beim Öffnen der 10 Packs.')
+      setGameState('idle')
+      setIsMassOpening(false)
+    }
+  }
+
   const handleOpenPack = async () => {
     if (getRemainingBoosters() <= 0) {
       toast.error('Limit erreicht! Komm morgen wieder.')
@@ -188,9 +276,12 @@ function SammelkartenContent() {
 
     setGameState('ripping')
     setIsAnimating(true)
+    setIsMassOpening(false)
     setFlippedCards([false, false, false])
     setRevealedTeachers(null)
     setCollectionResults(null)
+    setMassRevealedTeachers(null)
+    setMassCollectionResults(null)
 
     const godpackChance = config?.global_limits?.godpack_chance ?? 0.005
     const godpack = Math.random() < godpackChance
@@ -267,6 +358,28 @@ function SammelkartenContent() {
 
   const allFlipped = flippedCards.every(v => v === true)
 
+  const getPackProbabilities = () => {
+    if (!revealedTeachers || !config) return null;
+    
+    const godpackChance = config.global_limits?.godpack_chance ?? 0.005;
+    const weights = isGodpack ? (config.godpack_weights || DEFAULT_GODPACK_WEIGHTS) : (config.rarity_weights || DEFAULT_RARITY_WEIGHTS);
+    
+    const cardChances = revealedTeachers.map((t, i) => {
+      const slotWeights = weights[i] as any;
+      return slotWeights[t.rarity] || 0;
+    });
+
+    const combinedCardChance = cardChances.reduce((acc, curr) => acc * curr, 1);
+    const wholePackChance = (isGodpack ? godpackChance : (1 - godpackChance)) * combinedCardChance;
+
+    return {
+      cardChances,
+      wholePackChance
+    };
+  };
+
+  const packProbs = getPackProbabilities();
+
   return (
     <div className="container mx-auto py-8">
       {giftNotices.length > 0 && (
@@ -291,10 +404,22 @@ function SammelkartenContent() {
               "text-center space-y-2 transition-all duration-700",
               gameState === 'revealed' ? "opacity-100 scale-105" : "opacity-40"
             )}>
-              <h1 className="text-3xl font-black tracking-tighter font-mono flex items-center gap-3 justify-center">
-                <Sparkles className={cn("h-7 w-7", gameState === 'revealed' ? "text-primary animate-pulse" : "text-muted-foreground")} />
-                SAMMELKARTEN
-              </h1>
+              <div className="flex items-center justify-center gap-2 relative">
+                <h1 className="text-3xl font-black tracking-tighter font-mono flex items-center gap-3 justify-center">
+                  <Sparkles className={cn("h-7 w-7", gameState === 'revealed' ? "text-primary animate-pulse" : "text-muted-foreground")} />
+                  SAMMELKARTEN
+                </h1>
+                <button 
+                  onClick={() => setShowDebug(!showDebug)}
+                  className={cn(
+                    "p-1.5 rounded-full transition-all hover:bg-muted",
+                    showDebug ? "text-amber-500 bg-amber-500/10" : "text-muted-foreground/30"
+                  )}
+                  title="Debug-Informationen"
+                >
+                  <Star className="h-4 w-4" />
+                </button>
+              </div>
               {(gameState === 'idle' || gameState === 'revealed') && (
                 <div className="flex flex-col items-center gap-2 mt-2">
                   <div className="flex items-center justify-center gap-2">
@@ -326,9 +451,9 @@ function SammelkartenContent() {
             {/* The Pack/Card Container */}
             <div className="relative w-full min-h-[400px] flex items-center justify-center overflow-visible">
               
-              {/* Revealed Cards (Rendered behind the pack during ripping) */}
+              {/* Revealed Cards (Single Pack) */}
               <AnimatePresence mode="wait">
-                {(gameState === 'ripping' || gameState === 'revealed') && revealedTeachers && (
+                {(gameState === 'ripping' || gameState === 'revealed') && !isMassOpening && revealedTeachers && (
                   <motion.div 
                     key={revealedTeachers.map(t => t.id || t.name).join('-')}
                     initial="hidden"
@@ -350,7 +475,7 @@ function SammelkartenContent() {
                               opacity: 0, 
                               scale: 0.5,
                               rotate: idx === 0 ? -15 : idx === 2 ? 15 : 0,
-                              x: idx === 0 ? 100 : idx === 2 ? -100 : 0
+                              x: idx === 0 ? -60 : idx === 2 ? 60 : 0
                             },
                             visible: { 
                               y: 0, 
@@ -385,7 +510,7 @@ function SammelkartenContent() {
                             </div>
                           )}
 
-                          <div className="relative w-full aspect-[2.5/3.5] sm:w-64">
+                          <div className="relative w-full aspect-[2.5/3.5] sm:w-52 md:w-64">
                             {/* Floating Status Badge (shown after flip) */}
                             {isFlipped && result && (
                               <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-40 animate-in zoom-in duration-500">
@@ -406,11 +531,18 @@ function SammelkartenContent() {
                             <TeacherCard 
                               data={cardData}
                               isFlippedExternally={isFlipped}
+                              interactive={!isFlipped}
                               upgradeInfo={isFlipped && result?.isLevelUp ? { oldLevel: result.oldLevel!, newLevel: result.newLevel } : undefined}
                               className="w-full h-auto"
                             />
                           </div>
                           
+                          {isFlipped && showDebug && packProbs && (
+                            <div className="mt-2 bg-black/80 text-[8px] font-mono p-1 rounded border border-white/10 text-amber-200 animate-in fade-in duration-500">
+                              Chance: {(packProbs.cardChances[idx] * 100).toFixed(3)}%
+                            </div>
+                          )}
+
                           {!isFlipped && (
                             <div className="mt-4 animate-pulse text-[10px] text-white/50 font-black uppercase tracking-[0.2em] text-center line-clamp-1">Tippen</div>
                           )}
@@ -421,11 +553,79 @@ function SammelkartenContent() {
                 )}
               </AnimatePresence>
 
+              {/* Mass Results (10 Packs) */}
+              <AnimatePresence mode="wait">
+                {(gameState === 'ripping' || gameState === 'revealed') && isMassOpening && massRevealedTeachers && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 50 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="w-full max-w-4xl h-[65vh] overflow-y-auto px-4 space-y-6 custom-scrollbar pr-2"
+                  >
+                    {massRevealedTeachers.map((packData, packIdx) => (
+                      <motion.div 
+                        key={packIdx}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: packIdx * 0.05 }}
+                        className={cn(
+                          "flex items-center gap-3 sm:gap-6 p-3 sm:p-5 rounded-[2.5rem] border transition-colors",
+                          packData.isGodpack 
+                            ? "bg-amber-400/10 border-amber-400/30 hover:bg-amber-400/15" 
+                            : "bg-white/5 border-white/10 hover:bg-white/[0.08]"
+                        )}
+                      >
+                        {/* Pack Counter/Visual */}
+                        <div className="flex-none flex flex-col items-center justify-center w-12 sm:w-16">
+                           <div className={cn(
+                              "relative w-full aspect-[2.5/3.5] rounded-lg border flex items-center justify-center shadow-inner overflow-hidden",
+                              packData.isGodpack ? "bg-amber-600 border-amber-400" : "bg-blue-600/20 border-white/10"
+                           )}>
+                              <Zap className={cn("h-6 w-6", packData.isGodpack ? "text-white animate-pulse" : "text-white/40")} />
+                              <div className="absolute top-1 right-1 bg-white/10 px-1 rounded text-[8px] font-black text-white/60">#{packIdx + 1}</div>
+                              {packData.isGodpack && (
+                                <div className="absolute -bottom-1 -left-1 -right-1 bg-amber-200 text-amber-900 text-[6px] font-black text-center uppercase py-0.5 transform -rotate-12">GODPACK</div>
+                              )}
+                           </div>
+                        </div>
+
+                        {/* 3 Cards Preview */}
+                        <div className="flex-1 grid grid-cols-3 gap-2 sm:gap-4">
+                          {packData.teachers.map((teacher, cardIdx) => {
+                            const result = massCollectionResults?.[packIdx]?.[cardIdx]
+                            const cardData = mapToCardData(teacher, result?.variant || 'normal', config?.loot_teachers || DEFAULT_TEACHERS)
+                            
+                            return (
+                              <div key={cardIdx} className="relative group">
+                                <TeacherCard 
+                                  data={cardData}
+                                  isFlippedExternally={true}
+                                  className="w-full h-auto scale-100 group-hover:scale-[1.05] transition-transform duration-300"
+                                />
+                                {result && (
+                                  <div className="absolute -top-2 left-1/2 -translate-x-1/2 z-40">
+                                    {result.isNew ? (
+                                      <Badge className="bg-amber-500 border border-white/20 text-[8px] sm:text-[9px] font-black px-1.5 py-0 shadow-lg uppercase scale-90 sm:scale-100">NEW</Badge>
+                                    ) : result.isLevelUp ? (
+                                      <Badge className="bg-purple-600 border border-white/20 text-[8px] sm:text-[9px] font-black px-1.5 py-0 shadow-lg uppercase scale-90 sm:scale-100">UP</Badge>
+                                    ) : null}
+                                  </div>
+                                )}
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </motion.div>
+                    ))}
+                    <div className="h-8" /> {/* Spacer */}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
               {/* Booster Pack (Rendered on top during idle/ripping) */}
               {(gameState === 'idle' || gameState === 'ripping') && (
                 <div 
                   className={cn(
-                    "absolute z-20 w-64 h-96 cursor-pointer group transition-all duration-500",
+                    "absolute z-30 w-64 h-96 cursor-pointer group transition-all duration-500",
                     getRemainingBoosters() <= 0 && "opacity-50 cursor-not-allowed",
                     gameState === 'idle' && getRemainingBoosters() > 0 && "hover:scale-105 active:scale-95"
                   )}
@@ -482,12 +682,32 @@ function SammelkartenContent() {
 
             {/* Actions */}
             <div className="flex flex-col gap-3 mt-4 w-full items-center">
-              {gameState === 'revealed' && allFlipped && (
-                <div className="flex flex-col gap-3 w-full max-sm:max-w-[280px] sm:max-w-sm animate-in fade-in slide-in-from-bottom-4 duration-1000">
-                  <Button 
-                    onClick={getRemainingBoosters() > 0 ? handleOpenPack : () => setGameState('idle')}
-                    variant="outline"
-                    size="lg"
+            {gameState === 'idle' && getRemainingBoosters() >= 10 && (
+              <Button
+                variant="secondary"
+                size="lg"
+                className="rounded-full px-10 border-2 border-white/10 shadow-2xl bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-500 hover:to-purple-500 transition-all font-black uppercase tracking-widest gap-2"
+                onClick={handleOpenTenPacks}
+              >
+                <Sparkles className="h-5 w-5 fill-current text-yellow-300" />
+                10er Pack öffnen
+              </Button>
+            )}
+
+            {gameState === 'revealed' && (isMassOpening || allFlipped) && (
+              <div className="flex flex-col gap-3 w-full max-sm:max-w-[280px] sm:max-w-sm animate-in fade-in slide-in-from-bottom-4 duration-1000">
+                {!isMassOpening && showDebug && packProbs && (
+                  <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 mb-2 text-center">
+                    <p className="text-[10px] font-mono text-amber-200 uppercase tracking-widest mb-1">Pack-Wahrscheinlichkeit</p>
+                    <p className="text-xl font-black text-amber-500">{(packProbs.wholePackChance * 100).toPrecision(4)}%</p>
+                    <p className="text-[8px] text-amber-200/50 mt-1 font-mono">
+                      {isGodpack ? 'GODPACK FACTOR APPLIED' : 'REGULAR PACK PROBABILITY'}
+                    </p>
+                  </div>
+                )}
+                <Button 
+                  onClick={getRemainingBoosters() > 0 ? (isMassOpening ? handleOpenTenPacks : handleOpenPack) : () => setGameState('idle')}
+                  variant="outline"                    size="lg"
                     className={cn(
                       "rounded-full px-8 border-2 transition-all duration-500 shadow-xl w-full",
                       getRemainingBoosters() > 0 

@@ -1,5 +1,42 @@
 # Changelog
 
+## [0.26.22] - 2026-03-25
+- Fix: **Dauerhaftes Karten-Reveal beim Booster-Opening**. Einmal aufgedeckte Karten in der Booster-Ansicht können nicht mehr versehentlich wieder verdeckt werden. Dies verhindert Verwirrung beim schnellen Durchklicken der Belohnungen. In der Detailansicht bleibt die Möglichkeit zum Umdrehen weiterhin bestehen.
+
+## [0.26.21] - 2026-03-25
+- Feature: **Debug-Modus für Kartenziehungen**.
+    - Ein neuer Debug-Toggle (Stern-Icon) wurde hinzugefügt, um exakte Wahrscheinlichkeiten anzuzeigen.
+    - Anzeige der individuellen Ziehungs-Chance für jede enthüllte Karte basierend auf den Slot-Gewichtungen.
+    - Berechnung und Anzeige der Gesamt-Wahrscheinlichkeit des gesamten Packs (unter Berücksichtigung des Godpack-Faktors).
+
+## [0.26.20] - 2026-03-25
+- Fix: ** Upgrade-Animation gebändigt**. Ein Fehler in der Animations-Steuerung wurde behoben, durch den Karten bei einem Level-Up unkontrolliert mehrfach rotierten. Die Drehung wird nun präzise einmalig pro Upgrade ausgelöst und die Zustände für das Level-Badge stabiler synchronisiert.
+
+## [0.26.20] - 2026-03-25
+- Fix: **Album-Interaktion veredelt**. Karten in der Album-Übersicht drehen sich beim Anklicken nicht mehr um. Ein Klick öffnet nun direkt die Detailansicht, was für eine flüssigere Nutzerführung sorgt. In der Detailansicht und beim Öffnen von Boostern bleiben die Karten wie gewohnt interaktiv drehbar.
+
+## [0.26.19] - 2026-03-25
+- Fix: **Überlappende Sammelkarten auf dem iPad behoben**.
+    - Stacking-Context optimiert: Booster-Pack `zIndex` erhöht, um Überlappungen während der Ripping-Animation zu vermeiden.
+    - Layout-Anpassung: Kartenbreite auf Tablets (`sm:w-52`) reduziert, um unerwünschte Zeilenumbrüche im Hochformat zu verhindern.
+    - Grid-Fix: `hover:z-10` und `active:z-10` im Album hinzugefügt, damit vergrößerte Karten bei Touch-Bedienung nicht hinter Nachbarn verschwinden.
+    - Animations-Refactoring: Initiale Karten-Translation korrigiert, um clumpy Overlapping im Start-Moment des Reveal-Effekts zu vermeiden.
+
+## [0.26.19] - 2026-03-25
+- Feature: **10er Pack-Opening für "Suchtis"**.
+    - Nutzer mit mindestens 10 Boostern im Inventar können diese nun gleichzeitig mit einem Klick öffnen.
+    - Neue Ergebnis-Ansicht: Eine scrollbare Liste zeigt alle 10 Packs untereinander (3 Karten + Pack-Visual pro Zeile).
+    - Individuelle Godpack-Highlights innerhalb der Massen-Öffnung.
+    - Atomare Transaktion im Backend: Das Budget für alle 10 Packs wird in einem einzigen Vorgang geprüft und abgezogen.
+
+## [0.26.18] - 2026-03-25
+- Fix: **Synchronisierte Karten-Drehung im Album**. Ein Fehler wurde behoben, durch den Karten im Album unerwünscht rotierten, wenn die Detailansicht geöffnet oder dort eine Karte umgedreht wurde. Die Animations-Logik wurde auf ein deklaratives Modell umgestellt, das stabiler gegenüber Parent-Re-renders ist und den manuellen Flip-Status besser beibehält.
+
+## [0.26.17] - 2026-03-25
+- Performance: **Optimierung der Upgrade-Animationen**.
+    - Die Partikel-Effekte beim Level-Up wurden grundlegend optimiert: Statt komplexer SVGs werden nun einfache, Hardware-beschleunigte CSS-Shapes verwendet.
+    - Die Anzahl der Partikel wurde halbiert (von 24 auf 12) und die Berechnungen stabilisiert (Memoization), um Ruckeln beim Öffnen mehrerer Packs zu verhindern.
+
 ## [0.26.16] - 2026-03-25
 - UI: **Platzsparende Filter-Grids**. Die Filter für Seltenheit und Karten-Varianten im Album wurden in kompakte, quadratische Grids umgewandelt. Dies verhindert unerwünschtes Scaling bei unterschiedlichen Textlängen und macht das Menü deutlich übersichtlicher.
 

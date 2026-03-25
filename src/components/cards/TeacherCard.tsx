@@ -14,36 +14,48 @@ interface TeacherCardProps {
   styleVariant?: CardStyle;
   isFlippedExternally?: boolean;
   isLocked?: boolean;
+  interactive?: boolean;
   upgradeInfo?: { oldLevel: number, newLevel: number };
 }
 
-const Particle = ({ delay }: { delay: number }) => {
-  const angle = Math.random() * Math.PI * 2;
-  const distance = 50 + Math.random() * 100;
-  const x = Math.cos(angle) * distance;
-  const y = Math.sin(angle) * distance;
+const Particle = React.memo(({ delay }: { delay: number }) => {
+  const randoms = React.useMemo(() => {
+    const angle = Math.random() * Math.PI * 2;
+    const distance = 40 + Math.random() * 80;
+    return {
+      x: Math.cos(angle) * distance,
+      y: Math.sin(angle) * distance,
+      size: 1 + Math.random() * 2,
+      rotation: Math.random() * 360
+    };
+  }, []);
 
   return (
     <motion.div
       initial={{ x: 0, y: 0, opacity: 1, scale: 0 }}
       animate={{ 
-        x, 
-        y, 
+        x: randoms.x, 
+        y: randoms.y, 
         opacity: 0, 
-        scale: [0, 1.5, 0.5],
-        rotate: [0, 180, 360]
+        scale: [0, 1.5, 0],
+        rotate: [0, randoms.rotation]
       }}
       transition={{ 
-        duration: 1, 
+        duration: 0.8, 
         delay,
         ease: "easeOut" 
       }}
-      className="absolute w-[2cqw] h-[2cqw] bg-yellow-400 rounded-full"
-    >
-       <Star className="w-full h-full fill-current text-yellow-300" />
-    </motion.div>
+      className="absolute bg-yellow-400 rounded-sm will-change-transform"
+      style={{ 
+        width: `${randoms.size}cqw`, 
+        height: `${randoms.size}cqw`,
+        boxShadow: '0 0 10px rgba(255,215,0,0.5)'
+      }}
+    />
   );
-};
+});
+
+Particle.displayName = 'Particle';
 
 export const TeacherCard: React.FC<TeacherCardProps> = ({ 
   data, 
@@ -51,15 +63,18 @@ export const TeacherCard: React.FC<TeacherCardProps> = ({
   styleVariant = 'soft-glass',
   isFlippedExternally,
   isLocked = false,
+  interactive = true,
   upgradeInfo
 }) => {
   const [isFlippedInternally, setIsFlippedInternally] = useState(isFlippedExternally ?? true);
+  const [prevExternal, setPrevExternal] = useState(isFlippedExternally);
   
   useEffect(() => {
-    if (isFlippedExternally !== undefined) {
+    if (isFlippedExternally !== undefined && isFlippedExternally !== prevExternal) {
       setIsFlippedInternally(isFlippedExternally);
+      setPrevExternal(isFlippedExternally);
     }
-  }, [isFlippedExternally]);
+  }, [isFlippedExternally, prevExternal]);
 
   const isFlipped = isLocked ? false : isFlippedInternally;
 
@@ -69,17 +84,19 @@ export const TeacherCard: React.FC<TeacherCardProps> = ({
   const controls = useAnimation();
 
   useEffect(() => {
-    if (upgradeInfo && isFlipped) {
-      setDisplayLevel(upgradeInfo.oldLevel);
-      
+    // Only trigger if we have an upgrade and the card is flipped to the front
+    if (upgradeInfo && isFlipped && displayLevel < upgradeInfo.newLevel) {
       const timer = setTimeout(() => {
         setDisplayLevel(upgradeInfo.newLevel);
         setIsLevelAnimating(true);
         setShowBurst(true);
         
-        // Full 360-degree horizontal spin
+        // Determine start and end rotation based on flip state
+        const currentRot = isFlipped ? 0 : 180;
+        
+        // Execute exactly one 360-degree spin
         controls.start({
-          rotateY: [0, 360],
+          rotateY: [currentRot, currentRot + 360],
           transition: { duration: 0.8, ease: "easeInOut" }
         });
 
@@ -90,17 +107,11 @@ export const TeacherCard: React.FC<TeacherCardProps> = ({
       }, 1000);
       
       return () => clearTimeout(timer);
+    } else if (upgradeInfo && !isFlipped) {
+      // Sync display level when card is hidden
+      setDisplayLevel(upgradeInfo.oldLevel);
     }
-  }, [upgradeInfo, isFlipped, controls]);
-
-  useEffect(() => {
-    if (!isLevelAnimating) {
-      controls.start({ 
-        rotateY: isFlipped ? 0 : 180,
-        transition: { duration: 0.6, ease: "easeOut" }
-      });
-    }
-  }, [isFlipped, isLevelAnimating, controls]);
+  }, [upgradeInfo?.newLevel, upgradeInfo?.oldLevel, isFlipped, controls, displayLevel]);
 
   const isBlckShiny = data.variant === 'black_shiny_holo';
   const isShiny = data.variant === 'shiny';
@@ -162,12 +173,18 @@ export const TeacherCard: React.FC<TeacherCardProps> = ({
 
   return (
     <div 
-      className={cn("relative aspect-[2.5/3.5] cursor-pointer perspective-1000 @container", className)}
-      onClick={() => !isLocked && setIsFlippedInternally(!isFlippedInternally)}
+      className={cn("relative aspect-[2.5/3.5] perspective-1000 @container", interactive && !isLocked && "cursor-pointer", className)}
+      onClick={(e) => {
+        if (interactive && !isLocked) {
+          e.stopPropagation();
+          setIsFlippedInternally(!isFlippedInternally);
+        }
+      }}
     >
       <motion.div
-        animate={controls}
+        animate={isLevelAnimating ? controls : { rotateY: isFlipped ? 0 : 180 }}
         initial={{ rotateY: isFlipped ? 0 : 180 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
         style={{ transformStyle: "preserve-3d" }}
         className="w-full h-full relative will-change-transform"
       >
@@ -260,8 +277,8 @@ export const TeacherCard: React.FC<TeacherCardProps> = ({
 
                   {showBurst && (
                     <div className="absolute inset-0 flex items-center justify-center">
-                      {[...Array(24)].map((_, i) => (
-                        <Particle key={i} delay={i * 0.015} />
+                      {[...Array(12)].map((_, i) => (
+                        <Particle key={i} delay={i * 0.02} />
                       ))}
                     </div>
                   )}

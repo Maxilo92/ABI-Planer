@@ -283,7 +283,7 @@ export function TeacherAlbum({
   }, [])
 
   const filteredTeachers = useMemo(() => {
-    let result = globalTeachers.filter(t => {
+    const result = globalTeachers.filter(t => {
       // Search filter
       if (search && !t.name.toLowerCase().includes(search.toLowerCase())) return false
       
@@ -608,7 +608,7 @@ export function TeacherAlbum({
                     className={cn(
                       "relative transition-all duration-300 transform group w-full aspect-[2.5/3.5]",
                       !isOwned && "cursor-not-allowed opacity-80",
-                      isOwned && "cursor-pointer hover:scale-[1.05] hover:-rotate-1 active:scale-95"
+                      isOwned && "cursor-pointer hover:scale-[1.05] hover:-rotate-1 active:scale-95 hover:z-10 active:z-10"
                     )}
                   >
                     <TeacherCard 
@@ -617,6 +617,7 @@ export function TeacherAlbum({
                       styleVariant="modern-flat"
                       isFlippedExternally={isOwned}
                       isLocked={!isOwned}
+                      interactive={false}
                     />
                   </div>
 

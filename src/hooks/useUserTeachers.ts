@@ -208,69 +208,89 @@ export const useUserTeachers = (userId?: string) => {
     return () => unsubscribe()
   }, [activeUserId])
 
-  const collectBooster = useCallback(
-    async (teacherIds: string[], options?: { isGodpack?: boolean }) => {
+  const collectMassBoosters = useCallback(
+    async (packs: Array<{ teacherIds: string[], isGodpack: boolean }>) => {
       if (!isOwnProfile || !currentUser) throw new Error('Action not allowed')
-      if (teacherIds.length !== 3) {
-        throw new Error('Ein Kartenpack muss genau 3 Karten enthalten.')
-      }
+      if (packs.length === 0) throw new Error('Keine Packs zum Öffnen angegeben.')
+
+      packs.forEach(p => {
+        if (p.teacherIds.length !== 3) {
+          throw new Error('Jedes Kartenpack muss genau 3 Karten enthalten.')
+        }
+      })
 
       const userTeachersRef = doc(db, 'user_teachers', currentUser.uid)
       const profileRef = doc(db, 'profiles', currentUser.uid)
       const dailyPackAllowance = getDailyAllowance(config)
-      const isGodpack = !!options?.isGodpack
-      
+
       try {
         const results = await runTransaction(db, async (transaction) => {
           const profileDoc = await transaction.get(profileRef)
           if (!profileDoc.exists()) throw new Error('User profile not found')
-          
+
           const today = getCurrentBoosterDay(config)
           const currentProfileData = profileDoc.data() as Profile
           const currentStats = sanitizeBoosterStats(currentProfileData.booster_stats, today)
-          
+
           let dailyCount = currentStats.count
           let extraAvailable = currentStats.extra_available || 0
-          
+
           if (currentStats.last_reset !== today) {
             extraAvailable += calculateCarryoverExtras(currentStats.last_reset, today, dailyPackAllowance)
             dailyCount = 0
           }
 
-          if (dailyCount < dailyPackAllowance) {
-            dailyCount += 1
-          } else if (extraAvailable > 0) {
-            extraAvailable -= 1
-          } else {
-            throw new Error(`Tägliches Limit von ${dailyPackAllowance} Kartenpacks erreicht!`)
+          // Check if we have enough allowance for ALL packs
+          const packsToOpen = packs.length
+          let newDailyCount = dailyCount
+          let newExtraAvailable = extraAvailable
+
+          for (let i = 0; i < packsToOpen; i++) {
+            if (newDailyCount < dailyPackAllowance) {
+              newDailyCount += 1
+            } else if (newExtraAvailable > 0) {
+              newExtraAvailable -= 1
+            } else {
+              if (i === 0) {
+                throw new Error(`Limit erreicht! Du kannst keine Packs mehr öffnen.`)
+              } else {
+                // If they tried to open 10 but only had 4 left, we could theoretically 
+                // stop here, but the user wants to open 10 specifically. 
+                // So let's just fail if they don't have enough.
+                throw new Error(`Nicht genügend Booster verfügbar für ${packsToOpen} Packs (noch ${packsToOpen - i} nötig).`)
+              }
+            }
           }
 
           const teachersDoc = await transaction.get(userTeachersRef)
           const currentData = teachersDoc.exists() ? (teachersDoc.data() as UserTeacher) : {}
-          
+
           const tempData = { ...currentData }
-          const packResults = teacherIds.map(teacherId => {
-            const variant = getRandomVariant(teacherId, isGodpack, config)
-            const teacherData = tempData[teacherId] || { count: 0, level: 1, variants: {} }
-            const tCount = teacherData.count + 1
-            const tLevel = calculateLevel(tCount)
-            
-            const variants = teacherData.variants || {}
-            const vCount = (variants[variant] || 0) + 1
-            
-            tempData[teacherId] = {
-              count: tCount,
-              level: tLevel,
-              variants: {
-                ...variants,
-                [variant]: vCount
+          const allPacksResults = packs.map(pack => {
+            return pack.teacherIds.map(teacherId => {
+              const variant = getRandomVariant(teacherId, pack.isGodpack, config)
+              const teacherData = tempData[teacherId] || { count: 0, level: 1, variants: {} }
+              const tCount = teacherData.count + 1
+              const tLevel = calculateLevel(tCount)
+
+              const variants = teacherData.variants || {}
+              const vCount = (variants[variant] || 0) + 1
+
+              tempData[teacherId] = {
+                count: tCount,
+                level: tLevel,
+                variants: {
+                  ...variants,
+                  [variant]: vCount
+                }
               }
-            }
-            
-            return { teacherId, count: tCount, level: tLevel, variant }
+
+              return { teacherId, count: tCount, level: tLevel, variant }
+            })
           })
 
-          const updates = teacherIds.reduce((acc, id) => {
+          const allTeacherIds = packs.flatMap(p => p.teacherIds)
+          const updates = allTeacherIds.reduce((acc, id) => {
             acc[id] = tempData[id]
             return acc
           }, {} as any)
@@ -280,23 +300,32 @@ export const useUserTeachers = (userId?: string) => {
             booster_stats: {
               ...currentStats,
               last_reset: today,
-              count: dailyCount,
-              extra_available: extraAvailable,
-              total_opened: (currentStats.total_opened || 0) + 1
+              count: newDailyCount,
+              extra_available: newExtraAvailable,
+              total_opened: (currentStats.total_opened || 0) + packsToOpen
             }
           })
 
-          return packResults
+          return allPacksResults
         })
-        
+
         return results
       } catch (err) {
-        console.error('Error collecting booster pack:', err)
+        console.error('Error collecting mass boosters:', err)
         throw err
       }
     },
     [currentUser, isOwnProfile, config]
   )
+
+  const collectBooster = useCallback(
+    async (teacherIds: string[], options?: { isGodpack?: boolean }) => {
+      const result = await collectMassBoosters([{ teacherIds, isGodpack: !!options?.isGodpack }])
+      return result[0]
+    },
+    [collectMassBoosters]
+  )
+
 
   const claimExtraBoosters = useCallback(async () => {
     if (!isOwnProfile || !currentUser) throw new Error('Action not allowed')
