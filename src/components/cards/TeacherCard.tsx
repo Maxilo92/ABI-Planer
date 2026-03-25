@@ -13,46 +13,68 @@ interface TeacherCardProps {
   className?: string;
   styleVariant?: CardStyle;
   isFlippedExternally?: boolean;
+  isLocked?: boolean;
 }
 
 export const TeacherCard: React.FC<TeacherCardProps> = ({ 
   data, 
   className, 
   styleVariant = 'soft-glass',
-  isFlippedExternally 
+  isFlippedExternally,
+  isLocked = false
 }) => {
   const [isFlippedInternally, setIsFlippedInternally] = useState(false);
   const isFlipped = isFlippedExternally !== undefined ? isFlippedExternally : isFlippedInternally;
 
   const isBlckShiny = data.variant === 'black_shiny_holo';
-  const isGlass = data.variant === 'shiny' || data.variant === 'holo';
+  const isShiny = data.variant === 'shiny';
+  const isGlass = data.variant === 'holo';
 
   const getStyleClasses = () => {
+    if (isLocked) {
+      return {
+        card: "border-white/5 shadow-inner rounded-[10cqw]",
+        iconWrapper: "bg-white/5 rounded-full w-[35cqw] h-[35cqw] flex items-center justify-center border border-white/10",
+        headerIcon: "w-[18cqw] h-[18cqw] opacity-20",
+        header: "text-white/20",
+        text: "text-white/10 font-sans font-black text-[12cqw] blur-sm select-none",
+        border: "border-[2cqw] border-white/5",
+        bgOverlay: "bg-black/40",
+        numberTag: "bg-white/5 text-white/20 px-[2cqw] py-[0.5cqw] text-[3cqw] font-black rounded-full border border-white/5",
+        numberPos: "top-[8cqw] right-[8cqw]",
+        rarityPos: "bottom-[8cqw] right-[8cqw]",
+        raritySize: "14cqw"
+      };
+    }
+
     switch (styleVariant) {
       case 'modern-flat':
         return {
           card: cn(
             "transition-all rounded-[10cqw]",
-            !isBlckShiny && "border-black shadow-[2cqw_2cqw_0px_0px_rgba(0,0,0,1)] hover:shadow-[3cqw_3cqw_0px_0px_rgba(0,0,0,1)] border-[0.8cqw]",
+            !isBlckShiny && !isShiny && "border-black shadow-[2cqw_2cqw_0px_0px_rgba(0,0,0,1)] hover:shadow-[3cqw_3cqw_0px_0px_rgba(0,0,0,1)] border-[0.8cqw]",
+            isShiny && "shadow-[0_0_10px_rgba(255,255,255,0.4)] border-slate-300 border-[1cqw]",
             isBlckShiny && "shadow-[0_0_8cqw_rgba(147,51,234,0.5)] border-purple-500/50 border-[1cqw]"
           ),
           iconWrapper: cn(
             "bg-white border-[0.8cqw] border-black rounded-[4cqw] -rotate-2 shadow-[1cqw_1cqw_0px_0px_rgba(0,0,0,1)] flex items-center justify-center w-[35cqw] h-[35cqw]",
             isBlckShiny && "bg-neutral-900 border-purple-500/30 shadow-[0_0_15px_rgba(147,51,234,0.3)]",
+            isShiny && "bg-slate-100 border-slate-300 shadow-none",
             isGlass && "bg-white/40 border-white/30 backdrop-blur-md shadow-none"
           ),
           headerIcon: "w-[18cqw] h-[18cqw]",
-          header: (isBlckShiny || isGlass) ? "text-white" : "text-black",
+          header: (isBlckShiny || isGlass || isShiny) ? (isShiny ? "text-slate-600" : "text-white") : "text-black",
           text: cn(
             "font-sans uppercase font-black tracking-tighter text-[12cqw] leading-[0.85] break-words w-full",
             isBlckShiny ? "text-transparent bg-clip-text bg-gradient-to-b from-white to-purple-200 drop-shadow-[0_0_3cqw_rgba(147,51,234,0.8)]" : 
-            (isGlass ? "text-white drop-shadow-[0_0_2cqw_rgba(255,255,255,0.4)]" : "text-black")
+            (isShiny ? "text-slate-800 drop-shadow-[0_2px_2px_rgba(255,255,255,0.8)]" : 
+            (isGlass ? "text-white drop-shadow-[0_0_2cqw_rgba(255,255,255,0.4)]" : "text-black"))
           ),
           border: "", 
-          bgOverlay: isBlckShiny ? "bg-black/40" : (isGlass ? "bg-transparent" : "bg-white/5"),
+          bgOverlay: isBlckShiny ? "bg-black/40" : (isShiny ? "bg-white/30" : (isGlass ? "bg-transparent" : "bg-white/5")),
           numberTag: cn(
             "px-[2cqw] py-[0.5cqw] text-[3.5cqw] font-black rounded-[0.5cqw] transform rotate-1 border-[0.3cqw] border-black shadow-[0.5cqw_0.5cqw_0px_0px_rgba(0,0,0,1)]",
-            (isBlckShiny || isGlass) ? "bg-white text-black" : "bg-black text-white"
+            (isBlckShiny || isGlass || isShiny) ? "bg-white text-black" : "bg-black text-white"
           ),
           numberPos: "bottom-[8cqw] left-[8cqw]",
           rarityPos: "bottom-[8cqw] right-[8cqw]",
@@ -113,10 +135,14 @@ export const TeacherCard: React.FC<TeacherCardProps> = ({
             styleClasses.card
           )}
           style={{ 
-            backgroundColor: isBlckShiny ? '#0a0a0a' : (isGlass ? `${data.color}99` : data.color) 
+            backgroundColor: isLocked ? '#0a0a0a' : (isBlckShiny ? '#0a0a0a' : (isGlass ? `${data.color}99` : data.color)) 
           }}
         >
-          <CardEffectOverlay variant={data.variant} tintColor={data.color} />
+          {isLocked ? (
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.03)_0%,transparent_70%)] opacity-50" />
+          ) : (
+            <CardEffectOverlay variant={data.variant} tintColor={data.color} />
+          )}
 
           <div className={cn("absolute inset-0 pointer-events-none", styleClasses.bgOverlay)} />
           
@@ -139,10 +165,10 @@ export const TeacherCard: React.FC<TeacherCardProps> = ({
           <div className={cn("absolute z-30", styleClasses.rarityPos)}>
             <RaritySymbol 
               rarity={data.rarity} 
-              variant={data.variant}
-              size={0} // Controlled by className in RaritySymbol now
-              className={cn("w-[14cqw] h-[14cqw]")}
-              color={isBlckShiny ? 'white' : (styleVariant === 'modern-flat' ? 'black' : 'white')} 
+              variant={isLocked ? 'normal' : data.variant}
+              size={0} 
+              className={cn("w-[14cqw] h-[14cqw]", isLocked && "opacity-20 grayscale")}
+              color={isLocked ? 'white' : (isBlckShiny ? 'white' : (styleVariant === 'modern-flat' ? 'black' : 'white'))} 
             />
           </div>
         </div>

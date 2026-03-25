@@ -161,15 +161,18 @@ function TeacherCardDetail({ teacher, userData, onClose, globalTeachers }: { tea
   }, [userData])
 
   return (
-    <div className="flex flex-col items-center space-y-8 py-4">
-      <TeacherCard 
-        data={cardData}
-        className="scale-110 sm:scale-125"
-      />
+    <div className="flex flex-col items-center space-y-6 py-8 px-4 w-full">
+      <div className="relative w-full max-w-[280px] sm:max-w-[320px] aspect-[2.5/3.5] mb-4">
+        <TeacherCard 
+          data={cardData}
+          className="w-full h-auto"
+          styleVariant="modern-flat"
+        />
+      </div>
 
-      <div className="text-center animate-pulse flex items-center gap-2 text-white/50 text-sm font-medium">
-        <Rotate3d className="h-4 w-4" />
-        Klicken zum Umdrehen
+      <div className="text-center animate-pulse flex items-center gap-2 text-white/50 text-xs font-medium bg-white/5 px-3 py-1 rounded-full border border-white/5">
+        <Rotate3d className="h-3.5 w-3.5" />
+        Tippen zum Umdrehen
       </div>
 
       <div className="w-full max-w-sm space-y-4 px-4">
@@ -556,7 +559,7 @@ export function TeacherAlbum({
                     onClick={() => isOwned && setSelectedTeacher(teacher)}
                     className={cn(
                       "relative transition-all duration-300 transform group w-full aspect-[2.5/3.5]",
-                      !isOwned && "opacity-40 grayscale cursor-not-allowed",
+                      !isOwned && "cursor-not-allowed",
                       isOwned && "cursor-pointer hover:scale-[1.05] hover:-rotate-1 active:scale-95"
                     )}
                   >
@@ -565,11 +568,14 @@ export function TeacherAlbum({
                       className="w-full h-auto"
                       styleVariant="modern-flat"
                       isFlippedExternally={isOwned}
+                      isLocked={!isOwned}
                     />
                     
                     {!isOwned && (
-                      <div className="absolute inset-0 flex items-center justify-center z-50">
-                        <Lock className="h-10 w-10 text-white/40 drop-shadow-lg" />
+                      <div className="absolute inset-0 flex items-center justify-center z-50 pointer-events-none">
+                        <div className="bg-black/40 backdrop-blur-md rounded-full p-[4cqw] border border-white/10 shadow-2xl">
+                          <Lock className="h-[10cqw] w-[10cqw] text-white/40" />
+                        </div>
                       </div>
                     )}
                   </div>
@@ -608,12 +614,12 @@ export function TeacherAlbum({
 
       {/* Detail Dialog */}
       <Dialog open={!!selectedTeacher} onOpenChange={(open) => !open && setSelectedTeacher(null)}>
-        <DialogContent className="max-w-md p-0 overflow-hidden bg-transparent border-none shadow-none ring-0 sm:max-w-sm">
-          <div className="relative">
+        <DialogContent className="max-w-[95vw] sm:max-w-lg p-0 overflow-y-auto max-h-[90vh] bg-neutral-950/90 backdrop-blur-2xl border-white/10 shadow-2xl rounded-3xl ring-0">
+          <div className="relative w-full">
             <Button 
               variant="ghost" 
-              size="icon-sm" 
-              className="absolute top-2 right-2 z-50 rounded-full bg-black/20 backdrop-blur-md text-white hover:bg-black/40 border-none"
+              size="icon" 
+              className="absolute top-4 right-4 z-50 rounded-full bg-white/5 text-white/50 hover:bg-white/10 hover:text-white border border-white/10"
               onClick={() => setSelectedTeacher(null)}
             >
               <X className="h-4 w-4" />

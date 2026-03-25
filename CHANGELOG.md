@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.26.04] - 2026-03-25
+- Fix: **Album Detailansicht Sichtbarkeit**. Ein Fehler wurde behoben, bei dem Karten in der Album-Detailansicht aufgrund von zu schmalen Containern und Transparenzproblemen nicht angezeigt wurden. Das Layout wurde für bessere Sichtbarkeit und Kompatibilität auf allen Bildschirmgrößen optimiert.
+
+## [0.26.03] - 2026-03-25
+- UI: **Metallic-Redesign für Shiny-Karten**. Die texturierte "Glitzer"-Optik wurde durch ein hochwertiges, metallisches Design (Brushed Steel) ersetzt. Die Karten verfügen nun über eine fließende Lichtreflexions-Animation und einen optimierten Kontrast für Texte und Icons.
+
+## [0.26.02] - 2026-03-25
+- UI: **Optimierte Kartenskalierung beim Ziehen**. Die Karten werden nun dynamisch skaliert, sodass auf allen Mobilgeräten drei Karten nebeneinander in einer Reihe angezeigt werden. Mehrreihige Darstellungen bei der Booster-Öffnung wurden eliminiert.
+
+## [0.26.01] - 2026-03-25
+- UI: **Design-Update für gesperrte Karten**. Gesperrte Lehrer-Karten im Album haben nun ein spezielles "Mystery"-Design: Der Hintergrund ist tiefschwarz, der Name ist verschwommen dargestellt und das Schlosssymbol wurde durch ein moderneres Icon-Badge mit Glas-Effekt ersetzt.
+
 ## [0.26.00] - 2026-03-25
 - Feature: **Sammelkarten-Varianten Redesign**. Komplettes visuelles Update der Kartenvarianten. Die "Shiny"-Variante wurde von einem Glas-Look zu einem klassischen Funkel-Effekt überarbeitet. Die "Black Shiny"-Variante wurde zu einer "Secret Rare" mit tiefschwarzer Optik und violetten Glimmer-Effekten aufgewertet.
 - Feature: **Album-Varianten-Handling**. In der Album-Übersicht wird nun automatisch die seltenste Variante einer Karte angezeigt, die ein Nutzer besitzt. 

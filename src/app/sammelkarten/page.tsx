@@ -331,7 +331,7 @@ function SammelkartenContent() {
                     initial="hidden"
                     animate="visible"
                     exit="hidden"
-                    className="flex flex-wrap justify-center gap-4 sm:gap-6 w-full max-w-5xl"
+                    className="flex flex-nowrap justify-center gap-1.5 sm:gap-6 w-full max-w-6xl px-2 sm:px-6"
                   >
                     {revealedTeachers.map((teacher, idx) => {
                       const isFlipped = flippedCards[idx]
@@ -364,7 +364,7 @@ function SammelkartenContent() {
                             }
                           }}
                           className={cn(
-                            "relative flex flex-col items-center",
+                            "relative flex flex-col items-center flex-1 min-w-0 max-w-[220px] sm:max-w-none",
                             isFlipped && result?.isNew && "animate-new-card-float z-10",
                             isFlipped && result?.variant === 'black_shiny_holo' && "z-30 scale-110"
                           )}
@@ -382,7 +382,7 @@ function SammelkartenContent() {
                             </div>
                           )}
 
-                          <div className="relative w-48 sm:w-64 aspect-[2.5/3.5]">
+                          <div className="relative w-full aspect-[2.5/3.5] sm:w-64">
                             {/* Floating Status Badge (shown after flip) */}
                             {isFlipped && result && (
                               <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-40 animate-in zoom-in duration-500">
@@ -409,7 +409,7 @@ function SammelkartenContent() {
                           </div>
                           
                           {!isFlipped && (
-                            <div className="mt-4 animate-pulse text-[10px] text-white/50 font-black uppercase tracking-[0.2em]">Tippen zum Umdrehen</div>
+                            <div className="mt-4 animate-pulse text-[10px] text-white/50 font-black uppercase tracking-[0.2em] text-center line-clamp-1">Tippen</div>
                           )}
                         </motion.div>
                       )
