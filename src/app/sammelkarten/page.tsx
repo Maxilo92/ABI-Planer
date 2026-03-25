@@ -172,7 +172,7 @@ function SammelkartenContent() {
     const slotWeights = isGodpack ? godpackWeights : regularWeights
 
     return slotWeights.map(weights => {
-      const targetRarity = getWeightedRarity(weights)
+      const targetRarity = getWeightedRarity(weights as unknown as Record<string, number>)
       const matching = teachers.filter((t: any) => t.rarity === targetRarity)
       if (matching.length > 0) {
         return matching[Math.floor(Math.random() * matching.length)]

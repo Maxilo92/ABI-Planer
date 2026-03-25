@@ -62,8 +62,8 @@ export default function CalendarEventPage({ params }: { params: Promise<{ id: st
 
     downloadICS({
       title: event.title,
-      description: event.description,
-      location: event.location,
+      description: event.description ?? undefined,
+      location: event.location ?? undefined,
       start_date: event.start_date,
       end_date: event.end_date,
     })

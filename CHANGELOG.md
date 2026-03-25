@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.24.00] - 2026-03-25
+- Feature: **Sammelkarten Admin Suite**. Einführung eines dedizierten Admin-Dashboards unter `/admin/sammelkarten` zur vollständigen Kontrolle über den Lehrerpool, Drop-Rates und Pack-Parameter.
+- Feature: **Dynamic Card Configuration**. Migration der Sammelkarten-Einstellungen von einer statischen Konfiguration zu einem dynamischen, echtzeit-steuerbaren Firestore-Dokument (`settings/sammelkarten`).
+- Feature: **Pack Simulator**. Ein neues Admin-Tool zur Simulation von Tausenden von Booster-Öffnungen, um die tatsächliche Drop-Verteilung der konfigurierten Gewichte zu validieren.
+- Feature: **Custom Weights & Probabilities**. Admins können nun individuelle Gewichte für alle 3 Slots in regulären und Godpacks sowie die Wahrscheinlichkeiten für alle Karten-Varianten (Shiny, Holo, Black Shiny Holo) anpassen.
+- Feature: **Teacher Pool Management**. Erweiterte Funktionen zum Hinzufügen, Bearbeiten und Löschen von Lehrern im Lootpool, inklusive automatischem Sync mit der Voting-Datenbank.
+- Security: **Route Protection**. Implementierung der `AdminGuard`-Komponente für einen robusten Zugriffsschutz auf administrative Routen.
+- Refactor: **Frontend Integration**. Die Sammelkarten-Seite und die zugehörigen Hooks (`useUserTeachers`) nutzen nun konsistent die dynamische Konfiguration statt hartcodierter Fallbacks.
+
 ## [0.23.07] - 2026-03-25
 - UI: **AdSense Refinement**. Die AdSense-Komponente hat nun ein dezentes "Anzeige"-Label und einen Platzhalter, um Layout-Shifts zu vermeiden.
 - UI: **Mobile Safe Areas**. Implementierung von `pb-safe` (Safe Area Insets) für eine bessere Unterstützung des iOS Home-Indicators in der AppShell und der mobilen Navigation.

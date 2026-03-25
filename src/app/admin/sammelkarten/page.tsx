@@ -382,8 +382,8 @@ export default function CardManagerPage() {
     setTimeout(() => {
       const results = {
         totalPacks: simCount,
-        rarityCounts: { common: 0, rare: 0, epic: 0, mythic: 0, legendary: 0 },
-        variantCounts: { normal: 0, holo: 0, shiny: 0, black_shiny_holo: 0 },
+        rarityCounts: { common: 0, rare: 0, epic: 0, mythic: 0, legendary: 0 } as Record<TeacherRarity, number>,
+        variantCounts: { normal: 0, holo: 0, shiny: 0, black_shiny_holo: 0 } as Record<string, number>,
         godpackCount: 0,
         teachersFound: {} as Record<string, number>
       }
