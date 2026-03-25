@@ -1,19 +1,10 @@
 # Changelog
 
-## [0.26.25] - 2026-03-25
+## [0.26.26] - 2026-03-25
+- Fix: **Genaue Wahrscheinlichkeiten im Debug-Modus**. Die Wahrscheinlichkeitsberechnung für gezogene Karten wurde korrigiert und berücksichtigt nun auch die Chance für die jeweilige Variante (Normal, Holo, Shiny etc.), was zu einer präzisen Anzeige der tatsächlichen Drop-Chance führt.
 - Fix: **Zuverlässiges Aufdecken der Karten**. Ein Bug wurde behoben, bei dem das Umdrehen einer Karte nicht korrekt an die Seite gemeldet wurde. Die Klick-Logik wurde zentralisiert, sodass das Aufdecken nun zuverlässig den Gesamtfortschritt aktualisiert und die Navigations-Buttons korrekt erscheinen.
-
-## [0.26.24] - 2026-03-25
-- UI: **Expliziter "Pack öffnen"-Button**. Für eine klarere Nutzerführung gibt es nun einen eigenen Button zum Öffnen einzelner Packs, der immer sichtbar ist, solange Booster verfügbar sind. Der Button zum Öffnen von 10 Packs erscheint bei Bedarf zusätzlich.
-
-## [0.26.22] - 2026-03-25
 - Fix: **Build-Fehler behoben**. Ein doppelter schließender Tag (`/>`) in der `sammelkarten`-Seite, der zu einem Parsing-Fehler im Build-Prozess führte, wurde entfernt.
-
-## [0.26.23] - 2026-03-25
 - Fix: **Stabiles Karten-Reveal beim Booster-Opening**. Ein Fehler wurde behoben, durch den aufgedeckte Karten in der Booster-Ansicht wieder verdeckt werden konnten, was das Erscheinen der Navigations-Buttons verhinderte. Karten bleiben nun nach dem ersten Klick permanent aufgedeckt, was für einen zuverlässigen und klaren Ablauf sorgt.
-
-## [0.26.22] - 2026-03-25
-- Fix: **Dauerhaftes Karten-Reveal beim Booster-Opening**. Einmal aufgedeckte Karten in der Booster-Ansicht können nicht mehr versehentlich wieder verdeckt werden. Dies verhindert Verwirrung beim schnellen Durchklicken der Belohnungen. In der Detailansicht bleibt die Möglichkeit zum Umdrehen weiterhin bestehen.
 - Fix: **Überlappende Sammelkarten auf dem iPad behoben**.
     - Stacking-Context optimiert: Booster-Pack `zIndex` erhöht, um Überlappungen während der Ripping-Animation zu vermeiden.
     - Layout-Anpassung: Kartenbreite auf Tablets (`sm:w-52`) reduziert, um unerwünschte Zeilenumbrüche im Hochformat zu verhindern.

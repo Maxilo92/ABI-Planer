@@ -39,6 +39,12 @@ const DEFAULT_GODPACK_WEIGHTS = [
   { common: 0, rare: 0, epic: 0.4, mythic: 0.4, legendary: 0.2 }
 ]
 
+const DEFAULT_VARIANTS_PROBABILITIES = {
+  shiny: 0.05,
+  holo: 0.15,
+  black_shiny_holo: 0.005
+};
+
 const getRarityHex = (rarity: TeacherRarity) => {
   switch (rarity) {
     case 'common': return '#64748b'
@@ -358,15 +364,41 @@ function SammelkartenContent() {
 
   const allFlipped = flippedCards.every(v => v === true)
 
+  const getVariantProbability = (variant: CardVariant, isGodpack: boolean) => {
+    const probs = config?.variant_probabilities || DEFAULT_VARIANTS_PROBABILITIES;
+    
+    if (isGodpack) {
+      switch (variant) {
+        case 'black_shiny_holo': return 0.1;
+        case 'shiny': return 0.3; // 0.4 - 0.1
+        case 'holo': return 0.4; // 0.8 - 0.4
+        default: return 0.2; // 1.0 - 0.8
+      }
+    }
+    
+    switch (variant) {
+      case 'black_shiny_holo': return probs.black_shiny_holo ?? 0.005;
+      case 'shiny': return (probs.shiny ?? 0.05) - (probs.black_shiny_holo ?? 0.005);
+      case 'holo': return (probs.holo ?? 0.15) - (probs.shiny ?? 0.05);
+      default: return 1.0 - (probs.holo ?? 0.15);
+    }
+  }
+
   const getPackProbabilities = () => {
-    if (!revealedTeachers || !config) return null;
+    if (!revealedTeachers || !collectionResults || !config) return null;
     
     const godpackChance = config.global_limits?.godpack_chance ?? 0.005;
     const weights = isGodpack ? (config.godpack_weights || DEFAULT_GODPACK_WEIGHTS) : (config.rarity_weights || DEFAULT_RARITY_WEIGHTS);
     
-    const cardChances = revealedTeachers.map((t, i) => {
+    const cardChances = revealedTeachers.map((teacher, i) => {
       const slotWeights = weights[i] as any;
-      return slotWeights[t.rarity] || 0;
+      const rarityChance = slotWeights[teacher.rarity] || 0;
+      
+      const result = collectionResults[i];
+      if (!result) return 0;
+
+      const variantChance = getVariantProbability(result.variant, isGodpack);
+      return rarityChance * variantChance;
     });
 
     const combinedCardChance = cardChances.reduce((acc, curr) => acc * curr, 1);
@@ -540,10 +572,9 @@ function SammelkartenContent() {
                             
                             {isFlipped && showDebug && packProbs && (
                               <div className="mt-2 bg-black/80 text-[8px] font-mono p-1 rounded border border-white/10 text-amber-200 animate-in fade-in duration-500">
-                                Chance: {(packProbs.cardChances[idx] * 100).toFixed(3)}%
+                                Chance: {(packProbs.cardChances[idx] * 100).toPrecision(3)}%
                               </div>
                             )}
-
                             {!isFlipped && (
                               <div className="mt-4 animate-pulse text-[10px] text-white/50 font-black uppercase tracking-[0.2em] text-center line-clamp-1">Tippen</div>
                             )}
