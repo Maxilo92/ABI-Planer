@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.26.12] - 2026-03-25
+- UI: **Responsives Booster-Opening Layout**. Die Karten beim Öffnen eines Booster-Packs passen sich nun besser an kleine Bildschirme an. Statt unleserlich klein zu werden, brechen die Karten nun bei Platzmangel automatisch in eine zweite Zeile um.
+
+## [0.26.11] - 2026-03-25
+- UI: **Optimierte Level-Up-Visuals**. Die Upgrade-Animation für Sammelkarten wurde weiter verfeinert: Das große Level-Overlay auf der Karte wurde durch eine volle 360°-Horizontal-Rotation ersetzt. Das schwebende Badge zeigt nun präzise den Level-Übergang (z. B. "LVL 3 → 4") anstelle eines statischen Textes.
+
+## [0.26.10] - 2026-03-25
+- UI: **Komprimiertes Filter-Menü & Toggle-Sortierung**.
+    - Das Filter-Menü im Album wurde komplett überarbeitet und für mehr Übersichtlichkeit komprimiert.
+    - **Toggle-Sortierung**: Ein erneuter Klick auf den aktiven Sortier-Modus kehrt nun die Sortierreihenfolge um (Aufsteigend/Absteigend), visualisiert durch neue Icons.
+    - Seltenheits- und Varianten-Filter wurden platzsparend als Button-Grids gruppiert.
+    - Der Besitz-Status wird nun über einen kompakten Segmented-Control gesteuert.
+
 ## [0.26.11] - 2026-03-25
 - UI: **Erweiterte Filter im Lehrer-Album**.
     - Neue Filter-Kategorie für **Karten-Varianten** hinzugefügt (Normal, Holo, Shiny, Secret Rare).

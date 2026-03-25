@@ -70,10 +70,10 @@ export const TeacherCard: React.FC<TeacherCardProps> = ({
         setIsLevelAnimating(true);
         setShowBurst(true);
         
-        // Shake animation
+        // Full 360-degree horizontal spin
         controls.start({
-          x: [0, -10, 10, -10, 10, 0],
-          transition: { duration: 0.4, ease: "easeInOut" }
+          rotateY: [0, 360],
+          transition: { duration: 0.8, ease: "easeInOut" }
         });
 
         setTimeout(() => {
@@ -228,51 +228,27 @@ export const TeacherCard: React.FC<TeacherCardProps> = ({
                     {isLevelAnimating && (
                       <motion.div
                         initial={{ scale: 0.5, opacity: 0, y: 50 }}
-                        animate={{ scale: 1.2, opacity: 1, y: -100 }}
-                        exit={{ scale: 0.8, opacity: 0, y: -150 }}
-                        className="absolute font-black text-white text-[12cqw] drop-shadow-[0_0_15px_rgba(255,255,0,0.8)] z-50 italic"
+                        animate={{ scale: 1.1, opacity: 1, y: -110 }}
+                        exit={{ scale: 0.8, opacity: 0, y: -160 }}
+                        className="absolute font-black text-white text-[9cqw] drop-shadow-[0_0_15px_rgba(255,255,0,0.8)] z-50 italic flex items-center gap-[2cqw]"
                       >
-                        LEVEL UP!
+                        <span className="text-white/60">LVL</span>
+                        {upgradeInfo.oldLevel} 
+                        <span className="text-yellow-400 animate-pulse">→</span> 
+                        {upgradeInfo.newLevel}
                       </motion.div>
                     )}
                   </AnimatePresence>
 
-                  <motion.div
-                    initial={{ scale: 0, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    className="relative"
-                  >
-                    {showBurst && (
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        {[...Array(20)].map((_, i) => (
-                          <Particle key={i} delay={i * 0.02} />
-                        ))}
-                      </div>
-                    )}
-                    
-                    <div className="absolute inset-[-10cqw] blur-[30px] bg-yellow-400/30 animate-pulse rounded-full" />
-                    
-                    <motion.div
-                      key={displayLevel}
-                      initial={{ scale: 1.8, opacity: 0, rotate: -10 }}
-                      animate={{ scale: 1, opacity: 1, rotate: 0 }}
-                      className={cn(
-                        "relative px-[5cqw] py-[2cqw] rounded-[3cqw] border-[1.2cqw] shadow-2xl font-black text-[12cqw] tracking-tighter flex flex-col items-center justify-center min-w-[35cqw]",
-                        displayLevel >= 10 ? "bg-gradient-to-br from-yellow-400 via-amber-200 to-yellow-600 text-black border-yellow-200" : "bg-black text-white border-white"
-                      )}
-                    >
-                      <span className={cn(
-                        "text-[4cqw] uppercase tracking-widest",
-                        displayLevel >= 10 ? "text-black/60" : "text-white/60"
-                      )}>Level</span>
-                      <div className="leading-none mt-[-1cqw]">
-                        {displayLevel}
-                      </div>
-                    </motion.div>
-                  </motion.div>
+                  {showBurst && (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      {[...Array(24)].map((_, i) => (
+                        <Particle key={i} delay={i * 0.015} />
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
-
               <div className={cn("absolute z-30", styleClasses.numberPos)}>
                 <div className={styleClasses.numberTag}>
                   {data.cardNumber}

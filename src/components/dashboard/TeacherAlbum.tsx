@@ -8,7 +8,7 @@ import { useEffect, useState, useRef, useMemo } from 'react'
 import { LootTeacher, TeacherRarity, Profile, CardVariant } from '@/types/database'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { useRouter } from 'next/navigation'
-import { GraduationCap, Trophy, Star, Lock, Search, Filter, X, ChevronRight, Rotate3d, ArrowDownAZ, ArrowDownZA, ArrowUp10, LayoutGrid, Package } from 'lucide-react'
+import { GraduationCap, Trophy, Star, Lock, Search, Filter, X, ChevronRight, Rotate3d, ArrowDownAZ, ArrowDownZA, ArrowUp10, LayoutGrid, Package, ArrowUpNarrowWide, ArrowDownWideNarrow } from 'lucide-react'
 import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
@@ -252,12 +252,20 @@ export function TeacherAlbum({
   const [rarityFilters, setRarityFilters] = useState<TeacherRarity[]>([])
   const [variantFilters, setVariantFilters] = useState<NewCardVariant[]>([])
   const [ownershipFilter, setOwnershipFilter] = useState<'all' | 'owned' | 'missing'>(initialLimit ? 'owned' : 'all')
-  const [sortBy, setSortBy] = useState<'rarity_desc' | 'rarity_asc' | 'name_asc' | 'name_desc' | 'level_desc' | 'level_asc' | 'upgrade'>(
-    initialLimit ? 'level_desc' : 'rarity_desc'
-  )
+  const [sortKey, setSortKey] = useState<'rarity' | 'name' | 'level'>('rarity')
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
   
   // Selection state
   const [selectedTeacher, setSelectedTeacher] = useState<LootTeacher | null>(null)
+
+  const handleSortChange = (key: 'rarity' | 'name' | 'level') => {
+    if (sortKey === key) {
+      setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortKey(key)
+      setSortOrder('desc') // Default to desc for new key
+    }
+  }
 
   useEffect(() => {
     const unsubscribe = onSnapshot(doc(db, 'settings', 'global'), (snapshot) => {
@@ -321,27 +329,17 @@ export function TeacherAlbum({
       if (!!ownedA !== !!ownedB) return ownedB ? 1 : -1
       
       // Secondary sorting based on user selection
-      if (sortBy === 'level_desc' || sortBy === 'level_asc') {
+      if (sortKey === 'level') {
         const lvlA = ownedA?.level || 0
         const lvlB = ownedB?.level || 0
-        if (lvlA !== lvlB) return sortBy === 'level_desc' ? (lvlB - lvlA) : (lvlA - lvlB)
-      } else if (sortBy === 'upgrade') {
-        const getNeeded = (owned: any) => {
-          if (!owned) return 1000
-          const level = owned.level || 1
-          const count = owned.count || 0
-          return getNextLevelCount(level) - count
-        }
-        const neededA = getNeeded(ownedA)
-        const neededB = getNeeded(ownedB)
-        if (neededA !== neededB) return neededA - neededB
-      } else if (sortBy === 'rarity_desc' || sortBy === 'rarity_asc') {
+        if (lvlA !== lvlB) return sortOrder === 'desc' ? (lvlB - lvlA) : (lvlA - lvlB)
+      } else if (sortKey === 'rarity') {
         const rarityOrder: TeacherRarity[] = ['legendary', 'mythic', 'epic', 'rare', 'common']
         const rarityA = rarityOrder.indexOf(a.rarity)
         const rarityB = rarityOrder.indexOf(b.rarity)
-        if (rarityA !== rarityB) return sortBy === 'rarity_desc' ? (rarityA - rarityB) : (rarityB - rarityA)
-      } else if (sortBy === 'name_desc') {
-        return b.name.localeCompare(a.name)
+        if (rarityA !== rarityB) return sortOrder === 'desc' ? (rarityA - rarityB) : (rarityB - rarityA)
+      } else if (sortKey === 'name') {
+        return sortOrder === 'desc' ? b.name.localeCompare(a.name) : a.name.localeCompare(b.name)
       }
       
       // Default: sort by name
@@ -349,7 +347,7 @@ export function TeacherAlbum({
     })
 
     return result
-  }, [globalTeachers, userTeachers, search, rarityFilters, ownershipFilter, sortBy, initialLimit, isExpanded])
+  }, [globalTeachers, userTeachers, search, rarityFilters, variantFilters, ownershipFilter, sortKey, sortOrder, initialLimit, isExpanded])
 
   if (loadingUserTeachers || loadingGlobal) {
     return (
@@ -383,10 +381,11 @@ export function TeacherAlbum({
     setRarityFilters([])
     setVariantFilters([])
     setOwnershipFilter('all')
-    setSortBy('rarity_desc')
+    setSortKey('rarity')
+    setSortOrder('desc')
   }
 
-  const activeFilterCount = (search ? 1 : 0) + rarityFilters.length + variantFilters.length + (ownershipFilter !== 'all' ? 1 : 0) + (sortBy !== 'rarity_desc' ? 1 : 0)
+  const activeFilterCount = (search ? 1 : 0) + rarityFilters.length + variantFilters.length + (ownershipFilter !== 'all' ? 1 : 0) + (sortKey !== 'rarity' || sortOrder !== 'desc' ? 1 : 0)
 
   // Determine which teachers to show based on expansion state
   const displayedTeachers = initialLimit && !isExpanded 
@@ -468,93 +467,110 @@ export function TeacherAlbum({
                 </Badge>
               )}
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel>Besitz-Status</DropdownMenuLabel>
-              <DropdownMenuCheckboxItem 
-                checked={ownershipFilter === 'all'} 
-                onCheckedChange={() => setOwnershipFilter('all')}
-              >
-                Alle anzeigen
-              </DropdownMenuCheckboxItem>
-              <DropdownMenuCheckboxItem 
-                checked={ownershipFilter === 'owned'} 
-                onCheckedChange={() => setOwnershipFilter('owned')}
-              >
-                Nur Entdeckte
-              </DropdownMenuCheckboxItem>
-              <DropdownMenuCheckboxItem 
-                checked={ownershipFilter === 'missing'} 
-                onCheckedChange={() => setOwnershipFilter('missing')}
-              >
-                Nur Fehlende
-              </DropdownMenuCheckboxItem>
+            <DropdownMenuContent align="end" className="w-64 p-2 space-y-2">
+              <div className="space-y-1">
+                <DropdownMenuLabel className="text-[10px] font-black uppercase tracking-widest opacity-50 px-2 py-1">Besitz</DropdownMenuLabel>
+                <div className="flex p-1 bg-muted/50 rounded-lg gap-1">
+                  {(['all', 'owned', 'missing'] as const).map((status) => (
+                    <button
+                      key={status}
+                      onClick={() => setOwnershipFilter(status)}
+                      className={cn(
+                        "flex-1 px-2 py-1.5 rounded-md text-[10px] font-bold uppercase transition-all",
+                        ownershipFilter === status ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:bg-background/50"
+                      )}
+                    >
+                      {status === 'all' ? 'Alle' : status === 'owned' ? 'Entdeckt' : 'Fehlt'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <DropdownMenuSeparator />
               
-              <DropdownMenuSeparator />
-              <DropdownMenuLabel>Sortierung</DropdownMenuLabel>
-              <DropdownMenuRadioGroup value={sortBy} onValueChange={(v) => setSortBy(v as any)}>
-                <DropdownMenuRadioItem value="rarity_desc" className="flex items-center gap-2">
-                  <LayoutGrid className="h-4 w-4" />
-                  Seltenheit (hoch nach niedrig)
-                </DropdownMenuRadioItem>
-                <DropdownMenuRadioItem value="rarity_asc" className="flex items-center gap-2">
-                  <LayoutGrid className="h-4 w-4" />
-                  Seltenheit (niedrig nach hoch)
-                </DropdownMenuRadioItem>
-                <DropdownMenuRadioItem value="name_asc" className="flex items-center gap-2">
-                  <ArrowDownAZ className="h-4 w-4" />
-                  Alphabetisch (A-Z)
-                </DropdownMenuRadioItem>
-                <DropdownMenuRadioItem value="name_desc" className="flex items-center gap-2">
-                  <ArrowDownZA className="h-4 w-4" />
-                  Alphabetisch (Z-A)
-                </DropdownMenuRadioItem>
-                <DropdownMenuRadioItem value="level_desc" className="flex items-center gap-2">
-                  <ArrowUp10 className="h-4 w-4" />
-                  Level (absteigend)
-                </DropdownMenuRadioItem>
-                <DropdownMenuRadioItem value="level_asc" className="flex items-center gap-2">
-                  <ArrowDownAZ className="h-4 w-4" />
-                  Level (aufsteigend)
-                </DropdownMenuRadioItem>
-                {/* Upgrade-Logik entfernt, da Packs-System */}
-              </DropdownMenuRadioGroup>
+              <div className="space-y-1">
+                <DropdownMenuLabel className="text-[10px] font-black uppercase tracking-widest opacity-50 px-2 py-1">Sortierung</DropdownMenuLabel>
+                <div className="grid grid-cols-1 gap-1">
+                  {[
+                    { key: 'rarity', label: 'Seltenheit', icon: LayoutGrid },
+                    { key: 'name', label: 'Alphabet', icon: ArrowDownAZ },
+                    { key: 'level', label: 'Level', icon: ArrowUp10 }
+                  ].map((s) => (
+                    <button
+                      key={s.key}
+                      onClick={() => handleSortChange(s.key as any)}
+                      className={cn(
+                        "flex items-center justify-between w-full px-2 py-1.5 rounded-md text-xs transition-all",
+                        sortKey === s.key ? "bg-primary/10 text-primary font-bold" : "hover:bg-muted text-muted-foreground"
+                      )}
+                    >
+                      <div className="flex items-center gap-2">
+                        <s.icon className="h-3.5 w-3.5" />
+                        {s.label}
+                      </div>
+                      {sortKey === s.key && (
+                        sortOrder === 'desc' ? <ArrowDownWideNarrow className="h-3.5 w-3.5" /> : <ArrowUpNarrowWide className="h-3.5 w-3.5" />
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
 
               <DropdownMenuSeparator />
-              <DropdownMenuLabel>Seltenheit</DropdownMenuLabel>
-              {(['legendary', 'mythic', 'epic', 'rare', 'common'] as TeacherRarity[]).map((rarity) => (
-                <DropdownMenuCheckboxItem 
-                  key={rarity}
-                  checked={rarityFilters.includes(rarity)}
-                  onCheckedChange={() => toggleRarity(rarity)}
-                >
-                  <div className="flex items-center gap-2">
-                    <div className={cn("w-2 h-2 rounded-full", getRarityBadge(rarity))} />
-                    {getRarityLabel(rarity)}
-                  </div>
-                </DropdownMenuCheckboxItem>
-              ))}
+
+              <div className="space-y-1">
+                <DropdownMenuLabel className="text-[10px] font-black uppercase tracking-widest opacity-50 px-2 py-1">Seltenheit</DropdownMenuLabel>
+                <div className="flex flex-wrap gap-1 px-1">
+                  {(['legendary', 'mythic', 'epic', 'rare', 'common'] as TeacherRarity[]).map((rarity) => (
+                    <button
+                      key={rarity}
+                      onClick={() => toggleRarity(rarity)}
+                      className={cn(
+                        "w-6 h-6 rounded-md flex items-center justify-center transition-all border-2",
+                        rarityFilters.includes(rarity) 
+                          ? cn("border-transparent", getRarityBadge(rarity)) 
+                          : "border-muted-foreground/20 hover:border-muted-foreground/40"
+                      )}
+                      title={getRarityLabel(rarity)}
+                    >
+                      <div className={cn("w-2 h-2 rounded-full", rarityFilters.includes(rarity) ? "bg-white" : getRarityBadge(rarity))} />
+                    </button>
+                  ))}
+                </div>
+              </div>
 
               <DropdownMenuSeparator />
-              <DropdownMenuLabel>Variante</DropdownMenuLabel>
-              {(['black_shiny_holo', 'shiny', 'holo', 'normal'] as NewCardVariant[]).map((v) => (
-                <DropdownMenuCheckboxItem 
-                  key={v}
-                  checked={variantFilters.includes(v)}
-                  onCheckedChange={() => toggleVariant(v)}
-                >
-                  <div className="flex items-center gap-2">
-                    <div className={cn("w-2 h-2 rounded-full", getVariantBadge(v as any))} />
-                    {getVariantLabel(v as any)}
-                  </div>
-                </DropdownMenuCheckboxItem>
-              ))}
+
+              <div className="space-y-1">
+                <DropdownMenuLabel className="text-[10px] font-black uppercase tracking-widest opacity-50 px-2 py-1">Variante</DropdownMenuLabel>
+                <div className="grid grid-cols-2 gap-1 px-1">
+                  {(['black_shiny_holo', 'shiny', 'holo', 'normal'] as NewCardVariant[]).map((v) => (
+                    <button
+                      key={v}
+                      onClick={() => toggleVariant(v)}
+                      className={cn(
+                        "px-2 py-1.5 rounded-md text-[9px] font-black uppercase border-2 transition-all flex items-center gap-1.5",
+                        variantFilters.includes(v)
+                          ? cn("border-transparent text-white", getVariantBadge(v as any))
+                          : "border-muted-foreground/10 text-muted-foreground hover:border-muted-foreground/30"
+                      )}
+                    >
+                      <div className={cn("w-1.5 h-1.5 rounded-full", variantFilters.includes(v) ? "bg-white" : getVariantBadge(v as any))} />
+                      <span className="truncate">{getVariantLabel(v as any)}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
               
               {activeFilterCount > 0 && (
                 <>
                   <DropdownMenuSeparator />
-                  <DropdownMenuCheckboxItem onCheckedChange={clearFilters} className="text-destructive focus:text-destructive">
+                  <button 
+                    onClick={clearFilters}
+                    className="w-full px-2 py-2 text-[10px] font-black uppercase text-destructive hover:bg-destructive/10 rounded-md transition-all text-center"
+                  >
                     Alles zurücksetzen
-                  </DropdownMenuCheckboxItem>
+                  </button>
                 </>
               )}
             </DropdownMenuContent>
