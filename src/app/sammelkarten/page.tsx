@@ -73,7 +73,7 @@ function SammelkartenContent() {
   const [config, setConfig] = useState<SammelkartenConfig | null>(null)
   const [gameState, setGameState] = useState<'idle' | 'ripping' | 'revealed'>('idle')
   const [revealedTeachers, setRevealedTeachers] = useState<LootTeacher[] | null>(null)
-  const [collectionResults, setCollectionResults] = useState<Array<{ isNew: boolean, isLevelUp: boolean, newLevel: number, count: number, variant: CardVariant } | null> | null>(null)
+  const [collectionResults, setCollectionResults] = useState<Array<{ isNew: boolean, isLevelUp: boolean, oldLevel?: number, newLevel: number, count: number, variant: CardVariant } | null> | null>(null)
   const [flippedCards, setFlippedCards] = useState<boolean[]>([false, false, false])
   const [isGodpack, setIsGodpack] = useState(false)
   const [isAnimating, setIsAnimating] = useState(false)

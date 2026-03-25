@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.26.09] - 2026-03-25
+- Fix: **TypeScript Build Error**. Ein Fehler in der Typisierung der Sammlungs-Resultate wurde behoben, der den produktiven Build verhinderte (fehlende `oldLevel`-Eigenschaft in `collectionResults`).
+
+## [0.26.08] - 2026-03-25
+- Admin: **Autosave-Buffer für Karten-Manager**. Implementierung eines 10-sekündigen Puffers für Änderungen an der Sammelkarten-Konfiguration. Änderungen werden nun lokal gesammelt und erst nach einer Inaktivitätsphase von 10 Sekunden automatisch in die Datenbank geschrieben. Dies schont Ressourcen und erlaubt flüssigeres Editieren. Ein visueller Countdown informiert über den nächsten Speichervorgang.
+
 ## [0.26.07] - 2026-03-25
 - UI: **Karten-Detailansicht Optimierung**. Karten werden nun standardmäßig mit der Vorderseite zuerst angezeigt, wenn keine externe Steuerung vorliegt (z.B. im Album oder in der Detailansicht). Dies verbessert die Nutzererfahrung, da die Inhalte sofort sichtbar sind.
 

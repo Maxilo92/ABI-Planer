@@ -114,6 +114,9 @@ const DEFAULT_LIMITS = {
 export default function CardManagerPage() {
   const { user, profile } = useAuth()
   const [config, setConfig] = useState<SammelkartenConfig | null>(null)
+  const [localConfig, setLocalConfig] = useState<SammelkartenConfig | null>(null)
+  const [isDirty, setIsDirty] = useState(false)
+  const [autosaveCountdown, setAutosaveCountdown] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
   const [migrating, setMigrating] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -145,9 +148,14 @@ export default function CardManagerPage() {
   useEffect(() => {
     const unsubscribe = onSnapshot(doc(db, 'settings', 'sammelkarten'), (snapshot) => {
       if (snapshot.exists()) {
-        setConfig(snapshot.data() as SammelkartenConfig)
+        const data = snapshot.data() as SammelkartenConfig
+        setConfig(data)
+        if (!isDirty) {
+          setLocalConfig(data)
+        }
       } else {
         setConfig(null)
+        setLocalConfig(null)
       }
       setLoading(false)
     })
@@ -168,22 +176,55 @@ export default function CardManagerPage() {
     fetchVotingData()
 
     return () => unsubscribe()
-  }, [])
+  }, [isDirty])
 
-  const handleSaveConfig = async (updatedFields: Partial<SammelkartenConfig>) => {
-    if (!config) return
+  useEffect(() => {
+    if (!isDirty || !localConfig) {
+      setAutosaveCountdown(null)
+      return
+    }
+
+    const timer = setTimeout(() => {
+      performActualSave(localConfig)
+    }, 10000)
+
+    const interval = setInterval(() => {
+      setAutosaveCountdown(prev => (prev !== null && prev > 0) ? prev - 1 : 0)
+    }, 1000)
+    setAutosaveCountdown(10)
+
+    return () => {
+      clearTimeout(timer)
+      clearInterval(interval)
+    }
+  }, [isDirty, localConfig])
+
+  const performActualSave = async (dataToSave: SammelkartenConfig) => {
     setSaving(true)
     try {
       await updateDoc(doc(db, 'settings', 'sammelkarten'), {
-        ...updatedFields,
+        ...dataToSave,
         updated_at: serverTimestamp()
       })
-      toast.success('Änderungen gespeichert')
+      setIsDirty(false)
+      setAutosaveCountdown(null)
+      toast.success('Änderungen automatisch gespeichert')
     } catch (error) {
-      toast.error('Speichern fehlgeschlagen')
+      toast.error('Automatisches Speichern fehlgeschlagen')
     } finally {
       setSaving(false)
     }
+  }
+
+  const handleSaveConfig = (updatedFields: Partial<SammelkartenConfig>) => {
+    if (!localConfig) return
+    setLocalConfig(prev => prev ? { ...prev, ...updatedFields } : null)
+    setIsDirty(true)
+  }
+
+  const handleManualSave = async () => {
+    if (!localConfig || !isDirty) return
+    await performActualSave(localConfig)
   }
 
   const handleMigrate = async () => {
@@ -222,7 +263,7 @@ export default function CardManagerPage() {
   }
 
   const handleAddTeacher = async () => {
-    if (!newTeacherName.trim() || !config) return
+    if (!newTeacherName.trim() || !localConfig) return
     
     const newTeacher: LootTeacher = {
       id: newTeacherName.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
@@ -230,17 +271,17 @@ export default function CardManagerPage() {
       rarity: newTeacherRarity
     }
     
-    const updatedTeachers = [...(config.loot_teachers || []), newTeacher]
+    const updatedTeachers = [...(localConfig.loot_teachers || []), newTeacher]
     handleSaveConfig({ loot_teachers: updatedTeachers })
     setNewTeacherName('')
   }
 
   const handleRemoveTeacher = async (index: number) => {
-    if (!config) return
-    const teacher = config.loot_teachers[index]
+    if (!localConfig) return
+    const teacher = localConfig.loot_teachers[index]
     if (!confirm(`Möchtest du ${teacher.name} wirklich entfernen?`)) return
     
-    const updatedTeachers = config.loot_teachers.filter((_, i) => i !== index)
+    const updatedTeachers = localConfig.loot_teachers.filter((_, i) => i !== index)
     handleSaveConfig({ loot_teachers: updatedTeachers })
   }
 
@@ -251,9 +292,9 @@ export default function CardManagerPage() {
   }
 
   const handleUpdateTeacher = async () => {
-    if (!editingTeacher || editingIndex === null || !config) return
+    if (!editingTeacher || editingIndex === null || !localConfig) return
     
-    const updatedTeachers = [...config.loot_teachers]
+    const updatedTeachers = [...localConfig.loot_teachers]
     updatedTeachers[editingIndex] = editingTeacher
     
     handleSaveConfig({ loot_teachers: updatedTeachers })
@@ -261,12 +302,12 @@ export default function CardManagerPage() {
   }
 
   const handleSyncRarities = async () => {
-    if (!config) return
+    if (!localConfig) return
     if (!confirm('Möchtest du die Seltenheiten basierend auf den aktuellen Voting-Durchschnitten aktualisieren?')) return
     
     setSyncing(true)
     try {
-      const updatedTeachers = config.loot_teachers.map(t => {
+      const updatedTeachers = localConfig.loot_teachers.map(t => {
         const live = votingData[t.id]
         if (!live || live.count < 5) return t
         
@@ -289,7 +330,7 @@ export default function CardManagerPage() {
   }
 
   const handleBulkImport = async () => {
-    if (!config || importing) return
+    if (!localConfig || importing) return
     const confirmed = window.confirm('Möchtest du alle Lehrer aus der vordefinierten Liste importieren? Bestehende Lehrer in der Voting-Datenbank werden übersprungen.')
     if (!confirmed) return
 
@@ -413,7 +454,7 @@ export default function CardManagerPage() {
       }
       await batch.commit()
       
-      const newLootTeachers = [...(config.loot_teachers || [])]
+      const newLootTeachers = [...(localConfig.loot_teachers || [])]
       let addedCount = 0
       teachersToImport.forEach(t => {
         if (!newLootTeachers.some(lt => lt.id === t.id)) {
@@ -436,7 +477,7 @@ export default function CardManagerPage() {
   }
 
   const runSimulation = () => {
-    if (!config) return
+    if (!localConfig) return
     setSimulating(true)
     
     setTimeout(() => {
@@ -449,13 +490,13 @@ export default function CardManagerPage() {
       }
 
       const generateOnePack = (isGodpack: boolean) => {
-        const weights = isGodpack ? config.godpack_weights : config.rarity_weights
+        const weights = isGodpack ? localConfig!.godpack_weights : localConfig!.rarity_weights
         
         return weights.map(slotWeights => {
           const rand = Math.random()
           let cumulative = 0
           let targetRarity: TeacherRarity = 'common'
-          for (const [rarity, weight] of Object.entries(slotWeights)) {
+          for (const [rarity, weight] of Object.entries(slotWeights) as [TeacherRarity, number][]) {
             cumulative += weight
             if (rand < cumulative) {
               targetRarity = rarity as TeacherRarity
@@ -473,7 +514,7 @@ export default function CardManagerPage() {
             else if (vRand < 0.4) variant = 'shiny'
             else if (vRand < 0.8) variant = 'holo'
           } else {
-            const probs = config.variant_probabilities
+            const probs = localConfig!.variant_probabilities
             if (vRand < probs.black_shiny_holo) variant = 'black_shiny_holo'
             else if (vRand < probs.shiny) variant = 'shiny'
             else if (vRand < probs.holo) variant = 'holo'
@@ -485,7 +526,7 @@ export default function CardManagerPage() {
       }
 
       for (let i = 0; i < simCount; i++) {
-        const isGodpack = Math.random() < config.global_limits.godpack_chance
+        const isGodpack = Math.random() < localConfig!.global_limits.godpack_chance
         if (isGodpack) results.godpackCount++
         generateOnePack(isGodpack)
       }
@@ -518,19 +559,19 @@ export default function CardManagerPage() {
   }
 
   const filteredTeachers = useMemo(() => {
-    return (config?.loot_teachers || []).filter(t => 
+    return (localConfig?.loot_teachers || []).filter(t => 
       t.name.toLowerCase().includes(teacherSearch.toLowerCase())
     )
-  }, [config?.loot_teachers, teacherSearch])
+  }, [localConfig?.loot_teachers, teacherSearch])
 
   const rarityDistribution = useMemo(() => {
-    if (!config) return {}
+    if (!localConfig) return {}
     const dist: Record<string, number> = {}
-    config.loot_teachers.forEach(t => {
+    localConfig.loot_teachers.forEach(t => {
       dist[t.rarity] = (dist[t.rarity] || 0) + 1
     })
     return dist
-  }, [config])
+  }, [localConfig])
 
   if (loading) {
     return (
@@ -556,22 +597,43 @@ export default function CardManagerPage() {
           </div>
           
           <div className="flex items-center gap-2">
-            {!config && (
+            {!localConfig && (
               <Button onClick={handleMigrate} disabled={migrating} className="gap-2 bg-amber-600 hover:bg-amber-700">
                 {migrating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Database className="h-4 w-4" />}
                 Daten migrieren
               </Button>
             )}
-            {saving && (
-              <Badge variant="outline" className="animate-pulse bg-primary/5 text-primary border-primary/20">
-                <Loader2 className="h-3 w-3 animate-spin mr-2" />
-                Speichere...
-              </Badge>
+
+            {isDirty ? (
+              <div className="flex items-center gap-3 bg-muted/50 pl-3 pr-1 py-1 rounded-full border border-primary/10">
+                {autosaveCountdown !== null && (
+                  <span className="text-[10px] text-muted-foreground font-medium whitespace-nowrap">
+                    Autosave in {autosaveCountdown}s
+                  </span>
+                )}
+                <Button 
+                  size="sm" 
+                  variant="ghost"
+                  onClick={handleManualSave} 
+                  disabled={saving}
+                  className="h-7 text-[11px] gap-2 hover:bg-emerald-500/10 hover:text-emerald-600"
+                >
+                  {saving ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+                  Jetzt speichern
+                </Button>
+              </div>
+            ) : (
+              saving && (
+                <Badge variant="outline" className="animate-pulse bg-primary/5 text-primary border-primary/20">
+                  <Loader2 className="h-3 w-3 animate-spin mr-2" />
+                  Speichere...
+                </Badge>
+              )
             )}
           </div>
         </div>
 
-        {!config ? (
+        {!localConfig ? (
           <Card className="border-amber-500/50 bg-amber-500/5">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-amber-700">
@@ -629,7 +691,7 @@ export default function CardManagerPage() {
                               Bulk Import
                             </Button>
                             <Badge variant="secondary">
-                              {config.loot_teachers.length} Lehrer
+                              {localConfig!.loot_teachers.length} Lehrer
                             </Badge>
                           </div>
                         </div>
@@ -741,7 +803,7 @@ export default function CardManagerPage() {
                                   rarity === 'epic' ? 'bg-purple-500' :
                                   rarity === 'mythic' ? 'bg-red-500' : 'bg-amber-500'
                                 )} 
-                                style={{ width: `${((rarityDistribution[rarity] || 0) / (config?.loot_teachers?.length || 1)) * 100}%` }}
+                                style={{ width: `${((rarityDistribution[rarity] || 0) / (localConfig!.loot_teachers.length || 1)) * 100}%` }}
                               />
                             </div>
                           </div>
@@ -765,10 +827,10 @@ export default function CardManagerPage() {
                       <CardDescription>Wahrscheinlichkeiten pro Slot im Booster (Summe sollte 1.0 ergeben).</CardDescription>
                     </CardHeader>
                     <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                      {config.rarity_weights.map((slot, sIdx) => (
+                      {localConfig!.rarity_weights.map((slot, sIdx) => (
                         <div key={`reg-slot-${sIdx}`} className="space-y-4 p-4 rounded-xl border bg-muted/30">
                           <h4 className="text-xs font-black uppercase text-center tracking-widest border-b pb-2">Slot {sIdx + 1}</h4>
-                          {Object.entries(slot).map(([rarity, weight]) => (
+                          {(Object.entries(slot) as [TeacherRarity, number][]).map(([rarity, weight]) => (
                             <div key={rarity} className="space-y-1">
                               <div className="flex justify-between text-[10px] font-bold uppercase">
                                 <span className={getRarityColor(rarity as TeacherRarity)}>{getRarityLabel(rarity as TeacherRarity)}</span>
@@ -780,7 +842,7 @@ export default function CardManagerPage() {
                                 max="1"
                                 value={weight}
                                 onChange={(val) => {
-                                  const newWeights = [...config.rarity_weights]
+                                  const newWeights = [...localConfig!.rarity_weights]
                                   newWeights[sIdx] = { ...newWeights[sIdx], [rarity]: val }
                                   handleSaveConfig({ rarity_weights: newWeights })
                                 }}
@@ -803,10 +865,10 @@ export default function CardManagerPage() {
                       <CardDescription>Gewichte, wenn ein Godpack gezogen wird (extrem selten).</CardDescription>
                     </CardHeader>
                     <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                      {config.godpack_weights.map((slot, sIdx) => (
+                      {localConfig!.godpack_weights.map((slot, sIdx) => (
                         <div key={`god-slot-${sIdx}`} className="space-y-4 p-4 rounded-xl border bg-amber-500/5 border-amber-500/20">
                           <h4 className="text-xs font-black uppercase text-center tracking-widest border-b border-amber-500/20 pb-2 text-amber-700">Slot {sIdx + 1}</h4>
-                          {Object.entries(slot).map(([rarity, weight]) => (
+                          {(Object.entries(slot) as [TeacherRarity, number][]).map(([rarity, weight]) => (
                             <div key={rarity} className="space-y-1">
                               <div className="flex justify-between text-[10px] font-bold uppercase">
                                 <span className={getRarityColor(rarity as TeacherRarity)}>{getRarityLabel(rarity as TeacherRarity)}</span>
@@ -818,7 +880,7 @@ export default function CardManagerPage() {
                                 max="1"
                                 value={weight}
                                 onChange={(val) => {
-                                  const newWeights = [...config.godpack_weights]
+                                  const newWeights = [...localConfig!.godpack_weights]
                                   newWeights[sIdx] = { ...newWeights[sIdx], [rarity]: val }
                                   handleSaveConfig({ godpack_weights: newWeights })
                                 }}
@@ -849,8 +911,8 @@ export default function CardManagerPage() {
                             <Label className="text-xs">Tägliche Packs pro User</Label>
                             <SmartNumericInput 
                               isInteger
-                              value={config.global_limits.daily_allowance}
-                              onChange={(val) => handleSaveConfig({ global_limits: { ...config.global_limits, daily_allowance: val }})}
+                              value={localConfig!.global_limits.daily_allowance}
+                              onChange={(val) => handleSaveConfig({ global_limits: { ...localConfig!.global_limits, daily_allowance: val }})}
                             />
                           </div>
                           <div className="space-y-2">
@@ -859,16 +921,16 @@ export default function CardManagerPage() {
                               isInteger
                               min="0"
                               max="23"
-                              value={config.global_limits.reset_hour}
-                              onChange={(val) => handleSaveConfig({ global_limits: { ...config.global_limits, reset_hour: val }})}
+                              value={localConfig!.global_limits.reset_hour}
+                              onChange={(val) => handleSaveConfig({ global_limits: { ...localConfig!.global_limits, reset_hour: val }})}
                             />
                           </div>
                           <div className="space-y-2">
-                            <Label className="text-xs">Godpack Wahrscheinlichkeit {formatProbability(config.global_limits.godpack_chance)}</Label>
+                            <Label className="text-xs">Godpack Wahrscheinlichkeit {formatProbability(localConfig!.global_limits.godpack_chance)}</Label>
                             <SmartNumericInput 
                               step="0.0001"
-                              value={config.global_limits.godpack_chance}
-                              onChange={(val) => handleSaveConfig({ global_limits: { ...config.global_limits, godpack_chance: val }})}
+                              value={localConfig!.global_limits.godpack_chance}
+                              onChange={(val) => handleSaveConfig({ global_limits: { ...localConfig!.global_limits, godpack_chance: val }})}
                             />
                           </div>
                         </div>
@@ -879,27 +941,27 @@ export default function CardManagerPage() {
                         <h4 className="text-sm font-bold border-b pb-2">Varianten-Wahrscheinlichkeiten</h4>
                         <div className="space-y-4">
                           <div className="space-y-2">
-                            <Label className="text-xs">Shiny (Silber-Effekt) {formatProbability(config.variant_probabilities.shiny)}</Label>
+                            <Label className="text-xs">Shiny (Silber-Effekt) {formatProbability(localConfig!.variant_probabilities.shiny)}</Label>
                             <SmartNumericInput 
                               step="0.001"
-                              value={config.variant_probabilities.shiny}
-                              onChange={(val) => handleSaveConfig({ variant_probabilities: { ...config.variant_probabilities, shiny: val }})}
+                              value={localConfig!.variant_probabilities.shiny}
+                              onChange={(val) => handleSaveConfig({ variant_probabilities: { ...localConfig!.variant_probabilities, shiny: val }})}
                             />
                           </div>
                           <div className="space-y-2">
-                            <Label className="text-xs">Holo (Regenbogen-Effekt) {formatProbability(config.variant_probabilities.holo)}</Label>
+                            <Label className="text-xs">Holo (Regenbogen-Effekt) {formatProbability(localConfig!.variant_probabilities.holo)}</Label>
                             <SmartNumericInput 
                               step="0.001"
-                              value={config.variant_probabilities.holo}
-                              onChange={(val) => handleSaveConfig({ variant_probabilities: { ...config.variant_probabilities, holo: val }})}
+                              value={localConfig!.variant_probabilities.holo}
+                              onChange={(val) => handleSaveConfig({ variant_probabilities: { ...localConfig!.variant_probabilities, holo: val }})}
                             />
                           </div>
                           <div className="space-y-2">
-                            <Label className="text-xs">Black Shiny Holo (Secret Rare) {formatProbability(config.variant_probabilities.black_shiny_holo)}</Label>
+                            <Label className="text-xs">Black Shiny Holo (Secret Rare) {formatProbability(localConfig!.variant_probabilities.black_shiny_holo)}</Label>
                             <SmartNumericInput 
                               step="0.0001"
-                              value={config.variant_probabilities.black_shiny_holo}
-                              onChange={(val) => handleSaveConfig({ variant_probabilities: { ...config.variant_probabilities, black_shiny_holo: val }})}
+                              value={localConfig!.variant_probabilities.black_shiny_holo}
+                              onChange={(val) => handleSaveConfig({ variant_probabilities: { ...localConfig!.variant_probabilities, black_shiny_holo: val }})}
                             />
                           </div>
                         </div>
