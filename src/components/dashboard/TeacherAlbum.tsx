@@ -124,10 +124,16 @@ const getRarityHex = (rarity: TeacherRarity) => {
   }
 }
 
-const mapToCardData = (teacher: LootTeacher, userData: any, globalTeachers: LootTeacher[]): CardData => {
-  const variant: NewCardVariant = userData?.variants?.black_shiny_holo ? 'blckshiny' :
-                   (userData?.variants?.shiny ? 'shiny-v2' : 
-                   (userData?.variants?.holo ? 'holo' : 'normal'))
+const getBestVariant = (variants: Record<string, number> | undefined): NewCardVariant => {
+  if (!variants) return 'normal';
+  if (variants.black_shiny_holo) return 'black_shiny_holo';
+  if (variants.shiny) return 'shiny';
+  if (variants.holo) return 'holo';
+  return 'normal';
+}
+
+const mapToCardData = (teacher: LootTeacher, userData: any, globalTeachers: LootTeacher[], forcedVariant?: NewCardVariant): CardData => {
+  const variant = forcedVariant || getBestVariant(userData?.variants);
   
   const globalIndex = globalTeachers.findIndex(t => (t.id || t.name) === (teacher.id || teacher.name))
   
@@ -145,8 +151,14 @@ function TeacherCardDetail({ teacher, userData, onClose, globalTeachers }: { tea
   const isOwned = !!userData
   const level = userData?.level || 1
   const count = userData?.count || 0
+  const [displayVariant, setDisplayVariant] = useState<NewCardVariant>(getBestVariant(userData?.variants));
   
-  const cardData = mapToCardData(teacher, userData, globalTeachers)
+  const cardData = mapToCardData(teacher, userData, globalTeachers, displayVariant)
+
+  const ownedVariants = useMemo(() => {
+    if (!userData?.variants) return ['normal'];
+    return Object.keys(userData.variants).filter(v => userData.variants[v] > 0);
+  }, [userData])
 
   return (
     <div className="flex flex-col items-center space-y-8 py-4">
@@ -160,23 +172,54 @@ function TeacherCardDetail({ teacher, userData, onClose, globalTeachers }: { tea
         Klicken zum Umdrehen
       </div>
 
-      <div className="w-full max-w-xs bg-black/40 backdrop-blur-xl rounded-2xl p-6 space-y-4 border border-white/10 shadow-2xl">
-        <div className="flex justify-between items-center">
-          <span className="text-sm font-bold text-white">Statistiken</span>
-          <Badge variant="outline" className="text-[10px] text-white/70 border-white/20">{count}x gesammelt</Badge>
-        </div>
-        <div className="space-y-2">
-          <div className="flex justify-between text-xs font-bold px-1 text-white/80">
-            <span>Level {level}</span>
-            <span>Fortschritt</span>
+      <div className="w-full max-w-sm space-y-4 px-4">
+        {/* Variant Gallery */}
+        <div className="bg-black/40 backdrop-blur-xl rounded-2xl p-4 border border-white/10 shadow-2xl">
+          <p className="text-[10px] font-black uppercase text-white/40 mb-3 tracking-widest px-1">Deine Varianten</p>
+          <div className="flex flex-wrap gap-2">
+            {(['normal', 'holo', 'shiny', 'black_shiny_holo'] as NewCardVariant[]).map((v) => {
+              const isAvailable = ownedVariants.includes(v);
+              const isActive = displayVariant === v;
+              return (
+                <button
+                  key={v}
+                  disabled={!isAvailable}
+                  onClick={() => setDisplayVariant(v)}
+                  className={cn(
+                    "px-3 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all border-2",
+                    isAvailable 
+                      ? (isActive ? "bg-white text-black border-white shadow-[0_0_10px_rgba(255,255,255,0.3)]" : "bg-white/5 text-white/60 border-white/10 hover:bg-white/10")
+                      : "opacity-20 cursor-not-allowed border-transparent grayscale"
+                  )}
+                >
+                  {getVariantLabel(v as any)}
+                  {isAvailable && userData.variants?.[v] && userData.variants[v] > 1 && (
+                    <span className="ml-1 text-[8px] opacity-60">x{userData.variants[v]}</span>
+                  )}
+                </button>
+              )
+            })}
           </div>
-          <Progress 
-            value={((count - getPrevLevelCount(level)) / (getNextLevelCount(level) - getPrevLevelCount(level))) * 100} 
-            className="h-2 bg-white/10" 
-          />
-          <p className="text-[10px] text-center text-white/40 pt-1">
-            Noch {getNextLevelCount(level) - count} Karten bis Level {level + 1}
-          </p>
+        </div>
+
+        <div className="bg-black/40 backdrop-blur-xl rounded-2xl p-6 space-y-4 border border-white/10 shadow-2xl">
+          <div className="flex justify-between items-center">
+            <span className="text-sm font-bold text-white">Statistiken</span>
+            <Badge variant="outline" className="text-[10px] text-white/70 border-white/20">{count}x gesammelt</Badge>
+          </div>
+          <div className="space-y-2">
+            <div className="flex justify-between text-xs font-bold px-1 text-white/80">
+              <span>Level {level}</span>
+              <span>Fortschritt</span>
+            </div>
+            <Progress 
+              value={((count - getPrevLevelCount(level)) / (getNextLevelCount(level) - getPrevLevelCount(level))) * 100} 
+              className="h-2 bg-white/10" 
+            />
+            <p className="text-[10px] text-center text-white/40 pt-1">
+              Noch {getNextLevelCount(level) - count} Karten bis Level {level + 1}
+            </p>
+          </div>
         </div>
       </div>
     </div>

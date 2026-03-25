@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.26.00] - 2026-03-25
+- Feature: **Sammelkarten-Varianten Redesign**. Komplettes visuelles Update der Kartenvarianten. Die "Shiny"-Variante wurde von einem Glas-Look zu einem klassischen Funkel-Effekt überarbeitet. Die "Black Shiny"-Variante wurde zu einer "Secret Rare" mit tiefschwarzer Optik und violetten Glimmer-Effekten aufgewertet.
+- Feature: **Album-Varianten-Handling**. In der Album-Übersicht wird nun automatisch die seltenste Variante einer Karte angezeigt, die ein Nutzer besitzt. 
+- Feature: **Varianten-Galerie in der Detailansicht**. In der Lehrer-Detailansicht können Nutzer nun alle ihre gesammelten Varianten eines Lehrers in einer Galerie betrachten und die Karte entsprechend umschalten.
+- UI: **Secret Rare Animation**. Beim Ziehen einer Black-Shiny-Karte wird nun ein spektakulärer "Void-Effekt" mit pulsierenden Auren und Ping-Animationen ausgelöst, um die Seltenheit zu unterstreichen.
+- Refactor: **Variant Type Standardization**. Vereinheitlichung der Kartenvarianten-Bezeichnungen (`normal`, `holo`, `shiny`, `black_shiny_holo`) im gesamten System für bessere Wartbarkeit.
+
+## [0.25.04] - 2026-03-25
+- UI/UX: **Sammelkarten-Animation & Design Polish**. 
+    - Fix: **Content Leak beim Re-Draw**. Verzögerung beim Laden neuer Kartendaten eingeführt, um sicherzustellen, dass Karten erst nach dem Umdrehen aktualisiert werden.
+    - Fix: **Einheitliche Karten-Rückseiten**. Alle Karten nutzen nun ein identisches, hochwertiges Glas-Design auf der Rückseite, um die Seltenheit vor dem Umdrehen geheim zu halten.
+    - Fix: **Level-Up Spin Animation**. Die Rotation wurde auf 720° korrigiert, sodass die Karte korrekt auf der Vorderseite landet und nicht gespiegelt erscheint.
+    - Polish: **Pack-Opening Animation**. Die Karten fliegen nun mit einer sanften Staggered-Animation (Framer Motion) dynamisch aus dem Booster-Pack.
+
+## [0.25.04] - 2026-03-25
+- UI: **Kartenmanager Layout-Optimierung**. Die großen Tabs wurden durch eine kompaktere Navigation ersetzt. Alle Wahrscheinlichkeitsanzeigen (Drop-Rates, Limits, Varianten) zeigen nun zusätzlich zum Prozentsatz auch die intuitivere "1 in XXX" Notation an.
+
+## [0.25.03] - 2026-03-25
+- Fix: **Kartenmanager Eingabe-Stabilität**. Ein Fehler wurde behoben, bei dem numerische Eingabefelder im Kartenmanager (Gewichte, Limits, Wahrscheinlichkeiten) beim Löschen des Inhalts automatisch auf "0" zurückgesetzt wurden. Die neue `SmartNumericInput`-Komponente erlaubt nun das temporäre Leeren von Feldern während der Bearbeitung.
+
 ## [0.25.02] - 2026-03-25
 - Fix: **ads.txt Accessibility**. Explizite Hosting-Rewrite-Regel in `firebase.json` hinzugefügt, um sicherzustellen, dass die `ads.txt` direkt als statische Datei serviert wird und nicht von der Catch-All-Regel für die Single-Page-App (SPA) abgefangen wird.
 

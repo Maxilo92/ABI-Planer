@@ -3,6 +3,7 @@
 import { useAuth } from '@/context/AuthContext'
 import { Sparkles, Gift, GraduationCap, RotateCcw, Zap, Trophy, Clock, Star, Lock } from 'lucide-react'
 import { useEffect, useState, Suspense } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { redirect, useSearchParams } from 'next/navigation'
 import { db } from '@/lib/firebase'
 import { doc, onSnapshot } from 'firebase/firestore'
@@ -50,9 +51,7 @@ const getRarityHex = (rarity: TeacherRarity) => {
 }
 
 const mapToCardData = (teacher: LootTeacher, variant: CardVariant | NewCardVariant, globalTeachers: LootTeacher[]): CardData => {
-  const newVariant: NewCardVariant = variant === 'black_shiny_holo' ? 'blckshiny' :
-                   (variant === 'shiny' ? 'shiny-v2' : 
-                   (variant === 'holo' ? 'holo' : 'normal'))
+  const newVariant: NewCardVariant = variant as NewCardVariant;
   
   const globalIndex = globalTeachers.findIndex(t => (t.id || t.name) === (teacher.id || teacher.name))
   
@@ -232,21 +231,25 @@ function SammelkartenContent() {
         }
       })
 
-      setCollectionResults(processedResults)
-
-      if (user) {
-        logAction('LOOT_BOOSTER', user.uid, profile?.full_name, { 
-          teachers: pack.map(t => t.id || t.name),
-          results: processedResults,
-          isGodpack: godpack
-        })
-      }
+      // Delay data reveal until cards have flipped back (important for re-draw)
+      setTimeout(() => {
+        setRevealedTeachers(pack)
+        setCollectionResults(processedResults)
+        
+        if (user) {
+          logAction('LOOT_BOOSTER', user.uid, profile?.full_name, { 
+            teachers: pack.map(t => t.id || t.name),
+            results: processedResults,
+            isGodpack: godpack
+          })
+        }
+      }, 300)
 
       // Final transition to revealed
       setTimeout(() => {
         setGameState('revealed')
         setIsAnimating(false)
-      }, 400) // Faster transition
+      }, 700) // Adjusted timing to account for data delay
     } catch (err: any) {
       toast.error(err.message || 'Fehler beim Sammeln.')
       setGameState('idle')
@@ -321,63 +324,99 @@ function SammelkartenContent() {
             <div className="relative w-full min-h-[400px] flex items-center justify-center overflow-visible">
               
               {/* Revealed Cards (Rendered behind the pack during ripping) */}
-              {(gameState === 'ripping' || gameState === 'revealed') && revealedTeachers && (
-                <div className={cn(
-                  "flex flex-wrap justify-center gap-4 sm:gap-6 w-full max-w-5xl transition-all duration-700",
-                  gameState === 'ripping' ? "opacity-100 scale-75" : "opacity-100 scale-100"
-                )}>
-                  {revealedTeachers.map((teacher, idx) => {
-                    const isFlipped = flippedCards[idx]
-                    const result = collectionResults?.[idx]
-                    const cardData = mapToCardData(teacher, result?.variant || 'normal', config?.loot_teachers || DEFAULT_TEACHERS)
-                    
-                    return (
-                      <div 
-                        key={`${teacher.id}-${idx}`}
-                        className={cn(
-                          "relative transition-all duration-700 ease-out flex flex-col items-center",
-                          isFlipped && result?.isNew && "animate-new-card-float z-10"
-                        )}
-                        style={{ 
-                          transform: gameState === 'ripping' 
-                            ? `translate(${idx === 0 ? '80px' : idx === 2 ? '-80px' : '0'}, 0) rotate(${idx === 0 ? '-5deg' : idx === 2 ? '5deg' : '0'})` 
-                            : 'translate(0, 0) rotate(0deg)',
-                          zIndex: gameState === 'ripping' ? 10 : 20
-                        }}
-                        onClick={() => !isFlipped && handleFlipCard(idx)}
-                      >
-                        <div className="relative w-48 sm:w-64 aspect-[2.5/3.5]">
-                          {/* Floating Status Badge (shown after flip) */}
-                          {isFlipped && result && (
-                            <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-40 animate-in zoom-in duration-500">
-                              {result.isNew ? (
-                                <Badge className="bg-amber-500 border-2 border-white text-[10px] font-black px-2 py-0 shadow-xl whitespace-nowrap uppercase">NEW</Badge>
-                              ) : result.isLevelUp ? (
-                                <Badge className="bg-purple-500 border-2 border-white text-[10px] font-black px-2 py-0 shadow-xl whitespace-nowrap uppercase">LEVEL UP</Badge>
-                              ) : (
-                                <Badge className="bg-emerald-500 border-2 border-white text-[10px] font-black px-2 py-0 shadow-xl whitespace-nowrap uppercase">LVL {result.newLevel}</Badge>
-                              )}
+              <AnimatePresence mode="wait">
+                {(gameState === 'ripping' || gameState === 'revealed') && revealedTeachers && (
+                  <motion.div 
+                    key={revealedTeachers.map(t => t.id || t.name).join('-')}
+                    initial="hidden"
+                    animate="visible"
+                    exit="hidden"
+                    className="flex flex-wrap justify-center gap-4 sm:gap-6 w-full max-w-5xl"
+                  >
+                    {revealedTeachers.map((teacher, idx) => {
+                      const isFlipped = flippedCards[idx]
+                      const result = collectionResults?.[idx]
+                      const cardData = mapToCardData(teacher, result?.variant || 'normal', config?.loot_teachers || DEFAULT_TEACHERS)
+                      
+                      return (
+                        <motion.div 
+                          key={`${teacher.id}-${idx}`}
+                          variants={{
+                            hidden: { 
+                              y: 100, 
+                              opacity: 0, 
+                              scale: 0.5,
+                              rotate: idx === 0 ? -15 : idx === 2 ? 15 : 0,
+                              x: idx === 0 ? 100 : idx === 2 ? -100 : 0
+                            },
+                            visible: { 
+                              y: 0, 
+                              opacity: 1, 
+                              scale: 1,
+                              rotate: 0,
+                              x: 0,
+                              transition: { 
+                                delay: idx * 0.1,
+                                type: 'spring',
+                                damping: 15,
+                                stiffness: 100
+                              }
+                            }
+                          }}
+                          className={cn(
+                            "relative flex flex-col items-center",
+                            isFlipped && result?.isNew && "animate-new-card-float z-10",
+                            isFlipped && result?.variant === 'black_shiny_holo' && "z-30 scale-110"
+                          )}
+                          style={{ zIndex: isFlipped ? (result?.variant === 'black_shiny_holo' ? 50 : 30) : 20 }}
+                          onClick={() => !isFlipped && handleFlipCard(idx)}
+                        >
+                          {/* Black Shiny Void Effect */}
+                          {isFlipped && result?.variant === 'black_shiny_holo' && (
+                            <div className="absolute inset-[-40px] z-0 pointer-events-none overflow-visible">
+                              <div className="absolute inset-0 bg-purple-600/20 blur-[60px] animate-pulse rounded-full" />
+                              <div className="absolute inset-0 bg-blue-600/10 blur-[40px] animate-pulse rounded-full delay-700" />
+                              <div className="absolute inset-0 flex items-center justify-center">
+                                 <div className="w-full h-full border-4 border-white/5 animate-ping rounded-3xl opacity-20" />
+                              </div>
                             </div>
                           )}
 
-                          <TeacherCard 
-                            data={cardData}
-                            isFlippedExternally={isFlipped}
-                            className={cn(
-                              "w-full h-auto",
-                              isFlipped && result?.isLevelUp && "animate-level-up-spin"
+                          <div className="relative w-48 sm:w-64 aspect-[2.5/3.5]">
+                            {/* Floating Status Badge (shown after flip) */}
+                            {isFlipped && result && (
+                              <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-40 animate-in zoom-in duration-500">
+                                {result.variant === 'black_shiny_holo' ? (
+                                  <Badge className="bg-neutral-950 border-2 border-purple-500 text-purple-200 text-[10px] font-black px-2 py-0 shadow-[0_0_15px_rgba(147,51,234,0.8)] whitespace-nowrap uppercase italic tracking-widest">SECRET RARE</Badge>
+                                ) : result.isNew ? (
+                                  <Badge className="bg-amber-500 border-2 border-white text-[10px] font-black px-2 py-0 shadow-xl whitespace-nowrap uppercase">NEW</Badge>
+                                ) : result.isLevelUp ? (
+                                  <Badge className="bg-purple-500 border-2 border-white text-[10px] font-black px-2 py-0 shadow-xl whitespace-nowrap uppercase">LEVEL UP</Badge>
+                                ) : (
+                                  <Badge className="bg-emerald-500 border-2 border-white text-[10px] font-black px-2 py-0 shadow-xl whitespace-nowrap uppercase">LVL {result.newLevel}</Badge>
+                                )}
+                              </div>
                             )}
-                          />
-                        </div>
-                        
-                        {!isFlipped && (
-                          <div className="mt-4 animate-pulse text-[10px] text-white/50 font-black uppercase tracking-[0.2em]">Tippen zum Umdrehen</div>
-                        )}
-                      </div>
-                    )
-                  })}
-                </div>
-              )}
+
+                            <TeacherCard 
+                              data={cardData}
+                              isFlippedExternally={isFlipped}
+                              className={cn(
+                                "w-full h-auto",
+                                isFlipped && result?.isLevelUp && "animate-level-up-spin"
+                              )}
+                            />
+                          </div>
+                          
+                          {!isFlipped && (
+                            <div className="mt-4 animate-pulse text-[10px] text-white/50 font-black uppercase tracking-[0.2em]">Tippen zum Umdrehen</div>
+                          )}
+                        </motion.div>
+                      )
+                    })}
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               {/* Booster Pack (Rendered on top during idle/ripping) */}
               {(gameState === 'idle' || gameState === 'ripping') && (

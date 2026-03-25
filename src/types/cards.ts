@@ -5,8 +5,8 @@ export type Rarity = TeacherRarity;
 export type CardVariant = 
   | 'normal' 
   | 'holo' 
-  | 'shiny-v2' 
-  | 'blckshiny';
+  | 'shiny' 
+  | 'black_shiny_holo';
 
 export type CardStyle = 'soft-glass' | 'modern-flat' | 'playful-pattern' | 'modern-premium' | 'holographic-edge';
 

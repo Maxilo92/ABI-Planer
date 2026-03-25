@@ -27,6 +27,66 @@ import { TeacherRarity, LootTeacher } from '@/types/database'
 import { SammelkartenConfig } from '@/types/cards'
 import { cn } from '@/lib/utils'
 
+interface SmartNumericInputProps {
+  value: number;
+  onChange: (val: number) => void;
+  step?: string;
+  min?: string;
+  max?: string;
+  className?: string;
+  isInteger?: boolean;
+}
+
+function SmartNumericInput({ 
+  value, 
+  onChange, 
+  step = "1", 
+  min, 
+  max, 
+  className,
+  isInteger = false
+}: SmartNumericInputProps) {
+  const [localValue, setLocalValue] = useState<string>(value.toString());
+
+  useEffect(() => {
+    const parsedLocal = isInteger ? parseInt(localValue) : parseFloat(localValue);
+    if (parsedLocal !== value) {
+      setLocalValue(value.toString());
+    }
+  }, [value, isInteger, localValue]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setLocalValue(val);
+    
+    if (val !== "" && val !== "-") {
+      const parsed = isInteger ? parseInt(val) : parseFloat(val);
+      if (!isNaN(parsed)) {
+        onChange(parsed);
+      }
+    }
+  };
+
+  return (
+    <Input
+      type="number"
+      step={step}
+      min={min}
+      max={max}
+      value={localValue}
+      onChange={handleChange}
+      className={className}
+    />
+  );
+}
+
+function formatProbability(weight: number) {
+  if (weight <= 0) return "0%";
+  const percent = (weight * 100).toFixed(weight < 0.01 ? 2 : 1) + "%";
+  const oneIn = weight >= 1 ? "" : ` (1 in ${Math.round(1 / weight)})`;
+  return percent + oneIn;
+}
+
 const DEFAULT_RARITY_WEIGHTS = [
   { common: 0.8, rare: 0.15, epic: 0.04, mythic: 0.008, legendary: 0.002 },
   { common: 0.6, rare: 0.25, epic: 0.11, mythic: 0.03, legendary: 0.01 },
@@ -535,18 +595,18 @@ export default function CardManagerPage() {
             <div className="xl:col-span-3 space-y-8">
               
               <Tabs defaultValue="teachers">
-                <TabsList className="grid w-full grid-cols-3 lg:w-[400px]">
-                  <TabsTrigger value="teachers" className="gap-2">
-                    <Users className="h-4 w-4" />
-                    Lehrerpool
+                <TabsList className="flex w-fit bg-muted/50 p-1 rounded-lg">
+                  <TabsTrigger value="teachers" className="px-3 py-1.5 text-xs gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">
+                    <Users className="h-3.5 w-3.5" />
+                    <span className="hidden sm:inline">Lehrerpool</span>
                   </TabsTrigger>
-                  <TabsTrigger value="weights" className="gap-2">
-                    <TrendingUp className="h-4 w-4" />
-                    Drop-Rates
+                  <TabsTrigger value="weights" className="px-3 py-1.5 text-xs gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">
+                    <TrendingUp className="h-3.5 w-3.5" />
+                    <span className="hidden sm:inline">Drop-Rates</span>
                   </TabsTrigger>
-                  <TabsTrigger value="limits" className="gap-2">
-                    <Settings2 className="h-4 w-4" />
-                    Limits
+                  <TabsTrigger value="limits" className="px-3 py-1.5 text-xs gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">
+                    <Settings2 className="h-3.5 w-3.5" />
+                    <span className="hidden sm:inline">Parameter</span>
                   </TabsTrigger>
                 </TabsList>
 
@@ -712,17 +772,16 @@ export default function CardManagerPage() {
                             <div key={rarity} className="space-y-1">
                               <div className="flex justify-between text-[10px] font-bold uppercase">
                                 <span className={getRarityColor(rarity as TeacherRarity)}>{getRarityLabel(rarity as TeacherRarity)}</span>
-                                <span className="text-muted-foreground">{(weight * 100).toFixed(1)}%</span>
+                                <span className="text-muted-foreground">{formatProbability(weight)}</span>
                               </div>
-                              <Input 
-                                type="number" 
+                              <SmartNumericInput 
                                 step="0.001" 
                                 min="0" 
                                 max="1"
                                 value={weight}
-                                onChange={(e) => {
+                                onChange={(val) => {
                                   const newWeights = [...config.rarity_weights]
-                                  newWeights[sIdx] = { ...newWeights[sIdx], [rarity]: parseFloat(e.target.value) || 0 }
+                                  newWeights[sIdx] = { ...newWeights[sIdx], [rarity]: val }
                                   handleSaveConfig({ rarity_weights: newWeights })
                                 }}
                                 className="h-8 text-xs font-mono"
@@ -751,17 +810,16 @@ export default function CardManagerPage() {
                             <div key={rarity} className="space-y-1">
                               <div className="flex justify-between text-[10px] font-bold uppercase">
                                 <span className={getRarityColor(rarity as TeacherRarity)}>{getRarityLabel(rarity as TeacherRarity)}</span>
-                                <span className="text-muted-foreground">{(weight * 100).toFixed(1)}%</span>
+                                <span className="text-muted-foreground">{formatProbability(weight)}</span>
                               </div>
-                              <Input 
-                                type="number" 
+                              <SmartNumericInput 
                                 step="0.001" 
                                 min="0" 
                                 max="1"
                                 value={weight}
-                                onChange={(e) => {
+                                onChange={(val) => {
                                   const newWeights = [...config.godpack_weights]
-                                  newWeights[sIdx] = { ...newWeights[sIdx], [rarity]: parseFloat(e.target.value) || 0 }
+                                  newWeights[sIdx] = { ...newWeights[sIdx], [rarity]: val }
                                   handleSaveConfig({ godpack_weights: newWeights })
                                 }}
                                 className="h-8 text-xs font-mono"
@@ -789,27 +847,28 @@ export default function CardManagerPage() {
                         <div className="space-y-4">
                           <div className="space-y-2">
                             <Label className="text-xs">Tägliche Packs pro User</Label>
-                            <Input 
-                              type="number" 
+                            <SmartNumericInput 
+                              isInteger
                               value={config.global_limits.daily_allowance}
-                              onChange={(e) => handleSaveConfig({ global_limits: { ...config.global_limits, daily_allowance: parseInt(e.target.value) || 0 }})}
+                              onChange={(val) => handleSaveConfig({ global_limits: { ...config.global_limits, daily_allowance: val }})}
                             />
                           </div>
                           <div className="space-y-2">
                             <Label className="text-xs">Reset Stunde (Berlin Zeit, 0-23)</Label>
-                            <Input 
-                              type="number" 
+                            <SmartNumericInput 
+                              isInteger
+                              min="0"
+                              max="23"
                               value={config.global_limits.reset_hour}
-                              onChange={(e) => handleSaveConfig({ global_limits: { ...config.global_limits, reset_hour: parseInt(e.target.value) || 0 }})}
+                              onChange={(val) => handleSaveConfig({ global_limits: { ...config.global_limits, reset_hour: val }})}
                             />
                           </div>
                           <div className="space-y-2">
-                            <Label className="text-xs">Godpack Wahrscheinlichkeit (0.005 = 1/200)</Label>
-                            <Input 
-                              type="number" 
+                            <Label className="text-xs">Godpack Wahrscheinlichkeit {formatProbability(config.global_limits.godpack_chance)}</Label>
+                            <SmartNumericInput 
                               step="0.0001"
                               value={config.global_limits.godpack_chance}
-                              onChange={(e) => handleSaveConfig({ global_limits: { ...config.global_limits, godpack_chance: parseFloat(e.target.value) || 0 }})}
+                              onChange={(val) => handleSaveConfig({ global_limits: { ...config.global_limits, godpack_chance: val }})}
                             />
                           </div>
                         </div>
@@ -820,30 +879,27 @@ export default function CardManagerPage() {
                         <h4 className="text-sm font-bold border-b pb-2">Varianten-Wahrscheinlichkeiten</h4>
                         <div className="space-y-4">
                           <div className="space-y-2">
-                            <Label className="text-xs">Shiny (Silber-Effekt)</Label>
-                            <Input 
-                              type="number" 
+                            <Label className="text-xs">Shiny (Silber-Effekt) {formatProbability(config.variant_probabilities.shiny)}</Label>
+                            <SmartNumericInput 
                               step="0.001"
                               value={config.variant_probabilities.shiny}
-                              onChange={(e) => handleSaveConfig({ variant_probabilities: { ...config.variant_probabilities, shiny: parseFloat(e.target.value) || 0 }})}
+                              onChange={(val) => handleSaveConfig({ variant_probabilities: { ...config.variant_probabilities, shiny: val }})}
                             />
                           </div>
                           <div className="space-y-2">
-                            <Label className="text-xs">Holo (Regenbogen-Effekt)</Label>
-                            <Input 
-                              type="number" 
+                            <Label className="text-xs">Holo (Regenbogen-Effekt) {formatProbability(config.variant_probabilities.holo)}</Label>
+                            <SmartNumericInput 
                               step="0.001"
                               value={config.variant_probabilities.holo}
-                              onChange={(e) => handleSaveConfig({ variant_probabilities: { ...config.variant_probabilities, holo: parseFloat(e.target.value) || 0 }})}
+                              onChange={(val) => handleSaveConfig({ variant_probabilities: { ...config.variant_probabilities, holo: val }})}
                             />
                           </div>
                           <div className="space-y-2">
-                            <Label className="text-xs">Black Shiny Holo (Secret Rare)</Label>
-                            <Input 
-                              type="number" 
+                            <Label className="text-xs">Black Shiny Holo (Secret Rare) {formatProbability(config.variant_probabilities.black_shiny_holo)}</Label>
+                            <SmartNumericInput 
                               step="0.0001"
                               value={config.variant_probabilities.black_shiny_holo}
-                              onChange={(e) => handleSaveConfig({ variant_probabilities: { ...config.variant_probabilities, black_shiny_holo: parseFloat(e.target.value) || 0 }})}
+                              onChange={(val) => handleSaveConfig({ variant_probabilities: { ...config.variant_probabilities, black_shiny_holo: val }})}
                             />
                           </div>
                         </div>
@@ -868,10 +924,10 @@ export default function CardManagerPage() {
                   <div className="space-y-2">
                     <Label className="text-xs">Anzahl der Packs</Label>
                     <div className="flex gap-2">
-                      <Input 
-                        type="number" 
+                      <SmartNumericInput 
+                        isInteger
                         value={simCount} 
-                        onChange={(e) => setSimCount(parseInt(e.target.value) || 100)} 
+                        onChange={(val) => setSimCount(val)} 
                         className="font-mono h-9"
                       />
                       <Button onClick={runSimulation} disabled={simulating} size="sm" className="shrink-0">

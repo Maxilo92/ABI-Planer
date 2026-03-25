@@ -44,7 +44,7 @@
 
   @keyframes level-up-spin {
     0% { transform: rotateY(0deg); }
-    100% { transform: rotateY(540deg); }
+    100% { transform: rotateY(720deg); }
   }
   @keyframes new-card-float {
     0%, 100% { transform: translateY(0) scale(1.02); filter: brightness(1); }

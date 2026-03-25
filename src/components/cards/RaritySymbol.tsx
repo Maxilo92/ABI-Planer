@@ -19,7 +19,7 @@ export const RaritySymbol: React.FC<RaritySymbolProps> = ({
 }) => {
   const renderShape = () => {
     const isHolo = variant === 'holo';
-    const isBlck = variant === 'blckshiny';
+    const isBlck = variant === 'black_shiny_holo';
 
     const commonProps = {
       fill: color,

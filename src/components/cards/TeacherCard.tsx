@@ -24,8 +24,8 @@ export const TeacherCard: React.FC<TeacherCardProps> = ({
   const [isFlippedInternally, setIsFlippedInternally] = useState(false);
   const isFlipped = isFlippedExternally !== undefined ? isFlippedExternally : isFlippedInternally;
 
-  const isBlckShiny = data.variant === 'blckshiny';
-  const isGlass = data.variant.startsWith('glass-') || data.variant === 'shiny-v2';
+  const isBlckShiny = data.variant === 'black_shiny_holo';
+  const isGlass = data.variant === 'shiny' || data.variant === 'holo';
 
   const getStyleClasses = () => {
     switch (styleVariant) {
@@ -33,23 +33,23 @@ export const TeacherCard: React.FC<TeacherCardProps> = ({
         return {
           card: cn(
             "transition-all rounded-[10cqw]",
-            !isGlass && !isBlckShiny && "border-black shadow-[2cqw_2cqw_0px_0px_rgba(0,0,0,1)] hover:shadow-[3cqw_3cqw_0px_0px_rgba(0,0,0,1)] border-[0.8cqw]",
-            isBlckShiny && "shadow-[0_0_4cqw_rgba(255,255,255,0.15)] border-white/20 border-[0.8cqw]",
-            isGlass && "shadow-[0_4cqw_10cqw_-2cqw_rgba(0,0,0,0.15)] ring-[0.2cqw] ring-white/90"
+            !isBlckShiny && "border-black shadow-[2cqw_2cqw_0px_0px_rgba(0,0,0,1)] hover:shadow-[3cqw_3cqw_0px_0px_rgba(0,0,0,1)] border-[0.8cqw]",
+            isBlckShiny && "shadow-[0_0_8cqw_rgba(147,51,234,0.5)] border-purple-500/50 border-[1cqw]"
           ),
           iconWrapper: cn(
             "bg-white border-[0.8cqw] border-black rounded-[4cqw] -rotate-2 shadow-[1cqw_1cqw_0px_0px_rgba(0,0,0,1)] flex items-center justify-center w-[35cqw] h-[35cqw]",
-            isBlckShiny && "bg-neutral-800 border-white/20 shadow-none",
+            isBlckShiny && "bg-neutral-900 border-purple-500/30 shadow-[0_0_15px_rgba(147,51,234,0.3)]",
             isGlass && "bg-white/40 border-white/30 backdrop-blur-md shadow-none"
           ),
           headerIcon: "w-[18cqw] h-[18cqw]",
           header: (isBlckShiny || isGlass) ? "text-white" : "text-black",
           text: cn(
             "font-sans uppercase font-black tracking-tighter text-[12cqw] leading-[0.85] break-words w-full",
-            (isBlckShiny || isGlass) ? "text-white drop-shadow-[0_0_2cqw_rgba(255,255,255,0.4)]" : "text-black"
+            isBlckShiny ? "text-transparent bg-clip-text bg-gradient-to-b from-white to-purple-200 drop-shadow-[0_0_3cqw_rgba(147,51,234,0.8)]" : 
+            (isGlass ? "text-white drop-shadow-[0_0_2cqw_rgba(255,255,255,0.4)]" : "text-black")
           ),
           border: "", 
-          bgOverlay: isBlckShiny ? "bg-neutral-950" : (isGlass ? "bg-transparent" : "bg-white/5"),
+          bgOverlay: isBlckShiny ? "bg-black/40" : (isGlass ? "bg-transparent" : "bg-white/5"),
           numberTag: cn(
             "px-[2cqw] py-[0.5cqw] text-[3.5cqw] font-black rounded-[0.5cqw] transform rotate-1 border-[0.3cqw] border-black shadow-[0.5cqw_0.5cqw_0px_0px_rgba(0,0,0,1)]",
             (isBlckShiny || isGlass) ? "bg-white text-black" : "bg-black text-white"
@@ -93,14 +93,13 @@ export const TeacherCard: React.FC<TeacherCardProps> = ({
         <div 
           className={cn(
             "absolute inset-0 backface-hidden p-[8cqw] flex flex-col items-center justify-center overflow-hidden rotate-y-180",
-            isGlass ? styleClasses.card : "border-[2cqw] border-white/20 bg-neutral-950 rounded-[10cqw]"
+            "border-[2cqw] border-white/20 bg-neutral-950/80 backdrop-blur-xl rounded-[10cqw]"
           )}
-          style={isGlass ? { backgroundColor: `${data.color}99` } : undefined}
         >
-          {isGlass && <CardEffectOverlay variant={data.variant} tintColor={data.color} />}
+          <CardEffectOverlay variant="normal" tintColor="#000000" />
           
           <div className="relative z-10 flex flex-col items-center">
-            <Zap className="text-white mb-[4cqw] w-[20cqw] h-[20cqw]" />
+            <Zap className="text-white mb-[4cqw] w-[20cqw] h-[20cqw] drop-shadow-[0_0_10px_rgba(255,255,255,0.4)]" />
             <div className="text-white font-black tracking-[0.3em] text-[4cqw] uppercase opacity-80">
                ABI Planer
             </div>
