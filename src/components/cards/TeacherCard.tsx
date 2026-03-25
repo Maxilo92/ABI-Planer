@@ -172,11 +172,10 @@ export const TeacherCard: React.FC<TeacherCardProps> = ({
   const styleClasses = getStyleClasses();
 
   return (
-    <div 
-      className={cn("relative aspect-[2.5/3.5] perspective-1000 @container", interactive && !isLocked && "cursor-pointer", className)}
-      onClick={(e) => {
+    <div
+      className={cn("relative aspect-[2.5/3.5] perspective-1000 @container", className, interactive && "cursor-pointer")}
+      onClick={() => {
         if (interactive && !isLocked) {
-          e.stopPropagation();
           setIsFlippedInternally(!isFlippedInternally);
         }
       }}

@@ -1,6 +1,9 @@
 # Changelog
 
-## [0.26.24] - 2026-03-25
+## [0.26.23] - 2026-03-25
+- UI: **Expliziter "Pack öffnen"-Button**. Für eine klarere Nutzerführung gibt es nun einen eigenen Button zum Öffnen einzelner Packs, der immer sichtbar ist, solange Booster verfügbar sind. Der Button zum Öffnen von 10 Packs erscheint bei Bedarf zusätzlich.
+
+## [0.26.22] - 2026-03-25
 - Fix: **Build-Fehler behoben**. Ein doppelter schließender Tag (`/>`) in der `sammelkarten`-Seite, der zu einem Parsing-Fehler im Build-Prozess führte, wurde entfernt.
 
 ## [0.26.23] - 2026-03-25

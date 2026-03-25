@@ -497,55 +497,57 @@ function SammelkartenContent() {
                             isFlipped && result?.variant === 'black_shiny_holo' && "z-30 scale-110"
                           )}
                           style={{ zIndex: isFlipped ? (result?.variant === 'black_shiny_holo' ? 50 : 30) : 20 }}
-                          onClick={() => !isFlipped && handleFlipCard(idx)}
                         >
-                          {/* Black Shiny Void Effect */}
-                          {isFlipped && result?.variant === 'black_shiny_holo' && (
-                            <div className="absolute inset-[-40px] z-0 pointer-events-none overflow-visible">
-                              <div className="absolute inset-0 bg-purple-600/20 blur-[60px] animate-pulse rounded-full" />
-                              <div className="absolute inset-0 bg-blue-600/10 blur-[40px] animate-pulse rounded-full delay-700" />
-                              <div className="absolute inset-0 flex items-center justify-center">
-                                 <div className="w-full h-full border-4 border-white/5 animate-ping rounded-3xl opacity-20" />
-                              </div>
-                            </div>
-                          )}
-
-                          <div className="relative w-full aspect-[2.5/3.5] sm:w-52 md:w-64">
-                            {/* Floating Status Badge (shown after flip) */}
-                            {isFlipped && result && (
-                              <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-40 animate-in zoom-in duration-500">
-                                {result.variant === 'black_shiny_holo' ? (
-                                  <Badge className="bg-neutral-950 border-2 border-purple-500 text-purple-200 text-[10px] font-black px-2 py-0 shadow-[0_0_15px_rgba(147,51,234,0.8)] whitespace-nowrap uppercase italic tracking-widest">SECRET RARE</Badge>
-                                ) : result.isNew ? (
-                                  <Badge className="bg-amber-500 border-2 border-white text-[10px] font-black px-2 py-0 shadow-xl whitespace-nowrap uppercase">NEW</Badge>
-                                ) : result.isLevelUp ? (
-                                  <Badge className="bg-purple-600 border-2 border-white text-[10px] font-black px-2 py-0 shadow-xl whitespace-nowrap uppercase flex items-center gap-1">
-                                    LVL {result.oldLevel} <span className="text-yellow-400">→</span> {result.newLevel}
-                                  </Badge>
-                                ) : (
-                                  <Badge className="bg-emerald-500 border-2 border-white text-[10px] font-black px-2 py-0 shadow-xl whitespace-nowrap uppercase">LVL {result.newLevel}</Badge>
-                                )}
+                          {/* This outer div is now the only click handler */}
+                          <div onClick={() => !isFlipped && handleFlipCard(idx)}>
+                            {/* Black Shiny Void Effect */}
+                            {isFlipped && result?.variant === 'black_shiny_holo' && (
+                              <div className="absolute inset-[-40px] z-0 pointer-events-none overflow-visible">
+                                <div className="absolute inset-0 bg-purple-600/20 blur-[60px] animate-pulse rounded-full" />
+                                <div className="absolute inset-0 bg-blue-600/10 blur-[40px] animate-pulse rounded-full delay-700" />
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                  <div className="w-full h-full border-4 border-white/5 animate-ping rounded-3xl opacity-20" />
+                                </div>
                               </div>
                             )}
 
-                            <TeacherCard 
-                              data={cardData}
-                              isFlippedExternally={isFlipped}
-                              interactive={!isFlipped}
-                              upgradeInfo={isFlipped && result?.isLevelUp ? { oldLevel: result.oldLevel!, newLevel: result.newLevel } : undefined}
-                              className="w-full h-auto"
-                            />
-                          </div>
-                          
-                          {isFlipped && showDebug && packProbs && (
-                            <div className="mt-2 bg-black/80 text-[8px] font-mono p-1 rounded border border-white/10 text-amber-200 animate-in fade-in duration-500">
-                              Chance: {(packProbs.cardChances[idx] * 100).toFixed(3)}%
-                            </div>
-                          )}
+                            <div className="relative w-full aspect-[2.5/3.5] sm:w-52 md:w-64">
+                              {/* Floating Status Badge (shown after flip) */}
+                              {isFlipped && result && (
+                                <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-40 animate-in zoom-in duration-500">
+                                  {result.variant === 'black_shiny_holo' ? (
+                                    <Badge className="bg-neutral-950 border-2 border-purple-500 text-purple-200 text-[10px] font-black px-2 py-0 shadow-[0_0_15px_rgba(147,51,234,0.8)] whitespace-nowrap uppercase italic tracking-widest">SECRET RARE</Badge>
+                                  ) : result.isNew ? (
+                                    <Badge className="bg-amber-500 border-2 border-white text-[10px] font-black px-2 py-0 shadow-xl whitespace-nowrap uppercase">NEW</Badge>
+                                  ) : result.isLevelUp ? (
+                                    <Badge className="bg-purple-600 border-2 border-white text-[10px] font-black px-2 py-0 shadow-xl whitespace-nowrap uppercase flex items-center gap-1">
+                                      LVL {result.oldLevel} <span className="text-yellow-400">→</span> {result.newLevel}
+                                    </Badge>
+                                  ) : (
+                                    <Badge className="bg-emerald-500 border-2 border-white text-[10px] font-black px-2 py-0 shadow-xl whitespace-nowrap uppercase">LVL {result.newLevel}</Badge>
+                                  )}
+                                </div>
+                              )}
 
-                          {!isFlipped && (
-                            <div className="mt-4 animate-pulse text-[10px] text-white/50 font-black uppercase tracking-[0.2em] text-center line-clamp-1">Tippen</div>
-                          )}
+                              <TeacherCard 
+                                data={cardData}
+                                isFlippedExternally={isFlipped}
+                                interactive={false} // Card in booster view is never interactive on its own
+                                upgradeInfo={isFlipped && result?.isLevelUp ? { oldLevel: result.oldLevel!, newLevel: result.newLevel } : undefined}
+                                className="w-full h-auto"
+                              />
+                            </div>
+                            
+                            {isFlipped && showDebug && packProbs && (
+                              <div className="mt-2 bg-black/80 text-[8px] font-mono p-1 rounded border border-white/10 text-amber-200 animate-in fade-in duration-500">
+                                Chance: {(packProbs.cardChances[idx] * 100).toFixed(3)}%
+                              </div>
+                            )}
+
+                            {!isFlipped && (
+                              <div className="mt-4 animate-pulse text-[10px] text-white/50 font-black uppercase tracking-[0.2em] text-center line-clamp-1">Tippen</div>
+                            )}
+                          </div>
                         </motion.div>
                       )
                     })}
@@ -681,20 +683,37 @@ function SammelkartenContent() {
             </div>
 
             {/* Actions */}
-            <div className="flex flex-col gap-3 mt-4 w-full items-center">
-            {gameState === 'idle' && getRemainingBoosters() >= 10 && (
-              <Button
-                variant="secondary"
-                size="lg"
-                className="rounded-full px-10 border-2 border-white/10 shadow-2xl bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-500 hover:to-purple-500 transition-all font-black uppercase tracking-widest gap-2"
-                onClick={handleOpenTenPacks}
-              >
-                <Sparkles className="h-5 w-5 fill-current text-yellow-300" />
-                10er Pack öffnen
-              </Button>
-            )}
+            <div className="flex flex-col gap-4 mt-8 w-full items-center">
 
-            {gameState === 'revealed' && (isMassOpening || allFlipped) && (
+              {/* Action Buttons for Idle State */}
+              {gameState === 'idle' && getRemainingBoosters() > 0 && (
+                <div className="flex flex-col sm:flex-row gap-4 items-center justify-center">
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    className="rounded-full px-10 border-2 border-white/20 shadow-xl font-bold"
+                    onClick={handleOpenPack}
+                  >
+                    Pack öffnen
+                  </Button>
+
+                  {getRemainingBoosters() >= 10 && (
+                    <Button
+                      variant="secondary"
+                      size="lg"
+                      className="rounded-full px-8 border-2 border-white/10 shadow-2xl bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-500 hover:to-purple-500 transition-all font-black uppercase tracking-widest gap-2"
+                      onClick={handleOpenTenPacks}
+                    >
+                      <Sparkles className="h-5 w-5 fill-current text-yellow-300" />
+                      10er Pack öffnen
+                    </Button>
+                  )}
+                </div>
+              )}
+
+              {/* Action Buttons for Revealed State */}
+              {gameState === 'revealed' && (isMassOpening || allFlipped) && (
+
               <div className="flex flex-col gap-3 w-full max-sm:max-w-[280px] sm:max-w-sm animate-in fade-in slide-in-from-bottom-4 duration-1000">
                 {!isMassOpening && showDebug && packProbs && (
                   <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 mb-2 text-center">
