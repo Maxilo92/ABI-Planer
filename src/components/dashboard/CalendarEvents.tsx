@@ -36,6 +36,8 @@ export function CalendarEvents({
   const [profileNamesById, setProfileNamesById] = useState<Record<string, string>>({})
 
   useEffect(() => {
+    if (!user) return
+
     const unsubscribe = onSnapshot(collection(db, 'profiles'), (snapshot) => {
       const profileMap: Record<string, string> = {}
       snapshot.docs.forEach((entry) => {
@@ -45,10 +47,12 @@ export function CalendarEvents({
         }
       })
       setProfileNamesById(profileMap)
+    }, (error) => {
+      console.error('Error fetching profile names:', error)
     })
 
     return () => unsubscribe()
-  }, [])
+  }, [user])
 
   const handleDelete = async (id: string) => {
     if (!window.confirm('Möchtest du diesen Termin wirklich löschen?')) return

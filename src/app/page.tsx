@@ -189,11 +189,13 @@ export default function Dashboard() {
           }
 
           let votes: PollVote[] = []
-          try {
-            const votesSnap = await getDocs(collection(db, 'polls', doc.id, 'votes'))
-            votes = votesSnap.docs.map(d => ({ id: d.id, ...d.data() } as PollVote))
-          } catch (e) {
-            console.error(`Error fetching votes for poll ${doc.id}:`, e)
+          if (user) {
+            try {
+              const votesSnap = await getDocs(collection(db, 'polls', doc.id, 'votes'))
+              votes = votesSnap.docs.map(d => ({ id: d.id, ...d.data() } as PollVote))
+            } catch (e) {
+              console.error(`Error fetching votes for poll ${doc.id}:`, e)
+            }
           }
 
           pollsData.push({ ...poll, options, votes })

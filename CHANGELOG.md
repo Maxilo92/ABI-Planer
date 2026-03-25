@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.25.01] - 2026-03-25
+- Fix: **Guest Permission Stability**. Verbleibende `permission-denied` Fehler auf dem Dashboard (Poll-Votes) und in der Termin-Komponente (Profile-Collection) wurden behoben, indem Abfragen für unauthentifizierte Nutzer übersprungen werden. Dies stellt eine absolut saubere Konsole für den AdSense-Crawler sicher.
+
 ## [0.25.00] - 2026-03-25
 - Feature: **AdSense Compliance Finalization**. Erstellung der `public/ads.txt` zur Verifizierung der Anzeigenberechtigung.
 - Feature: **Datenschutz-Update**. Die Datenschutzerklärung (`/datenschutz`) wurde um die verpflichtende Google AdSense-Passage (Cookies, Datenverarbeitung) ergänzt.
