@@ -37,6 +37,7 @@ export type LogActionType =
   | 'FEEDBACK_SUBMIT'
   | 'LOOT_TEACHER'
   | 'LOOT_BOOSTER'
+  | 'LOOT_MASS_BOOSTER'
   | 'NEWS_RATE'
   | 'NEWS_COMMENT'
   | 'TEACHERS_BULK_IMPORT'

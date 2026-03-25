@@ -2,6 +2,10 @@
 
 ## [0.26.22] - 2026-03-25
 - Fix: **Dauerhaftes Karten-Reveal beim Booster-Opening**. Einmal aufgedeckte Karten in der Booster-Ansicht können nicht mehr versehentlich wieder verdeckt werden. Dies verhindert Verwirrung beim schnellen Durchklicken der Belohnungen. In der Detailansicht bleibt die Möglichkeit zum Umdrehen weiterhin bestehen.
+- Fix: **Überlappende Sammelkarten auf dem iPad behoben**.
+    - Stacking-Context optimiert: Booster-Pack `zIndex` erhöht, um Überlappungen während der Ripping-Animation zu vermeiden.
+    - Layout-Anpassung: Kartenbreite auf Tablets (`sm:w-52`) reduziert, um unerwünschte Zeilenumbrüche im Hochformat zu verhindern.
+    - Grid-Fix: `hover:z-10` und `active:z-10` im Album hinzugefügt, damit vergrößerte Karten bei Touch-Bedienung nicht hinter Nachbarn verschwinden.
 
 ## [0.26.21] - 2026-03-25
 - Feature: **Debug-Modus für Kartenziehungen**.
@@ -11,16 +15,7 @@
 
 ## [0.26.20] - 2026-03-25
 - Fix: ** Upgrade-Animation gebändigt**. Ein Fehler in der Animations-Steuerung wurde behoben, durch den Karten bei einem Level-Up unkontrolliert mehrfach rotierten. Die Drehung wird nun präzise einmalig pro Upgrade ausgelöst und die Zustände für das Level-Badge stabiler synchronisiert.
-
-## [0.26.20] - 2026-03-25
 - Fix: **Album-Interaktion veredelt**. Karten in der Album-Übersicht drehen sich beim Anklicken nicht mehr um. Ein Klick öffnet nun direkt die Detailansicht, was für eine flüssigere Nutzerführung sorgt. In der Detailansicht und beim Öffnen von Boostern bleiben die Karten wie gewohnt interaktiv drehbar.
-
-## [0.26.19] - 2026-03-25
-- Fix: **Überlappende Sammelkarten auf dem iPad behoben**.
-    - Stacking-Context optimiert: Booster-Pack `zIndex` erhöht, um Überlappungen während der Ripping-Animation zu vermeiden.
-    - Layout-Anpassung: Kartenbreite auf Tablets (`sm:w-52`) reduziert, um unerwünschte Zeilenumbrüche im Hochformat zu verhindern.
-    - Grid-Fix: `hover:z-10` und `active:z-10` im Album hinzugefügt, damit vergrößerte Karten bei Touch-Bedienung nicht hinter Nachbarn verschwinden.
-    - Animations-Refactoring: Initiale Karten-Translation korrigiert, um clumpy Overlapping im Start-Moment des Reveal-Effekts zu vermeiden.
 
 ## [0.26.19] - 2026-03-25
 - Feature: **10er Pack-Opening für "Suchtis"**.

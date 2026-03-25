@@ -390,6 +390,7 @@ export const useUserTeachers = (userId?: string) => {
     loading,
     error,
     collectBooster,
+    collectMassBoosters,
     getRemainingBoosters,
     claimExtraBoosters,
   }
