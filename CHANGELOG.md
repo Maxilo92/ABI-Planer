@@ -1,6 +1,12 @@
 # Changelog
 
-## [0.23.05] - 2026-03-25
+## [0.23.07] - 2026-03-25
+- UI: **AdSense Refinement**. Die AdSense-Komponente hat nun ein dezentes "Anzeige"-Label und einen Platzhalter, um Layout-Shifts zu vermeiden.
+- UI: **Mobile Safe Areas**. Implementierung von `pb-safe` (Safe Area Insets) für eine bessere Unterstützung des iOS Home-Indicators in der AppShell und der mobilen Navigation.
+- UI: **Responsive Layout Audit**. Optimierungen der Abstände im Sammelkarten-Bereich und verbesserte Darstellung des "Booster öffnen"-Buttons auf Mobilgeräten.
+
+## [0.23.06] - 2026-03-25
+
 - Feature: **AdSense Integration**. Implementierung des Google AdSense Scripts als Client-Komponente (`GoogleAdSense.tsx`). Um die Nutzererfahrung für Bestandsnutzer nicht zu beeinträchtigen, werden Anzeigen initial nur für nicht-angemeldete Nutzer (Gäste) ausgespielt.
 
 ## [0.23.04] - 2026-03-24

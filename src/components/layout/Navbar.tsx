@@ -99,6 +99,7 @@ export function Navbar() {
   if (isAdmin) {
     const adminSubItems = [
       { href: '/admin', label: 'Benutzer', icon: Users },
+      { href: '/admin/sammelkarten', label: 'Sammelkarten Manager', icon: Sparkles },
       { href: '/admin/global-settings', label: 'Globale Einstellungen', icon: Settings },
       { href: '/admin/logs', label: 'Logs', icon: BarChart2, isBeta: false },
       { href: '/admin/feedback', label: 'Feedback Admin', icon: MessageSquareHeart },

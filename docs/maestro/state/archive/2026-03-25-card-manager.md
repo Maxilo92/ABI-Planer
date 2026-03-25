@@ -1,15 +1,13 @@
 ---
 session_id: 2026-03-25-card-manager
-task: Add an admin-only 'Card Manager' sub-menu to the Sammelkarten feature. Move Lehrerpool management there. Add booster pack management (drop chances, booster-specific loot pools). Provide control over card variants and probabilities.
-created: '2026-03-25T16:37:54.484Z'
-updated: '2026-03-25T16:38:53.866Z'
+task: Migrate loot_teachers data and define card probabilities and weights.
+created: '2026-03-25T16:50:09.045Z'
+updated: '2026-03-25T17:12:28.246Z'
 status: completed
 workflow_mode: standard
-design_document: docs/maestro/plans/2026-03-25-card-manager-design.md
-implementation_plan: docs/maestro/plans/2026-03-25-card-manager-impl-plan.md
 current_phase: 1
 total_phases: 4
-execution_mode: sequential
+execution_mode: null
 execution_backend: native
 current_batch: null
 task_complexity: complex
@@ -20,12 +18,10 @@ token_usage:
   by_agent: {}
 phases:
   - id: 1
-    name: Data Migration Script
     status: in_progress
-    agents:
-      - data_engineer
+    agents: []
     parallel: false
-    started: '2026-03-25T16:37:54.484Z'
+    started: '2026-03-25T16:50:09.045Z'
     completed: null
     blocked_by: []
     files_created: []
@@ -40,15 +36,12 @@ phases:
     errors: []
     retry_count: 0
   - id: 2
-    name: Core Logic Refactoring
     status: pending
-    agents:
-      - coder
+    agents: []
     parallel: false
     started: null
     completed: null
-    blocked_by:
-      - 1
+    blocked_by: []
     files_created: []
     files_modified: []
     files_deleted: []
@@ -61,15 +54,12 @@ phases:
     errors: []
     retry_count: 0
   - id: 3
-    name: AdminGuard & Admin Layout
     status: pending
-    agents:
-      - coder
+    agents: []
     parallel: false
     started: null
     completed: null
-    blocked_by:
-      - 2
+    blocked_by: []
     files_created: []
     files_modified: []
     files_deleted: []
@@ -82,15 +72,12 @@ phases:
     errors: []
     retry_count: 0
   - id: 4
-    name: Card Manager UI
     status: pending
-    agents:
-      - coder
+    agents: []
     parallel: false
     started: null
     completed: null
-    blocked_by:
-      - 3
+    blocked_by: []
     files_created: []
     files_modified: []
     files_deleted: []
@@ -104,4 +91,4 @@ phases:
     retry_count: 0
 ---
 
-# Add an admin-only 'Card Manager' sub-menu to the Sammelkarten feature. Move Lehrerpool management there. Add booster pack management (drop chances, booster-specific loot pools). Provide control over card variants and probabilities. Orchestration Log
+# Migrate loot_teachers data and define card probabilities and weights. Orchestration Log

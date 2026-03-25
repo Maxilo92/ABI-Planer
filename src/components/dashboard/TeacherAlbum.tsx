@@ -346,14 +346,14 @@ export function TeacherAlbum({
           {!userId && (
             <Button 
               size="sm"
-              className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-black uppercase tracking-tighter gap-2 shadow-lg shadow-blue-500/20 mr-2"
+              className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-black uppercase tracking-tighter gap-2 shadow-lg shadow-blue-500/20 mr-2 max-sm:w-full max-sm:mr-0"
               onClick={() => router.push('/sammelkarten')}
             >
               <Package className="h-3.5 w-3.5" />
               Booster öffnen
             </Button>
           )}
-          <div className="flex items-center gap-2 bg-muted/50 px-3 py-1.5 rounded-full border">
+          <div className="flex items-center gap-2 bg-muted/50 px-3 py-1.5 rounded-full border max-sm:w-full max-sm:justify-center">
             <Trophy className="h-3.5 w-3.5 text-amber-500" />
             <span className="text-xs font-bold">
               {ownedCount} / {totalTeachers} Entdeckt

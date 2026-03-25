@@ -10,11 +10,11 @@ import { TeacherRarity, LootTeacher, CardVariant } from '@/types/database'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
-import { useUserTeachers } from '@/hooks/useUserTeachers'
+import { useUserTeachers, getCurrentBoosterDay } from '@/hooks/useUserTeachers'
 import { TeacherAlbum } from '@/components/dashboard/TeacherAlbum'
 import { GiftNoticeBanner } from '@/components/dashboard/GiftNoticeBanner'
 import { TeacherCard } from '@/components/cards/TeacherCard'
-import { CardData, CardVariant as NewCardVariant } from '@/types/cards'
+import { CardData, CardVariant as NewCardVariant, SammelkartenConfig } from '@/types/cards'
 import { useGiftNotices } from '@/hooks/useGiftNotices'
 import { logAction } from '@/lib/logging'
 import { toast } from 'sonner'
@@ -24,6 +24,18 @@ const DEFAULT_TEACHERS: LootTeacher[] = [
   { id: 'erika-musterfrau', name: "Erika Musterfrau", rarity: "rare" },
   { id: 'marie-curie', name: "Marie Curie", rarity: "mythic" },
   { id: 'albert-einstein', name: "Albert Einstein", rarity: "legendary" }
+]
+
+const DEFAULT_RARITY_WEIGHTS = [
+  { common: 0.8, rare: 0.15, epic: 0.04, mythic: 0.008, legendary: 0.002 },
+  { common: 0.6, rare: 0.25, epic: 0.11, mythic: 0.03, legendary: 0.01 },
+  { common: 0.4, rare: 0.35, epic: 0.17, mythic: 0.06, legendary: 0.02 }
+]
+
+const DEFAULT_GODPACK_WEIGHTS = [
+  { common: 0, rare: 0.4, epic: 0.35, mythic: 0.15, legendary: 0.10 },
+  { common: 0, rare: 0.2, epic: 0.4, mythic: 0.25, legendary: 0.15 },
+  { common: 0, rare: 0, epic: 0.4, mythic: 0.4, legendary: 0.2 }
 ]
 
 const getRarityHex = (rarity: TeacherRarity) => {
@@ -59,7 +71,7 @@ function SammelkartenContent() {
   const view = searchParams.get('view') || 'sammelkarten'
   const { user, profile, loading } = useAuth()
   const { collectBooster, teachers: userTeachers, getRemainingBoosters } = useUserTeachers()
-  const [globalSettings, setGlobalSettings] = useState<any>(null)
+  const [config, setConfig] = useState<SammelkartenConfig | null>(null)
   const [gameState, setGameState] = useState<'idle' | 'ripping' | 'revealed'>('idle')
   const [revealedTeachers, setRevealedTeachers] = useState<LootTeacher[] | null>(null)
   const [collectionResults, setCollectionResults] = useState<Array<{ isNew: boolean, isLevelUp: boolean, newLevel: number, count: number, variant: CardVariant } | null> | null>(null)
@@ -73,12 +85,14 @@ function SammelkartenContent() {
     const timer = setInterval(() => {
       const now = new Date()
       
-      // Calculate next 9:00 AM in Europe/Berlin
+      const resetHour = config?.global_limits?.reset_hour ?? 9
+      
+      // Calculate next reset in Europe/Berlin
       const berlinNowStr = now.toLocaleString("en-US", { timeZone: "Europe/Berlin" })
       const berlinNow = new Date(berlinNowStr)
       
       const target = new Date(berlinNowStr)
-      target.setHours(9, 0, 0, 0)
+      target.setHours(resetHour, 0, 0, 0)
       
       if (berlinNow >= target) {
         target.setDate(target.getDate() + 1)
@@ -94,9 +108,7 @@ function SammelkartenContent() {
     }, 1000)
 
     return () => clearInterval(timer)
-  }, [])
-
-
+  }, [config])
 
   useEffect(() => {
     if (!loading && !user) {
@@ -114,11 +126,24 @@ function SammelkartenContent() {
   }
 
   useEffect(() => {
-    const unsubscribe = onSnapshot(doc(db, 'settings', 'global'), (snapshot) => {
+    const unsubscribe = onSnapshot(doc(db, 'settings', 'sammelkarten'), (snapshot) => {
       if (snapshot.exists()) {
-        setGlobalSettings(snapshot.data())
+        setConfig(snapshot.data() as SammelkartenConfig)
       } else {
-        setGlobalSettings({ loot_teachers: DEFAULT_TEACHERS })
+        // Fallback to global if sammelkarten settings don't exist yet
+        const unsubGlobal = onSnapshot(doc(db, 'settings', 'global'), (globalSnap) => {
+          if (globalSnap.exists()) {
+            const data = globalSnap.data()
+            setConfig({
+              loot_teachers: data.loot_teachers || DEFAULT_TEACHERS,
+              rarity_weights: DEFAULT_RARITY_WEIGHTS,
+              godpack_weights: DEFAULT_GODPACK_WEIGHTS,
+              variant_probabilities: { shiny: 0.05, holo: 0.15, black_shiny_holo: 0.005 },
+              global_limits: { daily_allowance: 2, reset_hour: 9, godpack_chance: 0.005 }
+            })
+          }
+        })
+        return () => unsubGlobal()
       }
     })
     return () => unsubscribe()
@@ -127,8 +152,8 @@ function SammelkartenContent() {
   if (loading) return null
 
   const generatePack = (isGodpack: boolean): LootTeacher[] => {
-    const teachers = Array.isArray(globalSettings?.loot_teachers) && globalSettings.loot_teachers.length > 0
-      ? globalSettings.loot_teachers
+    const teachers = Array.isArray(config?.loot_teachers) && config.loot_teachers.length > 0
+      ? config.loot_teachers
       : DEFAULT_TEACHERS
 
     const getWeightedRarity = (weights: Record<string, number>): TeacherRarity => {
@@ -141,17 +166,8 @@ function SammelkartenContent() {
       return 'common'
     }
 
-    const regularWeights = [
-      { common: 0.8, rare: 0.15, epic: 0.04, mythic: 0.008, legendary: 0.002 },
-      { common: 0.6, rare: 0.25, epic: 0.11, mythic: 0.03, legendary: 0.01 },
-      { common: 0.4, rare: 0.35, epic: 0.17, mythic: 0.06, legendary: 0.02 }
-    ]
-
-    const godpackWeights = [
-      { common: 0, rare: 0.4, epic: 0.35, mythic: 0.15, legendary: 0.10 },
-      { common: 0, rare: 0.2, epic: 0.4, mythic: 0.25, legendary: 0.15 },
-      { common: 0, rare: 0, epic: 0.4, mythic: 0.4, legendary: 0.2 }
-    ]
+    const regularWeights = config?.rarity_weights || DEFAULT_RARITY_WEIGHTS
+    const godpackWeights = config?.godpack_weights || DEFAULT_GODPACK_WEIGHTS
 
     const slotWeights = isGodpack ? godpackWeights : regularWeights
 
@@ -175,7 +191,8 @@ function SammelkartenContent() {
     setIsAnimating(true)
     setFlippedCards([false, false, false])
 
-    const godpack = Math.random() < (1 / 2000)
+    const godpackChance = config?.global_limits?.godpack_chance ?? 0.005
+    const godpack = Math.random() < godpackChance
     setIsGodpack(godpack)
     const pack = generatePack(godpack)
     setRevealedTeachers(pack)
@@ -220,7 +237,8 @@ function SammelkartenContent() {
       if (user) {
         logAction('LOOT_BOOSTER', user.uid, profile?.full_name, { 
           teachers: pack.map(t => t.id || t.name),
-          results: processedResults
+          results: processedResults,
+          isGodpack: godpack
         })
       }
 
@@ -243,56 +261,6 @@ function SammelkartenContent() {
 
   const allFlipped = flippedCards.every(v => v === true)
 
-  const info = (rarity: TeacherRarity, variant?: CardVariant) => {
-    if (variant === 'black_shiny_holo') {
-      return {
-        label: 'Secret Rare',
-        color: 'bg-slate-950',
-        glow: 'shadow-[0_0_40px_rgba(147,51,234,0.8),0_0_60px_rgba(236,72,153,0.5)]',
-        highlight: 'rgba(147, 51, 234, 0.5)',
-        border: 'rgba(236, 72, 153, 0.8)'
-      }
-    }
-
-    switch (rarity) {
-      case 'common': return { 
-        label: 'Gewöhnlich', 
-        color: 'bg-slate-500', 
-        glow: 'shadow-[0_0_20px_rgba(100,116,139,0.4)]',
-        highlight: 'rgba(100, 116, 139, 0.4)',
-        border: 'rgba(100, 116, 139, 0.5)'
-      }
-      case 'rare': return { 
-        label: 'Selten', 
-        color: 'bg-emerald-500', 
-        glow: 'shadow-[0_0_25px_rgba(16,185,129,0.6)]',
-        highlight: 'rgba(16, 185, 129, 0.4)',
-        border: 'rgba(16, 185, 129, 0.5)'
-      }
-      case 'epic': return { 
-        label: 'Episch', 
-        color: 'bg-purple-600', 
-        glow: 'shadow-[0_0_30px_rgba(147,51,234,0.7)]',
-        highlight: 'rgba(147, 51, 234, 0.4)',
-        border: 'rgba(147, 51, 234, 0.5)'
-      }
-      case 'mythic': return { 
-        label: 'Mythisch', 
-        color: 'bg-red-600', 
-        glow: 'shadow-[0_0_35px_rgba(220,38,38,0.8)]',
-        highlight: 'rgba(220, 38, 38, 0.4)',
-        border: 'rgba(220, 38, 38, 0.5)'
-      }
-      case 'legendary': return { 
-        label: 'Legendär', 
-        color: 'bg-amber-500', 
-        glow: 'shadow-[0_0_40px_rgba(245,158,11,1)]',
-        highlight: 'rgba(245, 158, 11, 0.4)',
-        border: 'rgba(245, 158, 11, 0.5)'
-      }
-    }
-  }
-
   return (
     <div className="container mx-auto py-8">
       {giftNotices.length > 0 && (
@@ -309,8 +277,8 @@ function SammelkartenContent() {
       )}
 
       {view === 'sammelkarten' ? (
-        <div className="flex flex-col items-center justify-center min-h-[calc(100vh-20rem)] overflow-hidden pb-[calc(env(safe-area-inset-bottom)+1rem)]">
-          <div className="relative flex flex-col items-center space-y-12 w-full max-w-4xl px-6">
+        <div className="flex flex-col items-center justify-center min-h-[calc(100vh-16rem)] overflow-hidden pb-[calc(env(safe-area-inset-bottom)+1rem)]">
+          <div className="relative flex flex-col items-center space-y-8 sm:space-y-12 w-full max-w-4xl px-6">
             
             {/* Minimal Header */}
             <div className={cn(
@@ -361,7 +329,7 @@ function SammelkartenContent() {
                   {revealedTeachers.map((teacher, idx) => {
                     const isFlipped = flippedCards[idx]
                     const result = collectionResults?.[idx]
-                    const cardData = mapToCardData(teacher, result?.variant || 'normal', globalSettings?.loot_teachers || DEFAULT_TEACHERS)
+                    const cardData = mapToCardData(teacher, result?.variant || 'normal', config?.loot_teachers || DEFAULT_TEACHERS)
                     
                     return (
                       <div 
@@ -473,7 +441,7 @@ function SammelkartenContent() {
             {/* Actions */}
             <div className="flex flex-col gap-3 mt-4 w-full items-center">
               {gameState === 'revealed' && allFlipped && (
-                <div className="flex flex-col gap-3 w-full max-w-sm animate-in fade-in slide-in-from-bottom-4 duration-1000">
+                <div className="flex flex-col gap-3 w-full max-sm:max-w-[280px] sm:max-w-sm animate-in fade-in slide-in-from-bottom-4 duration-1000">
                   <Button 
                     onClick={getRemainingBoosters() > 0 ? handleOpenPack : () => setGameState('idle')}
                     variant="outline"

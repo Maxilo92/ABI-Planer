@@ -1,16 +1,16 @@
 ---
-session_id: 2026-03-25-card-manager
-task: Migrate loot_teachers data and define card probabilities and weights.
-created: '2026-03-25T16:50:09.045Z'
-updated: '2026-03-25T16:50:09.045Z'
+session_id: sammelkarten-admin-suite-2026-03-25
+task: Implement full administrative control over Sammelkarten packs (drop rates, variants, limits) in a dedicated suite.
+created: '2026-03-25T17:12:35.178Z'
+updated: '2026-03-25T17:12:42.148Z'
 status: in_progress
 workflow_mode: standard
 current_phase: 1
 total_phases: 4
-execution_mode: null
+execution_mode: parallel
 execution_backend: native
 current_batch: null
-task_complexity: complex
+task_complexity: medium
 token_usage:
   total_input: 0
   total_output: 0
@@ -19,9 +19,10 @@ token_usage:
 phases:
   - id: 1
     status: in_progress
-    agents: []
+    agents:
+      - data_engineer
     parallel: false
-    started: '2026-03-25T16:50:09.045Z'
+    started: '2026-03-25T17:12:35.178Z'
     completed: null
     blocked_by: []
     files_created: []
@@ -37,7 +38,8 @@ phases:
     retry_count: 0
   - id: 2
     status: pending
-    agents: []
+    agents:
+      - coder
     parallel: false
     started: null
     completed: null
@@ -55,7 +57,8 @@ phases:
     retry_count: 0
   - id: 3
     status: pending
-    agents: []
+    agents:
+      - coder
     parallel: false
     started: null
     completed: null
@@ -73,7 +76,8 @@ phases:
     retry_count: 0
   - id: 4
     status: pending
-    agents: []
+    agents:
+      - coder
     parallel: false
     started: null
     completed: null
@@ -91,4 +95,4 @@ phases:
     retry_count: 0
 ---
 
-# Migrate loot_teachers data and define card probabilities and weights. Orchestration Log
+# Implement full administrative control over Sammelkarten packs (drop rates, variants, limits) in a dedicated suite. Orchestration Log

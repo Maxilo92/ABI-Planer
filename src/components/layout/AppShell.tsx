@@ -19,7 +19,7 @@ export function AppShell({ children }: AppShellProps) {
 
   if (isAuthRoute) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background pb-safe">
         <DangerAlertBanner />
         <main className="min-h-screen">{children}</main>
         <RandomCookieBanner />
@@ -29,7 +29,7 @@ export function AppShell({ children }: AppShellProps) {
   }
 
   return (
-    <div className="min-h-[100dvh] bg-background md:flex">
+    <div className="min-h-[100dvh] bg-background md:flex pb-safe">
       <Navbar />
       <div className="flex-1 flex flex-col min-h-[100dvh]">
         <DangerAlertBanner />

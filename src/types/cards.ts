@@ -1,4 +1,6 @@
-export type Rarity = 'common' | 'rare' | 'epic' | 'mythic' | 'legendary';
+import { LootTeacher, TeacherRarity } from './database';
+
+export type Rarity = TeacherRarity;
 
 export type CardVariant = 
   | 'normal' 
@@ -6,7 +8,7 @@ export type CardVariant =
   | 'shiny-v2' 
   | 'blckshiny';
 
-export type CardStyle = 'soft-glass' | 'modern-flat' | 'playful-pattern' | 'minimalist-premium' | 'holographic-edge';
+export type CardStyle = 'soft-glass' | 'modern-flat' | 'playful-pattern' | 'modern-premium' | 'holographic-edge';
 
 export interface CardData {
   id: string;
@@ -16,4 +18,33 @@ export interface CardData {
   variant: CardVariant;
   color: string;
   style?: CardStyle;
+}
+
+export interface RarityWeights {
+  common: number;
+  rare: number;
+  epic: number;
+  mythic: number;
+  legendary: number;
+}
+
+export interface VariantProbabilities {
+  shiny: number;
+  holo: number;
+  black_shiny_holo: number;
+}
+
+export interface GlobalCardLimits {
+  daily_allowance: number;
+  reset_hour: number;
+  godpack_chance: number; // e.g., 0.005 for 1/200
+}
+
+export interface SammelkartenConfig {
+  loot_teachers: LootTeacher[];
+  rarity_weights: RarityWeights[]; // Array for 3 slots
+  godpack_weights: RarityWeights[]; // Array for 3 slots
+  variant_probabilities: VariantProbabilities;
+  global_limits: GlobalCardLimits;
+  updated_at?: any;
 }

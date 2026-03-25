@@ -11,18 +11,34 @@ export const calculateLevel = (count: number): number => {
   return Math.floor(Math.sqrt(count - 1)) + 1
 }
 
-const getRandomVariant = (teacherId: string, isGodpack: boolean): CardVariant => {
+const BERLIN_TIMEZONE = 'Europe/Berlin'
+const DEFAULT_DAILY_PACK_ALLOWANCE = 2
+
+const DEFAULT_VARIANTS_PROBABILITIES = {
+  shiny: 0.05,
+  holo: 0.15,
+  black_shiny_holo: 0.005
+}
+
+const getDailyAllowance = (config: any) => {
+  return config?.global_limits?.daily_allowance ?? DEFAULT_DAILY_PACK_ALLOWANCE
+}
+
+const getRandomVariant = (teacherId: string, isGodpack: boolean, config: any): CardVariant => {
   const rand = Math.random()
+  const probs = config?.variant_probabilities || DEFAULT_VARIANTS_PROBABILITIES
+
   if (isGodpack) {
+    // Godpacks have significantly boosted variant rates
     if (rand < 0.1) return 'black_shiny_holo'
     if (rand < 0.4) return 'shiny'
     if (rand < 0.8) return 'holo'
     return 'normal'
   }
   
-  if (rand < 0.005) return 'black_shiny_holo'
-  if (rand < 0.05) return 'shiny'
-  if (rand < 0.15) return 'holo'
+  if (rand < (probs.black_shiny_holo ?? 0.005)) return 'black_shiny_holo'
+  if (rand < (probs.shiny ?? 0.05)) return 'shiny'
+  if (rand < (probs.holo ?? 0.15)) return 'holo'
   return 'normal'
 }
 
@@ -33,9 +49,6 @@ type BoosterStats = {
   extra_boosters_claimed?: boolean
   total_opened?: number
 }
-
-const BERLIN_TIMEZONE = 'Europe/Berlin'
-const DAILY_PACK_ALLOWANCE = 2
 
 const toBerlinParts = (date: Date) => {
   const formatter = new Intl.DateTimeFormat('en-GB', {
@@ -114,7 +127,7 @@ const sanitizeBoosterStats = (stats: BoosterStats | null | undefined, today: str
 const calculateCarryoverExtras = (lastReset: string, today: string, dailyAllowance: number): number => {
   const daysMissed = daysBetween(lastReset, today)
   if (daysMissed <= 0) return 0
-  // Maximal 1 Tag nachholen (2 Packs), egal wie viele Tage verpasst wurden
+  // Maximal 1 Tag nachholen (z.B. 2 Packs), egal wie viele Tage verpasst wurden
   return Math.min(daysMissed, 1) * dailyAllowance
 }
 
@@ -122,13 +135,14 @@ const calculateCarryoverExtras = (lastReset: string, today: string, dailyAllowan
  * Calculates the current "booster day" identifier.
  * A new day starts at 09:00:00 Europe/Berlin time.
  */
-export const getCurrentBoosterDay = (): string => {
+export const getCurrentBoosterDay = (config?: any): string => {
+  const resetHour = config?.global_limits?.reset_hour ?? 9
   const now = new Date()
   const berlin = toBerlinParts(now)
   const baseDay = `${berlin.year}-${formatDatePart(berlin.month)}-${formatDatePart(berlin.day)}`
 
-  // If it's before 9:00 AM in Berlin, it still belongs to the previous booster day.
-  if (berlin.hour < 9) {
+  // If it's before the reset hour in Berlin, it still belongs to the previous booster day.
+  if (berlin.hour < resetHour) {
     return addDaysToDayString(baseDay, -1)
   }
 
@@ -151,8 +165,18 @@ export const useUserTeachers = (userId?: string) => {
   const isOwnProfile = !userId || userId === currentUser?.uid
   
   const [teachers, setTeachers] = useState<UserTeacher | null>(null)
+  const [config, setConfig] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
+
+  useEffect(() => {
+    const unsubscribe = onSnapshot(doc(db, 'settings', 'sammelkarten'), (snapshot) => {
+      if (snapshot.exists()) {
+        setConfig(snapshot.data())
+      }
+    })
+    return () => unsubscribe()
+  }, [])
 
   useEffect(() => {
     if (!activeUserId) {
@@ -193,7 +217,7 @@ export const useUserTeachers = (userId?: string) => {
 
       const userTeachersRef = doc(db, 'user_teachers', currentUser.uid)
       const profileRef = doc(db, 'profiles', currentUser.uid)
-      const dailyPackAllowance = DAILY_PACK_ALLOWANCE
+      const dailyPackAllowance = getDailyAllowance(config)
       const isGodpack = !!options?.isGodpack
       
       try {
@@ -201,7 +225,7 @@ export const useUserTeachers = (userId?: string) => {
           const profileDoc = await transaction.get(profileRef)
           if (!profileDoc.exists()) throw new Error('User profile not found')
           
-          const today = getCurrentBoosterDay()
+          const today = getCurrentBoosterDay(config)
           const currentProfileData = profileDoc.data() as Profile
           const currentStats = sanitizeBoosterStats(currentProfileData.booster_stats, today)
           
@@ -218,7 +242,7 @@ export const useUserTeachers = (userId?: string) => {
           } else if (extraAvailable > 0) {
             extraAvailable -= 1
           } else {
-            throw new Error('Tägliches Limit von 2 Kartenpacks erreicht!')
+            throw new Error(`Tägliches Limit von ${dailyPackAllowance} Kartenpacks erreicht!`)
           }
 
           const teachersDoc = await transaction.get(userTeachersRef)
@@ -226,7 +250,7 @@ export const useUserTeachers = (userId?: string) => {
           
           const tempData = { ...currentData }
           const packResults = teacherIds.map(teacherId => {
-            const variant = getRandomVariant(teacherId, isGodpack)
+            const variant = getRandomVariant(teacherId, isGodpack, config)
             const teacherData = tempData[teacherId] || { count: 0, level: 1, variants: {} }
             const tCount = teacherData.count + 1
             const tLevel = calculateLevel(tCount)
@@ -271,7 +295,7 @@ export const useUserTeachers = (userId?: string) => {
         throw err
       }
     },
-    [currentUser, isOwnProfile]
+    [currentUser, isOwnProfile, config]
   )
 
   const claimExtraBoosters = useCallback(async () => {
@@ -285,7 +309,7 @@ export const useUserTeachers = (userId?: string) => {
         if (!profileDoc.exists()) throw new Error('User profile not found')
 
         const currentProfileData = profileDoc.data() as Profile
-        const today = getCurrentBoosterDay()
+        const today = getCurrentBoosterDay(config)
         
         // Handle null or missing stats
         const currentStats = sanitizeBoosterStats(currentProfileData.booster_stats, today)
@@ -308,13 +332,13 @@ export const useUserTeachers = (userId?: string) => {
       console.error('Error claiming extra boosters:', err)
       throw err
     }
-  }, [currentUser, isOwnProfile])
+  }, [currentUser, isOwnProfile, config])
 
   const getRemainingBoosters = useCallback(() => {
     if (!isOwnProfile || !currentProfile) return 0
-    const today = getCurrentBoosterDay()
+    const today = getCurrentBoosterDay(config)
     const stats = currentProfile.booster_stats
-    const dailyLimit = DAILY_PACK_ALLOWANCE
+    const dailyLimit = getDailyAllowance(config)
     
     if (!stats) return dailyLimit
     
@@ -330,7 +354,7 @@ export const useUserTeachers = (userId?: string) => {
     }
     
     return Math.max(0, dailyLimit - normalizedStats.count) + extra
-  }, [currentProfile, isOwnProfile])
+  }, [currentProfile, isOwnProfile, config])
 
   return {
     teachers,
