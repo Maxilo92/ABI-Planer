@@ -25,7 +25,7 @@ export const TeacherCard: React.FC<TeacherCardProps> = ({
   isLocked = false,
   upgradeInfo
 }) => {
-  const [isFlippedInternally, setIsFlippedInternally] = useState(false);
+  const [isFlippedInternally, setIsFlippedInternally] = useState(true);
   const isFlipped = isFlippedExternally !== undefined ? isFlippedExternally : isFlippedInternally;
 
   const [displayLevel, setDisplayLevel] = useState(upgradeInfo?.oldLevel || 0);
@@ -137,6 +137,7 @@ export const TeacherCard: React.FC<TeacherCardProps> = ({
             "absolute inset-0 backface-hidden p-[8cqw] flex flex-col items-center justify-center overflow-hidden rotate-y-180",
             "border-[2cqw] border-white/20 bg-neutral-950 shadow-2xl rounded-[10cqw]"
           )}
+          style={{ transform: "rotateY(180deg) translateZ(1px)" }}
         >
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.05)_0%,transparent_70%)]" />
           <CardEffectOverlay variant="normal" tintColor="#000000" />
@@ -158,7 +159,8 @@ export const TeacherCard: React.FC<TeacherCardProps> = ({
             styleClasses.card
           )}
           style={{ 
-            backgroundColor: isLocked ? '#0a0a0a' : (isBlckShiny ? '#0a0a0a' : (isGlass ? `${data.color}99` : data.color)) 
+            backgroundColor: isLocked ? '#0a0a0a' : (isBlckShiny ? '#0a0a0a' : (isGlass ? data.color : data.color)),
+            transform: "translateZ(1px)"
           }}
         >
           {isLocked ? (

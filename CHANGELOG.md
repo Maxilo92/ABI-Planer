@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.26.07] - 2026-03-25
+- UI: **Karten-Detailansicht Optimierung**. Karten werden nun standardmäßig mit der Vorderseite zuerst angezeigt, wenn keine externe Steuerung vorliegt (z.B. im Album oder in der Detailansicht). Dies verbessert die Nutzererfahrung, da die Inhalte sofort sichtbar sind.
+
+## [0.26.06] - 2026-03-25
+- Fix: **Karten-Vorderseite/Rückseite Bleed-through**. Ein visueller Fehler wurde behoben, bei dem die Rückseite der Karte durch die Vorderseite (und umgekehrt) durchschien. Durch die Verwendung von 100% deckenden Hintergrundfarben und einer physischen Trennung der Kartenseiten im 3D-Raum (`translateZ`) ist die Darstellung nun auf allen Geräten korrekt.
+
 ## [0.26.05] - 2026-03-25
 - UI: **Überarbeitete Level-Up Animation**. Beim Upgrade einer Karte wird nun ein dynamisches Level-Overlay eingeblendet, das den Übergang vom alten zum neuen Level mit einem speziellen Animationseffekt (Skalierung & Bounce) visualisiert. Die Level-Anzeige erscheint nun ausschließlich während dieses Upgrades auf der Karte.
 
