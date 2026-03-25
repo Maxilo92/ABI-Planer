@@ -53,8 +53,15 @@ export const TeacherCard: React.FC<TeacherCardProps> = ({
   isLocked = false,
   upgradeInfo
 }) => {
-  const [isFlippedInternally, setIsFlippedInternally] = useState(true);
-  const isFlipped = isLocked ? false : (isFlippedExternally !== undefined ? isFlippedExternally : isFlippedInternally);
+  const [isFlippedInternally, setIsFlippedInternally] = useState(isFlippedExternally ?? true);
+  
+  useEffect(() => {
+    if (isFlippedExternally !== undefined) {
+      setIsFlippedInternally(isFlippedExternally);
+    }
+  }, [isFlippedExternally]);
+
+  const isFlipped = isLocked ? false : isFlippedInternally;
 
   const [displayLevel, setDisplayLevel] = useState(upgradeInfo?.oldLevel || 0);
   const [isLevelAnimating, setIsLevelAnimating] = useState(false);
@@ -85,6 +92,15 @@ export const TeacherCard: React.FC<TeacherCardProps> = ({
       return () => clearTimeout(timer);
     }
   }, [upgradeInfo, isFlipped, controls]);
+
+  useEffect(() => {
+    if (!isLevelAnimating) {
+      controls.start({ 
+        rotateY: isFlipped ? 0 : 180,
+        transition: { duration: 0.6, ease: "easeOut" }
+      });
+    }
+  }, [isFlipped, isLevelAnimating, controls]);
 
   const isBlckShiny = data.variant === 'black_shiny_holo';
   const isShiny = data.variant === 'shiny';
@@ -151,16 +167,11 @@ export const TeacherCard: React.FC<TeacherCardProps> = ({
     >
       <motion.div
         animate={controls}
-        className="w-full h-full"
+        initial={{ rotateY: isFlipped ? 0 : 180 }}
+        style={{ transformStyle: "preserve-3d" }}
+        className="w-full h-full relative will-change-transform"
       >
-        <motion.div
-          initial={{ rotateY: isFlipped ? 0 : 180 }}
-          animate={{ rotateY: isFlipped ? 0 : 180 }}
-          transition={{ duration: 0.6, ease: "easeOut" }}
-          style={{ transformStyle: "preserve-3d" }}
-          className="w-full h-full relative will-change-transform"
-        >
-          {/* BACK SIDE (Locked also shows this essentially) */}
+        {/* BACK SIDE (Locked also shows this essentially) */}
           <div 
             className={cn(
               "absolute inset-0 backface-hidden p-[8cqw] flex flex-col items-center justify-center overflow-hidden",
@@ -274,7 +285,6 @@ export const TeacherCard: React.FC<TeacherCardProps> = ({
             </div>
           )}
         </motion.div>
-      </motion.div>
     </div>
   );
 };

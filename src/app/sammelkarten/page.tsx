@@ -394,7 +394,9 @@ function SammelkartenContent() {
                                 ) : result.isNew ? (
                                   <Badge className="bg-amber-500 border-2 border-white text-[10px] font-black px-2 py-0 shadow-xl whitespace-nowrap uppercase">NEW</Badge>
                                 ) : result.isLevelUp ? (
-                                  <Badge className="bg-purple-500 border-2 border-white text-[10px] font-black px-2 py-0 shadow-xl whitespace-nowrap uppercase">LEVEL UP</Badge>
+                                  <Badge className="bg-purple-600 border-2 border-white text-[10px] font-black px-2 py-0 shadow-xl whitespace-nowrap uppercase flex items-center gap-1">
+                                    LVL {result.oldLevel} <span className="text-yellow-400">→</span> {result.newLevel}
+                                  </Badge>
                                 ) : (
                                   <Badge className="bg-emerald-500 border-2 border-white text-[10px] font-black px-2 py-0 shadow-xl whitespace-nowrap uppercase">LVL {result.newLevel}</Badge>
                                 )}
