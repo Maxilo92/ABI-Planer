@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.26.13] - 2026-03-25
+- UI: **Optimierter Shiny-Effekt**.
+    - Die Verläufe der Shiny-Effektfolie wurden weicher gestaltet, um sichtbare Kanten während der Animation zu eliminieren.
+    - Die Animationsgeschwindigkeit wurde deutlich reduziert (8s statt 3s), um ein ruhigeres und edleres Erscheinungsbild zu erzielen.
+
 ## [0.26.12] - 2026-03-25
 - UI: **Responsives Booster-Opening Layout**. Die Karten beim Öffnen eines Booster-Packs passen sich nun besser an kleine Bildschirme an. Statt unleserlich klein zu werden, brechen die Karten nun bei Platzmangel automatisch in eine zweite Zeile um.
 

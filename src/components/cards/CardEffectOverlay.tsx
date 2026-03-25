@@ -23,7 +23,8 @@ export const CardEffectOverlay: React.FC<{
       
       case 'shiny': 
         // 03 Shiny Sparkle: Multi-layered glitter and metallic reflection
-        return "bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.4)_0%,transparent_50%),linear-gradient(110deg,rgba(255,255,255,0.1)_0%,rgba(255,255,255,0.5)_45%,rgba(255,255,255,0.8)_50%,rgba(255,255,255,0.5)_55%,rgba(255,255,255,0.1)_100%)] bg-[length:200%_100%] animate-[shimmer_3s_infinite_linear] mix-blend-overlay opacity-90 shadow-[inset_0_0_80px_rgba(255,255,255,0.3)] after:absolute after:inset-0 after:bg-[url('https://grainy-gradients.vercel.app/noise.svg')] after:opacity-10 after:mix-blend-color-dodge";
+        // Softened transitions for a more seamless look and slowed down animation
+        return "bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.3)_0%,transparent_60%),linear-gradient(110deg,rgba(255,255,255,0.1)_0%,rgba(255,255,255,0.2)_30%,rgba(255,255,255,0.6)_45%,rgba(255,255,255,0.8)_50%,rgba(255,255,255,0.6)_55%,rgba(255,255,255,0.2)_70%,rgba(255,255,255,0.1)_100%)] bg-[length:200%_100%] animate-[shimmer_8s_infinite_linear] mix-blend-overlay opacity-90 shadow-[inset_0_0_80px_rgba(255,255,255,0.3)] after:absolute after:inset-0 after:bg-[url('https://grainy-gradients.vercel.app/noise.svg')] after:opacity-[0.08] after:mix-blend-color-dodge";
 
       case 'black_shiny_holo':
         // Cosmic Void: Deep space effect for Black Shiny
