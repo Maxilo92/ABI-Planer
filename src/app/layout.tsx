@@ -5,6 +5,7 @@ import { AppShell } from '@/components/layout/AppShell'
 import { AuthProvider } from '@/context/AuthContext'
 import { Toaster } from '@/components/ui/sonner'
 import { ThemeProvider } from '@/context/ThemeProvider'
+import { GoogleAdSense } from '@/components/layout/GoogleAdSense'
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' })
 
@@ -29,6 +30,7 @@ export default function RootLayout({
         >
           <AuthProvider>
             <AppShell>{children}</AppShell>
+            <GoogleAdSense />
             <Toaster />
           </AuthProvider>
         </ThemeProvider>

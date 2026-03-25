@@ -11,6 +11,7 @@
     "start": "node .next/standalone/server.js",
     "lint": "eslint .",
     "test:regressions": "node scripts/regression-guard.mjs",
+    "migrate:cards": "npx ts-node scripts/migrate_card_settings.ts",
     "check": "npm run test:regressions && npx tsc --noEmit && npm run build"
   },
   "devDependencies": {

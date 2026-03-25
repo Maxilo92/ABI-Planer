@@ -4,6 +4,7 @@ import { getFirestore } from "firebase-admin/firestore";
 import { emptyAllAlbums } from "./actions/emptyAllAlbums";
 import { wipeUserCards } from "./actions/wipeUserCards";
 import { wipeTeacherDatabase } from "./actions/wipeTeacherDatabase";
+import { fixEventCreators } from "./actions/fixEventCreators";
 
 /**
  * Scheduled function to execute pending danger actions every 15 minutes.
@@ -49,6 +50,9 @@ export const executeDangerActions = onSchedule("every 15 minutes", async (event)
         case "WIPE_USER_CARDS":
           await wipeUserCards(payload.uid);
           break;
+        case "FIX_EVENT_CREATORS":
+          await fixEventCreators();
+          break;
         // In the future, other actions like RESET_ALL_VOTES can be added here.
         default:
           console.warn(`Unknown action type: ${actionType}. Marking as failed.`);
@@ -58,7 +62,7 @@ export const executeDangerActions = onSchedule("every 15 minutes", async (event)
             completedAt: admin.firestore.Timestamp.now()
           });
           
-          await getFirestore("abi-data").collection("logs").add({
+          await getFirestore("abi-data").collection("danger_logs").add({
             action: "DANGER_ACTION_FAILED",
             user_id: actionData.triggeredBy || "SYSTEM",
             user_name: actionData.triggeredByName || "System/Cron",
@@ -79,7 +83,7 @@ export const executeDangerActions = onSchedule("every 15 minutes", async (event)
       });
 
       // Log success
-      await getFirestore("abi-data").collection("logs").add({
+      await getFirestore("abi-data").collection("danger_logs").add({
         action: "DANGER_ACTION_EXECUTED",
         user_id: actionData.triggeredBy || "SYSTEM",
         user_name: actionData.triggeredByName || "System/Cron",
@@ -102,7 +106,7 @@ export const executeDangerActions = onSchedule("every 15 minutes", async (event)
       });
 
       // Log failure
-      await getFirestore("abi-data").collection("logs").add({
+      await getFirestore("abi-data").collection("danger_logs").add({
         action: "DANGER_ACTION_FAILED",
         user_id: actionData.triggeredBy || "SYSTEM",
         user_name: actionData.triggeredByName || "System/Cron",

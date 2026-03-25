@@ -106,10 +106,6 @@ export function TeacherRarityVoting({ onStatusChange }: { onStatusChange?: (fini
       const nextTeachers = teachers.filter((_, i) => i !== currentIndex)
       const nextIndex = nextTeachers.length > 0 ? Math.floor(Math.random() * nextTeachers.length) : -1
       
-      // We keep the old state in case we need to rollback, but for UX we move on
-      const oldTeachers = [...teachers]
-      const oldIndex = currentIndex
-      
       setTeachers(nextTeachers)
       setCurrentIndex(nextIndex)
       if (nextTeachers.length === 0) {
@@ -117,22 +113,9 @@ export function TeacherRarityVoting({ onStatusChange }: { onStatusChange?: (fini
         if (onStatusChange) onStatusChange(true)
       }
 
-      // 2. Perform DB operations in background
-      // Save individual rating
-      await setDoc(doc(db, 'teacher_ratings', voteId), {
-        userId: user.uid,
-        teacherId: teacher.id,
-        rating: rating,
-        created_at: new Date().toISOString()
-      })
-
-      // Update user profile (rated_teachers)
-      await updateDoc(doc(db, 'profiles', user.uid), {
-        rated_teachers: arrayUnion(teacher.id)
-      })
-
-      // Update teacher aggregate transaction-safe to avoid race conditions between multiple voters.
+      // 2. Perform DB operations in background via atomic transaction
       await runTransaction(db, async (transaction) => {
+        // A. Read current teacher aggregate
         const teacherRef = doc(db, 'teachers', teacher.id)
         const teacherSnap = await transaction.get(teacherRef)
 
@@ -142,6 +125,22 @@ export function TeacherRarityVoting({ onStatusChange }: { onStatusChange?: (fini
         const newVoteCount = currentVoteCount + 1
         const newAvg = (currentTotal + rating) / newVoteCount
 
+        // B. Save individual rating
+        const ratingRef = doc(db, 'teacher_ratings', voteId)
+        transaction.set(ratingRef, {
+          userId: user.uid,
+          teacherId: teacher.id,
+          rating: rating,
+          created_at: new Date().toISOString()
+        })
+
+        // C. Update user profile (rated_teachers)
+        const profileRef = doc(db, 'profiles', user.uid)
+        transaction.update(profileRef, {
+          rated_teachers: arrayUnion(teacher.id)
+        })
+
+        // D. Update teacher aggregate
         transaction.set(teacherRef, {
           name: teacher.name,
           avg_rating: newAvg,

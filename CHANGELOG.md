@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.23.05] - 2026-03-25
+- Feature: **AdSense Integration**. Implementierung des Google AdSense Scripts als Client-Komponente (`GoogleAdSense.tsx`). Um die Nutzererfahrung für Bestandsnutzer nicht zu beeinträchtigen, werden Anzeigen initial nur für nicht-angemeldete Nutzer (Gäste) ausgespielt.
+
 ## [0.23.04] - 2026-03-24
 - Bugfix: **Tailwind v4 CSS Parsing Error**. Fix für den "Unexpected end of input" Fehler durch Entfernung ungültiger `[@container]:` Varianten in `TeacherCard.tsx`. Die `cqw`-Einheiten funktionieren in v4 nativ ohne diesen Präfix.
 

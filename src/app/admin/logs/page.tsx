@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { collection, getDocs, limit, orderBy, query, startAfter, type DocumentData, type QueryDocumentSnapshot } from 'firebase/firestore'
-import { Activity, Copy, FileJson } from 'lucide-react'
+import { Activity, Copy, FileJson, ShieldAlert } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { db } from '@/lib/firebase'
@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/context-menu'
 import { Input } from '@/components/ui/input'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { toDate } from '@/lib/utils'
 import type { LogActionType, LogEntry } from '@/lib/logging'
 
@@ -26,6 +27,7 @@ const LOGS_PAGE_SIZE = 40
 
 export default function AdminLogsPage() {
   const { profile, loading: authLoading } = useAuth()
+  const [activeTab, setActiveTab] = useState<'logs' | 'danger_logs'>('logs')
   const [logs, setLogs] = useState<AdminLog[]>([])
   const [selectedAction, setSelectedAction] = useState<LogActionType | 'all'>('all')
   const [selectedWindow, setSelectedWindow] = useState<'all' | '24h' | '7d'>('all')
@@ -50,11 +52,11 @@ export default function AdminLogsPage() {
     }
   }, [profile, authLoading, canManageUsers, router])
 
-  const fetchLogsChunk = useCallback(async (cursor: QueryDocumentSnapshot<DocumentData> | null) => {
+  const fetchLogsChunk = useCallback(async (cursor: QueryDocumentSnapshot<DocumentData> | null, collectionName: string) => {
     const constraints = [orderBy('timestamp', 'desc'), limit(LOGS_PAGE_SIZE)]
     const logsQuery = cursor
-      ? query(collection(db, 'logs'), ...constraints, startAfter(cursor))
-      : query(collection(db, 'logs'), ...constraints)
+      ? query(collection(db, collectionName), ...constraints, startAfter(cursor))
+      : query(collection(db, collectionName), ...constraints)
 
     const snapshot = await getDocs(logsQuery)
     const chunk = snapshot.docs.map((entryDoc) => ({ id: entryDoc.id, ...entryDoc.data() } as AdminLog))
@@ -75,7 +77,7 @@ export default function AdminLogsPage() {
     setHasMore(true)
 
     try {
-      const { chunk, nextCursor, hasNext } = await fetchLogsChunk(null)
+      const { chunk, nextCursor, hasNext } = await fetchLogsChunk(null, activeTab)
       setLogs(chunk)
       setLastVisible(nextCursor)
       setHasMore(hasNext)
@@ -86,7 +88,7 @@ export default function AdminLogsPage() {
     } finally {
       setLoading(false)
     }
-  }, [fetchLogsChunk])
+  }, [fetchLogsChunk, activeTab])
 
   const loadMore = useCallback(async () => {
     if (loading || loadingMore || !hasMore || !lastVisible) return
@@ -95,7 +97,7 @@ export default function AdminLogsPage() {
     setLoadError(null)
 
     try {
-      const { chunk, nextCursor, hasNext } = await fetchLogsChunk(lastVisible)
+      const { chunk, nextCursor, hasNext } = await fetchLogsChunk(lastVisible, activeTab)
       setLogs((previous) => {
         const seen = new Set(previous.map((entry) => entry.id))
         const merged = [...previous]
@@ -114,7 +116,7 @@ export default function AdminLogsPage() {
     } finally {
       setLoadingMore(false)
     }
-  }, [fetchLogsChunk, hasMore, lastVisible, loading, loadingMore])
+  }, [fetchLogsChunk, hasMore, lastVisible, loading, loadingMore, activeTab])
 
   useEffect(() => {
     if (authLoading) return
@@ -230,8 +232,125 @@ export default function AdminLogsPage() {
     toast.success('JSON in die Zwischenablage kopiert')
   }
 
-  if (authLoading || loading) {
-    return <div className="flex items-center justify-center min-h-[50vh]">Lade Aktivitäts-Logs...</div>
+  const renderLogsList = () => {
+    if (loading) {
+      return <div className="flex items-center justify-center py-12 text-muted-foreground">Lade Logs...</div>
+    }
+
+    if (loadError) {
+      return (
+        <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
+          {loadError}
+        </div>
+      )
+    }
+
+    if (filteredLogs.length === 0) {
+      return (
+        <div className="rounded-lg border border-dashed py-10 text-center text-sm text-muted-foreground">
+          Keine Logs mit den aktuellen Filtern gefunden.
+        </div>
+      )
+    }
+
+    return (
+      <>
+        <div className="space-y-3 lg:hidden">
+          {filteredLogs.map((entry) => (
+            <ContextMenu key={entry.id}>
+              <ContextMenuTrigger>
+                <div className="rounded-xl border border-border/70 bg-card/70 p-3 space-y-2 cursor-pointer transition-colors active:bg-accent/10">
+                  <div className="flex items-center justify-between gap-3">
+                    <Badge variant="outline">{entry.action}</Badge>
+                    <span className="text-xs text-muted-foreground">
+                      {toDate(entry.timestamp).toLocaleString('de-DE')}
+                    </span>
+                  </div>
+                  <p className="text-sm">
+                    <span className="text-muted-foreground">Nutzer:</span>{' '}
+                    {entry.user_name || 'Unbekannt'} ({entry.user_id || 'n/a'})
+                  </p>
+                  <p className="text-xs text-muted-foreground break-words">{formatDetails(entry.details)}</p>
+                </div>
+              </ContextMenuTrigger>
+              <ContextMenuContent>
+                <ContextMenuItem onClick={() => handleCopyRow(entry)}>
+                  <Copy className="h-4 w-4 mr-2" />
+                  <span>Zeile kopieren</span>
+                </ContextMenuItem>
+                <ContextMenuItem onClick={() => handleCopyJson(entry)}>
+                  <FileJson className="h-4 w-4 mr-2" />
+                  <span>JSON kopieren</span>
+                </ContextMenuItem>
+              </ContextMenuContent>
+            </ContextMenu>
+          ))}
+        </div>
+
+        <div className="hidden lg:block overflow-x-auto">
+          <Table className="min-w-[860px]">
+            <TableHeader>
+              <TableRow>
+                <TableHead>Zeitpunkt</TableHead>
+                <TableHead>Aktion</TableHead>
+                <TableHead>Nutzer</TableHead>
+                <TableHead>Details</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredLogs.map((entry) => (
+                <ContextMenu key={entry.id}>
+                  <ContextMenuTrigger>
+                    <TableRow className="cursor-pointer transition-colors hover:bg-muted/50">
+                      <TableCell className="whitespace-nowrap text-sm">
+                        {toDate(entry.timestamp).toLocaleString('de-DE')}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline">{entry.action}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm font-medium">{entry.user_name || 'Unbekannt'}</div>
+                        <div className="text-xs text-muted-foreground">{entry.user_id || 'n/a'}</div>
+                      </TableCell>
+                      <TableCell className="max-w-[420px]">
+                        <p className="text-xs text-muted-foreground break-words line-clamp-3">
+                          {formatDetails(entry.details)}
+                        </p>
+                      </TableCell>
+                    </TableRow>
+                  </ContextMenuTrigger>
+                  <ContextMenuContent>
+                    <ContextMenuItem onClick={() => handleCopyRow(entry)}>
+                      <Copy className="h-4 w-4 mr-2" />
+                      <span>Zeile kopieren</span>
+                    </ContextMenuItem>
+                    <ContextMenuItem onClick={() => handleCopyJson(entry)}>
+                      <FileJson className="h-4 w-4 mr-2" />
+                      <span>JSON kopieren</span>
+                    </ContextMenuItem>
+                  </ContextMenuContent>
+                </ContextMenu>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+
+        <div className="flex flex-col items-center gap-3 pt-2">
+          {loadingMore && <p className="text-xs text-muted-foreground">Lade weitere Logs...</p>}
+          {!loadingMore && hasMore && (
+            <Button variant="outline" size="sm" onClick={() => void loadMore()}>
+              Mehr laden
+            </Button>
+          )}
+          {!hasMore && <p className="text-xs text-muted-foreground">Ende der Logs erreicht.</p>}
+          <div ref={sentinelRef} className="h-1 w-full" aria-hidden="true" />
+        </div>
+      </>
+    )
+  }
+
+  if (authLoading) {
+    return <div className="flex items-center justify-center min-h-[50vh]">Lade Admin-Bereich...</div>
   }
 
   if (!profile || !canManageUsers) {
@@ -247,164 +366,80 @@ export default function AdminLogsPage() {
         <p className="text-muted-foreground text-sm">Nachvollziehbare Aktivitäten für Moderation und Support</p>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Activity className="h-5 w-5" /> Aktivitäts-Logs
-          </CardTitle>
-          <CardDescription>
-            Filtere Aktionen nach Typ, Zeitraum, Nutzer oder Inhalt.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
-            <select
-              className="h-10 rounded-md border bg-background px-3 text-sm"
-              value={selectedAction}
-              onChange={(e) => setSelectedAction(e.target.value as LogActionType | 'all')}
-            >
-              <option value="all">Alle Aktionen</option>
-              {availableActions.map((action) => (
-                <option key={action} value={action}>
-                  {action}
-                </option>
-              ))}
-            </select>
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)}>
+        <TabsList className="grid w-full max-w-[400px] grid-cols-2">
+          <TabsTrigger value="logs">Aktivitäts-Logs</TabsTrigger>
+          <TabsTrigger value="danger_logs">Danger Logs</TabsTrigger>
+        </TabsList>
 
-            <select
-              className="h-10 rounded-md border bg-background px-3 text-sm"
-              value={selectedWindow}
-              onChange={(e) => setSelectedWindow(e.target.value as 'all' | '24h' | '7d')}
-            >
-              <option value="all">Gesamter Zeitraum</option>
-              <option value="24h">Letzte 24 Stunden</option>
-              <option value="7d">Letzte 7 Tage</option>
-            </select>
-
-            <Input
-              placeholder="Nutzername oder User-ID"
-              value={userFilter}
-              onChange={(e) => setUserFilter(e.target.value)}
-            />
-
-            <Input
-              placeholder="In Aktion oder Details suchen"
-              value={detailsFilter}
-              onChange={(e) => setDetailsFilter(e.target.value)}
-            />
-          </div>
-
-          <div className="flex items-center justify-between text-sm text-muted-foreground">
-            <span>{filteredLogs.length} Einträge gefunden</span>
-            {filteredLogs.length > 0 && <span>Neuester Eintrag zuerst</span>}
-          </div>
-
-          {loadError && (
-            <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
-              {loadError}
-            </div>
-          )}
-
-          {filteredLogs.length === 0 ? (
-            <div className="rounded-lg border border-dashed py-10 text-center text-sm text-muted-foreground">
-              Keine Logs mit den aktuellen Filtern gefunden.
-            </div>
-          ) : (
-            <>
-              <div className="space-y-3 lg:hidden">
-                {filteredLogs.map((entry) => (
-                  <ContextMenu key={entry.id}>
-                    <ContextMenuTrigger>
-                      <div className="rounded-xl border border-border/70 bg-card/70 p-3 space-y-2 cursor-pointer transition-colors active:bg-accent/10">
-                        <div className="flex items-center justify-between gap-3">
-                          <Badge variant="outline">{entry.action}</Badge>
-                          <span className="text-xs text-muted-foreground">
-                            {toDate(entry.timestamp).toLocaleString('de-DE')}
-                          </span>
-                        </div>
-                        <p className="text-sm">
-                          <span className="text-muted-foreground">Nutzer:</span>{' '}
-                          {entry.user_name || 'Unbekannt'} ({entry.user_id || 'n/a'})
-                        </p>
-                        <p className="text-xs text-muted-foreground break-words">{formatDetails(entry.details)}</p>
-                      </div>
-                    </ContextMenuTrigger>
-                    <ContextMenuContent>
-                      <ContextMenuItem onClick={() => handleCopyRow(entry)}>
-                        <Copy />
-                        <span>Zeile kopieren</span>
-                      </ContextMenuItem>
-                      <ContextMenuItem onClick={() => handleCopyJson(entry)}>
-                        <FileJson />
-                        <span>JSON kopieren</span>
-                      </ContextMenuItem>
-                    </ContextMenuContent>
-                  </ContextMenu>
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              {activeTab === 'logs' ? (
+                <>
+                  <Activity className="h-5 w-5" />
+                  Aktivitäts-Logs
+                </>
+              ) : (
+                <>
+                  <ShieldAlert className="h-5 w-5 text-destructive" />
+                  Danger Logs
+                </>
+              )}
+            </CardTitle>
+            <CardDescription>
+              {activeTab === 'logs'
+                ? 'Filtere allgemeine Aktionen nach Typ, Zeitraum, Nutzer oder Inhalt.'
+                : 'Protokollierung kritischer Aktionen (Löschungen, Zurücksetzungen, Admin-Eingriffe).'}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
+              <select
+                className="h-10 rounded-md border bg-background px-3 text-sm"
+                value={selectedAction}
+                onChange={(e) => setSelectedAction(e.target.value as LogActionType | 'all')}
+              >
+                <option value="all">Alle Aktionen</option>
+                {availableActions.map((action) => (
+                  <option key={action} value={action}>
+                    {action}
+                  </option>
                 ))}
-              </div>
+              </select>
 
-              <div className="hidden lg:block overflow-x-auto">
-                <Table className="min-w-[860px]">
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Zeitpunkt</TableHead>
-                      <TableHead>Aktion</TableHead>
-                      <TableHead>Nutzer</TableHead>
-                      <TableHead>Details</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredLogs.map((entry) => (
-                      <ContextMenu key={entry.id}>
-                        <ContextMenuTrigger>
-                          <TableRow className="cursor-pointer transition-colors hover:bg-muted/50">
-                            <TableCell className="whitespace-nowrap text-sm">
-                              {toDate(entry.timestamp).toLocaleString('de-DE')}
-                            </TableCell>
-                            <TableCell>
-                              <Badge variant="outline">{entry.action}</Badge>
-                            </TableCell>
-                            <TableCell>
-                              <div className="text-sm font-medium">{entry.user_name || 'Unbekannt'}</div>
-                              <div className="text-xs text-muted-foreground">{entry.user_id || 'n/a'}</div>
-                            </TableCell>
-                            <TableCell className="max-w-[420px]">
-                              <p className="text-xs text-muted-foreground break-words line-clamp-3">
-                                {formatDetails(entry.details)}
-                              </p>
-                            </TableCell>
-                          </TableRow>
-                        </ContextMenuTrigger>
-                        <ContextMenuContent>
-                          <ContextMenuItem onClick={() => handleCopyRow(entry)}>
-                            <Copy />
-                            <span>Zeile kopieren</span>
-                          </ContextMenuItem>
-                          <ContextMenuItem onClick={() => handleCopyJson(entry)}>
-                            <FileJson />
-                            <span>JSON kopieren</span>
-                          </ContextMenuItem>
-                        </ContextMenuContent>
-                      </ContextMenu>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+              <select
+                className="h-10 rounded-md border bg-background px-3 text-sm"
+                value={selectedWindow}
+                onChange={(e) => setSelectedWindow(e.target.value as 'all' | '24h' | '7d')}
+              >
+                <option value="all">Gesamter Zeitraum</option>
+                <option value="24h">Letzte 24 Stunden</option>
+                <option value="7d">Letzte 7 Tage</option>
+              </select>
 
-              <div className="flex flex-col items-center gap-3 pt-2">
-                {loadingMore && <p className="text-xs text-muted-foreground">Lade weitere Logs...</p>}
-                {!loadingMore && hasMore && (
-                  <Button variant="outline" size="sm" onClick={() => void loadMore()}>
-                    Mehr laden
-                  </Button>
-                )}
-                {!hasMore && <p className="text-xs text-muted-foreground">Ende der Logs erreicht.</p>}
-                <div ref={sentinelRef} className="h-1 w-full" aria-hidden="true" />
-              </div>
-            </>
-          )}
-        </CardContent>
-      </Card>
+              <Input
+                placeholder="Nutzername oder User-ID"
+                value={userFilter}
+                onChange={(e) => setUserFilter(e.target.value)}
+              />
+
+              <Input
+                placeholder="In Aktion oder Details suchen"
+                value={detailsFilter}
+                onChange={(e) => setDetailsFilter(e.target.value)}
+              />
+            </div>
+
+            <div className="flex items-center justify-between text-sm text-muted-foreground">
+              <span>{filteredLogs.length} Einträge gefunden</span>
+              {filteredLogs.length > 0 && <span>Neuester Eintrag zuerst</span>}
+            </div>
+
+            {renderLogsList()}
+          </CardContent>
+        </Card>
+      </Tabs>
     </div>
   )
 }

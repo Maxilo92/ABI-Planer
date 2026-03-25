@@ -80,6 +80,7 @@ export interface TeacherRating {
   teacherId: string;
   rating: number; // 0.0, 0.25, 0.5, 0.75, 1.0
   created_at: string;
+  created_by_name?: string | null;
 }
 
 export interface GroupMessage {
@@ -124,6 +125,7 @@ export interface Settings {
   planning_groups?: PlanningGroup[];
   loot_teachers?: LootTeacher[];
   custom_popup_messages?: CustomPopupMessage[];
+  rarity_limits?: Record<TeacherRarity, number>;
 }
 
 export interface Todo {

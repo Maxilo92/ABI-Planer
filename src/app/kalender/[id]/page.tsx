@@ -11,6 +11,7 @@ import { toDate } from '@/lib/utils'
 import { Event } from '@/types/database'
 import { Button } from '@/components/ui/button'
 import { ShareResourceButton } from '@/components/ui/share-resource-button'
+import { downloadICS } from '@/lib/icsGenerator'
 
 function toGoogleDate(date: Date) {
   return date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z')
@@ -59,9 +60,13 @@ export default function CalendarEventPage({ params }: { params: Promise<{ id: st
   const openAppleCalendar = () => {
     if (!event) return
 
-    const startDate = toDate(event.start_date)
-    const referenceFrom2001 = Math.floor(startDate.getTime() / 1000 - 978307200)
-    window.location.assign(`calshow:${referenceFrom2001}`)
+    downloadICS({
+      title: event.title,
+      description: event.description,
+      location: event.location,
+      start_date: event.start_date,
+      end_date: event.end_date,
+    })
   }
 
   const openGoogleCalendar = () => {

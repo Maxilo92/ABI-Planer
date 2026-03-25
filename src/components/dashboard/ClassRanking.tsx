@@ -6,7 +6,8 @@ import { useEffect, useState } from 'react'
 import { db } from '@/lib/firebase'
 import { doc, onSnapshot } from 'firebase/firestore'
 import { Badge } from '@/components/ui/badge'
-import { BarChart3, Info, Lightbulb, Loader2 } from 'lucide-react'
+import { BarChart3, ChevronRight, Info, Lightbulb, Loader2 } from 'lucide-react'
+import Link from 'next/link'
 
 interface ClassStats {
   className: ClassName
@@ -144,6 +145,12 @@ export function ClassRanking({
               </p>
             </div>
           </div>
+          <Link 
+            href="/finanzen" 
+            className="flex items-center justify-center gap-1 w-full py-1.5 text-[10px] font-bold text-primary uppercase tracking-widest hover:bg-primary/5 rounded-lg transition-colors border border-primary/10"
+          >
+            Mehr Infos <ChevronRight className="h-3 w-3" />
+          </Link>
         </div>
       </CardContent>
     </Card>

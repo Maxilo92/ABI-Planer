@@ -7,6 +7,7 @@ import { doc, onSnapshot } from 'firebase/firestore'
 import { useEffect, useState, useRef, useMemo } from 'react'
 import { LootTeacher, TeacherRarity, Profile, CardVariant } from '@/types/database'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import { useRouter } from 'next/navigation'
 import { GraduationCap, Trophy, Star, Lock, Search, Filter, X, ChevronRight, Rotate3d, ArrowDownAZ, ArrowDownZA, ArrowUp10, LayoutGrid, Package } from 'lucide-react'
 import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
@@ -191,6 +192,7 @@ export function TeacherAlbum({
   targetProfile?: Profile | null,
   initialLimit?: number
 }) {
+  const router = useRouter()
   const { profile: currentProfile } = useAuth()
   const activeProfile = targetProfile !== undefined ? targetProfile : currentProfile
   const { teachers: userTeachers, loading: loadingUserTeachers } = useUserTeachers(userId)
@@ -341,6 +343,16 @@ export function TeacherAlbum({
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          {!userId && (
+            <Button 
+              size="sm"
+              className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-black uppercase tracking-tighter gap-2 shadow-lg shadow-blue-500/20 mr-2"
+              onClick={() => router.push('/sammelkarten')}
+            >
+              <Package className="h-3.5 w-3.5" />
+              Booster öffnen
+            </Button>
+          )}
           <div className="flex items-center gap-2 bg-muted/50 px-3 py-1.5 rounded-full border">
             <Trophy className="h-3.5 w-3.5 text-amber-500" />
             <span className="text-xs font-bold">

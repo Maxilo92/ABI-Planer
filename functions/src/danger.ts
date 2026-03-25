@@ -82,6 +82,10 @@ export const authorizeDangerAction = onCall({
     "DELETE_ALL_FEEDBACK": {
       expectedConfirmation: "DELETE ALL FEEDBACK",
       description: "Sämtliches Feedback wird gelöscht."
+    },
+    "FIX_EVENT_CREATORS": {
+      expectedConfirmation: "FIX EVENT CREATORS",
+      description: "Retroaktiv fehlende Erstellernamen in allen Kalendereinträgen ergänzen."
     }
   };
 
