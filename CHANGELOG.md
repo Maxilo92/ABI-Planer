@@ -1,6 +1,9 @@
 # Changelog
 
 ## [0.26.16] - 2026-03-25
+- UI: **Platzsparende Filter-Grids**. Die Filter für Seltenheit und Karten-Varianten im Album wurden in kompakte, quadratische Grids umgewandelt. Dies verhindert unerwünschtes Scaling bei unterschiedlichen Textlängen und macht das Menü deutlich übersichtlicher.
+
+## [0.26.15] - 2026-03-25
 - UI: **Veredelte Upgrade-Animationen & Responsive Fixes**.
     - Die Level-Up Animation wurde auf eine volle 360°-Horizontal-Rotation umgestellt.
     - Das schwebende Badge zeigt nun den präzisen Level-Übergang (z.B. "LVL 3 → 4") an.

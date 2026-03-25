@@ -520,16 +520,16 @@ export function TeacherAlbum({
 
               <div className="space-y-1">
                 <DropdownMenuLabel className="text-[10px] font-black uppercase tracking-widest opacity-50 px-2 py-1">Seltenheit</DropdownMenuLabel>
-                <div className="flex flex-wrap gap-1 px-1">
+                <div className="grid grid-cols-5 gap-1 px-1">
                   {(['legendary', 'mythic', 'epic', 'rare', 'common'] as TeacherRarity[]).map((rarity) => (
                     <button
                       key={rarity}
                       onClick={() => toggleRarity(rarity)}
                       className={cn(
-                        "w-6 h-6 rounded-md flex items-center justify-center transition-all border-2",
+                        "aspect-square rounded-md flex items-center justify-center transition-all border-2",
                         rarityFilters.includes(rarity) 
-                          ? cn("border-transparent", getRarityBadge(rarity)) 
-                          : "border-muted-foreground/20 hover:border-muted-foreground/40"
+                          ? cn("border-transparent shadow-sm", getRarityBadge(rarity)) 
+                          : "border-muted-foreground/10 bg-muted/30 hover:border-muted-foreground/30"
                       )}
                       title={getRarityLabel(rarity)}
                     >
@@ -543,20 +543,20 @@ export function TeacherAlbum({
 
               <div className="space-y-1">
                 <DropdownMenuLabel className="text-[10px] font-black uppercase tracking-widest opacity-50 px-2 py-1">Variante</DropdownMenuLabel>
-                <div className="grid grid-cols-2 gap-1 px-1">
+                <div className="grid grid-cols-4 gap-1 px-1">
                   {(['black_shiny_holo', 'shiny', 'holo', 'normal'] as NewCardVariant[]).map((v) => (
                     <button
                       key={v}
                       onClick={() => toggleVariant(v)}
                       className={cn(
-                        "px-2 py-1.5 rounded-md text-[9px] font-black uppercase border-2 transition-all flex items-center gap-1.5",
+                        "aspect-square rounded-md border-2 transition-all flex items-center justify-center",
                         variantFilters.includes(v)
-                          ? cn("border-transparent text-white", getVariantBadge(v as any))
-                          : "border-muted-foreground/10 text-muted-foreground hover:border-muted-foreground/30"
+                          ? cn("border-transparent shadow-sm", getVariantBadge(v as any))
+                          : "border-muted-foreground/10 bg-muted/30 hover:border-muted-foreground/30"
                       )}
+                      title={getVariantLabel(v as any)}
                     >
-                      <div className={cn("w-1.5 h-1.5 rounded-full", variantFilters.includes(v) ? "bg-white" : getVariantBadge(v as any))} />
-                      <span className="truncate">{getVariantLabel(v as any)}</span>
+                      <div className={cn("w-2 h-2 rounded-full", variantFilters.includes(v) ? "bg-white" : getVariantBadge(v as any))} />
                     </button>
                   ))}
                 </div>
