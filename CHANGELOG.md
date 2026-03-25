@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.24.01] - 2026-03-25
+- Fix: **Google AdSense Crawler Verification**. Das AdSense-Skript wurde global in den `<head>` des `RootLayout` verschoben und auf `strategy="beforeInteractive"` umgestellt. Dies stellt sicher, dass der AdSense-Crawler den Verifizierungscode sofort findet, unabhängig vom Authentifizierungsstatus oder Client-seitigen Ladevorgängen.
+- UI: **AdSense Redundancy Cleanup**. Entfernung des redundanten Skript-Tags aus der `GoogleAdSense`-Komponente bei gleichzeitiger Beibehaltung des visuellen Anzeigen-Platzhalters.
+
 ## [0.24.00] - 2026-03-25
 - Feature: **Sammelkarten Admin Suite**. Einführung eines dedizierten Admin-Dashboards unter `/admin/sammelkarten` zur vollständigen Kontrolle über den Lehrerpool, Drop-Rates und Pack-Parameter.
 - Feature: **Dynamic Card Configuration**. Migration der Sammelkarten-Einstellungen von einer statischen Konfiguration zu einem dynamischen, echtzeit-steuerbaren Firestore-Dokument (`settings/sammelkarten`).
