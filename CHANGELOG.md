@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.26.27] - 2026-03-25
+- Fix: **Korrekte Varianten-Wahrscheinlichkeit im Debug-Modus**. Ein Logikfehler in der Berechnung der Wahrscheinlichkeiten für Karten-Varianten (Holo, Shiny etc.) wurde behoben. Der Debug-Modus zeigt nun die exakte, korrekte Drop-Chance für die gezogene Seltenheit *und* Variante an.
+
 ## [0.26.26] - 2026-03-25
 - Fix: **Genaue Wahrscheinlichkeiten im Debug-Modus**. Die Wahrscheinlichkeitsberechnung für gezogene Karten wurde korrigiert und berücksichtigt nun auch die Chance für die jeweilige Variante (Normal, Holo, Shiny etc.), was zu einer präzisen Anzeige der tatsächlichen Drop-Chance führt.
 - Fix: **Zuverlässiges Aufdecken der Karten**. Ein Bug wurde behoben, bei dem das Umdrehen einer Karte nicht korrekt an die Seite gemeldet wurde. Die Klick-Logik wurde zentralisiert, sodass das Aufdecken nun zuverlässig den Gesamtfortschritt aktualisiert und die Navigations-Buttons korrekt erscheinen.

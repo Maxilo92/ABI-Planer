@@ -368,19 +368,25 @@ function SammelkartenContent() {
     const probs = config?.variant_probabilities || DEFAULT_VARIANTS_PROBABILITIES;
     
     if (isGodpack) {
+      // Godpack: if (rand < 0.1) bsh; if (rand < 0.4) shiny; if (rand < 0.8) holo
       switch (variant) {
         case 'black_shiny_holo': return 0.1;
-        case 'shiny': return 0.3; // 0.4 - 0.1
-        case 'holo': return 0.4; // 0.8 - 0.4
-        default: return 0.2; // 1.0 - 0.8
+        case 'shiny': return 0.4 - 0.1; // P(0.1 <= rand < 0.4)
+        case 'holo': return 0.8 - 0.4; // P(0.4 <= rand < 0.8)
+        default: return 1.0 - 0.8; // P(rand >= 0.8)
       }
     }
     
+    const pBSH = probs.black_shiny_holo ?? 0.005;
+    const pShiny = probs.shiny ?? 0.05;
+    const pHolo = probs.holo ?? 0.15;
+
+    // Regular: if (rand < pBSH) bsh; if (rand < pShiny) shiny; if (rand < pHolo) holo
     switch (variant) {
-      case 'black_shiny_holo': return probs.black_shiny_holo ?? 0.005;
-      case 'shiny': return (probs.shiny ?? 0.05) - (probs.black_shiny_holo ?? 0.005);
-      case 'holo': return (probs.holo ?? 0.15) - (probs.shiny ?? 0.05);
-      default: return 1.0 - (probs.holo ?? 0.15);
+      case 'black_shiny_holo': return pBSH;
+      case 'shiny': return pShiny - pBSH; // P(pBSH <= rand < pShiny)
+      case 'holo': return pHolo - pShiny; // P(pShiny <= rand < pHolo)
+      default: return 1.0 - pHolo; // P(rand >= pHolo)
     }
   }
 
