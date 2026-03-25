@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.26.23] - 2026-03-25
+- Fix: **Stabiles Karten-Reveal beim Booster-Opening**. Ein Fehler wurde behoben, durch den aufgedeckte Karten in der Booster-Ansicht wieder verdeckt werden konnten, was das Erscheinen der Navigations-Buttons verhinderte. Karten bleiben nun nach dem ersten Klick permanent aufgedeckt, was für einen zuverlässigen und klaren Ablauf sorgt.
+
 ## [0.26.22] - 2026-03-25
 - Fix: **Dauerhaftes Karten-Reveal beim Booster-Opening**. Einmal aufgedeckte Karten in der Booster-Ansicht können nicht mehr versehentlich wieder verdeckt werden. Dies verhindert Verwirrung beim schnellen Durchklicken der Belohnungen. In der Detailansicht bleibt die Möglichkeit zum Umdrehen weiterhin bestehen.
 - Fix: **Überlappende Sammelkarten auf dem iPad behoben**.
