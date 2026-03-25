@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.25.02] - 2026-03-25
+- Fix: **ads.txt Accessibility**. Explizite Hosting-Rewrite-Regel in `firebase.json` hinzugefügt, um sicherzustellen, dass die `ads.txt` direkt als statische Datei serviert wird und nicht von der Catch-All-Regel für die Single-Page-App (SPA) abgefangen wird.
+
 ## [0.25.01] - 2026-03-25
 - Fix: **Guest Permission Stability**. Verbleibende `permission-denied` Fehler auf dem Dashboard (Poll-Votes) und in der Termin-Komponente (Profile-Collection) wurden behoben, indem Abfragen für unauthentifizierte Nutzer übersprungen werden. Dies stellt eine absolut saubere Konsole für den AdSense-Crawler sicher.
 
