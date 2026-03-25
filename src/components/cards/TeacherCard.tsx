@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { GraduationCap, Zap } from 'lucide-react';
+import { motion, AnimatePresence, useAnimation } from 'framer-motion';
+import { GraduationCap, Zap, Star, Lock } from 'lucide-react';
 import { CardData, CardStyle } from '@/types/cards';
 import { RaritySymbol } from './RaritySymbol';
 import { CardEffectOverlay } from './CardEffectOverlay';
@@ -17,6 +17,34 @@ interface TeacherCardProps {
   upgradeInfo?: { oldLevel: number, newLevel: number };
 }
 
+const Particle = ({ delay }: { delay: number }) => {
+  const angle = Math.random() * Math.PI * 2;
+  const distance = 50 + Math.random() * 100;
+  const x = Math.cos(angle) * distance;
+  const y = Math.sin(angle) * distance;
+
+  return (
+    <motion.div
+      initial={{ x: 0, y: 0, opacity: 1, scale: 0 }}
+      animate={{ 
+        x, 
+        y, 
+        opacity: 0, 
+        scale: [0, 1.5, 0.5],
+        rotate: [0, 180, 360]
+      }}
+      transition={{ 
+        duration: 1, 
+        delay,
+        ease: "easeOut" 
+      }}
+      className="absolute w-[2cqw] h-[2cqw] bg-yellow-400 rounded-full"
+    >
+       <Star className="w-full h-full fill-current text-yellow-300" />
+    </motion.div>
+  );
+};
+
 export const TeacherCard: React.FC<TeacherCardProps> = ({ 
   data, 
   className, 
@@ -26,10 +54,12 @@ export const TeacherCard: React.FC<TeacherCardProps> = ({
   upgradeInfo
 }) => {
   const [isFlippedInternally, setIsFlippedInternally] = useState(true);
-  const isFlipped = isFlippedExternally !== undefined ? isFlippedExternally : isFlippedInternally;
+  const isFlipped = isLocked ? false : (isFlippedExternally !== undefined ? isFlippedExternally : isFlippedInternally);
 
   const [displayLevel, setDisplayLevel] = useState(upgradeInfo?.oldLevel || 0);
   const [isLevelAnimating, setIsLevelAnimating] = useState(false);
+  const [showBurst, setShowBurst] = useState(false);
+  const controls = useAnimation();
 
   useEffect(() => {
     if (upgradeInfo && isFlipped) {
@@ -38,34 +68,29 @@ export const TeacherCard: React.FC<TeacherCardProps> = ({
       const timer = setTimeout(() => {
         setDisplayLevel(upgradeInfo.newLevel);
         setIsLevelAnimating(true);
-        setTimeout(() => setIsLevelAnimating(false), 1000);
+        setShowBurst(true);
+        
+        // Shake animation
+        controls.start({
+          x: [0, -10, 10, -10, 10, 0],
+          transition: { duration: 0.4, ease: "easeInOut" }
+        });
+
+        setTimeout(() => {
+          setIsLevelAnimating(false);
+          setShowBurst(false);
+        }, 1500);
       }, 1000);
       
       return () => clearTimeout(timer);
     }
-  }, [upgradeInfo, isFlipped]);
+  }, [upgradeInfo, isFlipped, controls]);
 
   const isBlckShiny = data.variant === 'black_shiny_holo';
   const isShiny = data.variant === 'shiny';
   const isGlass = data.variant === 'holo';
 
   const getStyleClasses = () => {
-    if (isLocked) {
-      return {
-        card: "border-white/5 shadow-inner rounded-[10cqw]",
-        iconWrapper: "bg-white/5 rounded-full w-[35cqw] h-[35cqw] flex items-center justify-center border border-white/10",
-        headerIcon: "w-[18cqw] h-[18cqw] opacity-20",
-        header: "text-white/20",
-        text: "text-white/10 font-sans font-black text-[12cqw] blur-sm select-none",
-        border: "border-[2cqw] border-white/5",
-        bgOverlay: "bg-black/40",
-        numberTag: "bg-white/5 text-white/20 px-[2cqw] py-[0.5cqw] text-[3cqw] font-black rounded-full border border-white/5",
-        numberPos: "top-[8cqw] right-[8cqw]",
-        rarityPos: "bottom-[8cqw] right-[8cqw]",
-        raritySize: "14cqw"
-      };
-    }
-
     switch (styleVariant) {
       case 'modern-flat':
         return {
@@ -122,105 +147,150 @@ export const TeacherCard: React.FC<TeacherCardProps> = ({
   return (
     <div 
       className={cn("relative aspect-[2.5/3.5] cursor-pointer perspective-1000 @container", className)}
-      onClick={() => setIsFlippedInternally(!isFlippedInternally)}
+      onClick={() => !isLocked && setIsFlippedInternally(!isFlippedInternally)}
     >
       <motion.div
-        initial={{ rotateY: isFlipped ? 0 : 180 }}
-        animate={{ rotateY: isFlipped ? 0 : 180 }}
-        transition={{ duration: 0.6, ease: "easeOut" }}
-        style={{ transformStyle: "preserve-3d" }}
-        className="w-full h-full relative will-change-transform"
+        animate={controls}
+        className="w-full h-full"
       >
-        {/* BACK SIDE */}
-        <div 
-          className={cn(
-            "absolute inset-0 backface-hidden p-[8cqw] flex flex-col items-center justify-center overflow-hidden rotate-y-180",
-            "border-[2cqw] border-white/20 bg-neutral-950 shadow-2xl rounded-[10cqw]"
-          )}
-          style={{ transform: "rotateY(180deg) translateZ(1px)" }}
+        <motion.div
+          initial={{ rotateY: isFlipped ? 0 : 180 }}
+          animate={{ rotateY: isFlipped ? 0 : 180 }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
+          style={{ transformStyle: "preserve-3d" }}
+          className="w-full h-full relative will-change-transform"
         >
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.05)_0%,transparent_70%)]" />
-          <CardEffectOverlay variant="normal" tintColor="#000000" />
-          
-          <div className="relative z-10 flex flex-col items-center">
-            <div className="w-[25cqw] h-[25cqw] rounded-full bg-white/5 flex items-center justify-center mb-[4cqw] border border-white/10">
-              <Zap className="text-white w-[15cqw] h-[15cqw] drop-shadow-[0_0_15px_rgba(255,255,255,0.4)]" />
+          {/* BACK SIDE (Locked also shows this essentially) */}
+          <div 
+            className={cn(
+              "absolute inset-0 backface-hidden p-[8cqw] flex flex-col items-center justify-center overflow-hidden",
+              "border-[2cqw] border-white/20 bg-neutral-950 shadow-2xl rounded-[10cqw]",
+              isLocked ? "grayscale-[0.5] opacity-90" : ""
+            )}
+            style={{ transform: "rotateY(180deg) translateZ(1px)" }}
+          >
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.05)_0%,transparent_70%)]" />
+            <CardEffectOverlay variant="normal" tintColor="#000000" />
+            
+            <div className="relative z-10 flex flex-col items-center">
+              <div className={cn(
+                "w-[25cqw] h-[25cqw] rounded-full flex items-center justify-center mb-[4cqw] border border-white/10",
+                isLocked ? "bg-neutral-900" : "bg-white/5"
+              )}>
+                {isLocked ? (
+                  <Lock className="text-white/40 w-[12cqw] h-[12cqw]" />
+                ) : (
+                  <Zap className="text-white w-[15cqw] h-[15cqw] drop-shadow-[0_0_15px_rgba(255,255,255,0.4)]" />
+                )}
+              </div>
+              <div className="text-white font-black tracking-[0.3em] text-[4cqw] uppercase opacity-40">
+                 {isLocked ? "GESPERRT" : "ABI Planer"}
+              </div>
             </div>
-            <div className="text-white font-black tracking-[0.3em] text-[4cqw] uppercase opacity-40">
-               ABI Planer
-            </div>
-          </div>
-        </div>
 
-        {/* FRONT SIDE */}
-        <div 
-          className={cn(
-            "absolute inset-0 backface-hidden p-[7cqw] flex flex-col items-center overflow-hidden transition-all duration-300",
-            styleClasses.card
+            {isLocked && (
+              <div className="absolute inset-x-0 bottom-[15cqw] flex flex-col items-center">
+                 <div className="w-[10cqw] h-[1cqw] bg-white/10 rounded-full mb-2" />
+                 <div className="text-[2.5cqw] font-bold text-white/20 uppercase tracking-widest">Mystery Card</div>
+              </div>
+            )}
+          </div>
+
+          {/* FRONT SIDE */}
+          {!isLocked && (
+            <div 
+              className={cn(
+                "absolute inset-0 backface-hidden p-[7cqw] flex flex-col items-center overflow-hidden transition-all duration-300",
+                styleClasses.card
+              )}
+              style={{ 
+                backgroundColor: isBlckShiny ? '#0a0a0a' : (isGlass ? data.color : data.color),
+                transform: "translateZ(1px)"
+              }}
+            >
+              <CardEffectOverlay variant={data.variant} tintColor={data.color} />
+
+              <div className={cn("absolute inset-0 pointer-events-none", styleClasses.bgOverlay)} />
+              
+              <div className={cn("relative z-30 mb-[4cqw] mt-[4cqw]", styleClasses.iconWrapper)}>
+                <GraduationCap className={cn(styleClasses.header, styleClasses.headerIcon)} />
+              </div>
+
+              <div className="flex-1 flex flex-col items-center justify-center text-center relative z-30 w-full px-[2cqw]">
+                <h2 className={cn("drop-shadow-sm", styleClasses.text)}>
+                  {data.name}
+                </h2>
+              </div>
+
+              {upgradeInfo && (
+                <div className="absolute inset-0 z-50 flex items-center justify-center pointer-events-none">
+                  <AnimatePresence>
+                    {isLevelAnimating && (
+                      <motion.div
+                        initial={{ scale: 0.5, opacity: 0, y: 50 }}
+                        animate={{ scale: 1.2, opacity: 1, y: -100 }}
+                        exit={{ scale: 0.8, opacity: 0, y: -150 }}
+                        className="absolute font-black text-white text-[12cqw] drop-shadow-[0_0_15px_rgba(255,255,0,0.8)] z-50 italic"
+                      >
+                        LEVEL UP!
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  <motion.div
+                    initial={{ scale: 0, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    className="relative"
+                  >
+                    {showBurst && (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        {[...Array(20)].map((_, i) => (
+                          <Particle key={i} delay={i * 0.02} />
+                        ))}
+                      </div>
+                    )}
+                    
+                    <div className="absolute inset-[-10cqw] blur-[30px] bg-yellow-400/30 animate-pulse rounded-full" />
+                    
+                    <motion.div
+                      key={displayLevel}
+                      initial={{ scale: 1.8, opacity: 0, rotate: -10 }}
+                      animate={{ scale: 1, opacity: 1, rotate: 0 }}
+                      className={cn(
+                        "relative px-[5cqw] py-[2cqw] rounded-[3cqw] border-[1.2cqw] shadow-2xl font-black text-[12cqw] tracking-tighter flex flex-col items-center justify-center min-w-[35cqw]",
+                        displayLevel >= 10 ? "bg-gradient-to-br from-yellow-400 via-amber-200 to-yellow-600 text-black border-yellow-200" : "bg-black text-white border-white"
+                      )}
+                    >
+                      <span className={cn(
+                        "text-[4cqw] uppercase tracking-widest",
+                        displayLevel >= 10 ? "text-black/60" : "text-white/60"
+                      )}>Level</span>
+                      <div className="leading-none mt-[-1cqw]">
+                        {displayLevel}
+                      </div>
+                    </motion.div>
+                  </motion.div>
+                </div>
+              )}
+
+              <div className={cn("absolute z-30", styleClasses.numberPos)}>
+                <div className={styleClasses.numberTag}>
+                  {data.cardNumber}
+                </div>
+              </div>
+
+              <div className={cn("absolute z-30", styleClasses.rarityPos)}>
+                <RaritySymbol 
+                  rarity={data.rarity} 
+                  variant={data.variant}
+                  size={0} 
+                  className="w-[14cqw] h-[14cqw]"
+                  color={isBlckShiny ? 'white' : (styleVariant === 'modern-flat' ? 'black' : 'white')} 
+                />
+              </div>
+            </div>
           )}
-          style={{ 
-            backgroundColor: isLocked ? '#0a0a0a' : (isBlckShiny ? '#0a0a0a' : (isGlass ? data.color : data.color)),
-            transform: "translateZ(1px)"
-          }}
-        >
-          {isLocked ? (
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.03)_0%,transparent_70%)] opacity-50" />
-          ) : (
-            <CardEffectOverlay variant={data.variant} tintColor={data.color} />
-          )}
-
-          <div className={cn("absolute inset-0 pointer-events-none", styleClasses.bgOverlay)} />
-          
-          <div className={cn("relative z-30 mb-[4cqw] mt-[4cqw]", styleClasses.iconWrapper)}>
-            <GraduationCap className={cn(styleClasses.header, styleClasses.headerIcon)} />
-          </div>
-
-          <div className="flex-1 flex flex-col items-center justify-center text-center relative z-30 w-full px-[2cqw]">
-            <h2 className={cn("drop-shadow-sm", styleClasses.text)}>
-              {data.name}
-            </h2>
-          </div>
-
-          {upgradeInfo && (
-            <div className="absolute inset-0 z-40 flex items-center justify-center pointer-events-none">
-              <motion.div
-                initial={{ scale: 0, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                className="relative"
-              >
-                <div className="absolute inset-0 blur-[20px] bg-white/40 animate-pulse rounded-full" />
-                <motion.div
-                  key={displayLevel}
-                  initial={{ scale: 1.5, opacity: 0, y: -20 }}
-                  animate={{ scale: 1, opacity: 1, y: 0 }}
-                  className={cn(
-                    "relative bg-black text-white px-[4cqw] py-[1cqw] rounded-[2cqw] border-[1cqw] border-white shadow-2xl font-black text-[10cqw] tracking-tighter flex items-center gap-[1cqw]",
-                    isLevelAnimating && "animate-bounce"
-                  )}
-                >
-                  <span className="text-[4cqw] opacity-50">LVL</span>
-                  {displayLevel}
-                </motion.div>
-              </motion.div>
-            </div>
-          )}
-
-          <div className={cn("absolute z-30", styleClasses.numberPos)}>
-            <div className={styleClasses.numberTag}>
-              {data.cardNumber}
-            </div>
-          </div>
-
-          <div className={cn("absolute z-30", styleClasses.rarityPos)}>
-            <RaritySymbol 
-              rarity={data.rarity} 
-              variant={isLocked ? 'normal' : data.variant}
-              size={0} 
-              className={cn("w-[14cqw] h-[14cqw]", isLocked && "opacity-20 grayscale")}
-              color={isLocked ? 'white' : (isBlckShiny ? 'white' : (styleVariant === 'modern-flat' ? 'black' : 'white'))} 
-            />
-          </div>
-        </div>
+        </motion.div>
       </motion.div>
     </div>
   );

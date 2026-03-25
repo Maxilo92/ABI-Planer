@@ -167,6 +167,7 @@ function TeacherCardDetail({ teacher, userData, onClose, globalTeachers }: { tea
           data={cardData}
           className="w-full h-auto"
           styleVariant="modern-flat"
+          isFlippedExternally={true}
         />
       </div>
 
@@ -543,8 +544,8 @@ export function TeacherAlbum({
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4 md:gap-6">
-            {displayedTeachers.map((teacher) => {
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4 md:gap-6">
+            {filteredTeachers.map((teacher) => {
               const teacherId = teacher.id || teacher.name
               const userData = userTeachers?.[teacher.id] || userTeachers?.[teacher.name]
               const isOwned = !!userData
@@ -553,13 +554,13 @@ export function TeacherAlbum({
               return (
                 <div 
                   key={teacherId}
-                  className="flex flex-col items-center w-full max-w-[200px] mx-auto"
+                  className="flex flex-col items-center w-full mx-auto"
                 >
                   <div 
                     onClick={() => isOwned && setSelectedTeacher(teacher)}
                     className={cn(
                       "relative transition-all duration-300 transform group w-full aspect-[2.5/3.5]",
-                      !isOwned && "cursor-not-allowed",
+                      !isOwned && "cursor-not-allowed opacity-80",
                       isOwned && "cursor-pointer hover:scale-[1.05] hover:-rotate-1 active:scale-95"
                     )}
                   >
@@ -570,14 +571,6 @@ export function TeacherAlbum({
                       isFlippedExternally={isOwned}
                       isLocked={!isOwned}
                     />
-                    
-                    {!isOwned && (
-                      <div className="absolute inset-0 flex items-center justify-center z-50 pointer-events-none">
-                        <div className="bg-black/40 backdrop-blur-md rounded-full p-[4cqw] border border-white/10 shadow-2xl">
-                          <Lock className="h-[10cqw] w-[10cqw] text-white/40" />
-                        </div>
-                      </div>
-                    )}
                   </div>
 
                   {isOwned && (
@@ -612,19 +605,9 @@ export function TeacherAlbum({
         </>
       )}
 
-      {/* Detail Dialog */}
       <Dialog open={!!selectedTeacher} onOpenChange={(open) => !open && setSelectedTeacher(null)}>
-        <DialogContent className="max-w-[95vw] sm:max-w-lg p-0 overflow-y-auto max-h-[90vh] bg-neutral-950/90 backdrop-blur-2xl border-white/10 shadow-2xl rounded-3xl ring-0">
+        <DialogContent className="max-w-[95vw] sm:max-w-md p-0 overflow-y-auto max-h-[90vh] bg-neutral-950/90 backdrop-blur-2xl border-white/10 shadow-2xl rounded-3xl ring-0">
           <div className="relative w-full">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="absolute top-4 right-4 z-50 rounded-full bg-white/5 text-white/50 hover:bg-white/10 hover:text-white border border-white/10"
-              onClick={() => setSelectedTeacher(null)}
-            >
-              <X className="h-4 w-4" />
-            </Button>
-            
             {selectedTeacher && (
               <TeacherCardDetail 
                 teacher={selectedTeacher} 

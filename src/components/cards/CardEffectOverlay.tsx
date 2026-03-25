@@ -22,8 +22,8 @@ export const CardEffectOverlay: React.FC<{
         return "bg-[radial-gradient(circle_at_20%_20%,rgba(45,212,191,0.5)_0%,transparent_50%),radial-gradient(circle_at_80%_80%,rgba(232,121,249,0.5)_0%,transparent_50%),radial-gradient(circle_at_50%_50%,rgba(163,230,81,0.3)_0%,transparent_70%),radial-gradient(circle_at_10%_90%,rgba(251,191,36,0.3)_0%,transparent_40%)] mix-blend-color-dodge opacity-90 shadow-[inset_0_0_100px_rgba(255,255,255,0.2)] brightness-110";
       
       case 'shiny': 
-        // Metallic Brushed Steel: Clean, reflective metal look
-        return "bg-[linear-gradient(110deg,rgba(255,255,255,0.1)_0%,rgba(255,255,255,0.6)_45%,rgba(255,255,255,0.8)_50%,rgba(255,255,255,0.6)_55%,rgba(255,255,255,0.1)_100%)] bg-[length:200%_100%] animate-[shimmer_3s_infinite_linear] mix-blend-overlay opacity-80 shadow-[inset_0_0_50px_rgba(255,255,255,0.2)] before:absolute before:inset-0 before:bg-[linear-gradient(to_bottom,transparent_0%,rgba(255,255,255,0.05)_50%,transparent_100%)] before:bg-[length:100%_4px]";
+        // 03 Shiny Sparkle: Multi-layered glitter and metallic reflection
+        return "bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.4)_0%,transparent_50%),linear-gradient(110deg,rgba(255,255,255,0.1)_0%,rgba(255,255,255,0.5)_45%,rgba(255,255,255,0.8)_50%,rgba(255,255,255,0.5)_55%,rgba(255,255,255,0.1)_100%)] bg-[length:200%_100%] animate-[shimmer_3s_infinite_linear] mix-blend-overlay opacity-90 shadow-[inset_0_0_80px_rgba(255,255,255,0.3)] after:absolute after:inset-0 after:bg-[url('https://grainy-gradients.vercel.app/noise.svg')] after:opacity-10 after:mix-blend-color-dodge";
 
       case 'black_shiny_holo':
         // Cosmic Void: Deep space effect for Black Shiny

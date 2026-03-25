@@ -1,6 +1,14 @@
 # Changelog
 
+## [0.26.10] - 2026-03-25
+- UI: **Großes Design-Update für Sammelkarten**.
+    - **Shiny-Redesign**: Der Shiny-Effekt wurde komplett überarbeitet und wirkt nun durch mehrstufige Glitzer-Texturen und metallische Reflektionen deutlich hochwertiger.
+    - **Mystery-Cards**: Gesperrte Karten im Album zeigen nun ein intentionales "Mystery"-Design basierend auf dem Kartenrücken anstatt einer verschwommenen Vorderseite.
+    - **Album-Layout**: Die Skalierung im Album-Grid wurde optimiert (bis zu 6 Spalten auf großen Screens) und redundante Schließen-Buttons in der Detailansicht wurden entfernt.
+    - **Detailview-Korrektur**: Karten in der Detailansicht werden nun standardmäßig immer mit der Vorderseite zuerst angezeigt.
+
 ## [0.26.09] - 2026-03-25
+- UI: **Veredelte Upgrade-Animation**. Die Level-Up-Animation für Sammelkarten wurde grundlegend überarbeitet, um den Fortschritt belohnender zu gestalten. Ein dynamischer Sternen-Burst-Effekt, ein schwebendes "LEVEL UP!"-Label und eine Schüttel-Animation der Karte unterstreichen den Erfolg. Karten ab Level 10 erhalten zudem ein spezielles, goldenes Level-Badge.
 - Fix: **TypeScript Build Error**. Ein Fehler in der Typisierung der Sammlungs-Resultate wurde behoben, der den produktiven Build verhinderte (fehlende `oldLevel`-Eigenschaft in `collectionResults`).
 
 ## [0.26.08] - 2026-03-25
