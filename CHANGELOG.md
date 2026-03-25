@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.24.03] - 2026-03-25
+- Fix: **AdSense Verification Stability**. Das AdSense-Skript wird nun als natives HTML-Element (`<script>`) statt über die Next.js-Komponente eingebunden, um die Erkennung durch den statischen Google-Crawler zu optimieren.
+- Fix: **Quiet Banner Loading**. Der `DangerAlertBanner` unterdrückt nun Fehlermeldungen bei unzureichenden Berechtigungen (z. B. für Gäste oder Crawler), um Konsolenfehler während der Verifizierung zu vermeiden.
+
 ## [0.24.02] - 2026-03-25
 - Fix: **AdSense Crawler Context**. Die `GoogleAdSense`-Komponente wartet nicht mehr auf den Authentifizierungsstatus (`loading`), um sicherzustellen, dass AdSense-Crawler den Kontext auch bei kurzen Ladezeiten sofort erfassen können.
 - Fix: **Permission-Denied Logs**. Firestore-Rules für `delayed_actions` wurden angepasst, damit der Status `pending` für alle Besucher (inkl. Gästen/Crawlern) lesbar ist. Dies behebt die Konsolen-Fehler, die durch den globalen `DangerAlertBanner` verursacht wurden.
