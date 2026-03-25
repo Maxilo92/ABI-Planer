@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.25.00] - 2026-03-25
+- Feature: **AdSense Compliance Finalization**. Erstellung der `public/ads.txt` zur Verifizierung der Anzeigenberechtigung.
+- Feature: **Datenschutz-Update**. Die Datenschutzerklärung (`/datenschutz`) wurde um die verpflichtende Google AdSense-Passage (Cookies, Datenverarbeitung) ergänzt.
+- Fix: **Silent Guest Mode**. Hooks wie `useUserTeachers` und `useGiftNotices` brechen nun bei fehlender Authentifizierung sofort ab. Dies verhindert `permission-denied` Fehler in der Konsole für Gäste und Crawler, was die AdSense-Verifizierung stabilisiert.
+- Fix: **RootLayout Script Cleanup**. Der fälschlicherweise hinzugefügte Import von `AuthProvider` im Layout wurde korrigiert und ungenutzte Next.js-Komponenten entfernt.
+
 ## [0.24.03] - 2026-03-25
 - Fix: **AdSense Verification Stability**. Das AdSense-Skript wird nun als natives HTML-Element (`<script>`) statt über die Next.js-Komponente eingebunden, um die Erkennung durch den statischen Google-Crawler zu optimieren.
 - Fix: **Quiet Banner Loading**. Der `DangerAlertBanner` unterdrückt nun Fehlermeldungen bei unzureichenden Berechtigungen (z. B. für Gäste oder Crawler), um Konsolenfehler während der Verifizierung zu vermeiden.

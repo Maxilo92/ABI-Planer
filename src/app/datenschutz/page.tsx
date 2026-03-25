@@ -109,7 +109,28 @@ export default function DatenschutzPage() {
           </section>
 
           <section>
-            <h3 className="text-lg font-semibold text-foreground border-l-4 border-primary pl-3 mb-4">8. Ihre Rechte</h3>
+            <h3 className="text-lg font-semibold text-foreground border-l-4 border-primary pl-3 mb-4">8. Google AdSense</h3>
+            <div className="space-y-3 text-muted-foreground leading-relaxed">
+              <p>
+                Diese Website nutzt Google AdSense, einen Dienst zum Einbinden von Werbeanzeigen der Google Ireland Limited ("Google").
+              </p>
+              <p>
+                Google AdSense verwendet sog. "Cookies", Textdateien, die auf Ihrem Computer gespeichert werden und die eine Analyse der Benutzung der Website ermöglichen. Google AdSense verwendet auch sog. Web Beacons (unsichtbare Grafiken). Durch diese Web Beacons können Informationen wie der Besucherverkehr auf diesen Seiten ausgewertet werden.
+              </p>
+              <p>
+                Die durch Cookies und Web Beacons erzeugten Informationen über die Benutzung dieser Website (einschließlich Ihrer IP-Adresse) und Auslieferung von Werbeformaten werden an einen Server von Google in den USA oder anderen Drittstaaten übertragen und dort gespeichert. Diese Informationen können von Google an Vertragspartner von Google weitergegeben werden. Google wird Ihre IP-Adresse jedoch nicht mit anderen von Ihnen gespeicherten Daten zusammenführen.
+              </p>
+              <p>
+                Die Speicherung von AdSense-Cookies erfolgt auf Grundlage von Art. 6 Abs. 1 lit. f DSGVO. Der Websitebetreiber hat ein berechtigtes Interesse an der Analyse des Nutzerverhaltens, um sowohl sein Webangebot als auch seine Werbung zu optimieren.
+              </p>
+              <p>
+                Sie können die Installation der Cookies durch eine entsprechende Einstellung Ihrer Browser-Software verhindern; wir weisen Sie jedoch darauf hin, dass Sie in diesem Fall gegebenenfalls nicht sämtliche Funktionen dieser Website vollumfänglich nutzen können. Durch die Nutzung dieser Website erklären Sie sich mit der Bearbeitung der über Sie erhobenen Daten durch Google in der zuvor beschriebenen Art und Weise und zu dem zuvor benannten Zweck einverstanden.
+              </p>
+            </div>
+          </section>
+
+          <section>
+            <h3 className="text-lg font-semibold text-foreground border-l-4 border-primary pl-3 mb-4">9. Ihre Rechte</h3>
             <p className="text-muted-foreground leading-relaxed">Sie haben nach der DSGVO insbesondere folgende Rechte:</p>
             <ul className="list-disc pl-6 text-muted-foreground space-y-1">
               <li>Auskunft über gespeicherte Daten (Art. 15 DSGVO)</li>
