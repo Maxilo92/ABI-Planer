@@ -250,6 +250,7 @@ export function TeacherAlbum({
   // Filters state
   const [search, setSearch] = useState('')
   const [rarityFilters, setRarityFilters] = useState<TeacherRarity[]>([])
+  const [variantFilters, setVariantFilters] = useState<NewCardVariant[]>([])
   const [ownershipFilter, setOwnershipFilter] = useState<'all' | 'owned' | 'missing'>(initialLimit ? 'owned' : 'all')
   const [sortBy, setSortBy] = useState<'rarity_desc' | 'rarity_asc' | 'name_asc' | 'name_desc' | 'level_desc' | 'level_asc' | 'upgrade'>(
     initialLimit ? 'level_desc' : 'rarity_desc'
@@ -282,9 +283,17 @@ export function TeacherAlbum({
       if (rarityFilters.length > 0 && !rarityFilters.includes(t.rarity)) return false
       
       // Ownership filter
-      const isOwned = !!(userTeachers?.[t.id] || userTeachers?.[t.name])
+      const userData = userTeachers?.[t.id] || userTeachers?.[t.name]
+      const isOwned = !!userData
       if (ownershipFilter === 'owned' && !isOwned) return false
       if (ownershipFilter === 'missing' && isOwned) return false
+
+      // Variant filter
+      if (variantFilters.length > 0) {
+        if (!isOwned) return false;
+        const hasVariant = variantFilters.some(v => (userData.variants?.[v] || 0) > 0);
+        if (!hasVariant) return false;
+      }
       
       return true
     })
@@ -295,7 +304,7 @@ export function TeacherAlbum({
       const ownedB = (userTeachers?.[b.id] || userTeachers?.[b.name])
       
       // If we have an initialLimit and are not expanded, we PRIORITIZE level/rarity for the preview
-      if (initialLimit && !isExpanded && !search && rarityFilters.length === 0 && (ownershipFilter === 'all' || ownershipFilter === 'owned')) {
+      if (initialLimit && !isExpanded && !search && rarityFilters.length === 0 && variantFilters.length === 0 && (ownershipFilter === 'all' || ownershipFilter === 'owned')) {
         const lvlA = ownedA?.level || 0
         const lvlB = ownedB?.level || 0
         if (lvlA !== lvlB) return lvlB - lvlA
@@ -363,14 +372,21 @@ export function TeacherAlbum({
     )
   }
 
+  const toggleVariant = (variant: NewCardVariant) => {
+    setVariantFilters(prev => 
+      prev.includes(variant) ? prev.filter(v => v !== variant) : [...prev, variant]
+    )
+  }
+
   const clearFilters = () => {
     setSearch('')
     setRarityFilters([])
+    setVariantFilters([])
     setOwnershipFilter('all')
     setSortBy('rarity_desc')
   }
 
-  const activeFilterCount = (search ? 1 : 0) + rarityFilters.length + (ownershipFilter !== 'all' ? 1 : 0) + (sortBy !== 'rarity_desc' ? 1 : 0)
+  const activeFilterCount = (search ? 1 : 0) + rarityFilters.length + variantFilters.length + (ownershipFilter !== 'all' ? 1 : 0) + (sortBy !== 'rarity_desc' ? 1 : 0)
 
   // Determine which teachers to show based on expansion state
   const displayedTeachers = initialLimit && !isExpanded 
@@ -514,6 +530,21 @@ export function TeacherAlbum({
                   <div className="flex items-center gap-2">
                     <div className={cn("w-2 h-2 rounded-full", getRarityBadge(rarity))} />
                     {getRarityLabel(rarity)}
+                  </div>
+                </DropdownMenuCheckboxItem>
+              ))}
+
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel>Variante</DropdownMenuLabel>
+              {(['black_shiny_holo', 'shiny', 'holo', 'normal'] as NewCardVariant[]).map((v) => (
+                <DropdownMenuCheckboxItem 
+                  key={v}
+                  checked={variantFilters.includes(v)}
+                  onCheckedChange={() => toggleVariant(v)}
+                >
+                  <div className="flex items-center gap-2">
+                    <div className={cn("w-2 h-2 rounded-full", getVariantBadge(v as any))} />
+                    {getVariantLabel(v as any)}
                   </div>
                 </DropdownMenuCheckboxItem>
               ))}

@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.26.11] - 2026-03-25
+- UI: **Erweiterte Filter im Lehrer-Album**.
+    - Neue Filter-Kategorie für **Karten-Varianten** hinzugefügt (Normal, Holo, Shiny, Secret Rare).
+    - Der Filter-Count in der UI berücksichtigt nun auch die Varianten-Auswahl.
+    - Die Sortier- und Filter-Logik wurde optimiert, um die neuen Besitz-Daten (Varianten-Level) korrekt zu verarbeiten.
+
 ## [0.26.10] - 2026-03-25
 - UI: **Großes Design-Update für Sammelkarten**.
     - **Shiny-Redesign**: Der Shiny-Effekt wurde komplett überarbeitet und wirkt nun durch mehrstufige Glitzer-Texturen und metallische Reflektionen deutlich hochwertiger.
