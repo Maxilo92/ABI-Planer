@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.26.05] - 2026-03-25
+- UI: **Überarbeitete Level-Up Animation**. Beim Upgrade einer Karte wird nun ein dynamisches Level-Overlay eingeblendet, das den Übergang vom alten zum neuen Level mit einem speziellen Animationseffekt (Skalierung & Bounce) visualisiert. Die Level-Anzeige erscheint nun ausschließlich während dieses Upgrades auf der Karte.
+
+## [0.26.04] - 2026-03-25
+- Security/UI: **Verdeckte Karten beim Ziehen**. Ein Problem wurde behoben, bei dem die Vorderseite der Karten während des Ziehens kurzzeitig sichtbar sein konnte. Durch eine feste Initial-Rotation und einen 100% blickdichten Kartenrücken ist es nun technisch unmöglich, die Lehrer-Karten vor dem eigentlichen Umdrehen zu sehen. Außerdem werden alte Karten-Daten beim Öffnen eines neuen Packs sofort bereinigt.
+
 ## [0.26.04] - 2026-03-25
 - Fix: **Album Detailansicht Sichtbarkeit**. Ein Fehler wurde behoben, bei dem Karten in der Album-Detailansicht aufgrund von zu schmalen Containern und Transparenzproblemen nicht angezeigt wurden. Das Layout wurde für bessere Sichtbarkeit und Kompatibilität auf allen Bildschirmgrößen optimiert.
 

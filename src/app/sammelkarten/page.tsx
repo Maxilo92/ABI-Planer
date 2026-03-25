@@ -189,6 +189,8 @@ function SammelkartenContent() {
     setGameState('ripping')
     setIsAnimating(true)
     setFlippedCards([false, false, false])
+    setRevealedTeachers(null)
+    setCollectionResults(null)
 
     const godpackChance = config?.global_limits?.godpack_chance ?? 0.005
     const godpack = Math.random() < godpackChance
@@ -225,6 +227,7 @@ function SammelkartenContent() {
         return {
           isNew,
           isLevelUp,
+          oldLevel,
           newLevel: r.level,
           count: r.count,
           variant: r.variant
@@ -401,10 +404,8 @@ function SammelkartenContent() {
                             <TeacherCard 
                               data={cardData}
                               isFlippedExternally={isFlipped}
-                              className={cn(
-                                "w-full h-auto",
-                                isFlipped && result?.isLevelUp && "animate-level-up-spin"
-                              )}
+                              upgradeInfo={isFlipped && result?.isLevelUp ? { oldLevel: result.oldLevel!, newLevel: result.newLevel } : undefined}
+                              className="w-full h-auto"
                             />
                           </div>
                           

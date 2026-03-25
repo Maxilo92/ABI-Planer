@@ -14,6 +14,7 @@ interface TeacherCardProps {
   styleVariant?: CardStyle;
   isFlippedExternally?: boolean;
   isLocked?: boolean;
+  upgradeInfo?: { oldLevel: number, newLevel: number };
 }
 
 export const TeacherCard: React.FC<TeacherCardProps> = ({ 
@@ -21,10 +22,28 @@ export const TeacherCard: React.FC<TeacherCardProps> = ({
   className, 
   styleVariant = 'soft-glass',
   isFlippedExternally,
-  isLocked = false
+  isLocked = false,
+  upgradeInfo
 }) => {
   const [isFlippedInternally, setIsFlippedInternally] = useState(false);
   const isFlipped = isFlippedExternally !== undefined ? isFlippedExternally : isFlippedInternally;
+
+  const [displayLevel, setDisplayLevel] = useState(upgradeInfo?.oldLevel || 0);
+  const [isLevelAnimating, setIsLevelAnimating] = useState(false);
+
+  useEffect(() => {
+    if (upgradeInfo && isFlipped) {
+      setDisplayLevel(upgradeInfo.oldLevel);
+      
+      const timer = setTimeout(() => {
+        setDisplayLevel(upgradeInfo.newLevel);
+        setIsLevelAnimating(true);
+        setTimeout(() => setIsLevelAnimating(false), 1000);
+      }, 1000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [upgradeInfo, isFlipped]);
 
   const isBlckShiny = data.variant === 'black_shiny_holo';
   const isShiny = data.variant === 'shiny';
@@ -106,8 +125,9 @@ export const TeacherCard: React.FC<TeacherCardProps> = ({
       onClick={() => setIsFlippedInternally(!isFlippedInternally)}
     >
       <motion.div
+        initial={{ rotateY: isFlipped ? 0 : 180 }}
         animate={{ rotateY: isFlipped ? 0 : 180 }}
-        transition={{ duration: 0.6 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
         style={{ transformStyle: "preserve-3d" }}
         className="w-full h-full relative will-change-transform"
       >
@@ -115,14 +135,17 @@ export const TeacherCard: React.FC<TeacherCardProps> = ({
         <div 
           className={cn(
             "absolute inset-0 backface-hidden p-[8cqw] flex flex-col items-center justify-center overflow-hidden rotate-y-180",
-            "border-[2cqw] border-white/20 bg-neutral-950/80 backdrop-blur-xl rounded-[10cqw]"
+            "border-[2cqw] border-white/20 bg-neutral-950 shadow-2xl rounded-[10cqw]"
           )}
         >
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.05)_0%,transparent_70%)]" />
           <CardEffectOverlay variant="normal" tintColor="#000000" />
           
           <div className="relative z-10 flex flex-col items-center">
-            <Zap className="text-white mb-[4cqw] w-[20cqw] h-[20cqw] drop-shadow-[0_0_10px_rgba(255,255,255,0.4)]" />
-            <div className="text-white font-black tracking-[0.3em] text-[4cqw] uppercase opacity-80">
+            <div className="w-[25cqw] h-[25cqw] rounded-full bg-white/5 flex items-center justify-center mb-[4cqw] border border-white/10">
+              <Zap className="text-white w-[15cqw] h-[15cqw] drop-shadow-[0_0_15px_rgba(255,255,255,0.4)]" />
+            </div>
+            <div className="text-white font-black tracking-[0.3em] text-[4cqw] uppercase opacity-40">
                ABI Planer
             </div>
           </div>
@@ -155,6 +178,30 @@ export const TeacherCard: React.FC<TeacherCardProps> = ({
               {data.name}
             </h2>
           </div>
+
+          {upgradeInfo && (
+            <div className="absolute inset-0 z-40 flex items-center justify-center pointer-events-none">
+              <motion.div
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                className="relative"
+              >
+                <div className="absolute inset-0 blur-[20px] bg-white/40 animate-pulse rounded-full" />
+                <motion.div
+                  key={displayLevel}
+                  initial={{ scale: 1.5, opacity: 0, y: -20 }}
+                  animate={{ scale: 1, opacity: 1, y: 0 }}
+                  className={cn(
+                    "relative bg-black text-white px-[4cqw] py-[1cqw] rounded-[2cqw] border-[1cqw] border-white shadow-2xl font-black text-[10cqw] tracking-tighter flex items-center gap-[1cqw]",
+                    isLevelAnimating && "animate-bounce"
+                  )}
+                >
+                  <span className="text-[4cqw] opacity-50">LVL</span>
+                  {displayLevel}
+                </motion.div>
+              </motion.div>
+            </div>
+          )}
 
           <div className={cn("absolute z-30", styleClasses.numberPos)}>
             <div className={styleClasses.numberTag}>
