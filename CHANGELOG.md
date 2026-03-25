@@ -1,6 +1,9 @@
 # Changelog
 
-## [0.26.23] - 2026-03-25
+## [0.26.25] - 2026-03-25
+- Fix: **Zuverlässiges Aufdecken der Karten**. Ein Bug wurde behoben, bei dem das Umdrehen einer Karte nicht korrekt an die Seite gemeldet wurde. Die Klick-Logik wurde zentralisiert, sodass das Aufdecken nun zuverlässig den Gesamtfortschritt aktualisiert und die Navigations-Buttons korrekt erscheinen.
+
+## [0.26.24] - 2026-03-25
 - UI: **Expliziter "Pack öffnen"-Button**. Für eine klarere Nutzerführung gibt es nun einen eigenen Button zum Öffnen einzelner Packs, der immer sichtbar ist, solange Booster verfügbar sind. Der Button zum Öffnen von 10 Packs erscheint bei Bedarf zusätzlich.
 
 ## [0.26.22] - 2026-03-25
