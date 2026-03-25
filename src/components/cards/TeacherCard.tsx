@@ -189,8 +189,15 @@ export const TeacherCard: React.FC<TeacherCardProps> = ({
             </div>
 
             {isLocked && (
-              <div className="absolute inset-x-0 bottom-[15cqw] flex flex-col items-center">
-                 <div className="w-[10cqw] h-[1cqw] bg-white/10 rounded-full mb-2" />
+              <div className="absolute top-[8cqw] right-[8cqw] z-30">
+                <div className="bg-white/5 text-white/20 px-[2cqw] py-[0.5cqw] text-[3cqw] font-black rounded-full border border-white/5">
+                  {data.cardNumber}
+                </div>
+              </div>
+            )}
+
+            {isLocked && (
+              <div className="absolute inset-x-0 bottom-[15cqw] flex flex-col items-center">                 <div className="w-[10cqw] h-[1cqw] bg-white/10 rounded-full mb-2" />
                  <div className="text-[2.5cqw] font-bold text-white/20 uppercase tracking-widest">Mystery Card</div>
               </div>
             )}

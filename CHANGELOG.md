@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.26.14] - 2026-03-25
+- UI: **ID-Anzeige für gesperrte Karten**. Gesperrte Karten im Album zeigen nun ihre Karten-Nummer (ID) an, um die Orientierung in der Sammlung zu erleichtern.
+
 ## [0.26.13] - 2026-03-25
 - UI: **Optimierter Shiny-Effekt**.
     - Die Verläufe der Shiny-Effektfolie wurden weicher gestaltet, um sichtbare Kanten während der Animation zu eliminieren.
