@@ -656,7 +656,7 @@ export default function CardManagerPage() {
             {/* Left/Main Column: Teacher Pool & Weights */}
             <div className="xl:col-span-3 space-y-8">
               
-              <Tabs defaultValue="teachers" className="w-full">
+              <Tabs defaultValue="teachers" className="w-full flex-col">
                 <TabsList className="h-12 sm:h-10 w-full sm:w-fit max-w-full justify-start bg-muted/50 p-1 rounded-xl border border-border/60 overflow-x-auto">
                   <TabsTrigger value="teachers" className="h-10 sm:h-8 min-w-[112px] sm:min-w-[124px] px-3 py-1.5 text-xs gap-2 flex-none data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">
                     <Users className="h-3.5 w-3.5" />

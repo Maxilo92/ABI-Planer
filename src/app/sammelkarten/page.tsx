@@ -485,7 +485,7 @@ function SammelkartenContent() {
                     initial="hidden"
                     animate="visible"
                     exit="hidden"
-                    className="grid grid-cols-2 sm:grid-cols-3 place-items-center gap-x-3 gap-y-5 sm:gap-x-5 sm:gap-y-6 md:gap-x-8 w-full max-w-5xl px-2 sm:px-4"
+                    className="grid grid-cols-2 sm:grid-cols-3 place-items-center gap-x-2 gap-y-5 sm:gap-x-5 sm:gap-y-6 md:gap-x-8 w-full max-w-5xl px-1 sm:px-4"
                   >
                     {revealedTeachers.map((teacher, idx) => {
                       const isFlipped = flippedCards[idx]
@@ -518,7 +518,7 @@ function SammelkartenContent() {
                             }
                           }}
                           className={cn(
-                            "relative flex flex-col items-center w-full max-w-[170px] sm:max-w-[185px] md:max-w-[200px] lg:max-w-[220px]",
+                            "relative flex flex-col items-center w-[44vw] min-w-[140px] max-w-[190px] sm:w-full sm:min-w-0 sm:max-w-[185px] md:max-w-[200px] lg:max-w-[220px]",
                             idx === 2 && "col-span-2 sm:col-span-1",
                             isFlipped && result?.isNew && "animate-new-card-float z-10",
                             isFlipped && result?.variant === 'black_shiny_holo' && "z-30 scale-110"
