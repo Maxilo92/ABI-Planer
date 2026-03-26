@@ -656,17 +656,17 @@ export default function CardManagerPage() {
             {/* Left/Main Column: Teacher Pool & Weights */}
             <div className="xl:col-span-3 space-y-8">
               
-              <Tabs defaultValue="teachers" className="w-full flex-col">
-                <TabsList className="h-12 sm:h-10 w-fit justify-start bg-muted/50 p-1 rounded-xl border border-border/60">
-                  <TabsTrigger value="teachers" className="h-10 sm:h-8 min-w-[112px] sm:min-w-[124px] px-3 py-1.5 text-xs gap-2 flex-none data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">
+              <Tabs defaultValue="teachers" className="w-full">
+                <TabsList className="w-fit bg-muted/50 p-1 rounded-xl border border-border/60">
+                  <TabsTrigger value="teachers" className="px-4 py-1.5 text-xs gap-2 transition-all">
                     <Users className="h-3.5 w-3.5" />
                     <span>Lehrerpool</span>
                   </TabsTrigger>
-                  <TabsTrigger value="weights" className="h-10 sm:h-8 min-w-[112px] sm:min-w-[124px] px-3 py-1.5 text-xs gap-2 flex-none data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">
+                  <TabsTrigger value="weights" className="px-4 py-1.5 text-xs gap-2 transition-all">
                     <TrendingUp className="h-3.5 w-3.5" />
                     <span>Drop-Rates</span>
                   </TabsTrigger>
-                  <TabsTrigger value="limits" className="h-10 sm:h-8 min-w-[112px] sm:min-w-[124px] px-3 py-1.5 text-xs gap-2 flex-none data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">
+                  <TabsTrigger value="limits" className="px-4 py-1.5 text-xs gap-2 transition-all">
                     <Settings2 className="h-3.5 w-3.5" />
                     <span>Parameter</span>
                   </TabsTrigger>

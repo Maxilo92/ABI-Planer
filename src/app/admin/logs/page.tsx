@@ -367,7 +367,7 @@ export default function AdminLogsPage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)}>
-        <TabsList className="grid w-fit grid-cols-2">
+        <TabsList className="w-fit">
           <TabsTrigger value="logs" className="px-6">Aktivitäts-Logs</TabsTrigger>
           <TabsTrigger value="danger_logs" className="px-6">Danger Logs</TabsTrigger>
         </TabsList>

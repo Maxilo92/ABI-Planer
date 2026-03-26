@@ -438,7 +438,7 @@ export default function SettingsPage() {
       </div>
 
       <Tabs defaultValue="general" className="w-full">
-        <TabsList className="flex w-fit">
+        <TabsList className="w-fit">
           <TabsTrigger value="general">Allgemein</TabsTrigger>
           <TabsTrigger value="account">Konto & Boni</TabsTrigger>
           {canManageCourses && <TabsTrigger value="admin">Verwaltung</TabsTrigger>}

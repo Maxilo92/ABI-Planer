@@ -92,8 +92,8 @@ export default function TodosPage() {
         </div>
       </div>
 
-      <Tabs defaultValue="all" className="w-full flex flex-col gap-4">
-        <TabsList className="h-9 w-fit">
+      <Tabs defaultValue="all" className="w-full">
+        <TabsList className="w-fit">
           <TabsTrigger value="all" className="px-4">Alle ({filteredTodos.length})</TabsTrigger>
           <TabsTrigger value="open" className="px-4">Offen ({openTodos.length})</TabsTrigger>
           <TabsTrigger value="in_progress" className="px-4">In Arbeit ({inProgressTodos.length})</TabsTrigger>

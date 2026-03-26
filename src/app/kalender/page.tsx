@@ -91,8 +91,8 @@ export default function CalendarPage() {
         </div>
       </div>
 
-      <Tabs defaultValue="upcoming" className="w-full flex flex-col gap-4">
-        <TabsList className="h-9 w-fit">
+      <Tabs defaultValue="upcoming" className="w-full">
+        <TabsList className="w-fit">
           <TabsTrigger value="upcoming" className="px-4">Anstehend ({upcomingEvents.length})</TabsTrigger>
           <TabsTrigger value="past" className="px-4">Vergangen ({pastEvents.length})</TabsTrigger>
         </TabsList>
