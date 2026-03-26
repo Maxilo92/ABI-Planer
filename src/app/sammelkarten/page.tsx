@@ -485,7 +485,7 @@ function SammelkartenContent() {
                     initial="hidden"
                     animate="visible"
                     exit="hidden"
-                    className="grid grid-cols-2 sm:grid-cols-3 place-items-center gap-x-2 gap-y-5 sm:gap-x-5 sm:gap-y-6 md:gap-x-8 w-full max-w-5xl px-1 sm:px-4"
+                    className="grid grid-cols-2 md:grid-cols-3 place-items-center gap-x-4 gap-y-6 sm:gap-x-6 sm:gap-y-7 md:gap-x-8 lg:gap-x-10 w-full max-w-5xl px-2 sm:px-4 md:px-6"
                   >
                     {revealedTeachers.map((teacher, idx) => {
                       const isFlipped = flippedCards[idx]
@@ -518,10 +518,10 @@ function SammelkartenContent() {
                             }
                           }}
                           className={cn(
-                            "relative flex flex-col items-center w-[46vw] min-w-[150px] max-w-[210px] sm:w-full sm:min-w-0 sm:max-w-[200px] md:max-w-[220px] lg:max-w-[240px]",
-                            idx === 2 && "col-span-2 sm:col-span-1",
+                            "relative flex flex-col items-center w-[min(44vw,13.5rem)] min-w-[9rem] max-w-[13.5rem] md:w-[min(29vw,14rem)] md:min-w-[10rem] md:max-w-[14rem] lg:max-w-[15rem]",
+                            idx === 2 && "col-span-2 md:col-span-1",
                             isFlipped && result?.isNew && "animate-new-card-float z-10",
-                            isFlipped && result?.variant === 'black_shiny_holo' && "z-30 scale-110"
+                            isFlipped && result?.variant === 'black_shiny_holo' && "z-30 scale-[1.03] sm:scale-[1.06]"
                           )}
                           style={{ zIndex: isFlipped ? (result?.variant === 'black_shiny_holo' ? 50 : 30) : 20 }}
                         >
@@ -529,7 +529,7 @@ function SammelkartenContent() {
                           <div onClick={() => !isFlipped && handleFlipCard(idx)}>
                             {/* Black Shiny Void Effect */}
                             {isFlipped && result?.variant === 'black_shiny_holo' && (
-                              <div className="absolute inset-[-40px] z-0 pointer-events-none overflow-visible">
+                              <div className="absolute inset-[-24px] sm:inset-[-36px] z-0 pointer-events-none overflow-visible">
                                 <div className="absolute inset-0 bg-purple-600/20 blur-[60px] animate-pulse rounded-full" />
                                 <div className="absolute inset-0 bg-blue-600/10 blur-[40px] animate-pulse rounded-full delay-700" />
                                 <div className="absolute inset-0 flex items-center justify-center">
