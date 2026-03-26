@@ -64,9 +64,10 @@ export default function ReferralsPage() {
   }, [user])
 
   const referralLink = useMemo(() => {
-    if (!profile?.referral_code) return ''
-    return `abi-planer-27.de/r/${profile.referral_code}`
-  }, [profile?.referral_code])
+    const code = profile?.referral_code || user?.uid?.slice(0, 8)
+    if (!code) return ''
+    return `abi-planer-27.de/r/${code}`
+  }, [profile?.referral_code, user?.uid])
 
   const copyToClipboard = async () => {
     if (!referralLink) return

@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.26.34] - 2026-03-26
+- Fix: **Berechtigungsfehler im Referral-System behoben**. Fehlende Firestore-Regeln für die `referrals`-Collection wurden ergänzt, sodass Nutzer ihre eigenen Einladungs-Statistiken nun korrekt laden können.
+- Fix: **Base UI Button-Rendering**. Ein technischer Fehler im `Button`-Component wurde behoben, der zu Konsolen-Warnungen/Fehlern führte, wenn Buttons als Links (`render={<Link ... />}`) gerendert wurden.
+- Fix: **Referral-Code Fallback**. Bestehende Nutzer, die noch keinen `referral_code` in ihrem Profil haben, erhalten nun automatisch einen temporären Code basierend auf ihrer ID, damit sie das Einladungs-System sofort nutzen können.
+- Security: **Profil-Daten gehärtet**. Die Felder `referral_code` und `referred_by` wurden in den Firestore-Regeln gegen nachträgliche Manipulation durch den Nutzer gesperrt.
+
 ## [0.26.33] - 2026-03-26
 - Feature: **Freunde-werben-Freunde Programm eingeführt**. Nutzer können nun über ihr Einstellungs-Dashboard Freunde einladen.
     - Jeder Nutzer erhält einen persönlichen Einladungs-Code (`/r/XXXXXX`).
