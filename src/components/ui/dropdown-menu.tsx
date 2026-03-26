@@ -14,8 +14,14 @@ function DropdownMenuPortal({ ...props }: MenuPrimitive.Portal.Props) {
   return <MenuPrimitive.Portal data-slot="dropdown-menu-portal" {...props} />
 }
 
-function DropdownMenuTrigger({ ...props }: MenuPrimitive.Trigger.Props) {
-  return <MenuPrimitive.Trigger data-slot="dropdown-menu-trigger" {...props} />
+function DropdownMenuTrigger({ nativeButton, ...props }: MenuPrimitive.Trigger.Props) {
+  return (
+    <MenuPrimitive.Trigger
+      data-slot="dropdown-menu-trigger"
+      nativeButton={nativeButton ?? (props.render ? false : undefined)}
+      {...props}
+    />
+  )
 }
 
 function DropdownMenuContent({
@@ -97,18 +103,11 @@ function DropdownMenuItem({
     />
   )
 }
-function DropdownMenuTrigger({ nativeButton, ...props }: MenuPrimitive.Trigger.Props) {
-  return (
-    <MenuPrimitive.Trigger
-      data-slot="dropdown-menu-trigger"
-      nativeButton={nativeButton ?? (props.render ? false : undefined)}
-      {...props}
-    />
-  )
+
+function DropdownMenuSub({ ...props }: MenuPrimitive.SubmenuRoot.Props) {
+  return <MenuPrimitive.SubmenuRoot data-slot="dropdown-menu-sub" {...props} />
 }
 
-function DropdownMenuContent({
-...
 function DropdownMenuSubTrigger({
   className,
   inset,
@@ -134,6 +133,7 @@ function DropdownMenuSubTrigger({
     </MenuPrimitive.SubmenuTrigger>
   )
 }
+
 function DropdownMenuSubContent({
   align = "start",
   alignOffset = -3,
@@ -145,7 +145,7 @@ function DropdownMenuSubContent({
   return (
     <DropdownMenuContent
       data-slot="dropdown-menu-sub-content"
-      className={cn("w-auto min-w-[96px] rounded-lg bg-popover p-1 text-popover-foreground shadow-lg ring-1 ring-foreground/10 duration-100 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95", className )}
+      className={cn("w-auto min-w-[96px] rounded-lg bg-popover p-1 text-popover-foreground shadow-lg ring-1 ring-foreground/10 duration-100 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:overflow-hidden data-closed:fade-out-0 data-closed:zoom-out-95", className )}
       align={align}
       alignOffset={alignOffset}
       side={side}

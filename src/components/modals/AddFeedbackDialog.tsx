@@ -327,7 +327,7 @@ export function AddFeedbackDialog() {
             Hast du einen Fehler gefunden oder eine Idee für eine neue Funktion?
           </DialogDescription>
         </DialogHeader>
-        {open && <FeedbackForm key={Date.now()} onSuccess={() => setOpen(false)} />}
+        {open && <FeedbackForm onSuccess={() => setOpen(false)} />}
       </DialogContent>
     </Dialog>
   )

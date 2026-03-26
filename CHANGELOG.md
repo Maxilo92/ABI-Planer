@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.26.37] - 2026-03-26
+- Fix: **Build-Fehler im Dropdown-Menu behoben**. Ein Syntaxfehler in `src/components/ui/dropdown-menu.tsx` wurde korrigiert.
+- Fix: **Next.js Build-Isolation**. Der `scripts`-Ordner wird nun explizit von der TypeScript-Kompilierung ausgeschlossen, um Konflikte zwischen Node-Skripten und dem Web-Frontend zu vermeiden.
+- Fix: **Purity-Verletzungen (React Hooks) behoben**. Unzulässige Aufrufe von unreinen Funktionen wie `Date.now()` oder `Math.random()` während des Render-Prozesses wurden in stabile Zustände (`useState` + `useEffect`) überführt.
+- DX: **ESLint Performance & Scope optimiert**. Die Linting-Konfiguration ignoriert nun konsequent Build-Artefakte und externe Unterprojekte (`CardDesign`), was die Fehlerquote und Analysezeit drastisch reduziert.
+
 ## [0.26.36] - 2026-03-26
 - Fix: **Weitere Base UI Button-Warnungen behoben**. Die automatische Deaktivierung von `nativeButton` bei Verwendung des `render`-Props wurde nun auch auf `DialogTrigger`, `DialogClose`, `DropdownMenuTrigger` und `DropdownMenuSubTrigger` ausgeweitet. Dies eliminiert verbleibende Konsolen-Fehler, wenn z.B. Spans oder Icons als Trigger verwendet werden.
 

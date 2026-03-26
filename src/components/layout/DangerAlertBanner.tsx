@@ -53,11 +53,12 @@ export function DangerAlertBanner() {
   const activeAction = useMemo(() => {
     if (!actions.length) return null
     
+    const nowTime = new Date().getTime()
     // Sort and filter in JS to avoid complex indexes
     return actions
       .filter(a => !dismissedIds.includes(a.id))
       .sort((a, b) => new Date(a.executableAt).getTime() - new Date(b.executableAt).getTime())
-      .find(a => new Date(a.executableAt).getTime() > Date.now()) || null
+      .find(a => new Date(a.executableAt).getTime() > nowTime) || null
   }, [actions, dismissedIds])
 
   const { days, hours, minutes, seconds } = useCountdown(activeAction?.executableAt || '')

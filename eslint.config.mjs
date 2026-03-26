@@ -20,6 +20,11 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    "CardDesign/**",
+    "functions/node_modules/**",
+    "functions/lib/**",
+    "node_modules/**",
+    "scripts/**",
   ]),
 ]);
 

@@ -19,16 +19,25 @@ interface TeacherCardProps {
 }
 
 const Particle = React.memo(({ delay }: { delay: number }) => {
-  const randoms = React.useMemo(() => {
+  const [randoms, setRandoms] = React.useState<{
+    x: number;
+    y: number;
+    size: number;
+    rotation: number;
+  } | null>(null);
+
+  React.useEffect(() => {
     const angle = Math.random() * Math.PI * 2;
     const distance = 40 + Math.random() * 80;
-    return {
+    setRandoms({
       x: Math.cos(angle) * distance,
       y: Math.sin(angle) * distance,
       size: 1 + Math.random() * 2,
       rotation: Math.random() * 360
-    };
+    });
   }, []);
+
+  if (!randoms) return null;
 
   return (
     <motion.div
