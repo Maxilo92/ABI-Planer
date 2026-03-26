@@ -518,7 +518,7 @@ function SammelkartenContent() {
                             }
                           }}
                           className={cn(
-                            "relative flex flex-col items-center w-[44vw] min-w-[140px] max-w-[190px] sm:w-full sm:min-w-0 sm:max-w-[185px] md:max-w-[200px] lg:max-w-[220px]",
+                            "relative flex flex-col items-center w-[46vw] min-w-[150px] max-w-[210px] sm:w-full sm:min-w-0 sm:max-w-[200px] md:max-w-[220px] lg:max-w-[240px]",
                             idx === 2 && "col-span-2 sm:col-span-1",
                             isFlipped && result?.isNew && "animate-new-card-float z-10",
                             isFlipped && result?.variant === 'black_shiny_holo' && "z-30 scale-110"
@@ -558,11 +558,23 @@ function SammelkartenContent() {
 
                               <TeacherCard 
                                 data={cardData}
-                                isFlippedExternally={isFlipped}
+                                isFlippedExternally={true}
                                 interactive={false} // Card in booster view is never interactive on its own
                                 upgradeInfo={isFlipped && result?.isLevelUp ? { oldLevel: result.oldLevel!, newLevel: result.newLevel } : undefined}
                                 className="w-full h-auto"
                               />
+
+                              {!isFlipped && (
+                                <div className="absolute inset-0 z-20 border-[2cqw] border-white/20 bg-neutral-950 shadow-2xl rounded-[10cqw] overflow-hidden pointer-events-none">
+                                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.05)_0%,transparent_70%)]" />
+                                  <div className="relative z-10 flex h-full flex-col items-center justify-center">
+                                    <div className="w-[25cqw] h-[25cqw] rounded-full flex items-center justify-center mb-[4cqw] border border-white/10 bg-white/5">
+                                      <Zap className="text-white w-[15cqw] h-[15cqw] drop-shadow-[0_0_15px_rgba(255,255,255,0.4)]" />
+                                    </div>
+                                    <div className="text-white font-black tracking-[0.3em] text-[4cqw] uppercase opacity-40">ABI Planer</div>
+                                  </div>
+                                </div>
+                              )}
                             </div>
                             
                             {isFlipped && showDebug && packProbs && (

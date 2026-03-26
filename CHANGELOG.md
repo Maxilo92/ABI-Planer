@@ -6,6 +6,7 @@
 - Fix: **Sammelkarten-Manager auf Mobile besser nutzbar**. Die großen Tabs/Toggles wurden auf feste Trigger-Größen gebracht, horizontal scrollbar gemacht und das Layout so angepasst, dass keine überdimensionierten Leerräume mehr entstehen.
 - Fix: **Tabs im Sammelkarten-Manager korrekt über dem Inhalt positioniert**. Das Tabs-Layout wurde auf eine eindeutige vertikale Anordnung gesetzt, sodass die Toggle-Leiste direkt über den Kacheln liegt und links kein unnötiger Leerraum mehr entsteht.
 - Fix: **Mobile Kartenöffnung gegen Mini- und Flip-Ausfall gehärtet**. Reveal-Karten erhalten auf kleinen Viewports eine feste Mindestbreite, damit verdeckte Karten nicht zu klein rendern. Zusätzlich wurden WebKit-kompatible 3D-/Backface-Regeln ergänzt, damit aufgedeckte Karten auf iOS/Safari beim Flip nicht verschwinden.
+- Fix: **Booster-Reveal auf Smartphones weiter stabilisiert**. In der Öffnungsansicht wird die Karte nun durch ein robustes Back-Overlay verdeckt statt per 3D-Flip zwischen Front/Back zu wechseln. Das verhindert mobile Rendering-Aussetzer („Karte verschwindet nach Tap“) zuverlässig und hält die Karten zugleich deutlich größer.
 
 ## [0.26.27] - 2026-03-25
 - Fix: **Korrekte Varianten-Wahrscheinlichkeit im Debug-Modus**. Ein Logikfehler in der Berechnung der Wahrscheinlichkeiten für Karten-Varianten (Holo, Shiny etc.) wurde behoben. Der Debug-Modus zeigt nun die exakte, korrekte Drop-Chance für die gezogene Seltenheit *und* Variante an.
