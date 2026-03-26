@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.26.38] - 2026-03-26
+- Fix: **Base UI Button-Logik verfeinert**. Die automatische Deaktivierung von `nativeButton` wurde für `Dialog` und `DropdownMenu` Komponenten zurückgenommen, da sie bei der Verwendung von Standard-Buttons zu Fehlern führte. Stattdessen wird `nativeButton={false}` nun gezielt an Stellen eingesetzt, an denen Triggerelemente keine nativen Buttons sind (z.B. Text-Links im Todo-Dashboard).
+
 ## [0.26.37] - 2026-03-26
 - Fix: **Build-Fehler im Dropdown-Menu behoben**. Ein Syntaxfehler in `src/components/ui/dropdown-menu.tsx` wurde korrigiert.
 - Fix: **Next.js Build-Isolation**. Der `scripts`-Ordner wird nun explizit von der TypeScript-Kompilierung ausgeschlossen, um Konflikte zwischen Node-Skripten und dem Web-Frontend zu vermeiden.

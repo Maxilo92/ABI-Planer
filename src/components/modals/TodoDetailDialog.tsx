@@ -62,7 +62,7 @@ export function TodoDetailDialog({ todo, allTodos, trigger }: TodoDetailDialogPr
 
   return (
     <Dialog>
-      {trigger && <DialogTrigger render={trigger} />}
+      {trigger && <DialogTrigger render={trigger} nativeButton={false} />}
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <div className="flex items-center gap-2 mb-1">

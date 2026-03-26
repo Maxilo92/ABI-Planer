@@ -13,7 +13,6 @@ import {
   Trophy, 
   Calendar,
   Sparkles,
-  ShieldCheck,
   TrendingUp
 } from 'lucide-react'
 import { collection, query, where, getDocs, orderBy } from 'firebase/firestore'
@@ -199,27 +198,6 @@ export default function ReferralsPage() {
           </CardContent>
         </Card>
       </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-xl">
-            <ShieldCheck className="h-5 w-5 text-green-500" /> Datenschutz (GDPR/DSGVO)
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4 text-sm text-muted-foreground leading-relaxed">
-          <p>
-            Die Teilnahme am Empfehlungsprogramm ist freiwillig. Wenn jemand deinen Einladungs-Link nutzt, speichern wir die Verbindung zwischen deinem Account und dem des neuen Nutzers.
-          </p>
-          <ul className="list-disc pl-5 space-y-2">
-            <li><strong>Zweck:</strong> Ausschließlich zur Zuweisung von Belohnungen (Bonus-Booster) und zur Verhinderung von Missbrauch.</li>
-            <li><strong>Sichtbarkeit:</strong> Dein Name wird dem eingeladenen Freund bei der Registrierung möglicherweise angezeigt.</li>
-            <li><strong>Datenminimierung:</strong> Wir erfassen keine weiteren persönlichen Daten durch dieses Programm.</li>
-          </ul>
-          <p>
-            Weitere Informationen findest du in unserer <Link href="/datenschutz" className="underline hover:text-foreground">Datenschutzerklärung</Link>.
-          </p>
-        </CardContent>
-      </Card>
 
       <Card>
         <CardHeader>

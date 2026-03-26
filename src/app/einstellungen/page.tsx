@@ -19,6 +19,12 @@ import {
   DialogHeader, 
   DialogTitle 
 } from '@/components/ui/dialog'
+import { 
+  Tabs, 
+  TabsContent, 
+  TabsList, 
+  TabsTrigger 
+} from '@/components/ui/tabs'
 import { ThemeToggle } from '@/components/layout/ThemeToggle'
 import { AddFeedbackDialog } from '@/components/modals/AddFeedbackDialog'
 import { Input } from '@/components/ui/input'
@@ -431,184 +437,198 @@ export default function SettingsPage() {
         <p className="text-muted-foreground mt-1">Hier findest du persönliche Optionen, ohne den Header zu überladen.</p>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-xl">
-            <User className="h-5 w-5" /> Konto
-          </CardTitle>
-          <CardDescription>Profil ansehen und abmelden.</CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-col sm:flex-row gap-3">
-          <Button
-            variant="outline"
-            render={
-              <Link href="/profil" className="w-full sm:w-auto">
-                Profil öffnen
-              </Link>
-            }
-          />
-          <Button variant="destructive" onClick={handleSignOut} className="w-full sm:w-auto gap-2">
-            <LogOut className="h-4 w-4" /> Abmelden
-          </Button>
-        </CardContent>
-      </Card>
+      <Tabs defaultValue="account" className="w-full">
+        <TabsList className="grid w-full grid-cols-2 lg:flex lg:w-fit">
+          <TabsTrigger value="account">Konto</TabsTrigger>
+          <TabsTrigger value="preferences">Anpassung</TabsTrigger>
+          {canManageCourses && <TabsTrigger value="admin">Verwaltung</TabsTrigger>}
+        </TabsList>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-xl">
-            <Sparkles className="h-5 w-5 text-primary" /> Freunde einladen
-          </CardTitle>
-          <CardDescription>Sammle Bonus-Booster für dich und deine Freunde.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Button 
-            variant="outline" 
-            className="w-full sm:w-auto gap-2"
-            render={
-              <Link href="/einstellungen/referrals">
-                <Users className="h-4 w-4" /> Einladungs-Dashboard öffnen
-              </Link>
-            }
-          />
-        </CardContent>
-      </Card>
+        <TabsContent value="account" className="space-y-6 mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-xl">
+                <User className="h-5 w-5" /> Konto
+              </CardTitle>
+              <CardDescription>Profil ansehen und abmelden.</CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col sm:flex-row gap-3">
+              <Button
+                variant="outline"
+                render={
+                  <Link href="/profil" className="w-full sm:w-auto">
+                    Profil öffnen
+                  </Link>
+                }
+              />
+              <Button variant="destructive" onClick={handleSignOut} className="w-full sm:w-auto gap-2">
+                <LogOut className="h-4 w-4" /> Abmelden
+              </Button>
+            </CardContent>
+          </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-xl">
-            <MoonStar className="h-5 w-5" /> Darstellung
-          </CardTitle>
-          <CardDescription>Hell, dunkel oder automatisch nach System.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ThemeToggle />
-        </CardContent>
-      </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-xl">
+                <Sparkles className="h-5 w-5 text-primary" /> Freunde einladen
+              </CardTitle>
+              <CardDescription>Sammle Bonus-Booster für dich und deine Freunde.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button 
+                variant="outline" 
+                className="w-full sm:w-auto gap-2"
+                render={
+                  <Link href="/einstellungen/referrals">
+                    <Users className="h-4 w-4" /> Einladungs-Dashboard öffnen
+                  </Link>
+                }
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
 
+        <TabsContent value="preferences" className="space-y-6 mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-xl">
+                <MoonStar className="h-5 w-5" /> Darstellung
+              </CardTitle>
+              <CardDescription>Hell, dunkel oder automatisch nach System.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ThemeToggle />
+            </CardContent>
+          </Card>
 
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-xl">
+                <MessageSquarePlus className="h-5 w-5" /> Feedback
+              </CardTitle>
+              <CardDescription>Teile Bugs, Ideen und Feature-Wünsche.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <AddFeedbackDialog />
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-xl">
-            <MessageSquarePlus className="h-5 w-5" /> Feedback
-          </CardTitle>
-          <CardDescription>Teile Bugs, Ideen und Feature-Wünsche.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <AddFeedbackDialog />
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-xl">
-            <Users className="h-5 w-5" /> Kurssystem
-          </CardTitle>
-          <CardDescription>
-            Kurse umbenennen, hinzufügen oder entfernen. Umbenennungen werden auf bestehende Zuordnungen angewendet.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            {courseRows.map((row) => (
-              <div key={row.id} className="flex items-center gap-2">
-                <Input
-                  value={row.after}
-                  onChange={(e) => updateCourseRow(row.id, e.target.value)}
-                  placeholder="z.B. Kurs 1"
-                  disabled={!canManageCourses}
-                />
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => removeCourseRow(row.id)}
-                  disabled={!canManageCourses || courseRows.length <= 1}
-                  title="Kurs entfernen"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-            ))}
-          </div>
-          <Button variant="outline" onClick={addCourseRow} disabled={!canManageCourses} className="gap-2">
-            <Plus className="h-4 w-4" /> Kurs hinzufügen
-          </Button>
-          <div className="flex items-center justify-between gap-3">
-            <p className="text-xs text-muted-foreground">
-              {canManageCourses
-                ? canMigrateCourses
-                  ? 'Als Admin werden Umbenennungen automatisch in Profilen, Todos und Finanzen übernommen.'
-                  : 'Du kannst Kurse ändern, aber Datenmigration bei Umbenennungen erfordert Admin-Rechte.'
-                : 'Nur Planer/Admins können das Kurssystem bearbeiten.'}
-            </p>
-            <Button onClick={handleSaveCourses} disabled={!canManageCourses || savingCourses} className="gap-2">
-              <Save className="h-4 w-4" /> {savingCourses ? 'Speichern...' : 'Kurse speichern'}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-xl">
-            <Users className="h-5 w-5" /> Planungsgruppen
-          </CardTitle>
-          <CardDescription>
-            Plane Teams wie Ballplanung oder Gelder sammeln. Jede Gruppe kann einen Gruppenleiter erhalten.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            {planningGroupRows.map((row) => (
-              <div key={row.id} className="grid grid-cols-1 md:grid-cols-[1fr_1fr_auto] gap-2 items-center">
-                <Input
-                  value={row.after}
-                  onChange={(e) => updatePlanningGroupName(row.id, e.target.value)}
-                  placeholder="z.B. Ballplanung"
-                  disabled={!canManageCourses}
-                />
-                <select
-                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                  value={row.leaderUserId}
-                  onChange={(e) => updatePlanningGroupLeader(row.id, e.target.value)}
-                  disabled={!canManageCourses}
-                >
-                  <option value="">Kein Gruppenleiter</option>
-                  {planners.map((entry) => (
-                    <option key={entry.id} value={entry.id}>
-                      {entry.full_name || entry.email}
-                    </option>
+        {canManageCourses && (
+          <TabsContent value="admin" className="space-y-6 mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-xl">
+                  <Users className="h-5 w-5" /> Kurssystem
+                </CardTitle>
+                <CardDescription>
+                  Kurse umbenennen, hinzufügen oder entfernen. Umbenennungen werden auf bestehende Zuordnungen angewendet.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  {courseRows.map((row) => (
+                    <div key={row.id} className="flex items-center gap-2">
+                      <Input
+                        value={row.after}
+                        onChange={(e) => updateCourseRow(row.id, e.target.value)}
+                        placeholder="z.B. Kurs 1"
+                        disabled={!canManageCourses}
+                      />
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removeCourseRow(row.id)}
+                        disabled={!canManageCourses || courseRows.length <= 1}
+                        title="Kurs entfernen"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   ))}
-                </select>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => removePlanningGroupRow(row.id)}
-                  disabled={!canManageCourses || planningGroupRows.length <= 1}
-                  title="Planungsgruppe entfernen"
-                >
-                  <Trash2 className="h-4 w-4" />
+                </div>
+                <Button variant="outline" onClick={addCourseRow} disabled={!canManageCourses} className="gap-2">
+                  <Plus className="h-4 w-4" /> Kurs hinzufügen
                 </Button>
-              </div>
-            ))}
-          </div>
-          <Button variant="outline" onClick={addPlanningGroupRow} disabled={!canManageCourses} className="gap-2">
-            <Plus className="h-4 w-4" /> Planungsgruppe hinzufügen
-          </Button>
-          <div className="flex items-center justify-between gap-3">
-            <p className="text-xs text-muted-foreground">
-              {canManageCourses
-                ? canMigrateGroups
-                  ? 'Als Admin werden Umbenennungen automatisch in Profilen und Todos übernommen.'
-                  : 'Du kannst Gruppen ändern, aber Datenmigration bei Umbenennungen erfordert Admin-Rechte.'
-                : 'Nur Planer/Admins können Planungsgruppen bearbeiten.'}
-            </p>
-            <Button onClick={handleSavePlanningGroups} disabled={!canManageCourses || savingGroups} className="gap-2">
-              <Save className="h-4 w-4" /> {savingGroups ? 'Speichern...' : 'Gruppen speichern'}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-xs text-muted-foreground">
+                    {canManageCourses
+                      ? canMigrateCourses
+                        ? 'Als Admin werden Umbenennungen automatisch in Profilen, Todos und Finanzen übernommen.'
+                        : 'Du kannst Kurse ändern, aber Datenmigration bei Umbenennungen erfordert Admin-Rechte.'
+                      : 'Nur Planer/Admins können das Kurssystem bearbeiten.'}
+                  </p>
+                  <Button onClick={handleSaveCourses} disabled={!canManageCourses || savingCourses} className="gap-2">
+                    <Save className="h-4 w-4" /> {savingCourses ? 'Speichern...' : 'Kurse speichern'}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-xl">
+                  <Users className="h-5 w-5" /> Planungsgruppen
+                </CardTitle>
+                <CardDescription>
+                  Plane Teams wie Ballplanung oder Gelder sammeln. Jede Gruppe kann einen Gruppenleiter erhalten.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  {planningGroupRows.map((row) => (
+                    <div key={row.id} className="grid grid-cols-1 md:grid-cols-[1fr_1fr_auto] gap-2 items-center">
+                      <Input
+                        value={row.after}
+                        onChange={(e) => updatePlanningGroupName(row.id, e.target.value)}
+                        placeholder="z.B. Ballplanung"
+                        disabled={!canManageCourses}
+                      />
+                      <select
+                        className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                        value={row.leaderUserId}
+                        onChange={(e) => updatePlanningGroupLeader(row.id, e.target.value)}
+                        disabled={!canManageCourses}
+                      >
+                        <option value="">Kein Gruppenleiter</option>
+                        {planners.map((entry) => (
+                          <option key={entry.id} value={entry.id}>
+                            {entry.full_name || entry.email}
+                          </option>
+                        ))}
+                      </select>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removePlanningGroupRow(row.id)}
+                        disabled={!canManageCourses || planningGroupRows.length <= 1}
+                        title="Planungsgruppe entfernen"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+                <Button variant="outline" onClick={addPlanningGroupRow} disabled={!canManageCourses} className="gap-2">
+                  <Plus className="h-4 w-4" /> Planungsgruppe hinzufügen
+                </Button>
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-xs text-muted-foreground">
+                    {canManageCourses
+                      ? canMigrateGroups
+                        ? 'Als Admin werden Umbenennungen automatisch in Profilen und Todos übernommen.'
+                        : 'Du kannst Gruppen ändern, aber Datenmigration bei Umbenennungen erfordert Admin-Rechte.'
+                      : 'Nur Planer/Admins können Planungsgruppen bearbeiten.'}
+                  </p>
+                  <Button onClick={handleSavePlanningGroups} disabled={!canManageCourses || savingGroups} className="gap-2">
+                    <Save className="h-4 w-4" /> {savingGroups ? 'Speichern...' : 'Gruppen speichern'}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        )}
+      </Tabs>
 
       {/* Navigation Guard Dialog */}
       <Dialog open={isGuardOpen} onOpenChange={setIsGuardOpen}>
