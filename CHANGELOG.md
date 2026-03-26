@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.26.35] - 2026-03-26
+- Feature: **Vollständige Nutzerlöschung (Full Wipe)**. Das Löschen eines Nutzers in der Admin-Verwaltung führt nun automatisch zur Löschung des zugehörigen Firebase-Authentication-Kontos sowie zur Bereinigung aller nutzerspezifischen Daten (Sammelkarten, Geheimnisse, Stimmen, Geschenke) über einen neuen Cloud-Function-Trigger.
+
 ## [0.26.34] - 2026-03-26
 - Fix: **Berechtigungsfehler im Referral-System behoben**. Fehlende Firestore-Regeln für die `referrals`-Collection wurden ergänzt, sodass Nutzer ihre eigenen Einladungs-Statistiken nun korrekt laden können.
 - Fix: **Base UI Button-Rendering**. Ein technischer Fehler im `Button`-Component wurde behoben, der zu Konsolen-Warnungen/Fehlern führte, wenn Buttons als Links (`render={<Link ... />}`) gerendert wurden.

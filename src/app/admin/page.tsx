@@ -170,7 +170,7 @@ export default function AdminPage() {
       return
     }
 
-    if (confirm('Bist du sicher, dass du diesen Nutzer löschen möchtest? (Löscht nur das Profil-Dokument, nicht das Auth-Konto)')) {
+    if (confirm('Bist du sicher, dass du diesen Nutzer löschen möchtest? (Löscht das Profil-Dokument, das Auth-Konto und alle zugehörigen Daten permanent)')) {
       try {
         await deleteDoc(doc(db, 'profiles', id))
 
