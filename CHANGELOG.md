@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.26.42] - 2026-03-26
+- Feature: **Globale Belohnungs-Popups**. Das System für Belohnungs-Hinweise ("unseen gifts") wurde globalisiert. Nutzer erhalten nun auf jeder Seite (nicht nur auf dem Dashboard) sofort einen Hinweis, wenn sie neue Packs erhalten haben.
+- Feature: **Referral-Belohnungen mit Popup**. Wenn Nutzer über das Freunde-Werben-Programm Bonus-Booster erhalten, wird nun automatisch ein globales Popup ausgelöst, über das die Belohnung direkt eingesehen werden kann. Dies gilt sowohl für den Werbenden als auch für den neu registrierten Nutzer.
+
+## [0.26.41] - 2026-03-26
+- Feature: **Booster-Empfehlungsprogramm implementiert**. Nutzer können nun Freunde über personalisierte Kurzlinks (`/r/code`) einladen. 
+    - **Skalierende Belohnungen**: Der Werber erhält für die erste Einladung 2 Booster, für jede weitere +1, bis zu einem Maximum von 10 Boostern pro Freund.
+    - **Neuzugänge**: Geworbene Nutzer erhalten nach Profil-Vervollständigung sofort 3 Booster.
+    - **Sicherheit**: Ein monatliches Limit von 30 Boostern pro Werber wurde serverseitig via Cloud Function (Firestore Transactions) implementiert.
+- UI: **Einstellungen-Zentrale restrukturiert**. Einführung eines Tab-Interfaces zur besseren Gruppierung von Konto-Optionen, Darstellungs-Präferenzen und Verwaltungs-Tools. Dies löst das Problem der überladenen Einstellungsseite.
+- Cleanup: **Empfehlungsseite entschlackt**. Redundante DSGVO-Texte wurden entfernt, da diese bereits durch die globale Datenschutzerklärung abgedeckt sind.
+
+## [0.26.41] - 2026-03-26
+- UI: **Einstellungen restrukturiert**. Die wichtigsten Optionen (Profil, Darstellung/Theme, Feedback) befinden sich nun direkt im ersten Tab "Allgemein". Sekundäre Funktionen wie das Einladungs-System und die Abmelde-Funktion wurden in den zweiten Tab "Konto & Boni" verschoben, um die Benutzeroberfläche übersichtlicher zu gestalten.
+
+## [0.26.40] - 2026-03-26
+- UI: **Konsistente, kompakte Toggles systemweit**. Nach den Anpassungen in den Einstellungen wurden nun alle verbleibenden Tab-Listen (Toggles) auf `w-fit` umgestellt (u.a. in Admin-Zentrale, Logs, Todo-Liste, Kalender). Toggles nehmen nun systemweit nur noch den benötigten Platz am oberen Rand ein und wirken auf Mobilgeräten nicht mehr überdimensioniert.
+
+## [0.26.39] - 2026-03-26
+- Fix: **Tabs-Layout korrigiert (Top-to-Bottom Bug)**. Ein Fehler in der Tailwind-Selektoren-Logik der `Tabs`-Komponente wurde behoben, der dazu führte, dass Tab-Listen und Inhalte fälschlicherweise nebeneinander (vertikal gestreckt) statt übereinander dargestellt wurden. Die Komponente nutzt nun korrekte `data-[orientation]` Selektoren.
+- UI: **Kompaktere Toggles in Einstellungen & Admin**. Die Tab-Leisten (Toggles) in den Einstellungen und im Sammelkarten-Manager nehmen auf Mobilgeräten nun nicht mehr die volle Breite ein, sondern bleiben kompakt ("w-fit") am oberen Rand, wie vom Nutzer gewünscht.
+
 ## [0.26.38] - 2026-03-26
 - Fix: **Base UI Button-Logik verfeinert**. Die automatische Deaktivierung von `nativeButton` wurde für `Dialog` und `DropdownMenu` Komponenten zurückgenommen, da sie bei der Verwendung von Standard-Buttons zu Fehlern führte. Stattdessen wird `nativeButton={false}` nun gezielt an Stellen eingesetzt, an denen Triggerelemente keine nativen Buttons sind (z.B. Text-Links im Todo-Dashboard).
 

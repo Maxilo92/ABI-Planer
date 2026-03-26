@@ -13,10 +13,8 @@ import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import { useUserTeachers, getCurrentBoosterDay } from '@/hooks/useUserTeachers'
 import { TeacherAlbum } from '@/components/dashboard/TeacherAlbum'
-import { GiftNoticeBanner } from '@/components/dashboard/GiftNoticeBanner'
 import { TeacherCard } from '@/components/cards/TeacherCard'
 import { CardData, CardVariant as NewCardVariant, SammelkartenConfig } from '@/types/cards'
-import { useGiftNotices } from '@/hooks/useGiftNotices'
 import { toast } from 'sonner'
 
 const DEFAULT_TEACHERS: LootTeacher[] = [
@@ -91,7 +89,6 @@ function SammelkartenContent() {
   const [isAnimating, setIsAnimating] = useState(false)
   const [timeLeft, setTimeLeft] = useState<string>('')
   const [showDebug, setShowDebug] = useState(false)
-  const { giftNotices, totalGiftPacks, dismissGiftNotices } = useGiftNotices(user?.uid)
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -127,15 +124,6 @@ function SammelkartenContent() {
       redirect('/login?reason=unauthorized')
     }
   }, [user, loading])
-
-  const handleDismissGiftNotices = async () => {
-    try {
-      await dismissGiftNotices()
-    } catch (error) {
-      console.error('Error dismissing gift notices:', error)
-      toast.error('Geschenk-Hinweis konnte nicht geschlossen werden.')
-    }
-  }
 
   useEffect(() => {
     const unsubscribe = onSnapshot(doc(db, 'settings', 'sammelkarten'), (snapshot) => {
@@ -253,8 +241,6 @@ function SammelkartenContent() {
       setTimeout(() => {
         setMassRevealedTeachers(packsData)
         setMassCollectionResults(processedMassResults)
-        
-        // Logging für Booster-Öffnungen entfernt (wird nicht mehr geloggt)
       }, 300)
 
       setTimeout(() => {
@@ -296,7 +282,6 @@ function SammelkartenContent() {
       })
     }
 
-    // Trigger explosive fly-apart immediately
     try {
       const teacherIds = pack.map(t => t.id || t.name)
       const initialTeachers = { ...userTeachers }
@@ -325,19 +310,15 @@ function SammelkartenContent() {
         }
       })
 
-      // Delay data reveal until cards have flipped back (important for re-draw)
       setTimeout(() => {
         setRevealedTeachers(pack)
         setCollectionResults(processedResults)
-        
-        // Logging für Booster-Öffnungen entfernt (wird nicht mehr geloggt)
       }, 300)
 
-      // Final transition to revealed
       setTimeout(() => {
         setGameState('revealed')
         setIsAnimating(false)
-      }, 700) // Adjusted timing to account for data delay
+      }, 700)
     } catch (err: any) {
       toast.error(err.message || 'Fehler beim Sammeln.')
       setGameState('idle')
@@ -356,12 +337,11 @@ function SammelkartenContent() {
     const probs = config?.variant_probabilities || DEFAULT_VARIANTS_PROBABILITIES;
     
     if (isGodpack) {
-      // Godpack: if (rand < 0.1) bsh; if (rand < 0.4) shiny; if (rand < 0.8) holo
       switch (variant) {
         case 'black_shiny_holo': return 0.1;
-        case 'shiny': return 0.4 - 0.1; // P(0.1 <= rand < 0.4)
-        case 'holo': return 0.8 - 0.4; // P(0.4 <= rand < 0.8)
-        default: return 1.0 - 0.8; // P(rand >= 0.8)
+        case 'shiny': return 0.3;
+        case 'holo': return 0.4;
+        default: return 0.2;
       }
     }
     
@@ -369,12 +349,11 @@ function SammelkartenContent() {
     const pShiny = probs.shiny ?? 0.05;
     const pHolo = probs.holo ?? 0.15;
 
-    // Regular: if (rand < pBSH) bsh; if (rand < pShiny) shiny; if (rand < pHolo) holo
     switch (variant) {
       case 'black_shiny_holo': return pBSH;
-      case 'shiny': return pShiny - pBSH; // P(pBSH <= rand < pShiny)
-      case 'holo': return pHolo - pShiny; // P(pShiny <= rand < pHolo)
-      default: return 1.0 - pHolo; // P(rand >= pHolo)
+      case 'shiny': return pShiny - pBSH;
+      case 'holo': return pHolo - pShiny;
+      default: return 1.0 - pHolo;
     }
   }
 
@@ -408,19 +387,6 @@ function SammelkartenContent() {
 
   return (
     <div className="container mx-auto py-8">
-      {giftNotices.length > 0 && (
-        <GiftNoticeBanner
-          totalGiftPacks={totalGiftPacks}
-          titleText={giftNotices[0]?.popupTitle}
-          bodyText={giftNotices[0]?.popupBody}
-          customMessage={giftNotices[0]?.customMessage}
-          ctaLabel={giftNotices[0]?.ctaLabel}
-          ctaUrl={giftNotices[0]?.ctaUrl}
-          dismissLabel={giftNotices[0]?.dismissLabel}
-          onDismiss={handleDismissGiftNotices}
-        />
-      )}
-
       {view === 'sammelkarten' ? (
         <div className="flex flex-col items-center justify-center min-h-[calc(100vh-16rem)] overflow-hidden pb-[calc(env(safe-area-inset-bottom)+1rem)]">
           <div className="relative flex flex-col items-center space-y-8 sm:space-y-12 w-full max-w-4xl px-6">
@@ -525,9 +491,7 @@ function SammelkartenContent() {
                           )}
                           style={{ zIndex: isFlipped ? (result?.variant === 'black_shiny_holo' ? 50 : 30) : 20 }}
                         >
-                          {/* This outer div now has w-full to prevent layout collapse */}
                           <div className="w-full" onClick={() => !isFlipped && handleFlipCard(idx)}>
-                            {/* Black Shiny Void Effect */}
                             {isFlipped && result?.variant === 'black_shiny_holo' && (
                               <div className="absolute inset-[-24px] sm:inset-[-36px] z-0 pointer-events-none overflow-visible">
                                 <div className="absolute inset-0 bg-purple-600/20 blur-[60px] animate-pulse rounded-full" />
@@ -539,7 +503,6 @@ function SammelkartenContent() {
                             )}
 
                             <div className="relative w-full aspect-[2.5/3.5]">
-                              {/* Floating Status Badge (shown after flip) */}
                               {isFlipped && result && (
                                 <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-40 animate-in zoom-in duration-500">
                                   {result.variant === 'black_shiny_holo' ? (
@@ -560,7 +523,7 @@ function SammelkartenContent() {
                                 data={cardData}
                                 styleVariant="modern-flat"
                                 isFlippedExternally={isFlipped}
-                                interactive={false} // Card in booster view is never interactive on its own
+                                interactive={false}
                                 upgradeInfo={isFlipped && result?.isLevelUp ? { oldLevel: result.oldLevel!, newLevel: result.newLevel } : undefined}
                                 className="w-full h-auto"
                               />
@@ -603,7 +566,6 @@ function SammelkartenContent() {
                             : "bg-white/5 border-white/10 hover:bg-white/[0.08]"
                         )}
                       >
-                        {/* Pack Counter/Visual */}
                         <div className="flex-none flex flex-col items-center justify-center w-12 sm:w-16">
                            <div className={cn(
                               "relative w-full aspect-[2.5/3.5] rounded-lg border flex items-center justify-center shadow-inner overflow-hidden",
@@ -617,7 +579,6 @@ function SammelkartenContent() {
                            </div>
                         </div>
 
-                        {/* 3 Cards Preview */}
                         <div className="flex-1 grid grid-cols-3 gap-2 sm:gap-4">
                           {packData.teachers.map((teacher, cardIdx) => {
                             const result = massCollectionResults?.[packIdx]?.[cardIdx]
@@ -646,12 +607,11 @@ function SammelkartenContent() {
                         </div>
                       </motion.div>
                     ))}
-                    <div className="h-8" /> {/* Spacer */}
+                    <div className="h-8" />
                   </motion.div>
                 )}
               </AnimatePresence>
 
-              {/* Booster Pack (Rendered on top during idle/ripping) */}
               {(gameState === 'idle' || gameState === 'ripping') && (
                 <div 
                   className={cn(
@@ -672,9 +632,7 @@ function SammelkartenContent() {
                     </div>
                   )}
 
-                  {/* Pack Base with Zig-Zag Clip-Path */}
                   <div className="absolute inset-0 flex flex-col h-full w-full">
-                    {/* Top Part */}
                     <div 
                       className={cn(
                         "relative w-full h-1/3 z-20 transition-transform duration-700 ease-in-out overflow-hidden",
@@ -686,7 +644,6 @@ function SammelkartenContent() {
                         isGodpack ? "bg-neutral-950" : "bg-blue-600"
                       )} />
                       
-                      {/* Foil Texture Lines (Crimped Seal Effect) */}
                       <div className="absolute top-0 left-0 right-0 h-10 opacity-30 bg-[repeating-linear-gradient(90deg,transparent,transparent_2px,rgba(0,0,0,1)_2px,rgba(0,0,0,1)_4px)] border-b-2 border-black/20" />
                       
                       <div className="absolute inset-0 flex items-center justify-center pt-8">
@@ -699,7 +656,6 @@ function SammelkartenContent() {
                       </div>
                     </div>
 
-                    {/* Bottom Part */}
                     <div 
                       className={cn(
                         "relative w-full h-2/3 z-10 transition-transform duration-700 ease-in-out -mt-[1px] overflow-hidden",
@@ -711,10 +667,8 @@ function SammelkartenContent() {
                         isGodpack ? "bg-neutral-900" : "bg-blue-700"
                       )} />
                       
-                      {/* Bottom Seal Effect */}
                       <div className="absolute bottom-0 left-0 right-0 h-10 opacity-30 bg-[repeating-linear-gradient(90deg,transparent,transparent_2px,rgba(0,0,0,1)_2px,rgba(0,0,0,1)_4px)] border-t-2 border-black/20" />
 
-                      {/* Foil Shine Animation */}
                       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out pointer-events-none" />
 
                       <div className="relative z-10 flex flex-col items-center h-full w-full px-6 pt-10">
@@ -759,10 +713,7 @@ function SammelkartenContent() {
               )}
             </div>
 
-            {/* Actions */}
             <div className="flex flex-col gap-4 mt-8 w-full items-center">
-
-              {/* Action Buttons for Idle State */}
               {gameState === 'idle' && getRemainingBoosters() > 0 && (
                 <div className="flex flex-col sm:flex-row gap-4 items-center justify-center">
                   <Button
@@ -788,22 +739,18 @@ function SammelkartenContent() {
                 </div>
               )}
 
-              {/* Action Buttons for Revealed State */}
               {gameState === 'revealed' && (isMassOpening || allFlipped) && (
-
-              <div className="flex flex-col gap-3 w-full max-sm:max-w-[280px] sm:max-w-sm animate-in fade-in slide-in-from-bottom-4 duration-1000">
-                {!isMassOpening && showDebug && packProbs && (
-                  <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 mb-2 text-center">
-                    <p className="text-[10px] font-mono text-amber-200 uppercase tracking-widest mb-1">Pack-Wahrscheinlichkeit</p>
-                    <p className="text-xl font-black text-amber-500">{(packProbs.wholePackChance * 100).toPrecision(4)}%</p>
-                    <p className="text-[8px] text-amber-200/50 mt-1 font-mono">
-                      {isGodpack ? 'GODPACK FACTOR APPLIED' : 'REGULAR PACK PROBABILITY'}
-                    </p>
-                  </div>
-                )}
-                <Button 
-                  onClick={getRemainingBoosters() > 0 ? (isMassOpening ? handleOpenTenPacks : handleOpenPack) : () => setGameState('idle')}
-                  variant="outline"                    size="lg"
+                <div className="flex flex-col gap-3 w-full max-sm:max-w-[280px] sm:max-w-sm animate-in fade-in slide-in-from-bottom-4 duration-1000">
+                  {!isMassOpening && showDebug && packProbs && (
+                    <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 mb-2 text-center">
+                      <p className="text-[10px] font-mono text-amber-200 uppercase tracking-widest mb-1">Pack-Wahrscheinlichkeit</p>
+                      <p className="text-xl font-black text-amber-500">{(packProbs.wholePackChance * 100).toPrecision(4)}%</p>
+                    </div>
+                  )}
+                  <Button 
+                    onClick={getRemainingBoosters() > 0 ? (isMassOpening ? handleOpenTenPacks : handleOpenPack) : () => setGameState('idle')}
+                    variant="outline"
+                    size="lg"
                     className={cn(
                       "rounded-full px-8 border-2 transition-all duration-500 shadow-xl w-full",
                       getRemainingBoosters() > 0 

@@ -119,6 +119,19 @@ export const awardReferralBoosters = onDocumentWritten({
                 },
             }, { merge: true });
 
+            // Create notification for referred user
+            const referredGiftRef = referredRef.collection("unseen_gifts").doc();
+            transaction.set(referredGiftRef, {
+                packCount: 3,
+                popupTitle: "Willkommens-Bonus",
+                popupBody: "Du hast 3 Packs erhalten, weil du über einen Freunde-Link geworben wurdest!",
+                ctaLabel: "Packs öffnen",
+                ctaUrl: "/sammelkarten",
+                dismissLabel: "Gelesen",
+                createdAt: admin.firestore.FieldValue.serverTimestamp(),
+                createdBy: "system_referral",
+            });
+
             // Award boosters to referrer based on scaling and monthly cap
             if (allowedReward > 0) {
                 transaction.set(referrerRef, {
@@ -127,6 +140,19 @@ export const awardReferralBoosters = onDocumentWritten({
                     },
                 }, { merge: true });
                 console.log(`Awarded ${allowedReward} boosters to referrer ${referrerId}`);
+
+                // Create notification for referrer
+                const referrerGiftRef = referrerRef.collection("unseen_gifts").doc();
+                transaction.set(referrerGiftRef, {
+                    packCount: allowedReward,
+                    popupTitle: "Erfolgreich geworben!",
+                    popupBody: `Du hast ${allowedReward} Packs erhalten, weil ${after.full_name || 'ein Freund'} deinem Einladungs-Link gefolgt ist!`,
+                    ctaLabel: "Packs öffnen",
+                    ctaUrl: "/sammelkarten",
+                    dismissLabel: "Gelesen",
+                    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+                    createdBy: "system_referral",
+                });
             } else {
                 console.log(`Referrer ${referrerId} has reached monthly booster limit (Awarded: ${currentMonthAwarded}/30).`);
             }

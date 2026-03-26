@@ -6,6 +6,9 @@ import { Footer } from '@/components/layout/Footer'
 import { RandomCookieBanner } from '@/components/layout/RandomCookieBanner'
 import { DangerAlertBanner } from '@/components/layout/DangerAlertBanner'
 import { CustomPopupBanner } from '@/components/layout/CustomPopupBanner'
+import { useAuth } from '@/context/AuthContext'
+import { useGiftNotices } from '@/hooks/useGiftNotices'
+import { GiftNoticeBanner } from '@/components/dashboard/GiftNoticeBanner'
 
 interface AppShellProps {
   children: React.ReactNode
@@ -15,6 +18,8 @@ const authRoutes = new Set(['/login', '/register', '/waiting'])
 
 export function AppShell({ children }: AppShellProps) {
   const pathname = usePathname()
+  const { user } = useAuth()
+  const { giftNotices, totalGiftPacks, dismissGiftNotices } = useGiftNotices(user?.uid)
   const isAuthRoute = authRoutes.has(pathname)
 
   if (isAuthRoute) {
@@ -38,6 +43,20 @@ export function AppShell({ children }: AppShellProps) {
         </main>
         <Footer />
       </div>
+
+      {giftNotices.length > 0 && (
+        <GiftNoticeBanner
+          totalGiftPacks={totalGiftPacks}
+          titleText={giftNotices[0]?.popupTitle}
+          bodyText={giftNotices[0]?.popupBody}
+          customMessage={giftNotices[0]?.customMessage}
+          ctaLabel={giftNotices[0]?.ctaLabel}
+          ctaUrl={giftNotices[0]?.ctaUrl}
+          dismissLabel={giftNotices[0]?.dismissLabel}
+          onDismiss={dismissGiftNotices}
+        />
+      )}
+
       <RandomCookieBanner />
       <CustomPopupBanner />
     </div>

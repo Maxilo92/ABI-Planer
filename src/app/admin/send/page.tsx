@@ -245,12 +245,12 @@ function AdminSendContent() {
             </CardHeader>
             <CardContent>
               <Tabs value={popupActionType} onValueChange={(v) => setPopupActionType(v as PopupActionType)} className="w-full">
-                <TabsList className="grid w-full grid-cols-2 h-12 mb-8 bg-muted/50 p-1">
-                  <TabsTrigger value="gift" className="gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                <TabsList className="grid w-fit grid-cols-2 h-12 mb-8 bg-muted/50 p-1">
+                  <TabsTrigger value="gift" className="gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm px-6">
                     <Gift className="h-4 w-4" />
                     Packs verschenken
                   </TabsTrigger>
-                  <TabsTrigger value="multicast" className="gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                  <TabsTrigger value="multicast" className="gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm px-6">
                     <MessageSquare className="h-4 w-4" />
                     Multicast Nachricht
                   </TabsTrigger>

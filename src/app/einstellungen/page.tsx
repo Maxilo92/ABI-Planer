@@ -437,58 +437,34 @@ export default function SettingsPage() {
         <p className="text-muted-foreground mt-1">Hier findest du persönliche Optionen, ohne den Header zu überladen.</p>
       </div>
 
-      <Tabs defaultValue="account" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 lg:flex lg:w-fit">
-          <TabsTrigger value="account">Konto</TabsTrigger>
-          <TabsTrigger value="preferences">Anpassung</TabsTrigger>
+      <Tabs defaultValue="general" className="w-full">
+        <TabsList className="flex w-fit">
+          <TabsTrigger value="general">Allgemein</TabsTrigger>
+          <TabsTrigger value="account">Konto & Boni</TabsTrigger>
           {canManageCourses && <TabsTrigger value="admin">Verwaltung</TabsTrigger>}
         </TabsList>
 
-        <TabsContent value="account" className="space-y-6 mt-6">
+        <TabsContent value="general" className="space-y-6 mt-6">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-xl">
-                <User className="h-5 w-5" /> Konto
+                <User className="h-5 w-5" /> Profil
               </CardTitle>
-              <CardDescription>Profil ansehen und abmelden.</CardDescription>
+              <CardDescription>Dein öffentliches Profil ansehen und bearbeiten.</CardDescription>
             </CardHeader>
-            <CardContent className="flex flex-col sm:flex-row gap-3">
+            <CardContent>
               <Button
                 variant="outline"
+                className="w-full sm:w-auto"
                 render={
-                  <Link href="/profil" className="w-full sm:w-auto">
+                  <Link href="/profil">
                     Profil öffnen
                   </Link>
                 }
               />
-              <Button variant="destructive" onClick={handleSignOut} className="w-full sm:w-auto gap-2">
-                <LogOut className="h-4 w-4" /> Abmelden
-              </Button>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-xl">
-                <Sparkles className="h-5 w-5 text-primary" /> Freunde einladen
-              </CardTitle>
-              <CardDescription>Sammle Bonus-Booster für dich und deine Freunde.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button 
-                variant="outline" 
-                className="w-full sm:w-auto gap-2"
-                render={
-                  <Link href="/einstellungen/referrals">
-                    <Users className="h-4 w-4" /> Einladungs-Dashboard öffnen
-                  </Link>
-                }
-              />
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="preferences" className="space-y-6 mt-6">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-xl">
@@ -510,6 +486,42 @@ export default function SettingsPage() {
             </CardHeader>
             <CardContent>
               <AddFeedbackDialog />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="account" className="space-y-6 mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-xl">
+                <Sparkles className="h-5 w-5 text-primary" /> Freunde einladen
+              </CardTitle>
+              <CardDescription>Sammle Bonus-Booster für dich und deine Freunde.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button 
+                variant="outline" 
+                className="w-full sm:w-auto gap-2"
+                render={
+                  <Link href="/einstellungen/referrals">
+                    <Users className="h-4 w-4" /> Einladungs-Dashboard öffnen
+                  </Link>
+                }
+              />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-xl">
+                <LogOut className="h-5 w-5 text-destructive" /> Abmelden
+              </CardTitle>
+              <CardDescription>Beende deine aktuelle Sitzung auf diesem Gerät.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button variant="destructive" onClick={handleSignOut} className="w-full sm:w-auto gap-2">
+                <LogOut className="h-4 w-4" /> Abmelden
+              </Button>
             </CardContent>
           </Card>
         </TabsContent>
