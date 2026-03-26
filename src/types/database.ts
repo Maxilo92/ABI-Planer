@@ -45,6 +45,8 @@ export interface Profile {
     extra_boosters_claimed?: boolean;
     total_opened?: number;
   } | null;
+  referral_code: string;
+  referred_by: string | null;
 }
 
 export interface UserSecret {

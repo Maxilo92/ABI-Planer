@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
-import { MoreVertical, Shield, User, Trash2, Clock3, Undo2, Search, Gift } from 'lucide-react'
+import { MoreVertical, Shield, User, Trash2, Clock3, Undo2, Search, Gift, MessageSquare } from 'lucide-react'
 import { ResetPasswordDialog } from '@/components/modals/ResetPasswordDialog'
 import { useAuth } from '@/context/AuthContext'
 import { useRouter } from 'next/navigation'
@@ -19,8 +19,6 @@ import { logAction } from '@/lib/logging'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
-import { functions } from '@/lib/firebase'
-import { httpsCallable } from 'firebase/functions'
 import {
   Dialog,
   DialogContent,
@@ -45,15 +43,6 @@ export default function AdminPage() {
   const [profiles, setProfiles] = useState<Profile[]>([])
   const [userSearch, setUserSearch] = useState('')
   const [selectedGiftRecipients, setSelectedGiftRecipients] = useState<string[]>([])
-  const [giftPackCount, setGiftPackCount] = useState(1)
-  const [giftMessage, setGiftMessage] = useState('Ihr habt neue Packs geschenkt bekommen. Viel Spaß beim Öffnen!')
-  const [giftPopupTitle, setGiftPopupTitle] = useState('Neue Pack-Schenkung')
-  const [giftPopupBody, setGiftPopupBody] = useState('Du hast zusätzliche Packs erhalten.')
-  const [giftCtaLabel, setGiftCtaLabel] = useState('Zu den Packs')
-  const [giftCtaUrl, setGiftCtaUrl] = useState('/sammelkarten')
-  const [giftDismissLabel, setGiftDismissLabel] = useState('Gelesen')
-  const [isGiftDialogOpen, setIsGiftDialogOpen] = useState(false)
-  const [giftSending, setGiftSending] = useState(false)
   const [isBulkDialogOpen, setIsBulkDialogOpen] = useState(false)
   const [bulkAction, setBulkAction] = useState<BulkActionType>('approve')
   const [bulkCourse, setBulkCourse] = useState('')
@@ -210,7 +199,7 @@ export default function AdminPage() {
     p.email?.toLowerCase().includes(userSearch.toLowerCase())
   )
 
-  const selectableProfiles = filteredProfiles.filter((entry) => entry.id !== profile.id)
+  const selectableProfiles = filteredProfiles
   const allVisibleSelected = selectableProfiles.length > 0 && selectableProfiles.every((entry) => selectedGiftRecipients.includes(entry.id))
 
   const toggleRecipient = (userId: string, checked: boolean) => {
@@ -231,83 +220,6 @@ export default function AdminPage() {
 
     const visibleIds = new Set(selectableProfiles.map((entry) => entry.id))
     setSelectedGiftRecipients((prev) => prev.filter((id) => !visibleIds.has(id)))
-  }
-
-  const handleGiftPacks = async () => {
-    if (!user || selectedGiftRecipients.length === 0) return
-
-    const normalizedPopupTitle = giftPopupTitle.trim()
-    const normalizedPopupBody = giftPopupBody.trim()
-    const normalizedCtaLabel = giftCtaLabel.trim()
-    const normalizedCtaUrl = giftCtaUrl.trim()
-    const normalizedDismissLabel = giftDismissLabel.trim()
-    const trimmedMessage = giftMessage.trim() || normalizedPopupBody
-
-    if (!normalizedPopupTitle || !normalizedPopupBody || !normalizedCtaLabel || !normalizedDismissLabel) {
-      toast.error('Bitte alle Popup-Texte ausfüllen.')
-      return
-    }
-
-    if (!normalizedCtaUrl.startsWith('/')) {
-      toast.error('Der Link muss mit "/" beginnen, z.B. /sammelkarten')
-      return
-    }
-
-    const normalizedPackCount = Math.floor(giftPackCount)
-    if (normalizedPackCount < 0) {
-      toast.error('Packs pro Person darf nicht negativ sein.')
-      return
-    }
-
-    setGiftSending(true)
-    try {
-      const giftBoosterPack = httpsCallable(functions, 'giftBoosterPack')
-      const response = await giftBoosterPack({
-        userIds: selectedGiftRecipients,
-        packCount: normalizedPackCount,
-        customMessage: trimmedMessage,
-        popupTitle: normalizedPopupTitle,
-        popupBody: normalizedPopupBody,
-        ctaLabel: normalizedCtaLabel,
-        ctaUrl: normalizedCtaUrl,
-        dismissLabel: normalizedDismissLabel,
-      })
-
-      const payload = (response.data || {}) as { giftedCount?: number; failedUserIds?: string[] }
-      const giftedCount = payload.giftedCount || 0
-      const failedCount = (payload.failedUserIds || []).length
-
-      await logAction('BOOSTER_GIFT_SENT', user.uid, profile?.full_name, {
-        recipients: selectedGiftRecipients,
-        pack_count: normalizedPackCount,
-        message: trimmedMessage,
-        popup_title: normalizedPopupTitle,
-        popup_body: normalizedPopupBody,
-        cta_label: normalizedCtaLabel,
-        cta_url: normalizedCtaUrl,
-        dismiss_label: normalizedDismissLabel,
-        gifted_count: giftedCount,
-        failed_count: failedCount,
-      })
-
-      if (failedCount > 0) {
-        toast.warning(`${giftedCount} Nutzer benachrichtigt, ${failedCount} fehlgeschlagen.`)
-      } else {
-        toast.success(
-          normalizedPackCount > 0
-            ? `${giftedCount} Nutzer erfolgreich beschenkt.`
-            : `${giftedCount} Nutzer erfolgreich benachrichtigt.`
-        )
-      }
-
-      setSelectedGiftRecipients([])
-      setIsGiftDialogOpen(false)
-    } catch (error) {
-      console.error('Error gifting booster packs:', error)
-      toast.error('Schenkung konnte nicht ausgeführt werden.')
-    } finally {
-      setGiftSending(false)
-    }
   }
 
   const handleBulkAction = async () => {
@@ -405,6 +317,10 @@ export default function AdminPage() {
     }
   }
 
+  const openSinglePopup = (userId: string) => {
+    router.push("/admin/send?u=" + userId)
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -455,7 +371,10 @@ export default function AdminPage() {
               Massenaktion
             </Button>
             <Button
-              onClick={() => setIsGiftDialogOpen(true)}
+              onClick={() => {
+                sessionStorage.setItem('admin_send_recipients', JSON.stringify(selectedGiftRecipients))
+                router.push('/admin/send')
+              }}
               disabled={selectedGiftRecipients.length === 0}
               className="gap-2 w-full"
             >
@@ -500,7 +419,6 @@ export default function AdminPage() {
                         checked={selectedGiftRecipients.includes(p.id)}
                         onCheckedChange={(checked) => toggleRecipient(p.id, checked === true)}
                         aria-label={`Nutzer ${p.full_name || p.email} auswählen`}
-                        disabled={p.id === profile.id}
                       />
                     </TableCell>
                     <TableCell className="font-medium">
@@ -555,35 +473,38 @@ export default function AdminPage() {
                           <DropdownMenu>
                             <DropdownMenuTrigger
                               render={
-                                <Button variant="ghost" size="icon" disabled={!canManageRoleActions}>
+                                <Button variant="ghost" size="icon">
                                   <MoreVertical className="h-4 w-4" />
                                 </Button>
                               }
                             />
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => handleUpdateProfile(p.id, { role: 'admin' })}>
+                              <DropdownMenuItem onClick={() => openSinglePopup(p.id)}>
+                                <MessageSquare className="mr-2 h-4 w-4" /> Popup senden
+                              </DropdownMenuItem>
+                              <DropdownMenuItem disabled={!canManageRoleActions} onClick={() => handleUpdateProfile(p.id, { role: 'admin' })}>
                                 <Shield className="mr-2 h-4 w-4" /> Zum Admin
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleUpdateProfile(p.id, { role: 'admin_co' })}>
+                              <DropdownMenuItem disabled={!canManageRoleActions} onClick={() => handleUpdateProfile(p.id, { role: 'admin_co' })}>
                                 <Shield className="mr-2 h-4 w-4" /> Zum Co-Admin
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleUpdateProfile(p.id, { role: 'planner' })}>
+                              <DropdownMenuItem disabled={!canManageRoleActions} onClick={() => handleUpdateProfile(p.id, { role: 'planner' })}>
                                 <Shield className="mr-2 h-4 w-4" /> Zum Planer
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleUpdateProfile(p.id, { role: 'viewer' })}>
+                              <DropdownMenuItem disabled={!canManageRoleActions} onClick={() => handleUpdateProfile(p.id, { role: 'viewer' })}>
                                 <User className="mr-2 h-4 w-4" /> Zum Zuschauer
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleSetTimeout(p.id, 24)}>
+                              <DropdownMenuItem disabled={!canManageRoleActions} onClick={() => handleSetTimeout(p.id, 24)}>
                                 <Clock3 className="mr-2 h-4 w-4" /> Timeout 24h
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleSetTimeout(p.id, 24 * 7)}>
+                              <DropdownMenuItem disabled={!canManageRoleActions} onClick={() => handleSetTimeout(p.id, 24 * 7)}>
                                 <Clock3 className="mr-2 h-4 w-4" /> Timeout 7 Tage
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleClearTimeout(p.id)}>
+                              <DropdownMenuItem disabled={!canManageRoleActions} onClick={() => handleClearTimeout(p.id)}>
                                 <Undo2 className="mr-2 h-4 w-4" /> Timeout aufheben
                               </DropdownMenuItem>
                               <ResetPasswordDialog userEmail={p.email} userName={p.full_name || 'User'} />
-                              <DropdownMenuItem className="text-destructive" onClick={() => handleDeleteProfile(p.id)}>
+                              <DropdownMenuItem className="text-destructive" disabled={!canManageRoleActions} onClick={() => handleDeleteProfile(p.id)}>
                                 <Trash2 className="mr-2 h-4 w-4" /> Löschen
                               </DropdownMenuItem>
                             </DropdownMenuContent>
@@ -612,7 +533,6 @@ export default function AdminPage() {
                         checked={selectedGiftRecipients.includes(p.id)}
                         onCheckedChange={(checked) => toggleRecipient(p.id, checked === true)}
                         aria-label={`Nutzer ${p.full_name || p.email} auswählen`}
-                        disabled={p.id === profile.id}
                         className="mt-1"
                       />
                       <div>
@@ -629,35 +549,38 @@ export default function AdminPage() {
                       <DropdownMenu>
                         <DropdownMenuTrigger
                           render={
-                            <Button variant="ghost" size="icon" className="h-8 w-8" disabled={!canManageRoleActions}>
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
                               <MoreVertical className="h-4 w-4" />
                             </Button>
                           }
                         />
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleUpdateProfile(p.id, { role: 'admin' })}>
+                          <DropdownMenuItem onClick={() => openSinglePopup(p.id)}>
+                            <MessageSquare className="mr-2 h-4 w-4" /> Popup senden
+                          </DropdownMenuItem>
+                          <DropdownMenuItem disabled={!canManageRoleActions} onClick={() => handleUpdateProfile(p.id, { role: 'admin' })}>
                             <Shield className="mr-2 h-4 w-4" /> Zum Admin
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleUpdateProfile(p.id, { role: 'admin_co' })}>
+                          <DropdownMenuItem disabled={!canManageRoleActions} onClick={() => handleUpdateProfile(p.id, { role: 'admin_co' })}>
                             <Shield className="mr-2 h-4 w-4" /> Zum Co-Admin
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleUpdateProfile(p.id, { role: 'planner' })}>
+                          <DropdownMenuItem disabled={!canManageRoleActions} onClick={() => handleUpdateProfile(p.id, { role: 'planner' })}>
                             <Shield className="mr-2 h-4 w-4" /> Zum Planer
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleUpdateProfile(p.id, { role: 'viewer' })}>
+                          <DropdownMenuItem disabled={!canManageRoleActions} onClick={() => handleUpdateProfile(p.id, { role: 'viewer' })}>
                             <User className="mr-2 h-4 w-4" /> Zum Zuschauer
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleSetTimeout(p.id, 24)}>
+                          <DropdownMenuItem disabled={!canManageRoleActions} onClick={() => handleSetTimeout(p.id, 24)}>
                             <Clock3 className="mr-2 h-4 w-4" /> Timeout 24h
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleSetTimeout(p.id, 24 * 7)}>
+                          <DropdownMenuItem disabled={!canManageRoleActions} onClick={() => handleSetTimeout(p.id, 24 * 7)}>
                             <Clock3 className="mr-2 h-4 w-4" /> Timeout 7 Tage
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleClearTimeout(p.id)}>
+                          <DropdownMenuItem disabled={!canManageRoleActions} onClick={() => handleClearTimeout(p.id)}>
                             <Undo2 className="mr-2 h-4 w-4" /> Timeout aufheben
                           </DropdownMenuItem>
                           <ResetPasswordDialog userEmail={p.email} userName={p.full_name || 'User'} />
-                          <DropdownMenuItem className="text-destructive" onClick={() => handleDeleteProfile(p.id)}>
+                          <DropdownMenuItem className="text-destructive" disabled={!canManageRoleActions} onClick={() => handleDeleteProfile(p.id)}>
                             <Trash2 className="mr-2 h-4 w-4" /> Löschen
                           </DropdownMenuItem>
                         </DropdownMenuContent>
@@ -705,101 +628,6 @@ export default function AdminPage() {
           </div>
         </CardContent>
       </Card>
-
-      <Dialog open={isGiftDialogOpen} onOpenChange={setIsGiftDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Popup senden</DialogTitle>
-            <DialogDescription>
-              Die ausgewählten Nutzer sehen die Nachricht als Popup. Mit 0 Packs wird nur eine Nachricht versendet.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="space-y-2">
-              <Label htmlFor="gift-pack-count">Packs pro Person</Label>
-              <Input
-                id="gift-pack-count"
-                type="number"
-                min={0}
-                max={50}
-                value={giftPackCount}
-                onChange={(e) => {
-                  const parsed = Number(e.target.value)
-                  setGiftPackCount(Number.isFinite(parsed) ? parsed : 0)
-                }}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="gift-message">Zusatznachricht (optional)</Label>
-              <Input
-                id="gift-message"
-                value={giftMessage}
-                onChange={(e) => setGiftMessage(e.target.value)}
-                maxLength={200}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="gift-popup-title">Popup-Titel</Label>
-              <Input
-                id="gift-popup-title"
-                value={giftPopupTitle}
-                onChange={(e) => setGiftPopupTitle(e.target.value)}
-                maxLength={80}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="gift-popup-body">Popup-Haupttext</Label>
-              <Input
-                id="gift-popup-body"
-                value={giftPopupBody}
-                onChange={(e) => setGiftPopupBody(e.target.value)}
-                maxLength={200}
-              />
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <Label htmlFor="gift-popup-cta-label">Link-Text</Label>
-                <Input
-                  id="gift-popup-cta-label"
-                  value={giftCtaLabel}
-                  onChange={(e) => setGiftCtaLabel(e.target.value)}
-                  maxLength={40}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="gift-popup-dismiss-label">Schließen-Text</Label>
-                <Input
-                  id="gift-popup-dismiss-label"
-                  value={giftDismissLabel}
-                  onChange={(e) => setGiftDismissLabel(e.target.value)}
-                  maxLength={30}
-                />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="gift-popup-cta-url">Link-Ziel</Label>
-              <Input
-                id="gift-popup-cta-url"
-                value={giftCtaUrl}
-                onChange={(e) => setGiftCtaUrl(e.target.value)}
-                placeholder="/sammelkarten"
-                maxLength={120}
-              />
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Empfänger: {selectedGiftRecipients.length}
-            </p>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsGiftDialogOpen(false)} disabled={giftSending}>
-              Abbrechen
-            </Button>
-            <Button onClick={handleGiftPacks} disabled={giftSending || selectedGiftRecipients.length === 0}>
-              {giftSending ? 'Sende...' : 'Jetzt senden'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       <Dialog open={isBulkDialogOpen} onOpenChange={setIsBulkDialogOpen}>
         <DialogContent>

@@ -2,12 +2,12 @@
 
 import { useEffect, useState } from 'react'
 import { db } from '@/lib/firebase'
-import { collection, doc, getDocs, updateDoc, arrayUnion, setDoc, getDoc, runTransaction } from 'firebase/firestore'
+import { collection, doc, getDocs, arrayUnion, setDoc, getDoc, runTransaction, increment } from 'firebase/firestore'
 import { useAuth } from '@/context/AuthContext'
-import { Teacher, LootTeacher } from '@/types/database'
+import { Teacher, LootTeacher, Profile } from '@/types/database'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Star, Loader2, Sparkles, CheckCircle2, Lock } from 'lucide-react'
+import { Star, Loader2, Sparkles, CheckCircle2, Lock, Gift } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { logAction } from '@/lib/logging'
@@ -117,7 +117,12 @@ export function TeacherRarityVoting({ onStatusChange }: { onStatusChange?: (fini
       await runTransaction(db, async (transaction) => {
         // A. Read current teacher aggregate
         const teacherRef = doc(db, 'teachers', teacher.id)
-        const teacherSnap = await transaction.get(teacherRef)
+        const profileRef = doc(db, 'profiles', user.uid)
+        
+        const [teacherSnap, profileSnap] = await Promise.all([
+          transaction.get(teacherRef),
+          transaction.get(profileRef)
+        ])
 
         const currentVoteCount = teacherSnap.exists() ? (teacherSnap.data().vote_count || 0) : 0
         const currentAvg = teacherSnap.exists() ? (teacherSnap.data().avg_rating || 0) : 0
@@ -125,7 +130,25 @@ export function TeacherRarityVoting({ onStatusChange }: { onStatusChange?: (fini
         const newVoteCount = currentVoteCount + 1
         const newAvg = (currentTotal + rating) / newVoteCount
 
-        // B. Save individual rating
+        // B. Reward Logic
+        const ratedTeachers = (profileSnap.data()?.rated_teachers || []) as string[]
+        const newRatedCount = ratedTeachers.length + 1
+        let awardPack = false
+
+        // First vote ever
+        if (newRatedCount === 1) awardPack = true
+        // 5th vote
+        else if (newRatedCount === 5) awardPack = true
+        // Every 10 votes after 5 (15, 25, 35...)
+        else if (newRatedCount > 5 && (newRatedCount - 5) % 10 === 0) awardPack = true
+
+        if (awardPack) {
+          transaction.update(profileRef, {
+            'booster_stats.extra_available': increment(1)
+          })
+        }
+
+        // C. Save individual rating
         const ratingRef = doc(db, 'teacher_ratings', voteId)
         transaction.set(ratingRef, {
           userId: user.uid,
@@ -134,18 +157,25 @@ export function TeacherRarityVoting({ onStatusChange }: { onStatusChange?: (fini
           created_at: new Date().toISOString()
         })
 
-        // C. Update user profile (rated_teachers)
-        const profileRef = doc(db, 'profiles', user.uid)
+        // D. Update user profile (rated_teachers)
         transaction.update(profileRef, {
           rated_teachers: arrayUnion(teacher.id)
         })
 
-        // D. Update teacher aggregate
+        // E. Update teacher aggregate
         transaction.set(teacherRef, {
           name: teacher.name,
           avg_rating: newAvg,
           vote_count: newVoteCount,
         }, { merge: true })
+
+        return { awardPack }
+      }).then((result) => {
+        if (result?.awardPack) {
+          toast.success('Du hast 1 Booster-Pack als Belohnung erhalten!', {
+            icon: <Gift className="h-4 w-4 text-primary" />
+          })
+        }
       })
 
       if (user) {

@@ -1,10 +1,10 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { auth, db } from '@/lib/firebase'
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth'
 import { doc, setDoc, collection, getDocs, limit, query, getDoc } from 'firebase/firestore'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -13,7 +13,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import Link from 'next/link'
 import { logAction } from '@/lib/logging'
 
-export default function RegisterPage() {
+function RegisterForm() {
   const [step, setStep] = useState<1 | 2 | 3>(1)
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
@@ -26,6 +26,8 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const ref = searchParams.get('ref')
 
   useEffect(() => {
     const loadCourses = async () => {
@@ -160,6 +162,8 @@ export default function RegisterPage() {
           terms_version: '2026-03-20',
           accepted_at: new Date().toISOString(),
         },
+        referral_code: user.uid.slice(0, 8), // Unique code for sharing
+        referred_by: ref || null, // Capture invitation source
       })
 
       // ACCOUNT_CREATED Log (garantiert mit Name)
@@ -368,5 +372,17 @@ export default function RegisterPage() {
         </form>
       </Card>
     </div>
+  )
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    }>
+      <RegisterForm />
+    </Suspense>
   )
 }

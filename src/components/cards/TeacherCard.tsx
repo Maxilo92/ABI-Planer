@@ -47,8 +47,8 @@ const Particle = React.memo(({ delay }: { delay: number }) => {
       }}
       className="absolute bg-yellow-400 rounded-sm will-change-transform"
       style={{ 
-        width: `${randoms.size}cqw`, 
-        height: `${randoms.size}cqw`,
+        width: `${2 + randoms.size * 1.4}px`, 
+        height: `${2 + randoms.size * 1.4}px`,
         boxShadow: '0 0 10px rgba(255,215,0,0.5)'
       }}
     />
@@ -66,7 +66,7 @@ export const TeacherCard: React.FC<TeacherCardProps> = ({
   interactive = true,
   upgradeInfo
 }) => {
-  const [isFlippedInternally, setIsFlippedInternally] = useState(isFlippedExternally ?? true);
+  const [isFlippedInternally, setIsFlippedInternally] = useState(isFlippedExternally ?? false);
   const [prevExternal, setPrevExternal] = useState(isFlippedExternally);
   
   useEffect(() => {
@@ -136,10 +136,10 @@ export const TeacherCard: React.FC<TeacherCardProps> = ({
           headerIcon: "w-[18cqw] h-[18cqw]",
           header: (isBlckShiny || isGlass || isShiny) ? (isShiny ? "text-slate-600" : "text-white") : "text-black",
           text: cn(
-            "font-sans uppercase font-black tracking-tighter text-[12cqw] leading-[0.85] break-words w-full",
-            isBlckShiny ? "text-transparent bg-clip-text bg-gradient-to-b from-white to-purple-200 drop-shadow-[0_0_3cqw_rgba(147,51,234,0.8)]" : 
+            "font-sans uppercase font-black tracking-tighter text-[11cqw] leading-[0.85] break-words w-full",
+            isBlckShiny ? "text-transparent bg-clip-text bg-gradient-to-b from-white to-purple-200 drop-shadow-[0_0_10px_rgba(147,51,234,0.8)]" : 
             (isShiny ? "text-slate-800 drop-shadow-[0_2px_2px_rgba(255,255,255,0.8)]" : 
-            (isGlass ? "text-white drop-shadow-[0_0_2cqw_rgba(255,255,255,0.4)]" : "text-black"))
+            (isGlass ? "text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.4)]" : "text-black"))
           ),
           border: "", 
           bgOverlay: isBlckShiny ? "bg-black/40" : (isShiny ? "bg-white/30" : (isGlass ? "bg-transparent" : "bg-white/5")),
@@ -147,7 +147,7 @@ export const TeacherCard: React.FC<TeacherCardProps> = ({
             "px-[2cqw] py-[0.5cqw] text-[3.5cqw] font-black rounded-[0.5cqw] transform rotate-1 border-[0.3cqw] border-black shadow-[0.5cqw_0.5cqw_0px_0px_rgba(0,0,0,1)]",
             (isBlckShiny || isGlass || isShiny) ? "bg-white text-black" : "bg-black text-white"
           ),
-          numberPos: "bottom-[8cqw] left-[8cqw]",
+          numberPos: "top-[8cqw] right-[8cqw]",
           rarityPos: "bottom-[8cqw] right-[8cqw]",
           raritySize: "14cqw"
         };
@@ -158,7 +158,7 @@ export const TeacherCard: React.FC<TeacherCardProps> = ({
           iconWrapper: "bg-white/30 rounded-full w-[35cqw] h-[35cqw] flex items-center justify-center",
           headerIcon: "w-[18cqw] h-[18cqw]",
           header: "text-white",
-          text: "text-white font-sans font-black text-[12cqw]",
+          text: "text-white font-sans font-black text-[11cqw] leading-[0.9]",
           border: "border-[2cqw]",
           bgOverlay: "bg-white/10",
           numberTag: "bg-white/20 text-white px-[2cqw] py-[0.5cqw] text-[3cqw] font-black rounded-full",
@@ -174,6 +174,7 @@ export const TeacherCard: React.FC<TeacherCardProps> = ({
   return (
     <div
       className={cn("relative aspect-[2.5/3.5] perspective-1000 @container", className, interactive && "cursor-pointer")}
+      style={{ containerType: 'inline-size' }}
       onClick={() => {
         if (interactive && !isLocked) {
           setIsFlippedInternally(!isFlippedInternally);
@@ -194,7 +195,7 @@ export const TeacherCard: React.FC<TeacherCardProps> = ({
               "border-[2cqw] border-white/20 bg-neutral-950 shadow-2xl rounded-[10cqw]",
               isLocked ? "grayscale-[0.5] opacity-90" : ""
             )}
-            style={{ transform: "rotateY(180deg) translateZ(1px)" }}
+            style={{ transform: "rotateY(180deg) translateZ(0.5px)" }}
           >
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.05)_0%,transparent_70%)]" />
             <CardEffectOverlay variant="normal" tintColor="#000000" />
@@ -239,7 +240,7 @@ export const TeacherCard: React.FC<TeacherCardProps> = ({
               )}
               style={{ 
                 backgroundColor: isBlckShiny ? '#0a0a0a' : (isGlass ? data.color : data.color),
-                transform: "translateZ(1px)"
+                transform: "translateZ(0.5px)"
               }}
             >
               <CardEffectOverlay variant={data.variant} tintColor={data.color} />

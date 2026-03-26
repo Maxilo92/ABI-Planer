@@ -1,5 +1,37 @@
 # Changelog
 
+## [0.26.33] - 2026-03-26
+- Feature: **Freunde-werben-Freunde Programm eingeführt**. Nutzer können nun über ihr Einstellungs-Dashboard Freunde einladen.
+    - Jeder Nutzer erhält einen persönlichen Einladungs-Code (`/r/XXXXXX`).
+    - Neue Nutzer können bei der Registrierung über einen Empfehlungs-Link automatisch zugeordnet werden.
+    - Sowohl der Werber als auch der Geworbene erhalten Belohnungen (Booster-Packs) für erfolgreiche Registrierungen.
+- Feature: **Referral Dashboard**. Eine neue Seite unter `/einstellungen/referrals` zeigt den aktuellen Status, eingeladene Freunde und verdiente Belohnungen an.
+- Feature: **Integrierte Registrierungs-Abläufe**. Das Registrierungs-Formular unterstützt nun `Suspense` für stabilere Abfragen von URL-Parametern (`?ref=...`).
+
+## [0.26.32] - 2026-03-26
+- Refactor: **Popup senden in eigene Unterseite ausgelagert**. Das komplexe Modal zum Versenden von Popups und Packs in der Benutzerverwaltung wurde entfernt. Alle entsprechenden Aktionen ("Popup senden" einzeln oder als Massenaktion) leiten nun nahtlos auf die dedizierte "Kommunikations-Zentrale" (`/admin/send`) weiter.
+- Feature: **Admin Main Schnellauswahl auf Sendeseite**. Auf der `/admin/send` Seite wurde ein Button hinzugefügt, um Haupt-Administratoren mit einem Klick zur Empfängerliste hinzuzufügen.
+
+## [0.26.31] - 2026-03-26
+- Feature: **Belohnungssystem für Umfragen eingeführt**. Nutzer erhalten nun für jede erste Teilnahme an einer regulären Umfrage (z.B. Motto, Menü) sofort 1 zusätzliches Booster-Pack als Dankeschön.
+- Feature: **Belohnungen für Lehrer-Bewertungen (Crowdsourced Rarity)**. Um die Beteiligung bei der Festlegung der offiziellen Kartenseltenheiten zu fördern, erhalten Nutzer nun Booster-Packs für ihre Bewertungen:
+    - 1 Pack für die allererste Bewertung.
+    - 1 Pack für die 5. Bewertung.
+    - Danach 1 Pack für jede weiteren 10 Bewertungen (15, 25, 35...).
+- Improvement: **Transaktionssichere Belohnungsvergabe**. Alle Belohnungen werden über atomare Firestore-Transaktionen vergeben, um Konsistenz sicherzustellen und Missbrauch zu verhindern.
+
+## [0.26.30] - 2026-03-26
+- Feature: **Admin-Popup-System umfassend überarbeitet**. Das Senden von Popups an Nutzer wurde in "Pack-Schenkungen" und "Multicast-Nachrichten" aufgeteilt, um die Unterscheidung zwischen Belohnungen und reinen Informationen zu erleichtern.
+- Feature: **Live-Vorschau für Admin-Popups**. Im Sendedialog wird nun eine Echtzeit-Vorschau des finalen Popups (inkl. Titel, Text, Icons und Buttons) angezeigt, damit Admins das Ergebnis vor dem Versand prüfen können.
+- Feature: **Nutzer-Kontextmenü in der Admin-Verwaltung erweitert**. "Popup senden" ist nun direkt über das Aktions-Menü (3 Punkte) jedes einzelnen Nutzers erreichbar.
+- Fix: **Layout-Kollaps in Dropdown-Menüs behoben**. Dropdown-Menüs (Kontextmenüs) in der Benutzerverwaltung wurden "entquetscht" und nutzen nun eine angemessene Mindestbreite, auch wenn sie durch kleine Icons ausgelöst werden.
+- Feature: **Admin Main-Schnellauswahl**. Im Popup-Dialog wurde eine Schaltfläche hinzugefügt, um den Hauptadministrator ("admin_main") mit einem Klick zur Empfängerliste hinzuzufügen.
+
+## [0.26.29] - 2026-03-26
+- Refactor: **Alte Karten-Skalierungslogik vollständig ersetzt**. Die `TeacherCard`-Komponente nutzt kein `cqw` mehr in instabilen Umgebungen, sondern ein neues Prozent-/`clamp`-basiertes Layoutsystem für Abstände, Icons und Typografie (unterstützt durch explizites `container-type: inline-size`). Dadurch bleibt das Kartendesign bei unterschiedlichen Bildschirmgrößen stabil, ohne Deformationen.
+- Fix: **Kartenöffnung (Reveal) auf Smartphones stabilisiert**. Das redundante Back-Overlay in `page.tsx` wurde entfernt und ein Layout-Kollaps behoben, der Karten auf 0px Breite schrumpfen ließ; stattdessen nutzt die `TeacherCard` nun einen nativen 3D-Flip-Effekt (`preserve-3d`, `backface-hidden`). Das verhindert das Verschwinden von Karten beim Aufdecken auf iOS/Safari und sorgt für eine flüssige Animation.
+- Fix: **Skalierung ohne Detailverlust strukturell gehärtet**. Kritische Container-Queries innerhalb der Karte wurden so angepasst, dass sie sich auf den direkten Karten-Container beziehen, was Deformationen bei extrem kleinen oder großen Viewports verhindert.
+
 ## [0.26.28] - 2026-03-26
 - Fix: **Booster-Öffnungen werden nicht mehr geloggt**. Die Events für Einzel- und 10er-Pack-Opening wurden aus dem Aktivitäts-Log entfernt, damit die Logs nicht mit hochfrequenten Loot-Einträgen überflutet werden.
 - Fix: **Kartenöffnung auf Mobile/iPad responsiv stabilisiert**. Das Reveal-Layout nutzt jetzt ein klares Grid: auf kleinen Geräten beginnen die Karten in einer zweiten Reihe statt sich zu stark zu verkleinern, und auf iPad wurde der Abstand/Max-Width so angepasst, dass Karten sich nicht mehr berühren.

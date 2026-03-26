@@ -456,6 +456,26 @@ export default function SettingsPage() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-xl">
+            <Sparkles className="h-5 w-5 text-primary" /> Freunde einladen
+          </CardTitle>
+          <CardDescription>Sammle Bonus-Booster für dich und deine Freunde.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button 
+            variant="outline" 
+            className="w-full sm:w-auto gap-2"
+            render={
+              <Link href="/einstellungen/referrals">
+                <Users className="h-4 w-4" /> Einladungs-Dashboard öffnen
+              </Link>
+            }
+          />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-xl">
             <MoonStar className="h-5 w-5" /> Darstellung
           </CardTitle>
           <CardDescription>Hell, dunkel oder automatisch nach System.</CardDescription>

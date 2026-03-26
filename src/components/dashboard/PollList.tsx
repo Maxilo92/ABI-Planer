@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { db } from '@/lib/firebase'
-import { collection, deleteDoc, doc, getDocs, setDoc, serverTimestamp, writeBatch } from 'firebase/firestore'
+import { collection, deleteDoc, doc, getDocs, serverTimestamp, writeBatch, runTransaction, increment } from 'firebase/firestore'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
@@ -77,16 +77,32 @@ export function PollList({
     try {
       // One vote per user and poll by storing vote under polls/{pollId}/votes/{userId}
       const voteRef = doc(db, 'polls', pollId, 'votes', userId)
+      const profileRef = doc(db, 'profiles', userId)
       
-      await setDoc(voteRef, {
-        poll_id: pollId,
-        option_id: optionId,
-        user_id: userId,
-        created_at: serverTimestamp()
+      await runTransaction(db, async (transaction) => {
+        const voteSnap = await transaction.get(voteRef)
+        const isFirstVote = !voteSnap.exists()
+        
+        transaction.set(voteRef, {
+          poll_id: pollId,
+          option_id: optionId,
+          user_id: userId,
+          created_at: serverTimestamp()
+        })
+
+        if (isFirstVote) {
+          transaction.update(profileRef, {
+            'booster_stats.extra_available': increment(1)
+          })
+        }
       })
 
       await refreshVotesForPoll(pollId)
-      toast.success('Deine Stimme wurde gespeichert.')
+      toast.success(
+        !existingVote 
+          ? 'Stimme gespeichert! Du hast 1 Booster-Pack als Belohnung erhalten.' 
+          : 'Deine Stimme wurde geändert.'
+      )
       
       const optionText = poll?.options?.find(o => o.id === optionId)?.option_text || optionId
       await logAction('VOTE_CAST', userId, null, { 

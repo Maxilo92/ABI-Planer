@@ -525,8 +525,8 @@ function SammelkartenContent() {
                           )}
                           style={{ zIndex: isFlipped ? (result?.variant === 'black_shiny_holo' ? 50 : 30) : 20 }}
                         >
-                          {/* This outer div is now the only click handler */}
-                          <div onClick={() => !isFlipped && handleFlipCard(idx)}>
+                          {/* This outer div now has w-full to prevent layout collapse */}
+                          <div className="w-full" onClick={() => !isFlipped && handleFlipCard(idx)}>
                             {/* Black Shiny Void Effect */}
                             {isFlipped && result?.variant === 'black_shiny_holo' && (
                               <div className="absolute inset-[-24px] sm:inset-[-36px] z-0 pointer-events-none overflow-visible">
@@ -558,23 +558,12 @@ function SammelkartenContent() {
 
                               <TeacherCard 
                                 data={cardData}
-                                isFlippedExternally={true}
+                                styleVariant="modern-flat"
+                                isFlippedExternally={isFlipped}
                                 interactive={false} // Card in booster view is never interactive on its own
                                 upgradeInfo={isFlipped && result?.isLevelUp ? { oldLevel: result.oldLevel!, newLevel: result.newLevel } : undefined}
                                 className="w-full h-auto"
                               />
-
-                              {!isFlipped && (
-                                <div className="absolute inset-0 z-20 border-[2cqw] border-white/20 bg-neutral-950 shadow-2xl rounded-[10cqw] overflow-hidden pointer-events-none">
-                                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.05)_0%,transparent_70%)]" />
-                                  <div className="relative z-10 flex h-full flex-col items-center justify-center">
-                                    <div className="w-[25cqw] h-[25cqw] rounded-full flex items-center justify-center mb-[4cqw] border border-white/10 bg-white/5">
-                                      <Zap className="text-white w-[15cqw] h-[15cqw] drop-shadow-[0_0_15px_rgba(255,255,255,0.4)]" />
-                                    </div>
-                                    <div className="text-white font-black tracking-[0.3em] text-[4cqw] uppercase opacity-40">ABI Planer</div>
-                                  </div>
-                                </div>
-                              )}
                             </div>
                             
                             {isFlipped && showDebug && packProbs && (
@@ -638,6 +627,7 @@ function SammelkartenContent() {
                               <div key={cardIdx} className="relative group">
                                 <TeacherCard 
                                   data={cardData}
+                                  styleVariant="modern-flat"
                                   isFlippedExternally={true}
                                   className="w-full h-auto scale-100 group-hover:scale-[1.05] transition-transform duration-300"
                                 />
@@ -665,54 +655,103 @@ function SammelkartenContent() {
               {(gameState === 'idle' || gameState === 'ripping') && (
                 <div 
                   className={cn(
-                    "absolute z-30 w-64 h-96 cursor-pointer group transition-all duration-500",
+                    "absolute z-30 w-64 h-[400px] cursor-pointer group transition-all duration-500",
                     getRemainingBoosters() <= 0 && "opacity-50 cursor-not-allowed",
                     gameState === 'idle' && getRemainingBoosters() > 0 && "hover:scale-105 active:scale-95"
                   )}
+                  style={{ 
+                    filter: 'drop-shadow(0 20px 50px rgba(0,0,0,0.5))',
+                    perspective: '1000px'
+                  }}
                   onClick={getRemainingBoosters() > 0 && gameState === 'idle' ? handleOpenPack : undefined}
                 >
                   {getRemainingBoosters() <= 0 && gameState === 'idle' && (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center z-30 bg-black/60 rounded-3xl backdrop-blur-sm">
+                    <div className="absolute inset-0 flex flex-col items-center justify-center z-40 bg-black/60 rounded-xl backdrop-blur-sm overflow-hidden border-4 border-black/20">
                        <Clock className="h-10 w-10 text-white mb-3" />
                        <p className="text-white font-black text-xs uppercase tracking-[0.2em]">{timeLeft}</p>
                     </div>
                   )}
 
-                  {/* Top Part */}
-                  <div className={cn(
-                    "absolute top-0 left-0 w-full h-1/3 bg-transparent z-20 flex items-end justify-center pb-4 transition-transform duration-500",
-                    gameState === 'ripping' && "animate-rip-top"
-                  )}>
-                    <div className={cn(
-                      "absolute inset-0 bg-gradient-to-b rounded-t-3xl border-x-4 border-t-4 border-white/20 shadow-inner",
-                      isGodpack ? "from-yellow-400 to-amber-600" : "from-blue-600 to-blue-800"
-                    )} />
-                    <Zap className={cn("h-12 w-12 text-white/60 drop-shadow-[0_0_10px_rgba(255,255,255,0.5)] relative z-10", isGodpack && "animate-pulse text-white")} />
-                  </div>
-                  
-                  {/* Bottom Part */}
-                  <div className={cn(
-                    "absolute bottom-0 left-0 w-full h-2/3 z-10 flex flex-col items-center pt-8 transition-transform duration-500",
-                    gameState === 'ripping' && "animate-rip-bottom"
-                  )}>
-                    <div className={cn(
-                      "absolute inset-0 bg-gradient-to-t rounded-b-3xl border-x-4 border-b-4 border-white/20 shadow-2xl",
-                      isGodpack ? "from-amber-900 via-amber-700 to-amber-600" : "from-slate-900 via-blue-900 to-blue-800"
-                    )} />
-                    <div className="relative z-10 flex flex-col items-center h-full w-full">
-                      <div className="w-16 h-1 bg-white/20 rounded-full mb-8" />
-                      <h2 className="text-white font-black text-3xl tracking-tighter mb-1 italic drop-shadow-md">ABI PLANER</h2>
-                      <p className={cn("text-[10px] font-black uppercase tracking-[0.4em]", isGodpack ? "text-amber-200/80" : "text-blue-200/60")}>{isGodpack ? "✨ GODPACK ✨" : "Booster Pack"}</p>
+                  {/* Pack Base with Zig-Zag Clip-Path */}
+                  <div className="absolute inset-0 flex flex-col h-full w-full">
+                    {/* Top Part */}
+                    <div 
+                      className={cn(
+                        "relative w-full h-1/3 z-20 transition-transform duration-700 ease-in-out overflow-hidden",
+                        gameState === 'ripping' && "animate-rip-top"
+                      )}
+                    >
+                      <div className={cn(
+                        "absolute inset-0 border-x-4 border-t-4 border-black",
+                        isGodpack ? "bg-neutral-950" : "bg-blue-600"
+                      )} />
                       
-                      <div className="mt-auto mb-12">
-                         <div className="relative">
-                            <Gift className={cn(
-                              "h-16 w-16 transition-all duration-500",
-                              gameState === 'idle' ? "text-white/30 group-hover:text-white/60 group-hover:scale-110" : "text-white/50 scale-110",
-                              isGodpack && "text-amber-300 drop-shadow-[0_0_15px_rgba(251,191,36,0.8)]"
-                            )} />
-                            <div className={cn("absolute inset-0 blur-xl rounded-full scale-150 animate-pulse", isGodpack ? "bg-amber-400/40" : "bg-white/20")} />
+                      {/* Foil Texture Lines (Crimped Seal Effect) */}
+                      <div className="absolute top-0 left-0 right-0 h-10 opacity-30 bg-[repeating-linear-gradient(90deg,transparent,transparent_2px,rgba(0,0,0,1)_2px,rgba(0,0,0,1)_4px)] border-b-2 border-black/20" />
+                      
+                      <div className="absolute inset-0 flex items-center justify-center pt-8">
+                         <div className={cn(
+                           "p-3 rounded-2xl border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]",
+                           isGodpack ? "bg-amber-400" : "bg-white"
+                         )}>
+                           <Zap className={cn("h-8 w-8", isGodpack ? "text-black fill-black" : "text-black fill-black")} />
                          </div>
+                      </div>
+                    </div>
+
+                    {/* Bottom Part */}
+                    <div 
+                      className={cn(
+                        "relative w-full h-2/3 z-10 transition-transform duration-700 ease-in-out -mt-[1px] overflow-hidden",
+                        gameState === 'ripping' && "animate-rip-bottom"
+                      )}
+                    >
+                      <div className={cn(
+                        "absolute inset-0 border-x-4 border-b-4 border-black",
+                        isGodpack ? "bg-neutral-900" : "bg-blue-700"
+                      )} />
+                      
+                      {/* Bottom Seal Effect */}
+                      <div className="absolute bottom-0 left-0 right-0 h-10 opacity-30 bg-[repeating-linear-gradient(90deg,transparent,transparent_2px,rgba(0,0,0,1)_2px,rgba(0,0,0,1)_4px)] border-t-2 border-black/20" />
+
+                      {/* Foil Shine Animation */}
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out pointer-events-none" />
+
+                      <div className="relative z-10 flex flex-col items-center h-full w-full px-6 pt-10">
+                        <div className={cn(
+                          "relative mb-4 px-4 py-2 border-4 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] -rotate-1",
+                          isGodpack ? "bg-amber-400" : "bg-white"
+                        )}>
+                          <h2 className="font-black text-3xl tracking-tighter italic text-black uppercase">ABI PLANER</h2>
+                          {isGodpack && (
+                            <div className="absolute -top-3 -right-3 bg-red-500 text-white text-[8px] font-black px-2 py-1 rounded-full border-2 border-black animate-bounce shadow-md">GOD!</div>
+                          )}
+                        </div>
+
+                        <div className={cn(
+                          "px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-[0.2em] mb-auto border-4 border-black",
+                          isGodpack ? "bg-amber-500 text-black" : "bg-white text-black"
+                        )}>
+                          {isGodpack ? "SPECIAL EDITION" : "3 Lehrer Karten"}
+                        </div>
+
+                        <div className="w-full flex justify-between items-end pb-12">
+                           <div className="flex flex-col gap-1">
+                              <span className="text-[10px] font-black text-black/40 uppercase">S1/2026</span>
+                              <div className="flex gap-1">
+                                 {[...Array(4)].map((_, i) => (
+                                   <div key={i} className="w-3 h-1 bg-black/20 rounded-sm" />
+                                 ))}
+                              </div>
+                           </div>
+
+                           <div className={cn(
+                             "w-14 h-14 rounded-2xl flex items-center justify-center border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all group-hover:-translate-y-1 group-hover:-translate-x-1 group-hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]",
+                             isGodpack ? "bg-amber-400" : "bg-white"
+                           )}>
+                             <Gift className="h-7 w-7 text-black fill-black" />
+                           </div>
+                        </div>
                       </div>
                     </div>
                   </div>
