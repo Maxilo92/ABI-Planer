@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.26.28] - 2026-03-26
+- Fix: **Booster-Öffnungen werden nicht mehr geloggt**. Die Events für Einzel- und 10er-Pack-Opening wurden aus dem Aktivitäts-Log entfernt, damit die Logs nicht mit hochfrequenten Loot-Einträgen überflutet werden.
+- Fix: **Kartenöffnung auf Mobile/iPad responsiv stabilisiert**. Das Reveal-Layout nutzt jetzt ein klares Grid: auf kleinen Geräten beginnen die Karten in einer zweiten Reihe statt sich zu stark zu verkleinern, und auf iPad wurde der Abstand/Max-Width so angepasst, dass Karten sich nicht mehr berühren.
+- Fix: **Sammelkarten-Manager auf Mobile besser nutzbar**. Die großen Tabs/Toggles wurden auf feste Trigger-Größen gebracht, horizontal scrollbar gemacht und das Layout so angepasst, dass keine überdimensionierten Leerräume mehr entstehen.
+
 ## [0.26.27] - 2026-03-25
 - Fix: **Korrekte Varianten-Wahrscheinlichkeit im Debug-Modus**. Ein Logikfehler in der Berechnung der Wahrscheinlichkeiten für Karten-Varianten (Holo, Shiny etc.) wurde behoben. Der Debug-Modus zeigt nun die exakte, korrekte Drop-Chance für die gezogene Seltenheit *und* Variante an.
 

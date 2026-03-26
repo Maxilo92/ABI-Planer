@@ -17,7 +17,6 @@ import { GiftNoticeBanner } from '@/components/dashboard/GiftNoticeBanner'
 import { TeacherCard } from '@/components/cards/TeacherCard'
 import { CardData, CardVariant as NewCardVariant, SammelkartenConfig } from '@/types/cards'
 import { useGiftNotices } from '@/hooks/useGiftNotices'
-import { logAction } from '@/lib/logging'
 import { toast } from 'sonner'
 
 const DEFAULT_TEACHERS: LootTeacher[] = [
@@ -255,12 +254,7 @@ function SammelkartenContent() {
         setMassRevealedTeachers(packsData)
         setMassCollectionResults(processedMassResults)
         
-        if (user) {
-          logAction('LOOT_MASS_BOOSTER', user.uid, profile?.full_name, { 
-            packsCount: 10,
-            isAnyGodpack: packsData.some(p => p.isGodpack)
-          })
-        }
+        // Logging für Booster-Öffnungen entfernt (wird nicht mehr geloggt)
       }, 300)
 
       setTimeout(() => {
@@ -336,13 +330,7 @@ function SammelkartenContent() {
         setRevealedTeachers(pack)
         setCollectionResults(processedResults)
         
-        if (user) {
-          logAction('LOOT_BOOSTER', user.uid, profile?.full_name, { 
-            teachers: pack.map(t => t.id || t.name),
-            results: processedResults,
-            isGodpack: godpack
-          })
-        }
+        // Logging für Booster-Öffnungen entfernt (wird nicht mehr geloggt)
       }, 300)
 
       // Final transition to revealed
@@ -497,7 +485,7 @@ function SammelkartenContent() {
                     initial="hidden"
                     animate="visible"
                     exit="hidden"
-                    className="flex flex-wrap justify-center gap-4 sm:gap-6 w-full max-w-6xl px-2 sm:px-6"
+                    className="grid grid-cols-2 sm:grid-cols-3 place-items-center gap-x-3 gap-y-5 sm:gap-x-5 sm:gap-y-6 md:gap-x-8 w-full max-w-5xl px-2 sm:px-4"
                   >
                     {revealedTeachers.map((teacher, idx) => {
                       const isFlipped = flippedCards[idx]
@@ -530,7 +518,8 @@ function SammelkartenContent() {
                             }
                           }}
                           className={cn(
-                            "relative flex flex-col items-center flex-none w-[calc(50%-1rem)] min-w-[140px] max-w-[200px] sm:flex-1 sm:max-w-none sm:min-w-0",
+                            "relative flex flex-col items-center w-full max-w-[170px] sm:max-w-[185px] md:max-w-[200px] lg:max-w-[220px]",
+                            idx === 2 && "col-span-2 sm:col-span-1",
                             isFlipped && result?.isNew && "animate-new-card-float z-10",
                             isFlipped && result?.variant === 'black_shiny_holo' && "z-30 scale-110"
                           )}
@@ -549,7 +538,7 @@ function SammelkartenContent() {
                               </div>
                             )}
 
-                            <div className="relative w-full aspect-[2.5/3.5] sm:w-52 md:w-64">
+                            <div className="relative w-full aspect-[2.5/3.5]">
                               {/* Floating Status Badge (shown after flip) */}
                               {isFlipped && result && (
                                 <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-40 animate-in zoom-in duration-500">

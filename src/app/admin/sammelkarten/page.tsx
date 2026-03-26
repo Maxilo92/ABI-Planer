@@ -586,7 +586,7 @@ export default function CardManagerPage() {
 
   return (
     <AdminGuard>
-      <div className="container mx-auto py-8 space-y-8 pb-20">
+      <div className="container mx-auto py-8 space-y-8 pb-20 px-3 sm:px-4 lg:px-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
@@ -651,24 +651,24 @@ export default function CardManagerPage() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 lg:gap-8 items-start">
             
             {/* Left/Main Column: Teacher Pool & Weights */}
             <div className="xl:col-span-3 space-y-8">
               
-              <Tabs defaultValue="teachers">
-                <TabsList className="flex w-fit bg-muted/50 p-1 rounded-lg">
-                  <TabsTrigger value="teachers" className="px-3 py-1.5 text-xs gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">
+              <Tabs defaultValue="teachers" className="w-full">
+                <TabsList className="h-12 sm:h-10 w-full sm:w-fit max-w-full justify-start bg-muted/50 p-1 rounded-xl border border-border/60 overflow-x-auto">
+                  <TabsTrigger value="teachers" className="h-10 sm:h-8 min-w-[112px] sm:min-w-[124px] px-3 py-1.5 text-xs gap-2 flex-none data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">
                     <Users className="h-3.5 w-3.5" />
-                    <span className="hidden sm:inline">Lehrerpool</span>
+                    <span>Lehrerpool</span>
                   </TabsTrigger>
-                  <TabsTrigger value="weights" className="px-3 py-1.5 text-xs gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">
+                  <TabsTrigger value="weights" className="h-10 sm:h-8 min-w-[112px] sm:min-w-[124px] px-3 py-1.5 text-xs gap-2 flex-none data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">
                     <TrendingUp className="h-3.5 w-3.5" />
-                    <span className="hidden sm:inline">Drop-Rates</span>
+                    <span>Drop-Rates</span>
                   </TabsTrigger>
-                  <TabsTrigger value="limits" className="px-3 py-1.5 text-xs gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">
+                  <TabsTrigger value="limits" className="h-10 sm:h-8 min-w-[112px] sm:min-w-[124px] px-3 py-1.5 text-xs gap-2 flex-none data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">
                     <Settings2 className="h-3.5 w-3.5" />
-                    <span className="hidden sm:inline">Parameter</span>
+                    <span>Parameter</span>
                   </TabsTrigger>
                 </TabsList>
 
@@ -676,12 +676,12 @@ export default function CardManagerPage() {
                   <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
                     <Card className="lg:col-span-2">
                       <CardHeader>
-                        <div className="flex items-center justify-between">
+                        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                           <CardTitle className="flex items-center gap-2">
                             <GraduationCap className="h-5 w-5 text-primary" />
                             Lehrer-Lootpool
                           </CardTitle>
-                          <div className="flex items-center gap-2">
+                          <div className="flex flex-wrap items-center gap-2">
                             <Button variant="outline" size="sm" onClick={handleSyncRarities} disabled={syncing}>
                               {syncing ? <Loader2 className="h-3 w-3 animate-spin mr-2" /> : <RefreshCw className="h-3 w-3 mr-2" />}
                               Sync Polls
@@ -763,7 +763,7 @@ export default function CardManagerPage() {
                                           {getRarityLabel(teacher.rarity)}
                                         </span>
                                       </div>
-                                      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                      <div className="flex gap-1 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
                                         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEditTeacher(teacher, index)}>
                                           <Pencil className="h-4 w-4" />
                                         </Button>
