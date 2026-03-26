@@ -97,15 +97,23 @@ function DropdownMenuItem({
     />
   )
 }
-
-function DropdownMenuSub({ ...props }: MenuPrimitive.SubmenuRoot.Props) {
-  return <MenuPrimitive.SubmenuRoot data-slot="dropdown-menu-sub" {...props} />
+function DropdownMenuTrigger({ nativeButton, ...props }: MenuPrimitive.Trigger.Props) {
+  return (
+    <MenuPrimitive.Trigger
+      data-slot="dropdown-menu-trigger"
+      nativeButton={nativeButton ?? (props.render ? false : undefined)}
+      {...props}
+    />
+  )
 }
 
+function DropdownMenuContent({
+...
 function DropdownMenuSubTrigger({
   className,
   inset,
   children,
+  nativeButton,
   ...props
 }: MenuPrimitive.SubmenuTrigger.Props & {
   inset?: boolean
@@ -118,6 +126,7 @@ function DropdownMenuSubTrigger({
         "flex min-h-10 md:min-h-8 cursor-default items-center gap-2 rounded-md px-2 py-2 md:px-1.5 md:py-1 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground not-data-[variant=destructive]:focus:**:text-accent-foreground data-inset:pl-7 data-popup-open:bg-accent data-popup-open:text-accent-foreground data-open:bg-accent data-open:text-accent-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
         className
       )}
+      nativeButton={nativeButton ?? (props.render ? false : undefined)}
       {...props}
     >
       {children}
@@ -125,7 +134,6 @@ function DropdownMenuSubTrigger({
     </MenuPrimitive.SubmenuTrigger>
   )
 }
-
 function DropdownMenuSubContent({
   align = "start",
   alignOffset = -3,

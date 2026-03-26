@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.26.36] - 2026-03-26
+- Fix: **Weitere Base UI Button-Warnungen behoben**. Die automatische Deaktivierung von `nativeButton` bei Verwendung des `render`-Props wurde nun auch auf `DialogTrigger`, `DialogClose`, `DropdownMenuTrigger` und `DropdownMenuSubTrigger` ausgeweitet. Dies eliminiert verbleibende Konsolen-Fehler, wenn z.B. Spans oder Icons als Trigger verwendet werden.
+
 ## [0.26.35] - 2026-03-26
 - Feature: **Vollständige Nutzerlöschung (Full Wipe)**. Das Löschen eines Nutzers in der Admin-Verwaltung führt nun automatisch zur Löschung des zugehörigen Firebase-Authentication-Kontos sowie zur Bereinigung aller nutzerspezifischen Daten (Sammelkarten, Geheimnisse, Stimmen, Geschenke) über einen neuen Cloud-Function-Trigger.
 
