@@ -451,7 +451,7 @@ function SammelkartenContent() {
                     initial="hidden"
                     animate="visible"
                     exit="hidden"
-                    className="grid grid-cols-2 sm:grid-cols-3 place-items-center gap-x-4 gap-y-6 sm:gap-x-6 sm:gap-y-7 md:gap-x-8 w-full max-w-5xl px-2 sm:px-4"
+                    className="grid grid-cols-2 sm:grid-cols-3 place-items-center gap-x-6 gap-y-6 sm:gap-x-6 sm:gap-y-7 md:gap-x-8 w-full max-w-5xl px-2 sm:px-4"
                   >
                     {revealedTeachers.map((teacher, idx) => {
                       const isFlipped = flippedCards[idx]
@@ -484,7 +484,7 @@ function SammelkartenContent() {
                             }
                           }}
                           className={cn(
-                            "relative flex flex-col items-center w-[42vw] min-w-[140px] max-w-[200px] sm:w-full sm:min-w-0 sm:max-w-[190px] md:max-w-[210px] lg:max-w-[220px]",
+                            "relative flex flex-col items-center w-[40vw] min-w-[140px] max-w-[200px] sm:w-full sm:min-w-0 sm:max-w-[190px] md:max-w-[210px] lg:max-w-[220px] p-0.5",
                             idx === 2 && "col-span-2 sm:col-span-1",
                             isFlipped && result?.isNew && "animate-new-card-float z-10",
                             isFlipped && result?.variant === 'black_shiny_holo' && "z-30 scale-[1.03] sm:scale-[1.05]"
@@ -579,13 +579,13 @@ function SammelkartenContent() {
                            </div>
                         </div>
 
-                        <div className="flex-1 grid grid-cols-3 gap-2 sm:gap-4">
+                        <div className="flex-1 grid grid-cols-3 gap-3 sm:gap-4">
                           {packData.teachers.map((teacher, cardIdx) => {
                             const result = massCollectionResults?.[packIdx]?.[cardIdx]
                             const cardData = mapToCardData(teacher, result?.variant || 'normal', config?.loot_teachers || DEFAULT_TEACHERS)
                             
                             return (
-                              <div key={cardIdx} className="relative group">
+                              <div key={cardIdx} className="relative group p-0.5">
                                 <TeacherCard 
                                   data={cardData}
                                   styleVariant="modern-flat"
