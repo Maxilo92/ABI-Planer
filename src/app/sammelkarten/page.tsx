@@ -17,7 +17,7 @@ import { TeacherAlbum } from '@/components/dashboard/TeacherAlbum'
 import { TeacherCard } from '@/components/cards/TeacherCard'
 import { CardData, CardVariant as NewCardVariant, SammelkartenConfig } from '@/types/cards'
 import { ProbabilityInfo } from '@/components/cards/ProbabilityInfo'
-import { toast } from 'sonner'
+import { useSystemMessage } from '@/context/SystemMessageContext'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 
 const DEFAULT_TEACHERS: LootTeacher[] = [
@@ -76,6 +76,7 @@ function SammelkartenContent() {
   const searchParams = useSearchParams()
   const view = searchParams.get('view') || 'sammelkarten'
   const { user, profile, loading } = useAuth()
+  const { pushMessage } = useSystemMessage()
   const { collectBooster, collectMassBoosters, teachers: userTeachers, getRemainingBoosters } = useUserTeachers()
   const [config, setConfig] = useState<SammelkartenConfig | null>(null)
   const [gameState, setGameState] = useState<'idle' | 'ripping' | 'revealed'>('idle')
@@ -94,6 +95,18 @@ function SammelkartenContent() {
   const [isAnimating, setIsAnimating] = useState(false)
   const [timeLeft, setTimeLeft] = useState<string>('')
   const [showDebug, setShowDebug] = useState(false)
+  const [consecutiveOpenCount, setConsecutiveOpenCount] = useState(0)
+
+  // Calculate speed multiplier based on consecutive opens (0.3 to 1.0)
+  const speedMultiplier = Math.max(0.3, 1 - (consecutiveOpenCount * 0.12))
+
+  useEffect(() => {
+    // Reset consecutive count when idle for 5 seconds
+    if (gameState === 'idle') {
+      const timer = setTimeout(() => setConsecutiveOpenCount(0), 5000)
+      return () => clearTimeout(timer)
+    }
+  }, [gameState])
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -154,6 +167,37 @@ function SammelkartenContent() {
     return () => unsubscribe()
   }, [])
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.code === 'Space') {
+        if (e.repeat) return;
+        e.preventDefault();
+        
+        if (gameState === 'idle' && getRemainingBoosters() > 0) {
+          handleOpenPack();
+        } else if (gameState === 'revealed' && !isMassOpening) {
+          const nextIndex = flippedCards.findIndex(f => !f);
+          if (nextIndex !== -1) {
+            handleFlipCard(nextIndex);
+          } else if (getRemainingBoosters() > 0) {
+            handleOpenPack();
+          } else {
+            setGameState('idle');
+          }
+        } else if (gameState === 'revealed' && isMassOpening) {
+          if (getRemainingBoosters() >= 10) {
+            handleOpenTenPacks();
+          } else {
+            setGameState('idle');
+          }
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [gameState, flippedCards, getRemainingBoosters, isMassOpening]);
+
   if (loading) return null
 
   const generatePack = (isGodpack: boolean): LootTeacher[] => {
@@ -188,7 +232,12 @@ function SammelkartenContent() {
 
   const handleOpenTenPacks = async () => {
     if (getRemainingBoosters() < 10) {
-      toast.error('Du brauchst mindestens 10 Booster für diese Aktion!')
+      pushMessage({
+        type: 'toast',
+        priority: 'critical',
+        title: 'Fehler',
+        content: 'Du brauchst mindestens 10 Booster für diese Aktion!'
+      })
       return
     }
 
@@ -253,7 +302,12 @@ function SammelkartenContent() {
         setIsAnimating(false)
       }, isReopen ? 200 : 700)
     } catch (err: any) {
-      toast.error(err.message || 'Fehler beim Öffnen der 10 Packs.')
+      pushMessage({
+        type: 'toast',
+        priority: 'critical',
+        title: 'Fehler',
+        content: err.message || 'Fehler beim Öffnen der 10 Packs.'
+      })
       setGameState('idle')
       setIsMassOpening(false)
     }
@@ -261,7 +315,12 @@ function SammelkartenContent() {
 
   const handleOpenPack = async () => {
     if (getRemainingBoosters() <= 0) {
-      toast.error('Limit erreicht! Komm morgen wieder.')
+      pushMessage({
+        type: 'toast',
+        priority: 'critical',
+        title: 'Fehler',
+        content: 'Limit erreicht! Komm morgen wieder.'
+      })
       return
     }
 
@@ -280,8 +339,11 @@ function SammelkartenContent() {
     const pack = generatePack(godpack)
 
     if (godpack) {
-      toast("✨ GODPACK GEFUNDEN! ✨", {
-        description: "Alle Karten sind besonders selten!",
+      pushMessage({
+        type: 'toast',
+        priority: 'info',
+        title: '✨ GODPACK GEFUNDEN! ✨',
+        content: 'Alle Karten sind besonders selten!',
         duration: 5000,
       })
     }
@@ -325,7 +387,12 @@ function SammelkartenContent() {
         setIsAnimating(false)
       }, isReopen ? 200 : 700)
     } catch (err: any) {
-      toast.error(err.message || 'Fehler beim Sammeln.')
+      pushMessage({
+        type: 'toast',
+        priority: 'critical',
+        title: 'Fehler',
+        content: err.message || 'Fehler beim Sammeln.'
+      })
       setGameState('idle')
     }
   }
@@ -389,36 +456,6 @@ function SammelkartenContent() {
   };
 
   const packProbs = getPackProbabilities();
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.code === 'Space') {
-        e.preventDefault();
-        
-        if (gameState === 'idle' && getRemainingBoosters() > 0) {
-          handleOpenPack();
-        } else if (gameState === 'revealed' && !isMassOpening) {
-          const nextIndex = flippedCards.findIndex(f => !f);
-          if (nextIndex !== -1) {
-            handleFlipCard(nextIndex);
-          } else if (getRemainingBoosters() > 0) {
-            handleOpenPack();
-          } else {
-            setGameState('idle');
-          }
-        } else if (gameState === 'revealed' && isMassOpening) {
-          if (getRemainingBoosters() >= 10) {
-            handleOpenTenPacks();
-          } else {
-            setGameState('idle');
-          }
-        }
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [gameState, flippedCards, getRemainingBoosters, isMassOpening]);
 
   return (
     <div className="container mx-auto py-8">
@@ -488,6 +525,13 @@ function SammelkartenContent() {
 
             {/* The Pack/Card Container */}
             <div className="relative w-full min-h-[400px] flex items-center justify-center overflow-visible">
+              {/* Debug Speed Info */}
+              {showDebug && consecutiveOpenCount > 0 && (
+                <div className="absolute top-0 right-0 z-50 bg-black/80 backdrop-blur-md p-2 rounded-xl border border-white/10 text-[8px] font-mono text-amber-500 animate-in fade-in zoom-in duration-300">
+                  <p>OPEN SPEED: {((1 - speedMultiplier) * 100).toFixed(0)}%</p>
+                  <p>COMBO: {consecutiveOpenCount}x</p>
+                </div>
+              )}
               
               {/* Revealed Cards (Single Pack) */}
               <AnimatePresence mode="wait">
@@ -688,7 +732,7 @@ function SammelkartenContent() {
                 <div 
                   className={cn(
                     "absolute z-30 w-64 h-[400px] cursor-pointer group transition-all duration-500",
-                    getRemainingBoosters() <= 0 && "opacity-50 cursor-not-allowed",
+                    getRemainingBoosters() <= 0 && "opacity-80 cursor-not-allowed",
                     gameState === 'idle' && getRemainingBoosters() > 0 && "hover:scale-105 active:scale-95"
                   )}
                   style={{ 
@@ -698,9 +742,25 @@ function SammelkartenContent() {
                   onClick={getRemainingBoosters() > 0 && gameState === 'idle' ? handleOpenPack : undefined}
                 >
                   {getRemainingBoosters() <= 0 && gameState === 'idle' && (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center z-40 bg-black/60 rounded-xl backdrop-blur-sm overflow-hidden border-4 border-black/20">
-                       <Clock className="h-10 w-10 text-white mb-3" />
-                       <p className="text-white font-black text-xs uppercase tracking-[0.2em]">{timeLeft}</p>
+                    <div className="absolute inset-[-20px] z-50 flex items-center justify-center p-5">
+                      <div className="w-full h-full bg-black/40 backdrop-blur-2xl rounded-[3rem] border border-white/10 flex flex-col items-center justify-center text-center p-6 shadow-[0_0_50px_rgba(0,0,0,0.5)] animate-in fade-in zoom-in duration-500">
+                        <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mb-4 border border-white/10">
+                          <Lock className="h-8 w-8 text-white/40" />
+                        </div>
+                        <h3 className="text-white font-black text-xl tracking-tighter uppercase mb-1 italic">Sperre aktiv</h3>
+                        <p className="text-white/40 text-[10px] font-bold uppercase tracking-[0.2em] mb-4">Nachschub kommt in</p>
+                        
+                        <div className="bg-primary/20 px-4 py-2 rounded-xl border border-primary/30">
+                          <p className="text-primary font-mono text-2xl font-black tracking-widest">{timeLeft}</p>
+                        </div>
+
+                        <Link href="/sammelkarten/shop" className="mt-6">
+                           <Button variant="outline" size="sm" className="rounded-full bg-white/5 border-white/10 text-white/60 hover:text-white transition-all text-[10px] h-8 font-black uppercase tracking-widest">
+                              <ShoppingBag className="w-3.5 h-3.5 mr-2" />
+                              Nachschub kaufen
+                           </Button>
+                        </Link>
+                      </div>
                     </div>
                   )}
 
