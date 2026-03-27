@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.26.56] - 2026-03-27
+- UI: **Rabatt-Anzeige für Bundles**. Im Shop wird nun explizit angezeigt, wie viel man bei den größeren Booster-Bundles im Vergleich zum Einzelpreis (0,99 €) spart.
+
 ## [0.26.55] - 2026-03-27
 - Marketing: **Abikasse-Unterstützung hervorgehoben**. Im Shop wird nun prominent beworben, dass 90% der Einnahmen direkt an die jeweilige Abikasse der Stufe fließen, um den Abiball zu finanzieren. Die restlichen 10% dienen dem App-Unterhalt.
 

@@ -35,6 +35,7 @@ const SHOP_ITEMS = [
     amount: 1,
     limit: 10,
     price: '0,99 €',
+    priceNum: 0.99,
     description: '1 Booster Pack (3 Lehrerkarten).',
     color: 'blue' as const,
   },
@@ -44,6 +45,7 @@ const SHOP_ITEMS = [
     amount: 5,
     limit: 5,
     price: '3,99 €',
+    priceNum: 3.99,
     description: '5 Booster Packs (15 Lehrerkarten).',
     color: 'purple' as const,
     badge: 'Beliebt'
@@ -54,6 +56,7 @@ const SHOP_ITEMS = [
     amount: 12,
     limit: 2,
     price: '8,99 €',
+    priceNum: 8.99,
     description: '12 Booster Packs (36 Lehrerkarten).',
     color: 'amber' as const,
     badge: 'Bester Wert'
@@ -164,6 +167,12 @@ export default function SammelkartenShopPage() {
                     <h3 className="text-3xl font-black tracking-tight">{item.name}</h3>
                     <div className="flex flex-col items-center">
                       <p className="text-sm text-muted-foreground font-bold uppercase tracking-widest">{item.description}</p>
+                      {item.amount > 1 && (
+                        <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-success/10 border border-success/20 text-success text-[10px] font-black uppercase tracking-wider">
+                          <Sparkles className="w-3 h-3 fill-current" />
+                          Spare {(item.amount * 0.99 - item.priceNum!).toLocaleString('de-DE', { minimumFractionDigits: 2 })} €
+                        </div>
+                      )}
                       <div className="h-1 w-12 bg-primary/20 rounded-full mt-2" />
                     </div>
                   </div>
