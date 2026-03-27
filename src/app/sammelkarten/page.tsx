@@ -101,12 +101,14 @@ function SammelkartenContent() {
   const speedMultiplier = Math.max(0.3, 1 - (consecutiveOpenCount * 0.12))
 
   useEffect(() => {
-    // Reset consecutive count when idle for 5 seconds
-    if (gameState === 'idle') {
-      const timer = setTimeout(() => setConsecutiveOpenCount(0), 5000)
+    // Gradual combo decay: -1 every 10 seconds of inactivity
+    if (consecutiveOpenCount > 0) {
+      const timer = setTimeout(() => {
+        setConsecutiveOpenCount(prev => Math.max(0, prev - 1))
+      }, 10000)
       return () => clearTimeout(timer)
     }
-  }, [gameState])
+  }, [consecutiveOpenCount, gameState])
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -527,13 +529,6 @@ function SammelkartenContent() {
 
             {/* The Pack/Card Container */}
             <div className="relative w-full min-h-[400px] flex items-center justify-center overflow-visible">
-              {/* Debug Speed Info */}
-              {showDebug && (
-                <div className="absolute top-0 right-0 z-50 bg-black/80 backdrop-blur-md p-2 rounded-xl border border-white/10 text-[8px] font-mono text-amber-500 animate-in fade-in zoom-in duration-300">
-                  <p>UNPACK SPEED: {((1 - speedMultiplier) * 100).toFixed(0)}%</p>
-                  <p>COMBO: {consecutiveOpenCount}x</p>
-                </div>
-              )}
               
               {/* Revealed Cards (Single Pack) */}
               <AnimatePresence mode="wait">
@@ -848,6 +843,23 @@ function SammelkartenContent() {
             </div>
 
             <div className="flex flex-col gap-4 mt-8 w-full items-center">
+              {showDebug && (
+                <div className="flex gap-2 w-full max-sm:max-w-[280px] sm:max-w-sm mb-2 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                  <div className="flex-1 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-xl p-2 text-center transition-all">
+                    <p className="text-[8px] font-mono text-amber-600/70 dark:text-amber-200 uppercase tracking-widest mb-0.5">Unpack Speed</p>
+                    <p className="text-sm font-black text-amber-700 dark:text-amber-500 italic uppercase tracking-tighter">
+                      {((1 - speedMultiplier) * 100).toFixed(0)}% <span className="text-[10px] ml-1 opacity-60">({consecutiveOpenCount}x)</span>
+                    </p>
+                  </div>
+                  {(gameState === 'revealed' || gameState === 'ripping') && !isMassOpening && packProbs && (
+                    <div className="flex-1 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-xl p-2 text-center transition-all animate-in zoom-in duration-300">
+                      <p className="text-[8px] font-mono text-amber-600/70 dark:text-amber-200 uppercase tracking-widest mb-0.5">Probability</p>
+                      <p className="text-sm font-black text-amber-700 dark:text-amber-500">{(packProbs.wholePackChance * 100).toPrecision(4)}%</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
               {gameState === 'idle' && getRemainingBoosters() > 0 && (
                 <div className="flex flex-col sm:flex-row gap-4 items-center justify-center">
                   <Button
@@ -875,12 +887,6 @@ function SammelkartenContent() {
 
               {gameState === 'revealed' && (isMassOpening || allFlipped) && (
                 <div className="flex flex-col gap-3 w-full max-sm:max-w-[280px] sm:max-w-sm animate-in fade-in slide-in-from-bottom-4 duration-1000">
-                  {!isMassOpening && showDebug && packProbs && (
-                    <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 mb-2 text-center">
-                      <p className="text-[10px] font-mono text-amber-200 uppercase tracking-widest mb-1">Pack-Wahrscheinlichkeit</p>
-                      <p className="text-xl font-black text-amber-500">{(packProbs.wholePackChance * 100).toPrecision(4)}%</p>
-                    </div>
-                  )}
                   <Button 
                     onClick={getRemainingBoosters() > 0 ? (isMassOpening ? handleOpenTenPacks : handleOpenPack) : () => setGameState('idle')}
                     variant="outline"
