@@ -144,6 +144,7 @@ function mapTeacherToCardData(teacher: LootTeacher, userData: any, globalTeacher
     variant,
     color: getTeacherRarityHex(teacher.rarity),
     cardNumber: (globalIndex + 1).toString().padStart(3, '0'),
+    description: teacher.description,
   }
 }
 
@@ -205,6 +206,15 @@ function TeacherCardDetail({ teacher, userData, onClose, globalTeachers }: { tea
             })}
           </div>
         </div>
+
+        {teacher.description && (
+          <div className="bg-black/40 backdrop-blur-xl rounded-2xl p-5 border border-white/10 shadow-2xl">
+            <p className="text-[10px] font-black uppercase text-white/40 mb-2 tracking-widest px-1">Lehrer-Info</p>
+            <p className="text-sm text-white/90 italic leading-relaxed px-1">
+              &quot;{teacher.description}&quot;
+            </p>
+          </div>
+        )}
 
         <div className="bg-black/40 backdrop-blur-xl rounded-2xl p-6 space-y-4 border border-white/10 shadow-2xl">
           <div className="flex justify-between items-center">

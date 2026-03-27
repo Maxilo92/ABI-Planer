@@ -1,6 +1,8 @@
 import { onDocumentWritten } from "firebase-functions/v2/firestore";
+import { onCall, HttpsError } from "firebase-functions/v2/https";
 import * as admin from "firebase-admin";
-import { getFirestore } from "firebase-admin/firestore";
+import { getFirestore, FieldValue } from "firebase-admin/firestore";
+import * as logger from "firebase-functions/logger";
 
 if (admin.apps.length === 0) {
     admin.initializeApp();
@@ -15,8 +17,118 @@ type LootTeacher = {
 };
 
 /**
+ * Cloud Function to securely vote for a teacher's rarity.
+ * Awards booster packs at certain milestones (1st, 5th, 15th, 25th...).
+ */
+export const voteForTeacher = onCall({
+    region: "europe-west3",
+    maxInstances: 10,
+}, async (request) => {
+    if (!request.auth) {
+        throw new HttpsError("unauthenticated", "User must be authenticated.");
+    }
+
+    const { teacherId, rating, teacherName } = request.data;
+
+    if (!teacherId || typeof rating !== "number") {
+        throw new HttpsError("invalid-argument", "Missing teacherId or rating.");
+    }
+
+    const db = getFirestore("abi-data");
+    const uid = request.auth.uid;
+    const voteId = `${uid}_${teacherId}`;
+
+    const profileRef = db.collection("profiles").doc(uid);
+    const ratingRef = db.collection("teacher_ratings").doc(voteId);
+    const settingsRef = db.collection("settings").doc("global");
+
+    try {
+        const result = await db.runTransaction(async (transaction) => {
+            const [profileSnap, ratingSnap, settingsSnap] = await Promise.all([
+                transaction.get(profileRef),
+                transaction.get(ratingRef),
+                transaction.get(settingsRef)
+            ]);
+
+            if (!profileSnap.exists) {
+                throw new HttpsError("not-found", "User profile not found.");
+            }
+
+            if (ratingSnap.exists) {
+                throw new HttpsError("already-exists", "User has already voted for this teacher.");
+            }
+
+            const settingsData = settingsSnap.data() || {};
+            const lootTeachers = (settingsData.loot_teachers || []) as LootTeacher[];
+            const isCandidate = lootTeachers.some((t) => t.id === teacherId);
+
+            if (!isCandidate) {
+                throw new HttpsError("invalid-argument", "Teacher is not a valid voting candidate.");
+            }
+
+            const profileData = profileSnap.data() || {};
+            const ratedTeachers = (profileData.rated_teachers || []) as string[];
+            const newRatedCount = ratedTeachers.length + 1;
+
+            // Reward Logic: 1st, 5th, then every 10th (15, 25, 35...)
+            let awardPack = false;
+            if (newRatedCount === 1) awardPack = true;
+            else if (newRatedCount === 5) awardPack = true;
+            else if (newRatedCount > 5 && (newRatedCount - 5) % 10 === 0) awardPack = true;
+
+            const profileUpdate: any = {
+                rated_teachers: FieldValue.arrayUnion(teacherId)
+            };
+
+            if (awardPack) {
+                profileUpdate["booster_stats.extra_available"] = FieldValue.increment(1);
+            }
+
+            // Update profile
+            transaction.update(profileRef, profileUpdate);
+
+            // Save individual rating
+            transaction.set(ratingRef, {
+                userId: uid,
+                teacherId: teacherId,
+                teacherName: teacherName || null,
+                rating: rating,
+                created_at: new Date().toISOString()
+            });
+
+            // Log entry
+            const logRef = db.collection("logs").doc();
+            transaction.set(logRef, {
+                user_id: uid,
+                user_name: profileData.full_name || "Unknown",
+                action: "TEACHER_VOTE",
+                details: {
+                    teacher_id: teacherId,
+                    teacher_name: teacherName || teacherId,
+                    rating: rating,
+                    awarded_pack: awardPack
+                },
+                timestamp: FieldValue.serverTimestamp()
+            });
+
+            return { success: true, awardedPack };
+        });
+
+        return result;
+    } catch (error: any) {
+        logger.error("Error in voteForTeacher:", {
+            uid,
+            teacherId,
+            error: error.message
+        });
+        if (error instanceof HttpsError) throw error;
+        throw new HttpsError("internal", error.message || "Internal server error during voting.");
+    }
+});
+
+/**
  * Adjusting mythic/legendary thresholds to balance pack chances.
- * Legendary: 0.85 -> 0.9
+...
  * Mythic: 0.65 -> 0.75
  * Epic: 0.4 -> 0.5
  * Rare: 0.15 -> 0.25

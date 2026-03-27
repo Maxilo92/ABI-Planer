@@ -65,10 +65,11 @@ function mapToTeacherCardData(teacher: LootTeacher, variant: CardVariant | NewCa
     id: teacher.id || teacher.name,
     name: teacher.name,
     rarity: teacher.rarity,
-    variant: newVariant,
+    variant,
     color: getTeacherRarityHex(teacher.rarity),
     cardNumber: (globalIndex + 1).toString().padStart(3, '0'),
-  }
+    description: teacher.description,
+    }
 }
 
 function SammelkartenContent() {

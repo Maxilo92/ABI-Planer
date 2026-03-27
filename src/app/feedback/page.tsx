@@ -46,7 +46,7 @@ export default function FeedbackPage() {
   const [preparedImageUpload, setPreparedImageUpload] = useState<{ url: string } | null>(null)
   const [isPreparingImageUpload, setIsPreparingImageUpload] = useState(false)
 
-  const isAdmin = profile?.role && ['admin', 'admin_main', 'admin_co'].includes(profile.role)
+  const isAdmin = profile?.role && ['admin', 'admin_main', 'admin_co', 'planner', 'viewer'].includes(profile.role)
 
   useEffect(() => {
     if (!authLoading && !user) {

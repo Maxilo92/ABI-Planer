@@ -2,7 +2,7 @@
 
 import { use, useEffect, useState } from 'react'
 import Link from 'next/link'
-import { doc, getDoc, onSnapshot } from 'firebase/firestore'
+import { doc, onSnapshot } from 'firebase/firestore'
 import { format } from 'date-fns'
 import { de } from 'date-fns/locale'
 import { ArrowLeft, Calendar as CalendarIcon, Clock, ExternalLink, FileText, Loader2, MapPin, User } from 'lucide-react'
@@ -20,7 +20,6 @@ function toGoogleDate(date: Date) {
 export default function CalendarEventPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const [event, setEvent] = useState<Event | null>(null)
-  const [creatorName, setCreatorName] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -36,26 +35,6 @@ export default function CalendarEventPage({ params }: { params: Promise<{ id: st
 
     return () => unsubscribe()
   }, [id])
-
-  useEffect(() => {
-    if (!event?.created_by) {
-      return
-    }
-
-    const loadCreatorName = async () => {
-      try {
-        const profileRef = doc(db, 'profiles', event.created_by)
-        const profileSnapshot = await getDoc(profileRef)
-        const fullName = profileSnapshot.exists() ? (profileSnapshot.data().full_name as string | undefined) : undefined
-        setCreatorName(fullName || null)
-      } catch (error) {
-        console.error('Error loading creator profile:', error)
-        setCreatorName(null)
-      }
-    }
-
-    loadCreatorName()
-  }, [event?.created_by])
 
   const openAppleCalendar = () => {
     if (!event) return
@@ -152,7 +131,7 @@ export default function CalendarEventPage({ params }: { params: Promise<{ id: st
           </div>
           <div className="flex items-center gap-2 text-muted-foreground text-sm">
             <User className="h-4 w-4 text-primary/70" />
-            <span>Erstellt von: {event.created_by_name || creatorName || 'Unbekannt'}</span>
+            <span>Erstellt von: {event.created_by_name || 'Unbekannt'}</span>
           </div>
         </header>
 

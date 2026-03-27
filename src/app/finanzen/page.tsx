@@ -5,6 +5,7 @@ import { db } from '@/lib/firebase'
 import { collection, query, orderBy, onSnapshot, doc, deleteDoc, setDoc } from 'firebase/firestore'
 import { useAuth } from '@/context/AuthContext'
 import { FundingStatus } from '@/components/dashboard/FundingStatus'
+import { ClassRanking } from '@/components/dashboard/ClassRanking'
 import { AddFinanceDialog } from '@/components/modals/AddFinanceDialog'
 import { EditFinanceDialog } from '@/components/modals/EditFinanceDialog'
 import { FinanceEntry, Settings } from '@/types/database'
@@ -13,8 +14,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button'
 import { format } from 'date-fns'
 import { de } from 'date-fns/locale'
-import { Loader2, Trash2 } from 'lucide-react'
+import { Heart, Loader2, Trash2 } from 'lucide-react'
 import { toDate } from '@/lib/utils'
+import Link from 'next/link'
 import { toast } from 'sonner'
 import { logAction } from '@/lib/logging'
 
@@ -112,7 +114,15 @@ export default function FinancePage() {
           <h1 className="text-3xl font-bold tracking-tight">Finanzen</h1>
           <p className="text-muted-foreground">Budgetplanung mit Einnahmen und Ausgaben.</p>
         </div>
-        {isPlanner && <AddFinanceDialog />}
+        <div className="flex gap-2">
+          <Link href="/finanzen/spenden">
+            <Button variant="outline" className="gap-2">
+              <Heart className="h-4 w-4 text-primary fill-primary/20" />
+              Spenden & Hilfe
+            </Button>
+          </Link>
+          {isPlanner && <AddFinanceDialog />}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -164,6 +174,15 @@ export default function FinancePage() {
         initialTicketSales={settings?.expected_ticket_sales ?? 150}
         onTicketSalesChange={handleTicketSalesChange}
       />
+
+      <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
+        <ClassRanking 
+          finances={finances} 
+          goal={estimatedFundingGoal} 
+          useScrollContainer={false}
+          infoLink="/finanzen/spenden"
+        />
+      </div>
 
       <Card>
         <CardHeader>

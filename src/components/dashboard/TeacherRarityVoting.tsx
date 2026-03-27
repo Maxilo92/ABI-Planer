@@ -1,16 +1,16 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { db } from '@/lib/firebase'
-import { collection, doc, getDocs, arrayUnion, setDoc, getDoc, runTransaction, increment } from 'firebase/firestore'
+import { db, functions } from '@/lib/firebase'
+import { collection, doc, getDocs, getDoc } from 'firebase/firestore'
+import { httpsCallable } from 'firebase/functions'
 import { useAuth } from '@/context/AuthContext'
-import { Teacher, LootTeacher, Profile } from '@/types/database'
+import { Teacher, LootTeacher } from '@/types/database'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Star, Loader2, Sparkles, CheckCircle2, Lock, Gift } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
-import { logAction } from '@/lib/logging'
 import { useRouter } from 'next/navigation'
 import { Badge } from '@/components/ui/badge'
 
@@ -64,6 +64,7 @@ export function TeacherRarityVoting({ onStatusChange }: { onStatusChange?: (fini
               name: lt.name,
               avg_rating: aggregate.avg_rating || 0,
               vote_count: aggregate.vote_count || 0,
+              description: lt.description,
             } as Teacher
           })
         
@@ -99,10 +100,25 @@ export function TeacherRarityVoting({ onStatusChange }: { onStatusChange?: (fini
     
     setVoting(true)
     const teacher = teachers[currentIndex]
-    const voteId = `${user.uid}_${teacher.id}`
     
     try {
-      // 1. Update local UI state immediately to prevent "jumping"
+      // Perform DB operation via Cloud Function
+      const voteForTeacherFn = httpsCallable(functions, 'voteForTeacher')
+      const result = await voteForTeacherFn({
+        teacherId: teacher.id,
+        rating: rating,
+        teacherName: teacher.name
+      })
+
+      const data = result.data as { success: boolean, awardedPack: boolean }
+
+      if (data.awardedPack) {
+        toast.success('Du hast 1 Booster-Pack als Belohnung erhalten!', {
+          icon: <Gift className="h-4 w-4 text-primary" />
+        })
+      }
+
+      // Update local UI state ONLY on success
       const nextTeachers = teachers.filter((_, i) => i !== currentIndex)
       const nextIndex = nextTeachers.length > 0 ? Math.floor(Math.random() * nextTeachers.length) : -1
       
@@ -113,84 +129,10 @@ export function TeacherRarityVoting({ onStatusChange }: { onStatusChange?: (fini
         if (onStatusChange) onStatusChange(true)
       }
 
-      // 2. Perform DB operations in background via atomic transaction
-      await runTransaction(db, async (transaction) => {
-        // A. Read current teacher aggregate
-        const teacherRef = doc(db, 'teachers', teacher.id)
-        const profileRef = doc(db, 'profiles', user.uid)
-        
-        const [teacherSnap, profileSnap] = await Promise.all([
-          transaction.get(teacherRef),
-          transaction.get(profileRef)
-        ])
-
-        const currentVoteCount = teacherSnap.exists() ? (teacherSnap.data().vote_count || 0) : 0
-        const currentAvg = teacherSnap.exists() ? (teacherSnap.data().avg_rating || 0) : 0
-        const currentTotal = currentAvg * currentVoteCount
-        const newVoteCount = currentVoteCount + 1
-        const newAvg = (currentTotal + rating) / newVoteCount
-
-        // B. Reward Logic
-        const ratedTeachers = (profileSnap.data()?.rated_teachers || []) as string[]
-        const newRatedCount = ratedTeachers.length + 1
-        let awardPack = false
-
-        // First vote ever
-        if (newRatedCount === 1) awardPack = true
-        // 5th vote
-        else if (newRatedCount === 5) awardPack = true
-        // Every 10 votes after 5 (15, 25, 35...)
-        else if (newRatedCount > 5 && (newRatedCount - 5) % 10 === 0) awardPack = true
-
-        if (awardPack) {
-          transaction.update(profileRef, {
-            'booster_stats.extra_available': increment(1)
-          })
-        }
-
-        // C. Save individual rating
-        const ratingRef = doc(db, 'teacher_ratings', voteId)
-        transaction.set(ratingRef, {
-          userId: user.uid,
-          teacherId: teacher.id,
-          rating: rating,
-          created_at: new Date().toISOString()
-        })
-
-        // D. Update user profile (rated_teachers)
-        transaction.update(profileRef, {
-          rated_teachers: arrayUnion(teacher.id)
-        })
-
-        // E. Update teacher aggregate
-        transaction.set(teacherRef, {
-          name: teacher.name,
-          avg_rating: newAvg,
-          vote_count: newVoteCount,
-        }, { merge: true })
-
-        return { awardPack }
-      }).then((result) => {
-        if (result?.awardPack) {
-          toast.success('Du hast 1 Booster-Pack als Belohnung erhalten!', {
-            icon: <Gift className="h-4 w-4 text-primary" />
-          })
-        }
-      })
-
-      if (user) {
-        await logAction('TEACHER_VOTE', user.uid, profile?.full_name, { 
-          teacher_id: teacher.id, 
-          teacher_name: teacher.name,
-          rating: rating 
-        })
-      }
-
       toast.success(`${teacher.name} bewertet!`)
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error submitting teacher vote:', error)
-      toast.error('Bewertung fehlgeschlagen.')
-      // No rollback for now to keep it simple, but we could restore oldTeachers/oldIndex here
+      toast.error(error.message || 'Bewertung fehlgeschlagen.')
     } finally {
       setVoting(false)
     }
@@ -258,6 +200,11 @@ export function TeacherRarityVoting({ onStatusChange }: { onStatusChange?: (fini
           <CardTitle className="text-2xl lg:text-3xl font-black tracking-tight leading-tight">
             Wie selten ist <span className="text-primary">{currentTeacher.name}</span>?
           </CardTitle>
+          {currentTeacher.description && (
+            <p className="mt-2 text-sm font-medium text-muted-foreground/80 italic">
+              &quot;{currentTeacher.description}&quot;
+            </p>
+          )}
           <CardDescription className="mt-3 lg:mt-4 lg:text-sm lg:leading-relaxed">
             Deine Stimme hilft dabei, die offizielle Seltenheit im Lehrer-Album festzulegen. Wähle die Kategorie, die am besten passt!
           </CardDescription>

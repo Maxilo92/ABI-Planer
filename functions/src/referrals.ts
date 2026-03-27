@@ -49,30 +49,55 @@ export const awardReferralBoosters = onDocumentWritten({
     const db = getFirestore("abi-data");
     const uid = event.params.uid;
 
+    console.log(`[Referral] Triggered for user ${uid}`);
+
     const before = event.data?.before.data() as Profile | undefined;
     const after = event.data?.after.data() as Profile | undefined;
 
     // If document was deleted, do nothing
-    if (!after) return;
+    if (!after) {
+        console.log(`[Referral] Document deleted for ${uid}, skipping.`);
+        return;
+    }
 
     // Detect when full_name and class_name change from empty to non-empty
     const wasCompleted = before ? (!!before.full_name?.trim() && !!before.class_name?.trim()) : false;
     const isCompleted = (!!after.full_name?.trim() && !!after.class_name?.trim());
 
+    console.log(`[Referral] User ${uid}: wasCompleted=${wasCompleted}, isCompleted=${isCompleted}, referred_by=${after.referred_by}`);
+
     // Only proceed if the profile was just completed and there is a referrer
     if (wasCompleted || !isCompleted || !after.referred_by) {
+        console.log(`[Referral] Skipping ${uid}: already completed, not yet completed, or no referrer.`);
         return;
     }
 
-    const referrerId = after.referred_by;
+    const referralCode = after.referred_by;
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const startOfMonthISO = startOfMonth.toISOString();
     const timestamp = now.toISOString();
 
     try {
+        // 0. Find the actual referrer UID from the referral code
+        console.log(`[Referral] Looking up referrer for code: ${referralCode}`);
+        const referrerQuery = await db.collection("profiles")
+            .where("referral_code", "==", referralCode)
+            .limit(1)
+            .get();
+
+        if (referrerQuery.empty) {
+            console.warn(`[Referral] No referrer found with code ${referralCode} for user ${uid}.`);
+            return;
+        }
+
+        const referrerDoc = referrerQuery.docs[0];
+        const referrerId = referrerDoc.id;
+        console.log(`[Referral] Found referrer: ${referrerId} for code: ${referralCode}`);
+
         // 1. Fetch data for dynamic scaling and caps outside transaction
         // We query the referrals collection to calculate current month's awarded boosters and total past referrals.
+        console.log(`[Referral] Calculating rewards for referrer ${referrerId}`);
         const [totalCountSnap, monthlyRefsSnap] = await Promise.all([
             db.collection("referrals")
                 .where("referrerId", "==", referrerId)
@@ -93,6 +118,8 @@ export const awardReferralBoosters = onDocumentWritten({
         // Monthly cap: max 30 boosters per month
         const allowedReward = Math.max(0, Math.min(baseReward, 30 - currentMonthAwarded));
 
+        console.log(`[Referral] Stats for ${referrerId}: totalPast=${totalPastReferrals}, currentMonthAwarded=${currentMonthAwarded}, baseReward=${baseReward}, allowedReward=${allowedReward}`);
+
         // 3. Apply rewards in a transaction
         await db.runTransaction(async (transaction) => {
             const referrerRef = db.collection("profiles").doc(referrerId);
@@ -107,18 +134,19 @@ export const awardReferralBoosters = onDocumentWritten({
             ]);
 
             if (!referrerSnap.exists) {
-                console.warn(`Referrer ${referrerId} does not exist for referral by ${uid}.`);
+                console.warn(`[Referral] Referrer ${referrerId} does not exist in profiles collection.`);
                 return;
             }
 
             if (stdReferralSnap.exists) {
-                console.log(`Referral reward already granted for user ${uid}.`);
+                console.log(`[Referral] Referral reward already granted for user ${uid} (std_${uid} exists).`);
                 return;
             }
 
             // --- Awards ---
 
             // Award exactly 5 boosters to the referred user
+            console.log(`[Referral] Awarding 5 boosters to referred user ${uid}`);
             transaction.set(referredRef, {
                 booster_stats: {
                     extra_available: admin.firestore.FieldValue.increment(5),
@@ -145,7 +173,7 @@ export const awardReferralBoosters = onDocumentWritten({
                         extra_available: admin.firestore.FieldValue.increment(allowedReward),
                     },
                 }, { merge: true });
-                console.log(`Awarded ${allowedReward} boosters to referrer ${referrerId}`);
+                console.log(`[Referral] Awarded ${allowedReward} boosters to referrer ${referrerId}`);
 
                 // Create notification for referrer
                 const referrerGiftRef = referrerRef.collection("unseen_gifts").doc();
@@ -160,7 +188,7 @@ export const awardReferralBoosters = onDocumentWritten({
                     createdBy: "system_referral",
                 });
             } else {
-                console.log(`Referrer ${referrerId} has reached monthly booster limit (Awarded: ${currentMonthAwarded}/30).`);
+                console.log(`[Referral] Referrer ${referrerId} has reached monthly booster limit (Awarded: ${currentMonthAwarded}/30).`);
             }
 
             // Save standard referral document
@@ -173,8 +201,8 @@ export const awardReferralBoosters = onDocumentWritten({
             });
         });
 
-        console.log(`Successfully processed referral for user ${uid} by referrer ${referrerId}`);
+        console.log(`[Referral] Successfully processed referral for user ${uid} by referrer ${referrerId}`);
     } catch (error) {
-        console.error("Error in awardReferralBoosters:", error);
+        console.error("[Referral] Error in awardReferralBoosters:", error);
     }
 });

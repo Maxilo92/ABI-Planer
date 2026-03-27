@@ -20,6 +20,7 @@ interface ClassRankingProps {
   goal: number
   maxRows?: number
   useScrollContainer?: boolean
+  infoLink?: string
 }
 
 export function ClassRanking({
@@ -27,6 +28,7 @@ export function ClassRanking({
   goal,
   maxRows,
   useScrollContainer = true,
+  infoLink = '/finanzen',
 }: ClassRankingProps) {
   const [courses, setCourses] = useState<string[]>(['Kurs 1', 'Kurs 2', 'Kurs 3', 'Kurs 4', 'Kurs 5', 'Kurs 6', 'Kurs 7'])
   const [loading, setLoading] = useState(true)
@@ -146,7 +148,7 @@ export function ClassRanking({
             </div>
           </div>
           <Link 
-            href="/finanzen" 
+            href={infoLink} 
             className="flex items-center justify-center gap-1 w-full py-1.5 text-[10px] font-bold text-primary uppercase tracking-widest hover:bg-primary/5 rounded-lg transition-colors border border-primary/10"
           >
             Mehr Infos <ChevronRight className="h-3 w-3" />

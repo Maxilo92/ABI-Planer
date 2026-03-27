@@ -191,7 +191,7 @@ service cloud.firestore {
     }
     
     match /feedback/{feedbackId} {
-        allow read: if isAdmin() || (isAuthenticated() && resource.data.created_by == request.auth.uid) || (isApproved() && resource.data.is_private == false);
+        allow read: if isPlanner() || getProfile().role == 'viewer' || (isAuthenticated() && resource.data.created_by == request.auth.uid) || (isApproved() && resource.data.is_private == false);
         allow create: if isApproved();
         allow update, delete: if isAdmin();
     }

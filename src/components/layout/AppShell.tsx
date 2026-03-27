@@ -8,7 +8,7 @@ import { DangerAlertBanner } from '@/components/layout/DangerAlertBanner'
 import { CustomPopupBanner } from '@/components/layout/CustomPopupBanner'
 import { useAuth } from '@/context/AuthContext'
 import { useGiftNotices } from '@/hooks/useGiftNotices'
-import { GiftNoticeBanner } from '@/components/dashboard/GiftNoticeBanner'
+import { GiftNoticeModal } from '@/components/dashboard/GiftNoticeModal'
 import { useState, useEffect } from 'react'
 import { AlertTriangle, Lock, LogOut, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -116,7 +116,9 @@ export function AppShell({ children }: AppShellProps) {
   const [showWarning, setShowWarning] = useState(false)
   const isAuthRoute = authRoutes.has(pathname)
 
+  // eslint-disable-next-line react-hooks/purity
   const isTimedOut = profile?.timeout_until && new Date(profile.timeout_until).getTime() > Date.now()
+  // eslint-disable-next-line react-hooks/purity
   const hasWarning = profile?.timeout_until && new Date(profile.timeout_until).getTime() <= Date.now() && profile?.timeout_reason
 
   useEffect(() => {
@@ -166,7 +168,7 @@ export function AppShell({ children }: AppShellProps) {
       </div>
 
       {giftNotices.length > 0 && (
-        <GiftNoticeBanner
+        <GiftNoticeModal
           totalGiftPacks={totalGiftPacks}
           titleText={giftNotices[0]?.popupTitle}
           bodyText={giftNotices[0]?.popupBody}

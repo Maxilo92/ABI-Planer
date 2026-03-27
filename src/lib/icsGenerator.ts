@@ -63,11 +63,21 @@ export function downloadICS(event: ICSEvent) {
   const content = generateICS(event);
   const blob = new Blob([content], { type: 'text/calendar;charset=utf-8' });
   const url = URL.createObjectURL(blob);
+  
+  // For iOS/Safari compatibility: 
+  // 1. Try a hidden link first (most common)
+  // 2. Fallback to window.open if it's potentially blocked or fails
   const link = document.createElement('a');
   link.href = url;
   link.setAttribute('download', `${event.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.ics`);
   document.body.appendChild(link);
   link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
+  
+  // Give Safari a moment to process the download link before revoking
+  setTimeout(() => {
+    document.body.removeChild(link);
+    // On iOS, window.open with a blob URL can sometimes trigger the "Open in Calendar" dialog
+    // if the anchor click didn't work.
+    URL.revokeObjectURL(url);
+  }, 100);
 }

@@ -79,6 +79,7 @@ export interface Teacher {
   name: string;
   avg_rating: number; // 0.0 to 1.0
   vote_count: number;
+  description?: string;
 }
 
 export interface TeacherRating {
@@ -108,6 +109,7 @@ export interface LootTeacher {
   id: string;
   name: string;
   rarity: TeacherRarity;
+  description?: string;
 }
 
 export interface CustomPopupMessage {

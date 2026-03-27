@@ -44,6 +44,14 @@
         { "fieldPath": "referrerId", "order": "ASCENDING" },
         { "fieldPath": "timestamp", "order": "DESCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "delayed_actions",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "executableAt", "order": "ASCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

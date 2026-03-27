@@ -1,6 +1,5 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Event } from '@/types/database'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -33,26 +32,6 @@ export function CalendarEvents({
   showShareButton = false,
 }: CalendarEventsProps) {
   const { user, profile } = useAuth()
-  const [profileNamesById, setProfileNamesById] = useState<Record<string, string>>({})
-
-  useEffect(() => {
-    if (!user) return
-
-    const unsubscribe = onSnapshot(collection(db, 'profiles'), (snapshot) => {
-      const profileMap: Record<string, string> = {}
-      snapshot.docs.forEach((entry) => {
-        const data = entry.data() as { full_name?: string | null }
-        if (data.full_name) {
-          profileMap[entry.id] = data.full_name
-        }
-      })
-      setProfileNamesById(profileMap)
-    }, (error) => {
-      console.error('Error fetching profile names:', error)
-    })
-
-    return () => unsubscribe()
-  }, [user])
 
   const handleDelete = async (id: string) => {
     if (!window.confirm('Möchtest du diesen Termin wirklich löschen?')) return
@@ -142,7 +121,7 @@ export function CalendarEvents({
                       )}
                       <div className="flex items-center text-[10px] md:text-xs text-muted-foreground gap-1">
                         <User className="h-3 w-3" />
-                        {event.created_by_name || profileNamesById[event.created_by] || 'Unbekannt'}
+                        {event.created_by_name || 'Unbekannt'}
                       </div>
                     </div>
                   </Link>

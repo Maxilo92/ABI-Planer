@@ -18,6 +18,7 @@ export interface CardData {
   variant: CardVariant;
   color: string;
   style?: CardStyle;
+  description?: string;
 }
 
 export interface RarityWeights {
