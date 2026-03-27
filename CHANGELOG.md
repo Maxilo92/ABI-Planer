@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.26.59] - 2026-03-27
+- UI: **Kauf-Button Design verfeinert**. Der Streichpreis steht nun als schlichter Text links vom Hauptpreis, während die Prozent-Ersparnis in einem kleinen Label rechts hervorgehoben wird.
+
 ## [0.26.58] - 2026-03-27
 - Fix: **Kauf-Button Layout korrigiert**. Die Rabatt-Informationen wurden nebeneinander statt übereinander platziert, um Clipping-Fehler zu vermeiden und die Lesbarkeit zu verbessern.
 
