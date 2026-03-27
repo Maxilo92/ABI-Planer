@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.26.54] - 2026-03-27
+- UI: **Demo-Kauf-Modal implementiert**. Beim Klick auf ein Booster-Paket öffnet sich nun ein Bestätigungs-Modal, das den Demo-Charakter der Transaktion verdeutlicht.
+- UI: **Kauf-Button vereinfacht**. Das Kreditkarten-Icon wurde aus dem Kauf-Button entfernt, um ein minimalistischeres Design zu erzielen.
+
+## [0.26.53] - 2026-03-27
+- UI: **Booster Shop UI optimiert**. Der Preis der Booster-Packs wird nun direkt auf dem Kauf-Button angezeigt anstatt in einem separaten Info-Feld, um die Benutzeroberfläche übersichtlicher und moderner zu gestalten.
+
 ## [0.26.52] - 2026-03-27
 - Fix: **Kritischer Firebase-Fehler im Booster Shop behoben**. Ein `internal`-Error beim Kauf von Boostern wurde durch Korrektur des Datenbank-Zugriffs in den Cloud Functions (`getFirestore` statt fehlerhaftem `admin.firestore`) behoben.
 - Fix: **Fehlende Seltenheits-Synchronisierung korrigiert**. Die automatische Seltenheitsberechnung (`calculateTeacherRarity`) wurde ebenfalls auf den korrekten Datenbank-Zugriff umgestellt, um Dateninkonsistenzen zu vermeiden.

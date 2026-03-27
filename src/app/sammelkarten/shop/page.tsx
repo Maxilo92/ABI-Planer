@@ -66,6 +66,7 @@ export default function SammelkartenShopPage() {
   
   const [isPurchasing, setIsPurchasing] = useState<string | null>(null)
   const [successItem, setSuccessItem] = useState<{name: string, amount: number} | null>(null)
+  const [demoItem, setDemoItem] = useState<typeof SHOP_ITEMS[0] | null>(null)
 
   const now = new Date()
   const currentMonthStr = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`
@@ -166,14 +167,13 @@ export default function SammelkartenShopPage() {
                     </div>
                   </div>
 
-                  <div className="bg-muted/30 rounded-3xl p-6 flex flex-col items-center justify-center space-y-1 border border-border/50 shadow-inner">
-                    <div className="flex items-center gap-2 mb-1">
+                  <div className="bg-muted/30 rounded-3xl p-4 flex flex-col items-center justify-center space-y-1 border border-border/50 shadow-inner">
+                    <div className="flex items-center gap-2">
                        <Clock className="w-3 h-3 text-muted-foreground" />
                        <span className="text-[10px] text-muted-foreground font-black uppercase tracking-[0.1em]">
                          Verfügbar: {item.limit - currentPurchases} / {item.limit}
                        </span>
                     </div>
-                    <span className="text-5xl font-black tracking-tighter">{item.price}</span>
                   </div>
                 </div>
 
@@ -183,7 +183,7 @@ export default function SammelkartenShopPage() {
                       isLimitReached ? 'bg-muted text-muted-foreground' : 'bg-primary text-primary-foreground hover:bg-primary/90'
                     }`}
                     disabled={isPurchasing !== null || isLimitReached}
-                    onClick={() => handlePurchase(item)}
+                    onClick={() => setDemoItem(item)}
                   >
                     {isPurchasing === item.id ? (
                       <div className="flex items-center gap-3">
@@ -193,9 +193,8 @@ export default function SammelkartenShopPage() {
                     ) : isLimitReached ? (
                       'Limit erreicht'
                     ) : (
-                      <div className="flex items-center gap-3">
-                        <CreditCard className="w-6 h-6" />
-                        Kaufen
+                      <div className="flex items-center justify-center">
+                        {item.price}
                       </div>
                     )}
                   </Button>
@@ -237,6 +236,72 @@ export default function SammelkartenShopPage() {
            </div>
         </section>
       </main>
+
+      {/* Demo Purchase Modal */}
+      <AnimatePresence>
+        {demoItem && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[110] flex items-center justify-center bg-background/90 backdrop-blur-xl p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-card border border-border p-8 rounded-[2.5rem] shadow-2xl max-w-md w-full space-y-8 relative overflow-hidden"
+            >
+              <div className="absolute inset-0 bg-gradient-to-tr from-primary/5 via-transparent to-transparent pointer-events-none" />
+              
+              <div className="flex justify-between items-start relative z-10">
+                <div className="space-y-1">
+                  <h3 className="text-3xl font-black tracking-tight">Kauf bestätigen</h3>
+                  <p className="text-sm text-muted-foreground font-bold uppercase tracking-widest">Demo Transaktion</p>
+                </div>
+                <Button variant="ghost" size="icon" onClick={() => setDemoItem(null)} className="rounded-full">
+                  <ChevronLeft className="w-5 h-5 rotate-90" />
+                </Button>
+              </div>
+
+              <div className="p-6 bg-muted/30 rounded-3xl border border-border/50 space-y-4 shadow-inner relative z-10">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs font-black text-muted-foreground uppercase tracking-wider">Artikel</span>
+                  <span className="font-black text-lg">{demoItem.name}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-xs font-black text-muted-foreground uppercase tracking-wider">Inhalt</span>
+                  <span className="font-black">{demoItem.amount} Booster Packs</span>
+                </div>
+                <div className="pt-4 border-t border-border/50 flex justify-between items-center">
+                  <span className="text-lg font-black tracking-tight">Gesamtpreis</span>
+                  <span className="text-3xl font-black text-primary tracking-tighter">{demoItem.price}</span>
+                </div>
+              </div>
+
+              <div className="space-y-4 relative z-10">
+                <div className="flex items-start gap-3 p-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl text-amber-600 dark:text-amber-400 text-[10px] font-bold uppercase tracking-wide leading-relaxed">
+                  <AlertCircle className="w-5 h-5 shrink-0" />
+                  <span>Dies ist eine Simulation. Es werden keine echten Zahlungsdaten erhoben oder Kosten verursacht.</span>
+                </div>
+                
+                <Button 
+                  className="w-full h-16 rounded-2xl font-black text-xl shadow-lg hover:shadow-primary/20 transition-all"
+                  onClick={() => {
+                    handlePurchase(demoItem);
+                    setDemoItem(null);
+                  }}
+                >
+                  Kaufen
+                </Button>
+                <Button variant="ghost" className="w-full font-bold text-muted-foreground hover:text-foreground" onClick={() => setDemoItem(null)}>
+                  Abbrechen
+                </Button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Success Animation Overlay */}
       <AnimatePresence>
