@@ -13,7 +13,7 @@ import { format } from 'date-fns'
 import { de } from 'date-fns/locale'
 import { Loader2, Trash2, ArrowRight, Eye, User as UserIcon } from 'lucide-react'
 import { toDate } from '@/lib/utils'
-import { toast } from 'sonner'
+import { useSystemMessage } from '@/context/SystemMessageContext'
 import Link from 'next/link'
 import { deleteNewsImageByPath } from '@/lib/newsImageUpload'
 import { logAction } from '@/lib/logging'
@@ -22,6 +22,7 @@ import { ShareResourceButton } from '@/components/ui/share-resource-button'
 
 export default function NewsPage() {
   const { profile, loading: authLoading } = useAuth()
+  const { pushMessage } = useSystemMessage()
   const [news, setNews] = useState<NewsEntry[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -85,10 +86,20 @@ export default function NewsPage() {
         })
       }
 
-      toast.success('Beitrag erfolgreich gelöscht.')
+      pushMessage({
+        type: 'toast',
+        priority: 'info',
+        title: 'Erfolg',
+        content: 'Beitrag erfolgreich gelöscht.'
+      })
     } catch (err) {
       console.error('Error deleting news:', err)
-      toast.error('Fehler beim Löschen des Beitrags.')
+      pushMessage({
+        type: 'toast',
+        priority: 'critical',
+        title: 'Fehler',
+        content: 'Fehler beim Löschen des Beitrags.'
+      })
     }
   }
 

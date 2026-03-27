@@ -3,10 +3,10 @@ import { Inter } from 'next/font/google'
 import './globals.css'
 import { AppShell } from '@/components/layout/AppShell'
 import { AuthProvider } from '@/context/AuthContext'
+import { SystemMessageProvider } from '@/context/SystemMessageContext'
 import { Toaster } from '@/components/ui/sonner'
 import { ThemeProvider } from '@/context/ThemeProvider'
 import { GoogleAdSense } from '@/components/layout/GoogleAdSense'
-import Script from 'next/script'
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' })
 
@@ -37,9 +37,11 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <AuthProvider>
-            <AppShell>{children}</AppShell>
-            <GoogleAdSense />
-            <Toaster />
+            <SystemMessageProvider>
+              <AppShell>{children}</AppShell>
+              <GoogleAdSense />
+              <Toaster />
+            </SystemMessageProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>

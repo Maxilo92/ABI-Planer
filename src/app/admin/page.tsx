@@ -15,7 +15,7 @@ import { SetTimeoutDialog } from '@/components/modals/SetTimeoutDialog'
 import { useAuth } from '@/context/AuthContext'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { toast } from 'sonner'
+import { useSystemMessage } from '@/context/SystemMessageContext'
 import { logAction } from '@/lib/logging'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -41,6 +41,7 @@ type BulkActionType =
 
 export default function AdminPage() {
   const { user, profile, loading: authLoading } = useAuth()
+  const { pushMessage } = useSystemMessage()
   const [profiles, setProfiles] = useState<Profile[]>([])
   const [userSearch, setUserSearch] = useState('')
   const [selectedGiftRecipients, setSelectedGiftRecipients] = useState<string[]>([])
@@ -160,9 +161,19 @@ export default function AdminPage() {
     })
 
     if (hours > 0) {
-      toast.success(`Nutzer ${timeoutTarget.name} wurde für ${hours} Stunden gesperrt.`)
+      pushMessage({
+        type: 'toast',
+        priority: 'info',
+        title: 'Erfolg',
+        content: `Nutzer ${timeoutTarget.name} wurde für ${hours} Stunden gesperrt.`
+      })
     } else {
-      toast.success(`Nutzer ${timeoutTarget.name} wurde verwarnt.`)
+      pushMessage({
+        type: 'toast',
+        priority: 'info',
+        title: 'Erfolg',
+        content: `Nutzer ${timeoutTarget.name} wurde verwarnt.`
+      })
     }
     setTimeoutTarget(null)
   }
@@ -172,7 +183,12 @@ export default function AdminPage() {
       timeout_until: null,
       timeout_reason: null,
     })
-    toast.success('Timeout wurde aufgehoben.')
+    pushMessage({
+      type: 'toast',
+      priority: 'info',
+      title: 'Erfolg',
+      content: 'Timeout wurde aufgehoben.'
+    })
   }
 
   const handleDeleteProfile = async (id: string) => {
@@ -241,17 +257,32 @@ export default function AdminPage() {
 
     const selectedProfiles = profiles.filter((entry) => selectedGiftRecipients.includes(entry.id) && entry.id !== profile.id)
     if (selectedProfiles.length === 0) {
-      toast.error('Keine gültigen Nutzer ausgewählt.')
+      pushMessage({
+        type: 'toast',
+        priority: 'critical',
+        title: 'Fehler',
+        content: 'Keine gültigen Nutzer ausgewählt.'
+      })
       return
     }
 
     if (bulkAction === 'set_course' && !bulkCourse) {
-      toast.error('Bitte einen Kurs auswählen.')
+      pushMessage({
+        type: 'toast',
+        priority: 'critical',
+        title: 'Fehler',
+        content: 'Bitte einen Kurs auswählen.'
+      })
       return
     }
 
     if (bulkAction === 'set_group' && !bulkGroup) {
-      toast.error('Bitte eine Gruppe auswählen.')
+      pushMessage({
+        type: 'toast',
+        priority: 'critical',
+        title: 'Fehler',
+        content: 'Bitte eine Gruppe auswählen.'
+      })
       return
     }
 
@@ -316,13 +347,28 @@ export default function AdminPage() {
       })
 
       if (successIds.length > 0) {
-        toast.success(`Massenaktion abgeschlossen: ${successIds.length} erfolgreich.`)
+        pushMessage({
+          type: 'toast',
+          priority: 'info',
+          title: 'Erfolg',
+          content: `Massenaktion abgeschlossen: ${successIds.length} erfolgreich.`
+        })
       }
       if (skippedIds.length > 0) {
-        toast.warning(`${skippedIds.length} Nutzer übersprungen (Berechtigungsschutz).`)
+        pushMessage({
+          type: 'toast',
+          priority: 'warning',
+          title: 'Warnung',
+          content: `${skippedIds.length} Nutzer übersprungen (Berechtigungsschutz).`
+        })
       }
       if (failedIds.length > 0) {
-        toast.error(`${failedIds.length} Nutzer konnten nicht aktualisiert werden.`)
+        pushMessage({
+          type: 'toast',
+          priority: 'critical',
+          title: 'Fehler',
+          content: `${failedIds.length} Nutzer konnten nicht aktualisiert werden.`
+        })
       }
 
       setIsBulkDialogOpen(false)
