@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.26.64] - 2026-03-27
+- Fix: **Z-Index Problem behoben**. Der sticky Header im Shop überdeckt nun nicht mehr das globale Navigationsmenü auf Mobilgeräten.
+
 ## [0.26.63] - 2026-03-27
 - UI: **Layout-Korrekturen im Shop**. Die Booster-Bilder haben nun mehr Abstand zu den oberen Badges und sind besser zentriert. Die Animation des Rabatt-Badges wurde entfernt.
 
