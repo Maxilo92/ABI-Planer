@@ -1,6 +1,7 @@
 # Changelog
 
 ## [Unreleased]
+- **Hotfix (Hydration/DOM Nesting):** In [src/components/ui/context-menu.tsx](src/components/ui/context-menu.tsx) wurde `ContextMenuTrigger` um `asChild` erweitert; in [src/app/admin/page.tsx](src/app/admin/page.tsx) wird dies für Tabellenzeilen genutzt. Dadurch entstehen im `tbody` keine ungültigen `div`-Wrapper mehr.
 - **UI Fix (Admin-Rechtsklick):** In [src/app/admin/page.tsx](src/app/admin/page.tsx) wurde für die Desktop-Benutzerzeilen ein echtes Kontextmenü per Rechtsklick ergänzt (Profil öffnen, Popup senden, Auswahl toggeln, Name/E-Mail/User-ID kopieren).
 - **UI Fix (Empfänger-Rechtsklick):** In [src/app/admin/send/page.tsx](src/app/admin/send/page.tsx) wurde die Empfängerliste auf echte Zeilen umgestellt, damit das Kontextmenü per Rechtsklick zuverlässig öffnet.
 - **UI Fix (Kommunikations-Zentrale Header):** In [src/app/admin/send/page.tsx](src/app/admin/send/page.tsx) wurde der doppelte Zurück-Button bereinigt.

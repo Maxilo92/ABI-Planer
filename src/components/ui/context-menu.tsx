@@ -34,8 +34,9 @@ function ContextMenu({ children }: { children: React.ReactNode }) {
 function ContextMenuTrigger({
   children,
   className,
+  asChild = false,
   ...props
-}: React.ComponentProps<"div">) {
+}: React.ComponentProps<"div"> & { asChild?: boolean }) {
   const context = React.useContext(ContextMenuContext)
   
   const handleContextMenu = (e: React.MouseEvent) => {
@@ -43,6 +44,23 @@ function ContextMenuTrigger({
     e.preventDefault()
     context.setAnchor({ x: e.clientX, y: e.clientY })
     context.setOpen(true)
+  }
+
+  if (asChild && React.isValidElement(children)) {
+    const child = children as React.ReactElement<any>
+    const childProps = children.props as {
+      className?: string
+      onContextMenu?: (e: React.MouseEvent) => void
+    }
+
+    return React.cloneElement(child, {
+      ...props,
+      onContextMenu: (e: React.MouseEvent) => {
+        childProps.onContextMenu?.(e)
+        handleContextMenu(e)
+      },
+      className: cn(childProps.className, className),
+    })
   }
 
   return (

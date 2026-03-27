@@ -518,7 +518,7 @@ export default function AdminPage() {
 
                   return (
                     <ContextMenu key={p.id}>
-                      <ContextMenuTrigger>
+                      <ContextMenuTrigger asChild>
                         <TableRow>
                           <TableCell>
                             <Checkbox
