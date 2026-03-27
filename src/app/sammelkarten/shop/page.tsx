@@ -203,18 +203,18 @@ export default function SammelkartenShopPage() {
                     ) : isLimitReached ? (
                       <span className="text-xl">Limit erreicht</span>
                     ) : (
-                      <div className="flex flex-col items-center justify-center space-y-0.5">
+                      <div className="flex items-center justify-center gap-3">
+                        <span className="text-2xl tracking-tighter">{item.price}</span>
                         {item.amount > 1 && (
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs line-through opacity-60 decoration-1">
-                              {(item.amount * 0.99).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
+                          <div className="flex items-center gap-2 px-2.5 py-1 rounded-xl bg-white/10 border border-white/5">
+                            <span className="text-[10px] line-through opacity-50 decoration-1">
+                              {(item.amount * 0.99).toLocaleString('de-DE', { minimumFractionDigits: 2 })}€
                             </span>
-                            <span className="bg-white/20 text-[10px] px-1.5 py-0.5 rounded-lg font-black tracking-tighter">
+                            <span className="text-[10px] font-black tracking-tighter text-primary-foreground">
                               -{Math.round((1 - item.priceNum! / (item.amount * 0.99)) * 100)}%
                             </span>
                           </div>
                         )}
-                        <span className="text-2xl tracking-tighter">{item.price}</span>
                       </div>
                     )}
                   </Button>
