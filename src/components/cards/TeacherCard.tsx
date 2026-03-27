@@ -193,7 +193,7 @@ export const TeacherCard: React.FC<TeacherCardProps> = ({
       <motion.div
         animate={isLevelAnimating ? controls : { rotateY: isFlipped ? 0 : 180 }}
         initial={{ rotateY: isFlipped ? 0 : 180 }}
-        transition={{ duration: 0.6, ease: "easeOut" }}
+        transition={{ duration: 0.4, ease: "easeOut" }}
         style={{ transformStyle: "preserve-3d" }}
         className="w-full h-full relative will-change-transform"
       >

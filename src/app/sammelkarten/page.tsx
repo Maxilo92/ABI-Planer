@@ -390,6 +390,36 @@ function SammelkartenContent() {
 
   const packProbs = getPackProbabilities();
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.code === 'Space') {
+        e.preventDefault();
+        
+        if (gameState === 'idle' && getRemainingBoosters() > 0) {
+          handleOpenPack();
+        } else if (gameState === 'revealed' && !isMassOpening) {
+          const nextIndex = flippedCards.findIndex(f => !f);
+          if (nextIndex !== -1) {
+            handleFlipCard(nextIndex);
+          } else if (getRemainingBoosters() > 0) {
+            handleOpenPack();
+          } else {
+            setGameState('idle');
+          }
+        } else if (gameState === 'revealed' && isMassOpening) {
+          if (getRemainingBoosters() >= 10) {
+            handleOpenTenPacks();
+          } else {
+            setGameState('idle');
+          }
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [gameState, flippedCards, getRemainingBoosters, isMassOpening]);
+
   return (
     <div className="container mx-auto py-8">
       {view === 'sammelkarten' ? (
@@ -492,10 +522,10 @@ function SammelkartenContent() {
                               rotate: 0,
                               x: 0,
                               transition: { 
-                                delay: idx * 0.1,
+                                delay: idx * 0.04,
                                 type: 'spring',
-                                damping: 15,
-                                stiffness: 100
+                                damping: 18,
+                                stiffness: 220
                               }
                             }
                           }}
