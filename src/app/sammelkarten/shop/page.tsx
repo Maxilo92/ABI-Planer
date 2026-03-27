@@ -152,7 +152,7 @@ export default function SammelkartenShopPage() {
 
                 {item.amount > 1 && !isLimitReached && (
                   <div className="absolute top-6 left-6 z-20">
-                    <Badge className="bg-success text-success-foreground px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter shadow-lg border-none animate-pulse">
+                    <Badge className="bg-success text-success-foreground px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter shadow-lg border-none">
                       -{Math.round((1 - item.priceNum! / (item.amount * 0.99)) * 100)}% Rabatt
                     </Badge>
                   </div>
@@ -166,7 +166,7 @@ export default function SammelkartenShopPage() {
                   </div>
                 )}
 
-                <div className="relative p-8 flex-1 flex flex-col space-y-8">
+                <div className="relative px-8 pb-8 pt-16 flex-1 flex flex-col space-y-8">
                   <div className="py-4">
                      <BoosterPackVisual amount={item.amount} color={item.color} />
                   </div>

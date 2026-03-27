@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.26.63] - 2026-03-27
+- UI: **Layout-Korrekturen im Shop**. Die Booster-Bilder haben nun mehr Abstand zu den oberen Badges und sind besser zentriert. Die Animation des Rabatt-Badges wurde entfernt.
+
 ## [0.26.62] - 2026-03-27
 - UI: **Rabatt-Badge neu platziert**. Die Prozent-Ersparnis wurde vom Kauf-Button entfernt und stattdessen als pulsierendes Badge in der oberen linken Ecke der Booster-Pakete platziert, um sie prominenter hervorzuheben.
 
