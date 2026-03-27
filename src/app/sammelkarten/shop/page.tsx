@@ -150,6 +150,14 @@ export default function SammelkartenShopPage() {
               >
                 <div className="absolute inset-0 bg-gradient-to-tr from-white/5 via-transparent to-transparent pointer-events-none" />
 
+                {item.amount > 1 && !isLimitReached && (
+                  <div className="absolute top-6 left-6 z-20">
+                    <Badge className="bg-success text-success-foreground px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter shadow-lg border-none animate-pulse">
+                      -{Math.round((1 - item.priceNum! / (item.amount * 0.99)) * 100)}% Rabatt
+                    </Badge>
+                  </div>
+                )}
+
                 {(item.badge || isLimitReached) && (
                   <div className="absolute top-6 right-6 z-20">
                     <Badge className={`${isLimitReached ? 'bg-destructive' : 'bg-primary'} text-primary-foreground px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter shadow-lg border-none`}>
@@ -212,13 +220,6 @@ export default function SammelkartenShopPage() {
                           )}
                           <span className="text-2xl tracking-tighter">{item.price}</span>
                         </div>
-                        {item.amount > 1 && (
-                          <div className="absolute top-0 right-0 w-12 h-12 overflow-hidden pointer-events-none rounded-tr-2xl">
-                            <div className="absolute top-[10px] -right-[15px] w-[60px] bg-white/40 text-white text-[8px] font-black py-0.5 text-center rotate-45 shadow-sm uppercase tracking-tighter backdrop-blur-sm">
-                              -{Math.round((1 - item.priceNum! / (item.amount * 0.99)) * 100)}%
-                            </div>
-                          </div>
-                        )}
                       </>
                     )}
                   </Button>
