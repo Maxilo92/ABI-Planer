@@ -1,10 +1,10 @@
 # Changelog
 
+## [0.31.20] - 2026-03-27
+- **UI Fix (Sammelkarten):** Es wurde ein Flackern behoben, bei dem die "Keine Packs"-Anzeige kurzzeitig während der Öffnungs-Animation des letzten Boosters eingeblendet wurde. Das UI wartet nun ab, bis die Animation vollständig abgeschlossen ist, bevor der leere Zustand angezeigt wird.
+
 ## [0.31.19] - 2026-03-27
 - **UI Design Fix (Sammelkarten):** Das Blitz-Icon (`Zap`) in der leeren Booster-Anzeige wurde auf `text-foreground` umgestellt und die Deckkraft leicht erhöht. Dies stellt sicher, dass das Icon auch im Light-Mode auf hellem Hintergrund gut erkennbar ist.
-
-## [0.31.18] - 2026-03-27
-- **UI Design Fix (Sammelkarten):** Die Textfarben im leeren Booster-Fach wurden auf theme-basierte Vordergrundfarben (`text-foreground`) umgestellt. Dies behebt ein Problem, bei dem der Text in bestimmten Umgebungen (z.B. bei erzwungener Farbinvertierung) unleserlich weiß war.
 
 ## [0.31.14] - 2026-03-27
 - **UI Design Refinement (Sammelkarten):** Die gestrichelte Umrandung im leeren Booster-Fach wurde vollständig entfernt für einen noch minimalistischeren und saubereren Look.
