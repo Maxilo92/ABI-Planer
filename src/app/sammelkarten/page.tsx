@@ -192,7 +192,9 @@ function SammelkartenContent() {
       return
     }
 
-    setGameState('ripping')
+    const isReopen = gameState === 'revealed'
+    if (!isReopen) setGameState('ripping')
+    
     setIsAnimating(true)
     setIsMassOpening(true)
     setMassRevealedTeachers(null)
@@ -244,12 +246,12 @@ function SammelkartenContent() {
       setTimeout(() => {
         setMassRevealedTeachers(packsData)
         setMassCollectionResults(processedMassResults)
-      }, 300)
+      }, isReopen ? 100 : 300)
 
       setTimeout(() => {
         setGameState('revealed')
         setIsAnimating(false)
-      }, 700)
+      }, isReopen ? 200 : 700)
     } catch (err: any) {
       toast.error(err.message || 'Fehler beim Öffnen der 10 Packs.')
       setGameState('idle')
@@ -263,7 +265,9 @@ function SammelkartenContent() {
       return
     }
 
-    setGameState('ripping')
+    const isReopen = gameState === 'revealed'
+    if (!isReopen) setGameState('ripping')
+    
     setIsAnimating(true)
     setIsMassOpening(false)
     setRevealedTeachers(null)
@@ -314,12 +318,12 @@ function SammelkartenContent() {
         setRevealedTeachers(pack)
         setCollectionResults(processedResults)
         setFlippedCards([false, false, false]) // Reset flip state only when new cards are set
-      }, 300)
+      }, isReopen ? 100 : 300)
 
       setTimeout(() => {
         setGameState('revealed')
         setIsAnimating(false)
-      }, 700)
+      }, isReopen ? 200 : 700)
     } catch (err: any) {
       toast.error(err.message || 'Fehler beim Sammeln.')
       setGameState('idle')
