@@ -21,7 +21,8 @@ import {
   Trophy,
   ShieldCheck,
   AlertCircle,
-  Clock
+  Clock,
+  Heart
 } from 'lucide-react'
 import { toast } from 'sonner'
 import Link from 'next/link'
@@ -120,13 +121,13 @@ export default function SammelkartenShopPage() {
         {/* Hero Section */}
         <section className="text-center space-y-4">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-black uppercase tracking-widest">
-            <ShoppingBag className="w-3 h-3" />
-            Limited Edition
+            <Heart className="w-3 h-3 fill-current" />
+            90% für eure Abikasse
           </div>
           <h2 className="text-4xl font-black tracking-tighter sm:text-6xl">Erweitere deine Sammlung</h2>
           <p className="text-muted-foreground max-w-2xl mx-auto leading-relaxed text-lg font-medium">
             Sichere dir zusätzliche Booster-Pakete und entdecke seltene Lehrerkarten. 
-            Alle Käufe unterliegen fairen monatlichen Limits.
+            <span className="text-foreground block mt-1">90% aller Einnahmen fließen direkt in eure Abikasse!</span>
           </p>
         </section>
 
@@ -206,7 +207,7 @@ export default function SammelkartenShopPage() {
 
         {/* Legal Stuff Footer */}
         <section className="pt-12 border-t border-border space-y-10">
-           <div className="grid grid-cols-1 sm:grid-cols-2 gap-10 text-xs text-muted-foreground leading-relaxed font-medium">
+           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-xs text-muted-foreground leading-relaxed font-medium">
              <div className="space-y-3 p-6 bg-card border border-border rounded-2xl">
                 <h5 className="font-black text-foreground uppercase tracking-[0.15em] flex items-center gap-2 text-[10px]">
                    <CheckCircle2 className="w-3.5 h-3.5 text-success" />
@@ -214,7 +215,7 @@ export default function SammelkartenShopPage() {
                 </h5>
                 <p>
                   Monatliche Limits helfen dabei, das Spielgleichgewicht zu wahren. Wir möchten sicherstellen, dass der Sammelspaß 
-                  für alle Schüler im Vordergrund steht und exzessives Kaufverhalten verhindert wird.
+                  für alle Schüler im Vordergrund steht.
                 </p>
              </div>
              <div className="space-y-3 p-6 bg-card border border-border rounded-2xl">
@@ -225,6 +226,16 @@ export default function SammelkartenShopPage() {
                 <p>
                   Alle Booster enthalten zufällige Inhalte nach mathematisch festgelegten Quoten. 
                   Details findest du auf unserer <Link href="/sammelkarten/info" className="text-info font-bold underline underline-offset-4 hover:text-info/80">Info-Seite</Link>.
+                </p>
+             </div>
+             <div className="space-y-3 p-6 bg-card border border-border rounded-2xl border-primary/20 bg-primary/5">
+                <h5 className="font-black text-primary uppercase tracking-[0.15em] flex items-center gap-2 text-[10px]">
+                   <Trophy className="w-3.5 h-3.5" />
+                   Euer Abiball
+                </h5>
+                <p className="text-foreground/80">
+                  <span className="font-black text-foreground text-sm block mb-1 text-primary">90% Spendequote</span>
+                  Jeder Kauf unterstützt direkt eure Stufenkasse (90%). Die restlichen 10% decken Serverkosten und die App-Entwicklung.
                 </p>
              </div>
            </div>
