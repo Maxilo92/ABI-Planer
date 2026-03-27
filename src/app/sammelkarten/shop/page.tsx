@@ -213,10 +213,10 @@ export default function SammelkartenShopPage() {
                           <span className="text-2xl tracking-tighter">{item.price}</span>
                         </div>
                         {item.amount > 1 && (
-                          <div className="absolute top-0 right-0 h-10 w-10 flex items-center justify-center">
-                            <span className="bg-white/20 text-[10px] px-8 py-1 font-black tracking-tighter text-white rotate-45 translate-x-[30%] -translate-y-[20%] shadow-sm">
+                          <div className="absolute top-0 right-0 w-12 h-12 overflow-hidden pointer-events-none rounded-tr-2xl">
+                            <div className="absolute top-[10px] -right-[15px] w-[60px] bg-white/40 text-white text-[8px] font-black py-0.5 text-center rotate-45 shadow-sm uppercase tracking-tighter backdrop-blur-sm">
                               -{Math.round((1 - item.priceNum! / (item.amount * 0.99)) * 100)}%
-                            </span>
+                            </div>
                           </div>
                         )}
                       </>

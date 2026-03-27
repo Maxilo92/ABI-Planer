@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.26.61] - 2026-03-27
+- UI: **Rabatt-Eckbanner optimiert**. Die Sichtbarkeit und Positionierung des diagonalen Prozent-Banners auf dem Kauf-Button wurde verbessert und mit einem Backdrop-Blur versehen.
+
 ## [0.26.60] - 2026-03-27
 - UI: **Eck-Banner für Rabatte**. Die Prozent-Ersparnis wird nun als diagonales Banner in der oberen rechten Ecke des Kauf-Buttons angezeigt.
 
