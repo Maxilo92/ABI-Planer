@@ -248,6 +248,7 @@ function SammelkartenContent() {
     setIsMassOpening(true)
     setMassRevealedTeachers(null)
     setMassCollectionResults(null)
+    setConsecutiveOpenCount(prev => prev + 1)
 
     const godpackChance = config?.global_limits?.godpack_chance ?? 0.005
     const packsData = Array.from({ length: 10 }).map(() => {
@@ -332,6 +333,7 @@ function SammelkartenContent() {
     setRevealedTeachers(null)
     setCollectionResults(null)
     setFlippedCards([false, false, false])
+    setConsecutiveOpenCount(prev => prev + 1)
 
     const godpackChance = config?.global_limits?.godpack_chance ?? 0.005
     const godpack = Math.random() < godpackChance
@@ -526,9 +528,9 @@ function SammelkartenContent() {
             {/* The Pack/Card Container */}
             <div className="relative w-full min-h-[400px] flex items-center justify-center overflow-visible">
               {/* Debug Speed Info */}
-              {showDebug && consecutiveOpenCount > 0 && (
+              {showDebug && (
                 <div className="absolute top-0 right-0 z-50 bg-black/80 backdrop-blur-md p-2 rounded-xl border border-white/10 text-[8px] font-mono text-amber-500 animate-in fade-in zoom-in duration-300">
-                  <p>OPEN SPEED: {((1 - speedMultiplier) * 100).toFixed(0)}%</p>
+                  <p>UNPACK SPEED: {((1 - speedMultiplier) * 100).toFixed(0)}%</p>
                   <p>COMBO: {consecutiveOpenCount}x</p>
                 </div>
               )}
