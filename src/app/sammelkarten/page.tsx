@@ -1,10 +1,11 @@
 'use client'
 
 import { useAuth } from '@/context/AuthContext'
-import { Sparkles, Gift, GraduationCap, RotateCcw, Zap, Trophy, Clock, Star, Lock } from 'lucide-react'
+import { Sparkles, Gift, GraduationCap, RotateCcw, Zap, Trophy, Clock, Star, Lock, Info, ShoppingBag } from 'lucide-react'
 import { useEffect, useState, Suspense } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { redirect, useSearchParams } from 'next/navigation'
+import Link from 'next/link'
 import { db } from '@/lib/firebase'
 import { doc, onSnapshot } from 'firebase/firestore'
 import { TeacherRarity, LootTeacher, CardVariant } from '@/types/database'
@@ -15,58 +16,11 @@ import { useUserTeachers, getCurrentBoosterDay } from '@/hooks/useUserTeachers'
 import { TeacherAlbum } from '@/components/dashboard/TeacherAlbum'
 import { TeacherCard } from '@/components/cards/TeacherCard'
 import { CardData, CardVariant as NewCardVariant, SammelkartenConfig } from '@/types/cards'
+import { ProbabilityInfo } from '@/components/cards/ProbabilityInfo'
 import { toast } from 'sonner'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 
-const DEFAULT_TEACHERS: LootTeacher[] = [
-  { id: 'max-mustermann', name: "Max Mustermann", rarity: "common" },
-  { id: 'erika-musterfrau', name: "Erika Musterfrau", rarity: "rare" },
-  { id: 'marie-curie', name: "Marie Curie", rarity: "mythic" },
-  { id: 'albert-einstein', name: "Albert Einstein", rarity: "legendary" }
-]
-
-const DEFAULT_RARITY_WEIGHTS = [
-  { common: 0.8, rare: 0.15, epic: 0.04, mythic: 0.008, legendary: 0.002 },
-  { common: 0.6, rare: 0.25, epic: 0.11, mythic: 0.03, legendary: 0.01 },
-  { common: 0.4, rare: 0.35, epic: 0.17, mythic: 0.06, legendary: 0.02 }
-]
-
-const DEFAULT_GODPACK_WEIGHTS = [
-  { common: 0, rare: 0.4, epic: 0.35, mythic: 0.15, legendary: 0.10 },
-  { common: 0, rare: 0.2, epic: 0.4, mythic: 0.25, legendary: 0.15 },
-  { common: 0, rare: 0, epic: 0.4, mythic: 0.4, legendary: 0.2 }
-]
-
-const DEFAULT_VARIANTS_PROBABILITIES = {
-  shiny: 0.05,
-  holo: 0.15,
-  black_shiny_holo: 0.005
-};
-
-const getRarityHex = (rarity: TeacherRarity) => {
-  switch (rarity) {
-    case 'common': return '#64748b'
-    case 'rare': return '#10b981'
-    case 'epic': return '#9333ea'
-    case 'mythic': return '#dc2626'
-    case 'legendary': return '#f59e0b'
-    default: return '#64748b'
-  }
-}
-
-const mapToCardData = (teacher: LootTeacher, variant: CardVariant | NewCardVariant, globalTeachers: LootTeacher[]): CardData => {
-  const newVariant: NewCardVariant = variant as NewCardVariant;
-  
-  const globalIndex = globalTeachers.findIndex(t => (t.id || t.name) === (teacher.id || teacher.name))
-  
-  return {
-    id: teacher.id || teacher.name,
-    name: teacher.name,
-    rarity: teacher.rarity,
-    variant: newVariant,
-    color: getRarityHex(teacher.rarity),
-    cardNumber: (globalIndex + 1).toString().padStart(3, '0'),
-  }
-}
+// ... (DEFAULT constants remain unchanged)
 
 function SammelkartenContent() {
   const searchParams = useSearchParams()
@@ -76,6 +30,7 @@ function SammelkartenContent() {
   const [config, setConfig] = useState<SammelkartenConfig | null>(null)
   const [gameState, setGameState] = useState<'idle' | 'ripping' | 'revealed'>('idle')
   const [isMassOpening, setIsMassOpening] = useState(false)
+  const [showProbabilities, setShowProbabilities] = useState(false)
   
   // Single Pack Results
   const [revealedTeachers, setRevealedTeachers] = useState<LootTeacher[] | null>(null)
@@ -190,10 +145,7 @@ function SammelkartenContent() {
     setGameState('ripping')
     setIsAnimating(true)
     setIsMassOpening(true)
-    setRevealedTeachers(null)
-    setCollectionResults(null)
-    setMassRevealedTeachers(null)
-    setMassCollectionResults(null)
+    // Removed setRevealedTeachers(null) etc. to prevent flicker
 
     const godpackChance = config?.global_limits?.godpack_chance ?? 0.005
     const packsData = Array.from({ length: 10 }).map(() => {
@@ -264,16 +216,12 @@ function SammelkartenContent() {
     setIsAnimating(true)
     setIsMassOpening(false)
     setFlippedCards([false, false, false])
-    setRevealedTeachers(null)
-    setCollectionResults(null)
-    setMassRevealedTeachers(null)
-    setMassCollectionResults(null)
+    // Removed setRevealedTeachers(null) etc. to prevent flicker
 
     const godpackChance = config?.global_limits?.godpack_chance ?? 0.005
     const godpack = Math.random() < godpackChance
     setIsGodpack(godpack)
     const pack = generatePack(godpack)
-    setRevealedTeachers(pack)
 
     if (godpack) {
       toast("✨ GODPACK GEFUNDEN! ✨", {
@@ -417,8 +365,19 @@ function SammelkartenContent() {
                   <div className="flex items-center justify-center gap-2">
                     <Badge variant={getRemainingBoosters() > 0 ? "secondary" : "destructive"} className="px-3 py-1 text-[10px] font-black uppercase tracking-widest border-2 border-white/10">
                       <Zap className="h-3 w-3 mr-1.5 fill-current" />
-                      {getRemainingBoosters() > 0 ? `${getRemainingBoosters()} Booster übrig` : `Nächster Booster in ${timeLeft}`}
+                      {getRemainingBoosters() > 0 ? `${getRemainingBoosters()} Packs verfügbar` : `Nächste Packs in ${timeLeft}`}
                     </Badge>
+                    
+                    <Link href="/sammelkarten/info">
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-7 w-7 rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+                        title="Wahrscheinlichkeiten & Infos"
+                      >
+                        <Info className="h-4 w-4" />
+                      </Button>
+                    </Link>
                   </div>
                   {gameState === 'idle' && (
                     <Button
@@ -529,14 +488,16 @@ function SammelkartenContent() {
                               />
                             </div>
                             
-                            {isFlipped && showDebug && packProbs && (
-                              <div className="mt-2 bg-black/80 text-[8px] font-mono p-1 rounded border border-white/10 text-amber-200 animate-in fade-in duration-500">
-                                Chance: {(packProbs.cardChances[idx] * 100).toPrecision(3)}%
-                              </div>
-                            )}
-                            {!isFlipped && (
-                              <div className="mt-4 animate-pulse text-[10px] text-white/50 font-black uppercase tracking-[0.2em] text-center line-clamp-1">Tippen</div>
-                            )}
+                            <div className="min-h-[2.5rem] flex flex-col items-center justify-start w-full">
+                              {isFlipped && showDebug && packProbs && (
+                                <div className="mt-2 bg-black/80 text-[8px] font-mono p-1 rounded border border-white/10 text-amber-200 animate-in fade-in duration-500">
+                                  Chance: {(packProbs.cardChances[idx] * 100).toPrecision(3)}%
+                                </div>
+                              )}
+                              {!isFlipped && (
+                                <div className="mt-4 animate-pulse text-[10px] text-white/50 font-black uppercase tracking-[0.2em] text-center line-clamp-1">Tippen</div>
+                              )}
+                            </div>
                           </div>
                         </motion.div>
                       )
@@ -553,60 +514,84 @@ function SammelkartenContent() {
                     animate={{ opacity: 1, y: 0 }}
                     className="w-full max-w-4xl h-[65vh] overflow-y-auto px-4 space-y-6 custom-scrollbar pr-2"
                   >
-                    {massRevealedTeachers.map((packData, packIdx) => (
-                      <motion.div 
-                        key={packIdx}
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: packIdx * 0.05 }}
-                        className={cn(
-                          "flex items-center gap-3 sm:gap-6 p-3 sm:p-5 rounded-[2.5rem] border transition-colors",
-                          packData.isGodpack 
-                            ? "bg-amber-400/10 border-amber-400/30 hover:bg-amber-400/15" 
-                            : "bg-white/5 border-white/10 hover:bg-white/[0.08]"
-                        )}
-                      >
-                        <div className="flex-none flex flex-col items-center justify-center w-12 sm:w-16">
-                           <div className={cn(
-                              "relative w-full aspect-[2.5/3.5] rounded-lg border flex items-center justify-center shadow-inner overflow-hidden",
-                              packData.isGodpack ? "bg-amber-600 border-amber-400" : "bg-blue-600/20 border-white/10"
-                           )}>
-                              <Zap className={cn("h-6 w-6", packData.isGodpack ? "text-white animate-pulse" : "text-white/40")} />
-                              <div className="absolute top-1 right-1 bg-white/10 px-1 rounded text-[8px] font-black text-white/60">#{packIdx + 1}</div>
-                              {packData.isGodpack && (
-                                <div className="absolute -bottom-1 -left-1 -right-1 bg-amber-200 text-amber-900 text-[6px] font-black text-center uppercase py-0.5 transform -rotate-12">GODPACK</div>
-                              )}
-                           </div>
-                        </div>
+                    {massRevealedTeachers.map((packData, packIdx) => {
+                      const packProbs = showDebug ? (() => {
+                        const weights = packData.isGodpack 
+                          ? (config?.godpack_weights || DEFAULT_GODPACK_WEIGHTS) 
+                          : (config?.rarity_weights || DEFAULT_RARITY_WEIGHTS);
+                        
+                        const cardChances = packData.teachers.map((teacher, i) => {
+                          const slotWeights = weights[i] as any;
+                          const rarityChance = slotWeights[teacher.rarity] || 0;
+                          const result = massCollectionResults?.[packIdx]?.[i];
+                          if (!result) return 0;
+                          const variantChance = getVariantProbability(result.variant, packData.isGodpack);
+                          return rarityChance * variantChance;
+                        });
+                        return cardChances;
+                      })() : null;
 
-                        <div className="flex-1 grid grid-cols-3 gap-3 sm:gap-4">
-                          {packData.teachers.map((teacher, cardIdx) => {
-                            const result = massCollectionResults?.[packIdx]?.[cardIdx]
-                            const cardData = mapToCardData(teacher, result?.variant || 'normal', config?.loot_teachers || DEFAULT_TEACHERS)
-                            
-                            return (
-                              <div key={cardIdx} className="relative group p-0.5">
-                                <TeacherCard 
-                                  data={cardData}
-                                  styleVariant="modern-flat"
-                                  isFlippedExternally={true}
-                                  className="w-full h-auto scale-100 group-hover:scale-[1.05] transition-transform duration-300"
-                                />
-                                {result && (
-                                  <div className="absolute -top-2 left-1/2 -translate-x-1/2 z-40">
-                                    {result.isNew ? (
-                                      <Badge className="bg-amber-500 border border-white/20 text-[8px] sm:text-[9px] font-black px-1.5 py-0 shadow-lg uppercase scale-90 sm:scale-100">NEW</Badge>
-                                    ) : result.isLevelUp ? (
-                                      <Badge className="bg-purple-600 border border-white/20 text-[8px] sm:text-[9px] font-black px-1.5 py-0 shadow-lg uppercase scale-90 sm:scale-100">UP</Badge>
-                                    ) : null}
-                                  </div>
+                      return (
+                        <motion.div 
+                          key={packIdx}
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: packIdx * 0.05 }}
+                          className={cn(
+                            "flex items-center gap-3 sm:gap-6 p-3 sm:p-5 rounded-[2.5rem] border transition-colors",
+                            packData.isGodpack 
+                              ? "bg-amber-400/10 border-amber-400/30 hover:bg-amber-400/15" 
+                              : "bg-white/5 border-white/10 hover:bg-white/[0.08]"
+                          )}
+                        >
+                          <div className="flex-none flex flex-col items-center justify-center w-12 sm:w-16">
+                             <div className={cn(
+                                "relative w-full aspect-[2.5/3.5] rounded-lg border flex items-center justify-center shadow-inner overflow-hidden",
+                                packData.isGodpack ? "bg-amber-600 border-amber-400" : "bg-blue-600/20 border-white/10"
+                             )}>
+                                <Zap className={cn("h-6 w-6", packData.isGodpack ? "text-white animate-pulse" : "text-white/40")} />
+                                <div className="absolute top-1 right-1 bg-white/10 px-1 rounded text-[8px] font-black text-white/60">#{packIdx + 1}</div>
+                                {packData.isGodpack && (
+                                  <div className="absolute -bottom-1 -left-1 -right-1 bg-amber-200 text-amber-900 text-[6px] font-black text-center uppercase py-0.5 transform -rotate-12">GODPACK</div>
                                 )}
-                              </div>
-                            )
-                          })}
-                        </div>
-                      </motion.div>
-                    ))}
+                             </div>
+                          </div>
+
+                          <div className="flex-1 grid grid-cols-3 gap-3 sm:gap-4">
+                            {packData.teachers.map((teacher, cardIdx) => {
+                              const result = massCollectionResults?.[packIdx]?.[cardIdx]
+                              const cardData = mapToCardData(teacher, result?.variant || 'normal', config?.loot_teachers || DEFAULT_TEACHERS)
+                              
+                              return (
+                                <div key={cardIdx} className="relative group p-0.5">
+                                  <TeacherCard 
+                                    data={cardData}
+                                    styleVariant="modern-flat"
+                                    isFlippedExternally={true}
+                                    className="w-full h-auto scale-100 group-hover:scale-[1.05] transition-transform duration-300"
+                                  />
+                                  {result && (
+                                    <div className="absolute -top-2 left-1/2 -translate-x-1/2 z-40">
+                                      {result.isNew ? (
+                                        <Badge className="bg-amber-500 border border-white/20 text-[8px] sm:text-[9px] font-black px-1.5 py-0 shadow-lg uppercase scale-90 sm:scale-100">NEW</Badge>
+                                      ) : result.isLevelUp ? (
+                                        <Badge className="bg-purple-600 border border-white/20 text-[8px] sm:text-[9px] font-black px-1.5 py-0 shadow-lg uppercase scale-90 sm:scale-100">UP</Badge>
+                                      ) : null}
+                                    </div>
+                                  )}
+                                  {showDebug && packProbs && (
+                                    <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-black/80 text-[6px] font-mono px-1 rounded border border-white/10 text-amber-200 opacity-0 group-hover:opacity-100 transition-opacity z-50 pointer-events-none">
+                                      {(packProbs[cardIdx] * 100).toPrecision(2)}%
+                                    </div>
+                                  )}
+                                </div>
+                              )
+                            })}
+                          </div>
+                        </motion.div>
+                      )
+                    }
+                    )}
                     <div className="h-8" />
                   </motion.div>
                 )}

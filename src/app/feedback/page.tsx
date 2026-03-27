@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { collection, addDoc, query, orderBy, onSnapshot, where } from 'firebase/firestore'
+import { collection, addDoc, query, orderBy, onSnapshot, where, or } from 'firebase/firestore'
 import { MessageSquarePlus, Bug, Lightbulb, HelpCircle, Image as ImageIcon, X, Loader2 } from 'lucide-react'
 
 import { db } from '@/lib/firebase'
@@ -55,12 +55,19 @@ export default function FeedbackPage() {
   }, [authLoading, user, router])
 
   useEffect(() => {
-    if (authLoading) return
+    if (authLoading || !user) return
 
     const feedbackRef = collection(db, 'feedback')
     const q = isAdmin 
       ? query(feedbackRef, orderBy('created_at', 'desc'))
-      : query(feedbackRef, where('is_private', '==', false), orderBy('created_at', 'desc'))
+      : query(
+          feedbackRef, 
+          or(
+            where('is_private', '==', false),
+            where('created_by', '==', user.uid)
+          ),
+          orderBy('created_at', 'desc')
+        )
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       setFeedbackItems(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Feedback)))
@@ -71,7 +78,7 @@ export default function FeedbackPage() {
     })
 
     return () => unsubscribe()
-  }, [isAdmin, authLoading])
+  }, [isAdmin, authLoading, user])
 
   useEffect(() => {
     return () => {
@@ -252,7 +259,7 @@ export default function FeedbackPage() {
 
   const filteredItems = sortedItems.filter(item => {
     if (isAdmin) return true
-    return !item.is_private
+    return !item.is_private || item.created_by === user?.uid
   })
 
   return (

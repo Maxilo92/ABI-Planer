@@ -9,8 +9,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
-import { MoreVertical, Shield, User, Trash2, Clock3, Undo2, Search, Gift, MessageSquare } from 'lucide-react'
+import { MoreVertical, Shield, User, Trash2, Clock3, Undo2, Search, Gift, MessageSquare, AlertTriangle } from 'lucide-react'
 import { ResetPasswordDialog } from '@/components/modals/ResetPasswordDialog'
+import { SetTimeoutDialog } from '@/components/modals/SetTimeoutDialog'
 import { useAuth } from '@/context/AuthContext'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -44,6 +45,8 @@ export default function AdminPage() {
   const [userSearch, setUserSearch] = useState('')
   const [selectedGiftRecipients, setSelectedGiftRecipients] = useState<string[]>([])
   const [isBulkDialogOpen, setIsBulkDialogOpen] = useState(false)
+  const [isTimeoutDialogOpen, setIsTimeoutDialogOpen] = useState(false)
+  const [timeoutTarget, setTimeoutTarget] = useState<{ id: string, name: string } | null>(null)
   const [bulkAction, setBulkAction] = useState<BulkActionType>('approve')
   const [bulkCourse, setBulkCourse] = useState('')
   const [bulkGroup, setBulkGroup] = useState('')
@@ -144,13 +147,24 @@ export default function AdminPage() {
     }
   }
 
-  const handleSetTimeout = async (id: string, hours: number) => {
-    const timeoutUntil = new Date(Date.now() + hours * 60 * 60 * 1000).toISOString()
-    await handleUpdateProfile(id, {
+  const handleTimeoutConfirm = async (hours: number, reason: string) => {
+    if (!timeoutTarget) return
+
+    const timeoutUntil = hours > 0 
+      ? new Date(Date.now() + hours * 60 * 60 * 1000).toISOString()
+      : new Date(Date.now() - 1000).toISOString() // Past date means warning only
+
+    await handleUpdateProfile(timeoutTarget.id, {
       timeout_until: timeoutUntil,
-      timeout_reason: `Admin-Timeout (${hours}h)`,
+      timeout_reason: reason,
     })
-    toast.success(`Nutzer wurde für ${hours} Stunden getimeoutet.`)
+
+    if (hours > 0) {
+      toast.success(`Nutzer ${timeoutTarget.name} wurde für ${hours} Stunden gesperrt.`)
+    } else {
+      toast.success(`Nutzer ${timeoutTarget.name} wurde verwarnt.`)
+    }
+    setTimeoutTarget(null)
   }
 
   const handleClearTimeout = async (id: string) => {
@@ -434,8 +448,12 @@ export default function AdminPage() {
                         {p.role}
                       </Badge>
                       {p.timeout_until && new Date(p.timeout_until).getTime() > Date.now() && (
-                        <Badge variant="destructive" className="ml-2">
-                          Timeout
+                        <Badge 
+                          variant="destructive" 
+                          className="ml-2"
+                          title={p.timeout_reason || 'Kein Grund angegeben'}
+                        >
+                          Sperre
                         </Badge>
                       )}
                     </TableCell>
@@ -494,11 +512,11 @@ export default function AdminPage() {
                               <DropdownMenuItem disabled={!canManageRoleActions} onClick={() => handleUpdateProfile(p.id, { role: 'viewer' })}>
                                 <User className="mr-2 h-4 w-4" /> Zum Zuschauer
                               </DropdownMenuItem>
-                              <DropdownMenuItem disabled={!canManageRoleActions} onClick={() => handleSetTimeout(p.id, 24)}>
-                                <Clock3 className="mr-2 h-4 w-4" /> Timeout 24h
-                              </DropdownMenuItem>
-                              <DropdownMenuItem disabled={!canManageRoleActions} onClick={() => handleSetTimeout(p.id, 24 * 7)}>
-                                <Clock3 className="mr-2 h-4 w-4" /> Timeout 7 Tage
+                              <DropdownMenuItem disabled={!canManageRoleActions} onClick={() => {
+                                setTimeoutTarget({ id: p.id, name: p.full_name || p.email })
+                                setIsTimeoutDialogOpen(true)
+                              }}>
+                                <AlertTriangle className="mr-2 h-4 w-4 text-destructive" /> Warnen / Sperren
                               </DropdownMenuItem>
                               <DropdownMenuItem disabled={!canManageRoleActions} onClick={() => handleClearTimeout(p.id)}>
                                 <Undo2 className="mr-2 h-4 w-4" /> Timeout aufheben
@@ -570,11 +588,11 @@ export default function AdminPage() {
                           <DropdownMenuItem disabled={!canManageRoleActions} onClick={() => handleUpdateProfile(p.id, { role: 'viewer' })}>
                             <User className="mr-2 h-4 w-4" /> Zum Zuschauer
                           </DropdownMenuItem>
-                          <DropdownMenuItem disabled={!canManageRoleActions} onClick={() => handleSetTimeout(p.id, 24)}>
-                            <Clock3 className="mr-2 h-4 w-4" /> Timeout 24h
-                          </DropdownMenuItem>
-                          <DropdownMenuItem disabled={!canManageRoleActions} onClick={() => handleSetTimeout(p.id, 24 * 7)}>
-                            <Clock3 className="mr-2 h-4 w-4" /> Timeout 7 Tage
+                          <DropdownMenuItem disabled={!canManageRoleActions} onClick={() => {
+                            setTimeoutTarget({ id: p.id, name: p.full_name || p.email })
+                            setIsTimeoutDialogOpen(true)
+                          }}>
+                            <AlertTriangle className="mr-2 h-4 w-4 text-destructive" /> Warnen / Sperren
                           </DropdownMenuItem>
                           <DropdownMenuItem disabled={!canManageRoleActions} onClick={() => handleClearTimeout(p.id)}>
                             <Undo2 className="mr-2 h-4 w-4" /> Timeout aufheben
@@ -589,9 +607,16 @@ export default function AdminPage() {
                   </div>
 
                   {p.timeout_until && new Date(p.timeout_until).getTime() > Date.now() && (
-                    <Badge variant="destructive" className="w-full justify-center py-1">
-                      Nutzer ist getimeoutet
-                    </Badge>
+                    <div className="space-y-2">
+                      <Badge variant="destructive" className="w-full justify-center py-1">
+                        Nutzer ist gesperrt
+                      </Badge>
+                      {p.timeout_reason && (
+                        <p className="text-[10px] text-center text-muted-foreground italic px-2">
+                          Grund: {p.timeout_reason}
+                        </p>
+                      )}
+                    </div>
                   )}
 
                   <div className="grid grid-cols-2 gap-3 pt-2 border-t">
@@ -703,6 +728,12 @@ export default function AdminPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <SetTimeoutDialog 
+        isOpen={isTimeoutDialogOpen}
+        onOpenChange={setIsTimeoutDialogOpen}
+        onConfirm={handleTimeoutConfirm}
+        userName={timeoutTarget?.name || 'Nutzer'}
+      />
     </div>
   )
 }

@@ -118,6 +118,24 @@ function RegisterForm() {
     e.preventDefault()
 
     setError(null)
+    
+    // Final validation check for all required fields
+    if (!fullName.trim()) {
+      setStep(1)
+      setError('Bitte gib deinen vollständigen Namen ein.')
+      return
+    }
+    if (!email.trim() || !password.trim() || !email.includes('@hgr-web.lernsax.de')) {
+      setStep(2)
+      setError('Bitte überprüfe deine E-Mail und dein Passwort.')
+      return
+    }
+    if (!isAtLeast16 || !acceptsTerms) {
+      setStep(3)
+      setError('Bitte bestätige dein Alter und die AGB.')
+      return
+    }
+
     if (!validateCurrentStep()) return
 
     if (step < 3) {

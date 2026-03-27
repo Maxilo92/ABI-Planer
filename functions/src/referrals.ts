@@ -32,8 +32,10 @@ interface Referral {
 /**
  * Triggered when a user completes their profile.
  * Awards boosters to both referrer and referred user.
+ * Triggered when a user completes their profile.
+ * Awards boosters to both referrer and referred user.
  * Referrer gets min(2 + totalPastReferrals, 10) boosters, capped at 30 per month.
- * Referred user always gets 3 boosters.
+ * Referred user always gets 5 boosters.
  */
 export const awardReferralBoosters = onDocumentWritten({
     document: "profiles/{uid}",
@@ -112,19 +114,19 @@ export const awardReferralBoosters = onDocumentWritten({
 
             // --- Awards ---
 
-            // Award exactly 3 boosters to the referred user
+            // Award exactly 5 boosters to the referred user
             transaction.set(referredRef, {
                 booster_stats: {
-                    extra_available: admin.firestore.FieldValue.increment(3),
+                    extra_available: admin.firestore.FieldValue.increment(5),
                 },
             }, { merge: true });
 
             // Create notification for referred user
             const referredGiftRef = referredRef.collection("unseen_gifts").doc();
             transaction.set(referredGiftRef, {
-                packCount: 3,
+                packCount: 5,
                 popupTitle: "Willkommens-Bonus",
-                popupBody: "Du hast 3 Packs erhalten, weil du über einen Freunde-Link geworben wurdest!",
+                popupBody: "Du hast 5 Packs erhalten, weil du über einen Freunde-Link geworben wurdest!",
                 ctaLabel: "Packs öffnen",
                 ctaUrl: "/sammelkarten",
                 dismissLabel: "Gelesen",

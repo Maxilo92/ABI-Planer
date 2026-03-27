@@ -14,6 +14,7 @@ export * from "./mfa";
 export * from "./danger";
 export * from "./cron";
 export * from "./gifts";
+export * from "./shop";
 export * from "./rarity";
 export * from "./giftUtils";
 export * from "./referrals";

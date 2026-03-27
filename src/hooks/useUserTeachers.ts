@@ -1,8 +1,9 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { db } from '@/lib/firebase'
+import { db, functions } from '@/lib/firebase'
 import { doc, onSnapshot, runTransaction } from 'firebase/firestore'
+import { httpsCallable } from 'firebase/functions'
 import { useAuth } from '@/context/AuthContext'
 import { UserTeacher, Profile, CardVariant } from '@/types/database'
 
@@ -363,6 +364,23 @@ export const useUserTeachers = (userId?: string) => {
     }
   }, [currentUser, isOwnProfile, config])
 
+  const purchaseBoosters = useCallback(async (amount: number, itemId: string) => {
+    if (!isOwnProfile || !currentUser) throw new Error('Nicht angemeldet oder keine Berechtigung')
+
+    try {
+      const purchaseBoostersFn = httpsCallable<{ amount: number, itemId: string }, { success: boolean }>(
+        functions, 
+        'purchaseBoosters'
+      );
+      
+      const result = await purchaseBoostersFn({ amount, itemId });
+      return result.data;
+    } catch (err: any) {
+      console.error('Fehler beim Kauf von Boostern (Cloud Function):', err)
+      throw new Error(err.message || 'Die Transaktion konnte nicht im Backend verarbeitet werden.')
+    }
+  }, [currentUser, isOwnProfile])
+
   const getRemainingBoosters = useCallback(() => {
     if (!isOwnProfile || !currentProfile) return 0
     const today = getCurrentBoosterDay(config)
@@ -393,5 +411,6 @@ export const useUserTeachers = (userId?: string) => {
     collectMassBoosters,
     getRemainingBoosters,
     claimExtraBoosters,
+    purchaseBoosters,
   }
 }

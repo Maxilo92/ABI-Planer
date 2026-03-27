@@ -145,7 +145,7 @@ export const TeacherCard: React.FC<TeacherCardProps> = ({
           headerIcon: "w-[18cqw] h-[18cqw]",
           header: (isBlckShiny || isGlass || isShiny) ? (isShiny ? "text-slate-600" : "text-white") : "text-black",
           text: cn(
-            "font-sans uppercase font-black tracking-tighter text-[11cqw] leading-[0.85] break-words w-full",
+            "font-sans uppercase font-black tracking-tighter text-[11cqw] leading-[0.95] break-words w-full py-[1cqw]",
             isBlckShiny ? "text-transparent bg-clip-text bg-gradient-to-b from-white to-purple-200 drop-shadow-[0_0_10px_rgba(147,51,234,0.8)]" : 
             (isShiny ? "text-slate-800 drop-shadow-[0_2px_2px_rgba(255,255,255,0.8)]" : 
             (isGlass ? "text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.4)]" : "text-black"))
