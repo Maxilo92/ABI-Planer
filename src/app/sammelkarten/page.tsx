@@ -473,7 +473,7 @@ function SammelkartenContent() {
               gameState === 'revealed' ? "opacity-100 scale-105" : "opacity-40"
             )}>
               <div className="flex items-center justify-center gap-2 relative">
-                <h1 className="text-3xl font-black tracking-tighter font-mono flex items-center gap-3 justify-center">
+                <h1 className="text-3xl font-black tracking-tighter font-mono flex items-center gap-3 justify-center text-foreground">
                   <Sparkles className={cn("h-7 w-7", gameState === 'revealed' ? "text-primary animate-pulse" : "text-muted-foreground")} />
                   SAMMELKARTEN
                 </h1>
@@ -845,16 +845,16 @@ function SammelkartenContent() {
             <div className="flex flex-col gap-4 mt-8 w-full items-center">
               {showDebug && (
                 <div className="flex gap-2 w-full max-sm:max-w-[280px] sm:max-w-sm mb-2 animate-in fade-in slide-in-from-bottom-2 duration-500">
-                  <div className="flex-1 bg-slate-50 dark:bg-amber-500/10 border border-slate-200 dark:border-amber-500/20 rounded-xl p-2 text-center transition-all shadow-sm">
-                    <p className="text-[8px] font-mono text-slate-500 dark:text-amber-200 uppercase tracking-widest mb-0.5">Unpack Speed</p>
-                    <p className="text-sm font-black text-slate-950 dark:text-amber-500 italic uppercase tracking-tighter">
+                  <div className="flex-1 bg-black border border-white/20 rounded-xl p-2 text-center shadow-2xl">
+                    <p className="text-[8px] font-mono text-white/50 uppercase tracking-widest mb-0.5 font-bold">Unpack Speed</p>
+                    <p className="text-sm font-black text-amber-500 italic uppercase tracking-tighter">
                       {((1 - speedMultiplier) * 100).toFixed(0)}% <span className="text-[10px] ml-1 opacity-60">({consecutiveOpenCount}x)</span>
                     </p>
                   </div>
                   {(gameState === 'revealed' || gameState === 'ripping') && !isMassOpening && packProbs && (
-                    <div className="flex-1 bg-slate-50 dark:bg-amber-500/10 border border-slate-200 dark:border-amber-500/20 rounded-xl p-2 text-center transition-all animate-in zoom-in duration-300 shadow-sm">
-                      <p className="text-[8px] font-mono text-slate-500 dark:text-amber-200 uppercase tracking-widest mb-0.5">Probability</p>
-                      <p className="text-sm font-black text-slate-950 dark:text-amber-500">{(packProbs.wholePackChance * 100).toPrecision(4)}%</p>
+                    <div className="flex-1 bg-black border border-white/20 rounded-xl p-2 text-center animate-in zoom-in duration-300 shadow-2xl">
+                      <p className="text-[8px] font-mono text-white/50 uppercase tracking-widest mb-0.5 font-bold">Probability</p>
+                      <p className="text-sm font-black text-amber-500">{(packProbs.wholePackChance * 100).toPrecision(4)}%</p>
                     </div>
                   )}
                 </div>
