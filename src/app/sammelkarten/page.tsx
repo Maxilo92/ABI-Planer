@@ -195,7 +195,8 @@ function SammelkartenContent() {
     setGameState('ripping')
     setIsAnimating(true)
     setIsMassOpening(true)
-    // Removed setRevealedTeachers(null) etc. to prevent flicker
+    setMassRevealedTeachers(null)
+    setMassCollectionResults(null)
 
     const godpackChance = config?.global_limits?.godpack_chance ?? 0.005
     const packsData = Array.from({ length: 10 }).map(() => {
@@ -265,7 +266,9 @@ function SammelkartenContent() {
     setGameState('ripping')
     setIsAnimating(true)
     setIsMassOpening(false)
-    // Removed setRevealedTeachers(null) etc. to prevent flicker
+    setRevealedTeachers(null)
+    setCollectionResults(null)
+    setFlippedCards([false, false, false])
 
     const godpackChance = config?.global_limits?.godpack_chance ?? 0.005
     const godpack = Math.random() < godpackChance
@@ -795,8 +798,8 @@ function SammelkartenContent() {
                   >
                     {getRemainingBoosters() > 0 ? (
                       <>
-                        <RotateCcw className="h-4 w-4 mr-2" />
-                        Nächstes Pack öffnen ({getRemainingBoosters()})
+                        <Zap className="h-4 w-4 mr-2" />
+                        {isMassOpening ? 'Weitere 10 Packs' : 'Booster'} aufreißen ({getRemainingBoosters()})
                       </>
                     ) : (
 
