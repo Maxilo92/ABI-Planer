@@ -47,6 +47,10 @@ export interface Profile {
   } | null;
   referral_code: string;
   referred_by: string | null;
+  shop_stats?: {
+    month: string;
+    counts: Record<string, number>;
+  } | null;
 }
 
 export interface UserSecret {

@@ -16,6 +16,10 @@ interface Profile {
     booster_stats?: {
         extra_available?: number;
     } | null;
+    shop_stats?: {
+        month: string;
+        counts: Record<string, number>;
+    } | null;
 }
 
 /**

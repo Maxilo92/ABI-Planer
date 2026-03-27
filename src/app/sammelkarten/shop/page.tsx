@@ -69,7 +69,7 @@ export default function SammelkartenShopPage() {
 
   const now = new Date()
   const currentMonthStr = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`
-  const shopStats = profile?.shop_stats?.month === currentMonthStr ? profile.shop_stats.counts : {}
+  const shopStats = (profile?.shop_stats?.month === currentMonthStr && profile?.shop_stats) ? profile.shop_stats.counts : {}
 
   const handlePurchase = async (item: typeof SHOP_ITEMS[0]) => {
     setIsPurchasing(item.id)
