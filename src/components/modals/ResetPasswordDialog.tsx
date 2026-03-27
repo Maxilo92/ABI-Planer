@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { auth } from '@/lib/firebase'
+import { getFirebaseAuth } from '@/lib/firebase'
 import { sendPasswordResetEmail } from 'firebase/auth'
 import { 
   Dialog, 
@@ -15,6 +15,8 @@ import {
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { KeyRound } from 'lucide-react'
+
+const auth = getFirebaseAuth()
 
 interface ResetPasswordDialogProps {
   userEmail: string

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { auth } from '@/lib/firebase'
+import { getFirebaseAuth } from '@/lib/firebase'
 import { signInWithEmailAndPassword } from 'firebase/auth'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
@@ -9,6 +9,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import Link from 'next/link'
+
+const auth = getFirebaseAuth()
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')

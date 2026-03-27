@@ -16,6 +16,9 @@ interface GiftBoosterPackData {
     ctaLabel?: string;
     ctaUrl?: string;
     dismissLabel?: string;
+    senderName?: string;
+    notificationType?: "popup" | "banner" | "quickmessage";
+    notificationIcon?: "gift" | "info" | "star" | "message";
 }
 
 const isAdminRole = (role: unknown): boolean => {
@@ -23,9 +26,13 @@ const isAdminRole = (role: unknown): boolean => {
 };
 
 const ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:3001",
+    "http://127.0.0.1:3001",
     "https://abi-planer-27.de",
     "https://abi-planer-75319.web.app",
-    "https://abi-planer-75319.firebaseapp.app",
+    "https://abi-planer-75319.firebaseapp.com",
 ];
 
 export const giftBoosterPack = onCall({
@@ -40,8 +47,9 @@ export const giftBoosterPack = onCall({
 
     const callerProfileRef = db.collection("profiles").doc(request.auth.uid);
     const callerProfileDoc = await callerProfileRef.get();
+    const callerProfileData = callerProfileDoc.data() || {};
 
-    if (!isAdminRole(callerProfileDoc.data()?.role)) {
+    if (!isAdminRole(callerProfileData?.role)) {
         throw new HttpsError(
             "permission-denied",
             "Must be an administrative user to call this function.",
@@ -58,14 +66,20 @@ export const giftBoosterPack = onCall({
         ctaLabel,
         ctaUrl,
         dismissLabel,
+        senderName,
+        notificationType,
+        notificationIcon,
     } = request.data as GiftBoosterPackData;
 
     const message = (customMessage || popupBody || "Du hast ein Geschenk erhalten!").trim();
     const normalizedPopupTitle = (popupTitle || "Neue Pack-Schenkung").trim();
     const normalizedPopupBody = (popupBody || message).trim();
     const normalizedCtaLabel = (ctaLabel || "Zu den Packs").trim();
-    const normalizedDismissLabel = (dismissLabel || "Gelesen").trim();
+    const normalizedDismissLabel = (dismissLabel || "Okay").trim();
     const normalizedCtaUrl = (ctaUrl || "/sammelkarten").trim();
+    const normalizedSenderName = (senderName || callerProfileData.full_name || "System").trim();
+    const normalizedNotificationType = notificationType || "popup";
+    const normalizedNotificationIcon = notificationIcon || "gift";
 
     const recipients = Array.from(new Set([
         ...(Array.isArray(userIds) ? userIds : []),
@@ -80,7 +94,8 @@ export const giftBoosterPack = onCall({
         normalizedPopupTitle.length === 0 ||
         normalizedPopupBody.length === 0 ||
         normalizedCtaLabel.length === 0 ||
-        normalizedDismissLabel.length === 0
+        normalizedDismissLabel.length === 0 ||
+        normalizedSenderName.length === 0
     ) {
         throw new HttpsError(
             "invalid-argument",
@@ -90,6 +105,14 @@ export const giftBoosterPack = onCall({
 
     if (!normalizedCtaUrl.startsWith("/")) {
         throw new HttpsError("invalid-argument", "ctaUrl must start with '/'.");
+    }
+
+    if (!["popup", "banner", "quickmessage"].includes(normalizedNotificationType)) {
+        throw new HttpsError("invalid-argument", "notificationType must be one of: popup, banner, quickmessage.");
+    }
+
+    if (!["gift", "info", "star", "message"].includes(normalizedNotificationIcon)) {
+        throw new HttpsError("invalid-argument", "notificationIcon must be one of: gift, info, star, message.");
     }
 
     const safePackCount = Math.floor(packCount);
@@ -138,6 +161,9 @@ export const giftBoosterPack = onCall({
                         dismissLabel: normalizedDismissLabel,
                         createdAt: admin.firestore.FieldValue.serverTimestamp(),
                         createdBy: request.auth?.uid,
+                        createdByName: normalizedSenderName,
+                        notificationType: normalizedNotificationType,
+                        notificationIcon: normalizedNotificationIcon,
                     });
 
                     giftedCount += 1;

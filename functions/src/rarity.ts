@@ -111,7 +111,7 @@ export const voteForTeacher = onCall({
                 timestamp: FieldValue.serverTimestamp()
             });
 
-            return { success: true, awardedPack };
+            return { success: true, awardedPack: awardPack };
         });
 
         return result;

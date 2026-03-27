@@ -1,11 +1,14 @@
 'use client'
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
-import { auth, db } from '@/lib/firebase'
+import { getFirebaseAuth, getFirebaseDb } from '@/lib/firebase'
 import { onAuthStateChanged, signOut, User } from 'firebase/auth'
 import { doc, onSnapshot, updateDoc, serverTimestamp } from 'firebase/firestore'
 
 import { Profile } from '@/types/database'
+
+const auth = getFirebaseAuth();
+const db = getFirebaseDb();
 
 interface AuthContextType {
   user: User | null
@@ -27,13 +30,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (!auth) {
-      console.error('Firebase Auth is not initialized. Check your configuration.')
-      setLoading(false)
-      return
-    }
-
-    let profileUnsubscribe: (() => void) | null = null
+    let profileUnsubscribe: (() => void) | null = null;
 
     const authUnsubscribe = onAuthStateChanged(auth, async (user) => {
       setUser(user)

@@ -1,8 +1,8 @@
-import { initializeApp, getApps, getApp } from "firebase/app";
-import { getAuth, connectAuthEmulator } from "firebase/auth";
-import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
-import { getStorage, connectStorageEmulator } from "firebase/storage";
-import { getFunctions, connectFunctionsEmulator } from "firebase/functions";
+import { initializeApp, getApp, getApps, FirebaseApp } from 'firebase/app'
+import { getAuth, connectAuthEmulator, Auth } from 'firebase/auth'
+import { getFirestore, connectFirestoreEmulator, Firestore } from 'firebase/firestore'
+import { getStorage, connectStorageEmulator, FirebaseStorage } from 'firebase/storage'
+import { getFunctions, connectFunctionsEmulator, Functions } from 'firebase/functions'
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -13,45 +13,75 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-const isConfigValid = !!process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
+let app: FirebaseApp;
+let auth: Auth;
+let db: Firestore;
+let storage: FirebaseStorage;
+let functions: Functions;
 
-if (!isConfigValid && typeof window !== 'undefined') {
-  console.error('Firebase configuration is missing! Check your environment variables.');
-}
-
-// Initialize Firebase
-const app = isConfigValid ? (getApps().length > 0 ? getApp() : initializeApp(firebaseConfig)) : null;
-const auth = app ? getAuth(app) : ({} as any);
-const db = app ? getFirestore(app, 'abi-data') : ({} as any);
-const storage = app ? getStorage(app) : ({} as any);
-const functions = app ? getFunctions(app, 'europe-west3') : ({} as any);
-
-// Connect to Emulators only if explicitly requested via ENV or if you want to test locally
-// To use emulators, add NEXT_PUBLIC_USE_FIREBASE_EMULATOR=true to your .env.local
-const useEmulators = process.env.NEXT_PUBLIC_USE_FIREBASE_EMULATOR === 'true';
-
-if (useEmulators && process.env.NODE_ENV === 'development' && typeof window !== 'undefined') {
-  const host = window.location.hostname;
-  
-  // Use a global variable to prevent re-connecting during HMR
-  if (!(window as any)._firebaseEmulatorsConnected) {
-    // Firestore Emulator (abi-data)
-    if (db) connectFirestoreEmulator(db, host, 8080);
-    
-    // Auth Emulator
-    if (auth) connectAuthEmulator(auth, `http://${host}:9099`);
-    
-    // Functions Emulator
-    if (functions) connectFunctionsEmulator(functions, host, 5001);
-    
-    // Storage Emulator
-    if (storage) connectStorageEmulator(storage, host, 9199);
-    
-    (window as any)._firebaseEmulatorsConnected = true;
-    console.log('--- CONNECTED TO LOCAL FIREBASE EMULATORS ---');
+function initialize() {
+  const isConfigValid = !!firebaseConfig.apiKey;
+  if (!isConfigValid) {
+    throw new Error('Firebase configuration is missing! Check your environment variables.');
   }
-} else if (process.env.NODE_ENV === 'development') {
-  console.log('--- USING PRODUCTION FIREBASE (Local Dev) ---');
+
+  if (!getApps().length) {
+    app = initializeApp(firebaseConfig);
+    auth = getAuth(app);
+    db = getFirestore(app, 'abi-data');
+    storage = getStorage(app);
+    functions = getFunctions(app, 'europe-west3');
+
+    const useEmulators = process.env.NEXT_PUBLIC_USE_FIREBASE_EMULATOR === 'true';
+
+    if (useEmulators && process.env.NODE_ENV === 'development' && typeof window !== 'undefined') {
+      if (!(window as any)._firebaseEmulatorsConnected) {
+        const host = window.location.hostname;
+        connectFirestoreEmulator(db, host, 8080);
+        connectAuthEmulator(auth, `http://${host}:9099`);
+        connectFunctionsEmulator(functions, host, 5001);
+        connectStorageEmulator(storage, host, 9199);
+        (window as any)._firebaseEmulatorsConnected = true;
+        console.log('--- CONNECTED TO LOCAL FIREBASE EMULATORS ---');
+      }
+    } else if (process.env.NODE_ENV === 'development' && !useEmulators) {
+      console.log('--- USING PRODUCTION FIREBASE (Local Dev) ---');
+    }
+  } else {
+    app = getApp();
+    auth = getAuth(app);
+    db = getFirestore(app, 'abi-data');
+    storage = getStorage(app);
+    functions = getFunctions(app, 'europe-west3');
+  }
 }
 
-export { app, auth, db, storage, functions };
+export function getFirebaseAuth() {
+  if (!auth) initialize();
+  return auth;
+}
+
+export function getFirebaseDb() {
+  if (!db) initialize();
+  return db;
+}
+
+export function getFirebaseStorage() {
+  if (!storage) initialize();
+  return storage;
+}
+
+export function getFirebaseFunctions() {
+  if (!functions) initialize();
+  return functions;
+}
+
+export function getFirebaseApp() {
+  if (!app) initialize();
+  return app;
+}
+
+// Backward-compatible named exports for existing imports across the app.
+initialize();
+
+export { app, auth, db, storage, functions }

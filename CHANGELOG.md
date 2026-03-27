@@ -1,5 +1,32 @@
 # Changelog
 
+## [Unreleased]
+- **UI Fix (Empfänger-Rechtsklick):** In [src/app/admin/send/page.tsx](src/app/admin/send/page.tsx) wurde die Empfängerliste auf echte Zeilen umgestellt, damit das Kontextmenü per Rechtsklick zuverlässig öffnet.
+- **UI Fix (Kommunikations-Zentrale Header):** In [src/app/admin/send/page.tsx](src/app/admin/send/page.tsx) wurde der doppelte Zurück-Button bereinigt.
+- **UI Fix (Absender in Vorschau):** In [src/app/admin/send/page.tsx](src/app/admin/send/page.tsx) wird der Absender in der Vorschau nicht mehr abgeschnitten (Wrap statt Truncate).
+- **Feature (Empfänger-Kontextmenü):** In [src/app/admin/send/page.tsx](src/app/admin/send/page.tsx) hat die Benutzerliste jetzt ein Kontextmenü pro Empfänger (Name/E-Mail/User-ID kopieren, Entfernen aus Liste).
+- **UI Tweak (Absender-Position in Vorschau):** In [src/app/admin/send/page.tsx](src/app/admin/send/page.tsx) steht der Absender jetzt direkt in der Nachrichten-Footer-Zeile links neben den Buttons (statt separat darunter).
+- **UI Tweak (Nachrichten-Icons):** In [src/app/admin/send/page.tsx](src/app/admin/send/page.tsx) und [src/context/SystemMessageContext.tsx](src/context/SystemMessageContext.tsx) wurden Emoji-Präfixe entfernt. Titel bleiben nun sauber ohne Emoji, die Icon-Auswahl bleibt als visuelles Icon erhalten.
+- **UI Update (Kommunikations-Zentrale Inputs):** In [src/app/admin/send/page.tsx](src/app/admin/send/page.tsx) wurden relevante Textfelder auf auto-wachsende `textarea`-Felder umgestellt, damit lange Eingaben umbrechen und kein horizontales Scrollen nötig ist.
+- **Feature (Notification-Typ pro Versand):** In [src/app/admin/send/page.tsx](src/app/admin/send/page.tsx) kann jetzt pro Nachricht gewählt werden: `Popup`, `Banner` oder `Quickmessage`.
+- **Runtime Update (Notification Routing):** In [functions/src/gifts.ts](functions/src/gifts.ts) wird `notificationType` gespeichert; in [src/context/SystemMessageContext.tsx](src/context/SystemMessageContext.tsx) wird die Geschenk-Nachricht entsprechend als Modal, Banner oder Toast ausgespielt.
+- **UX Fix (Absender sichtbar):** Der Absender bleibt in allen Notification-Arten im Inhalt sichtbar (Fallback `System`) in [src/context/SystemMessageContext.tsx](src/context/SystemMessageContext.tsx).
+- **UI Update (Kommunikations-Zentrale):** In [src/app/admin/send/page.tsx](src/app/admin/send/page.tsx) wurden Schnellvorlagen ergänzt (1-Klick-Befüllung für Titel/Text/Buttons), damit standardisierte Nachrichten deutlich schneller erstellt werden können.
+- **UI Update (Absender-Steuerung):** In [src/app/admin/send/page.tsx](src/app/admin/send/page.tsx) gibt es jetzt Absender-Presets (`System`, `Admin Team`, `Mein Name`) zusätzlich zur manuellen Eingabe.
+- **UI Update (Live-Vorschau):** In [src/app/admin/send/page.tsx](src/app/admin/send/page.tsx) zeigt die Vorschau den finalen Absender jetzt direkt im Nachrichtentext an.
+- **UX Update (Geschenk-Absender):** In [src/app/admin/send/page.tsx](src/app/admin/send/page.tsx) ist der Absendername jetzt konfigurierbar (inkl. Option „Als System senden“). Der Absender wird in der Live-Vorschau und beim Versand berücksichtigt.
+- **Runtime Update (Geschenk-Daten):** In [functions/src/gifts.ts](functions/src/gifts.ts) wird nun `createdByName` gespeichert und der Standard für den Schließen-Button auf `Okay` gesetzt.
+- **UX Update (Geschenk-Modal):** In [src/context/SystemMessageContext.tsx](src/context/SystemMessageContext.tsx) wird der Absender als Klarname angezeigt (statt UID), mit Fallback auf `System`.
+- **UX Update (Geschenk-Popup):** In [src/context/SystemMessageContext.tsx](src/context/SystemMessageContext.tsx) zeigt das Geschenk-Modal jetzt mehr Informationen (Pack-Anzahl, Popup-Text, Absender) und mehrere Buttons (`CTA`, `Album öffnen`, `Später`).
+- **UX/State Fix (Geschenk-Popup):** Geschenk-Benachrichtigungen werden beim Schließen/Aktion per `deleteDoc` aus `profiles/{uid}/unseen_gifts` entfernt, damit derselbe Dialog nicht erneut auftaucht.
+- **Runtime Fix (Admin Send CORS):** In [functions/src/gifts.ts](functions/src/gifts.ts) wurden lokale Dev-Origins (`http://localhost:3000`, `http://127.0.0.1:3000`, inkl. `:3001`) für `giftBoosterPack` ergänzt. Dadurch werden Preflight-Requests aus der lokalen Next.js-Entwicklung nicht mehr durch CORS blockiert.
+- **Config Fix (Firebase Hostname):** Falscher Hostname `firebaseapp.app` in [functions/src/gifts.ts](functions/src/gifts.ts) auf `firebaseapp.com` korrigiert.
+- **Build Fix (Firebase Exports):** In [src/lib/firebase.ts](src/lib/firebase.ts) wurden rückwärtskompatible Named Exports (`app`, `auth`, `db`, `storage`, `functions`) wiederhergestellt, damit bestehende Imports in der App weiterhin funktionieren.
+- **Build Fix (Auth Imports):** Die Komponenten [src/components/layout/Navbar.tsx](src/components/layout/Navbar.tsx), [src/app/login/page.tsx](src/app/login/page.tsx) und [src/components/modals/ResetPasswordDialog.tsx](src/components/modals/ResetPasswordDialog.tsx) nutzen nun konsistent `getFirebaseAuth()`.
+- **TypeScript Fix (Sammelkarten):** Unmöglicher State-Vergleich in [src/app/sammelkarten/page.tsx](src/app/sammelkarten/page.tsx) entfernt, um den Next.js-Build wieder durchlaufen zu lassen.
+- **Runtime Fix (Danger Scheduler):** In [functions/src/cron.ts](functions/src/cron.ts) wurde die `executeDangerActions`-Abfrage index-unabhängig gemacht (Filter auf `executableAt` nun nach `status == pending` im Code), um `FAILED_PRECONDITION`/`internal`-Fehlerpfade zu vermeiden.
+- **Functions Build Fix (Rarity Voting):** Tippfehler in [functions/src/rarity.ts](functions/src/rarity.ts) korrigiert (`awardedPack: awardPack`), sodass Functions-Deploys nicht mehr am TypeScript-Build scheitern.
+
 ## [0.31.20] - 2026-03-27
 - **UI Fix (Sammelkarten):** Es wurde ein Flackern behoben, bei dem die "Keine Packs"-Anzeige kurzzeitig während der Öffnungs-Animation des letzten Boosters eingeblendet wurde. Das UI wartet nun ab, bis die Animation vollständig abgeschlossen ist, bevor der leere Zustand angezeigt wird.
 

@@ -14,20 +14,23 @@ export const executeDangerActions = onSchedule("every 15 minutes", async (event)
   const now = admin.firestore.Timestamp.now();
   
   const actionsRef = getFirestore("abi-data").collection("delayed_actions");
-  const query = actionsRef
-    .where("status", "==", "pending")
-    .where("executableAt", "<=", now);
+  const query = actionsRef.where("status", "==", "pending");
 
   const snapshot = await query.get();
+  const eligibleDocs = snapshot.docs.filter((actionDoc) => {
+    const executableAt = actionDoc.data().executableAt;
+    if (!executableAt || typeof executableAt.toMillis !== "function") return false;
+    return executableAt.toMillis() <= now.toMillis();
+  });
 
-  if (snapshot.empty) {
+  if (eligibleDocs.length === 0) {
     console.log("No pending danger actions to execute.");
     return;
   }
 
-  console.log(`Found ${snapshot.size} pending danger actions to execute.`);
+  console.log(`Found ${eligibleDocs.length} pending danger actions to execute.`);
 
-  for (const doc of snapshot.docs) {
+  for (const doc of eligibleDocs) {
     const actionData = doc.data();
     const actionId = doc.id;
     const actionType = actionData.actionType;

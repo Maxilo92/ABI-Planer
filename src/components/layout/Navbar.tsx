@@ -6,13 +6,15 @@ import { useEffect, useState } from 'react'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
-import { auth } from '@/lib/firebase'
+import { getFirebaseAuth } from '@/lib/firebase'
 import { signOut } from 'firebase/auth'
 import { useRouter, usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/context/AuthContext'
 import { CountdownHeader } from './CountdownHeader'
 import { useNotifications } from '@/hooks/useNotifications'
+
+const auth = getFirebaseAuth()
 
 interface NavItem {
   href: string

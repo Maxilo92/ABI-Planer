@@ -7,7 +7,7 @@ import { useAuth } from './AuthContext'
 import { usePathname } from 'next/navigation'
 import { auth, db } from '@/lib/firebase'
 import { signOut } from 'firebase/auth'
-import { collection, query, where, onSnapshot, doc } from 'firebase/firestore'
+import { collection, query, where, onSnapshot, doc, deleteDoc } from 'firebase/firestore'
 import { DelayedAction, CustomPopupMessage } from '@/types/database'
 
 const FALLBACK_MESSAGES = [
@@ -257,13 +257,90 @@ export const SystemMessageProvider = ({ children }: { children: ReactNode }) => 
           snapshot.docChanges().forEach((change) => {
             if (change.type === 'added') {
               const gift = change.doc.data()
+              const giftRef = doc(db, 'profiles', user.uid, 'unseen_gifts', change.doc.id)
+              const packCount = typeof gift.packCount === 'number' ? Math.max(0, Math.floor(gift.packCount)) : 0
+              const popupTitle = (typeof gift.popupTitle === 'string' && gift.popupTitle.trim().length > 0)
+                ? gift.popupTitle.trim()
+                : 'Neues Geschenk!'
+              const popupBody = (typeof gift.popupBody === 'string' && gift.popupBody.trim().length > 0)
+                ? gift.popupBody.trim()
+                : 'Du hast ein Geschenk erhalten!'
+              const ctaLabel = (typeof gift.ctaLabel === 'string' && gift.ctaLabel.trim().length > 0)
+                ? gift.ctaLabel.trim()
+                : 'Zu den Packs'
+              const ctaUrl = (typeof gift.ctaUrl === 'string' && gift.ctaUrl.startsWith('/'))
+                ? gift.ctaUrl
+                : '/sammelkarten'
+              const dismissLabel = (typeof gift.dismissLabel === 'string' && gift.dismissLabel.trim().length > 0)
+                ? gift.dismissLabel.trim()
+                : 'Später'
+              const notificationType = gift.notificationType === 'banner' || gift.notificationType === 'quickmessage'
+                ? gift.notificationType
+                : 'popup'
+
+              const senderInfo = typeof gift.createdByName === 'string' && gift.createdByName.trim().length > 0
+                ? gift.createdByName.trim()
+                : 'System'
+
+              const dismissGift = async () => {
+                try {
+                  await deleteDoc(giftRef)
+                } catch (err) {
+                  console.error('SystemMessage: Failed to delete gift notification:', err)
+                }
+              }
+
+              const baseContent = `${packCount > 0 ? `Du hast ${packCount} zusätzliche Booster-Packs erhalten. ` : ''}${popupBody}\n\n~ ${senderInfo}`.trim()
+
+              const baseActions = [
+                {
+                  label: ctaLabel,
+                  href: ctaUrl,
+                  variant: 'default' as const,
+                },
+                {
+                  label: dismissLabel,
+                  onClick: () => {
+                    void dismissGift()
+                  },
+                  variant: 'ghost' as const,
+                },
+              ]
+
+              const isModal = notificationType === 'popup'
+
               pushMessage({
                 id: change.doc.id,
-                type: 'modal',
+                type: notificationType === 'quickmessage' ? 'toast' : (isModal ? 'modal' : 'banner'),
                 priority: 'high',
-                title: 'Neues Geschenk!',
-                content: `Du hast ${gift.amount || ''} ${gift.type || 'ein Geschenk'} erhalten!`,
-                isDismissible: true
+                title: popupTitle,
+                content: baseContent,
+                isDismissible: true,
+                actions: isModal
+                  ? [
+                      {
+                        label: ctaLabel,
+                        href: ctaUrl,
+                        variant: 'default',
+                      },
+                      {
+                        label: 'Album öffnen',
+                        href: '/sammelkarten?view=album',
+                        variant: 'secondary',
+                      },
+                      {
+                        label: dismissLabel,
+                        onClick: () => {
+                          void dismissGift()
+                        },
+                        variant: 'ghost',
+                      },
+                    ]
+                  : baseActions,
+                duration: notificationType === 'quickmessage' ? 7000 : undefined,
+                onDismiss: () => {
+                  void dismissGift()
+                },
               })
             } else if (change.type === 'removed') {
               dismissMessage(change.doc.id)
