@@ -265,7 +265,6 @@ function SammelkartenContent() {
     setGameState('ripping')
     setIsAnimating(true)
     setIsMassOpening(false)
-    setFlippedCards([false, false, false])
     // Removed setRevealedTeachers(null) etc. to prevent flicker
 
     const godpackChance = config?.global_limits?.godpack_chance ?? 0.005
@@ -311,6 +310,7 @@ function SammelkartenContent() {
       setTimeout(() => {
         setRevealedTeachers(pack)
         setCollectionResults(processedResults)
+        setFlippedCards([false, false, false]) // Reset flip state only when new cards are set
       }, 300)
 
       setTimeout(() => {
@@ -796,9 +796,10 @@ function SammelkartenContent() {
                     {getRemainingBoosters() > 0 ? (
                       <>
                         <RotateCcw className="h-4 w-4 mr-2" />
-                        Noch einmal versuchen ({getRemainingBoosters()})
+                        Nächstes Pack öffnen ({getRemainingBoosters()})
                       </>
                     ) : (
+
                       <>
                         <Clock className="h-4 w-4 mr-2" />
                         Pack-Reset in {timeLeft}
