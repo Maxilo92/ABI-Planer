@@ -189,22 +189,32 @@ export default function SammelkartenShopPage() {
 
                 <div className="p-8 pt-0">
                   <Button
-                    className={`w-full font-black h-16 rounded-2xl text-xl shadow-xl transition-all duration-300 ${
+                    className={`w-full font-black h-20 rounded-2xl shadow-xl transition-all duration-300 ${
                       isLimitReached ? 'bg-muted text-muted-foreground' : 'bg-primary text-primary-foreground hover:bg-primary/90'
                     }`}
                     disabled={isPurchasing !== null || isLimitReached}
                     onClick={() => setDemoItem(item)}
                   >
                     {isPurchasing === item.id ? (
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-3 text-xl">
                         <div className="w-6 h-6 border-3 border-current border-t-transparent rounded-full animate-spin" />
                         Verarbeite...
                       </div>
                     ) : isLimitReached ? (
-                      'Limit erreicht'
+                      <span className="text-xl">Limit erreicht</span>
                     ) : (
-                      <div className="flex items-center justify-center">
-                        {item.price}
+                      <div className="flex flex-col items-center justify-center space-y-0.5">
+                        {item.amount > 1 && (
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs line-through opacity-60 decoration-1">
+                              {(item.amount * 0.99).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
+                            </span>
+                            <span className="bg-white/20 text-[10px] px-1.5 py-0.5 rounded-lg font-black tracking-tighter">
+                              -{Math.round((1 - item.priceNum! / (item.amount * 0.99)) * 100)}%
+                            </span>
+                          </div>
+                        )}
+                        <span className="text-2xl tracking-tighter">{item.price}</span>
                       </div>
                     )}
                   </Button>

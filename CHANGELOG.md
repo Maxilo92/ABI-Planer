@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.26.57] - 2026-03-27
+- UI: **Streichpreise & Prozent-Badges**. Der Kauf-Button zeigt nun bei Bundles den durchgestrichenen Originalpreis sowie die prozentuale Ersparnis an, um den Mehrwert der Pakete besser zu verdeutlichen.
+
 ## [0.26.56] - 2026-03-27
 - UI: **Rabatt-Anzeige für Bundles**. Im Shop wird nun explizit angezeigt, wie viel man bei den größeren Booster-Bundles im Vergleich zum Einzelpreis (0,99 €) spart.
 
