@@ -113,7 +113,7 @@ const getRarityGlow = (rarity: TeacherRarity) => {
   }
 }
 
-const getRarityHex = (rarity: TeacherRarity) => {
+function getTeacherRarityHex(rarity: TeacherRarity) {
   switch (rarity) {
     case 'common': return '#64748b'
     case 'rare': return '#10b981'
@@ -124,7 +124,7 @@ const getRarityHex = (rarity: TeacherRarity) => {
   }
 }
 
-const getBestVariant = (variants: Record<string, number> | undefined): NewCardVariant => {
+function getBestVariant(variants: Record<string, number> | undefined): NewCardVariant {
   if (!variants) return 'normal';
   if (variants.black_shiny_holo) return 'black_shiny_holo';
   if (variants.shiny) return 'shiny';
@@ -132,7 +132,7 @@ const getBestVariant = (variants: Record<string, number> | undefined): NewCardVa
   return 'normal';
 }
 
-const mapToCardData = (teacher: LootTeacher, userData: any, globalTeachers: LootTeacher[], forcedVariant?: NewCardVariant): CardData => {
+function mapTeacherToCardData(teacher: LootTeacher, userData: any, globalTeachers: LootTeacher[], forcedVariant?: NewCardVariant): CardData {
   const variant = forcedVariant || getBestVariant(userData?.variants);
   
   const globalIndex = globalTeachers.findIndex(t => (t.id || t.name) === (teacher.id || teacher.name))
@@ -142,7 +142,7 @@ const mapToCardData = (teacher: LootTeacher, userData: any, globalTeachers: Loot
     name: teacher.name,
     rarity: teacher.rarity,
     variant,
-    color: getRarityHex(teacher.rarity),
+    color: getTeacherRarityHex(teacher.rarity),
     cardNumber: (globalIndex + 1).toString().padStart(3, '0'),
   }
 }
@@ -153,7 +153,7 @@ function TeacherCardDetail({ teacher, userData, onClose, globalTeachers }: { tea
   const count = userData?.count || 0
   const [displayVariant, setDisplayVariant] = useState<NewCardVariant>(getBestVariant(userData?.variants));
   
-  const cardData = mapToCardData(teacher, userData, globalTeachers, displayVariant)
+  const cardData = mapTeacherToCardData(teacher, userData, globalTeachers, displayVariant)
 
   const ownedVariants = useMemo(() => {
     if (!userData?.variants) return ['normal'];
@@ -596,7 +596,7 @@ export function TeacherAlbum({
               const teacherId = teacher.id || teacher.name
               const userData = userTeachers?.[teacher.id] || userTeachers?.[teacher.name]
               const isOwned = !!userData
-              const cardData = mapToCardData(teacher, userData, globalTeachers)
+              const cardData = mapTeacherToCardData(teacher, userData, globalTeachers)
 
               return (
                 <div 

@@ -20,7 +20,56 @@ import { ProbabilityInfo } from '@/components/cards/ProbabilityInfo'
 import { toast } from 'sonner'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 
-// ... (DEFAULT constants remain unchanged)
+const DEFAULT_TEACHERS: LootTeacher[] = [
+  { id: 'max-mustermann', name: "Max Mustermann", rarity: "common" },
+  { id: 'erika-musterfrau', name: "Erika Musterfrau", rarity: "rare" },
+  { id: 'marie-curie', name: "Marie Curie", rarity: "mythic" },
+  { id: 'albert-einstein', name: "Albert Einstein", rarity: "legendary" }
+]
+
+const DEFAULT_RARITY_WEIGHTS = [
+  { common: 0.8, rare: 0.15, epic: 0.04, mythic: 0.008, legendary: 0.002 },
+  { common: 0.6, rare: 0.25, epic: 0.11, mythic: 0.03, legendary: 0.01 },
+  { common: 0.4, rare: 0.35, epic: 0.17, mythic: 0.06, legendary: 0.02 }
+]
+
+const DEFAULT_GODPACK_WEIGHTS = [
+  { common: 0, rare: 0.4, epic: 0.35, mythic: 0.15, legendary: 0.10 },
+  { common: 0, rare: 0.2, epic: 0.4, mythic: 0.25, legendary: 0.15 },
+  { common: 0, rare: 0, epic: 0.4, mythic: 0.4, legendary: 0.2 }
+]
+
+const DEFAULT_VARIANTS_PROBABILITIES = {
+  shiny: 0.05,
+  holo: 0.15,
+  black_shiny_holo: 0.005
+};
+
+function getTeacherRarityHex(rarity: TeacherRarity) {
+  switch (rarity) {
+    case 'common': return '#64748b'
+    case 'rare': return '#10b981'
+    case 'epic': return '#9333ea'
+    case 'mythic': return '#dc2626'
+    case 'legendary': return '#f59e0b'
+    default: return '#64748b'
+  }
+}
+
+function mapToTeacherCardData(teacher: LootTeacher, variant: CardVariant | NewCardVariant, globalTeachers: LootTeacher[]): CardData {
+  const newVariant: NewCardVariant = variant as NewCardVariant;
+  
+  const globalIndex = globalTeachers.findIndex(t => (t.id || t.name) === (teacher.id || teacher.name))
+  
+  return {
+    id: teacher.id || teacher.name,
+    name: teacher.name,
+    rarity: teacher.rarity,
+    variant: newVariant,
+    color: getTeacherRarityHex(teacher.rarity),
+    cardNumber: (globalIndex + 1).toString().padStart(3, '0'),
+  }
+}
 
 function SammelkartenContent() {
   const searchParams = useSearchParams()
@@ -415,7 +464,7 @@ function SammelkartenContent() {
                     {revealedTeachers.map((teacher, idx) => {
                       const isFlipped = flippedCards[idx]
                       const result = collectionResults?.[idx]
-                      const cardData = mapToCardData(teacher, result?.variant || 'normal', config?.loot_teachers || DEFAULT_TEACHERS)
+                      const cardData = mapToTeacherCardData(teacher, result?.variant || 'normal', config?.loot_teachers || DEFAULT_TEACHERS)
                       
                       return (
                         <motion.div 
@@ -560,7 +609,7 @@ function SammelkartenContent() {
                           <div className="flex-1 grid grid-cols-3 gap-3 sm:gap-4">
                             {packData.teachers.map((teacher, cardIdx) => {
                               const result = massCollectionResults?.[packIdx]?.[cardIdx]
-                              const cardData = mapToCardData(teacher, result?.variant || 'normal', config?.loot_teachers || DEFAULT_TEACHERS)
+                              const cardData = mapToTeacherCardData(teacher, result?.variant || 'normal', config?.loot_teachers || DEFAULT_TEACHERS)
                               
                               return (
                                 <div key={cardIdx} className="relative group p-0.5">
