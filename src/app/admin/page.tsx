@@ -9,6 +9,14 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuLabel,
+  ContextMenuSeparator,
+  ContextMenuTrigger,
+} from '@/components/ui/context-menu'
 import { MoreVertical, Shield, User, Trash2, Clock3, Undo2, Search, Gift, MessageSquare, AlertTriangle } from 'lucide-react'
 import { ResetPasswordDialog } from '@/components/modals/ResetPasswordDialog'
 import { SetTimeoutDialog } from '@/components/modals/SetTimeoutDialog'
@@ -381,6 +389,36 @@ export default function AdminPage() {
     router.push("/admin/send?u=" + userId)
   }
 
+  const copyUserValue = async (value: string | null | undefined, label: string) => {
+    const normalized = (value || '').trim()
+    if (!normalized) {
+      pushMessage({
+        type: 'toast',
+        priority: 'warning',
+        title: 'Hinweis',
+        content: `${label} ist nicht vorhanden.`,
+      })
+      return
+    }
+
+    try {
+      await navigator.clipboard.writeText(normalized)
+      pushMessage({
+        type: 'toast',
+        priority: 'info',
+        title: 'Kopiert',
+        content: `${label} wurde kopiert.`,
+      })
+    } catch {
+      pushMessage({
+        type: 'toast',
+        priority: 'critical',
+        title: 'Fehler',
+        content: `${label} konnte nicht kopiert werden.`,
+      })
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -472,112 +510,138 @@ export default function AdminPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredProfiles.map((p) => (
-                  <TableRow key={p.id}>
-                    <TableCell>
-                      <Checkbox
-                        checked={selectedGiftRecipients.includes(p.id)}
-                        onCheckedChange={(checked) => toggleRecipient(p.id, checked === true)}
-                        aria-label={`Nutzer ${p.full_name || p.email} auswählen`}
-                      />
-                    </TableCell>
-                    <TableCell className="font-medium">
-                      <Link href={`/profil/${p.id}`} className="hover:underline focus-visible:underline">
-                        {p.full_name || 'Unbekannt'}
-                      </Link>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground break-all">
-                      {p.email}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className="capitalize">
-                        {p.role}
-                      </Badge>
-                      {p.timeout_until && new Date(p.timeout_until).getTime() > Date.now() && (
-                        <Badge 
-                          variant="destructive" 
-                          className="ml-2"
-                          title={p.timeout_reason || 'Kein Grund angegeben'}
-                        >
-                          Sperre
-                        </Badge>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <select
-                        className="h-9 w-full rounded-md border bg-background px-2 text-sm"
-                        value={p.class_name || ''}
-                        onChange={(e) => handleUpdateProfile(p.id, { class_name: e.target.value || null })}
-                      >
-                        <option value="">Kein Kurs</option>
-                        {courses.map((course) => (
-                          <option key={course} value={course}>{course}</option>
-                        ))}
-                      </select>
-                    </TableCell>
-                    <TableCell>
-                      <select
-                        className="h-9 w-full rounded-md border bg-background px-2 text-sm"
-                        value={p.planning_group || ''}
-                        onChange={(e) => handleUpdateProfile(p.id, { planning_group: e.target.value || null })}
-                      >
-                        <option value="">Keine Gruppe</option>
-                        {planningGroups.map((groupName) => (
-                          <option key={groupName} value={groupName}>{groupName}</option>
-                        ))}
-                      </select>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {(() => {
-                        const isMainAdminAccount = p.role === 'admin_main' || p.role === 'admin'
-                        const isSelf = p.id === profile.id
-                        const canManageRoleActions = !isMainAdminAccount && !isSelf
+                {filteredProfiles.map((p) => {
+                  const isMainAdminAccount = p.role === 'admin_main' || p.role === 'admin'
+                  const isSelf = p.id === profile.id
+                  const canManageRoleActions = !isMainAdminAccount && !isSelf
+                  const isSelected = selectedGiftRecipients.includes(p.id)
 
-                        return (
-                          <DropdownMenu>
-                            <DropdownMenuTrigger
-                              render={
-                                <Button variant="ghost" size="icon">
-                                  <MoreVertical className="h-4 w-4" />
-                                </Button>
-                              }
+                  return (
+                    <ContextMenu key={p.id}>
+                      <ContextMenuTrigger>
+                        <TableRow>
+                          <TableCell>
+                            <Checkbox
+                              checked={isSelected}
+                              onCheckedChange={(checked) => toggleRecipient(p.id, checked === true)}
+                              aria-label={`Nutzer ${p.full_name || p.email} auswählen`}
                             />
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => openSinglePopup(p.id)}>
-                                <MessageSquare className="mr-2 h-4 w-4" /> Popup senden
-                              </DropdownMenuItem>
-                              <DropdownMenuItem disabled={!canManageRoleActions} onClick={() => handleUpdateProfile(p.id, { role: 'admin' })}>
-                                <Shield className="mr-2 h-4 w-4" /> Zum Admin
-                              </DropdownMenuItem>
-                              <DropdownMenuItem disabled={!canManageRoleActions} onClick={() => handleUpdateProfile(p.id, { role: 'admin_co' })}>
-                                <Shield className="mr-2 h-4 w-4" /> Zum Co-Admin
-                              </DropdownMenuItem>
-                              <DropdownMenuItem disabled={!canManageRoleActions} onClick={() => handleUpdateProfile(p.id, { role: 'planner' })}>
-                                <Shield className="mr-2 h-4 w-4" /> Zum Planer
-                              </DropdownMenuItem>
-                              <DropdownMenuItem disabled={!canManageRoleActions} onClick={() => handleUpdateProfile(p.id, { role: 'viewer' })}>
-                                <User className="mr-2 h-4 w-4" /> Zum Zuschauer
-                              </DropdownMenuItem>
-                              <DropdownMenuItem disabled={!canManageRoleActions} onClick={() => {
-                                setTimeoutTarget({ id: p.id, name: p.full_name || p.email })
-                                setIsTimeoutDialogOpen(true)
-                              }}>
-                                <AlertTriangle className="mr-2 h-4 w-4 text-destructive" /> Warnen / Sperren
-                              </DropdownMenuItem>
-                              <DropdownMenuItem disabled={!canManageRoleActions} onClick={() => handleClearTimeout(p.id)}>
-                                <Undo2 className="mr-2 h-4 w-4" /> Timeout aufheben
-                              </DropdownMenuItem>
-                              <ResetPasswordDialog userEmail={p.email} userName={p.full_name || 'User'} />
-                              <DropdownMenuItem className="text-destructive" disabled={!canManageRoleActions} onClick={() => handleDeleteProfile(p.id)}>
-                                <Trash2 className="mr-2 h-4 w-4" /> Löschen
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        )
-                      })()}
-                    </TableCell>
-                  </TableRow>
-                ))}
+                          </TableCell>
+                          <TableCell className="font-medium">
+                            <Link href={`/profil/${p.id}`} className="hover:underline focus-visible:underline">
+                              {p.full_name || 'Unbekannt'}
+                            </Link>
+                          </TableCell>
+                          <TableCell className="text-muted-foreground break-all">
+                            {p.email}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className="capitalize">
+                              {p.role}
+                            </Badge>
+                            {p.timeout_until && new Date(p.timeout_until).getTime() > Date.now() && (
+                              <Badge
+                                variant="destructive"
+                                className="ml-2"
+                                title={p.timeout_reason || 'Kein Grund angegeben'}
+                              >
+                                Sperre
+                              </Badge>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <select
+                              className="h-9 w-full rounded-md border bg-background px-2 text-sm"
+                              value={p.class_name || ''}
+                              onChange={(e) => handleUpdateProfile(p.id, { class_name: e.target.value || null })}
+                            >
+                              <option value="">Kein Kurs</option>
+                              {courses.map((course) => (
+                                <option key={course} value={course}>{course}</option>
+                              ))}
+                            </select>
+                          </TableCell>
+                          <TableCell>
+                            <select
+                              className="h-9 w-full rounded-md border bg-background px-2 text-sm"
+                              value={p.planning_group || ''}
+                              onChange={(e) => handleUpdateProfile(p.id, { planning_group: e.target.value || null })}
+                            >
+                              <option value="">Keine Gruppe</option>
+                              {planningGroups.map((groupName) => (
+                                <option key={groupName} value={groupName}>{groupName}</option>
+                              ))}
+                            </select>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger
+                                render={
+                                  <Button variant="ghost" size="icon">
+                                    <MoreVertical className="h-4 w-4" />
+                                  </Button>
+                                }
+                              />
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => openSinglePopup(p.id)}>
+                                  <MessageSquare className="mr-2 h-4 w-4" /> Popup senden
+                                </DropdownMenuItem>
+                                <DropdownMenuItem disabled={!canManageRoleActions} onClick={() => handleUpdateProfile(p.id, { role: 'admin' })}>
+                                  <Shield className="mr-2 h-4 w-4" /> Zum Admin
+                                </DropdownMenuItem>
+                                <DropdownMenuItem disabled={!canManageRoleActions} onClick={() => handleUpdateProfile(p.id, { role: 'admin_co' })}>
+                                  <Shield className="mr-2 h-4 w-4" /> Zum Co-Admin
+                                </DropdownMenuItem>
+                                <DropdownMenuItem disabled={!canManageRoleActions} onClick={() => handleUpdateProfile(p.id, { role: 'planner' })}>
+                                  <Shield className="mr-2 h-4 w-4" /> Zum Planer
+                                </DropdownMenuItem>
+                                <DropdownMenuItem disabled={!canManageRoleActions} onClick={() => handleUpdateProfile(p.id, { role: 'viewer' })}>
+                                  <User className="mr-2 h-4 w-4" /> Zum Zuschauer
+                                </DropdownMenuItem>
+                                <DropdownMenuItem disabled={!canManageRoleActions} onClick={() => {
+                                  setTimeoutTarget({ id: p.id, name: p.full_name || p.email })
+                                  setIsTimeoutDialogOpen(true)
+                                }}>
+                                  <AlertTriangle className="mr-2 h-4 w-4 text-destructive" /> Warnen / Sperren
+                                </DropdownMenuItem>
+                                <DropdownMenuItem disabled={!canManageRoleActions} onClick={() => handleClearTimeout(p.id)}>
+                                  <Undo2 className="mr-2 h-4 w-4" /> Timeout aufheben
+                                </DropdownMenuItem>
+                                <ResetPasswordDialog userEmail={p.email} userName={p.full_name || 'User'} />
+                                <DropdownMenuItem className="text-destructive" disabled={!canManageRoleActions} onClick={() => handleDeleteProfile(p.id)}>
+                                  <Trash2 className="mr-2 h-4 w-4" /> Löschen
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      </ContextMenuTrigger>
+                      <ContextMenuContent className="w-56">
+                        <ContextMenuLabel>{p.full_name || p.email || p.id}</ContextMenuLabel>
+                        <ContextMenuSeparator />
+                        <ContextMenuItem onClick={() => router.push(`/profil/${p.id}`)}>
+                          <User className="h-4 w-4" /> Profil öffnen
+                        </ContextMenuItem>
+                        <ContextMenuItem onClick={() => openSinglePopup(p.id)}>
+                          <MessageSquare className="h-4 w-4" /> Popup senden
+                        </ContextMenuItem>
+                        <ContextMenuItem onClick={() => toggleRecipient(p.id, !isSelected)}>
+                          <Gift className="h-4 w-4" /> {isSelected ? 'Aus Auswahl entfernen' : 'Zur Auswahl hinzufügen'}
+                        </ContextMenuItem>
+                        <ContextMenuSeparator />
+                        <ContextMenuItem onClick={() => copyUserValue(p.full_name, 'Name')}>
+                          <User className="h-4 w-4" /> Name kopieren
+                        </ContextMenuItem>
+                        <ContextMenuItem onClick={() => copyUserValue(p.email, 'E-Mail')}>
+                          <MessageSquare className="h-4 w-4" /> E-Mail kopieren
+                        </ContextMenuItem>
+                        <ContextMenuItem onClick={() => copyUserValue(p.id, 'User-ID')}>
+                          <Shield className="h-4 w-4" /> User-ID kopieren
+                        </ContextMenuItem>
+                      </ContextMenuContent>
+                    </ContextMenu>
+                  )
+                })}
               </TableBody>
             </Table>
           </div>

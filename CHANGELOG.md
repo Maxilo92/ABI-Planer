@@ -1,6 +1,7 @@
 # Changelog
 
 ## [Unreleased]
+- **UI Fix (Admin-Rechtsklick):** In [src/app/admin/page.tsx](src/app/admin/page.tsx) wurde für die Desktop-Benutzerzeilen ein echtes Kontextmenü per Rechtsklick ergänzt (Profil öffnen, Popup senden, Auswahl toggeln, Name/E-Mail/User-ID kopieren).
 - **UI Fix (Empfänger-Rechtsklick):** In [src/app/admin/send/page.tsx](src/app/admin/send/page.tsx) wurde die Empfängerliste auf echte Zeilen umgestellt, damit das Kontextmenü per Rechtsklick zuverlässig öffnet.
 - **UI Fix (Kommunikations-Zentrale Header):** In [src/app/admin/send/page.tsx](src/app/admin/send/page.tsx) wurde der doppelte Zurück-Button bereinigt.
 - **UI Fix (Absender in Vorschau):** In [src/app/admin/send/page.tsx](src/app/admin/send/page.tsx) wird der Absender in der Vorschau nicht mehr abgeschnitten (Wrap statt Truncate).
