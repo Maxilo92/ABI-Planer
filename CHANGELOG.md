@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.26.52] - 2026-03-27
+- Fix: **Kritischer Firebase-Fehler im Booster Shop behoben**. Ein `internal`-Error beim Kauf von Boostern wurde durch Korrektur des Datenbank-Zugriffs in den Cloud Functions (`getFirestore` statt fehlerhaftem `admin.firestore`) behoben.
+- Fix: **Fehlende Seltenheits-Synchronisierung korrigiert**. Die automatische Seltenheitsberechnung (`calculateTeacherRarity`) wurde ebenfalls auf den korrekten Datenbank-Zugriff umgestellt, um Dateninkonsistenzen zu vermeiden.
+- Robustheit: **Zusätzliche Validierung im Backend**. Der Kauf-Prozess prüft nun explizit auf gültige `amount`-Werte und schützt vor `NaN`-Fehlern in der Datenbank.
+
 ## [0.26.51] - 2026-03-27
 - Fix: **Build-Fehler im Booster Shop behoben**. Die Eigenschaft `shop_stats` wurde zum `Profile`-Interface hinzugefügt, um einen TypeScript-Fehler beim Build-Vorgang zu korrigieren.
 

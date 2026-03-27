@@ -1,5 +1,6 @@
 import { onDocumentWritten } from "firebase-functions/v2/firestore";
 import * as admin from "firebase-admin";
+import { getFirestore } from "firebase-admin/firestore";
 
 if (admin.apps.length === 0) {
     admin.initializeApp();
@@ -68,7 +69,7 @@ export const calculateTeacherRarity = onDocumentWritten({
     database: "abi-data",
     region: "europe-west3",
 }, async (event) => {
-    const db = admin.firestore();
+    const db = getFirestore("abi-data");
     const ratingData = event.data?.after.data();
     const teacherId = ratingData?.teacherId;
 
@@ -155,7 +156,7 @@ export const syncLootTeacherRarity = onDocumentWritten({
     database: "abi-data",
     region: "europe-west3",
 }, async (event) => {
-    const db = admin.firestore();
+    const db = getFirestore("abi-data");
     const teacherId = event.params.teacherId;
     const teacherData = event.data?.after.data();
 

@@ -1,5 +1,6 @@
 import * as assert from "node:assert";
 
+/**
  * Mocking the logic found in functions/src/referrals.ts to verify the reward math.
  * Base reward: min(2 + totalPastReferrals, 10) boosters
  * Monthly cap: 30 boosters
