@@ -189,7 +189,7 @@ export default function SammelkartenShopPage() {
 
                 <div className="p-8 pt-0">
                   <Button
-                    className={`w-full font-black h-20 rounded-2xl shadow-xl transition-all duration-300 ${
+                    className={`w-full font-black h-20 rounded-2xl shadow-xl transition-all duration-300 relative overflow-hidden ${
                       isLimitReached ? 'bg-muted text-muted-foreground' : 'bg-primary text-primary-foreground hover:bg-primary/90'
                     }`}
                     disabled={isPurchasing !== null || isLimitReached}
@@ -203,19 +203,23 @@ export default function SammelkartenShopPage() {
                     ) : isLimitReached ? (
                       <span className="text-xl">Limit erreicht</span>
                     ) : (
-                      <div className="flex items-center justify-center gap-4">
+                      <>
+                        <div className="flex items-center justify-center gap-4">
+                          {item.amount > 1 && (
+                            <span className="text-sm line-through opacity-40 decoration-1 font-medium">
+                              {(item.amount * 0.99).toLocaleString('de-DE', { minimumFractionDigits: 2 })}€
+                            </span>
+                          )}
+                          <span className="text-2xl tracking-tighter">{item.price}</span>
+                        </div>
                         {item.amount > 1 && (
-                          <span className="text-sm line-through opacity-40 decoration-1 font-medium">
-                            {(item.amount * 0.99).toLocaleString('de-DE', { minimumFractionDigits: 2 })}€
-                          </span>
+                          <div className="absolute top-0 right-0 h-10 w-10 flex items-center justify-center">
+                            <span className="bg-white/20 text-[10px] px-8 py-1 font-black tracking-tighter text-white rotate-45 translate-x-[30%] -translate-y-[20%] shadow-sm">
+                              -{Math.round((1 - item.priceNum! / (item.amount * 0.99)) * 100)}%
+                            </span>
+                          </div>
                         )}
-                        <span className="text-2xl tracking-tighter">{item.price}</span>
-                        {item.amount > 1 && (
-                          <span className="bg-white/20 text-[10px] px-2 py-0.5 rounded-lg font-black tracking-tighter text-white">
-                            -{Math.round((1 - item.priceNum! / (item.amount * 0.99)) * 100)}%
-                          </span>
-                        )}
-                      </div>
+                      </>
                     )}
                   </Button>
                 </div>

@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.26.60] - 2026-03-27
+- UI: **Eck-Banner für Rabatte**. Die Prozent-Ersparnis wird nun als diagonales Banner in der oberen rechten Ecke des Kauf-Buttons angezeigt.
+
 ## [0.26.59] - 2026-03-27
 - UI: **Kauf-Button Design verfeinert**. Der Streichpreis steht nun als schlichter Text links vom Hauptpreis, während die Prozent-Ersparnis in einem kleinen Label rechts hervorgehoben wird.
 
