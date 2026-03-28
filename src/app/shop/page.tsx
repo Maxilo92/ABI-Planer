@@ -404,15 +404,15 @@ function ShopContent() {
                 <p>
                   Willst du den Entwickler direkt unterstützen? Dann kannst du mir gerne einen Kaffee ausgeben.
                 </p>
-                <Link 
+                <a 
                   href="https://buymeacoffee.com/maxilo" 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 text-amber-600 font-bold hover:underline underline-offset-4 mt-1"
                 >
-                  Coffee ausgeben
+                  Kaffee ausgeben
                   <ChevronLeft className="w-3 h-3 rotate-180" />
-                </Link>
+                </a>
              </div>
            </div>
            

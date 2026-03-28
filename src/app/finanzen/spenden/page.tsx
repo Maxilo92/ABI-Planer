@@ -68,12 +68,12 @@ export default function SpendenPage() {
               Wenn dir die App gefällt und du meine Arbeit unterstützen möchtest, freue ich mich über einen virtuellen Kaffee!
             </p>
             <div className="pt-4">
-              <Link href="https://buymeacoffee.com/maxilo" target="_blank" rel="noopener noreferrer">
+              <a href="https://buymeacoffee.com/maxilo" target="_blank" rel="noopener noreferrer">
                 <Button className="w-full gap-2">
                   <Coffee className="h-4 w-4" />
                   Kaffee spendieren
                 </Button>
-              </Link>
+              </a>
             </div>
             <p className="text-xs text-muted-foreground italic">
               Hinweis: Diese Spenden gehen direkt an den Entwickler (Max) und nicht in die Abikasse des Jahrgangs.
