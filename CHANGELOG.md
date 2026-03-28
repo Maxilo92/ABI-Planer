@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.34.1] - 2026-03-28
+- **Hotfix (Navbar):** Behebung eines `ReferenceError` ("ShoppingBag is not defined") durch Hinzufügen des fehlenden Icon-Imports in der Navigation.
+
 ## [0.34.0] - 2026-03-28
 - **New Feature (Global Shop):** Einführung eines zentralen Shops unter `/shop`.
     - Der neue Shop bietet Kategorien für Sammelkarten, Stufen-Merch und Sonstiges.
