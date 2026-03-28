@@ -185,6 +185,7 @@ function TeacherCardDetail({ teacher, userData, onClose, globalTeachers }: { tea
                 className="w-full h-auto"
                 styleVariant="modern-flat"
                 isFlippedExternally={true}
+                interactive={false}
               />
             </motion.div>
           ) : (
