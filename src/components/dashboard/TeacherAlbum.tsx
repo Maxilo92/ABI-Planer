@@ -338,12 +338,22 @@ export function TeacherAlbum({
   useEffect(() => {
     let unsubscribeGlobal: (() => void) | null = null;
 
+    const deduplicate = (teachers: LootTeacher[]) => {
+      const seen = new Set();
+      return teachers.filter(t => {
+        const id = t.id || t.name;
+        if (seen.has(id)) return false;
+        seen.add(id);
+        return true;
+      });
+    };
+
     // Listen to sammelkarten settings as primary source
     const unsubscribeSammelkarten = onSnapshot(doc(db, 'settings', 'sammelkarten'), (snapshot) => {
       if (snapshot.exists()) {
         const data = snapshot.data()
         if (Array.isArray(data.loot_teachers) && data.loot_teachers.length > 0) {
-          setGlobalTeachers(data.loot_teachers)
+          setGlobalTeachers(deduplicate(data.loot_teachers))
           setLoadingGlobal(false)
           // If we found data in sammelkarten, we don't need the global listener anymore
           if (unsubscribeGlobal) {
@@ -360,7 +370,7 @@ export function TeacherAlbum({
           if (globalSnap.exists()) {
             const globalData = globalSnap.data()
             setGlobalTeachers(Array.isArray(globalData.loot_teachers) && globalData.loot_teachers.length > 0 
-              ? globalData.loot_teachers 
+              ? deduplicate(globalData.loot_teachers) 
               : DEFAULT_TEACHERS)
           } else {
             setGlobalTeachers(DEFAULT_TEACHERS)
@@ -686,7 +696,7 @@ export function TeacherAlbum({
       ) : (
         <>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4 md:gap-6">
-            {displayedTeachers.map((teacher) => {
+            {displayedTeachers.map((teacher, idx) => {
               const teacherId = teacher.id || teacher.name
               const userData = userTeachers?.[teacher.id] || userTeachers?.[teacher.name]
               const isOwned = !!userData
@@ -694,7 +704,7 @@ export function TeacherAlbum({
 
               return (
                 <div 
-                  key={teacherId}
+                  key={`${teacherId}-${idx}`}
                   className="flex flex-col items-center w-full mx-auto"
                 >
                   <div 
