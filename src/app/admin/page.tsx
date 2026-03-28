@@ -526,6 +526,29 @@ export default function AdminPage() {
                               onCheckedChange={(checked) => toggleRecipient(p.id, checked === true)}
                               aria-label={`Nutzer ${p.full_name || p.email} auswählen`}
                             />
+                            <ContextMenuContent className="w-56">
+                              <ContextMenuLabel>{p.full_name || p.email || p.id}</ContextMenuLabel>
+                              <ContextMenuSeparator />
+                              <ContextMenuItem onClick={() => router.push(`/profil/${p.id}`)}>
+                                <User className="h-4 w-4" /> Profil öffnen
+                              </ContextMenuItem>
+                              <ContextMenuItem onClick={() => openSinglePopup(p.id)}>
+                                <MessageSquare className="h-4 w-4" /> Popup senden
+                              </ContextMenuItem>
+                              <ContextMenuItem onClick={() => toggleRecipient(p.id, !isSelected)}>
+                                <Gift className="h-4 w-4" /> {isSelected ? 'Aus Auswahl entfernen' : 'Zur Auswahl hinzufügen'}
+                              </ContextMenuItem>
+                              <ContextMenuSeparator />
+                              <ContextMenuItem onClick={() => copyUserValue(p.full_name, 'Name')}>
+                                <User className="h-4 w-4" /> Name kopieren
+                              </ContextMenuItem>
+                              <ContextMenuItem onClick={() => copyUserValue(p.email, 'E-Mail')}>
+                                <MessageSquare className="h-4 w-4" /> E-Mail kopieren
+                              </ContextMenuItem>
+                              <ContextMenuItem onClick={() => copyUserValue(p.id, 'User-ID')}>
+                                <Shield className="h-4 w-4" /> User-ID kopieren
+                              </ContextMenuItem>
+                            </ContextMenuContent>
                           </TableCell>
                           <TableCell className="font-medium">
                             <Link href={`/profil/${p.id}`} className="hover:underline focus-visible:underline">
@@ -616,29 +639,6 @@ export default function AdminPage() {
                           </TableCell>
                         </TableRow>
                       </ContextMenuTrigger>
-                      <ContextMenuContent className="w-56">
-                        <ContextMenuLabel>{p.full_name || p.email || p.id}</ContextMenuLabel>
-                        <ContextMenuSeparator />
-                        <ContextMenuItem onClick={() => router.push(`/profil/${p.id}`)}>
-                          <User className="h-4 w-4" /> Profil öffnen
-                        </ContextMenuItem>
-                        <ContextMenuItem onClick={() => openSinglePopup(p.id)}>
-                          <MessageSquare className="h-4 w-4" /> Popup senden
-                        </ContextMenuItem>
-                        <ContextMenuItem onClick={() => toggleRecipient(p.id, !isSelected)}>
-                          <Gift className="h-4 w-4" /> {isSelected ? 'Aus Auswahl entfernen' : 'Zur Auswahl hinzufügen'}
-                        </ContextMenuItem>
-                        <ContextMenuSeparator />
-                        <ContextMenuItem onClick={() => copyUserValue(p.full_name, 'Name')}>
-                          <User className="h-4 w-4" /> Name kopieren
-                        </ContextMenuItem>
-                        <ContextMenuItem onClick={() => copyUserValue(p.email, 'E-Mail')}>
-                          <MessageSquare className="h-4 w-4" /> E-Mail kopieren
-                        </ContextMenuItem>
-                        <ContextMenuItem onClick={() => copyUserValue(p.id, 'User-ID')}>
-                          <Shield className="h-4 w-4" /> User-ID kopieren
-                        </ContextMenuItem>
-                      </ContextMenuContent>
                     </ContextMenu>
                   )
                 })}

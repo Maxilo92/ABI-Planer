@@ -304,6 +304,16 @@ export default function AdminLogsPage() {
                     <TableRow className="cursor-pointer transition-colors hover:bg-muted/50">
                       <TableCell className="whitespace-nowrap text-sm">
                         {toDate(entry.timestamp).toLocaleString('de-DE')}
+                        <ContextMenuContent>
+                          <ContextMenuItem onClick={() => handleCopyRow(entry)}>
+                            <Copy className="h-4 w-4 mr-2" />
+                            <span>Zeile kopieren</span>
+                          </ContextMenuItem>
+                          <ContextMenuItem onClick={() => handleCopyJson(entry)}>
+                            <FileJson className="h-4 w-4 mr-2" />
+                            <span>JSON kopieren</span>
+                          </ContextMenuItem>
+                        </ContextMenuContent>
                       </TableCell>
                       <TableCell>
                         <Badge variant="outline">{entry.action}</Badge>
@@ -319,16 +329,6 @@ export default function AdminLogsPage() {
                       </TableCell>
                     </TableRow>
                   </ContextMenuTrigger>
-                  <ContextMenuContent>
-                    <ContextMenuItem onClick={() => handleCopyRow(entry)}>
-                      <Copy className="h-4 w-4 mr-2" />
-                      <span>Zeile kopieren</span>
-                    </ContextMenuItem>
-                    <ContextMenuItem onClick={() => handleCopyJson(entry)}>
-                      <FileJson className="h-4 w-4 mr-2" />
-                      <span>JSON kopieren</span>
-                    </ContextMenuItem>
-                  </ContextMenuContent>
                 </ContextMenu>
               ))}
             </TableBody>
