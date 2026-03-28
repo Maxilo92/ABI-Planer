@@ -1,0 +1,141 @@
+'use client';
+
+import React from 'react';
+import { GraduationCap, Heart, Swords } from 'lucide-react';
+import { CardData, CardStyle } from '@/types/cards';
+import { RaritySymbol } from './RaritySymbol';
+import { CardEffectOverlay } from './CardEffectOverlay';
+import { cn } from '@/lib/utils';
+
+interface TeacherSpecCardProps {
+  data: CardData;
+  className?: string;
+  styleVariant?: CardStyle;
+}
+
+export const TeacherSpecCard: React.FC<TeacherSpecCardProps> = ({ 
+  data, 
+  className, 
+  styleVariant = 'modern-flat'
+}) => {
+  const isBlckShiny = data.variant === 'black_shiny_holo';
+  const isShiny = data.variant === 'shiny';
+  const isGlass = data.variant === 'holo';
+
+  const getStyleClasses = () => {
+    switch (styleVariant) {
+      case 'modern-flat':
+        return {
+          card: cn(
+            "transition-all rounded-[10cqw]",
+            !isBlckShiny && !isShiny && "border-black shadow-[2cqw_2cqw_0px_0px_rgba(0,0,0,1)] border-[0.8cqw]",
+            isShiny && "shadow-[0_0_10px_rgba(255,255,255,0.4)] border-slate-300 border-[1cqw]",
+            isBlckShiny && "shadow-[0_0_8cqw_rgba(147,51,234,0.5)] border-purple-500/50 border-[1cqw]"
+          ),
+          header: (isBlckShiny || isGlass || isShiny) ? (isShiny ? "text-slate-600" : "text-white") : "text-black",
+          text: cn(
+            "font-sans uppercase font-black tracking-tighter leading-[0.95]",
+            isBlckShiny ? "text-transparent bg-clip-text bg-gradient-to-b from-white to-purple-200" : 
+            (isShiny ? "text-slate-800" : 
+            (isGlass ? "text-white" : "text-black"))
+          ),
+          bgOverlay: isBlckShiny ? "bg-black/40" : (isShiny ? "bg-white/30" : (isGlass ? "bg-transparent" : "bg-white/5")),
+          numberTag: cn(
+            "px-[1.5cqw] py-[0.5cqw] text-[3cqw] font-black rounded-[0.5cqw] border-[0.3cqw] border-black",
+            (isBlckShiny || isGlass || isShiny) ? "bg-white text-black" : "bg-black text-white"
+          ),
+        };
+      
+      default:
+        return {
+          card: "border-white/40 shadow-2xl backdrop-blur-xl border-[2cqw] rounded-[10cqw]",
+          header: "text-white",
+          text: "text-white font-sans font-black leading-[0.9]",
+          bgOverlay: "bg-white/10",
+          numberTag: "bg-white/20 text-white px-[1.5cqw] py-[0.5cqw] text-[2.5cqw] font-black rounded-full",
+        };
+    }
+  };
+
+  const styleClasses = getStyleClasses();
+
+  return (
+    <div
+      className={cn("relative aspect-[2.5/3.5] @container overflow-hidden", className, styleClasses.card)}
+      style={{ 
+        containerType: 'inline-size',
+        backgroundColor: isBlckShiny ? '#0a0a0a' : (isGlass ? data.color : data.color)
+      }}
+    >
+      <CardEffectOverlay variant={data.variant} tintColor={data.color} />
+      <div className={cn("absolute inset-0 pointer-events-none", styleClasses.bgOverlay)} />
+
+      <div className="relative z-10 h-full w-full p-[6cqw] flex flex-col space-y-[3cqw]">
+        {/* Header: Name & HP */}
+        <div className="flex justify-between items-center w-full border-b-[0.5cqw] border-current pb-[1cqw]" style={{ color: (isBlckShiny || isGlass || isShiny) ? 'white' : 'black' }}>
+          <h2 className={cn("text-[6cqw] truncate max-w-[70%]", styleClasses.text)}>
+            {data.name}
+          </h2>
+          {data.hp && (
+            <div className="flex items-center gap-[1cqw]">
+              <span className="text-[3cqw] font-black uppercase opacity-60">HP</span>
+              <span className="text-[6cqw] font-black tracking-tighter">{data.hp}</span>
+              <Heart className="w-[5cqw] h-[5cqw] fill-current text-red-500" />
+            </div>
+          )}
+        </div>
+
+        {/* Small Artwork Box */}
+        <div className="w-full aspect-[2/1] bg-black/10 rounded-[3cqw] flex items-center justify-center border-[0.4cqw] border-current/20" style={{ color: (isBlckShiny || isGlass || isShiny) ? 'white' : 'black' }}>
+          <GraduationCap className="w-[12cqw] h-[12cqw] opacity-30" />
+        </div>
+
+        {/* Attacks List */}
+        <div className="flex-1 space-y-[2.5cqw] overflow-hidden">
+          {data.attacks?.slice(0, 3).map((attack, idx) => (
+            <div key={idx} className="flex flex-col border-b-[0.2cqw] border-current/10 pb-[1.5cqw]" style={{ color: (isBlckShiny || isGlass || isShiny) ? 'white' : 'black' }}>
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-[1.5cqw]">
+                  <Swords className="w-[3.5cqw] h-[3.5cqw] text-blue-500" />
+                  <span className="text-[4cqw] font-black uppercase tracking-tight">{attack.name}</span>
+                </div>
+                {attack.damage !== undefined && (
+                  <span className="text-[4.5cqw] font-black tracking-tighter">{attack.damage}</span>
+                )}
+              </div>
+              {attack.description && (
+                <p className="text-[2.8cqw] leading-tight opacity-70 line-clamp-2">
+                  {attack.description}
+                </p>
+              )}
+            </div>
+          ))}
+        </div>
+
+        {/* Footer: Flavor Text & Metadata */}
+        <div className="space-y-[2cqw] mt-auto">
+          {data.description && (
+            <div className="bg-white/5 rounded-[2cqw] p-[2cqw] border-[0.2cqw] border-current/10 italic" style={{ color: (isBlckShiny || isGlass || isShiny) ? 'white/90' : 'black/90' }}>
+              <p className="text-[2.5cqw] leading-relaxed line-clamp-3">
+                &quot;{data.description}&quot;
+              </p>
+            </div>
+          )}
+          
+          <div className="flex justify-between items-end">
+            <div className={styleClasses.numberTag}>
+              #{data.cardNumber}
+            </div>
+            <RaritySymbol 
+              rarity={data.rarity} 
+              variant={data.variant}
+              size={0} 
+              className="w-[10cqw] h-[10cqw]"
+              color={isBlckShiny ? 'white' : (styleVariant === 'modern-flat' ? 'black' : 'white')} 
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};

@@ -5,15 +5,17 @@ import { useAuth } from '@/context/AuthContext'
 import { db } from '@/lib/firebase'
 import { doc, onSnapshot } from 'firebase/firestore'
 import { useEffect, useState, useRef, useMemo } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { LootTeacher, TeacherRarity, Profile, CardVariant } from '@/types/database'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { useRouter } from 'next/navigation'
-import { GraduationCap, Trophy, Star, Lock, Search, Filter, X, ChevronRight, Rotate3d, ArrowDownAZ, ArrowDownZA, ArrowUp10, LayoutGrid, Package, ArrowUpNarrowWide, ArrowDownWideNarrow, Heart, Swords } from 'lucide-react'
+import { GraduationCap, Trophy, Star, Lock, Search, Filter, X, ChevronRight, ChevronLeft, Rotate3d, ArrowDownAZ, ArrowDownZA, ArrowUp10, LayoutGrid, Package, ArrowUpNarrowWide, ArrowDownWideNarrow, Heart, Swords } from 'lucide-react'
 import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
 import { TeacherCard } from '@/components/cards/TeacherCard'
+import { TeacherSpecCard } from '@/components/cards/TeacherSpecCard'
 import { CardData, CardVariant as NewCardVariant } from '@/types/cards'
 import {
   Dialog,
@@ -155,6 +157,7 @@ function TeacherCardDetail({ teacher, userData, onClose, globalTeachers }: { tea
   const level = userData?.level || 1
   const count = userData?.count || 0
   const [displayVariant, setDisplayVariant] = useState<NewCardVariant>(getBestVariant(userData?.variants));
+  const [activeCard, setActiveCard] = useState<'visual' | 'spec'>('visual');
   
   const cardData = mapTeacherToCardData(teacher, userData, globalTeachers, displayVariant)
 
@@ -165,50 +168,73 @@ function TeacherCardDetail({ teacher, userData, onClose, globalTeachers }: { tea
 
   return (
     <div className="flex flex-col items-center space-y-6 py-8 px-4 w-full">
-      <div className="relative w-full max-w-[280px] sm:max-w-[320px] aspect-[2.5/3.5] mb-4">
-        <TeacherCard 
-          data={cardData}
-          className="w-full h-auto"
-          styleVariant="modern-flat"
-          isFlippedExternally={true}
-        />
+      <div className="relative w-full max-w-[280px] sm:max-w-[320px] aspect-[2.5/3.5] mb-4 group">
+        <AnimatePresence mode="wait">
+          {activeCard === 'visual' ? (
+            <motion.div
+              key="visual"
+              initial={{ x: 50, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: -50, opacity: 0 }}
+              transition={{ type: 'spring', damping: 20, stiffness: 100 }}
+              className="w-full h-full cursor-pointer"
+              onClick={() => setActiveCard('spec')}
+            >
+              <TeacherCard 
+                data={cardData}
+                className="w-full h-auto"
+                styleVariant="modern-flat"
+                isFlippedExternally={true}
+              />
+            </motion.div>
+          ) : (
+            <motion.div
+              key="spec"
+              initial={{ x: -50, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: 50, opacity: 0 }}
+              transition={{ type: 'spring', damping: 20, stiffness: 100 }}
+              className="w-full h-full cursor-pointer"
+              onClick={() => setActiveCard('visual')}
+            >
+              <TeacherSpecCard 
+                data={cardData}
+                className="w-full h-auto"
+                styleVariant="modern-flat"
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Navigation Arrows */}
+        <button 
+          onClick={(e) => { e.stopPropagation(); setActiveCard(activeCard === 'visual' ? 'spec' : 'visual'); }}
+          className="absolute left-[-20%] top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/5 hover:bg-white/10 text-white/40 transition-all opacity-0 group-hover:opacity-100 max-sm:hidden"
+        >
+          <ChevronLeft className="h-6 w-6" />
+        </button>
+        <button 
+          onClick={(e) => { e.stopPropagation(); setActiveCard(activeCard === 'visual' ? 'spec' : 'visual'); }}
+          className="absolute right-[-20%] top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/5 hover:bg-white/10 text-white/40 transition-all opacity-0 group-hover:opacity-100 max-sm:hidden"
+        >
+          <ChevronRight className="h-6 w-6" />
+        </button>
       </div>
 
-      <div className="text-center animate-pulse flex items-center gap-2 text-white/50 text-xs font-medium bg-white/5 px-3 py-1 rounded-full border border-white/5">
-        <Rotate3d className="h-3.5 w-3.5" />
-        Tippen zum Umdrehen
+      <div className="flex flex-col items-center gap-3">
+        <div className="text-center animate-pulse flex items-center gap-2 text-white/50 text-xs font-medium bg-white/5 px-3 py-1.5 rounded-full border border-white/5">
+          {activeCard === 'visual' ? <Rotate3d className="h-3.5 w-3.5" /> : <Swords className="h-3.5 w-3.5" />}
+          {activeCard === 'visual' ? 'Tippen für Specs' : 'Tippen für Artwork'}
+        </div>
+        
+        {/* Pagination Dots */}
+        <div className="flex gap-1.5">
+          <button onClick={() => setActiveCard('visual')} className={cn("h-1 rounded-full transition-all", activeCard === 'visual' ? "bg-white w-6" : "bg-white/20 w-3")} />
+          <button onClick={() => setActiveCard('spec')} className={cn("h-1 rounded-full transition-all", activeCard === 'spec' ? "bg-white w-6" : "bg-white/20 w-3")} />
+        </div>
       </div>
 
       <div className="w-full max-w-sm space-y-4 px-4">
-        {/* Stats Header (Name & HP) */}
-        <div className="bg-black/40 backdrop-blur-xl rounded-2xl p-5 border border-white/10 shadow-2xl">
-          <div className="flex justify-between items-start mb-1">
-             <div className="flex flex-col">
-               <p className="text-[10px] font-black uppercase text-white/40 tracking-widest">Name</p>
-               <h3 className="text-xl font-black text-white uppercase tracking-tighter">
-                 {teacher.name}
-               </h3>
-             </div>
-             {teacher.hp && (
-               <div className="flex flex-col items-end">
-                 <p className="text-[10px] font-black uppercase text-white/40 tracking-widest">HP</p>
-                 <div className="flex items-center gap-1.5 text-red-500">
-                    <span className="text-xl font-black tracking-tighter">{teacher.hp}</span>
-                    <Heart className="h-5 w-5 fill-current" />
-                 </div>
-               </div>
-             )}
-          </div>
-          <div className="flex items-center gap-2 mt-2">
-            <Badge className={cn("text-[10px] font-black uppercase px-2 py-0 border-none", getRarityBadge(teacher.rarity))}>
-              {getRarityLabel(teacher.rarity)}
-            </Badge>
-            <Badge variant="outline" className="text-[10px] font-black uppercase px-2 py-0 border-white/10 text-white/40">
-              #{cardData.cardNumber}
-            </Badge>
-          </div>
-        </div>
-
         {/* Variant Gallery */}
         <div className="bg-black/40 backdrop-blur-xl rounded-2xl p-4 border border-white/10 shadow-2xl">
           <p className="text-[10px] font-black uppercase text-white/40 mb-3 tracking-widest px-1">Deine Varianten</p>
@@ -237,42 +263,6 @@ function TeacherCardDetail({ teacher, userData, onClose, globalTeachers }: { tea
             })}
           </div>
         </div>
-
-        {teacher.description && (
-          <div className="bg-black/40 backdrop-blur-xl rounded-2xl p-5 border border-white/10 shadow-2xl">
-            <p className="text-[10px] font-black uppercase text-white/40 mb-2 tracking-widest px-1">Lehrer-Info</p>
-            <p className="text-sm text-white/90 italic leading-relaxed px-1">
-              &quot;{teacher.description}&quot;
-            </p>
-          </div>
-        )}
-
-        {/* Attacks Section */}
-        {teacher.attacks && teacher.attacks.length > 0 && (
-          <div className="bg-black/40 backdrop-blur-xl rounded-2xl p-5 border border-white/10 shadow-2xl space-y-4">
-            <p className="text-[10px] font-black uppercase text-white/40 tracking-widest px-1">Angriffe</p>
-            <div className="space-y-3">
-              {teacher.attacks.map((attack, idx) => (
-                <div key={idx} className="flex flex-col gap-1 px-1 border-l-2 border-white/5 pl-3 py-0.5">
-                  <div className="flex justify-between items-center">
-                    <div className="flex items-center gap-2">
-                      <Swords className="h-3.5 w-3.5 text-blue-400" />
-                      <span className="text-sm font-black text-white uppercase tracking-tight">{attack.name}</span>
-                    </div>
-                    {attack.damage !== undefined && (
-                      <span className="text-sm font-black text-blue-400">{attack.damage} DMG</span>
-                    )}
-                  </div>
-                  {attack.description && (
-                    <p className="text-[11px] text-white/50 leading-snug">
-                      {attack.description}
-                    </p>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
 
         <div className="bg-black/40 backdrop-blur-xl rounded-2xl p-6 space-y-4 border border-white/10 shadow-2xl">
           <div className="flex justify-between items-center">
