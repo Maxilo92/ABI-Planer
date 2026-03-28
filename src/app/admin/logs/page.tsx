@@ -300,7 +300,7 @@ export default function AdminLogsPage() {
             <TableBody>
               {filteredLogs.map((entry) => (
                 <ContextMenu key={entry.id}>
-                  <ContextMenuTrigger>
+                  <ContextMenuTrigger asChild>
                     <TableRow className="cursor-pointer transition-colors hover:bg-muted/50">
                       <TableCell className="whitespace-nowrap text-sm">
                         {toDate(entry.timestamp).toLocaleString('de-DE')}

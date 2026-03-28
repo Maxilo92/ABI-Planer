@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { LayoutDashboard, CheckSquare, Calendar, Euro, Megaphone, BarChart2, LogOut, Menu, X, ShieldCheck, User, MessageSquareHeart, Settings, Users, ChevronDown, ChevronRight, Sparkles, HelpCircle, Gift, Trophy, AlertTriangle, ShoppingBag } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
@@ -55,10 +56,11 @@ export function Navbar() {
   const toggleSubmenu = (href: string, e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    setOpenSubmenus(prev => ({
-      ...prev,
-      [href]: !prev[href]
-    }))
+    setOpenSubmenus(prev => {
+      const isCurrentlyOpen = !!prev[href]
+      // Close all other submenus and toggle the current one
+      return { [href]: !isCurrentlyOpen }
+    })
   }
 
   const isAdmin = profile?.role === 'admin_main' || profile?.role === 'admin_co' || profile?.role === 'admin'
@@ -181,7 +183,7 @@ export function Navbar() {
 
   const renderNavItem = (item: NavItem, isMobile: boolean = false) => {
     const hasSubItems = item.subItems && item.subItems.length > 0
-    const isExpanded = openSubmenus[item.href] || (hasSubItems && isActive(item.href))
+    const isExpanded = openSubmenus[item.href] || (hasSubItems && isActive(item.href) && Object.keys(openSubmenus).length === 0)
     const active = isActive(item.href)
 
     return (
@@ -208,7 +210,12 @@ export function Navbar() {
                 </Badge>
               )}
             </div>
-            {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+            <motion.div
+              animate={{ rotate: isExpanded ? 90 : 0 }}
+              transition={{ duration: 0.2 }}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </motion.div>
           </button>
         ) : (
           <Link
@@ -234,36 +241,46 @@ export function Navbar() {
           </Link>
         )}
 
-        {hasSubItems && isExpanded && (
-          <div className={cn("ml-4 pl-4 border-l space-y-1", isMobile ? "mt-1" : "mt-1")}>
-            {item.subItems!.map((subItem) => (
-              <Link
-                key={subItem.href}
-                href={subItem.href}
-                onClick={() => {
-                  if (isMobile) setIsOpen(false)
+        <AnimatePresence initial={false}>
+          {hasSubItems && isExpanded && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2, ease: "easeInOut" }}
+              className="overflow-hidden"
+            >
+              <div className={cn("ml-4 pl-4 border-l space-y-1 py-1", isMobile ? "mt-1" : "mt-1")}>
+                {item.subItems!.map((subItem) => (
+                  <Link
+                    key={subItem.href}
+                    href={subItem.href}
+                    onClick={() => {
+                      if (isMobile) setIsOpen(false)
 
-                  const queryIndex = subItem.href.indexOf('?')
-                  if (queryIndex >= 0) {
-                    setCurrentSearch(subItem.href.slice(queryIndex))
-                  }
-                }}
-                className={cn(
-                  'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
-                  isActive(subItem.href) ? 'text-primary bg-secondary/30' : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
-                )}
-              >
-                <subItem.icon className="h-3.5 w-3.5" />
-                <span className="truncate">{subItem.label}</span>
-                {subItem.isBeta && (
-                  <Badge variant="secondary" className="ml-1 px-1.5 py-0 text-[9px] uppercase tracking-wide">
-                    Beta
-                  </Badge>
-                )}
-              </Link>
-            ))}
-          </div>
-        )}
+                      const queryIndex = subItem.href.indexOf('?')
+                      if (queryIndex >= 0) {
+                        setCurrentSearch(subItem.href.slice(queryIndex))
+                      }
+                    }}
+                    className={cn(
+                      'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
+                      isActive(subItem.href) ? 'text-primary bg-secondary/30' : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
+                    )}
+                  >
+                    <subItem.icon className="h-3.5 w-3.5" />
+                    <span className="truncate">{subItem.label}</span>
+                    {subItem.isBeta && (
+                      <Badge variant="secondary" className="ml-1 px-1.5 py-0 text-[9px] uppercase tracking-wide">
+                        Beta
+                      </Badge>
+                    )}
+                  </Link>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     )
   }

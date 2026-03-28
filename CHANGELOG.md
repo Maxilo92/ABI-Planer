@@ -1,6 +1,11 @@
 # Changelog
 
+## [0.35.1] - 2026-03-28
+- **UX (Navbar):** Die Untermenüs in der Sidebar sind nun exklusiv (nur eines gleichzeitig offen).
+- **Animationen:** Hinzufügen von sanften Öffnungs- und Schließanimationen (framer-motion) für Untermenüs inklusive rotierendem Chevron-Icon.
+
 ## [0.35.0] - 2026-03-28
+
 - **UX Update (Navbar):** Umstrukturierung der Navigationsleiste für bessere Übersichtlichkeit durch thematische Gruppierung.
     - **Übersicht:** Dashboard, News, Umfragen.
     - **Planung:** Kalender, Todos, Gruppen.

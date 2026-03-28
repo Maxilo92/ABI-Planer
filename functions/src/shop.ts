@@ -46,6 +46,8 @@ export const createStripeCheckoutSession = onCall({
   const stripe = new Stripe(stripeKey);
   const userId = request.auth.uid;
 
+  logger.info("Creating Stripe session with Promo Codes allowed", { userId, itemId, allow_promotion_codes: true });
+
   try {
     const session = await stripe.checkout.sessions.create({
       line_items: [{
@@ -53,6 +55,7 @@ export const createStripeCheckoutSession = onCall({
         quantity: 1,
       }],
       mode: "payment",
+      allow_promotion_codes: true, // Ermöglicht Gutscheincodes im Checkout
       client_reference_id: userId, // ESSENTIELL: Verknüpfung zum User
       metadata: {
         itemId: itemId,

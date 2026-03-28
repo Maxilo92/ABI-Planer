@@ -57,7 +57,7 @@ service cloud.firestore {
       allow update: if (
         // Case 1: Self-update for non-admin users (cannot change role, approval, course, group, or referral flags)
         (request.auth.uid == userId && !isAdmin() &&
-         !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'is_approved', 'planning_group', 'class_name', 'timeout_until', 'timeout_reason', 'is_group_leader', 'referral_code', 'referred_by', 'booster_stats'])) ||
+         !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'is_approved', 'planning_group', 'class_name', 'timeout_until', 'timeout_reason', 'is_group_leader', 'referral_code', 'referred_by'])) ||
 
         // Case 1b: Self-update for rated_teachers
         (request.auth.uid == userId && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['rated_teachers'])) ||
