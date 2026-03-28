@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, Heart, PiggyBank, School } from 'lucide-react'
+import { ArrowLeft, Coffee, Heart, PiggyBank } from 'lucide-react'
 import Link from 'next/link'
 
 export default function SpendenPage() {
@@ -24,42 +24,15 @@ export default function SpendenPage() {
         <Card className="flex flex-col h-full border-primary/20 shadow-lg">
           <CardHeader>
             <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4 text-primary">
-              <School className="h-6 w-6" />
-            </div>
-            <CardTitle className="text-2xl font-bold">Am Max</CardTitle>
-            <CardDescription>Spenden direkt vor Ort in der Schule.</CardDescription>
-          </CardHeader>
-          <CardContent className="flex-1 space-y-4">
-            <p className="text-sm leading-relaxed">
-              Du kannst uns direkt am Max-Planck-Gymnasium unterstützen. 
-              Wir sind regelmäßig bei Schulveranstaltungen, Elternabenden oder in den Pausen mit einem Stand vertreten.
-            </p>
-            <div className="bg-muted p-4 rounded-lg space-y-2">
-              <h4 className="font-semibold text-sm">Möglichkeiten:</h4>
-              <ul className="text-xs space-y-1 list-disc list-inside text-muted-foreground">
-                <li>Kuchenverkauf in den Pausen</li>
-                <li>Getränkeverkauf bei Konzerten</li>
-                <li>Direkte Barspenden in unsere Sammelbüchse</li>
-              </ul>
-            </div>
-            <p className="text-xs text-muted-foreground italic">
-              Alle Einnahmen vor Ort fließen zu 100% in die Abikasse und werden für den Abiball verwendet.
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="flex flex-col h-full border-primary/20 shadow-lg">
-          <CardHeader>
-            <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4 text-primary">
               <PiggyBank className="h-6 w-6" />
             </div>
             <CardTitle className="text-2xl font-bold">Abikasse</CardTitle>
-            <CardDescription>Überweisungen und digitale Spenden.</CardDescription>
+            <CardDescription>Offizielle Spenden für den Abijahrgang.</CardDescription>
           </CardHeader>
           <CardContent className="flex-1 space-y-4">
             <p className="text-sm leading-relaxed">
-              Für größere Beträge oder wenn du nicht persönlich vorbeikommen kannst, 
-              ist eine Überweisung direkt auf unser Abikonto der einfachste Weg.
+              Dies ist der offizielle Weg, um für unseren Abijahrgang zu spenden. 
+              Alle Beträge auf dieses Konto fließen zu 100% in die Abikasse und werden direkt für die Finanzierung unseres Abiballs und gemeinsamer Aktivitäten verwendet.
             </p>
             <div className="bg-primary/5 p-4 rounded-lg border border-primary/10 space-y-3">
               <div className="space-y-1">
@@ -76,7 +49,34 @@ export default function SpendenPage() {
               </div>
             </div>
             <p className="text-xs text-muted-foreground">
-              Auf Wunsch stellen wir gerne eine private Spendenquittung aus (bitte Name im Verwendungszweck angeben).
+              Vielen Dank für deine Unterstützung unseres Jahrgangs!
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="flex flex-col h-full border-primary/20 shadow-lg">
+          <CardHeader>
+            <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4 text-primary">
+              <Coffee className="h-6 w-6" />
+            </div>
+            <CardTitle className="text-2xl font-bold">Entwickler unterstützen</CardTitle>
+            <CardDescription>Ein kleiner Support für die App-Entwicklung.</CardDescription>
+          </CardHeader>
+          <CardContent className="flex-1 space-y-4">
+            <p className="text-sm leading-relaxed">
+              Diese App wird von mir in meiner Freizeit entwickelt und gepflegt. 
+              Wenn dir die App gefällt und du meine Arbeit unterstützen möchtest, freue ich mich über einen virtuellen Kaffee!
+            </p>
+            <div className="pt-4">
+              <Link href="https://buymeacoffee.com/maxilo" target="_blank" rel="noopener noreferrer">
+                <Button className="w-full gap-2">
+                  <Coffee className="h-4 w-4" />
+                  Kaffee spendieren
+                </Button>
+              </Link>
+            </div>
+            <p className="text-xs text-muted-foreground italic">
+              Hinweis: Diese Spenden gehen direkt an den Entwickler (Max) und nicht in die Abikasse des Jahrgangs.
             </p>
           </CardContent>
         </Card>

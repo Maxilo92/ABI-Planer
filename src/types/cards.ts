@@ -1,4 +1,4 @@
-import { LootTeacher, TeacherRarity } from './database';
+import { LootTeacher, TeacherRarity, TeacherAttack } from './database';
 
 export type Rarity = TeacherRarity;
 
@@ -19,6 +19,8 @@ export interface CardData {
   color: string;
   style?: CardStyle;
   description?: string;
+  hp?: number;
+  attacks?: TeacherAttack[];
 }
 
 export interface RarityWeights {

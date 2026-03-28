@@ -71,7 +71,25 @@ export default function AGBPage() {
           </section>
 
           <section>
-            <h3 className="text-lg font-semibold text-foreground border-l-4 border-primary pl-3 mb-4">6. Schlussbestimmungen</h3>
+            <h3 className="text-lg font-semibold text-foreground border-l-4 border-primary pl-3 mb-4">6. Kauf digitaler Inhalte (Booster-Shop)</h3>
+            <p className="text-muted-foreground leading-relaxed">
+              Nutzer haben die Möglichkeit, digitale Zusatzinhalte (Booster-Packs für das Sammelkarten-Spiel) gegen Entgelt zu erwerben. Die Abwicklung erfolgt über den externen Zahlungsdienstleister Stripe. 
+              <br /><br />
+              <strong>Spendenzweck:</strong> Mit dem Kauf unterstützen Sie direkt den Abiturjahrgang 2027. Von jedem Brutto-Verkaufspreis fließen 90% in die Stufenkasse (Abikasse) zur Finanzierung des Abiballs und anderer Jahrgangsaktivitäten. Die restlichen 10% dienen der Deckung von Transaktionsgebühren, Steuern und Serverkosten.
+            </p>
+          </section>
+
+          <section>
+            <h3 className="text-lg font-semibold text-foreground border-l-4 border-primary pl-3 mb-4">7. Widerrufsbelehrung & Erlöschen des Widerrufsrechts</h3>
+            <p className="text-muted-foreground leading-relaxed">
+              Bei dem Kauf von Booster-Packs handelt es sich um die Bereitstellung digitaler Inhalte, die nicht auf einem körperlichen Datenträger geliefert werden. 
+              <br /><br />
+              <strong>Erlöschen des Widerrufsrechts:</strong> Das Widerrufsrecht erlischt vorzeitig, wenn wir mit der Ausführung des Vertrages begonnen haben (Zustellung der digitalen Booster im Nutzerprofil), nachdem Sie ausdrücklich zugestimmt haben, dass wir mit der Ausführung des Vertrags vor Ablauf der Widerrufsfrist beginnen, und Sie Ihre Kenntnis davon bestätigt haben, dass Sie durch Ihre Zustimmung mit Beginn der Ausführung des Vertrags Ihr Widerrufsrecht verlieren.
+            </p>
+          </section>
+
+          <section>
+            <h3 className="text-lg font-semibold text-foreground border-l-4 border-primary pl-3 mb-4">8. Schlussbestimmungen</h3>
             <p className="text-muted-foreground leading-relaxed">
               Sollten einzelne Bestimmungen dieser AGB unwirksam sein oder werden, bleibt die Wirksamkeit der übrigen Bestimmungen hiervon unberührt. Gerichtsstand ist, soweit zulässig, der Standort der Schule.
             </p>
@@ -79,7 +97,7 @@ export default function AGBPage() {
 
           <div className="pt-8 border-t space-y-2">
             <p className="text-xs text-muted-foreground italic">
-              Stand: 20. März 2026. Dies ist ein privat betriebenes Schul-Projekt.
+              Stand: 28. März 2026. Dies ist ein privat betriebenes Schul-Projekt des Abiturjahrgangs 2027.
             </p>
             <p className="text-xs text-muted-foreground">
               Projekt-Link: <a href="https://github.com/Maxilo92/ABI-Planer" className="underline hover:text-primary">GitHub Repository</a>

@@ -20,6 +20,7 @@ import {
   Dialog, DialogContent, DialogDescription, 
   DialogFooter, DialogHeader, DialogTitle 
 } from '@/components/ui/dialog'
+import { Textarea } from '@/components/ui/textarea'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { toast } from 'sonner'
 import { logAction } from '@/lib/logging'
@@ -294,8 +295,16 @@ export default function CardManagerPage() {
   const handleUpdateTeacher = async () => {
     if (!editingTeacher || editingIndex === null || !localConfig) return
     
+    // Clean up empty attacks
+    const cleanedAttacks = (editingTeacher.attacks || []).filter(a => a.name && a.name.trim() !== '');
+    const teacherToSave = { 
+      ...editingTeacher, 
+      attacks: cleanedAttacks.length > 0 ? cleanedAttacks : undefined,
+      description: editingTeacher.description?.trim() || undefined
+    };
+
     const updatedTeachers = [...localConfig.loot_teachers]
-    updatedTeachers[editingIndex] = editingTeacher
+    updatedTeachers[editingIndex] = teacherToSave
     
     handleSaveConfig({ loot_teachers: updatedTeachers })
     setIsEditDialogOpen(false)
@@ -1056,22 +1065,35 @@ export default function CardManagerPage() {
 
         {/* Edit Dialog */}
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-          <DialogContent>
+          <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Lehrer bearbeiten</DialogTitle>
               <DialogDescription>
-                Ändere den Namen oder die Seltenheit des Lehrers.
+                Ändere Details, Seltenheit und Kampfwerte des Lehrers.
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="edit-teacher-name">Name</Label>
-                <Input
-                  id="edit-teacher-name"
-                  value={editingTeacher?.name || ''}
-                  onChange={(e) => setEditingTeacher(prev => prev ? { ...prev, name: e.target.value } : null)}
-                />
+              <div className="grid grid-cols-3 gap-4">
+                <div className="col-span-2 space-y-2">
+                  <Label htmlFor="edit-teacher-name">Name</Label>
+                  <Input
+                    id="edit-teacher-name"
+                    value={editingTeacher?.name || ''}
+                    onChange={(e) => setEditingTeacher(prev => prev ? { ...prev, name: e.target.value } : null)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-teacher-hp">HP</Label>
+                  <Input
+                    id="edit-teacher-hp"
+                    type="number"
+                    placeholder="100"
+                    value={editingTeacher?.hp || ''}
+                    onChange={(e) => setEditingTeacher(prev => prev ? { ...prev, hp: e.target.value === '' ? undefined : parseInt(e.target.value) } : null)}
+                  />
+                </div>
               </div>
+
               <div className="space-y-2">
                 <Label htmlFor="edit-teacher-rarity">Seltenheit</Label>
                 <select
@@ -1086,6 +1108,77 @@ export default function CardManagerPage() {
                   <option value="mythic">Mythisch</option>
                   <option value="legendary">Legendär</option>
                 </select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit-teacher-desc">Beschreibung (Satz)</Label>
+                <Textarea
+                  id="edit-teacher-desc"
+                  placeholder="Ein kleiner Satz über den Lehrer..."
+                  value={editingTeacher?.description || ''}
+                  onChange={(e) => setEditingTeacher(prev => prev ? { ...prev, description: e.target.value } : null)}
+                />
+              </div>
+
+              <div className="space-y-4 pt-4 border-t">
+                <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground">Angriffe (Max. 3)</Label>
+                {[0, 1, 2].map(idx => (
+                  <div key={idx} className="space-y-2 p-3 bg-muted/30 rounded-lg border">
+                    <div className="flex justify-between items-center mb-1">
+                      <Label className="text-[10px] uppercase font-bold text-muted-foreground">Angriff {idx + 1}</Label>
+                      {(editingTeacher?.attacks?.[idx]?.name) && (
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-4 w-4 text-destructive"
+                          onClick={() => {
+                            const newAttacks = [...(editingTeacher?.attacks || [])];
+                            newAttacks.splice(idx, 1);
+                            setEditingTeacher(prev => prev ? { ...prev, attacks: newAttacks } : null);
+                          }}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-4 gap-2">
+                      <Input 
+                        placeholder="Name" 
+                        className="col-span-3 h-8 text-xs"
+                        value={editingTeacher?.attacks?.[idx]?.name || ''}
+                        onChange={(e) => {
+                          const newAttacks = [...(editingTeacher?.attacks || [])];
+                          if (!newAttacks[idx]) newAttacks[idx] = { name: '' };
+                          newAttacks[idx].name = e.target.value;
+                          setEditingTeacher(prev => prev ? { ...prev, attacks: newAttacks } : null);
+                        }}
+                      />
+                      <Input 
+                        placeholder="DMG" 
+                        type="number"
+                        className="h-8 text-xs"
+                        value={editingTeacher?.attacks?.[idx]?.damage ?? ''}
+                        onChange={(e) => {
+                          const newAttacks = [...(editingTeacher?.attacks || [])];
+                          if (!newAttacks[idx]) newAttacks[idx] = { name: '' };
+                          newAttacks[idx].damage = e.target.value === '' ? undefined : parseInt(e.target.value);
+                          setEditingTeacher(prev => prev ? { ...prev, attacks: newAttacks } : null);
+                        }}
+                      />
+                    </div>
+                    <Input 
+                      placeholder="Beschreibung (optional)" 
+                      className="h-8 text-[10px]"
+                      value={editingTeacher?.attacks?.[idx]?.description || ''}
+                      onChange={(e) => {
+                        const newAttacks = [...(editingTeacher?.attacks || [])];
+                        if (!newAttacks[idx]) newAttacks[idx] = { name: '' };
+                        newAttacks[idx].description = e.target.value;
+                        setEditingTeacher(prev => prev ? { ...prev, attacks: newAttacks } : null);
+                      }}
+                    />
+                  </div>
+                ))}
               </div>
             </div>
             <DialogFooter>

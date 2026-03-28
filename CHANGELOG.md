@@ -1,23 +1,34 @@
 # Changelog
 
+## [0.32.1] - 2026-03-28
+- **Fix (Lehrer-Album):** Behebung eines Fehlers, bei dem Lehrerdaten (HP, Angriffe, Beschreibungen) nicht in der Detailansicht angezeigt wurden. Der Album-View nutzt nun konsistent die neuen `settings/sammelkarten`-Daten als Primärquelle.
+- **UI Fix (Profil-Album):** Korrektur der Album-Vorschau auf der Profilseite; es werden nun wie vorgesehen nur die Top 5 Karten angezeigt statt des gesamten Albums.
+
+## [0.32.0] - 2026-03-28
+- **Feature (Stripe Payment):** Vollständige Integration der Stripe-Zahlungsabwicklung für den Booster-Shop. Nutzer können nun echte Kartenpakete sicher erwerben.
+- **Sicherheit (Webhook-Guard):** Implementierung eines hochsicheren Webhook-Systems (`stripeWebhook`) mit kryptografischer Signatur-Verifizierung und Idempotenz-Prüfung zur Vermeidung von Doppelbuchungen.
+- **Rechtliche Absicherung:**
+    - **Widerrufsverzicht:** Integration der gesetzlich vorgeschriebenen Checkbox/Hinweise zum Verzicht auf das Widerrufsrecht bei digitalen Inhalten (Booster-Packs) direkt im Checkout-Prozess.
+    - **Stripe Tax:** Automatisierte Berechnung und Abführung der länderspezifischen Umsatzsteuer für digitale Güter.
+    - **Dokumentations-Update:** Vollständige Überarbeitung der **AGB**, **Datenschutzerklärung**, **Sammelkarten-Infoseite** und der **Hilfe-FAQs** zur korrekten Abbildung des Kaufprozesses.
+- **Wirtschaftssystem:** Transparente Ausweisung der **90% Spendenquote** für die jeweilige Abikasse pro Verkauf.
+- **Backend-Stabilität:** Behebung von Typ-Konflikten (v1 zu v2) bei Cloud Functions im Referral-System (`awardReferralBoosters`, `onProfileDeleted`).
+
+## [0.31.21] - 2026-03-28
+- **Feature (Lehrer-Stats):** Lehrer-Sammelkarten haben jetzt HP, Beschreibungen und bis zu 3 Angriffe (sichtbar in der Detailansicht).
+- **Admin Update (Sammelkarten):** Der Editor im Admin-Bereich unterstützt nun das Pflegen von HP, Beschreibungen und Angriffen pro Lehrer.
+- **UI Cleanup (Spenden):** Die Spendenseite wurde bereinigt (Entfernen von "Am Max", Hinzufügen von BuyMeACoffee).
+- **Hotfix (Hydration/DOM Nesting):** In [src/components/ui/context-menu.tsx](src/components/ui/context-menu.tsx) wurde `ContextMenuTrigger` um `asChild` erweitert; in [src/app/admin/page.tsx](src/app/admin/page.tsx) wird dies für Tabellenzeilen genutzt.
+- **UI Fix (Admin-Rechtsklick):** Echtes Kontextmenü für Desktop-Benutzerzeilen in [src/app/admin/page.tsx](src/app/admin/page.tsx).
+- **UI Fix (Empfänger-Rechtsklick):** Die Empfängerliste in [src/app/admin/send/page.tsx](src/app/admin/send/page.tsx) nutzt nun echte Zeilen für das Kontextmenü.
+- **Feature (Empfänger-Kontextmenü):** Benutzerliste hat jetzt ein Kontextmenü pro Empfänger.
+- **UI Update (Kommunikations-Zentrale):** Schnellvorlagen, Absender-Presets und Live-Vorschau-Verbesserungen in [src/app/admin/send/page.tsx](src/app/admin/send/page.tsx).
+- **Runtime Update (Notification Routing):** Support für `Popup`, `Banner` und `Quickmessage` pro Nachricht.
+
 ## [Unreleased]
-- **Hotfix (Hydration/DOM Nesting):** In [src/components/ui/context-menu.tsx](src/components/ui/context-menu.tsx) wurde `ContextMenuTrigger` um `asChild` erweitert; in [src/app/admin/page.tsx](src/app/admin/page.tsx) wird dies für Tabellenzeilen genutzt. Dadurch entstehen im `tbody` keine ungültigen `div`-Wrapper mehr.
-- **UI Fix (Admin-Rechtsklick):** In [src/app/admin/page.tsx](src/app/admin/page.tsx) wurde für die Desktop-Benutzerzeilen ein echtes Kontextmenü per Rechtsklick ergänzt (Profil öffnen, Popup senden, Auswahl toggeln, Name/E-Mail/User-ID kopieren).
-- **UI Fix (Empfänger-Rechtsklick):** In [src/app/admin/send/page.tsx](src/app/admin/send/page.tsx) wurde die Empfängerliste auf echte Zeilen umgestellt, damit das Kontextmenü per Rechtsklick zuverlässig öffnet.
-- **UI Fix (Kommunikations-Zentrale Header):** In [src/app/admin/send/page.tsx](src/app/admin/send/page.tsx) wurde der doppelte Zurück-Button bereinigt.
-- **UI Fix (Absender in Vorschau):** In [src/app/admin/send/page.tsx](src/app/admin/send/page.tsx) wird der Absender in der Vorschau nicht mehr abgeschnitten (Wrap statt Truncate).
-- **Feature (Empfänger-Kontextmenü):** In [src/app/admin/send/page.tsx](src/app/admin/send/page.tsx) hat die Benutzerliste jetzt ein Kontextmenü pro Empfänger (Name/E-Mail/User-ID kopieren, Entfernen aus Liste).
-- **UI Tweak (Absender-Position in Vorschau):** In [src/app/admin/send/page.tsx](src/app/admin/send/page.tsx) steht der Absender jetzt direkt in der Nachrichten-Footer-Zeile links neben den Buttons (statt separat darunter).
-- **UI Tweak (Nachrichten-Icons):** In [src/app/admin/send/page.tsx](src/app/admin/send/page.tsx) und [src/context/SystemMessageContext.tsx](src/context/SystemMessageContext.tsx) wurden Emoji-Präfixe entfernt. Titel bleiben nun sauber ohne Emoji, die Icon-Auswahl bleibt als visuelles Icon erhalten.
-- **UI Update (Kommunikations-Zentrale Inputs):** In [src/app/admin/send/page.tsx](src/app/admin/send/page.tsx) wurden relevante Textfelder auf auto-wachsende `textarea`-Felder umgestellt, damit lange Eingaben umbrechen und kein horizontales Scrollen nötig ist.
-- **Feature (Notification-Typ pro Versand):** In [src/app/admin/send/page.tsx](src/app/admin/send/page.tsx) kann jetzt pro Nachricht gewählt werden: `Popup`, `Banner` oder `Quickmessage`.
-- **Runtime Update (Notification Routing):** In [functions/src/gifts.ts](functions/src/gifts.ts) wird `notificationType` gespeichert; in [src/context/SystemMessageContext.tsx](src/context/SystemMessageContext.tsx) wird die Geschenk-Nachricht entsprechend als Modal, Banner oder Toast ausgespielt.
-- **UX Fix (Absender sichtbar):** Der Absender bleibt in allen Notification-Arten im Inhalt sichtbar (Fallback `System`) in [src/context/SystemMessageContext.tsx](src/context/SystemMessageContext.tsx).
-- **UI Update (Kommunikations-Zentrale):** In [src/app/admin/send/page.tsx](src/app/admin/send/page.tsx) wurden Schnellvorlagen ergänzt (1-Klick-Befüllung für Titel/Text/Buttons), damit standardisierte Nachrichten deutlich schneller erstellt werden können.
-- **UI Update (Absender-Steuerung):** In [src/app/admin/send/page.tsx](src/app/admin/send/page.tsx) gibt es jetzt Absender-Presets (`System`, `Admin Team`, `Mein Name`) zusätzlich zur manuellen Eingabe.
-- **UI Update (Live-Vorschau):** In [src/app/admin/send/page.tsx](src/app/admin/send/page.tsx) zeigt die Vorschau den finalen Absender jetzt direkt im Nachrichtentext an.
-- **UX Update (Geschenk-Absender):** In [src/app/admin/send/page.tsx](src/app/admin/send/page.tsx) ist der Absendername jetzt konfigurierbar (inkl. Option „Als System senden“). Der Absender wird in der Live-Vorschau und beim Versand berücksichtigt.
-- **Runtime Update (Geschenk-Daten):** In [functions/src/gifts.ts](functions/src/gifts.ts) wird nun `createdByName` gespeichert und der Standard für den Schließen-Button auf `Okay` gesetzt.
+
+## [0.31.20] - 2026-03-27
+- **Hotfix (Hydration/DOM Nesting):** In [src/components/ui/context-menu.tsx](src/components/ui/context-menu.tsx) wurde `ContextMenuTrigger` um `asChild` erweitert.
 - **UX Update (Geschenk-Modal):** In [src/context/SystemMessageContext.tsx](src/context/SystemMessageContext.tsx) wird der Absender als Klarname angezeigt (statt UID), mit Fallback auf `System`.
 - **UX Update (Geschenk-Popup):** In [src/context/SystemMessageContext.tsx](src/context/SystemMessageContext.tsx) zeigt das Geschenk-Modal jetzt mehr Informationen (Pack-Anzahl, Popup-Text, Absender) und mehrere Buttons (`CTA`, `Album öffnen`, `Später`).
 - **UX/State Fix (Geschenk-Popup):** Geschenk-Benachrichtigungen werden beim Schließen/Aktion per `deleteDoc` aus `profiles/{uid}/unseen_gifts` entfernt, damit derselbe Dialog nicht erneut auftaucht.

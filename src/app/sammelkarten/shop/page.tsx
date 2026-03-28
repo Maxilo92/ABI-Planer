@@ -1,8 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useUserTeachers } from '@/hooks/useUserTeachers'
 import { useAuth } from '@/context/AuthContext'
 import { Button } from '@/components/ui/button'
@@ -22,11 +22,13 @@ import {
   ShieldCheck,
   AlertCircle,
   Clock,
-  Heart
+  Heart,
+  Lock
 } from 'lucide-react'
 import { toast } from 'sonner'
 import Link from 'next/link'
 import { BoosterPackVisual } from '@/components/cards/BoosterPackVisual'
+import { getFunctions, httpsCallable } from 'firebase/functions'
 
 const SHOP_ITEMS = [
   {
@@ -65,32 +67,46 @@ const SHOP_ITEMS = [
 
 export default function SammelkartenShopPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { profile } = useAuth()
-  const { purchaseBoosters, getRemainingBoosters } = useUserTeachers()
+  const { getRemainingBoosters } = useUserTeachers()
   
   const [isPurchasing, setIsPurchasing] = useState<string | null>(null)
   const [successItem, setSuccessItem] = useState<{name: string, amount: number} | null>(null)
-  const [demoItem, setDemoItem] = useState<typeof SHOP_ITEMS[0] | null>(null)
+  const [confirmItem, setConfirmItem] = useState<typeof SHOP_ITEMS[0] | null>(null)
+
+  // Handle successful purchase return from Stripe
+  useEffect(() => {
+    if (searchParams.get('success') === 'true') {
+      toast.success('Zahlung erfolgreich! Deine Booster werden in Kürze freigeschaltet.')
+      setSuccessItem({ name: 'Deine Booster', amount: 0 }) 
+    }
+    if (searchParams.get('canceled') === 'true') {
+      toast.error('Zahlung abgebrochen.')
+    }
+  }, [searchParams])
 
   const now = new Date()
   const currentMonthStr = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`
   const shopStats = (profile?.shop_stats?.month === currentMonthStr && profile?.shop_stats) ? profile.shop_stats.counts : {}
 
-  const handlePurchase = async (item: typeof SHOP_ITEMS[0]) => {
+  const handleStripeCheckout = async (item: typeof SHOP_ITEMS[0]) => {
     setIsPurchasing(item.id)
     
-    // API Delay for realistic feel
-    await new Promise(resolve => setTimeout(resolve, 1500))
-
     try {
-      await purchaseBoosters(item.amount, item.id)
-      setSuccessItem({ name: item.name, amount: item.amount })
-      toast.success(`${item.name} erfolgreich erworben!`)
-      setTimeout(() => setSuccessItem(null), 4000)
+      const functions = getFunctions(undefined, 'europe-west3')
+      const createSession = httpsCallable<{ itemId: string }, { url: string }>(functions, 'createStripeCheckoutSession')
+      
+      const result = await createSession({ itemId: item.id })
+      
+      if (result.data.url) {
+        window.location.href = result.data.url
+      } else {
+        throw new Error('Keine Checkout-URL erhalten.')
+      }
     } catch (err: any) {
-      console.error('Kauf-Fehler:', err)
-      toast.error(err.message || 'Kauf fehlgeschlagen. Bitte versuche es später erneut.')
-    } finally {
+      console.error('Stripe-Error:', err)
+      toast.error(err.message || 'Bezahlvorgang konnte nicht gestartet werden.')
       setIsPurchasing(null)
     }
   }
@@ -201,7 +217,7 @@ export default function SammelkartenShopPage() {
                       isLimitReached ? 'bg-muted text-muted-foreground' : 'bg-primary text-primary-foreground hover:bg-primary/90'
                     }`}
                     disabled={isPurchasing !== null || isLimitReached}
-                    onClick={() => setDemoItem(item)}
+                    onClick={() => setConfirmItem(item)}
                   >
                     {isPurchasing === item.id ? (
                       <div className="flex items-center gap-3 text-xl">
@@ -235,11 +251,10 @@ export default function SammelkartenShopPage() {
              <div className="space-y-3 p-6 bg-card border border-border rounded-2xl">
                 <h5 className="font-black text-foreground uppercase tracking-[0.15em] flex items-center gap-2 text-[10px]">
                    <CheckCircle2 className="w-3.5 h-3.5 text-success" />
-                   Fair-Play Garantie
+                   Sicher Bezahlen
                 </h5>
                 <p>
-                  Monatliche Limits helfen dabei, das Spielgleichgewicht zu wahren. Wir möchten sicherstellen, dass der Sammelspaß 
-                  für alle Schüler im Vordergrund steht.
+                  Deine Zahlung wird sicher über Stripe verarbeitet. Wir speichern keine Kreditkartendaten auf unseren Servern.
                 </p>
              </div>
              <div className="space-y-3 p-6 bg-card border border-border rounded-2xl">
@@ -267,14 +282,14 @@ export default function SammelkartenShopPage() {
            <div className="flex flex-wrap justify-center gap-8 text-[10px] text-muted-foreground font-black uppercase tracking-[0.2em] opacity-40">
               <span className="flex items-center gap-2"><ShieldCheck className="w-4 h-4" /> SSL Verschlüsselt</span>
               <span className="flex items-center gap-2"><Package className="w-4 h-4" /> Digitale Zustellung</span>
-              <span className="flex items-center gap-2"><Star className="w-4 h-4" /> Support 24/7</span>
+              <span className="flex items-center gap-2"><Lock className="w-4 h-4" /> PCI-DSS Konform</span>
            </div>
         </section>
       </main>
 
-      {/* Demo Purchase Modal */}
+      {/* Purchase Confirmation Modal */}
       <AnimatePresence>
-        {demoItem && (
+        {confirmItem && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -292,9 +307,9 @@ export default function SammelkartenShopPage() {
               <div className="flex justify-between items-start relative z-10">
                 <div className="space-y-1">
                   <h3 className="text-3xl font-black tracking-tight">Kauf bestätigen</h3>
-                  <p className="text-sm text-muted-foreground font-bold uppercase tracking-widest">Demo Transaktion</p>
+                  <p className="text-sm text-muted-foreground font-bold uppercase tracking-widest">Sicherer Checkout</p>
                 </div>
-                <Button variant="ghost" size="icon" onClick={() => setDemoItem(null)} className="rounded-full">
+                <Button variant="ghost" size="icon" onClick={() => setConfirmItem(null)} className="rounded-full">
                   <ChevronLeft className="w-5 h-5 rotate-90" />
                 </Button>
               </div>
@@ -302,34 +317,41 @@ export default function SammelkartenShopPage() {
               <div className="p-6 bg-muted/30 rounded-3xl border border-border/50 space-y-4 shadow-inner relative z-10">
                 <div className="flex justify-between items-center">
                   <span className="text-xs font-black text-muted-foreground uppercase tracking-wider">Artikel</span>
-                  <span className="font-black text-lg">{demoItem.name}</span>
+                  <span className="font-black text-lg">{confirmItem.name}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-xs font-black text-muted-foreground uppercase tracking-wider">Inhalt</span>
-                  <span className="font-black">{demoItem.amount} Booster Packs</span>
+                  <span className="font-black">{confirmItem.amount} Booster Packs</span>
                 </div>
                 <div className="pt-4 border-t border-border/50 flex justify-between items-center">
                   <span className="text-lg font-black tracking-tight">Gesamtpreis</span>
-                  <span className="text-3xl font-black text-primary tracking-tighter">{demoItem.price}</span>
+                  <span className="text-3xl font-black text-primary tracking-tighter">{confirmItem.price}</span>
                 </div>
               </div>
 
               <div className="space-y-4 relative z-10">
-                <div className="flex items-start gap-3 p-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl text-amber-600 dark:text-amber-400 text-[10px] font-bold uppercase tracking-wide leading-relaxed">
-                  <AlertCircle className="w-5 h-5 shrink-0" />
-                  <span>Dies ist eine Simulation. Es werden keine echten Zahlungsdaten erhoben oder Kosten verursacht.</span>
+                <div className="flex items-start gap-3 p-4 bg-primary/5 border border-primary/10 rounded-2xl text-muted-foreground text-[10px] font-bold uppercase tracking-wide leading-relaxed">
+                  <ShieldCheck className="w-5 h-5 shrink-0 text-primary" />
+                  <span>
+                    Mit dem Klick auf "Zur Kasse" wirst du zu Stripe weitergeleitet. 
+                    <span className="text-foreground block mt-1">
+                      WICHTIG: Du stimmst der sofortigen Ausführung des Vertrages zu und verlierst dein Widerrufsrecht für diese digitalen Inhalte.
+                    </span>
+                  </span>
                 </div>
                 
                 <Button 
-                  className="w-full h-16 rounded-2xl font-black text-xl shadow-lg hover:shadow-primary/20 transition-all"
+                  className="w-full h-16 rounded-2xl font-black text-xl shadow-lg hover:shadow-primary/20 transition-all flex items-center justify-center gap-3"
                   onClick={() => {
-                    handlePurchase(demoItem);
-                    setDemoItem(null);
+                    handleStripeCheckout(confirmItem);
+                    setConfirmItem(null);
                   }}
+                  disabled={isPurchasing !== null}
                 >
-                  Kaufen
+                  <CreditCard className="w-6 h-6" />
+                  Zur Kasse
                 </Button>
-                <Button variant="ghost" className="w-full font-bold text-muted-foreground hover:text-foreground" onClick={() => setDemoItem(null)}>
+                <Button variant="ghost" className="w-full font-bold text-muted-foreground hover:text-foreground" onClick={() => setConfirmItem(null)}>
                   Abbrechen
                 </Button>
               </div>
@@ -338,7 +360,7 @@ export default function SammelkartenShopPage() {
         )}
       </AnimatePresence>
 
-      {/* Success Animation Overlay */}
+      {/* Success Animation Overlay (General success message after Stripe redirect) */}
       <AnimatePresence>
         {successItem && (
           <motion.div
@@ -364,14 +386,14 @@ export default function SammelkartenShopPage() {
               </div>
 
               <div className="space-y-3">
-                <h3 className="text-3xl font-black tracking-tighter">Vielen Dank!</h3>
+                <h3 className="text-3xl font-black tracking-tighter">Zahlung bestätigt!</h3>
                 <p className="text-muted-foreground font-bold">
-                  Du hast <span className="text-foreground font-black">{successItem.amount} Booster Packs</span> erhalten.
+                  Deine Booster wurden gutgeschrieben und stehen jetzt zum Öffnen bereit.
                 </p>
               </div>
 
               <Button onClick={() => setSuccessItem(null)} className="w-full h-14 rounded-2xl font-black text-lg bg-primary text-primary-foreground shadow-lg">
-                Weiter sammeln
+                Booster öffnen
               </Button>
             </motion.div>
           </motion.div>

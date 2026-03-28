@@ -91,6 +91,32 @@ export default function HilfePage() {
       ]
     },
     {
+      id: 'zahlungen',
+      category: 'Zahlungen & Booster-Kauf',
+      items: [
+        {
+          q: 'Wie kann ich zusätzliche Booster-Packs kaufen?',
+          a: 'Im Bereich "Sammelkarten" findest du den "Booster Shop". Dort kannst du verschiedene Pakete wählen. Die Zahlung erfolgt sicher über unseren Partner Stripe.'
+        },
+        {
+          q: 'Welche Zahlungsmethoden werden unterstützt?',
+          a: 'Wir unterstützen alle gängigen Methoden via Stripe, darunter Kreditkarte (Visa, Mastercard), Apple Pay, Google Pay, Giropay und Klarna.'
+        },
+        {
+          q: 'Was passiert mit dem Geld?',
+          a: 'Das ist das Beste: 90% aller Einnahmen fließen direkt in eure Stufenkasse (Abikasse), um euren Abiball und eure Aktionen zu finanzieren. Die restlichen 10% decken Transaktionsgebühren und Serverkosten.'
+        },
+        {
+          q: 'Erhalte ich eine Rechnung?',
+          a: 'Ja! Nach jedem Kauf schickt dir Stripe automatisch eine offizielle Rechnung als PDF an deine hinterlegte E-Mail-Adresse.'
+        },
+        {
+          q: 'Kann ich meinen Kauf widerrufen?',
+          a: 'Da es sich um digitale Inhalte handelt, die sofort nach dem Kauf in deinem Album erscheinen, erlischt das Widerrufsrecht mit der Bereitstellung. Dem stimmst du beim Kauf explizit zu.'
+        }
+      ]
+    },
+    {
       id: 'finanzen',
       category: 'Finanzen & Kontostand',
       items: [

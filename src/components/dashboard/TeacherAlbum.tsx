@@ -8,7 +8,7 @@ import { useEffect, useState, useRef, useMemo } from 'react'
 import { LootTeacher, TeacherRarity, Profile, CardVariant } from '@/types/database'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { useRouter } from 'next/navigation'
-import { GraduationCap, Trophy, Star, Lock, Search, Filter, X, ChevronRight, Rotate3d, ArrowDownAZ, ArrowDownZA, ArrowUp10, LayoutGrid, Package, ArrowUpNarrowWide, ArrowDownWideNarrow } from 'lucide-react'
+import { GraduationCap, Trophy, Star, Lock, Search, Filter, X, ChevronRight, Rotate3d, ArrowDownAZ, ArrowDownZA, ArrowUp10, LayoutGrid, Package, ArrowUpNarrowWide, ArrowDownWideNarrow, Heart, Swords } from 'lucide-react'
 import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
@@ -145,6 +145,8 @@ function mapTeacherToCardData(teacher: LootTeacher, userData: any, globalTeacher
     color: getTeacherRarityHex(teacher.rarity),
     cardNumber: (globalIndex + 1).toString().padStart(3, '0'),
     description: teacher.description,
+    hp: teacher.hp,
+    attacks: teacher.attacks,
   }
 }
 
@@ -178,6 +180,35 @@ function TeacherCardDetail({ teacher, userData, onClose, globalTeachers }: { tea
       </div>
 
       <div className="w-full max-w-sm space-y-4 px-4">
+        {/* Stats Header (Name & HP) */}
+        <div className="bg-black/40 backdrop-blur-xl rounded-2xl p-5 border border-white/10 shadow-2xl">
+          <div className="flex justify-between items-start mb-1">
+             <div className="flex flex-col">
+               <p className="text-[10px] font-black uppercase text-white/40 tracking-widest">Name</p>
+               <h3 className="text-xl font-black text-white uppercase tracking-tighter">
+                 {teacher.name}
+               </h3>
+             </div>
+             {teacher.hp && (
+               <div className="flex flex-col items-end">
+                 <p className="text-[10px] font-black uppercase text-white/40 tracking-widest">HP</p>
+                 <div className="flex items-center gap-1.5 text-red-500">
+                    <span className="text-xl font-black tracking-tighter">{teacher.hp}</span>
+                    <Heart className="h-5 w-5 fill-current" />
+                 </div>
+               </div>
+             )}
+          </div>
+          <div className="flex items-center gap-2 mt-2">
+            <Badge className={cn("text-[10px] font-black uppercase px-2 py-0 border-none", getRarityBadge(teacher.rarity))}>
+              {getRarityLabel(teacher.rarity)}
+            </Badge>
+            <Badge variant="outline" className="text-[10px] font-black uppercase px-2 py-0 border-white/10 text-white/40">
+              #{cardData.cardNumber}
+            </Badge>
+          </div>
+        </div>
+
         {/* Variant Gallery */}
         <div className="bg-black/40 backdrop-blur-xl rounded-2xl p-4 border border-white/10 shadow-2xl">
           <p className="text-[10px] font-black uppercase text-white/40 mb-3 tracking-widest px-1">Deine Varianten</p>
@@ -216,15 +247,42 @@ function TeacherCardDetail({ teacher, userData, onClose, globalTeachers }: { tea
           </div>
         )}
 
+        {/* Attacks Section */}
+        {teacher.attacks && teacher.attacks.length > 0 && (
+          <div className="bg-black/40 backdrop-blur-xl rounded-2xl p-5 border border-white/10 shadow-2xl space-y-4">
+            <p className="text-[10px] font-black uppercase text-white/40 tracking-widest px-1">Angriffe</p>
+            <div className="space-y-3">
+              {teacher.attacks.map((attack, idx) => (
+                <div key={idx} className="flex flex-col gap-1 px-1 border-l-2 border-white/5 pl-3 py-0.5">
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-2">
+                      <Swords className="h-3.5 w-3.5 text-blue-400" />
+                      <span className="text-sm font-black text-white uppercase tracking-tight">{attack.name}</span>
+                    </div>
+                    {attack.damage !== undefined && (
+                      <span className="text-sm font-black text-blue-400">{attack.damage} DMG</span>
+                    )}
+                  </div>
+                  {attack.description && (
+                    <p className="text-[11px] text-white/50 leading-snug">
+                      {attack.description}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div className="bg-black/40 backdrop-blur-xl rounded-2xl p-6 space-y-4 border border-white/10 shadow-2xl">
           <div className="flex justify-between items-center">
-            <span className="text-sm font-bold text-white">Statistiken</span>
+            <span className="text-sm font-bold text-white">Sammlungs-Fortschritt</span>
             <Badge variant="outline" className="text-[10px] text-white/70 border-white/20">{count}x gesammelt</Badge>
           </div>
           <div className="space-y-2">
             <div className="flex justify-between text-xs font-bold px-1 text-white/80">
               <span>Level {level}</span>
-              <span>Fortschritt</span>
+              <span>EP</span>
             </div>
             <Progress 
               value={((count - getPrevLevelCount(level)) / (getNextLevelCount(level) - getPrevLevelCount(level))) * 100} 
@@ -278,18 +336,44 @@ export function TeacherAlbum({
   }
 
   useEffect(() => {
-    const unsubscribe = onSnapshot(doc(db, 'settings', 'global'), (snapshot) => {
+    let unsubscribeGlobal: (() => void) | null = null;
+
+    // Listen to sammelkarten settings as primary source
+    const unsubscribeSammelkarten = onSnapshot(doc(db, 'settings', 'sammelkarten'), (snapshot) => {
       if (snapshot.exists()) {
         const data = snapshot.data()
-        setGlobalTeachers(Array.isArray(data.loot_teachers) && data.loot_teachers.length > 0 
-          ? data.loot_teachers 
-          : DEFAULT_TEACHERS)
-      } else {
-        setGlobalTeachers(DEFAULT_TEACHERS)
+        if (Array.isArray(data.loot_teachers) && data.loot_teachers.length > 0) {
+          setGlobalTeachers(data.loot_teachers)
+          setLoadingGlobal(false)
+          // If we found data in sammelkarten, we don't need the global listener anymore
+          if (unsubscribeGlobal) {
+            unsubscribeGlobal();
+            unsubscribeGlobal = null;
+          }
+          return
+        }
       }
-      setLoadingGlobal(false)
+      
+      // Fallback to global settings if sammelkarten doesn't exist or has no teachers
+      if (!unsubscribeGlobal) {
+        unsubscribeGlobal = onSnapshot(doc(db, 'settings', 'global'), (globalSnap) => {
+          if (globalSnap.exists()) {
+            const globalData = globalSnap.data()
+            setGlobalTeachers(Array.isArray(globalData.loot_teachers) && globalData.loot_teachers.length > 0 
+              ? globalData.loot_teachers 
+              : DEFAULT_TEACHERS)
+          } else {
+            setGlobalTeachers(DEFAULT_TEACHERS)
+          }
+          setLoadingGlobal(false)
+        })
+      }
     })
-    return () => unsubscribe()
+
+    return () => {
+      unsubscribeSammelkarten()
+      if (unsubscribeGlobal) unsubscribeGlobal()
+    }
   }, [])
 
   const filteredTeachers = useMemo(() => {
@@ -602,7 +686,7 @@ export function TeacherAlbum({
       ) : (
         <>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4 md:gap-6">
-            {filteredTeachers.map((teacher) => {
+            {displayedTeachers.map((teacher) => {
               const teacherId = teacher.id || teacher.name
               const userData = userTeachers?.[teacher.id] || userTeachers?.[teacher.name]
               const isOwned = !!userData

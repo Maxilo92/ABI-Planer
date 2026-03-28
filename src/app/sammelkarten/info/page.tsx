@@ -8,7 +8,7 @@ import { doc, onSnapshot } from 'firebase/firestore'
 import { SammelkartenConfig } from '@/types/cards'
 import { ProbabilityInfo } from '@/components/cards/ProbabilityInfo'
 import { Button } from '@/components/ui/button'
-import { ChevronLeft, Scale, ShieldCheck, AlertCircle, Info } from 'lucide-react'
+import { ChevronLeft, Scale, ShieldCheck, AlertCircle, Info, CreditCard, Heart } from 'lucide-react'
 
 const DEFAULT_RARITY_WEIGHTS = [
   { common: 0.8, rare: 0.15, epic: 0.04, mythic: 0.008, legendary: 0.002 },
@@ -57,14 +57,14 @@ export default function SammelkartenInfoPage() {
       <main className="container mx-auto max-w-3xl px-4 py-8 space-y-12">
         {/* Intro Section */}
         <section className="space-y-4">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-info/10 border border-info/20 text-info text-xs font-bold uppercase tracking-widest">
-            <Scale className="w-3 h-3" />
-            Fairness Garantie
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-bold uppercase tracking-widest">
+            <Heart className="w-3 h-3 fill-current" />
+            90% für eure Abikasse
           </div>
-          <h2 className="text-3xl font-black tracking-tight">Sammelkarten System</h2>
+          <h2 className="text-3xl font-black tracking-tight">Sammelkarten System & Support</h2>
           <p className="text-muted-foreground leading-relaxed">
             Das Sammeln von Lehrerkarten im ABI Planer ist als unterhaltsames Begleitelement für deine Abiturphase gedacht. 
-            Um volle Transparenz zu gewährleisten, listen wir hier alle Wahrscheinlichkeiten und rechtlichen Rahmenbedingungen auf.
+            Besonders wichtig: <span className="text-foreground font-black underline underline-offset-4 decoration-primary/30">90% aller Einnahmen</span> aus dem Booster-Shop fließen direkt in eure Stufenkasse (Abikasse), um euren Abiball und eure Aktionen zu finanzieren!
           </p>
         </section>
 
@@ -79,42 +79,37 @@ export default function SammelkartenInfoPage() {
         <section className="grid gap-6">
           <h3 className="text-xl font-bold flex items-center gap-2">
             <ShieldCheck className="w-5 h-5 text-success" />
-            Rechtliche Hinweise & Jugendschutz
+            Rechtliche Hinweise & Sicherheit
           </h3>
           
           <div className="grid gap-4">
             <div className="p-5 bg-card border border-border rounded-xl space-y-3 shadow-sm">
               <div className="flex items-center gap-2 font-bold">
-                <AlertCircle className="w-4 h-4 text-amber-500" />
-                Kein materieller Wert
+                <CreditCard className="w-4 h-4 text-primary" />
+                Sichere Zahlungen über Stripe
               </div>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                Die digitalen Sammelkarten im ABI Planer besitzen keinen materiellen Gegenwert. Sie können nicht gegen Echtgeld ausgezahlt, 
-                außerhalb der Plattform gehandelt oder übertragen werden. Es handelt sich rein um digitale Unterhaltungsgüter.
+                Alle Zahlungen werden sicher über den zertifizierten Zahlungsdienstleister Stripe abgewickelt. Wir speichern keine Kreditkarten- oder Bankdaten auf unseren Servern. Du erhältst nach jedem Kauf eine offizielle Rechnung per E-Mail.
               </p>
             </div>
 
             <div className="p-5 bg-card border border-border rounded-xl space-y-3 shadow-sm">
-              <div className="flex items-center gap-2 font-bold">
-                <ShieldCheck className="w-4 h-4 text-info" />
-                Jugendschutz (Lootbox-Richtlinien)
+              <div className="flex items-center gap-2 font-bold text-amber-600">
+                <AlertCircle className="w-4 h-4" />
+                Widerrufsrecht bei digitalen Inhalten
               </div>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                Wir halten uns an die aktuellen Empfehlungen zum Jugendschutz. Der Erwerb von Boostern erfolgt primär durch Engagement 
-                innerhalb der App (Tägliche Belohnung, Teilnahme an Abstimmungen). Eventuelle Käufe von Zusatz-Boostern sind optional 
-                und dienen der Unterstützung der Plattform-Entwicklung.
+                Da Booster-Packs digitale Inhalte sind, die sofort nach dem Kauf bereitgestellt werden, erlischt dein Widerrufsrecht mit Beginn der Ausführung (Zustellung der Booster). Dem stimmst du im Checkout-Prozess explizit zu.
               </p>
             </div>
 
             <div className="p-5 bg-card border border-border rounded-xl space-y-3 shadow-sm">
               <div className="flex items-center gap-2 font-bold">
                 <Scale className="w-4 h-4 text-purple-500" />
-                Algorithmus & Zufall
+                Zufallsprinzip & Transparenz
               </div>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                Die Verteilung der Karten erfolgt über einen kryptographisch sicheren Zufallsgenerator. Die Wahrscheinlichkeiten 
-                sind für alle Nutzer identisch und werden nicht individuell beeinflusst. Die Drop-Rates werden regelmäßig 
-                überprüft, um die Balance des Systems zu wahren.
+                Die Verteilung der Karten erfolgt über einen kryptographisch sicheren Zufallsgenerator basierend auf den oben gelisteten Wahrscheinlichkeiten. Die Drop-Rates sind für alle Nutzer identisch und absolut transparent.
               </p>
             </div>
           </div>

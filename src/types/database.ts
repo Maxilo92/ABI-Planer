@@ -103,6 +103,12 @@ export interface GroupMessage {
   pinned?: boolean;
 }
 
+export interface TeacherAttack {
+  name: string;
+  damage?: number;
+  description?: string;
+}
+
 export type TeacherRarity = 'common' | 'rare' | 'epic' | 'mythic' | 'legendary';
 
 export interface LootTeacher {
@@ -110,6 +116,8 @@ export interface LootTeacher {
   name: string;
   rarity: TeacherRarity;
   description?: string;
+  hp?: number;
+  attacks?: TeacherAttack[];
 }
 
 export interface CustomPopupMessage {

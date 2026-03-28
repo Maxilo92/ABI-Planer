@@ -69,7 +69,9 @@ function mapToTeacherCardData(teacher: LootTeacher, variant: CardVariant | NewCa
     color: getTeacherRarityHex(teacher.rarity),
     cardNumber: (globalIndex + 1).toString().padStart(3, '0'),
     description: teacher.description,
-    }
+    hp: teacher.hp,
+    attacks: teacher.attacks,
+  }
 }
 
 function SammelkartenContent() {

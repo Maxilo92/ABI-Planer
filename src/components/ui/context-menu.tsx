@@ -82,10 +82,9 @@ function ContextMenuContent({
   const context = React.useContext(ContextMenuContext)
   if (!context) return null
 
-  // Always render portal in document.body to avoid invalid DOM in tables
   return (
     <MenuPrimitive.Root open={context.open} onOpenChange={context.setOpen}>
-      <MenuPrimitive.Portal container={typeof window !== 'undefined' ? document.body : undefined}>
+      <MenuPrimitive.Portal>
         <MenuPrimitive.Positioner
           anchor={{
             getBoundingClientRect: () =>

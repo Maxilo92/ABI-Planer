@@ -130,7 +130,25 @@ export default function DatenschutzPage() {
           </section>
 
           <section>
-            <h3 className="text-lg font-semibold text-foreground border-l-4 border-primary pl-3 mb-4">9. Ihre Rechte</h3>
+            <h3 className="text-lg font-semibold text-foreground border-l-4 border-primary pl-3 mb-4">9. Stripe (Zahlungsabwicklung)</h3>
+            <div className="space-y-3 text-muted-foreground leading-relaxed">
+              <p>
+                Wir bieten die Möglichkeit an, digitale Zusatzinhalte über unsere Website zu erwerben. Für die Abwicklung der Zahlungen nutzen wir den Zahlungsdienstleister Stripe. Anbieter für Nutzer im Europäischen Wirtschaftsraum ist Stripe Payments Europe, Ltd., 1 Grand Canal Street Lower, Grand Canal Dock, Dublin, Irland ("Stripe").
+              </p>
+              <p>
+                Wenn Sie eine Zahlung über Stripe tätigen, werden Ihre Zahlungsdaten (z. B. Kreditkartennummer, Bankverbindung, Rechnungsadresse) an Stripe übermittelt. Die Übermittlung Ihrer Daten an Stripe erfolgt auf Grundlage von Art. 6 Abs. 1 lit. b DSGVO (Vertragserfüllung).
+              </p>
+              <p>
+                <strong>Stripe Tax:</strong> Zur Einhaltung steuerrechtlicher Verpflichtungen (insbesondere zur korrekten Berechnung der Umsatzsteuer bei digitalen Gütern) nutzt Stripe Ihre Adressdaten, um den steuerrelevanten Ort der Leistung zu bestimmen.
+              </p>
+              <p>
+                Details zum Datenschutz bei Stripe finden Sie in der Datenschutzerklärung von Stripe unter: <a href="https://stripe.com/de/privacy" target="_blank" rel="noopener noreferrer" className="underline hover:text-primary">https://stripe.com/de/privacy</a>.
+              </p>
+            </div>
+          </section>
+
+          <section>
+            <h3 className="text-lg font-semibold text-foreground border-l-4 border-primary pl-3 mb-4">10. Ihre Rechte</h3>
             <p className="text-muted-foreground leading-relaxed">Sie haben nach der DSGVO insbesondere folgende Rechte:</p>
             <ul className="list-disc pl-6 text-muted-foreground space-y-1">
               <li>Auskunft über gespeicherte Daten (Art. 15 DSGVO)</li>
@@ -143,7 +161,7 @@ export default function DatenschutzPage() {
           </section>
 
           <section>
-            <h3 className="text-lg font-semibold text-foreground border-l-4 border-primary pl-3 mb-4">9. Kontakt bei Datenschutzfragen</h3>
+            <h3 className="text-lg font-semibold text-foreground border-l-4 border-primary pl-3 mb-4">11. Kontakt bei Datenschutzfragen</h3>
             <p className="text-muted-foreground leading-relaxed">
               Bei Fragen zur Datenverarbeitung oder zur Ausübung Ihrer Rechte wenden Sie sich bitte an:
               <br />
@@ -152,7 +170,7 @@ export default function DatenschutzPage() {
           </section>
 
           <div className="pt-8 border-t space-y-2">
-            <p className="text-xs text-muted-foreground italic">Stand: 20. März 2026.</p>
+            <p className="text-xs text-muted-foreground italic">Stand: 28. März 2026.</p>
             <p className="text-xs text-muted-foreground">
               Hinweis: Diese App ist ein privat betriebenes Projekt und kein offizielles Angebot der Schule.
             </p>
