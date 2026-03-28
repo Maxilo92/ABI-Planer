@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useUserTeachers } from '@/hooks/useUserTeachers'
@@ -65,7 +65,7 @@ const SHOP_ITEMS = [
   }
 ]
 
-export default function SammelkartenShopPage() {
+function ShopContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { profile } = useAuth()
@@ -360,7 +360,7 @@ export default function SammelkartenShopPage() {
         )}
       </AnimatePresence>
 
-      {/* Success Animation Overlay (General success message after Stripe redirect) */}
+      {/* Success Animation Overlay */}
       <AnimatePresence>
         {successItem && (
           <motion.div
@@ -400,5 +400,13 @@ export default function SammelkartenShopPage() {
         )}
       </AnimatePresence>
     </div>
+  )
+}
+
+export default function SammelkartenShopPage() {
+  return (
+    <Suspense fallback={<div className="container mx-auto py-20 text-center"><Zap className="h-8 w-8 animate-pulse mx-auto text-primary" /></div>}>
+      <ShopContent />
+    </Suspense>
   )
 }
