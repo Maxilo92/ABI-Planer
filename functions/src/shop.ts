@@ -68,7 +68,7 @@ export const createStripeCheckoutSession = onCall({
         }
       },
       success_url: `https://abi-planer-27.de/sammelkarten?success=true&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `https://abi-planer-27.de/sammelkarten/shop?canceled=true`,
+      cancel_url: `https://abi-planer-27.de/shop?canceled=true`,
     });
 
     return { url: session.url };

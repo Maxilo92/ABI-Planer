@@ -82,6 +82,7 @@ export function Navbar() {
       ],
     },
     { href: '/abstimmungen', label: 'Umfragen', icon: BarChart2, notify: notifications.umfragen },
+    { href: '/shop', label: 'Shop', icon: ShoppingBag },
   ]
 
   if (profile) {

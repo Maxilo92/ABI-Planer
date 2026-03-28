@@ -835,7 +835,7 @@ function SammelkartenContent() {
                                 <p className="text-foreground font-mono text-4xl font-light tracking-tighter">{timeLeft}</p>
                             </div>
 
-                            <Link href="/sammelkarten/shop" className="w-full max-w-[160px] block mx-auto">
+                            <Link href="/shop?category=sammelkarten" className="w-full max-w-[160px] block mx-auto">
                                 <Button 
                                   variant="default" 
                                   className="w-full rounded-2xl bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 hover:bg-neutral-800 dark:hover:bg-neutral-200 transition-all text-[11px] h-12 font-black uppercase tracking-[0.2em] shadow-xl"

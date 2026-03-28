@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.34.0] - 2026-03-28
+- **New Feature (Global Shop):** Einführung eines zentralen Shops unter `/shop`.
+    - Der neue Shop bietet Kategorien für Sammelkarten, Stufen-Merch und Sonstiges.
+    - Die Booster-Bundles wurden in den globalen Shop integriert.
+    - Vorbereitung für weitere Artikel wie Soli-Beiträge und Merchandising.
+    - Integration in die Hauptnavigation für bessere Sichtbarkeit.
+- **UX Fix (Shop):** Alle Shop-Links führen nun konsistent zum neuen globalen Shop.
+
 ## [0.33.5] - 2026-03-28
 - **UX Update (Shop):** Der Booster-Shop enthält nun im Footer einen Link zum "BuyMeACoffee"-Profil des Entwicklers für direkten Support.
 
