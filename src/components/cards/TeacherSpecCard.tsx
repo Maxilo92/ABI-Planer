@@ -119,10 +119,15 @@ export const TeacherSpecCard: React.FC<TeacherSpecCardProps> = ({
           </div>
 
           {/* Footer: Flavor Text & Metadata */}
-          <div className="space-y-[2cqw] mt-auto shrink-0">
+          <div className="space-y-[2.5cqw] mt-auto shrink-0">
             {data.description && (
-              <div className="bg-black/5 rounded-[2cqw] p-[2cqw] border-[0.2cqw] border-current/10 italic" style={{ color: (isBlckShiny || isGlass || isShiny) ? 'white/90' : 'black/90' }}>
-                <p className="text-[2.8cqw] leading-relaxed line-clamp-3">
+              <div 
+                className={cn(
+                  "rounded-[2.5cqw] p-[3cqw] border-[0.3cqw] border-current/20 italic shadow-inner",
+                  (isBlckShiny || isGlass || isShiny) ? "bg-black/30 text-white/90" : "bg-white/40 text-black/90"
+                )}
+              >
+                <p className="text-[3.2cqw] leading-snug line-clamp-3">
                   &quot;{data.description}&quot;
                 </p>
               </div>
