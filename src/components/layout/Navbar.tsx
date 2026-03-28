@@ -64,25 +64,35 @@ export function Navbar() {
   const isAdmin = profile?.role === 'admin_main' || profile?.role === 'admin_co' || profile?.role === 'admin'
 
   const navItems: NavItem[] = [
-    { href: '/', label: 'Dashboard', icon: LayoutDashboard, isBeta: false },
-    { href: '/todos', label: 'Todos', icon: CheckSquare, notify: notifications.todos },
-    { href: '/kalender', label: 'Kalender', icon: Calendar, notify: notifications.kalender },
-    { href: '/finanzen', label: 'Finanzen', icon: Euro },
-    { href: '/news', label: 'News', icon: Megaphone, notify: notifications.news },
-    { href: '/feedback', label: 'Feedback', icon: MessageSquareHeart },
     {
-      href: '/gruppen-root',
-      label: 'Gruppen',
-      icon: Users,
-      isBeta: false,
+      href: '/uebersicht-root',
+      label: 'Übersicht',
+      icon: LayoutDashboard,
       subItems: [
-        { href: '/gruppen?bereich=mein-team', label: 'Mein Team', icon: Users },
-        { href: '/gruppen?bereich=alle-gruppen', label: 'Alle Gruppen', icon: Users },
-        { href: '/gruppen?bereich=shared-hub', label: 'Shared Hub', icon: MessageSquareHeart },
+        { href: '/', label: 'Dashboard', icon: LayoutDashboard },
+        { href: '/news', label: 'News', icon: Megaphone, notify: notifications.news },
+        { href: '/abstimmungen', label: 'Umfragen', icon: BarChart2, notify: notifications.umfragen },
       ],
     },
-    { href: '/abstimmungen', label: 'Umfragen', icon: BarChart2, notify: notifications.umfragen },
-    { href: '/shop', label: 'Shop', icon: ShoppingBag },
+    {
+      href: '/planung-root',
+      label: 'Planung',
+      icon: Calendar,
+      subItems: [
+        { href: '/kalender', label: 'Kalender', icon: Calendar, notify: notifications.kalender },
+        { href: '/todos', label: 'Todos', icon: CheckSquare, notify: notifications.todos },
+        { href: '/gruppen?bereich=alle-gruppen', label: 'Gruppen & Teams', icon: Users },
+      ],
+    },
+    {
+      href: '/finanzen-root',
+      label: 'Finanzen',
+      icon: Euro,
+      subItems: [
+        { href: '/finanzen', label: 'Kassenstand', icon: Euro },
+        { href: '/shop', label: 'Shop', icon: ShoppingBag },
+      ],
+    },
   ]
 
   if (profile) {
@@ -97,7 +107,16 @@ export function Navbar() {
     })
   }
 
-  navItems.push({ href: '/einstellungen', label: 'Einstellungen', icon: Settings })
+  navItems.push({
+    href: '/support-root',
+    label: 'Support',
+    icon: HelpCircle,
+    subItems: [
+      { href: '/hilfe', label: 'Hilfe & Info', icon: HelpCircle },
+      { href: '/feedback', label: 'Feedback geben', icon: MessageSquareHeart },
+      { href: '/einstellungen', label: 'Einstellungen', icon: Settings },
+    ]
+  })
 
   if (isAdmin) {
     const adminSubItems = [
@@ -137,8 +156,11 @@ export function Navbar() {
 
     if (href === '/') return pathname === '/'
     if (href === '/admin-root') return pathname.startsWith('/admin')
-    if (href === '/gruppen-root') return pathname.startsWith('/gruppen')
+    if (href === '/uebersicht-root') return pathname === '/' || pathname.startsWith('/news') || pathname.startsWith('/abstimmungen')
+    if (href === '/planung-root') return pathname.startsWith('/kalender') || pathname.startsWith('/todos') || pathname.startsWith('/gruppen')
+    if (href === '/finanzen-root') return pathname.startsWith('/finanzen') || pathname.startsWith('/shop')
     if (href === '/sammelkarten-root') return pathname.startsWith('/sammelkarten')
+    if (href === '/support-root') return pathname.startsWith('/hilfe') || pathname.startsWith('/feedback') || pathname.startsWith('/einstellungen')
 
     if (queryString) {
       if (pathname !== path) return false

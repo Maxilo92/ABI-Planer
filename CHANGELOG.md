@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.35.0] - 2026-03-28
+- **UX Update (Navbar):** Umstrukturierung der Navigationsleiste für bessere Übersichtlichkeit durch thematische Gruppierung.
+    - **Übersicht:** Dashboard, News, Umfragen.
+    - **Planung:** Kalender, Todos, Gruppen.
+    - **Finanzen:** Kassenstand, Shop.
+    - **Support:** Hilfe, Feedback, Einstellungen.
+    - Die Gruppen werden bei aktiven Unterseiten automatisch hervorgehoben.
+
+## [0.34.1] - 2026-03-28
+- **Hotfix (Berechtigungen):** Behebung eines kritischen Fehlers, bei dem reguläre Nutzer keine Booster öffnen konnten, da die Firestore-Regeln das Aktualisieren der `booster_stats` auf dem eigenen Profil blockierten.
+
 ## [0.34.1] - 2026-03-28
 - **Hotfix (Navbar):** Behebung eines `ReferenceError` ("ShoppingBag is not defined") durch Hinzufügen des fehlenden Icon-Imports in der Navigation.
 
