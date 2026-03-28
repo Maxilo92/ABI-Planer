@@ -266,6 +266,17 @@ export const TeacherCard: React.FC<TeacherCardProps> = ({
                 </h2>
               </div>
 
+              {data.description && (
+                <div className="relative z-30 w-full mb-[10cqw] px-[4cqw] text-center">
+                  <p className={cn(
+                    "text-[2.8cqw] leading-tight italic line-clamp-2 drop-shadow-sm",
+                    (isBlckShiny || isGlass || isShiny) ? "text-white/60" : "text-black/50"
+                  )}>
+                    &quot;{data.description}&quot;
+                  </p>
+                </div>
+              )}
+
               {upgradeInfo && (
                 <div className="absolute inset-0 z-50 flex items-center justify-center pointer-events-none">
                   <AnimatePresence>
