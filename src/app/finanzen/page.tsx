@@ -14,11 +14,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button'
 import { format } from 'date-fns'
 import { de } from 'date-fns/locale'
-import { Heart, Loader2, Trash2 } from 'lucide-react'
+import { Heart, Loader2, Trash2, Wallet } from 'lucide-react'
 import { toDate } from '@/lib/utils'
 import Link from 'next/link'
 import { toast } from 'sonner'
 import { logAction } from '@/lib/logging'
+import { ProtectedSystemGate } from '@/components/ui/ProtectedSystemGate'
 
 export default function FinancePage() {
   const { user, profile, loading: authLoading } = useAuth()
@@ -27,6 +28,13 @@ export default function FinancePage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    if (authLoading) return
+
+    if (!profile) {
+      setLoading(false)
+      return
+    }
+
     // 1. Listen to Settings
     const settingsRef = doc(db, 'settings', 'config')
     const unsubscribeSettings = onSnapshot(settingsRef, (doc) => {
@@ -43,18 +51,33 @@ export default function FinancePage() {
     const unsubscribeFinances = onSnapshot(qFinances, (snapshot) => {
       setFinances(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FinanceEntry)))
       setLoading(false)
+    }, (error) => {
+      console.error('Error listening to finances:', error)
+      setLoading(false)
     })
 
     return () => {
       unsubscribeSettings()
       unsubscribeFinances()
     }
-  }, [])
+  }, [authLoading, profile])
 
   if (authLoading || loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    )
+  }
+
+  if (!profile) {
+    return (
+      <div className="py-12">
+        <ProtectedSystemGate 
+          title="Finanzübersicht gesperrt" 
+          description="Die Kassenstände und Ausgaben der Stufe sind privat. Bitte melde dich an, um die Finanzplanung zu sehen."
+          icon={<Wallet className="h-10 w-10 text-primary" />}
+        />
       </div>
     )
   }
@@ -173,6 +196,7 @@ export default function FinancePage() {
         goal={estimatedFundingGoal}
         initialTicketSales={settings?.expected_ticket_sales ?? 150}
         onTicketSalesChange={handleTicketSalesChange}
+        isAuthenticated={!!user}
       />
 
       <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
