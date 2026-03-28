@@ -23,7 +23,8 @@ import {
   AlertCircle,
   Clock,
   Heart,
-  Lock
+  Lock,
+  Coffee
 } from 'lucide-react'
 import { toast } from 'sonner'
 import Link from 'next/link'
@@ -247,7 +248,7 @@ function ShopContent() {
 
         {/* Legal Stuff Footer */}
         <section className="pt-12 border-t border-border space-y-10">
-           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-xs text-muted-foreground leading-relaxed font-medium">
+           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 text-xs text-muted-foreground leading-relaxed font-medium">
              <div className="space-y-3 p-6 bg-card border border-border rounded-2xl">
                 <h5 className="font-black text-foreground uppercase tracking-[0.15em] flex items-center gap-2 text-[10px]">
                    <CheckCircle2 className="w-3.5 h-3.5 text-success" />
@@ -276,6 +277,24 @@ function ShopContent() {
                   <span className="font-black text-foreground text-sm block mb-1 text-primary">90% Spendequote</span>
                   Jeder Kauf unterstützt direkt eure Stufenkasse (90%). Die restlichen 10% decken Serverkosten und die App-Entwicklung.
                 </p>
+             </div>
+             <div className="space-y-3 p-6 bg-card border border-border rounded-2xl">
+                <h5 className="font-black text-foreground uppercase tracking-[0.15em] flex items-center gap-2 text-[10px]">
+                   <Coffee className="w-3.5 h-3.5 text-amber-600" />
+                   Entwickler Support
+                </h5>
+                <p>
+                  Willst du den Entwickler direkt unterstützen? Dann kannst du mir gerne einen Kaffee ausgeben.
+                </p>
+                <Link 
+                  href="https://buymeacoffee.com/maxilo" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 text-amber-600 font-bold hover:underline underline-offset-4 mt-1"
+                >
+                  Coffee ausgeben
+                  <ChevronLeft className="w-3 h-3 rotate-180" />
+                </Link>
              </div>
            </div>
            
