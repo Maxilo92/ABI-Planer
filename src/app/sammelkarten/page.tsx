@@ -2,7 +2,7 @@
 
 import { useAuth } from '@/context/AuthContext'
 import { Sparkles, Gift, GraduationCap, RotateCcw, Zap, Trophy, Clock, Star, Lock, Info, ShoppingBag } from 'lucide-react'
-import { useEffect, useState, Suspense } from 'react'
+import { useEffect, useState, Suspense, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { redirect, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
@@ -19,6 +19,7 @@ import { CardData, CardVariant as NewCardVariant, SammelkartenConfig } from '@/t
 import { ProbabilityInfo } from '@/components/cards/ProbabilityInfo'
 import { useSystemMessage } from '@/context/SystemMessageContext'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { ProtectedSystemGate } from '@/components/ui/ProtectedSystemGate'
 
 const DEFAULT_TEACHERS: LootTeacher[] = [
   { id: 'max-mustermann', name: "Max Mustermann", rarity: "common" },
@@ -141,11 +142,17 @@ function SammelkartenContent() {
     return () => clearInterval(timer)
   }, [config])
 
-  useEffect(() => {
-    if (!loading && !user) {
-      redirect('/login?reason=unauthorized')
-    }
-  }, [user, loading])
+  if (!loading && !user) {
+    return (
+      <div className="py-12">
+        <ProtectedSystemGate 
+          title="Sammelkarten gesperrt" 
+          description="Sammle Lehrer, levele sie auf und vervollständige dein Album. Um Booster zu öffnen, musst du angemeldet sein."
+          icon={<Sparkles className="h-10 w-10 text-primary" />}
+        />
+      </div>
+    )
+  }
 
   useEffect(() => {
     const unsubscribe = onSnapshot(doc(db, 'settings', 'sammelkarten'), (snapshot) => {
@@ -171,70 +178,7 @@ function SammelkartenContent() {
     return () => unsubscribe()
   }, [])
 
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.code === 'Space') {
-        if (e.repeat) return;
-        e.preventDefault();
-        
-        if (gameState === 'idle' && getRemainingBoosters() > 0) {
-          handleOpenPack();
-        } else if (gameState === 'revealed' && !isMassOpening) {
-          const nextIndex = flippedCards.findIndex(f => !f);
-          if (nextIndex !== -1) {
-            handleFlipCard(nextIndex);
-          } else if (getRemainingBoosters() > 0) {
-            handleOpenPack();
-          } else {
-            setGameState('idle');
-          }
-        } else if (gameState === 'revealed' && isMassOpening) {
-          if (getRemainingBoosters() >= 10) {
-            handleOpenTenPacks();
-          } else {
-            setGameState('idle');
-          }
-        }
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [gameState, flippedCards, getRemainingBoosters, isMassOpening]);
-
-  if (loading) return null
-
-  const generatePack = (isGodpack: boolean): LootTeacher[] => {
-    const teachers = Array.isArray(config?.loot_teachers) && config.loot_teachers.length > 0
-      ? config.loot_teachers
-      : DEFAULT_TEACHERS
-
-    const getWeightedRarity = (weights: Record<string, number>): TeacherRarity => {
-      const rand = Math.random()
-      let cumulative = 0
-      for (const [rarity, weight] of Object.entries(weights)) {
-        cumulative += weight
-        if (rand < cumulative) return rarity as TeacherRarity
-      }
-      return 'common'
-    }
-
-    const regularWeights = config?.rarity_weights || DEFAULT_RARITY_WEIGHTS
-    const godpackWeights = config?.godpack_weights || DEFAULT_GODPACK_WEIGHTS
-
-    const slotWeights = isGodpack ? godpackWeights : regularWeights
-
-    return slotWeights.map(weights => {
-      const targetRarity = getWeightedRarity(weights as unknown as Record<string, number>)
-      const matching = teachers.filter((t: any) => t.rarity === targetRarity)
-      if (matching.length > 0) {
-        return matching[Math.floor(Math.random() * matching.length)]
-      }
-      return teachers[Math.floor(Math.random() * teachers.length)]
-    })
-  }
-
-  const handleOpenTenPacks = async () => {
+  const handleOpenTenPacks = useCallback(async () => {
     if (getRemainingBoosters() < 10) {
       pushMessage({
         type: 'toast',
@@ -254,24 +198,23 @@ function SammelkartenContent() {
     setMassCollectionResults(null)
     setConsecutiveOpenCount(prev => prev + 1)
 
-    const godpackChance = config?.global_limits?.godpack_chance ?? 0.005
-    const packsData = Array.from({ length: 10 }).map(() => {
-      const godpack = Math.random() < godpackChance
-      return {
-        isGodpack: godpack,
-        teachers: generatePack(godpack)
-      }
-    })
-
     try {
-      const initialTeachers = { ...userTeachers }
-      const massPacks = packsData.map(p => ({
-        teacherIds: p.teachers.map(t => t.id || t.name),
-        isGodpack: p.isGodpack
-      }))
-
-      const allResults = await collectMassBoosters(massPacks)
+      const allResults = await collectMassBoosters(10)
+      const teachers = config?.loot_teachers || DEFAULT_TEACHERS
       
+      const packsData = allResults.map(packResults => {
+        const packTeachers = packResults.map(r => 
+          teachers.find(t => (t.id || t.name) === r.teacherId) || DEFAULT_TEACHERS[0]
+        )
+        const isGodpack = packResults.every(r => r.variant !== 'normal')
+
+        return {
+          isGodpack,
+          teachers: packTeachers
+        }
+      })
+
+      const initialTeachers = { ...userTeachers }
       const processedMassResults = allResults.map((packResults) => {
         return packResults.map(r => {
           const isNew = !initialTeachers[r.teacherId]
@@ -316,9 +259,9 @@ function SammelkartenContent() {
       setGameState('idle')
       setIsMassOpening(false)
     }
-  }
+  }, [getRemainingBoosters, pushMessage, gameState, config, userTeachers, collectMassBoosters])
 
-  const handleOpenPack = async () => {
+  const handleOpenPack = useCallback(async () => {
     if (getRemainingBoosters() <= 0) {
       pushMessage({
         type: 'toast',
@@ -339,26 +282,28 @@ function SammelkartenContent() {
     setFlippedCards([false, false, false])
     setConsecutiveOpenCount(prev => prev + 1)
 
-    const godpackChance = config?.global_limits?.godpack_chance ?? 0.005
-    const godpack = Math.random() < godpackChance
-    setIsGodpack(godpack)
-    const pack = generatePack(godpack)
-
-    if (godpack) {
-      pushMessage({
-        type: 'toast',
-        priority: 'info',
-        title: '✨ GODPACK GEFUNDEN! ✨',
-        content: 'Alle Karten sind besonders selten!',
-        duration: 5000,
-      })
-    }
-
     try {
-      const teacherIds = pack.map(t => t.id || t.name)
-      const initialTeachers = { ...userTeachers }
-      const results = await collectBooster(teacherIds, { isGodpack: godpack })
+      const results = await collectBooster()
+      const teachers = config?.loot_teachers || DEFAULT_TEACHERS
       
+      const pack = results.map(r => 
+        teachers.find(t => (t.id || t.name) === r.teacherId) || DEFAULT_TEACHERS[0]
+      )
+
+      const isGodpack = results.every(r => r.variant !== 'normal')
+      setIsGodpack(isGodpack)
+
+      if (isGodpack) {
+        pushMessage({
+          type: 'toast',
+          priority: 'info',
+          title: '✨ GODPACK GEFUNDEN! ✨',
+          content: 'Alle Karten sind besonders selten!',
+          duration: 5000,
+        })
+      }
+
+      const initialTeachers = { ...userTeachers }
       const processedResults = results.map(r => {
         const isNew = !initialTeachers[r.teacherId]
         const oldLevel = initialTeachers[r.teacherId]?.level || 1
@@ -385,7 +330,7 @@ function SammelkartenContent() {
       setTimeout(() => {
         setRevealedTeachers(pack)
         setCollectionResults(processedResults)
-        setFlippedCards([false, false, false]) // Reset flip state only when new cards are set
+        setFlippedCards([false, false, false])
       }, isReopen ? 100 : 300)
 
       setTimeout(() => {
@@ -401,13 +346,48 @@ function SammelkartenContent() {
       })
       setGameState('idle')
     }
-  }
+  }, [getRemainingBoosters, pushMessage, gameState, config, userTeachers, collectBooster])
 
-  const handleFlipCard = (index: number) => {
-    const newFlipped = [...flippedCards]
-    newFlipped[index] = true
-    setFlippedCards(newFlipped)
-  }
+  const handleFlipCard = useCallback((index: number) => {
+    setFlippedCards(prev => {
+      const newFlipped = [...prev]
+      newFlipped[index] = true
+      return newFlipped
+    })
+  }, [])
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.code === 'Space') {
+        if (e.repeat) return;
+        e.preventDefault();
+        
+        if (gameState === 'idle' && getRemainingBoosters() > 0) {
+          handleOpenPack();
+        } else if (gameState === 'revealed' && !isMassOpening) {
+          const nextIndex = flippedCards.findIndex(f => !f);
+          if (nextIndex !== -1) {
+            handleFlipCard(nextIndex);
+          } else if (getRemainingBoosters() > 0) {
+            handleOpenPack();
+          } else {
+            setGameState('idle');
+          }
+        } else if (gameState === 'revealed' && isMassOpening) {
+          if (getRemainingBoosters() >= 10) {
+            handleOpenTenPacks();
+          } else {
+            setGameState('idle');
+          }
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [gameState, flippedCards, getRemainingBoosters, isMassOpening, handleOpenPack, handleOpenTenPacks, handleFlipCard]);
+
+  if (loading) return null
 
   const allFlipped = flippedCards.every(v => v === true)
 

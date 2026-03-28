@@ -194,24 +194,23 @@ export const TeacherCard: React.FC<TeacherCardProps> = ({
         animate={isLevelAnimating ? controls : { rotateY: isFlipped ? 0 : 180 }}
         initial={{ rotateY: isFlipped ? 0 : 180 }}
         transition={{ duration: 0.4, ease: "easeOut" }}
-        style={{ transformStyle: "preserve-3d" }}
-        className="w-full h-full relative will-change-transform"
+        className="w-full h-full relative will-change-transform preserve-3d"
       >
         {/* BACK SIDE (Locked also shows this essentially) */}
           <div 
             className={cn(
-              "absolute inset-0 backface-hidden p-[8cqw] flex flex-col items-center justify-center overflow-hidden",
+              "absolute inset-0 backface-hidden p-[8%] flex flex-col items-center justify-center overflow-hidden",
               "border-[2cqw] border-white/20 bg-neutral-950 shadow-2xl rounded-[10cqw]",
               isLocked ? "grayscale-[0.5] opacity-90" : ""
             )}
-            style={{ transform: "rotateY(180deg) translateZ(0.5px)" }}
+            style={{ transform: "rotateY(180deg) translateZ(1px)" }}
           >
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.05)_0%,transparent_70%)]" />
             <CardEffectOverlay variant="normal" tintColor="#000000" />
             
             <div className="relative z-10 flex flex-col items-center">
               <div className={cn(
-                "w-[25cqw] h-[25cqw] rounded-full flex items-center justify-center mb-[4cqw] border border-white/10",
+                "w-[25%] aspect-square rounded-full flex items-center justify-center mb-[4%] border border-white/10",
                 isLocked ? "bg-neutral-900" : "bg-white/5"
               )}>
                 {isLocked ? (
@@ -226,7 +225,7 @@ export const TeacherCard: React.FC<TeacherCardProps> = ({
             </div>
 
             {isLocked && (
-              <div className="absolute top-[8cqw] right-[8cqw] z-30">
+              <div className="absolute top-[8%] right-[8%] z-30">
                 <div className="bg-white/5 text-white/20 px-[2cqw] py-[0.5cqw] text-[3cqw] font-black rounded-full border border-white/5">
                   {data.cardNumber}
                 </div>
@@ -234,7 +233,7 @@ export const TeacherCard: React.FC<TeacherCardProps> = ({
             )}
 
             {isLocked && (
-              <div className="absolute inset-x-0 bottom-[15cqw] flex flex-col items-center">                 <div className="w-[10cqw] h-[1cqw] bg-white/10 rounded-full mb-2" />
+              <div className="absolute inset-x-0 bottom-[15%] flex flex-col items-center">                 <div className="w-[10cqw] h-[1cqw] bg-white/10 rounded-full mb-2" />
                  <div className="text-[2.5cqw] font-bold text-white/20 uppercase tracking-widest">Mystery Card</div>
               </div>
             )}
@@ -244,23 +243,23 @@ export const TeacherCard: React.FC<TeacherCardProps> = ({
           {!isLocked && (
             <div 
               className={cn(
-                "absolute inset-0 backface-hidden p-[7cqw] flex flex-col items-center overflow-hidden transition-all duration-300",
+                "absolute inset-0 backface-hidden p-[7%] flex flex-col items-center overflow-hidden transition-all duration-300",
                 styleClasses.card
               )}
               style={{ 
                 backgroundColor: isBlckShiny ? '#0a0a0a' : (isGlass ? data.color : data.color),
-                transform: "translateZ(0.5px)"
+                transform: "translateZ(1px)"
               }}
             >
               <CardEffectOverlay variant={data.variant} tintColor={data.color} />
 
               <div className={cn("absolute inset-0 pointer-events-none", styleClasses.bgOverlay)} />
               
-              <div className={cn("relative z-30 mb-[4cqw] mt-[4cqw]", styleClasses.iconWrapper)}>
+              <div className={cn("relative z-30 mb-[4%] mt-[4%]", styleClasses.iconWrapper)}>
                 <GraduationCap className={cn(styleClasses.header, styleClasses.headerIcon)} />
               </div>
 
-              <div className="flex-1 flex flex-col items-center justify-center text-center relative z-30 w-full px-[2cqw]">
+              <div className="flex-1 flex flex-col items-center justify-center text-center relative z-30 w-full px-[2%]">
                 <h2 className={cn("drop-shadow-sm", styleClasses.text)}>
                   {data.name}
                 </h2>

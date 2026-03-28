@@ -102,12 +102,15 @@ service cloud.firestore {
       allow write: if isPlanner();
     }
 
-    match /todos/{id} { allow read: if true; allow write: if isPlanner(); }
-    match /events/{id} { 
-      allow read: if true; 
+    match /todos/{id} { 
+      allow read: if isAuthenticated() && isLernsax(); 
       allow write: if isPlanner(); 
     }
-    match /finances/{id} { allow read: if true; allow write: if isPlanner(); }
+    match /events/{id} { 
+      allow read: if isAuthenticated() && isLernsax(); 
+      allow write: if isPlanner(); 
+    }
+    match /finances/{id} { allow read: if isAuthenticated() && isLernsax(); allow write: if isPlanner(); }
     match /news/{id} { 
       allow read: if true; 
       allow write: if isPlanner(); 
@@ -122,7 +125,7 @@ service cloud.firestore {
       ));
 
       match /comments/{commentId} {
-        allow read: if true;
+        allow read: if isAuthenticated() && isLernsax();
         allow create: if isApproved();
         allow update, delete: if isAdmin() || (isAuthenticated() && resource.data.created_by == request.auth.uid);
       }
@@ -130,11 +133,11 @@ service cloud.firestore {
 
     match /user_teachers/{userId} {
       allow read: if isAuthenticated();
-      allow write: if isAuthenticated() && request.auth.uid == userId;
+      allow write: if false; // Only via Admin SDK
     }
 
     match /teachers/{teacherId} {
-      allow read: if true;
+      allow read: if isAuthenticated() && isLernsax();
       allow write: if isAdmin();
     }
 
@@ -145,16 +148,16 @@ service cloud.firestore {
     }
 
     match /polls/{pollId} {
-      allow read: if true;
+      allow read: if isAuthenticated() && isLernsax();
       allow write: if isPlanner();
 
       match /options/{optionId} {
-        allow read: if true;
+        allow read: if isAuthenticated() && isLernsax();
         allow write: if isPlanner();
       }
 
       match /votes/{voteId} {
-        allow read: if true;
+        allow read: if isAuthenticated() && isLernsax();
         allow create: if isAuthenticated() && request.auth.uid == voteId && request.resource.data.user_id == request.auth.uid;
         allow update: if isAuthenticated() && request.auth.uid == voteId && request.resource.data.user_id == request.auth.uid &&
           get(/databases/$(database)/documents/polls/$(pollId)).data.allow_vote_change == true;
@@ -171,13 +174,13 @@ service cloud.firestore {
     }
 
     match /votes/{voteId} {
-      allow read: if true;
+      allow read: if isAuthenticated() && isLernsax();
       allow create: if isLernsax() && request.resource.data.user_id == request.auth.uid;
       allow delete: if isAdmin() || (isAuthenticated() && resource.data.user_id == request.auth.uid);
     }
 
     match /poll_votes/{voteId} {
-      allow read: if true;
+      allow read: if isAuthenticated() && isLernsax();
       allow create, update: if isAuthenticated() && request.auth.uid == request.resource.data.user_id;
       allow delete: if isAdmin() || (isAuthenticated() && resource.data.user_id == request.auth.uid);
     }

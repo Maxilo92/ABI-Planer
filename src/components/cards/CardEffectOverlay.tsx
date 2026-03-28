@@ -46,7 +46,7 @@ export const CardEffectOverlay: React.FC<{
   return (
     <div 
       className={cn(
-        "absolute inset-0 pointer-events-none z-20 transition-all duration-500",
+        "absolute inset-0 pointer-events-none z-20 transition-all duration-500 will-change-transform",
         getOverlayStyles()
       )}
       style={isBlackShiny && tintColor ? { backgroundColor: `${tintColor}${getTintOpacity()}` } : undefined}

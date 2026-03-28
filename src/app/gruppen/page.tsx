@@ -40,6 +40,7 @@ import { GroupWall } from '@/components/groups/GroupWall'
 import { GroupCard } from '@/components/groups/GroupCard'
 import { MemberItem } from '@/components/groups/MemberItem'
 import { AddTodoDialog } from '@/components/modals/AddTodoDialog'
+import { ProtectedSystemGate } from '@/components/ui/ProtectedSystemGate'
 
 type GroupsMainTab = 'mein-team' | 'alle-gruppen' | 'shared-hub'
 
@@ -58,11 +59,20 @@ function GroupsPageContent() {
   const isGroupLeader = profile?.is_group_leader
 
   useEffect(() => {
+    if (authLoading) return
+
+    if (!profile) {
+      setLoading(false)
+      return
+    }
+
     // 1. Listen to Profiles
     const profilesRef = collection(db, 'profiles')
     const qProfiles = query(profilesRef)
     const unsubscribeProfiles = onSnapshot(qProfiles, (snapshot) => {
       setProfiles(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Profile)))
+    }, (error) => {
+      console.error('Error listening to profiles:', error)
     })
 
     // 2. Listen to Settings (for Planning Groups)
@@ -72,18 +82,25 @@ function GroupsPageContent() {
         const data = docSnap.data() as Settings
         setPlanningGroups(data.planning_groups || [])
       }
+    }, (error) => {
+      console.error('Error listening to settings:', error)
     })
 
     // 3. Listen to Todos
     const qTodos = query(collection(db, 'todos'), orderBy('created_at', 'desc'))
     const unsubscribeTodos = onSnapshot(qTodos, (snapshot) => {
       setTodos(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Todo)))
+    }, (error) => {
+      console.error('Error listening to todos:', error)
     })
 
     // 4. Listen to Events
     const qEvents = query(collection(db, 'events'), orderBy('start_date', 'asc'))
     const unsubscribeEvents = onSnapshot(qEvents, (snapshot) => {
       setEvents(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Event)))
+      setLoading(false)
+    }, (error) => {
+      console.error('Error listening to events:', error)
       setLoading(false)
     })
 
@@ -93,7 +110,27 @@ function GroupsPageContent() {
       unsubscribeTodos()
       unsubscribeEvents()
     }
-  }, [])
+  }, [authLoading, profile])
+
+  if (authLoading || loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    )
+  }
+
+  if (!profile) {
+    return (
+      <div className="py-12">
+        <ProtectedSystemGate 
+          title="Arbeitsgruppen gesperrt" 
+          description="Die internen Planungsgruppen und deren Kommunikation sind privat. Bitte melde dich an, um mitzuplanen."
+          icon={<Users className="h-10 w-10 text-primary" />}
+        />
+      </div>
+    )
+  }
 
   const handleUpdateMember = async (userId: string, groupName: string | null) => {
     const targetProfile = profiles.find(p => p.id === userId)

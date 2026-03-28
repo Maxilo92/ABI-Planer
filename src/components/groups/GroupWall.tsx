@@ -25,7 +25,8 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { format } from 'date-fns'
 import { de } from 'date-fns/locale'
 import { toDate, cn } from '@/lib/utils'
-import { Send, Trash2, MessageSquare, Pin, PinOff, Target, Users } from 'lucide-react'
+import { Send, Trash2, MessageSquare, Pin, PinOff, Target, Users, ChevronRight } from 'lucide-react'
+import { motion, AnimatePresence, useAnimation } from 'framer-motion'
 import { toast } from 'sonner'
 import {
   DropdownMenu,
@@ -227,27 +228,49 @@ export function GroupWall({ groupName, canManage = false, type = 'internal' }: G
             </div>
             
             <div className={cn(
-              "relative group p-3.5 shadow-sm transition-all",
+              "relative group p-3.5 shadow-sm transition-all overflow-hidden",
               isPinned 
                 ? "bg-amber-50 dark:bg-amber-950/20 border border-amber-200/50 dark:border-amber-900/50 text-foreground rounded-2xl" 
                 : isOwn 
                   ? "bg-primary text-primary-foreground rounded-2xl rounded-tr-none hover:shadow-md hover:shadow-primary/10" 
                   : "bg-muted/80 dark:bg-muted/40 backdrop-blur-sm border border-border/50 text-foreground rounded-2xl rounded-tl-none hover:shadow-md hover:shadow-black/5"
             )}>
-              {msg.target_group && (
+              {/* Swipe Background Action */}
+              {(canManage || isOwn) && (
                 <div className={cn(
-                  "flex items-center gap-1.5 mb-2 font-bold text-[10px] uppercase tracking-wider",
-                  isOwn ? "text-primary-foreground/80" : "text-primary"
+                  "absolute inset-0 flex items-center justify-end px-6 bg-destructive text-destructive-foreground transition-opacity",
+                  "opacity-0 group-active:opacity-100"
                 )}>
-                  <Target className="h-3 w-3" />
-                  Für: {msg.target_group}
+                  <Trash2 className="h-5 w-5 animate-pulse" />
                 </div>
               )}
-              
-              <p className="leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+
+              <motion.div
+                drag={ (canManage || isOwn) ? "x" : false }
+                dragConstraints={{ left: -100, right: 0 }}
+                dragElastic={0.1}
+                onDragEnd={(_, info) => {
+                  if (info.offset.x < -80) {
+                    handleDeleteMessage(msg.id);
+                  }
+                }}
+                className="relative bg-inherit rounded-[inherit] z-10"
+              >
+                {msg.target_group && (
+                  <div className={cn(
+                    "flex items-center gap-1.5 mb-2 font-bold text-[10px] uppercase tracking-wider",
+                    isOwn ? "text-primary-foreground/80" : "text-primary"
+                  )}>
+                    <Target className="h-3 w-3" />
+                    Für: {msg.target_group}
+                  </div>
+                )}
+                
+                <p className="leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+              </motion.div>
               
               <div className={cn(
-                "absolute top-0 flex items-center gap-1.5 transition-all sm:opacity-0 sm:group-hover:opacity-100",
+                "absolute top-0 flex items-center gap-1.5 transition-all sm:opacity-0 sm:group-hover:opacity-100 z-20",
                 isOwn ? "right-full mr-2 sm:mr-3" : "left-full ml-2 sm:ml-3"
               )}>
                 {canManage && (

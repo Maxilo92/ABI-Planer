@@ -33,15 +33,15 @@ export default function PromoAuthPage() {
   }
 
   const features = [
-    { name: 'Aktuelle News & Termine lesen', guest: true, user: true, icon: <Calendar className="h-4 w-4" /> },
-    { name: 'Umfragen einsehen (ohne Abstimmung)', guest: true, user: true, icon: <MessageSquare className="h-4 w-4" /> },
-    { name: 'Finanzstatus einsehen', guest: true, user: true, icon: <Clock className="h-4 w-4" /> },
-    { name: 'An Umfragen teilnehmen & mitbestimmen', guest: false, user: true, icon: <CheckCircle2 className="h-4 w-4" /> },
+    { name: 'Aktuelle News lesen', guest: true, user: true, icon: <Calendar className="h-4 w-4" /> },
+    { name: 'Soli-Beiträge leisten (Stripe)', guest: true, user: true, icon: <ArrowRight className="h-4 w-4" /> },
+    { name: 'Termine & Kalender einsehen', guest: false, user: true, icon: <Calendar className="h-4 w-4" /> },
+    { name: 'An Umfragen teilnehmen', guest: false, user: true, icon: <CheckCircle2 className="h-4 w-4" /> },
     { name: 'Sammelkarten-Spielfortschritt', guest: false, user: true, icon: <Gift className="h-4 w-4" /> },
-    { name: 'Eigene To-Do Listen & Checklisten', guest: false, user: true, icon: <CheckCircle2 className="h-4 w-4" /> },
+    { name: 'Aufgaben & To-Dos verwalten', guest: false, user: true, icon: <CheckCircle2 className="h-4 w-4" /> },
+    { name: 'Finanzplanung & Kassenstand', guest: false, user: true, icon: <Clock className="h-4 w-4" /> },
     { name: 'Teilnahme an Planungsgruppen', guest: false, user: true, icon: <Users className="h-4 w-4" /> },
-    { name: 'News kommentieren & Feedback geben', guest: false, user: true, icon: <MessageSquare className="h-4 w-4" /> },
-    { name: 'Sichere Datenspeicherung (Cross-Browser)', guest: false, user: true, icon: <Database className="h-4 w-4" /> },
+    { name: 'News bewerten & kommentieren', guest: false, user: true, icon: <MessageSquare className="h-4 w-4" /> },
   ]
 
   return (
@@ -78,7 +78,7 @@ export default function PromoAuthPage() {
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground leading-relaxed mb-4 italic">
-                Deine Daten sind nur lokal in diesem Browser gespeichert. Wenn du den Cache löschst oder das Gerät wechselst, sind deine Votes und Fortschritte weg.
+                Deine Möglichkeiten sind als Gast stark eingeschränkt. Du kannst dich informieren, aber nicht an der Planung oder dem Sammel-Game teilnehmen.
               </p>
               <ul className="space-y-3">
                 {features.filter(f => f.guest).map((feature, i) => (

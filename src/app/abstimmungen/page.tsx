@@ -10,6 +10,7 @@ import { PollList } from '@/components/dashboard/PollList'
 import { TeacherRarityVoting } from '@/components/dashboard/TeacherRarityVoting'
 import { AddPollDialog } from '@/components/modals/AddPollDialog'
 import { Poll, PollOption, PollVote } from '@/types/database'
+import { ProtectedSystemGate } from '@/components/ui/ProtectedSystemGate'
 
 export default function PollsPage() {
   const { user, profile, loading: authLoading } = useAuth()
@@ -19,6 +20,11 @@ export default function PollsPage() {
 
   useEffect(() => {
     if (authLoading) return
+
+    if (!profile) {
+      setLoading(false)
+      return
+    }
 
     const q = query(
       collection(db, 'polls'),
@@ -44,10 +50,13 @@ export default function PollsPage() {
       
       setPolls(pollsData)
       setLoading(false)
+    }, (error) => {
+      console.error('Error listening to polls:', error)
+      setLoading(false)
     })
 
     return () => unsubscribe()
-  }, [authLoading])
+  }, [authLoading, profile])
 
   const sortedPolls = [...polls].sort((a, b) => {
     const aVoted = a.votes?.some(v => v.user_id === user?.uid)
@@ -82,6 +91,18 @@ export default function PollsPage() {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    )
+  }
+
+  if (!profile) {
+    return (
+      <div className="py-12">
+        <ProtectedSystemGate 
+          title="Abstimmungen gesperrt" 
+          description="Um an Umfragen teilzunehmen und die Ergebnisse zu sehen, musst du mit deinem Lernsax-Konto angemeldet sein."
+          icon={<BarChart2 className="h-10 w-10 text-primary" />}
+        />
       </div>
     )
   }

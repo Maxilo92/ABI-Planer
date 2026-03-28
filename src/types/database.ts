@@ -3,7 +3,7 @@ import { Timestamp } from 'firebase/firestore';
 export type UserRole = 'viewer' | 'planner' | 'admin' | 'admin_main' | 'admin_co';
 export type TodoStatus = 'open' | 'in_progress' | 'done';
 export type ClassName = string;
-export type DashboardComponentKey = 'funding' | 'news' | 'todos' | 'events' | 'polls' | 'leaderboard';
+export type DashboardComponentKey = 'funding' | 'news' | 'todos' | 'events' | 'polls' | 'leaderboard' | 'cards';
 
 export interface PlanningGroup {
   name: string;

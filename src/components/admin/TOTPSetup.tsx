@@ -34,7 +34,7 @@ export function TOTPSetup({ profile }: TOTPSetupProps) {
     setLoading(true)
     setMessage(null)
     try {
-      const setup2FA = httpsCallable<{ }, { secret: string, qrCodeUrl: string }>(functions, 'setup2FA')
+      const setup2FA = httpsCallable<object, { secret: string, qrCodeUrl: string }>(functions, 'setup2FA')
       const result = await setup2FA()
       setSetupData(result.data)
       setStep('setup')
@@ -74,7 +74,7 @@ export function TOTPSetup({ profile }: TOTPSetupProps) {
     setLoading(true)
     setMessage(null)
     try {
-      const disable2FA = httpsCallable<{ }, { success: boolean }>(functions, 'disable2FA')
+      const disable2FA = httpsCallable<object, { success: boolean }>(functions, 'disable2FA')
       await disable2FA()
       setMessage({ type: 'success', text: 'Zwei-Faktor-Authentisierung wurde deaktiviert.' })
       setTimeout(() => setOpen(false), 2000)

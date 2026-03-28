@@ -9,7 +9,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { LootTeacher, TeacherRarity, Profile, CardVariant } from '@/types/database'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { useRouter } from 'next/navigation'
-import { GraduationCap, Trophy, Star, Lock, Search, Filter, X, ChevronRight, ChevronLeft, Rotate3d, ArrowDownAZ, ArrowDownZA, ArrowUp10, LayoutGrid, Package, ArrowUpNarrowWide, ArrowDownWideNarrow, Heart, Swords } from 'lucide-react'
+import { GraduationCap, Trophy, Star, Lock, Search, Filter, X, ChevronRight, ChevronLeft, Rotate3d, ArrowDownAZ, ArrowDownZA, ArrowUp10, LayoutGrid, Package, ArrowUpNarrowWide, ArrowDownWideNarrow, Heart, Swords, Sparkles } from 'lucide-react'
 import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
@@ -152,12 +152,29 @@ function mapTeacherToCardData(teacher: LootTeacher, userData: any, globalTeacher
   }
 }
 
-function TeacherCardDetail({ teacher, userData, onClose, globalTeachers }: { teacher: LootTeacher, userData: any, onClose: () => void, globalTeachers: LootTeacher[] }) {
+function TeacherCardDetail({ 
+  teacher, 
+  userData, 
+  onClose, 
+  globalTeachers,
+  allTeachers,
+  currentIndex,
+  onNavigate
+}: { 
+  teacher: LootTeacher, 
+  userData: any, 
+  onClose: () => void, 
+  globalTeachers: LootTeacher[],
+  allTeachers: LootTeacher[],
+  currentIndex: number,
+  onNavigate: (index: number) => void
+}) {
   const isOwned = !!userData
   const level = userData?.level || 1
   const count = userData?.count || 0
   const [displayVariant, setDisplayVariant] = useState<NewCardVariant>(getBestVariant(userData?.variants));
   const [activeCard, setActiveCard] = useState<'visual' | 'spec'>('visual');
+  const [direction, setDirection] = useState(0);
   
   const cardData = mapTeacherToCardData(teacher, userData, globalTeachers, displayVariant)
 
@@ -166,20 +183,42 @@ function TeacherCardDetail({ teacher, userData, onClose, globalTeachers }: { tea
     return Object.keys(userData.variants).filter(v => userData.variants[v] > 0);
   }, [userData])
 
+  const handleNext = () => {
+    if (currentIndex < allTeachers.length - 1) {
+      setDirection(1);
+      onNavigate(currentIndex + 1);
+    }
+  };
+
+  const handlePrev = () => {
+    if (currentIndex > 0) {
+      setDirection(-1);
+      onNavigate(currentIndex - 1);
+    }
+  };
+
   return (
     <div className="flex flex-col items-center space-y-6 py-8 px-4 w-full">
       <div className="relative w-full max-w-[280px] sm:max-w-[320px] aspect-[2.5/3.5] mb-4 group">
-        <AnimatePresence mode="wait">
-          {activeCard === 'visual' ? (
-            <motion.div
-              key="visual"
-              initial={{ x: 50, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              exit={{ x: -50, opacity: 0 }}
-              transition={{ type: 'spring', damping: 20, stiffness: 100 }}
-              className="w-full h-full cursor-pointer"
-              onClick={() => setActiveCard('spec')}
-            >
+        <AnimatePresence mode="wait" custom={direction}>
+          <motion.div
+            key={`${teacher.id || teacher.name}-${activeCard}`}
+            custom={direction}
+            initial={{ x: direction > 0 ? 100 : direction < 0 ? -100 : 0, opacity: 0, scale: 0.9 }}
+            animate={{ x: 0, opacity: 1, scale: 1 }}
+            exit={{ x: direction > 0 ? -100 : direction < 0 ? 100 : 0, opacity: 0, scale: 0.9 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+            drag="x"
+            dragConstraints={{ left: 0, right: 0 }}
+            dragElastic={0.2}
+            onDragEnd={(_, info) => {
+              if (info.offset.x < -70) handleNext();
+              else if (info.offset.x > 70) handlePrev();
+            }}
+            className="w-full h-full cursor-pointer touch-none"
+            onClick={() => setActiveCard(activeCard === 'visual' ? 'spec' : 'visual')}
+          >
+            {activeCard === 'visual' ? (
               <TeacherCard 
                 data={cardData}
                 className="w-full h-auto"
@@ -187,36 +226,28 @@ function TeacherCardDetail({ teacher, userData, onClose, globalTeachers }: { tea
                 isFlippedExternally={true}
                 interactive={false}
               />
-            </motion.div>
-          ) : (
-            <motion.div
-              key="spec"
-              initial={{ x: -50, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              exit={{ x: 50, opacity: 0 }}
-              transition={{ type: 'spring', damping: 20, stiffness: 100 }}
-              className="w-full h-full cursor-pointer"
-              onClick={() => setActiveCard('visual')}
-            >
+            ) : (
               <TeacherSpecCard 
                 data={cardData}
                 className="w-full h-auto"
                 styleVariant="modern-flat"
               />
-            </motion.div>
-          )}
+            )}
+          </motion.div>
         </AnimatePresence>
 
         {/* Navigation Arrows */}
         <button 
-          onClick={(e) => { e.stopPropagation(); setActiveCard(activeCard === 'visual' ? 'spec' : 'visual'); }}
-          className="absolute left-[-20%] top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/5 hover:bg-white/10 text-white/40 transition-all opacity-0 group-hover:opacity-100 max-sm:hidden"
+          onClick={(e) => { e.stopPropagation(); handlePrev(); }}
+          disabled={currentIndex === 0}
+          className="absolute left-[-20%] top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/5 hover:bg-white/10 text-white/40 transition-all opacity-0 group-hover:opacity-100 max-sm:hidden disabled:opacity-0"
         >
           <ChevronLeft className="h-6 w-6" />
         </button>
         <button 
-          onClick={(e) => { e.stopPropagation(); setActiveCard(activeCard === 'visual' ? 'spec' : 'visual'); }}
-          className="absolute right-[-20%] top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/5 hover:bg-white/10 text-white/40 transition-all opacity-0 group-hover:opacity-100 max-sm:hidden"
+          onClick={(e) => { e.stopPropagation(); handleNext(); }}
+          disabled={currentIndex === allTeachers.length - 1}
+          className="absolute right-[-20%] top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/5 hover:bg-white/10 text-white/40 transition-all opacity-0 group-hover:opacity-100 max-sm:hidden disabled:opacity-0"
         >
           <ChevronRight className="h-6 w-6" />
         </button>
@@ -224,12 +255,13 @@ function TeacherCardDetail({ teacher, userData, onClose, globalTeachers }: { tea
 
       <div className="flex flex-col items-center gap-3">
         <div className="text-center animate-pulse flex items-center gap-2 text-white/50 text-xs font-medium bg-white/5 px-3 py-1.5 rounded-full border border-white/5">
-          {activeCard === 'visual' ? <Rotate3d className="h-3.5 w-3.5" /> : <Swords className="h-3.5 w-3.5" />}
-          {activeCard === 'visual' ? 'Tippen für Specs' : 'Tippen für Artwork'}
+          <Sparkles className="h-3.5 w-3.5 text-blue-400" />
+          Wischen für andere Lehrer
         </div>
         
         {/* Pagination Dots */}
-        <div className="flex gap-1.5">
+        <div className="flex gap-1.5 items-center">
+          <div className="text-[10px] font-black text-white/20 mr-1">{currentIndex + 1} / {allTeachers.length}</div>
           <button onClick={() => setActiveCard('visual')} className={cn("h-1 rounded-full transition-all", activeCard === 'visual' ? "bg-white w-6" : "bg-white/20 w-3")} />
           <button onClick={() => setActiveCard('spec')} className={cn("h-1 rounded-full transition-all", activeCard === 'spec' ? "bg-white w-6" : "bg-white/20 w-3")} />
         </div>
@@ -315,7 +347,7 @@ export function TeacherAlbum({
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
   
   // Selection state
-  const [selectedTeacher, setSelectedTeacher] = useState<LootTeacher | null>(null)
+  const [selectedTeacherIndex, setSelectedTeacherIndex] = useState<number | null>(null)
 
   const handleSortChange = (key: 'rarity' | 'name' | 'level') => {
     if (sortKey === key) {
@@ -459,6 +491,13 @@ export function TeacherAlbum({
   const totalCardsCollected = Object.values(userTeachers || {}).reduce((acc: number, curr: any) => acc + (curr.count || 0), 0)
   const packsOpened = activeProfile?.booster_stats?.total_opened || 0
 
+  // Determine which teachers to show based on expansion state
+  const displayedTeachers = initialLimit && !isExpanded 
+    ? filteredTeachers.slice(0, initialLimit) 
+    : filteredTeachers
+
+  const selectedTeacher = selectedTeacherIndex !== null ? displayedTeachers[selectedTeacherIndex] : null
+
   const toggleRarity = (rarity: TeacherRarity) => {
     setRarityFilters(prev => 
       prev.includes(rarity) ? prev.filter(r => r !== rarity) : [...prev, rarity]
@@ -481,11 +520,6 @@ export function TeacherAlbum({
   }
 
   const activeFilterCount = (search ? 1 : 0) + rarityFilters.length + variantFilters.length + (ownershipFilter !== 'all' ? 1 : 0) + (sortKey !== 'rarity' || sortOrder !== 'desc' ? 1 : 0)
-
-  // Determine which teachers to show based on expansion state
-  const displayedTeachers = initialLimit && !isExpanded 
-    ? filteredTeachers.slice(0, initialLimit) 
-    : filteredTeachers
 
   return (
     <div className="space-y-6">
@@ -699,7 +733,7 @@ export function TeacherAlbum({
                   className="flex flex-col items-center w-full mx-auto"
                 >
                   <div 
-                    onClick={() => isOwned && setSelectedTeacher(teacher)}
+                    onClick={() => isOwned && setSelectedTeacherIndex(idx)}
                     className={cn(
                       "relative transition-all duration-300 transform group w-full aspect-[2.5/3.5]",
                       !isOwned && "cursor-not-allowed opacity-80",
@@ -748,15 +782,18 @@ export function TeacherAlbum({
         </>
       )}
 
-      <Dialog open={!!selectedTeacher} onOpenChange={(open) => !open && setSelectedTeacher(null)}>
+      <Dialog open={selectedTeacherIndex !== null} onOpenChange={(open) => !open && setSelectedTeacherIndex(null)}>
         <DialogContent className="max-w-[95vw] sm:max-w-md p-0 overflow-y-auto max-h-[90vh] bg-neutral-950/90 backdrop-blur-2xl border-white/10 shadow-2xl rounded-3xl ring-0">
           <div className="relative w-full">
-            {selectedTeacher && (
+            {selectedTeacher && selectedTeacherIndex !== null && (
               <TeacherCardDetail 
                 teacher={selectedTeacher} 
                 userData={userTeachers?.[selectedTeacher.id] || userTeachers?.[selectedTeacher.name]}
-                onClose={() => setSelectedTeacher(null)}
+                onClose={() => setSelectedTeacherIndex(null)}
                 globalTeachers={globalTeachers}
+                allTeachers={displayedTeachers}
+                currentIndex={selectedTeacherIndex}
+                onNavigate={(index) => setSelectedTeacherIndex(index)}
               />
             )}
           </div>

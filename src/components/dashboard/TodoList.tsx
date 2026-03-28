@@ -10,7 +10,7 @@ import { doc, updateDoc, deleteDoc } from 'firebase/firestore'
 import { useAuth } from '@/context/AuthContext'
 import { toDate } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
-import { Trash2, Calendar, Plus } from 'lucide-react'
+import { Trash2, Calendar } from 'lucide-react'
 import { toast } from 'sonner'
 import { EditTodoDialog } from '@/components/modals/EditTodoDialog'
 import { AddTodoDialog } from '@/components/modals/AddTodoDialog'
@@ -34,30 +34,87 @@ export function TodoList({
 }: TodoListProps) {
   const { user, profile } = useAuth()
 
-  // Flatten the todo tree for rendering
+  // Flatten the todo tree for rendering with smart sorting
   const displayedTodos = useMemo(() => {
     const result: (Todo & { depth: number })[] = [];
     const processed = new Set<string>();
+
+    const getTodoScore = (todo: Todo) => {
+      let score = 0;
+      
+      // 2. Relevance Score (Personal > Group > Class)
+      if (todo.assigned_to_user === user?.uid) score += 100;
+      if (todo.assigned_to_group === profile?.planning_group) score += 50;
+      if (todo.assigned_to_class === profile?.class_name) score += 25;
+      
+      // 3. Deadline Urgency (Overdue > Soon > Far)
+      if (todo.deadline_date && todo.status !== 'done') {
+        const deadline = toDate(todo.deadline_date);
+        const now = new Date();
+        const diffDays = Math.ceil((deadline.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+        
+        if (isBefore(deadline, startOfDay(now))) {
+          score += 40; // Overdue
+        } else if (diffDays <= 7) {
+          score += 20; // < 7 days
+        } else if (diffDays <= 14) {
+          score += 10; // < 14 days
+        }
+      }
+      
+      return score;
+    };
+
+    const compareTodos = (a: Todo, b: Todo) => {
+      // 1. Status (Active > Done)
+      const isDoneA = a.status === 'done';
+      const isDoneB = b.status === 'done';
+      if (isDoneA !== isDoneB) return isDoneA ? 1 : -1;
+      
+      // 2 & 3. Relevance + Urgency Score
+      const scoreA = getTodoScore(a);
+      const scoreB = getTodoScore(b);
+      if (scoreA !== scoreB) return scoreB - scoreA;
+      
+      // 4. Absolute Deadline (Soonest first)
+      if (a.deadline_date && b.deadline_date) {
+        const dateA = toDate(a.deadline_date).getTime();
+        const dateB = toDate(b.deadline_date).getTime();
+        if (dateA !== dateB) return dateA - dateB;
+      } else if (a.deadline_date) {
+        return -1;
+      } else if (b.deadline_date) {
+        return 1;
+      }
+      
+      // 5. Creation Date (Newest first)
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    };
 
     const addWithChildren = (todo: Todo, depth: number) => {
       if (processed.has(todo.id)) return;
       processed.add(todo.id);
       result.push({ ...todo, depth });
       
-      const children = todos.filter((t) => t.parentId === todo.id);
+      const children = todos
+        .filter((t) => t.parentId === todo.id)
+        .sort(compareTodos);
+      
       children.forEach((c) => addWithChildren(c, depth + 1));
     };
 
     // First, process todos that are "roots" in the current set 
     // (either parentId is null or parent is not present in the current todos array)
-    const roots = todos.filter((t) => !t.parentId || !todos.find((p) => p.id === t.parentId));
+    const roots = todos
+      .filter((t) => !t.parentId || !todos.find((p) => p.id === t.parentId))
+      .sort(compareTodos);
     
     // Process roots to build the partial tree
     roots.forEach((r) => addWithChildren(r, 0));
     
-    // Finally, apply maxItems slice if necessary (though page.tsx already limits to 5)
+    // Finally, apply maxItems slice if necessary
     return typeof maxItems === 'number' ? result.slice(0, maxItems) : result;
-  }, [todos, maxItems])
+  }, [todos, maxItems, user?.uid, profile?.planning_group, profile?.class_name])
 
   const handleToggle = async (id: string, completed: boolean) => {
     if (!canManage) return

@@ -11,6 +11,8 @@ import { Loader2, Search } from 'lucide-react'
 import { toDate } from '@/lib/utils'
 import { Input } from '@/components/ui/input'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { ProtectedSystemGate } from '@/components/ui/ProtectedSystemGate'
+import { Calendar } from 'lucide-react'
 
 export default function CalendarPage() {
   const { profile, loading: authLoading } = useAuth()
@@ -19,14 +21,24 @@ export default function CalendarPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    if (authLoading) return
+
+    if (!profile) {
+      setLoading(false)
+      return
+    }
+
     const q = query(collection(db, 'events'), orderBy('start_date', 'asc'))
     const unsubscribe = onSnapshot(q, (snapshot) => {
       setEvents(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Event)))
       setLoading(false)
+    }, (error) => {
+      console.error('Error listening to events:', error)
+      setLoading(false)
     })
 
     return () => unsubscribe()
-  }, [])
+  }, [authLoading, profile])
 
   useEffect(() => {
     if (!authLoading && profile) {
@@ -54,6 +66,18 @@ export default function CalendarPage() {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    )
+  }
+
+  if (!profile) {
+    return (
+      <div className="py-12">
+        <ProtectedSystemGate 
+          title="Kalender gesperrt" 
+          description="Um die Terminplanung und Details zu Events zu sehen, musst du mit deinem Lernsax-Konto angemeldet sein."
+          icon={<Calendar className="h-10 w-10 text-primary" />}
+        />
       </div>
     )
   }

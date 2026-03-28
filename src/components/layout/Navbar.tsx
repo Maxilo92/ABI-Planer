@@ -73,19 +73,23 @@ export function Navbar() {
       subItems: [
         { href: '/', label: 'Dashboard', icon: LayoutDashboard },
         { href: '/news', label: 'News', icon: Megaphone, notify: notifications.news },
-        { href: '/abstimmungen', label: 'Umfragen', icon: BarChart2, notify: notifications.umfragen },
+        ...(profile ? [
+          { href: '/abstimmungen', label: 'Umfragen', icon: BarChart2, notify: notifications.umfragen }
+        ] : []),
       ],
     },
-    {
-      href: '/planung-root',
-      label: 'Planung',
-      icon: Calendar,
-      subItems: [
-        { href: '/kalender', label: 'Kalender', icon: Calendar, notify: notifications.kalender },
-        { href: '/todos', label: 'Todos', icon: CheckSquare, notify: notifications.todos },
-        { href: '/gruppen?bereich=alle-gruppen', label: 'Gruppen & Teams', icon: Users },
-      ],
-    },
+    ...(profile ? [
+      {
+        href: '/planung-root',
+        label: 'Planung',
+        icon: Calendar,
+        subItems: [
+          { href: '/kalender', label: 'Kalender', icon: Calendar, notify: notifications.kalender },
+          { href: '/todos', label: 'Todos', icon: CheckSquare, notify: notifications.todos },
+          { href: '/gruppen?bereich=alle-gruppen', label: 'Gruppen & Teams', icon: Users },
+        ],
+      }
+    ] : []),
     {
       href: '/finanzen-root',
       label: 'Finanzen',
@@ -192,15 +196,15 @@ export function Navbar() {
           <button
             onClick={(e) => toggleSubmenu(item.href, e)}
             className={cn(
-              'flex w-full items-center justify-between rounded-md px-3 py-2.5 text-sm font-medium transition-colors',
+              'flex w-full items-center justify-between rounded-xl px-4 py-3 text-sm font-medium transition-colors',
               active ? 'bg-secondary/50 text-primary' : 'hover:bg-secondary'
             )}
           >
             <div className="flex items-center gap-3">
               <div className="relative">
-                <item.icon className="h-4 w-4" />
+                <item.icon className="h-5 w-5" />
                 {item.notify && (
-                  <span className="absolute -right-0.5 -top-0.5 flex h-2 w-2 rounded-full bg-red-500 border border-background" />
+                  <span className="absolute -right-0.5 -top-0.5 flex h-2.5 w-2.5 rounded-full bg-red-500 border-2 border-background" />
                 )}
               </div>
               <span className="truncate">{item.label}</span>
@@ -214,7 +218,7 @@ export function Navbar() {
               animate={{ rotate: isExpanded ? 90 : 0 }}
               transition={{ duration: 0.2 }}
             >
-              <ChevronRight className="h-4 w-4" />
+              <ChevronRight className="h-4 w-4 opacity-50" />
             </motion.div>
           </button>
         ) : (
@@ -222,14 +226,14 @@ export function Navbar() {
             href={item.href}
             onClick={() => isMobile && setIsOpen(false)}
             className={cn(
-              'flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors',
+              'flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-colors',
               active ? 'bg-secondary text-primary' : 'hover:bg-secondary'
             )}
           >
             <div className="relative">
-              <item.icon className="h-4 w-4" />
+              <item.icon className="h-5 w-5" />
               {item.notify && (
-                <span className="absolute -right-0.5 -top-0.5 flex h-2 w-2 rounded-full bg-red-500 border border-background" />
+                <span className="absolute -right-0.5 -top-0.5 flex h-2.5 w-2.5 rounded-full bg-red-500 border-2 border-background" />
               )}
             </div>
             <span className="truncate">{item.label}</span>
@@ -250,7 +254,7 @@ export function Navbar() {
               transition={{ duration: 0.2, ease: "easeInOut" }}
               className="overflow-hidden"
             >
-              <div className={cn("ml-4 pl-4 border-l space-y-1 py-1", isMobile ? "mt-1" : "mt-1")}>
+              <div className={cn("ml-6 pl-4 border-l-2 space-y-1 py-1", isMobile ? "mt-1" : "mt-1")}>
                 {item.subItems!.map((subItem) => (
                   <Link
                     key={subItem.href}
@@ -264,11 +268,11 @@ export function Navbar() {
                       }
                     }}
                     className={cn(
-                      'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
+                      'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
                       isActive(subItem.href) ? 'text-primary bg-secondary/30' : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
                     )}
                   >
-                    <subItem.icon className="h-3.5 w-3.5" />
+                    <subItem.icon className="h-4 w-4" />
                     <span className="truncate">{subItem.label}</span>
                     {subItem.isBeta && (
                       <Badge variant="secondary" className="ml-1 px-1.5 py-0 text-[9px] uppercase tracking-wide">
@@ -325,19 +329,40 @@ export function Navbar() {
       {/* Mobile drawer */}
       {!loading && isOpen && (
         <div className="md:hidden fixed inset-0 z-40">
-          <button className="absolute inset-0 bg-black/50" onClick={() => setIsOpen(false)} aria-label="Navigation schliessen" />
-          <aside className="absolute left-0 top-16 bottom-0 w-[85vw] max-w-80 border-r bg-background flex flex-col">
+          <motion.button 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 bg-black/50" 
+            onClick={() => setIsOpen(false)} 
+            aria-label="Navigation schliessen" 
+          />
+          <motion.aside 
+            initial={{ x: '-100%' }}
+            animate={{ x: 0 }}
+            exit={{ x: '-100%' }}
+            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+            drag="x"
+            dragConstraints={{ left: 0, right: 0 }}
+            dragElastic={0.05}
+            onDragEnd={(_, info) => {
+              if (info.offset.x < -100) {
+                setIsOpen(false)
+              }
+            }}
+            className="absolute left-0 top-16 bottom-0 w-[85vw] max-w-80 border-r bg-background flex flex-col shadow-2xl touch-pan-y"
+          >
             <div className="flex-1 p-4 overflow-y-auto space-y-1">
               {navItems.map((item) => renderNavItem(item, true))}
             </div>
 
-            <div className="p-4 border-t space-y-2">
+            <div className="p-4 border-t space-y-2 pb-8">
               {profile ? (
                 <>
                   <Link
                     href="/profil"
                     onClick={() => setIsOpen(false)}
-                    className="flex items-center gap-3 rounded-md px-3 py-2.5 hover:bg-secondary transition-colors"
+                    className="flex items-center gap-3 rounded-md px-3 py-3 hover:bg-secondary transition-colors"
                   >
                     <Avatar size="default">
                       <AvatarFallback className="bg-primary/10 text-primary font-bold">{userInitial}</AvatarFallback>
@@ -349,7 +374,7 @@ export function Navbar() {
                   </Link>
                   <Button
                     variant="ghost"
-                    className="w-full justify-start gap-3 text-destructive hover:bg-destructive/10"
+                    className="w-full h-12 justify-start gap-3 text-destructive hover:bg-destructive/10 rounded-xl"
                     onClick={handleSignOut}
                   >
                     <LogOut className="h-4 w-4" />
@@ -357,12 +382,12 @@ export function Navbar() {
                   </Button>
                 </>
               ) : (
-                <Link href="/login" onClick={() => setIsOpen(false)} className={cn(buttonVariants({ variant: 'default' }), 'w-full justify-center')}>
+                <Link href="/login" onClick={() => setIsOpen(false)} className={cn(buttonVariants({ variant: 'default' }), 'w-full h-12 justify-center rounded-xl')}>
                   Anmelden
                 </Link>
               )}
             </div>
-          </aside>
+          </motion.aside>
         </div>
       )}
 

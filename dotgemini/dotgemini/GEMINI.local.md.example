@@ -1,0 +1,26 @@
+# Persönliche Overrides
+
+> Umbenennen in GEMINI.local.md – wird gitignoriert und nicht geteilt.
+
+## Meine Präferenzen
+
+- Ich bevorzuge ausführliche Commit-Messages mit Kontext
+- Immer Begründung vor Änderungen
+- Bei Unsicherheit lieber nachfragen
+
+## Umgebung
+
+- Test-Datenbank läuft auf Port 5433 (nicht 5432)
+- Nutze `pnpm` statt `npm`
+
+## Shortcuts
+
+- "ship it" → `/ship`
+- "review" → `/pr-review`
+- "fix it" → `/debug-fix`
+
+## Aktueller Kontext
+
+- Arbeite am Billing-Modul
+- Staging-Umgebung: https://staging.example.com
+- Feature-Flags via LaunchDarkly

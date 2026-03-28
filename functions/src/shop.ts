@@ -27,15 +27,17 @@ export const createStripeCheckoutSession = onCall({
   region: "europe-west3",
   secrets: ["STRIPE_SECRET_KEY"], // Nutzt Firebase Secrets für Live-Sicherheit
 }, async (request) => {
-  if (!request.auth) {
-    throw new HttpsError("unauthenticated", "Anmeldung erforderlich.");
-  }
-
   const { itemId } = request.data;
   const product = STRIPE_PRICES[itemId];
 
   if (!product) {
     throw new HttpsError("invalid-argument", "Ungültiges Produkt.");
+  }
+
+  // Sicherheits-Check: Sammelkarten-Produkte erfordern zwingend ein Konto
+  const isAppProduct = itemId.includes("booster");
+  if (isAppProduct && !request.auth) {
+    throw new HttpsError("unauthenticated", "Für diesen Artikel ist ein Konto erforderlich.");
   }
 
   const stripeKey = process.env.STRIPE_SECRET_KEY;
@@ -44,9 +46,9 @@ export const createStripeCheckoutSession = onCall({
   }
 
   const stripe = new Stripe(stripeKey);
-  const userId = request.auth.uid;
+  const userId = request.auth?.uid || null;
 
-  logger.info("Creating Stripe session with Promo Codes allowed", { userId, itemId, allow_promotion_codes: true });
+  logger.info("Creating Stripe session", { userId, itemId, isGuest: !userId });
 
   try {
     const session = await stripe.checkout.sessions.create({
@@ -55,22 +57,24 @@ export const createStripeCheckoutSession = onCall({
         quantity: 1,
       }],
       mode: "payment",
-      allow_promotion_codes: true, // Ermöglicht Gutscheincodes im Checkout
-      client_reference_id: userId, // ESSENTIELL: Verknüpfung zum User
+      allow_promotion_codes: true,
+      client_reference_id: userId, // Kann null sein für Gäste
+      billing_address_collection: "required",
       metadata: {
         itemId: itemId,
         amount: product.amount.toString(),
+        isAppProduct: isAppProduct.toString(),
         legal_notice: "Widerrufsverzicht akzeptiert bei Ausführung"
       },
-      // Stripe Tax für legale MwSt.-Abwicklung (muss in Stripe aktiviert sein)
       automatic_tax: { enabled: true },
-      // Custom Text für rechtliche Absicherung im Checkout
       custom_text: {
         submit: {
           message: "Mit dem Kauf stimmst du der sofortigen Ausführung zu und verlierst dein Widerrufsrecht bei digitalen Inhalten."
         }
       },
-      success_url: `https://abi-planer-27.de/sammelkarten?success=true&session_id={CHECKOUT_SESSION_ID}`,
+      success_url: isAppProduct 
+        ? `https://abi-planer-27.de/sammelkarten?success=true&session_id={CHECKOUT_SESSION_ID}`
+        : `https://abi-planer-27.de/shop?success=true&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `https://abi-planer-27.de/shop?canceled=true`,
     });
 
@@ -110,18 +114,18 @@ export const stripeWebhook = onRequest({
   // Nur erfolgreiche Zahlungen verarbeiten
   if (event.type === "checkout.session.completed") {
     const session = event.data.object as Stripe.Checkout.Session;
-    const userId = session.client_reference_id;
+    const userId = session.client_reference_id; // Kann null sein für Gäste
     const amount = Number(session.metadata?.amount || 0);
     const itemId = session.metadata?.itemId;
+    const isAppProduct = session.metadata?.isAppProduct === "true";
 
-    if (!userId || !amount || !itemId) {
-      logger.error("Missing Metadata in Session:", session.id);
-      res.status(200).send("No userId found - ignored.");
+    if (!itemId) {
+      logger.error("Missing ItemId in Session:", session.id);
+      res.status(200).send("No itemId found - ignored.");
       return;
     }
 
     const db = getFirestore("abi-data");
-    const profileRef = db.collection("profiles").doc(userId);
     const transactionRef = db.collection("stripe_transactions").doc(session.id);
 
     try {
@@ -134,37 +138,43 @@ export const stripeWebhook = onRequest({
           return;
         }
 
-        // Booster gutschreiben
-        transaction.update(profileRef, {
-          "booster_stats.extra_available": FieldValue.increment(amount),
-          updated_at: FieldValue.serverTimestamp()
-        });
+        // 1. Fulfillment für App-Produkte (Booster) nur wenn UserID vorhanden
+        if (isAppProduct && userId) {
+          const profileRef = db.collection("profiles").doc(userId);
+          transaction.update(profileRef, {
+            "booster_stats.extra_available": FieldValue.increment(amount),
+            updated_at: FieldValue.serverTimestamp()
+          });
+        }
 
-        // Transaktion als verarbeitet markieren
+        // 2. Transaktion speichern (für alle, inkl. Gäste)
         transaction.set(transactionRef, {
-          user_id: userId,
+          user_id: userId || "guest",
+          is_guest: !userId,
           amount: amount,
           item_id: itemId,
           stripe_session_id: session.id,
+          customer_email: session.customer_details?.email || null,
           processed_at: FieldValue.serverTimestamp(),
           status: "completed"
         });
 
-        // Audit-Log
+        // 3. Audit-Log
         const logRef = db.collection("logs").doc();
         transaction.set(logRef, {
-          user_id: userId,
+          user_id: userId || "guest",
           action: "STRIPE_PAYMENT_SUCCESS",
           details: {
             session_id: session.id,
             item: itemId,
-            booster_count: amount
+            booster_count: isAppProduct ? amount : 0,
+            is_guest: !userId
           },
           timestamp: FieldValue.serverTimestamp()
         });
       });
 
-      logger.info("Boosters awarded successfully for user", { userId, amount });
+      logger.info("Transaction fulfilled successfully", { userId, itemId, isGuest: !userId });
     } catch (error) {
       logger.error("Fulfillment Transaction Failed:", error);
       res.status(500).send("Internal Server Error during fulfillment.");
@@ -280,5 +290,163 @@ export const purchaseBoosters = onCall({
     
     // Provide more detail in the internal error for debugging
     throw new HttpsError("internal", `Kauf fehlgeschlagen: ${error.message || 'Unbekannter Fehler'}`);
+  }
+});
+
+/**
+ * Cloud Function zum Öffnen eines Boosters.
+ * Zieht Karten basierend auf gewichteten Zufallswerten.
+ */
+export const openBooster = onCall({
+  maxInstances: 10,
+  memory: "256MiB",
+  region: "europe-west3",
+}, async (request) => {
+  if (!request.auth) {
+    throw new HttpsError("unauthenticated", "Anmeldung erforderlich.");
+  }
+
+  const userId = request.auth.uid;
+  const db = getFirestore("abi-data");
+  const countToOpen = Math.min(Math.max(Number(request.data.count) || 1, 1), 10); // Limit to max 10 packs at once
+
+  try {
+    return await db.runTransaction(async (transaction) => {
+      const profileRef = db.collection("profiles").doc(userId);
+      const userTeachersRef = db.collection("user_teachers").doc(userId);
+      const settingsRef = db.collection("settings").doc("sammelkarten");
+
+      const [profileSnap, userTeachersSnap, settingsSnap] = await Promise.all([
+        transaction.get(profileRef),
+        transaction.get(userTeachersRef),
+        transaction.get(settingsRef)
+      ]);
+
+      if (!profileSnap.exists) {
+        throw new HttpsError("not-found", "Profil nicht gefunden.");
+      }
+
+      const profileData = profileSnap.data() || {};
+      const boosterStats = profileData.booster_stats || {};
+      const extraAvailable = Number(boosterStats.extra_available) || 0;
+
+      if (extraAvailable < countToOpen) {
+        throw new HttpsError("failed-precondition", `Nicht genügend Booster verfügbar (${extraAvailable} vorhanden, ${countToOpen} benötigt).`);
+      }
+
+      if (!settingsSnap.exists) {
+        throw new HttpsError("internal", "Sammelkarten-Konfiguration fehlt.");
+      }
+
+      const config = settingsSnap.data() as any;
+      const lootTeachers = (config.loot_teachers || []) as any[];
+      const rarityWeightsRaw = config.rarity_weights || [];
+      const rarityWeights = Array.isArray(rarityWeightsRaw) ? rarityWeightsRaw : [rarityWeightsRaw];
+      const variantProbs = config.variant_probabilities || {};
+
+      if (lootTeachers.length === 0 || rarityWeights.length === 0) {
+        throw new HttpsError("internal", "Keine Karten zum Ziehen verfügbar.");
+      }
+
+      const allPacks: any[] = [];
+      const userTeachersData = (userTeachersSnap.data() || {}) as any;
+
+      for (let p = 0; p < countToOpen; p++) {
+        const cardsOpenedInPack: any[] = [];
+        // Jedes Pack enthält so viele Karten wie rarityWeights definiert sind (normalerweise 3)
+        for (const weights of rarityWeights) {
+          // 1. Seltenheit rollen
+          const rarities = ["common", "rare", "epic", "mythic", "legendary"];
+          const totalWeight = rarities.reduce((sum, r) => sum + (Number(weights[r]) || 0), 0);
+          let randomRarityValue = Math.random() * totalWeight;
+          let selectedRarity = "common";
+          
+          for (const r of rarities) {
+            const w = Number(weights[r]) || 0;
+            if (randomRarityValue < w) {
+              selectedRarity = r;
+              break;
+            }
+            randomRarityValue -= w;
+          }
+
+          // 2. Variante rollen
+          const randVariantValue = Math.random();
+          let variant: "normal" | "holo" | "shiny" | "black_shiny_holo" = "normal";
+          if (randVariantValue < (Number(variantProbs.black_shiny_holo) || 0.005)) {
+            variant = "black_shiny_holo";
+          } else if (randVariantValue < (Number(variantProbs.shiny) || 0.05)) {
+            variant = "shiny";
+          } else if (randVariantValue < (Number(variantProbs.holo) || 0.15)) {
+            variant = "holo";
+          }
+
+          // 3. Lehrer auswählen
+          const candidates = lootTeachers.filter((t) => t.rarity === selectedRarity);
+          const selectedTeacher = candidates.length > 0
+            ? candidates[Math.floor(Math.random() * candidates.length)]
+            : (lootTeachers.filter(t => t.rarity === "common")[0] || lootTeachers[0]);
+
+          if (!selectedTeacher) continue;
+
+          const teacherId = selectedTeacher.id;
+
+          // 4. User-Fortschritt aktualisieren
+          if (!userTeachersData[teacherId]) {
+            userTeachersData[teacherId] = {
+              count: 1,
+              level: 1,
+              variants: { [variant]: 1 }
+            };
+          } else {
+            const current = userTeachersData[teacherId];
+            current.count = (Number(current.count) || 0) + 1;
+            // Level-Formel: Math.floor(Math.sqrt(count - 1)) + 1
+            current.level = Math.floor(Math.sqrt(current.count - 1)) + 1;
+            if (!current.variants) current.variants = {};
+            current.variants[variant] = (Number(current.variants[variant]) || 0) + 1;
+          }
+
+          cardsOpenedInPack.push({
+            id: teacherId,
+            name: selectedTeacher.name,
+            rarity: selectedTeacher.rarity,
+            variant,
+            level: userTeachersData[teacherId].level,
+            count: userTeachersData[teacherId].count
+          });
+        }
+        allPacks.push({ cards: cardsOpenedInPack });
+      }
+
+      // Profile aktualisieren: Booster abziehen, total_opened erhöhen
+      transaction.update(profileRef, {
+        "booster_stats.extra_available": FieldValue.increment(-countToOpen),
+        "booster_stats.total_opened": FieldValue.increment(countToOpen),
+        updated_at: FieldValue.serverTimestamp()
+      });
+
+      // User Teachers speichern
+      transaction.set(userTeachersRef, userTeachersData);
+
+      // Audit Log
+      const logRef = db.collection("logs").doc();
+      transaction.set(logRef, {
+        user_id: userId,
+        action: "OPEN_BOOSTER",
+        details: {
+          packCount: countToOpen,
+          packs: allPacks.map(p => p.cards.map((c: any) => ({ id: c.id, variant: c.variant, rarity: c.rarity })))
+        },
+        timestamp: FieldValue.serverTimestamp()
+      });
+
+      logger.info("Boosters successfully opened", { userId, packCount: countToOpen });
+      return { packs: allPacks };
+    });
+  } catch (error: any) {
+    logger.error("Error in openBooster:", error);
+    if (error instanceof HttpsError) throw error;
+    throw new HttpsError("internal", error.message || "Interner Fehler beim Öffnen des Boosters.");
   }
 });

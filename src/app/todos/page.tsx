@@ -10,6 +10,8 @@ import { Todo } from '@/types/database'
 import { Loader2, Search } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { ProtectedSystemGate } from '@/components/ui/ProtectedSystemGate'
+import { CheckSquare } from 'lucide-react'
 
 export default function TodosPage() {
   const { profile, loading: authLoading } = useAuth()
@@ -18,6 +20,13 @@ export default function TodosPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    if (authLoading) return
+
+    if (!profile) {
+      setLoading(false)
+      return
+    }
+
     const q = query(
       collection(db, 'todos'),
       orderBy('created_at', 'desc')
@@ -25,10 +34,13 @@ export default function TodosPage() {
     const unsubscribe = onSnapshot(q, (snapshot) => {
       setTodos(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Todo)))
       setLoading(false)
+    }, (error) => {
+      console.error('Error listening to todos:', error)
+      setLoading(false)
     })
 
     return () => unsubscribe()
-  }, [])
+  }, [authLoading, profile])
 
   useEffect(() => {
     if (!authLoading && profile) {
@@ -56,6 +68,18 @@ export default function TodosPage() {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    )
+  }
+
+  if (!profile) {
+    return (
+      <div className="py-12">
+        <ProtectedSystemGate 
+          title="Aufgaben gesperrt" 
+          description="Die internen To-Dos und Verantwortlichkeiten sind nur für angemeldete Schüler einsehbar."
+          icon={<CheckSquare className="h-10 w-10 text-primary" />}
+        />
       </div>
     )
   }

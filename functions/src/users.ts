@@ -65,5 +65,29 @@ export const onProfileDeleted = onDocumentDeleted({
     console.error(`Error deleting unseen_gifts for user ${userId}:`, error);
   }
 
+  // 5. Delete referral record
+  try {
+    await db.collection("referrals").doc(`std_${userId}`).delete();
+    console.log(`Deleted referral record for user ${userId}`);
+  } catch (error) {
+    console.error(`Error deleting referral record for user ${userId}:`, error);
+  }
+
+  // 6. Pseudonymize Stripe transactions
+  try {
+    const stripeTransactionsSnapshot = await db.collection("stripe_transactions").where("user_id", "==", userId).get();
+    const pseudonymizePromises = stripeTransactionsSnapshot.docs.map(doc => 
+      doc.ref.update({
+        user_id: `masked_${userId.substring(0, 8)}`,
+        status: "pseudonymized",
+        pseudonymized_at: admin.firestore.FieldValue.serverTimestamp()
+      })
+    );
+    await Promise.all(pseudonymizePromises);
+    console.log(`Pseudonymized ${stripeTransactionsSnapshot.size} Stripe transactions for user ${userId}`);
+  } catch (error) {
+    console.error(`Error pseudonymizing Stripe transactions for user ${userId}:`, error);
+  }
+
   console.log(`Cleanup finished for user: ${userId}`);
 });

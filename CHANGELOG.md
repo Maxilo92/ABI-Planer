@@ -1,5 +1,77 @@
 # Changelog
 
+## [0.36.15] - 2026-03-28
+- **UX Reversion:** Die Sortier-Logik und der Funktionsumfang des Dashboards für angemeldete Nutzer wurden vollständig auf den ursprünglichen Stand zurückgesetzt (inkl. Ranking/Leaderboard). Lediglich die Sammelkarten-Werbung bleibt für Konto-Inhaber ausgeblendet, um die Benutzeroberfläche sauber zu halten.
+- **Guest Logic Stability:** Die optimierte "Promo-First" Ansicht für Gäste bleibt erhalten, ohne die Erfahrung für registrierte Nutzer zu beeinflussen.
+
+## [0.36.14] - 2026-03-28
+- **UX Update (First Impression):** Optimierung des Dashboards für neue Besucher. Die Sammelkarten-Promo wird für Gäste nun als allererstes Element angezeigt, um sofort ein visuelles Highlight zu setzen und das Interesse am Projekt zu wecken.
+- **Contextual UI:** Die Sammelkarten-Werbung wird für bereits angemeldete Nutzer nun konsequent ausgeblendet, um Platz für deren eigentliche Planungsdaten zu schaffen.
+
+## [0.36.13] - 2026-03-28
+- **UX Refinement (Navbar):** Der Menüpunkt 'Umfragen' wird für Gäste nun ebenfalls in der Sidebar ausgeblendet. Damit sind alle interaktiven und geschützten Bereiche der App für nicht angemeldete Nutzer unsichtbar, was die Navigation auf die öffentlich zugänglichen Inhalte (Dashboard & News) fokussiert.
+
+## [0.36.12] - 2026-03-28
+- **UX Refinement (Navbar):** Die gesamte Menü-Kategorie 'Planung' (Kalender, Todos, Gruppen) wird für Gäste nun vollständig ausgeblendet, um die Navigation übersichtlicher zu gestalten.
+- **Promo Page Update:** Die `/promo` Seite wurde aktualisiert, um die aktuellen Berechtigungsunterschiede zwischen Gästen und registrierten Nutzern korrekt widerzuspiegeln. Sie dient nun als zentraler Info-Hub für die Vorteile eines Lernsax-Accounts.
+
+## [0.36.11] - 2026-03-28
+- **Shop Update:** Booster-Packs und andere kontoabhängige Artikel werden für Gäste nun vollständig ausgeblendet, statt nur gesperrt zu sein. Dies sorgt für eine übersichtlichere Shop-Ansicht, die nur aktuell kaufbare Artikel für den jeweiligen Nutzer anzeigt.
+- **Dynamic Categories:** Shop-Kategorien werden nun dynamisch gefiltert. Kategorien, die für den aktuellen Nutzer keine verfügbaren Artikel enthalten (z.B. 'Sammelkarten' für Gäste), werden automatisch verborgen.
+
+## [0.36.10] - 2026-03-28
+- **Bugfix (Shop):** Behebung eines `ReferenceError`, bei dem das `Loader2` Icon im Shop nicht korrekt importiert war und zu einem Absturz der Seite führte.
+
+## [0.36.9] - 2026-03-28
+- **Shop Update (Guest Checkout):** Einführung von Gast-Bestellungen für app-unabhängige Artikel (z.B. Soli-Beiträge, Merch). Nicht angemeldete Nutzer können nun den Shop durchstöbern und ausgewählte Artikel direkt über Stripe erwerben.
+- **Item-Level Security:** App-spezifische digitale Güter (wie Booster-Packs) bleiben weiterhin exklusiv für angemeldete Nutzer mit Lernsax-Konto reserviert. Die Benutzeroberfläche führt Gäste nun gezielt durch die unterschiedlichen Berechtigungsstufen pro Artikel.
+- **Backend Fulfillment:** Die Cloud Functions wurden aktualisiert, um Zahlungen sowohl für registrierte Nutzer (automatisierte Booster-Gutschrift) als auch für Gäste (reine Transaktionserfassung) sicher abzuwickeln.
+
+## [0.36.8] - 2026-03-28
+- **Security & UX (Shop):** Der Shop wurde nun ebenfalls mit einem visuellen `ProtectedSystemGate` für nicht angemeldete Nutzer versehen. Dies stellt sicher, dass Käufe nur von authentifizierten Nutzern getätigt werden können, während Gäste weiterhin über die Vorteile des Shops informiert werden.
+
+## [0.36.7] - 2026-03-28
+- **UX Refinement (Dashboard):** Präzisierung der Dashboard-Sichtbarkeit. Das "Stufen-Ranking" (Leaderboard) und das uneingeschränkte Finanz-Widget sind nun ausschließlich für angemeldete Nutzer sichtbar.
+- **Privacy Enforcement:** Für Gäste (Nutzer ohne Konto) bleibt das Ranking vollständig verborgen und das Finanz-Widget zeigt nur anonymisierte Fortschrittsdaten ohne exakte Beträge. Sobald ein Nutzer angemeldet ist, stehen alle Funktionen und Daten wie gewohnt uneingeschränkt zur Verfügung.
+
+## [0.36.6] - 2026-03-28
+- **Privacy Update (Dashboard):** Das "Stufen-Ranking" (Leaderboard) wurde vom Dashboard entfernt.
+- **Financial Privacy:** Das Finanz-Widget auf dem Dashboard wurde für Gäste eingeschränkt. Ohne Anmeldung sind der exakte Kassenstand sowie die Ticketpreis-Kalkulation verborgen; es wird lediglich der Fortschritt zum Gesamtziel visualisiert.
+- **News Engagement:** Liken und Kommentieren von News-Beiträgen ist nun technisch und visuell nur noch für angemeldete Nutzer möglich.
+- **Stability Fix:** Behebung eines Fehlers bei der Initialisierung von Dashboard-Daten nach dem Login.
+
+## [0.36.5] - 2026-03-28
+- **UX & Privacy (Dashboard):** Termine und Todos werden für nicht angemeldete Nutzer nun vollständig vom Dashboard ausgeblendet. Zudem wurde das Dashboard für Gäste auf die wesentlichen öffentlichen Inhalte (News & Sammelkarten-Promo) reduziert, um eine saubere und einladende Oberfläche ohne leere Boxen zu gewährleisten.
+- **Navigation Update:** Die Links zu 'Kalender' und 'Todos' werden in der Sidebar für Gäste nun ebenfalls verborgen, um die Privatsphäre der internen Planung zu wahren.
+- **Frontend Performance:** Optimierung der Dashboard-Datenabfragen. Listener für geschützte Daten werden erst gestartet, wenn eine Authentifizierung vorliegt.
+
+## [0.36.4] - 2026-03-28
+- **UX Update (Dashboard):** Einführung einer interaktiven Werbe-Kachel für das Sammelkarten-System auf dem Dashboard. Auch nicht angemeldete Nutzer sehen nun die Vorteile des Sammelalbums (Shiny, Holo, Legendary Karten) und werden gezielt zur Registrierung eingeladen, um am Mini-Game teilzunehmen.
+
+## [0.36.3] - 2026-03-28
+- **Bugfix (UX):** Behebung eines kritischen Fehlers, bei dem nicht angemeldete Nutzer in einer permanenten Lade-Animation feststeckten. Die `ProtectedSystemGate` Sperr-Anzeige wird nun zuverlässig eingeblendet, wenn kein Profil gefunden wurde.
+- **Hook Stability:** Bereinigung der `useEffect` Abhängigkeiten in allen Haupt-Modulen für stabilere Re-Renders.
+
+## [0.36.2] - 2026-03-28
+- **Bugfix (Console):** Behebung eines React-Fehlers in der `ProtectedSystemGate` Komponente. Die `asChild` Prop wurde durch das korrekte `render` Prop-Pattern für Buttons ersetzt.
+- **Security (Firestore):** Härtung der Frontend-Listener. Datenbank-Abfragen für geschützte Bereiche (Kalender, Finanzen, etc.) werden nun erst nach erfolgreicher Anmeldung gestartet. Dies verhindert "Permission Denied" Fehler in der Browser-Konsole für nicht angemeldete Besucher.
+
+## [0.36.1] - 2026-03-28
+- **UX Update (Public Access):** Die News-Sektion ist nun wieder vollständig öffentlich einsehbar, auch ohne angemeldetes Konto. Dies ermöglicht es, wichtige Updates auch externen Personen oder noch nicht registrierten Schülern zugänglich zu machen.
+- **Security & UX (Protected Gates):** Alle geschützten Bereiche (Kalender, Finanzen, Umfragen, Sammelkarten, Aufgaben, Gruppen) wurden mit einem visuellen "Login Required"-Gate versehen. Statt eines automatischen Redirects sehen nicht angemeldete Nutzer nun eine informative Sperr-Anzeige mit direktem Link zur Anmeldung.
+- **Firestore Rules:** Wiederherstellung des öffentlichen Lesezugriffs für die `news` Collection in den Sicherheitsregeln. Härtung der `todos` Regeln (Lernsax-Pflicht für Lesezugriff).
+
+## [0.36.0] - 2026-03-28
+- **Critical Security (TCG Logic):** Die Booster-Generierung (RNG) wurde vollständig auf die Serverseite (`openBooster` Cloud Function) verschoben. Damit ist eine Manipulation der Karten-Drops durch Nutzer technisch ausgeschlossen.
+- **Critical Security (Firestore):** Alle Kern-Module (`news`, `events`, `finances`, `polls`, `teachers`) wurden gegen unbefugten Lesezugriff aus dem Internet gesperrt. Zugriff erfordert nun zwingend eine Authentifizierung via Lernsax.
+- **Critical Security (Data Integrity):** Nutzer-Schreibrechte auf die eigene Sammelkarten-Kollektion wurden entzogen. Aktualisierungen erfolgen nur noch autorisiert durch das Backend.
+- **Compliance (GDPR/DSGVO):** Vervollständigung der Nutzerdaten-Löschung. Das System entfernt nun auch Referral-Daten und anonymisiert Finanz-Datensätze rechtskonform für die GoBD-Aufbewahrungspflicht.
+- **Compliance (Stripe):** Die Erfassung der Rechnungsadresse im Checkout ist nun verpflichtend, um die EU-MOSS MwSt-Vorgaben für digitale Güter vollständig zu erfüllen.
+- **Automation (Rarity Sync):** Implementierung eines 15-minütigen Cron-Jobs zur globalen Stabilisierung der Lehrer-Seltenheiten (Vermeidung von Seltenheits-Drift).
+
+## [0.35.4] - 2026-03-28
+- **Fix (Samsung Browser):** Behebung von Rendering-Problemen im Samsung Mobile Browser durch robustere CSS-Einheiten (%) und verbesserte 3D-Transform-Kompatibilität (`-webkit-` Prefixe, `translateZ` Optimierung).
+
 ## [0.35.3] - 2026-03-28
 - **Hotfix (Hydration):** Behebung von DOM-Nesting-Fehlern (`<span> cannot be a child of <tbody>`) in der Benutzerverwaltung und in den Admin-Logs. `ContextMenuContent` wurde in ein `TableCell` verschoben, um die HTML-Validität der Tabellenstruktur zu wahren.
 

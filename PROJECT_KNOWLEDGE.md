@@ -15,19 +15,30 @@ Dieses Dokument sichert das Wissen über die technische Struktur und die getroff
   - `profiles/{uid}`: Nutzerdaten inkl. `role` ('viewer', 'planner', 'admin') und `is_approved`.
   - `settings/config`: Zentrale App-Werte (`ball_date`, `funding_goal`).
   - `finances`, `news`, `events`, `todos`, `polls`, `votes`: Module der App.
-
 ## 3. Sicherheits-Konzept (Zero Trust)
-### E-Mail-Sperre
-- Sowohl in der **UI** (`RegisterPage`, `LoginPage`) als auch in den **Firestore Rules** wird die Domain `@hgr-web.lernsax.de` erzwungen.
-- Code: `email.toLowerCase().endsWith('@hgr-web.lernsax.de')`.
+### Daten-Zugriff (Read Rules)
+- **Öffentlich:** Die `news` Collection ist für alle Nutzer (auch unauthentifiziert) lesbar, um Transparenz zu gewährleisten.
+- **Kritisch:** Alle anderen Kern-Collections (`events`, `finances`, `polls`, `teachers`, `todos`) sind gegen öffentlichen Lesezugriff gesperrt.
+- **Regel:** Zugriff erfolgt nur nach erfolgreicher Authentifizierung via `@hgr-web.lernsax.de`.
+
+### Sammelkarten & RNG (TCG)
+- **Autoritär:** Die Generierung von Karten-Packs und Varianten (RNG) erfolgt ausschließlich serverseitig über die Cloud Function `openBooster`.
+- **Integrität:** Client-seitige Manipulationen der Sammlung sind unmöglich, da Schreibrechte auf `user_teachers` für Nutzer gesperrt sind und nur via Admin SDK (Cloud Functions) aktualisiert werden.
 
 ### Rollen-System
-- **Viewer:** Standard für alle Lernsax-Nutzer (darf lesen und abstimmen).
-- **Planner:** Darf Termine, News und Aufgaben erstellen.
-- **Admin:** Darf zusätzlich Rollen vergeben und Profile löschen.
+...
 - **Erster Nutzer:** Der allererste registrierte Nutzer in der Datenbank erhält automatisch die `admin` Rolle.
 
-## 4. Deployment-Workflow
+## 4. Backend & Automatisierung (Cloud Functions)
+### Rarity Sync (Cron)
+- **Job:** Ein 15-minütiger Cron-Job (`syncTeacherRarities`) stabilisiert die Seltenheiten basierend auf globalen Limits (z.B. max. 1 Legendary). Dies verhindert "Rarity Drift".
+
+### GDPR & Löschung
+- **Vollständig:** Die Lösch-Logik (`onProfileDeleted`) umfasst alle Nutzer-Daten, inkl. der `referrals` Collection. Finanz-Transfers in `stripe_transactions` werden aus GoBD-Gründen (10 Jahre) anonymisiert aufbewahrt.
+
+## 5. Deployment-Workflow
+...
+
 Das Deployment erfolgt über GitHub-Branches:
 1.  **Entwicklung:** Änderungen werden auf dem `main` Branch gesammelt.
 2.  **Produktion:** Um die Live-Seite zu aktualisieren, muss `main` in den **`release`** Branch gemergt und gepusht werden.

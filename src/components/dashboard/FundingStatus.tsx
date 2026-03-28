@@ -13,9 +13,10 @@ interface FundingStatusProps {
   goal: number
   initialTicketSales?: number
   onTicketSalesChange?: (value: number) => void
+  isAuthenticated: boolean
 }
 
-export function FundingStatus({ current, goal, initialTicketSales = 150, onTicketSalesChange }: FundingStatusProps) {
+export function FundingStatus({ current, goal, initialTicketSales = 150, onTicketSalesChange, isAuthenticated }: FundingStatusProps) {
   const [mounted, setHydrated] = useState(false)
   const [ticketSalesInput, setTicketSalesInput] = useState(String(initialTicketSales))
   
@@ -75,7 +76,7 @@ export function FundingStatus({ current, goal, initialTicketSales = 150, onTicke
           <div className="space-y-4">
             <div className="flex justify-between items-end">
               <span className="text-2xl md:text-3xl font-bold" suppressHydrationWarning>
-                {formatCurrency(current)}
+                {isAuthenticated ? formatCurrency(current) : '???,?? €'}
               </span>
               <span className="text-xs text-muted-foreground mb-1" suppressHydrationWarning>
                 von {formatCurrency(goal)}
@@ -89,35 +90,43 @@ export function FundingStatus({ current, goal, initialTicketSales = 150, onTicke
             />
           </div>
 
-          <div className="pt-4 border-t space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="space-y-1">
-                <Label htmlFor="tickets" className="text-xs text-muted-foreground">Erwartete Ticketverkäufe</Label>
-                <Input 
-                  id="tickets"
-                  type="number"
-                  value={ticketSalesInput}
-                  onChange={(e) => {
-                    const value = e.target.value
-                    if (/^\d*$/.test(value)) {
-                      setTicketSalesInput(value)
-                    }
-                  }}
-                  className="w-24 h-8 text-sm"
-                  min="0"
-                />
+          {isAuthenticated ? (
+            <div className="pt-4 border-t space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="space-y-1">
+                  <Label htmlFor="tickets" className="text-xs text-muted-foreground">Erwartete Ticketverkäufe</Label>
+                  <Input 
+                    id="tickets"
+                    type="number"
+                    value={ticketSalesInput}
+                    onChange={(e) => {
+                      const value = e.target.value
+                      if (/^\d*$/.test(value)) {
+                        setTicketSalesInput(value)
+                      }
+                    }}
+                    className="w-24 h-8 text-sm"
+                    min="0"
+                  />
+                </div>
+                <div className="text-right">
+                  <p className="text-xs text-muted-foreground mb-1">Geschätzter Ticketpreis</p>
+                  <p className="text-xl font-bold text-primary" suppressHydrationWarning>
+                    {formatCurrency(estimatedPrice, 2)}
+                  </p>
+                </div>
               </div>
-              <div className="text-right">
-                <p className="text-xs text-muted-foreground mb-1">Geschätzter Ticketpreis</p>
-                <p className="text-xl font-bold text-primary" suppressHydrationWarning>
-                  {formatCurrency(estimatedPrice, 2)}
-                </p>
-              </div>
+              <p className="text-[10px] text-muted-foreground italic leading-tight">
+                Der Ticketpreis berechnet sich aus dem noch offenen Betrag ({formatCurrency(remaining)}), um das Ziel von {formatCurrency(goal)} zu erreichen, geteilt durch die Anzahl der erwarteten Verkäufe.
+              </p>
             </div>
-            <p className="text-[10px] text-muted-foreground italic leading-tight">
-              Der Ticketpreis berechnet sich aus dem noch offenen Betrag ({formatCurrency(remaining)}), um das Ziel von {formatCurrency(goal)} zu erreichen, geteilt durch die Anzahl der erwarteten Verkäufe.
-            </p>
-          </div>
+          ) : (
+            <div className="pt-4 border-t space-y-2 text-center">
+              <p className="text-xs text-muted-foreground font-medium">
+                Melde dich an, um den aktuellen Kassenstand und Details zur Finanzierung zu sehen.
+              </p>
+            </div>
+          )}
           
           <p className="text-[10px] md:text-xs text-muted-foreground text-center italic opacity-70">
             Das Ziel bildet euer angestrebtes Budget ab. Einnahmen bilden den aktuellen Stand.

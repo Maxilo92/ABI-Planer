@@ -25,7 +25,8 @@ import {
   Heart,
   Clock,
   LayoutGrid,
-  Tags
+  Tags,
+  Loader2
 } from 'lucide-react'
 import { toast } from 'sonner'
 import Link from 'next/link'
@@ -47,6 +48,7 @@ interface ShopItem {
   badge?: string
   isBooster?: boolean
   isPlaceholder?: boolean
+  requireAuth?: boolean
 }
 
 const CATEGORIES = [
@@ -67,7 +69,8 @@ const ALL_ITEMS: ShopItem[] = [
     priceNum: 0.99,
     description: '1 Booster Pack (3 Lehrerkarten).',
     color: 'blue',
-    isBooster: true
+    isBooster: true,
+    requireAuth: true
   },
   {
     id: 'five-boosters',
@@ -80,7 +83,8 @@ const ALL_ITEMS: ShopItem[] = [
     description: '5 Booster Packs (15 Lehrerkarten).',
     color: 'purple',
     badge: 'Beliebt',
-    isBooster: true
+    isBooster: true,
+    requireAuth: true
   },
   {
     id: 'twelve-boosters',
@@ -93,7 +97,8 @@ const ALL_ITEMS: ShopItem[] = [
     description: '12 Booster Packs (36 Lehrerkarten).',
     color: 'amber',
     badge: 'Bester Wert',
-    isBooster: true
+    isBooster: true,
+    requireAuth: true
   },
   {
     id: 'soli-donation-small',
@@ -105,7 +110,8 @@ const ALL_ITEMS: ShopItem[] = [
     priceNum: 2.50,
     description: 'Unterstütze deine Stufe direkt mit einem kleinen Beitrag.',
     color: 'emerald',
-    isPlaceholder: true
+    isPlaceholder: true,
+    requireAuth: false
   },
   {
     id: 'soli-donation-large',
@@ -118,17 +124,34 @@ const ALL_ITEMS: ShopItem[] = [
     description: 'Maximale Unterstützung für eure Abikasse.',
     color: 'rose',
     isPlaceholder: true,
-    badge: 'Ehren-Aktion'
+    badge: 'Ehren-Aktion',
+    requireAuth: false
   }
 ]
 
 function ShopContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { profile } = useAuth()
+  const { user, profile, loading: authLoading } = useAuth()
   const { getRemainingBoosters } = useUserTeachers()
   
+  const availableCategories = useMemo(() => {
+    return CATEGORIES.filter(cat => {
+      if (cat.id === 'all') return true
+      const itemsInCat = ALL_ITEMS.filter(item => item.category === cat.id as any)
+      const accessibleItems = user ? itemsInCat : itemsInCat.filter(i => !i.requireAuth)
+      return accessibleItems.length > 0
+    })
+  }, [user])
+
   const [activeCategory, setActiveCategory] = useState(searchParams.get('category') || 'all')
+
+  // Effect to handle category hiding if user logs out or requested cat is invalid for guest
+  useEffect(() => {
+    if (activeCategory !== 'all' && !availableCategories.find(c => c.id === activeCategory)) {
+      setActiveCategory('all')
+    }
+  }, [availableCategories, activeCategory])
   const [isPurchasing, setIsPurchasing] = useState<string | null>(null)
   const [successItem, setSuccessItem] = useState<{name: string, amount: number} | null>(null)
   const [confirmItem, setConfirmItem] = useState<ShopItem | null>(null)
@@ -145,15 +168,29 @@ function ShopContent() {
   }, [searchParams])
 
   const filteredItems = useMemo(() => {
-    if (activeCategory === 'all') return ALL_ITEMS
-    return ALL_ITEMS.filter(item => item.category === activeCategory)
-  }, [activeCategory])
+    let items = ALL_ITEMS
+    if (activeCategory !== 'all') {
+      items = items.filter(item => item.category === activeCategory)
+    }
+    // Filter out items that require login if user is not authenticated
+    if (!user) {
+      items = items.filter(item => !item.requireAuth)
+    }
+    return items
+  }, [activeCategory, user])
 
   const now = new Date()
   const currentMonthStr = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`
   const shopStats = (profile?.shop_stats?.month === currentMonthStr && profile?.shop_stats) ? profile.shop_stats.counts : {}
 
   const handleStripeCheckout = async (item: ShopItem) => {
+    if (item.requireAuth && !user) {
+      toast.error('Anmeldung erforderlich', {
+        description: 'Um Booster-Packs zu sammeln, musst du angemeldet sein.'
+      })
+      return
+    }
+
     if (item.isPlaceholder) {
       toast.info('Dieser Artikel ist aktuell noch in Vorbereitung.')
       return
@@ -177,6 +214,14 @@ function ShopContent() {
       toast.error(err.message || 'Bezahlvorgang konnte nicht gestartet werden.')
       setIsPurchasing(null)
     }
+  }
+
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    )
   }
 
   return (
@@ -217,7 +262,7 @@ function ShopContent() {
 
         {/* Categories */}
         <div className="flex flex-wrap justify-center gap-2">
-          {CATEGORIES.map((cat) => (
+          {availableCategories.map((cat) => (
             <button
               key={cat.id}
               onClick={() => setActiveCategory(cat.id)}
@@ -329,7 +374,15 @@ function ShopContent() {
                         isLimitReached ? "bg-muted text-muted-foreground cursor-not-allowed" : "bg-primary text-primary-foreground hover:bg-primary/90"
                       )}
                       disabled={isPurchasing !== null || isLimitReached}
-                      onClick={() => setConfirmItem(item)}
+                      onClick={() => {
+                        if (item.requireAuth && !user) {
+                          toast.error('Anmeldung erforderlich', {
+                            description: 'Booster-Packs können nur mit einem registrierten Lernsax-Konto gesammelt werden.'
+                          })
+                          return
+                        }
+                        setConfirmItem(item)
+                      }}
                     >
                       {isPurchasing === item.id ? (
                         <div className="flex items-center gap-3">
@@ -339,13 +392,20 @@ function ShopContent() {
                       ) : isLimitReached ? (
                         <span>Limit erreicht</span>
                       ) : (
-                        <div className="flex items-center justify-center gap-4">
-                          {item.amount > 1 && item.isBooster && (
-                            <span className="text-sm line-through opacity-40 decoration-1 font-medium">
-                              {(item.amount * 0.99).toLocaleString('de-DE', { minimumFractionDigits: 2 })}€
+                        <div className="flex flex-col items-center">
+                          <div className="flex items-center justify-center gap-4">
+                            {item.amount > 1 && item.isBooster && (
+                              <span className="text-sm line-through opacity-40 decoration-1 font-medium">
+                                {(item.amount * 0.99).toLocaleString('de-DE', { minimumFractionDigits: 2 })}€
+                              </span>
+                            )}
+                            <span className="text-2xl tracking-tighter">{item.price}</span>
+                          </div>
+                          {item.requireAuth && !user && (
+                            <span className="text-[9px] uppercase tracking-widest opacity-60 mt-1 flex items-center gap-1 font-bold">
+                              <Lock className="w-2.5 h-2.5" /> Login erforderlich
                             </span>
                           )}
-                          <span className="text-2xl tracking-tighter">{item.price}</span>
                         </div>
                       )}
                     </Button>

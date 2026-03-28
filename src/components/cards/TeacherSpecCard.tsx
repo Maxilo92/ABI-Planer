@@ -76,14 +76,14 @@ export const TeacherSpecCard: React.FC<TeacherSpecCardProps> = ({
         <CardEffectOverlay variant={data.variant} tintColor={data.color} />
         <div className={cn("absolute inset-0 pointer-events-none", styleClasses.bgOverlay)} />
 
-        <div className="relative z-10 h-full w-full p-[7cqw] flex flex-col space-y-[3cqw]">
+        <div className="relative z-10 h-full w-full p-[7%] flex flex-col space-y-[3%]">
           {/* Header: Name & HP */}
-          <div className="flex justify-between items-center w-full border-b-[0.5cqw] border-current pb-[1cqw]" style={{ color: (isBlckShiny || isGlass || isShiny) ? 'white' : 'black' }}>
+          <div className="flex justify-between items-center w-full border-b-[0.5cqw] border-current pb-[1%]" style={{ color: (isBlckShiny || isGlass || isShiny) ? 'white' : 'black' }}>
             <h2 className={cn("text-[6.5cqw] truncate max-w-[65%] font-black uppercase tracking-tighter leading-none", styleClasses.text)}>
               {data.name}
             </h2>
             {data.hp && (
-              <div className="flex items-center gap-[1cqw]">
+              <div className="flex items-center gap-[1%]">
                 <span className="text-[3cqw] font-black uppercase opacity-60">HP</span>
                 <span className="text-[7cqw] font-black tracking-tighter leading-none">{data.hp}</span>
                 <Heart className="w-[5.5cqw] h-[5.5cqw] fill-current text-red-500" />
@@ -92,16 +92,16 @@ export const TeacherSpecCard: React.FC<TeacherSpecCardProps> = ({
           </div>
 
           {/* Small Artwork Box */}
-          <div className="w-full aspect-[2/1] bg-black/10 rounded-[3cqw] flex items-center justify-center border-[0.4cqw] border-current/20 shrink-0" style={{ color: (isBlckShiny || isGlass || isShiny) ? 'white' : 'black' }}>
+          <div className="w-full aspect-[2/1] bg-black/10 rounded-[3%] flex items-center justify-center border-[0.4cqw] border-current/20 shrink-0" style={{ color: (isBlckShiny || isGlass || isShiny) ? 'white' : 'black' }}>
             <GraduationCap className="w-[12cqw] h-[12cqw] opacity-30" />
           </div>
 
           {/* Attacks List */}
-          <div className="flex-1 space-y-[3cqw] overflow-hidden pt-[1cqw]">
+          <div className="flex-1 space-y-[3%] overflow-hidden pt-[1%]">
             {data.attacks?.slice(0, 3).map((attack, idx) => (
-              <div key={idx} className="flex flex-col border-b-[0.2cqw] border-current/10 pb-[2cqw]" style={{ color: (isBlckShiny || isGlass || isShiny) ? 'white' : 'black' }}>
+              <div key={idx} className="flex flex-col border-b-[0.2cqw] border-current/10 pb-[2%]" style={{ color: (isBlckShiny || isGlass || isShiny) ? 'white' : 'black' }}>
                 <div className="flex justify-between items-center">
-                  <div className="flex items-center gap-[1.5cqw]">
+                  <div className="flex items-center gap-[1.5%]">
                     <Swords className="w-[4cqw] h-[4cqw] text-blue-500" />
                     <span className="text-[4.5cqw] font-black uppercase tracking-tight">{attack.name}</span>
                   </div>
@@ -110,7 +110,7 @@ export const TeacherSpecCard: React.FC<TeacherSpecCardProps> = ({
                   )}
                 </div>
                 {attack.description && (
-                  <p className="text-[3cqw] leading-tight opacity-70 line-clamp-2 mt-[0.5cqw]">
+                  <p className="text-[3cqw] leading-tight opacity-70 line-clamp-2 mt-[0.5%]">
                     {attack.description}
                   </p>
                 )}
@@ -119,11 +119,11 @@ export const TeacherSpecCard: React.FC<TeacherSpecCardProps> = ({
           </div>
 
           {/* Footer: Flavor Text & Metadata */}
-          <div className="space-y-[2.5cqw] mt-auto shrink-0">
+          <div className="space-y-[2.5%] mt-auto shrink-0">
             {data.description && (
               <div 
                 className={cn(
-                  "rounded-[2.5cqw] p-[3cqw] border-[0.3cqw] border-current/20 italic shadow-inner",
+                  "rounded-[2.5%] p-[3%] border-[0.3cqw] border-current/20 italic shadow-inner",
                   (isBlckShiny || isGlass || isShiny) ? "bg-black/30 text-white/90" : "bg-white/40 text-black/90"
                 )}
               >

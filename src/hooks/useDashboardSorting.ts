@@ -16,18 +16,21 @@ export function useDashboardSorting(
   news: NewsEntry[]
 ): DashboardComponentKey[] {
   return useMemo(() => {
+    // Guest View: Promotional First Impression
+    if (!profile) {
+      return ['cards', 'news', 'polls', 'funding'];
+    }
+
+    // Authenticated View: Original logic, promo hidden
     const scores: Record<DashboardComponentKey, number> = {
       todos: 0,
       events: 0,
       polls: 0,
       funding: 0,
       news: 0,
-      leaderboard: 40, // Higher baseline to keep it prominent
+      leaderboard: 40, // Baseline for ranking
+      cards: -100, // Never show for logged in users
     };
-
-    if (!profile) {
-      return ['news', 'events', 'polls', 'todos', 'funding', 'leaderboard'];
-    }
 
     // Todos Score: +100 if user has an open todo assigned to them, their group, or their class.
     const hasOpenTodo = todos.some(todo => 
@@ -74,7 +77,7 @@ export function useDashboardSorting(
     });
     if (hasRecentNews) scores.news = 30;
 
-    // Sort components by score descending
+    // Original component list (no promo for users)
     const componentKeys: DashboardComponentKey[] = [
       'todos',
       'events',

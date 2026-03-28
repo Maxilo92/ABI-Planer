@@ -57,19 +57,24 @@ export default function NewsDetailPage({ params }: { params: Promise<{ id: strin
       setLoading(false)
     })
 
-    // Subscribe to comments sub-collection
-    const commentsQuery = query(
-      collection(db, 'news', id, 'comments'),
-      orderBy('created_at', 'desc')
-    )
-    
-    const unsubscribeComments = onSnapshot(commentsQuery, (snapshot) => {
-      const commentsData = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as Comment[]
-      setComments(commentsData)
-    })
+    // Subscribe to comments sub-collection - only for authenticated users
+    let unsubscribeComments = () => {}
+    if (user && profile) {
+      const commentsQuery = query(
+        collection(db, 'news', id, 'comments'),
+        orderBy('created_at', 'desc')
+      )
+      
+      unsubscribeComments = onSnapshot(commentsQuery, (snapshot) => {
+        const commentsData = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })) as Comment[]
+        setComments(commentsData)
+      }, (error) => {
+        console.error('Error listening to comments:', error)
+      })
+    }
 
     return () => {
       unsubscribeNews()
@@ -79,7 +84,9 @@ export default function NewsDetailPage({ params }: { params: Promise<{ id: strin
 
   const handleVote = async (type: 'up' | 'down') => {
     if (!user || !news) {
-      toast.error('Du musst angemeldet sein, um abzustimmen.')
+      toast.error('Anmeldung erforderlich', {
+        description: 'Um News zu bewerten, musst du angemeldet sein.'
+      })
       return
     }
 
@@ -282,6 +289,7 @@ export default function NewsDetailPage({ params }: { params: Promise<{ id: strin
                 size="sm"
                 className="gap-2 rounded-full"
                 onClick={() => handleVote('up')}
+                disabled={!user || !profile?.is_approved}
               >
                 <ThumbsUp className={`h-4 w-4 ${userVote === 'up' ? 'fill-current' : ''}`} />
                 <span>{upVotes}</span>
@@ -291,15 +299,21 @@ export default function NewsDetailPage({ params }: { params: Promise<{ id: strin
                 size="sm"
                 className="gap-2 rounded-full"
                 onClick={() => handleVote('down')}
+                disabled={!user || !profile?.is_approved}
               >
                 <ThumbsDown className={`h-4 w-4 ${userVote === 'down' ? 'fill-current' : ''}`} />
                 <span>{downVotes}</span>
               </Button>
             </div>
+            {!user && (
+              <p className="text-[10px] text-muted-foreground font-medium italic">
+                Anmelden zum Abstimmen
+              </p>
+            )}
             <div className="h-4 w-px bg-border/50" />
             <div className="flex items-center gap-2 text-muted-foreground text-sm">
               <MessageSquare className="h-4 w-4" />
-              <span>{comments.length} {comments.length === 1 ? 'Kommentar' : 'Kommentare'}</span>
+              <span>{user ? comments.length : '??'} {comments.length === 1 ? 'Kommentar' : 'Kommentare'}</span>
             </div>
           </div>
         </div>
