@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.37.22] - 2026-03-29
+- **Database Index Fix:** Fehlenden zusammengesetzten Index für die `referral_claims` Collection hinzugefügt. Dies behebt den `FAILED_PRECONDITION` Fehler, der die automatisierte Vergabe von Referral-Belohnungen blockiert hat.
+
 ## [0.37.21] - 2026-03-29
 - **Referral Migration Härtung:** Präzisere Fehlermeldungen in der Migrations-Zusammenfassung hinzugefügt, um exakt zu bestimmen, warum bestimmte Werber-Codes nicht aufgelöst werden konnten.
 
