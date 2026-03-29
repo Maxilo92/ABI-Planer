@@ -21,6 +21,8 @@ import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { logAction } from '@/lib/logging'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 
 export default function Dashboard() {
   const router = useRouter()
@@ -281,9 +283,21 @@ export default function Dashboard() {
                         {item.created_at ? toDate(item.created_at).toLocaleDateString('de-DE') : 'Neu'}
                       </span>
                     </div>
-                    <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
-                      {item.content}
-                    </p>
+                    <div className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+                      <ReactMarkdown
+                        remarkPlugins={[remarkGfm]}
+                        components={{
+                          p: ({ children }) => <>{children}</>,
+                          strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
+                          em: ({ children }) => <em className="italic">{children}</em>,
+                          ul: ({ children }) => <span className="inline-block mr-1">•</span>,
+                          li: ({ children }) => <span className="inline-block mr-1">{children}</span>,
+                          a: ({ children }) => <span>{children}</span>,
+                        }}
+                      >
+                        {item.content}
+                      </ReactMarkdown>
+                    </div>
                     <div className="mt-2 flex items-center justify-end text-[10px] font-medium text-primary">
                       <span className="inline-flex items-center gap-1">
                         Zum Beitrag <ArrowRight className="h-3 w-3" />
@@ -313,7 +327,7 @@ export default function Dashboard() {
               <FundingStatus
                 key="funding"
                 current={currentFunding}
-                goal={expenseGoal > 0 ? expenseGoal : (settings?.funding_goal ?? 10000)}
+                goal={settings?.funding_goal ?? 10000}
                 initialTicketSales={settings?.expected_ticket_sales ?? 150}
                 onTicketSalesChange={handleTicketSalesChange}
                 isAuthenticated={!!user}

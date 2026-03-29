@@ -226,3 +226,61 @@ export const syncTeacherRarities = onSchedule("every 15 minutes", async (event) 
     console.error("Error synchronizing teacher rarities:", error);
   }
 });
+
+/**
+ * Weekly archive for audit logs (GoBD compliance).
+ * Moves logs older than 12 months (365 days) to 'audit_archives' and deletes them from 'logs'.
+ * Also cleans up 'danger_logs' older than 30 days.
+ */
+export const archiveAuditLogs = onSchedule("every sunday 03:00", async (event) => {
+  const db = getFirestore("abi-data");
+  const now = admin.firestore.Timestamp.now();
+  const twelveMonthsAgo = new admin.firestore.Timestamp(now.seconds - (365 * 24 * 60 * 60), 0);
+  const thirtyDaysAgo = new admin.firestore.Timestamp(now.seconds - (30 * 24 * 60 * 60), 0);
+
+  console.log(`Starting log archival... (Older than: ${twelveMonthsAgo.toDate().toISOString()})`);
+
+  try {
+    // 1. Archive Audit Logs (> 12 months)
+    const logsRef = db.collection("logs");
+    const oldLogsSnapshot = await logsRef.where("timestamp", "<", twelveMonthsAgo).limit(500).get();
+
+    if (!oldLogsSnapshot.empty) {
+      const batch = db.batch();
+      const archiveRef = db.collection("audit_archives");
+
+      oldLogsSnapshot.forEach(doc => {
+        const data = doc.data();
+        const archiveDocRef = archiveRef.doc(doc.id);
+        batch.set(archiveDocRef, {
+          ...data,
+          archived_at: admin.firestore.FieldValue.serverTimestamp()
+        });
+        batch.delete(doc.ref);
+      });
+
+      await batch.commit();
+      console.log(`Archived ${oldLogsSnapshot.size} audit logs.`);
+    } else {
+      console.log("No old audit logs to archive.");
+    }
+
+    // 2. Cleanup Danger Logs (> 30 days)
+    const dangerLogsRef = db.collection("danger_logs");
+    const oldDangerLogsSnapshot = await dangerLogsRef.where("timestamp", "<", thirtyDaysAgo).limit(500).get();
+
+    if (!oldDangerLogsSnapshot.empty) {
+      const batch = db.batch();
+      oldDangerLogsSnapshot.forEach(doc => {
+        batch.delete(doc.ref);
+      });
+      await batch.commit();
+      console.log(`Deleted ${oldDangerLogsSnapshot.size} old danger logs.`);
+    } else {
+      console.log("No old danger logs to delete.");
+    }
+
+  } catch (error) {
+    console.error("Error during log archival/cleanup:", error);
+  }
+});

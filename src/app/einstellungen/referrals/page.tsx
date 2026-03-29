@@ -99,13 +99,18 @@ export default function ReferralsPage() {
   }, [referrals])
 
   const nextRewardStats = useMemo(() => {
-    // Scaling reward: 2 + totalPastReferrals, capped at 10
-    // Only count 'standard' type referrals for the scaling reward base
-    const standardReferralsCount = referrals.filter(r => r.type === 'standard').length
-    const nextAmount = Math.min(2 + standardReferralsCount, 10)
+    const now = new Date()
+    const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
+    
+    const monthlyStandardReferralsCount = referrals.filter(r => 
+      r.timestamp >= firstDayOfMonth && r.type === 'standard'
+    ).length
+    
+    // NEW SCALE: 4, 5, 6, 7, 8 (total 30 for 5 referrals). Resets monthly.
+    const nextAmount = monthlyStandardReferralsCount < 5 ? (4 + monthlyStandardReferralsCount) : 0
     
     return {
-      total: standardReferralsCount,
+      total: monthlyStandardReferralsCount,
       nextAmount
     }
   }, [referrals])
@@ -193,7 +198,7 @@ export default function ReferralsPage() {
               <span className="text-3xl font-bold">{nextRewardStats.nextAmount} Booster</span>
             </div>
             <p className="text-xs text-muted-foreground">
-              Je mehr Freunde du einlädst, desto höher wird deine Belohnung (bis zu 10 Booster).
+              Jeden Monat startest du neu: 4, 5, 6, 7, 8 Booster für die ersten 5 Freunde!
             </p>
           </CardContent>
         </Card>

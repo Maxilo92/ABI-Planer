@@ -122,14 +122,13 @@ async function processReferralReward(uid: string, after: Profile) {
         return { success: true, alreadyClaimed: true };
     }
 
-    const totalPastReferrals = totalCountSnap.data().count;
-    const currentMonthAwarded = monthlyRefsSnap.docs.reduce((sum, doc) => sum + (doc.data().boosters_awarded_referrer || 0), 0);
-
-    // 2. Calculate rewards
-    const baseReward = Math.min(2 + totalPastReferrals, 10);
+    const pastMonthlyReferrals = monthlyRefsSnap.size;
+    
+    // NEW SCALE: 4, 5, 6, 7, 8 (total 30 for 5 referrals). Resets monthly.
+    const baseReward = pastMonthlyReferrals < 5 ? (4 + pastMonthlyReferrals) : 0;
     const allowedReward = Math.max(0, Math.min(baseReward, 30 - currentMonthAwarded));
 
-    console.log(`[Referral] Stats for ${referrerId}: totalPast=${totalPastReferrals}, currentMonthAwarded=${currentMonthAwarded}, baseReward=${baseReward}, allowedReward=${allowedReward}`);
+    console.log(`[Referral] Stats for ${referrerId}: pastMonthly=${pastMonthlyReferrals}, currentMonthAwarded=${currentMonthAwarded}, baseReward=${baseReward}, allowedReward=${allowedReward}`);
 
     // 3. Apply rewards in a transaction
     await db.runTransaction(async (transaction) => {

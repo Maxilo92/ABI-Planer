@@ -1,5 +1,83 @@
 # Changelog
 
+## [1.0.8] - 2026-03-29
+- **Hotfix (News Editor):** Console-Warnung im Dialog-Rendering behoben.
+    - **Dialog API-Kompatibilität:** Ungültiges Prop `onInteractOutside` aus News-Dialogen entfernt (Base-UI kompatibel).
+    - **Stabiler Bild-Flow:** Schließen des Dialogs wird während Dateiauswahl/Zuschnitt weiterhin über `onOpenChange` kontrolliert, inklusive sauberem Reset bei abgebrochener Dateiauswahl.
+
+## [1.0.7] - 2026-03-29
+- **Hotfix (News Editor):** Bildauswahl im Erstellen/Bearbeiten-Dialog stabilisiert.
+    - **Dialog-Stabilität:** Während Dateiauswahl und offenem Cropper wird das unbeabsichtigte Schließen des Dialogs unterbunden, damit Inhalte nicht verschwinden.
+    - **Bild-Workflow:** Der Zuschnitt kann nun zuverlässig abgeschlossen und das Bild als Titelbild übernommen werden.
+
+## [1.0.6] - 2026-03-29
+- **Hotfix (News Editor):** React-Hook-Fehler beim Bearbeiten von News behoben.
+    - **`useEffect` Stabilisierung:** Das Dependency-Array im Bearbeitungsdialog hat nun eine konstante Größe (`[open, news.id]`), wodurch der Console-Fehler "The final argument passed to useEffect changed size between renders" nicht mehr auftritt.
+
+## [1.0.5] - 2026-03-29
+- **Mobile Optimization (News Editor):** Verbesserte Bedienbarkeit des News-Editors auf Smartphones.
+    - **Optimiertes Scrolling:** Zentralisierter Scroll-Bereich im Dialog verhindert doppelte Scrollbalken und verbessert die Touch-Bedienung.
+    - **Responsives Design:** Der Editor nutzt nun die volle Bildschirmbreite auf Mobilgeräten und passt Textgrößen sowie Abstände dynamisch an.
+    - **Verbesserte Bild-Vorschau:** Interaktive Bild-Overlays auf Mobile erleichtern das Ändern von Titelbildern.
+
+## [1.0.4] - 2026-03-29
+- **Performance & UX (News Editor):** Grundlegende Überarbeitung des News-Editors für bessere Performance und Benutzerführung.
+    - **Tabbed Interface:** Einführung von "Editor", "Vorschau" und "Hilfe" Tabs in den Erstellungs- und Bearbeitungs-Dialogen.
+    - **Live-Vorschau:** Echtzeit-Vorschau des Beitrags (inkl. Titelbild und Markdown) vor der Veröffentlichung.
+    - **Performance-Boost:** Durch die Trennung von Editor und Vorschau wurde die Eingabeverzögerung (Input Lag) beim Tippen langer Texte eliminiert.
+    - **Markdown-Guide:** Integrierte Schnellanleitung für die gängigsten Markdown-Befehle direkt im Editor.
+
+## [1.0.3] - 2026-03-29
+- **Feature (News):** Erweitertes Markdown-System für News-Beiträge.
+    - **GFM-Support:** Unterstützung für Tabellen, Aufgabenlisten (Task Lists), Durchstreichen und Autolinks via `remark-gfm`.
+    - **Code-Highlighting:** Einführung von stilisierten Inline-Code und Code-Blöcken für technische Updates.
+    - **Layout-Verbesserungen:** Optimierte Darstellung von Blockquotes, Listen und Tabellen für bessere Lesbarkeit auf allen Geräten.
+    - **Dashboard-Integration:** Auch News-Vorschauen auf dem Dashboard unterstützen nun einfache Markdown-Formatierung.
+
+## [1.0.2] - 2026-03-29
+- **Bug-Fix (Finanzplaner):** Korrektur der Zielsummen-Anzeige auf dem Dashboard.
+    - **Dashboard-Priorisierung:** Das Finanzierungsziel wird nun korrekt aus den Systemeinstellungen (`funding_goal`) geladen, anstatt fälschlicherweise die Summe der Ausgaben als Ziel zu priorisieren.
+
+## [1.0.1] - 2026-03-29
+- **Performance-Optimierung (Sammelkarten):** Massive Verbesserung der Reaktionszeit beim Sortieren und Filtern im Lehrer-Album.
+    - **Schwartzian Transform:** Einführung einer Vorberechnungs-Ebene (`teacherMetadata`) für Sortier-Gewichte, um teure Lookups während des Sortiervorgangs zu eliminieren (O(1) statt O(N log N)).
+    - **Component Memoization:** Die `TeacherCard`-Komponente wurde memoisiert (`React.memo`), um unnötige Re-renders des gesamten Grids bei Positionsänderungen zu verhindern.
+    - **Rendering-Effizienz:** `cardData` wird nun ebenfalls vorab berechnet, um Objekt-Instanziierungen während des Renderings zu minimieren.
+
+## [1.0.0] - 2026-03-29
+- **Production Readiness Milestone:** Offizieller Release der Version 1.0.0.
+- **GoBD Compliance:** Einführung einer automatisierten Archivierung für Audit-Logs (`archiveAuditLogs`). Datensätze, die älter als 12 Monate sind, werden nun wöchentlich in eine Langzeit-Kollektion (`audit_archives`) überführt.
+- **Database Hygiene:** Automatisierte Bereinigung der `danger_logs` nach 30 Tagen zur Optimierung des Speicherplatzes.
+- **Final Security Audit:** Bestätigung aller kritischen Fixes (Server-side RNG, gehärtete Firestore Rules, Stripe Billing Address Pflicht).
+- **Stability:** Alle Systeme (Kalender, Finanzen, Sammelkarten, Admin-Zentrale) wurden für den Live-Betrieb verifiziert.
+
+## [0.37.27] - 2026-03-29
+- **Sammelkarten Refinement (Sorting):** Präzisierung der Filter- und Sortierfunktionen im Lehrer-Album.
+    - **Duale Sortierung:** Unterscheidung zwischen "Seltenheit" (Legendary > Mythic...) und "Variante" (BlackHolo > Shiny...).
+    - **UI:** Hinzufügen einer dedizierten "Variante"-Option im Sortier-Menü.
+    - **Priorisierung:** BlackHolos (Secret Rare) und Legendary Karten werden nun in ihren jeweiligen Sortier-Modi korrekt an oberster Stelle priorisiert.
+
+## [0.37.26] - 2026-03-29
+- **Hotfix (Groups Page):** Behebung eines `ReferenceError: cn is not defined` auf der Planungsgruppen-Seite, der durch einen fehlenden Import nach dem visuellen Update verursacht wurde.
+
+## [0.37.25] - 2026-03-29
+- **Referral Program Update (v2):** Umstellung des Empfehlungsprogramms auf ein monatlich progressives Belohnungsmodell.
+    - **Referrer-Belohnungen:** Werber starten jeden Monat neu bei 4 Boostern für die erste Empfehlung. Die Belohnung steigert sich pro Monat progressiv (4, 5, 6, 7, 8 Booster), bis das monatliche Limit von 30 Boostern nach 5 Empfehlungen erreicht ist.
+    - **Monatlicher Reset:** Die Belohnungsstufe wird am ersten Tag jedes Monats automatisch auf 4 Booster zurückgesetzt.
+    - **UI:** Überarbeitung des Einladungs-Dashboards mit aktueller Belohnungsvorschau ("Dein nächster Freund bringt dir X Booster") basierend auf den monatlichen Erfolgen.
+    - **Backend:** Optimierte Cloud Functions Logik für die monatliche Abrechnung und Validierung der progressiven Belohnungen.
+
+## [0.37.25] - 2026-03-29
+- **Groups Page Visual Overhaul:** Komplette optische Überarbeitung der Planungsgruppen-Seite für einen modernen "Premium-Look".
+    - Einführung von 3D-Effekten, sanften Verläufen und abgerundeten Ecken (`rounded-[2.5rem]`).
+    - **Alle Gruppen:** Dynamische Farbakzente pro Gruppe, verbesserte Statistiken mit Fortschrittsbalken und visuelle Header.
+    - **Mein Team:** Veredelte Ansicht des eigenen Workspace mit atmosphärischen Hintergründen und optimierten Team-Karten.
+    - **Shared Hub:** Modernisiertes Layout für die globale Kommunikation mit Live-Status-Indikatoren und verbesserten Richtlinien-Karten.
+    - **UX:** Sanftere Animationen und verbesserte responsive Darstellung auf allen Endgeräten.
+
+## [0.37.24] - 2026-03-29
+- **Navbar UI Restore:** Die direkten Links zu den Gruppenbereichen ("Mein Team", "Alle Gruppen", "Shared Hub") wurden im Untermenü 'Planung' wiederhergestellt, um einen schnelleren Zugriff auf die verschiedenen Team-Workspaces zu ermöglichen.
+
 ## [0.37.23] - 2026-03-29
 - **Database Index Fix:** Die Sortier-Reihenfolge des `referral_claims` Index wurde von `DESC` auf `ASC` korrigiert, um exakt den Anforderungen der Firestore-Abfrage zu entsprechen.
 

@@ -192,19 +192,20 @@ function getTeacherRarityHex(rarity: TeacherRarity) {
   }
 }
 
-const RARITY_ORDER: TeacherRarity[] = [
-  "legendary",
-  "mythic",
-  "epic",
-  "rare",
-  "common",
-];
-const VARIANT_ORDER: NewCardVariant[] = [
-  "black_shiny_holo",
-  "shiny",
-  "holo",
-  "normal",
-];
+const RARITY_MAP: Record<string, number> = {
+  legendary: 0,
+  mythic: 1,
+  epic: 2,
+  rare: 3,
+  common: 4,
+};
+
+const VARIANT_MAP: Record<string, number> = {
+  black_shiny_holo: 0,
+  shiny: 1,
+  holo: 2,
+  normal: 3,
+};
 
 function getBestVariant(
   variants: Record<string, number> | undefined,
@@ -219,14 +220,21 @@ function getBestVariant(
 function mapTeacherToCardData(
   teacher: LootTeacher,
   userData: any,
-  globalTeachers: LootTeacher[],
+  globalTeachers: LootTeacher[] | Map<string, number> | number,
   forcedVariant?: NewCardVariant,
 ): CardData {
   const variant = forcedVariant || getBestVariant(userData?.variants);
 
-  const globalIndex = globalTeachers.findIndex(
-    (t) => (t.id || t.name) === (teacher.id || teacher.name),
-  );
+  let globalIndex: number;
+  if (typeof globalTeachers === "number") {
+    globalIndex = globalTeachers;
+  } else if (globalTeachers instanceof Map) {
+    globalIndex = globalTeachers.get(teacher.id || teacher.name) ?? -1;
+  } else {
+    globalIndex = globalTeachers.findIndex(
+      (t) => (t.id || t.name) === (teacher.id || teacher.name),
+    );
+  }
 
   return {
     id: teacher.id || teacher.name,
@@ -253,8 +261,8 @@ function TeacherCardDetail({
   teacher: LootTeacher;
   userData: any;
   onClose: () => void;
-  globalTeachers: LootTeacher[];
-  allTeachers: LootTeacher[];
+  globalTeachers: LootTeacher[] | Map<string, number>;
+  allTeachers: any[];
   currentIndex: number;
   onNavigate: (index: number) => void;
 }) {
@@ -502,7 +510,9 @@ export function TeacherAlbum({
   const [ownershipFilter, setOwnershipFilter] = useState<
     "all" | "owned" | "missing"
   >(initialLimit ? "owned" : "all");
-  const [sortKey, setSortKey] = useState<"rarity" | "name" | "level">("rarity");
+  const [sortKey, setSortKey] = useState<
+    "rarity" | "variant" | "name" | "level"
+  >("rarity");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
   // Selection state
@@ -512,7 +522,34 @@ export function TeacherAlbum({
 
   const isPreview = !!initialLimit && !isExpanded;
 
-  const handleSortChange = (key: "rarity" | "name" | "level") => {
+  const globalIndexMap = useMemo(() => {
+    const map = new Map<string, number>();
+    globalTeachers.forEach((t, i) => {
+      map.set(t.id || t.name, i);
+    });
+    return map;
+  }, [globalTeachers]);
+
+  const teacherMetadata = useMemo(() => {
+    return globalTeachers.map((t, index) => {
+      const userData = userTeachers?.[t.id] || userTeachers?.[t.name];
+      const isOwned = !!userData;
+      const bestVariant = getBestVariant(userData?.variants);
+      return {
+        teacher: t,
+        userData,
+        isOwned,
+        bestVariant,
+        rarityWeight: RARITY_MAP[t.rarity] ?? 99,
+        variantWeight: VARIANT_MAP[bestVariant] ?? 99,
+        level: userData?.level || 1,
+        nameLower: t.name.toLowerCase(),
+        cardData: mapTeacherToCardData(t, userData, index, bestVariant),
+      };
+    });
+  }, [globalTeachers, userTeachers]);
+
+  const handleSortChange = (key: "rarity" | "variant" | "name" | "level") => {
     if (sortKey === key) {
       setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
     } else {
@@ -585,26 +622,27 @@ export function TeacherAlbum({
   }, []);
 
   const filteredTeachers = useMemo(() => {
-    const result = globalTeachers.filter((t) => {
+    const searchLower = search.toLowerCase();
+
+    const result = teacherMetadata.filter((m) => {
+      const t = m.teacher;
       // Search filter
-      if (search && !t.name.toLowerCase().includes(search.toLowerCase()))
-        return false;
+      if (search && !m.nameLower.includes(searchLower)) return false;
 
       // Rarity filter
       if (rarityFilters.length > 0 && !rarityFilters.includes(t.rarity))
         return false;
 
       // Ownership filter
-      const userData = userTeachers?.[t.id] || userTeachers?.[t.name];
-      const isOwned = !!userData;
-      if (ownershipFilter === "owned" && !isOwned) return false;
-      if (ownershipFilter === "missing" && isOwned) return false;
+      if (ownershipFilter === "owned" && !m.isOwned) return false;
+      if (ownershipFilter === "missing" && m.isOwned) return false;
 
       // Variant filter
       if (variantFilters.length > 0) {
-        if (!isOwned) return false;
+        const variants = m.userData?.variants;
+        if (!m.isOwned || !variants) return false;
         const hasVariant = variantFilters.some(
-          (v) => (userData.variants?.[v] || 0) > 0,
+          (v) => (variants[v] || 0) > 0,
         );
         if (!hasVariant) return false;
       }
@@ -614,10 +652,7 @@ export function TeacherAlbum({
 
     // Sorting logic
     result.sort((a, b) => {
-      const ownedA = userTeachers?.[a.id] || userTeachers?.[a.name];
-      const ownedB = userTeachers?.[b.id] || userTeachers?.[b.name];
-
-      // If we have an initialLimit and are not expanded, we PRIORITIZE rarity (version > rarity) for the preview
+      // If we have an initialLimit and are not expanded, we PRIORITIZE rarity (rarity > version) for the preview
       if (
         initialLimit &&
         !isExpanded &&
@@ -627,66 +662,59 @@ export function TeacherAlbum({
         (ownershipFilter === "all" || ownershipFilter === "owned")
       ) {
         // Ownership first even in preview
-        if (!!ownedA !== !!ownedB) return ownedB ? 1 : -1;
+        if (a.isOwned !== b.isOwned) return b.isOwned ? 1 : -1;
 
-        const varA = getBestVariant(ownedA?.variants);
-        const varB = getBestVariant(ownedB?.variants);
-        const varIndexA = VARIANT_ORDER.indexOf(varA);
-        const varIndexB = VARIANT_ORDER.indexOf(varB);
+        if (a.rarityWeight !== b.rarityWeight)
+          return a.rarityWeight - b.rarityWeight;
 
-        if (varIndexA !== varIndexB) return varIndexA - varIndexB;
+        if (a.variantWeight !== b.variantWeight)
+          return a.variantWeight - b.variantWeight;
 
-        const rarIndexA = RARITY_ORDER.indexOf(a.rarity);
-        const rarIndexB = RARITY_ORDER.indexOf(b.rarity);
-        if (rarIndexA !== rarIndexB) return rarIndexA - rarIndexB;
+        if (a.level !== b.level) return b.level - a.level;
 
-        const lvlA = ownedA?.level || 0;
-        const lvlB = ownedB?.level || 0;
-        if (lvlA !== lvlB) return lvlB - lvlA;
-
-        return a.name.localeCompare(b.name);
+        return a.teacher.name.localeCompare(b.teacher.name);
       }
 
       // Ownership always comes first in normal sorting
-      if (!!ownedA !== !!ownedB) return ownedB ? 1 : -1;
+      if (a.isOwned !== b.isOwned) return b.isOwned ? 1 : -1;
 
       // Secondary sorting based on user selection
       if (sortKey === "level") {
-        const lvlA = ownedA?.level || 0;
-        const lvlB = ownedB?.level || 0;
-        if (lvlA !== lvlB)
-          return sortOrder === "desc" ? lvlB - lvlA : lvlA - lvlB;
+        if (a.level !== b.level)
+          return sortOrder === "desc" ? b.level - a.level : a.level - b.level;
       } else if (sortKey === "rarity") {
-        const varA = getBestVariant(ownedA?.variants);
-        const varB = getBestVariant(ownedB?.variants);
-        const varIndexA = VARIANT_ORDER.indexOf(varA);
-        const varIndexB = VARIANT_ORDER.indexOf(varB);
-
-        if (varIndexA !== varIndexB)
+        if (a.rarityWeight !== b.rarityWeight)
           return sortOrder === "desc"
-            ? varIndexA - varIndexB
-            : varIndexB - varIndexA;
+            ? a.rarityWeight - b.rarityWeight
+            : b.rarityWeight - a.rarityWeight;
 
-        const rarIndexA = RARITY_ORDER.indexOf(a.rarity);
-        const rarIndexB = RARITY_ORDER.indexOf(b.rarity);
-        if (rarIndexA !== rarIndexB)
+        if (a.variantWeight !== b.variantWeight)
           return sortOrder === "desc"
-            ? rarIndexA - rarIndexB
-            : rarIndexB - rarIndexA;
+            ? a.variantWeight - b.variantWeight
+            : b.variantWeight - a.variantWeight;
+      } else if (sortKey === "variant") {
+        if (a.variantWeight !== b.variantWeight)
+          return sortOrder === "desc"
+            ? a.variantWeight - b.variantWeight
+            : b.variantWeight - a.variantWeight;
+
+        if (a.rarityWeight !== b.rarityWeight)
+          return sortOrder === "desc"
+            ? a.rarityWeight - b.rarityWeight
+            : b.rarityWeight - a.rarityWeight;
       } else if (sortKey === "name") {
         return sortOrder === "desc"
-          ? b.name.localeCompare(a.name)
-          : a.name.localeCompare(b.name);
+          ? b.teacher.name.localeCompare(a.teacher.name)
+          : a.teacher.name.localeCompare(b.teacher.name);
       }
 
       // Default: sort by name
-      return a.name.localeCompare(b.name);
+      return a.teacher.name.localeCompare(b.teacher.name);
     });
 
     return result;
   }, [
-    globalTeachers,
-    userTeachers,
+    teacherMetadata,
     search,
     rarityFilters,
     variantFilters,
@@ -903,6 +931,11 @@ export function TeacherAlbum({
                           label: "Seltenheit",
                           icon: LayoutGrid,
                         },
+                        {
+                          key: "variant",
+                          label: "Variante",
+                          icon: Sparkles,
+                        },
                         { key: "name", label: "Alphabet", icon: ArrowDownAZ },
                         { key: "level", label: "Level", icon: ArrowUp10 },
                       ].map((s) => (
@@ -1051,16 +1084,10 @@ export function TeacherAlbum({
       ) : (
         <>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4 md:gap-6">
-            {displayedTeachers.map((teacher, idx) => {
+            {displayedTeachers.map((m, idx) => {
+              const teacher = m.teacher;
               const teacherId = teacher.id || teacher.name;
-              const userData =
-                userTeachers?.[teacher.id] || userTeachers?.[teacher.name];
-              const isOwned = !!userData;
-              const cardData = mapTeacherToCardData(
-                teacher,
-                userData,
-                globalTeachers,
-              );
+              const isOwned = m.isOwned;
 
               return (
                 <div
@@ -1077,7 +1104,7 @@ export function TeacherAlbum({
                     )}
                   >
                     <TeacherCard
-                      data={cardData}
+                      data={m.cardData}
                       className="w-full h-auto"
                       styleVariant="modern-flat"
                       isFlippedExternally={isOwned}
@@ -1093,7 +1120,7 @@ export function TeacherAlbum({
                       </h3>
                       <div className="flex items-center justify-center gap-1.5 mt-1">
                         <div className="bg-black text-white rounded-full px-1.5 py-0 text-[8px] font-black border border-white/10">
-                          LVL {userData.level || 1}
+                          LVL {m.level}
                         </div>
                       </div>
                     </div>
@@ -1133,13 +1160,10 @@ export function TeacherAlbum({
           <div className="relative w-full">
             {selectedTeacher && selectedTeacherIndex !== null && (
               <TeacherCardDetail
-                teacher={selectedTeacher}
-                userData={
-                  userTeachers?.[selectedTeacher.id] ||
-                  userTeachers?.[selectedTeacher.name]
-                }
+                teacher={selectedTeacher.teacher}
+                userData={selectedTeacher.userData}
                 onClose={() => setSelectedTeacherIndex(null)}
-                globalTeachers={globalTeachers}
+                globalTeachers={globalIndexMap}
                 allTeachers={displayedTeachers}
                 currentIndex={selectedTeacherIndex}
                 onNavigate={(index) => setSelectedTeacherIndex(index)}

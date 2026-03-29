@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { LayoutDashboard, CheckSquare, Calendar, Euro, Megaphone, BarChart2, LogOut, Menu, X, ShieldCheck, User, MessageSquareHeart, Settings, Users, ChevronDown, ChevronRight, Sparkles, HelpCircle, Gift, Trophy, AlertTriangle, ShoppingBag } from 'lucide-react'
+import { LayoutDashboard, CheckSquare, Calendar, Euro, Megaphone, BarChart2, LogOut, Menu, X, ShieldCheck, User, MessageSquareHeart, Settings, Users, ChevronDown, ChevronRight, Sparkles, HelpCircle, Gift, Trophy, AlertTriangle, ShoppingBag, MessageSquare } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button, buttonVariants } from '@/components/ui/button'
@@ -87,7 +87,11 @@ export function Navbar() {
         subItems: [
           { href: '/kalender', label: 'Kalender', icon: Calendar, notify: notifications.kalender },
           { href: '/todos', label: 'Todos', icon: CheckSquare, notify: notifications.todos },
-          { href: '/gruppen?bereich=alle-gruppen', label: 'Gruppen & Teams', icon: Users },
+          ...(profile?.planning_group ? [
+            { href: '/gruppen?bereich=mein-team', label: 'Mein Team', icon: Users },
+          ] : []),
+          { href: '/gruppen?bereich=alle-gruppen', label: 'Alle Gruppen', icon: Users },
+          { href: '/gruppen?bereich=shared-hub', label: 'Shared Hub', icon: MessageSquare },
         ],
       }
     ] : []),

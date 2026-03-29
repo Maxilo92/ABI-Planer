@@ -36,27 +36,6 @@ function testRarityLimits() {
 
     const results = applyRarityLimits(teachers, limits);
 
-    assert.strictEqual(results.get("t1"), "legendary");
-    assert.strictEqual(results.get("t2"), "mythic"); // demoted from legendary
-    assert.strictEqual(results.get("t3"), "epic");   // demoted from mythic (because t2 took mythic slot)
-    assert.strictEqual(results.get("t4"), "epic");   // mythic slot full, but epic limit not yet hit for this one?
-    // Wait, the logic is:
-    /*
-    if (assignedRarity === "legendary" && rarityLimits.legendary !== undefined && counts.legendary >= rarityLimits.legendary) {
-        assignedRarity = "mythic";
-    }
-    if (assignedRarity === "mythic" && rarityLimits.mythic !== undefined && counts.mythic >= rarityLimits.mythic) {
-        assignedRarity = "epic";
-    }
-    ...
-    */
-    // t1: legendary, count.legendary = 1
-    // t2: legendary -> mythic, count.mythic = 1
-    // t3: mythic -> epic, count.epic = 1
-    // t4: mythic -> epic -> rare, count.rare = 1
-    // t5: epic -> rare -> common, count.common = 1
-    // t6: rare -> common, count.common = 2
-
     assert.strictEqual(results.get("t1"), "legendary", "t1 should be legendary");
     assert.strictEqual(results.get("t2"), "mythic", "t2 should be demoted to mythic");
     assert.strictEqual(results.get("t3"), "epic", "t3 should be demoted to epic");

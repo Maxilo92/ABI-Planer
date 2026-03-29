@@ -1,0 +1,41 @@
+# Projekt-Update: Vorbereitung Abi-Ball 2026 🎊
+
+Wir haben in den letzten Tagen massive Fortschritte gemacht! Hier ist eine Übersicht über den aktuellen Stand und die nächsten Schritte für unsere Stufe.
+
+## Aktueller Status (Checkliste)
+Hier siehst du, was wir bereits erledigt haben und was noch offen ist:
+- [x] Location fest gebucht (Stadthalle)
+- [x] DJ Vertrag unterschrieben
+- [ ] Buffet-Auswahl finalisieren
+- [ ] Deko-Konzept abstimmen ~~altes Konzept verworfen~~
+
+## Kostenübersicht (Tabelle)
+Hier ist die aktuelle Kalkulation für die größten Posten unserer Planung:
+
+| Posten | Status | Budget (Plan) |
+| :--- | :--- | :--- |
+| **Miete** | Bezahlt | 2.500 € |
+| **Catering** | Anzahlung geleistet | 4.000 € |
+| **Technik/Licht** | Angebot erhalten | 1.200 € |
+
+## Wichtige Hinweise
+> **Hinweis vom Planungs-Team:** Bitte denkt daran, eure Essenswünsche bis zum 15. April einzureichen! Nur so können wir das Catering final kalkulieren.
+
+Hier geht es direkt zum Formular: https://abi-planer.de/umfrage (Link wird automatisch erkannt!)
+
+---
+
+### Technische Details für die IT-AG
+Falls ihr die Daten für die Anzeige in der Aula abrufen wollt, nutzt diesen Endpunkt:
+`GET /api/v1/funding-status`
+
+```json
+{
+  "goal": 10000,
+  "current": 6450,
+  "status": "on_track"
+}
+```
+
+Wir freuen uns auf einen unvergesslichen Abend!
+*Euer Orga-Team*

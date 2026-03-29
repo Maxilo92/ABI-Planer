@@ -66,7 +66,7 @@ const Particle = React.memo(({ delay }: { delay: number }) => {
 
 Particle.displayName = 'Particle';
 
-export const TeacherCard: React.FC<TeacherCardProps> = ({ 
+export const TeacherCard = React.memo(({ 
   data, 
   className, 
   styleVariant = 'soft-glass',
@@ -74,7 +74,7 @@ export const TeacherCard: React.FC<TeacherCardProps> = ({
   isLocked = false,
   interactive = true,
   upgradeInfo
-}) => {
+}: TeacherCardProps) => {
   const [isFlippedInternally, setIsFlippedInternally] = useState(isFlippedExternally ?? false);
   const [prevExternal, setPrevExternal] = useState(isFlippedExternally);
   
@@ -312,4 +312,19 @@ export const TeacherCard: React.FC<TeacherCardProps> = ({
         </motion.div>
     </div>
   );
-};
+}, (prevProps, nextProps) => {
+  return (
+    prevProps.isLocked === nextProps.isLocked &&
+    prevProps.isFlippedExternally === nextProps.isFlippedExternally &&
+    prevProps.className === nextProps.className &&
+    prevProps.styleVariant === nextProps.styleVariant &&
+    prevProps.interactive === nextProps.interactive &&
+    prevProps.upgradeInfo?.newLevel === nextProps.upgradeInfo?.newLevel &&
+    prevProps.data.id === nextProps.data.id &&
+    prevProps.data.variant === nextProps.data.variant &&
+    prevProps.data.rarity === nextProps.data.rarity &&
+    prevProps.data.name === nextProps.data.name
+  );
+});
+
+TeacherCard.displayName = 'TeacherCard';

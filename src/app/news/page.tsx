@@ -18,6 +18,7 @@ import Link from 'next/link'
 import { deleteNewsImageByPath } from '@/lib/newsImageUpload'
 import { logAction } from '@/lib/logging'
 import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import { ShareResourceButton } from '@/components/ui/share-resource-button'
 
 export default function NewsPage() {
@@ -182,12 +183,30 @@ export default function NewsPage() {
 
                   <div className={`text-foreground/80 leading-relaxed text-sm md:text-base ${!item.is_small_update ? 'line-clamp-4' : ''}`}>
                     <ReactMarkdown
+                      remarkPlugins={[remarkGfm]}
                       components={{
                         p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
                         strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
                         em: ({ children }) => <em className="italic">{children}</em>,
                         ul: ({ children }) => <ul className="list-disc pl-5 mb-2">{children}</ul>,
                         ol: ({ children }) => <ol className="list-decimal pl-5 mb-2">{children}</ol>,
+                        li: ({ children, ...props }) => {
+                          const isTask = (props as any).checked !== undefined;
+                          return (
+                            <li className={isTask ? 'list-none flex items-start gap-2' : ''}>
+                              {children}
+                            </li>
+                          );
+                        },
+                        input: ({ checked }) => (
+                          <input 
+                            type="checkbox" 
+                            checked={checked} 
+                            readOnly 
+                            className="h-3.5 w-3.5 mt-1 rounded border-primary text-primary focus:ring-primary"
+                          />
+                        ),
+                        del: ({ children }) => <del className="line-through opacity-60">{children}</del>,
                       }}
                     >
                       {item.content}
