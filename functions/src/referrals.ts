@@ -14,6 +14,7 @@ interface Profile {
     full_name: string | null;
     class_name?: string | null;
     referred_by: string | null;
+    referral_code?: string;
     is_referral_claimed?: boolean;
     total_referrals?: number;
     total_referral_boosters?: number;

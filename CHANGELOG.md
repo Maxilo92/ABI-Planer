@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.37.14] - 2026-03-29
+- **Build Fix (Functions):** Behebung eines TypeScript-Fehlers in der `referrals.ts` Cloud Function, der durch ein fehlendes Feld im lokalen `Profile` Interface den Deployment-Prozess verhinderte.
+
 ## [0.37.13] - 2026-03-29
 - **Local Dev Fix (CORS):** CORS-Unterstützung für alle Referral-Cloud-Functions aktiviert. Dies ermöglicht den Aufruf der Funktionen von `localhost:3000` gegen das Produktiv-Backend, was die lokale Entwicklung und Diagnose erheblich erleichtert.
 
