@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.37.4] - 2026-03-29
+- **Visual Update:** Das problematische SVG-Logo wurde durch die PNG-Versionen ersetzt, um eine konsistente Darstellung über alle Endgeräte und Browser hinweg zu gewährleisten.
+
 ## [0.37.3] - 2026-03-29
 - **Registration UX Fix:** Validierungsfehler (wie "Bitte überprüfe deine E-Mail...") erscheinen nun erst nach der ersten Interaktion/Absenden, nicht mehr direkt beim Laden der Seite.
 - **Privacy & UX:** Parodie-Werbebanner und Cookie-Popups werden nun auf Auth-Seiten (Login, Register, Waiting) unterdrückt, um den Fokus auf die Kernfunktionen zu legen.
