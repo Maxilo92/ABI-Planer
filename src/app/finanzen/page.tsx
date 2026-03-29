@@ -128,7 +128,7 @@ export default function FinancePage() {
   const totalIncome = amounts.filter((value) => value > 0).reduce((acc, value) => acc + value, 0)
   const totalExpenses = amounts.filter((value) => value < 0).reduce((acc, value) => acc + Math.abs(value), 0)
   const currentBalance = totalIncome - totalExpenses
-  const estimatedFundingGoal = settings?.funding_goal ?? 10000
+  const fundingGoal = settings?.funding_goal ?? 10000
 
   return (
     <div className="space-y-6">
@@ -175,7 +175,7 @@ export default function FinancePage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-foreground">
-              {estimatedFundingGoal.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
+              {fundingGoal.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
             </div>
           </CardContent>
         </Card>
@@ -193,7 +193,7 @@ export default function FinancePage() {
 
       <FundingStatus
         current={currentBalance}
-        goal={estimatedFundingGoal}
+        goal={fundingGoal}
         initialTicketSales={settings?.expected_ticket_sales ?? 150}
         onTicketSalesChange={handleTicketSalesChange}
         isAuthenticated={!!user}

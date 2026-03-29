@@ -128,11 +128,7 @@ export function PollList({
       })
 
       await refreshVotesForPoll(pollId)
-      toast.success(
-        !existingVote 
-          ? 'Stimme gespeichert! Du hast 1 Booster-Pack als Belohnung erhalten.' 
-          : 'Deine Stimme wurde geändert.'
-      )
+      if (!existingVote) toast.success('Deine Stimme wurde gespeichert. Du hast 1 Booster-Pack als Belohnung erhalten.'); else toast.success('Deine Stimme wurde geändert.')
       
       const optionText = poll?.options?.find(o => o.id === optionId)?.option_text || optionId
       await logAction('VOTE_CAST', userId, null, { 
@@ -286,9 +282,9 @@ export function PollList({
                         size="sm" 
                         className="w-full mt-1 h-8"
                         onClick={() => handleVote(poll.id, option.id)}
-                        disabled={!!loading || (userVote?.option_id === option.id)}
+                        disabled={!!isVoting || (userVote?.option_id === option.id)}
                       >
-                        {loading === option.id ? 'Abstimmung...' : userVote ? 'Auswahl ändern' : 'Wählen'}
+                        {isVoting === option.id ? 'Abstimmung...' : userVote ? 'Auswahl ändern' : 'Wählen'}
                       </Button>
                     )}
                   </div>
@@ -340,9 +336,9 @@ export function PollList({
                       size="sm"
                       className="text-xs text-muted-foreground hover:text-destructive h-7"
                       onClick={() => handleWithdraw(poll.id)}
-                      disabled={!!loading}
+                      disabled={!!isVoting}
                     >
-                      {loading === 'withdraw-' + poll.id ? 'Wird zurückgezogen...' : 'Teilnahme zurückziehen'}
+                      {isVoting === 'withdraw-' + poll.id ? 'Wird zurückgezogen...' : 'Teilnahme zurückziehen'}
                     </Button>
                   )}
                 </div>

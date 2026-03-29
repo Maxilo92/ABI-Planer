@@ -6,8 +6,39 @@ import { Button } from '@/components/ui/button'
 import { Sparkles, Trophy, Zap, Star, ArrowRight } from 'lucide-react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
+import { Skeleton } from '@/components/ui/skeleton'
 
-export function SammelkartenPromo({ isAuthenticated }: { isAuthenticated: boolean }) {
+export function SammelkartenPromo({ 
+  isAuthenticated, 
+  loading = false 
+}: { 
+  isAuthenticated: boolean,
+  loading?: boolean
+}) {
+  if (loading) {
+    return (
+      <Card className="overflow-hidden border-none shadow-xl h-[340px] bg-muted animate-pulse">
+        <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/20 via-purple-500/20 to-pink-500/20" />
+        <CardHeader className="relative z-10 pb-2">
+          <div className="flex items-center gap-2 mb-1">
+            <Skeleton className="h-6 w-24 bg-white/20" />
+          </div>
+          <Skeleton className="h-8 w-48 bg-white/20" />
+        </CardHeader>
+        <CardContent className="relative z-10 space-y-4">
+          <Skeleton className="h-4 w-56 bg-white/20" />
+          <Skeleton className="h-4 w-40 bg-white/20" />
+          <div className="flex flex-wrap gap-2 py-1">
+            {[1, 2, 3].map((i) => (
+              <Skeleton key={i} className="h-6 w-16 rounded-full bg-white/20" />
+            ))}
+          </div>
+          <Skeleton className="h-10 w-full rounded-xl bg-white/20" />
+        </CardContent>
+      </Card>
+    )
+  }
+
   return (
     <Card className="overflow-hidden border-none shadow-xl bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 text-white group relative">
       <div className="absolute top-0 right-0 p-4 opacity-20 group-hover:scale-110 transition-transform duration-500 rotate-12">

@@ -32,6 +32,7 @@ export default function Dashboard() {
   const [polls, setPolls] = useState<Poll[]>([])
   const [allFinances, setAllFinances] = useState<FinanceEntry[]>([])
   const [currentFunding, setCurrentFunding] = useState(0)
+  const [expenseGoal, setExpenseGoal] = useState(0)
   const [timeoutReached, setTimeoutReached] = useState(false)
   const [initialLoadState, setInitialLoadState] = useState({
     settings: false,
@@ -147,6 +148,7 @@ export default function Dashboard() {
         const incomeTotal = amounts.filter((value) => value > 0).reduce((acc, value) => acc + value, 0)
         const expenseTotal = amounts.filter((value) => value < 0).reduce((acc, value) => acc + Math.abs(value), 0)
         setCurrentFunding(incomeTotal - expenseTotal)
+        setExpenseGoal(expenseTotal)
         markLoaded('finances')
       }, (error) => {
         console.error('Error listening to finances:', error)
@@ -311,7 +313,7 @@ export default function Dashboard() {
               <FundingStatus
                 key="funding"
                 current={currentFunding}
-                goal={settings?.funding_goal ?? 10000}
+                goal={expenseGoal > 0 ? expenseGoal : (settings?.funding_goal ?? 10000)}
                 initialTicketSales={settings?.expected_ticket_sales ?? 150}
                 onTicketSalesChange={handleTicketSalesChange}
                 isAuthenticated={!!user}

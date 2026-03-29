@@ -8,6 +8,7 @@ import { doc, onSnapshot } from 'firebase/firestore'
 import { Badge } from '@/components/ui/badge'
 import { BarChart3, ChevronRight, Info, Lightbulb, Loader2 } from 'lucide-react'
 import Link from 'next/link'
+import { Skeleton } from '@/components/ui/skeleton'
 
 interface ClassStats {
   className: ClassName
@@ -21,6 +22,7 @@ interface ClassRankingProps {
   maxRows?: number
   useScrollContainer?: boolean
   infoLink?: string
+  loading?: boolean
 }
 
 export function ClassRanking({
@@ -29,9 +31,10 @@ export function ClassRanking({
   maxRows,
   useScrollContainer = true,
   infoLink = '/finanzen',
+  loading: propLoading,
 }: ClassRankingProps) {
   const [courses, setCourses] = useState<string[]>(['Kurs 1', 'Kurs 2', 'Kurs 3', 'Kurs 4', 'Kurs 5', 'Kurs 6', 'Kurs 7'])
-  const [loading, setLoading] = useState(true)
+  const [internalLoading, setInternalLoading] = useState(true)
 
   useEffect(() => {
     const settingsRef = doc(db, 'settings', 'config')
@@ -39,7 +42,7 @@ export function ClassRanking({
       if (doc.exists() && doc.data().courses) {
         setCourses(doc.data().courses)
       }
-      setLoading(false)
+      setInternalLoading(false)
     })
     return () => unsubscribe()
   }, [])
@@ -61,10 +64,32 @@ export function ClassRanking({
 
   const displayedStats = typeof maxRows === 'number' ? stats.slice(0, maxRows) : stats
 
-  if (loading) {
+  if (propLoading || internalLoading) {
     return (
-      <Card className="h-full border-border/40 shadow-subtle flex items-center justify-center p-12">
-        <Loader2 className="h-8 w-8 animate-spin text-primary/30" />
+      <Card className="h-full border-border/40 shadow-subtle flex flex-col elevated-card">
+        <CardHeader className="pb-3 border-b border-border bg-muted/10">
+          <div className="flex items-center justify-between">
+            <Skeleton className="h-6 w-32" />
+            <Skeleton className="h-5 w-20" />
+          </div>
+        </CardHeader>
+        <CardContent className="p-0 flex-1">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="flex items-center justify-between p-3 border-b border-border/70 last:border-b-0">
+              <div className="flex items-center gap-3">
+                <Skeleton className="h-7 w-7 rounded-full" />
+                <div className="space-y-2">
+                  <Skeleton className="h-3 w-16" />
+                  <Skeleton className="h-1 w-24 rounded-full" />
+                </div>
+              </div>
+              <div className="text-right space-y-2">
+                <Skeleton className="h-3 w-12 ml-auto" />
+                <Skeleton className="h-2 w-8 ml-auto" />
+              </div>
+            </div>
+          ))}
+        </CardContent>
       </Card>
     )
   }

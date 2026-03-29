@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.37.8] - 2026-03-29
+- **Migration Utility:** Web-Interface für die Referral-Migration unter `/admin/migrate-referrals` hinzugefügt. Dies ermöglicht es Admins, die Datenüberführung sicher und bequem über die App auszulösen, ohne die Browser-Konsole nutzen zu müssen.
+
 ## [0.37.7] - 2026-03-29
 - **Referral Migration:** Einführung einer Admin-Funktion (`adminMigrateReferrals`), um alle bestehenden Empfehlungsdaten sicher in das neue robuste V2-System zu überführen. Dies korrigiert die Statistiken (`total_referrals`) und stellt sicher, dass alle historischen Boni korrekt in der neuen `referral_claims` Collection erfasst sind.
 
