@@ -1,6 +1,6 @@
 import { onDocumentWritten } from "firebase-functions/v2/firestore";
 import * as admin from "firebase-admin";
-import { getFirestore } from "firebase-admin/firestore";
+import { getFirestore, FieldValue } from "firebase-admin/firestore";
 
 if (admin.apps.length === 0) {
     admin.initializeApp();
@@ -36,10 +36,6 @@ interface Referral {
 /**
  * Triggered when a user completes their profile.
  * Awards boosters to both referrer and referred user.
- * Triggered when a user completes their profile.
- * Awards boosters to both referrer and referred user.
- * Referrer gets min(2 + totalPastReferrals, 10) boosters, capped at 30 per month.
- * Referred user always gets 5 boosters.
  */
 export const awardReferralBoosters = onDocumentWritten({
     document: "profiles/{uid}",
@@ -61,12 +57,13 @@ export const awardReferralBoosters = onDocumentWritten({
     }
 
     // Detect when full_name and class_name change from empty to non-empty
+    // We also check if it's a new document (creation)
     const wasCompleted = before ? (!!before.full_name?.trim() && !!before.class_name?.trim()) : false;
     const isCompleted = (!!after.full_name?.trim() && !!after.class_name?.trim());
 
     console.log(`[Referral] User ${uid}: wasCompleted=${wasCompleted}, isCompleted=${isCompleted}, referred_by=${after.referred_by}`);
 
-    // Only proceed if the profile was just completed and there is a referrer
+    // Only proceed if the profile was just completed (or created completed) and there is a referrer
     if (wasCompleted || !isCompleted || !after.referred_by) {
         console.log(`[Referral] Skipping ${uid}: already completed, not yet completed, or no referrer.`);
         return;
@@ -93,10 +90,10 @@ export const awardReferralBoosters = onDocumentWritten({
 
         const referrerDoc = referrerQuery.docs[0];
         const referrerId = referrerDoc.id;
-        console.log(`[Referral] Found referrer: ${referrerId} for code: ${referralCode}`);
+        const referrerData = referrerDoc.data() as Profile;
+        console.log(`[Referral] Found referrer: ${referrerId} (${referrerData.full_name}) for code: ${referralCode}`);
 
         // 1. Fetch data for dynamic scaling and caps outside transaction
-        // We query the referrals collection to calculate current month's awarded boosters and total past referrals.
         console.log(`[Referral] Calculating rewards for referrer ${referrerId}`);
         const [totalCountSnap, monthlyRefsSnap] = await Promise.all([
             db.collection("referrals")
@@ -134,8 +131,7 @@ export const awardReferralBoosters = onDocumentWritten({
             ]);
 
             if (!referrerSnap.exists) {
-                console.warn(`[Referral] Referrer ${referrerId} does not exist in profiles collection.`);
-                return;
+                throw new Error(`Referrer ${referrerId} does not exist in profiles collection.`);
             }
 
             if (stdReferralSnap.exists) {
@@ -149,7 +145,7 @@ export const awardReferralBoosters = onDocumentWritten({
             console.log(`[Referral] Awarding 5 boosters to referred user ${uid}`);
             transaction.set(referredRef, {
                 booster_stats: {
-                    extra_available: admin.firestore.FieldValue.increment(5),
+                    extra_available: FieldValue.increment(5),
                 },
             }, { merge: true });
 
@@ -162,7 +158,7 @@ export const awardReferralBoosters = onDocumentWritten({
                 ctaLabel: "Packs öffnen",
                 ctaUrl: "/sammelkarten",
                 dismissLabel: "Gelesen",
-                createdAt: admin.firestore.FieldValue.serverTimestamp(),
+                createdAt: FieldValue.serverTimestamp(),
                 createdBy: "system_referral",
             });
 
@@ -170,7 +166,7 @@ export const awardReferralBoosters = onDocumentWritten({
             if (allowedReward > 0) {
                 transaction.set(referrerRef, {
                     booster_stats: {
-                        extra_available: admin.firestore.FieldValue.increment(allowedReward),
+                        extra_available: FieldValue.increment(allowedReward),
                     },
                 }, { merge: true });
                 console.log(`[Referral] Awarded ${allowedReward} boosters to referrer ${referrerId}`);
@@ -184,7 +180,7 @@ export const awardReferralBoosters = onDocumentWritten({
                     ctaLabel: "Packs öffnen",
                     ctaUrl: "/sammelkarten",
                     dismissLabel: "Gelesen",
-                    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+                    createdAt: FieldValue.serverTimestamp(),
                     createdBy: "system_referral",
                 });
             } else {
@@ -204,5 +200,7 @@ export const awardReferralBoosters = onDocumentWritten({
         console.log(`[Referral] Successfully processed referral for user ${uid} by referrer ${referrerId}`);
     } catch (error) {
         console.error("[Referral] Error in awardReferralBoosters:", error);
+        throw error; // Rethrow to ensure it's logged as a failure in GCP
     }
 });
+

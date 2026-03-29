@@ -1,6 +1,16 @@
 # Changelog
 
-## [0.37.1] - 2026-03-29
+## [0.37.2] - 2026-03-29
+- **Bugfix (Referral System):** Behebung eines Fehlers im Empfehlungsprogramm, der die Gutschrift von Bonus-Boostern verhinderte. Die Cloud Function `awardReferralBoosters` wurde auf die konsistente Verwendung von `FieldValue` aus dem modularen Firestore SDK (`firebase-admin/firestore`) umgestellt, um Transaktionsfehler zu vermeiden. Zusätzliche Logging-Punkte wurden für eine bessere Fehlerdiagnose im Backend integriert.
+
+## [0.36.30] - 2026-03-29
+- **Navbar UI Adjustment:** Der Projektschriftzug "ABI Planer" wurde neben dem Logo in der Navigation wiederhergestellt, wie vom Nutzer gewünscht. Das neue Logo (`ABI Planer Logo.svg`) wird nun harmonisch neben dem Text angezeigt.
+
+## [0.36.29] - 2026-03-29
+- **Navbar UI Refinement:** Redundante Text-Branding ("ABI Planer") neben dem Logo in der Navigation entfernt. Das neue Logo dient nun als alleiniges, cleanes Branding-Element in der Sidebar und im mobilen Header.
+- **Visual Branding:** Logo-Größe in der Navigation für bessere Präsenz optimiert (56x56 in Sidebar, 48x48 im mobilen Header) und mittig ausgerichtet.
+
+## [0.36.28] - 2026-03-29
 - **Admin Focus (Settings):** Die Wahrscheinlichkeit für Werbe-Parodie-Banner ist nun in den globalen Einstellungen separat von der Cookie-Wahrscheinlichkeit einstellbar.
 - **Performance Update (Stability):** Behebung eines Fehlers, der bei Hintergrund-Updates (z.B. Online-Status Heartbeat) ein unnötiges Neu-Initialisieren aller Datenbank-Listener auf dem Dashboard und in der System-Benachrichtigung auslöste. Die Seite ist nun deutlich ruhiger und flackert nicht mehr.
 
