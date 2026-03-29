@@ -68,8 +68,8 @@ async function processReferralReward(uid: string, after: Profile) {
         referrerId = directDoc.id;
         referrerName = (directDoc.data() as Profile).full_name || referrerName;
         console.log(`[Referral] SUCCESS: Resolved referrer via UID: ${referrerId}`);
-    } else {
-        // 2. Try finding by referral_code field (Short code match)
+    // 2. Try finding by referral_code field (Short code match)
+    if (!referrerId) {
         console.log(`[Referral] Checking if code is a short_code...`);
         const querySnap = await db.collection("profiles")
             .where("referral_code", "==", referralCode)
@@ -80,7 +80,25 @@ async function processReferralReward(uid: string, after: Profile) {
             const docSnap = querySnap.docs[0];
             referrerId = docSnap.id;
             referrerName = (docSnap.data() as Profile).full_name || referrerName;
-            console.log(`[Referral] SUCCESS: Resolved referrer via short code: ${referrerId}`);
+            console.log(`[Referral] SUCCESS: Resolved referrer via short code field: ${referrerId}`);
+        }
+    }
+
+    // 3. NEW: Try finding by UID prefix (First 8 chars of UID)
+    if (!referrerId && referralCode.length >= 8) {
+        console.log(`[Referral] Checking if code is a UID prefix...`);
+        // We search for IDs between 'code' and 'code' + high-unicode char
+        const prefixQuery = await db.collection("profiles")
+            .where(admin.firestore.FieldPath.documentId(), ">=", referralCode)
+            .where(admin.firestore.FieldPath.documentId(), "<", referralCode + "\uf8ff")
+            .limit(1)
+            .get();
+
+        if (!prefixQuery.empty) {
+            const docSnap = prefixQuery.docs[0];
+            referrerId = docSnap.id;
+            referrerName = (docSnap.data() as Profile).full_name || referrerName;
+            console.log(`[Referral] SUCCESS: Resolved referrer via UID prefix: ${referrerId}`);
         }
     }
 
@@ -385,7 +403,27 @@ export const debugCheckReferralCode = onCall({
             };
         }
 
-        // --- NEW: If not found, list some valid codes for debugging ---
+        // --- NEW: Check UID Prefix ---
+        if (code.length >= 8) {
+            const prefixQuery = await db.collection("profiles")
+                .where(admin.firestore.FieldPath.documentId(), ">=", code)
+                .where(admin.firestore.FieldPath.documentId(), "<", code + "\uf8ff")
+                .limit(1)
+                .get();
+
+            if (!prefixQuery.empty) {
+                const docSnap = prefixQuery.docs[0];
+                const data = docSnap.data() as Profile;
+                return { 
+                    found: true, 
+                    type: "uid_prefix", 
+                    uid: docSnap.id, 
+                    name: data.full_name 
+                };
+            }
+        }
+
+        // --- If not found, list some valid codes for debugging ---
         const samplesSnap = await db.collection("profiles")
             .where("referral_code", ">", "")
             .limit(5)

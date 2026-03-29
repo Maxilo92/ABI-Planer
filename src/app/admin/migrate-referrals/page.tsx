@@ -115,7 +115,11 @@ export default function MigrateReferralsPage() {
                   </p>
                   <p>Name: {debugResult.name || 'Unbekannt'}</p>
                   <p>UID: <code className="bg-white/50 px-1 rounded">{debugResult.uid}</code></p>
-                  <p>Typ: {debugResult.type === 'uid' ? 'Direkte User-ID' : 'Kurz-Code'}</p>
+                  <p>Typ: {
+                    debugResult.type === 'uid' ? 'Direkte User-ID' : 
+                    debugResult.type === 'uid_prefix' ? 'UID-Präfix (Anfang der ID)' : 
+                    'Kurz-Code'
+                  }</p>
                 </div>
               ) : (
                 <div className="space-y-1">

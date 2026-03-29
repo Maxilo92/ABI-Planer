@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.37.18] - 2026-03-29
+- **Referral "Super-Search":** Die Werber-Erkennung wurde nochmals erweitert und nutzt nun auch eine Präfix-Suche auf die User-IDs. Dies stellt sicher, dass Referral-Links auch dann funktionieren, wenn das Feld `referral_code` im Werber-Profil noch nicht generiert wurde, die ID aber mit dem Code übereinstimmt.
+
 ## [0.37.17] - 2026-03-29
 - **Bugfix (UI):** Bereinigung der JSX-Struktur im Referrer-Diagnose-Tool. Ein Klammerfehler wurde korrigiert, der in Version 0.37.16 zu einem Absturz der Admin-Seite führte.
 
