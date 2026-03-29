@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.37.17] - 2026-03-29
+- **Bugfix (UI):** Bereinigung der JSX-Struktur im Referrer-Diagnose-Tool. Ein Klammerfehler wurde korrigiert, der in Version 0.37.16 zu einem Absturz der Admin-Seite führte.
+
 ## [0.37.16] - 2026-03-29
 - **Bugfix (UI):** Behebung eines Syntaxfehlers im Diagnose-Tool der Migrationsseite, der den Seitenaufbau verhinderte.
 
