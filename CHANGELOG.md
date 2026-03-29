@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.37.15] - 2026-03-29
+- **Diagnostic UX:** Das Referrer-Diagnose-Tool zeigt nun bei einer fehlgeschlagenen Suche Beispiel-Codes aus der Datenbank an. Dies hilft Admins zu erkennen, ob Codes ein falsches Format haben oder ob das `referral_code` Feld in der Datenbank generell fehlt.
+
 ## [0.37.14] - 2026-03-29
 - **Build Fix (Functions):** Behebung eines TypeScript-Fehlers in der `referrals.ts` Cloud Function, der durch ein fehlendes Feld im lokalen `Profile` Interface den Deployment-Prozess verhinderte.
 

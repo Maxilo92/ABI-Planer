@@ -385,7 +385,23 @@ export const debugCheckReferralCode = onCall({
             };
         }
 
-        return { found: false, reason: "not_found_in_db" };
+        // --- NEW: If not found, list some valid codes for debugging ---
+        const samplesSnap = await db.collection("profiles")
+            .where("referral_code", ">", "")
+            .limit(5)
+            .get();
+        
+        const samples = samplesSnap.docs.map(d => ({
+            code: (d.data() as Profile).referral_code,
+            name: (d.data() as Profile).full_name,
+            uid: d.id
+        }));
+
+        return { 
+            found: false, 
+            reason: "not_found_in_db", 
+            existingSamples: samples 
+        };
     } catch (error: any) {
         console.error("[Referral Debug] Query failed:", error);
         return { found: false, reason: "query_error", error: error.message };

@@ -116,14 +116,29 @@ export default function MigrateReferralsPage() {
                   <p>Name: {debugResult.name || 'Unbekannt'}</p>
                   <p>UID: <code className="bg-white/50 px-1 rounded">{debugResult.uid}</code></p>
                   <p>Typ: {debugResult.type === 'uid' ? 'Direkte User-ID' : 'Kurz-Code'}</p>
-                </div>
-              ) : (
-                <div className="space-y-1">
-                  <p className="font-bold flex items-center gap-2">
-                    <AlertCircle className="h-4 w-4" /> Nicht gefunden
-                  </p>
-                  <p>Grund: {debugResult.reason === 'query_error' ? `Datenbank-Fehler (${debugResult.error})` : 'Code existiert nicht.'}</p>
-                  {debugResult.reason === 'query_error' && (
+                ) : (
+                  <div className="space-y-1">
+                    <p className="font-bold flex items-center gap-2">
+                      <AlertCircle className="h-4 w-4" /> Nicht gefunden
+                    </p>
+                    <p>Grund: {debugResult.reason === 'query_error' ? `Datenbank-Fehler (${debugResult.error})` : 'Code existiert nicht.'}</p>
+
+                    {debugResult.existingSamples && debugResult.existingSamples.length > 0 && (
+                      <div className="mt-4 pt-4 border-t border-destructive/10">
+                        <p className="text-xs font-bold uppercase tracking-wider mb-2 opacity-70">Existierende Beispiel-Codes in der DB:</p>
+                        <ul className="space-y-2">
+                          {debugResult.existingSamples.map((s: any) => (
+                            <li key={s.uid} className="flex flex-col bg-background/50 p-2 rounded border border-destructive/5">
+                              <span className="font-mono font-bold text-foreground">Code: {s.code}</span>
+                              <span className="text-[10px] opacity-70">Nutzer: {s.name} (UID: {s.uid})</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {debugResult.reason === 'query_error' && (
+                ...
                     <p className="text-xs mt-2 opacity-80">
                       <Info className="h-3 w-3 inline mr-1" />
                       Hinweis: Ein Datenbank-Fehler deutet oft auf einen fehlenden Firestore-Index hin.
