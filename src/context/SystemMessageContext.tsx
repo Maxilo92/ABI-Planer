@@ -30,6 +30,8 @@ const PARODY_AD_MESSAGES = [
   'Werbeblock Ende: Wenn jeder im Team eine Mini-Aufgabe übernimmt, wird der Abiball plötzlich machbar.'
 ]
 
+const AUTH_ROUTES = ['/login', '/register', '/waiting', '/unauthorized']
+
 interface SystemMessageContextType {
   activeMessages: SystemMessage[]
   pushMessage: (msg: Omit<SystemMessage, 'id' | 'createdAt'> & { id?: string }) => string
@@ -123,10 +125,13 @@ export const SystemMessageProvider = ({ children }: { children: ReactNode }) => 
       if (!docSnap.exists()) return
       const settings = docSnap.data()
       
+      const isAuthRoute = AUTH_ROUTES.includes(pathname)
+
       // 1. Popups
       const messages = (settings.custom_popup_messages || []) as CustomPopupMessage[]
       messages.forEach((msg) => {
         if (!msg.enabled) return
+        if (isAuthRoute) return
         if (sessionStorage.getItem(`custom_popup_dismissed_${msg.id}`)) return
         
         const matches = !msg.routes || msg.routes.length === 0 || msg.routes.some(r => {
@@ -162,7 +167,7 @@ export const SystemMessageProvider = ({ children }: { children: ReactNode }) => 
 
       // 2. Cookie Parody
       const firstVisitDone = localStorage.getItem('cookie_banner_first_visit_done')
-      if (!firstVisitDone) {
+      if (!firstVisitDone && !isAuthRoute) {
         const cookieMessages = settings.cookie_messages || FALLBACK_MESSAGES
         const message = cookieMessages[Math.floor(Math.random() * cookieMessages.length)]
         setTimeout(() => {
@@ -191,7 +196,7 @@ export const SystemMessageProvider = ({ children }: { children: ReactNode }) => 
             ]
           })
         }, 1200)
-      } else if (Math.random() < (settings.ad_banner_chance ?? settings.cookie_banner_chance ?? 0.3)) {
+      } else if (!isAuthRoute && Math.random() < (settings.ad_banner_chance ?? settings.cookie_banner_chance ?? 0.3)) {
         const adMessages = settings.ad_messages || PARODY_AD_MESSAGES
         const message = adMessages[Math.floor(Math.random() * adMessages.length)]
         setTimeout(() => {

@@ -26,6 +26,7 @@ function RegisterForm() {
   const [acceptsTerms, setAcceptsTerms] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [showError, setShowError] = useState(false)
   const router = useRouter()
   const searchParams = useSearchParams()
   const ref = searchParams.get('ref')
@@ -119,6 +120,7 @@ function RegisterForm() {
     e.preventDefault()
 
     setError(null)
+    setShowError(true)
     
     // Final validation check for all required fields
     if (!fullName.trim()) {
@@ -141,6 +143,7 @@ function RegisterForm() {
 
     if (step < 3) {
       setStep((prev) => (prev + 1) as 1 | 2 | 3)
+      setShowError(false)
       return
     }
 
@@ -240,7 +243,7 @@ function RegisterForm() {
           </CardHeader>
           <form onSubmit={handleRegister}>
             <CardContent className="space-y-6 px-5 pb-7 sm:px-7 sm:pb-8">
-              {error && (
+              {showError && error && (
                 <div className="bg-destructive/15 text-destructive text-sm p-3 rounded-md text-center">
                   {error}
                 </div>
