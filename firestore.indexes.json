@@ -12,7 +12,7 @@
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "referrer_uid", "order": "ASCENDING" },
-        { "fieldPath": "timestamp", "order": "DESCENDING" }
+        { "fieldPath": "timestamp", "order": "ASCENDING" }
       ]
     },
     {

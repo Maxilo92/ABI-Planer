@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.37.23] - 2026-03-29
+- **Database Index Fix:** Die Sortier-Reihenfolge des `referral_claims` Index wurde von `DESC` auf `ASC` korrigiert, um exakt den Anforderungen der Firestore-Abfrage zu entsprechen.
+
 ## [0.37.22] - 2026-03-29
 - **Database Index Fix:** Fehlenden zusammengesetzten Index für die `referral_claims` Collection hinzugefügt. Dies behebt den `FAILED_PRECONDITION` Fehler, der die automatisierte Vergabe von Referral-Belohnungen blockiert hat.
 
