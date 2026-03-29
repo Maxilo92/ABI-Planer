@@ -32,6 +32,8 @@ import { toast } from 'sonner'
 import Link from 'next/link'
 import { BoosterPackVisual } from '@/components/cards/BoosterPackVisual'
 import { getFunctions, httpsCallable } from 'firebase/functions'
+import { doc, getDoc } from 'firebase/firestore'
+import { db } from '@/lib/firebase'
 import { cn } from '@/lib/utils'
 
 // Shop Item definition
@@ -165,6 +167,32 @@ function ShopContent() {
   const [isPurchasing, setIsPurchasing] = useState<string | null>(null)
   const [successItem, setSuccessItem] = useState<{name: string, amount: number} | null>(null)
   const [confirmItem, setConfirmItem] = useState<ShopItem | null>(null)
+  const [courses, setCourses] = useState<string[]>([])
+  const [loadingCourses, setLoadingCourses] = useState(true)
+  const [selectedDonationCourse, setSelectedDonationCourse] = useState('')
+  const [donorDisplayName, setDonorDisplayName] = useState('')
+
+  const isDonationItem = (item: ShopItem | null) => !!item && item.id.startsWith('soli-donation')
+
+  useEffect(() => {
+    const loadCourses = async () => {
+      try {
+        const settingsSnap = await getDoc(doc(db, 'settings', 'config'))
+        const rawCourses = settingsSnap.exists() ? settingsSnap.data()?.courses : []
+        const parsedCourses = Array.isArray(rawCourses)
+          ? rawCourses.filter((course): course is string => typeof course === 'string' && course.trim().length > 0)
+          : []
+        setCourses(parsedCourses)
+      } catch (error) {
+        console.error('Error loading courses for donations:', error)
+        setCourses([])
+      } finally {
+        setLoadingCourses(false)
+      }
+    }
+
+    loadCourses()
+  }, [])
 
   // Handle successful purchase return from Stripe
   useEffect(() => {
@@ -193,7 +221,7 @@ function ShopContent() {
   const currentMonthStr = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`
   const shopStats = (profile?.shop_stats?.month === currentMonthStr && profile?.shop_stats) ? profile.shop_stats.counts : {}
 
-  const handleStripeCheckout = async (item: ShopItem) => {
+  const handleStripeCheckout = async (item: ShopItem, selectedCourse?: string, donorName?: string) => {
     if (item.requireAuth && !user) {
       toast.error('Anmeldung erforderlich', {
         description: 'Um Booster-Packs zu sammeln, musst du angemeldet sein.'
@@ -210,9 +238,9 @@ function ShopContent() {
     
     try {
       const functions = getFunctions(undefined, 'europe-west3')
-      const createSession = httpsCallable<{ itemId: string }, { url: string }>(functions, 'createStripeCheckoutSession')
+      const createSession = httpsCallable<{ itemId: string, selectedCourse?: string, donorName?: string }, { url: string }>(functions, 'createStripeCheckoutSession')
       
-      const result = await createSession({ itemId: item.id })
+      const result = await createSession({ itemId: item.id, selectedCourse, donorName })
       
       if (result.data.url) {
         window.location.href = result.data.url
@@ -391,6 +419,8 @@ function ShopContent() {
                           })
                           return
                         }
+                        setSelectedDonationCourse('')
+                        setDonorDisplayName('')
                         setConfirmItem(item)
                       }}
                     >
@@ -537,6 +567,42 @@ function ShopContent() {
               </div>
 
               <div className="space-y-4 relative z-10">
+                {isDonationItem(confirmItem) && (
+                  <div className="space-y-2 p-4 bg-muted/30 rounded-2xl border border-border/50">
+                    <label htmlFor="donation-course" className="text-xs font-black text-muted-foreground uppercase tracking-wider block">
+                      Kurs für Ranking (optional)
+                    </label>
+                    <select
+                      id="donation-course"
+                      className="w-full h-11 rounded-xl border border-border bg-background px-3 text-sm font-semibold outline-none focus:ring-2 focus:ring-primary/30"
+                      value={selectedDonationCourse}
+                      onChange={(e) => setSelectedDonationCourse(e.target.value)}
+                      disabled={loadingCourses || isPurchasing !== null}
+                    >
+                      <option value="">Kein Kurs zuordnen</option>
+                      {courses.map((course) => (
+                        <option key={course} value={course}>{course}</option>
+                      ))}
+                    </select>
+                    <label htmlFor="donation-name" className="text-xs font-black text-muted-foreground uppercase tracking-wider block pt-2">
+                      Dein Name (optional)
+                    </label>
+                    <input
+                      id="donation-name"
+                      type="text"
+                      maxLength={80}
+                      placeholder="z.B. Max Mustermann"
+                      className="w-full h-11 rounded-xl border border-border bg-background px-3 text-sm font-semibold outline-none focus:ring-2 focus:ring-primary/30"
+                      value={donorDisplayName}
+                      onChange={(e) => setDonorDisplayName(e.target.value)}
+                      disabled={isPurchasing !== null}
+                    />
+                    <p className="text-[11px] text-muted-foreground">
+                      Wenn du einen Kurs auswählst, wird die Spende dem Kurs im Leaderboard zugeordnet.
+                    </p>
+                  </div>
+                )}
+
                 <div className="flex items-start gap-3 p-4 bg-primary/5 border border-primary/10 rounded-2xl text-muted-foreground text-[10px] font-bold uppercase tracking-wide leading-relaxed">
                   <ShieldCheck className="w-5 h-5 shrink-0 text-primary" />
                   <span>
@@ -550,15 +616,25 @@ function ShopContent() {
                 <Button 
                   className="w-full h-16 rounded-2xl font-black text-xl shadow-lg hover:shadow-primary/20 transition-all flex items-center justify-center gap-3"
                   onClick={() => {
-                    handleStripeCheckout(confirmItem);
+                    handleStripeCheckout(
+                      confirmItem,
+                      isDonationItem(confirmItem) && selectedDonationCourse ? selectedDonationCourse : undefined,
+                      isDonationItem(confirmItem) && donorDisplayName.trim() ? donorDisplayName.trim() : undefined
+                    );
                     setConfirmItem(null);
+                    setSelectedDonationCourse('');
+                    setDonorDisplayName('');
                   }}
-                  disabled={isPurchasing !== null}
+                  disabled={isPurchasing !== null || (isDonationItem(confirmItem) && loadingCourses)}
                 >
                   <CreditCard className="w-6 h-6" />
                   {confirmItem.isPlaceholder ? 'Aktuell nicht verfügbar' : 'Zur Kasse'}
                 </Button>
-                <Button variant="ghost" className="w-full font-bold text-muted-foreground hover:text-foreground" onClick={() => setConfirmItem(null)}>
+                <Button variant="ghost" className="w-full font-bold text-muted-foreground hover:text-foreground" onClick={() => {
+                  setConfirmItem(null)
+                  setSelectedDonationCourse('')
+                  setDonorDisplayName('')
+                }}>
                   Abbrechen
                 </Button>
               </div>

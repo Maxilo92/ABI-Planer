@@ -135,7 +135,7 @@ export const createStripeCheckoutSession = onCall({
   region: "europe-west3",
   secrets: ["STRIPE_SECRET_KEY"], // Nutzt Firebase Secrets für Live-Sicherheit
 }, async (request) => {
-  const { itemId } = request.data;
+  const { itemId, selectedCourse, donorName } = request.data;
   const product = STRIPE_PRICES[itemId];
 
   if (!product) {
@@ -144,6 +144,28 @@ export const createStripeCheckoutSession = onCall({
 
   // Sicherheits-Check: Sammelkarten-Produkte erfordern zwingend ein Konto
   const isAppProduct = itemId.includes("booster");
+  const isDonationProduct = itemId.startsWith("soli-donation");
+
+  const sanitizedSelectedCourse = typeof selectedCourse === "string" ? selectedCourse.trim() : "";
+  const sanitizedDonorName = typeof donorName === "string" ? donorName.trim() : "";
+
+  if (sanitizedDonorName.length > 80) {
+    throw new HttpsError("invalid-argument", "Der angegebene Name ist zu lang.");
+  }
+
+  if (isDonationProduct && sanitizedSelectedCourse) {
+    const db = getFirestore("abi-data");
+    const configSnap = await db.collection("settings").doc("config").get();
+    const courses = (configSnap.exists ? configSnap.data()?.courses : []) as string[] | undefined;
+    const validCourses = Array.isArray(courses)
+      ? courses.filter((course) => typeof course === "string" && course.trim().length > 0).map((course) => course.trim())
+      : [];
+
+    if (!validCourses.includes(sanitizedSelectedCourse)) {
+      throw new HttpsError("invalid-argument", "Der ausgewaehlte Kurs ist ungueltig.");
+    }
+  }
+
   if (isAppProduct && !request.auth) {
     throw new HttpsError("unauthenticated", "Für diesen Artikel ist ein Konto erforderlich.");
   }
@@ -185,6 +207,8 @@ export const createStripeCheckoutSession = onCall({
         itemId: itemId,
         amount: product.amount.toString(),
         isAppProduct: isAppProduct.toString(),
+        selectedCourse: sanitizedSelectedCourse || "",
+        donorName: isDonationProduct ? sanitizedDonorName : "",
         legal_notice: "Widerrufsverzicht akzeptiert bei Ausführung"
       },
       automatic_tax: { enabled: true },
@@ -241,6 +265,13 @@ export const stripeWebhook = onRequest({
     const amount = Number(session.metadata?.amount || 0);
     const itemId = session.metadata?.itemId;
     const isAppProduct = session.metadata?.isAppProduct === "true";
+    const isDonationProduct = (itemId || "").startsWith("soli-donation");
+    const selectedCourseRaw = typeof session.metadata?.selectedCourse === "string" ? session.metadata.selectedCourse.trim() : "";
+    const selectedCourse = selectedCourseRaw.length > 0 ? selectedCourseRaw : null;
+    const donorNameRaw = typeof session.metadata?.donorName === "string" ? session.metadata.donorName.trim() : "";
+    const donorName = donorNameRaw.length > 0 ? donorNameRaw : null;
+    const amountTotalCents = Number(session.amount_total || 0);
+    const amountTotalEur = amountTotalCents > 0 ? amountTotalCents / 100 : 0;
 
     if (!itemId) {
       logger.error("Missing ItemId in Session:", session.id);
@@ -261,9 +292,42 @@ export const stripeWebhook = onRequest({
           return;
         }
 
+        let responsibleClass: string | null = selectedCourse;
+        let payerName: string | null = null;
+        let profileRef: FirebaseFirestore.DocumentReference | null = null;
+
+        if (userId) {
+          profileRef = db.collection("profiles").doc(userId);
+          const profileDoc = await transaction.get(profileRef);
+          const profileData = profileDoc.exists ? profileDoc.data() : null;
+
+          if (!isDonationProduct && !responsibleClass && typeof profileData?.class_name === "string" && profileData.class_name.trim().length > 0) {
+            responsibleClass = profileData.class_name.trim();
+          }
+
+          if (typeof profileData?.full_name === "string" && profileData.full_name.trim().length > 0) {
+            payerName = profileData.full_name.trim();
+          }
+        }
+
+        if (donorName) {
+          payerName = donorName;
+        }
+
+        if (!payerName && typeof session.customer_details?.name === "string" && session.customer_details.name.trim().length > 0) {
+          payerName = session.customer_details.name.trim();
+        }
+
+        if (!payerName && typeof session.customer_details?.email === "string" && session.customer_details.email.trim().length > 0) {
+          payerName = session.customer_details.email.trim();
+        }
+
+        if (!payerName) {
+          payerName = userId ? "Shop-Kauf" : "Gastkauf";
+        }
+
         // 1. Fulfillment für App-Produkte (Booster) nur wenn UserID vorhanden
-        if (isAppProduct && userId) {
-          const profileRef = db.collection("profiles").doc(userId);
+        if (isAppProduct && userId && profileRef) {
           transaction.update(profileRef, {
             "booster_stats.extra_available": FieldValue.increment(amount),
             updated_at: FieldValue.serverTimestamp()
@@ -275,14 +339,42 @@ export const stripeWebhook = onRequest({
           user_id: userId || "guest",
           is_guest: !userId,
           amount: amount,
+          charged_amount_eur: amountTotalEur,
+          charged_amount_cents: amountTotalCents,
           item_id: itemId,
+          selected_course: responsibleClass,
+          donor_name: donorName,
           stripe_session_id: session.id,
           customer_email: session.customer_details?.email || null,
           processed_at: FieldValue.serverTimestamp(),
           status: "completed"
         });
 
-        // 3. Audit-Log
+        // 3. Kauf in Finanzen eintragen (alle Shop-Käufe)
+        if (amountTotalEur > 0) {
+          const financeRef = db.collection("finances").doc();
+          const itemLabelMap: Record<string, string> = {
+            "single-booster": "Starter Pack",
+            "five-boosters": "Booster Bundle",
+            "twelve-boosters": "Elite Box",
+            "soli-donation-small": "Kleiner Beitrag",
+            "soli-donation-medium": "Mittlerer Beitrag",
+            "soli-donation-large": "Großer Beitrag",
+          };
+
+          const itemLabel = itemId ? (itemLabelMap[itemId] || itemId) : "Shop-Kauf";
+
+          transaction.set(financeRef, {
+            amount: amountTotalEur,
+            description: `Shop-Kauf: ${itemLabel}`,
+            responsible_class: responsibleClass,
+            responsible_user_name: payerName,
+            created_by: "system:stripe",
+            entry_date: FieldValue.serverTimestamp(),
+          });
+        }
+
+        // 4. Audit-Log
         const logRef = db.collection("logs").doc();
         transaction.set(logRef, {
           user_id: userId || "guest",
@@ -291,6 +383,8 @@ export const stripeWebhook = onRequest({
             session_id: session.id,
             item: itemId,
             booster_count: isAppProduct ? amount : 0,
+            charged_amount_eur: amountTotalEur,
+            responsible_class: responsibleClass,
             is_guest: !userId
           },
           timestamp: FieldValue.serverTimestamp()

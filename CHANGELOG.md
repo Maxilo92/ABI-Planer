@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.36.26] - 2026-03-29
+- **Shop Update (Spenden):** Kursauswahl bei Spenden ist jetzt optional (statt verpflichtend).
+- **Spenden-Checkout:** Optionales Namensfeld ergänzt, damit Spendende ihren Namen freiwillig angeben können.
+- **Backend Mapping:** Kurs- und Namensangaben werden nur bei Eingabe übernommen und in der Transaktion/Finanzbuchung gespeichert.
+
+## [0.36.25] - 2026-03-29
+- **Shop/Leaderboard:** Bei Spenden im Shop ist die Auswahl eines Kurses jetzt verpflichtend. Die Kurszuordnung wird an Stripe-Metadaten übergeben und fließt ins Kurs-Ranking ein.
+- **Finance Automation:** Alle Stripe-Käufe (Spenden und Booster) werden nun automatisch als Einnahmen in `finances` erfasst.
+- **Finance Attribution:** Finanz-Einträge aus Shop-Käufen speichern Kursbezug (`responsible_class`) und Zahler-Kontext (`responsible_user_name`) für transparente Auswertung.
+
 ## [0.36.24] - 2026-03-29
 - **Shop Text Update:** Bei den drei Spendenartikeln im globalen Shop wurde das Präfix "Soli-" aus den Artikelnamen entfernt.
 
