@@ -328,12 +328,12 @@ export function Navbar() {
 
       {/* Mobile drawer */}
       {!loading && isOpen && (
-        <div className="md:hidden fixed inset-0 z-[90]">
+        <div className="md:hidden fixed inset-0 z-[90] pointer-events-none">
           <motion.button 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 bg-black/50" 
+            className="absolute left-0 right-0 top-16 bottom-0 bg-black/50 pointer-events-auto" 
             onClick={() => setIsOpen(false)} 
             aria-label="Navigation schliessen" 
           />
@@ -350,9 +350,9 @@ export function Navbar() {
                 setIsOpen(false)
               }
             }}
-            className="absolute left-0 top-16 bottom-0 w-[85vw] max-w-80 border-r bg-background flex flex-col shadow-2xl touch-pan-y"
+            className="absolute left-0 top-16 bottom-0 w-[85vw] max-w-80 border-r bg-background flex flex-col shadow-2xl touch-pan-y pt-4 pointer-events-auto"
           >
-            <div className="flex-1 p-4 overflow-y-auto space-y-1">
+            <div className="flex-1 px-4 pb-4 overflow-y-auto space-y-1">
               {navItems.map((item) => renderNavItem(item, true))}
             </div>
 
