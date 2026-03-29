@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.37.12] - 2026-03-29
+- **Build Fix (Finanzen):** Behebung eines kritischen TypeScript-Fehlers auf der Finanzseite, bei dem eine undefinierte Variable (`estimatedFundingGoal`) im `ClassRanking` Widget den Produktions-Build verhinderte.
+
 ## [0.37.11] - 2026-03-29
 - **Referral Robustness Update:** Die Referrer-Suche wurde erheblich verbessert. Das System kann nun sowohl kurze 8-stellige Codes als auch vollständige User-IDs (UIDs) im Feld `referred_by` auflösen. Dies stellt sicher, dass Belohnungen auch dann korrekt zugeordnet werden, wenn historische Daten oder unterschiedliche Link-Formate verwendet wurden.
 

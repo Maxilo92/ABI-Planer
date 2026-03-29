@@ -202,7 +202,7 @@ export default function FinancePage() {
       <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
         <ClassRanking 
           finances={finances} 
-          goal={estimatedFundingGoal} 
+          goal={fundingGoal} 
           useScrollContainer={false}
           infoLink="/finanzen/spenden"
         />
