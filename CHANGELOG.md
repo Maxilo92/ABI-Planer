@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.37.10] - 2026-03-29
+- **Referral Diagnostic Update:** Erweitertes Logging sowohl im Frontend (`AuthContext`) als auch im Backend (`functions`) für das Empfehlungssystem hinzugefügt. Dies ermöglicht eine präzise Fehlerdiagnose, warum Belohnungen in bestimmten Fällen nicht gutgeschrieben werden.
+
 ## [0.37.9] - 2026-03-29
 - **Bugfix (UI):** Korrektur eines React-Prop-Fehlers auf der Referral-Migrationsseite. Die `Button`-Komponente verwendet nun korrekt das `render`-Prop-Pattern anstelle von `asChild`, was die Konsolenausgabe bereinigt und die UI-Stabilität verbessert.
 

@@ -45,40 +45,41 @@ async function processReferralReward(uid: string, after: Profile) {
     const db = getFirestore("abi-data");
     
     if (!after.referred_by) {
-        console.log(`[Referral] User ${uid} has no referrer, skipping.`);
+        console.log(`[Referral] User ${uid} has no referrer code in profile, skipping.`);
         return { success: false, reason: "no_referrer" };
     }
 
     const referralCode = after.referred_by;
+    console.log(`[Referral] Starting process for user ${uid} with code: ${referralCode}`);
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const startOfMonthISO = startOfMonth.toISOString();
     const timestamp = now.toISOString();
 
     // 0. Find the actual referrer UID from the referral code
-    console.log(`[Referral] Looking up referrer for code: ${referralCode}`);
+    console.log(`[Referral] Looking up referrer profile with code: ${referralCode}`);
     const referrerQuery = await db.collection("profiles")
         .where("referral_code", "==", referralCode)
         .limit(1)
         .get();
 
     if (referrerQuery.empty) {
-        console.warn(`[Referral] No referrer found with code ${referralCode} for user ${uid}.`);
+        console.warn(`[Referral] FAILED: No profile found with referral_code "${referralCode}" for user ${uid}.`);
         return { success: false, reason: "referrer_not_found" };
     }
 
     const referrerDoc = referrerQuery.docs[0];
     const referrerId = referrerDoc.id;
     const referrerData = referrerDoc.data() as Profile;
-    console.log(`[Referral] Found referrer: ${referrerId} (${referrerData.full_name}) for code: ${referralCode}`);
+    console.log(`[Referral] SUCCESS: Found referrer ${referrerId} (${referrerData.full_name}) for code: ${referralCode}`);
 
     if (referrerId === uid) {
-        console.warn(`[Referral] User ${uid} tried to refer themselves.`);
+        console.warn(`[Referral] FAILED: User ${uid} tried to refer themselves.`);
         return { success: false, reason: "self_referral" };
     }
 
     // 1. Fetch data for dynamic scaling and caps outside transaction
-    console.log(`[Referral] Calculating rewards for referrer ${referrerId}`);
+    console.log(`[Referral] Checking for existing claims for referred user ${uid}...`);
     const [totalCountSnap, monthlyRefsSnap, claimSnap] = await Promise.all([
         db.collection("referral_claims")
             .where("referrer_uid", "==", referrerId)
@@ -92,7 +93,7 @@ async function processReferralReward(uid: string, after: Profile) {
     ]);
 
     if (claimSnap.exists) {
-        console.log(`[Referral] Reward already claimed for user ${uid}.`);
+        console.log(`[Referral] ALREADY CLAIMED: Document referral_claims/${uid} already exists.`);
         return { success: true, alreadyClaimed: true };
     }
 
@@ -239,23 +240,29 @@ export const claimReferral = onCall({
     }
 
     const uid = request.auth.uid;
+    console.log(`[Referral onCall] Triggered claim request for user ${uid}`);
     const db = getFirestore("abi-data");
     const profileSnap = await db.collection("profiles").doc(uid).get();
     
     if (!profileSnap.exists) {
+        console.error(`[Referral onCall] Profile for ${uid} not found in database.`);
         throw new HttpsError("not-found", "Profile not found.");
     }
 
     const profile = profileSnap.data() as Profile;
+    console.log(`[Referral onCall] Profile loaded. referred_by=${profile.referred_by}, is_referral_claimed=${profile.is_referral_claimed}`);
     
     if (profile.is_referral_claimed) {
+        console.log(`[Referral onCall] User ${uid} already has is_referral_claimed=true.`);
         return { success: true, alreadyClaimed: true };
     }
 
     try {
-        return await processReferralReward(uid, profile);
+        const result = await processReferralReward(uid, profile);
+        console.log(`[Referral onCall] Process finished for ${uid}. Result:`, JSON.stringify(result));
+        return result;
     } catch (error: any) {
-        console.error("[Referral] Error in onCall:", error);
+        console.error(`[Referral onCall] FATAL ERROR for user ${uid}:`, error);
         throw new HttpsError("internal", error.message || "Failed to process referral.");
     }
 });

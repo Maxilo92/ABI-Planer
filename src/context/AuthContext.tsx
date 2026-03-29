@@ -41,8 +41,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       try {
         console.log('[AuthContext] Triggering referral claim check...')
         const claimReferralFn = httpsCallable(functions, 'claimReferral')
-        await claimReferralFn()
-        console.log('[AuthContext] Referral claim check processed.')
+        const result = await claimReferralFn()
+        console.log('[AuthContext] Referral claim check processed. Result:', result.data)
       } catch (error) {
         // We log but don't block the UI for referral failures
         console.error('[AuthContext] Failed to claim referral:', error)
