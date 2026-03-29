@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.36.20] - 2026-03-29
+- **Git Hygiene:** Root `.gitignore` erweitert, damit KI-Agenten-/Prompt-Konfigs (u.a. `.gemini`, `dotgemini`, `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`) nicht mehr neu in Git aufgenommen werden.
+- **Repository Cleanup:** Bereits getrackte Dateien unter `dotgemini/` wurden per `git rm --cached` aus dem Index entfernt, bleiben lokal aber erhalten.
+
 ## [0.36.19] - 2026-03-29
 - **Hotfix (Runtime):** Behebung des React-Fehlers "Rendered fewer hooks than expected" auf der Sammelkarten-Seite.
 - **Stability:** Die geschuetzte Gast-Ansicht wird nun im finalen Render-Zweig angezeigt (statt per fruehem Return vor spaeteren Hooks), wodurch die Hook-Reihenfolge stabil bleibt.

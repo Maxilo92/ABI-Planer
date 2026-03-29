@@ -40,3 +40,14 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 CardDesign/
+
+# AI agent configs and prompts
+/.gemini/
+/dotgemini/
+**/AGENTS.md
+**/CLAUDE.md
+**/GEMINI.md
+**/copilot-instructions.md
+**/*.agent.md
+**/*.instructions.md
+**/*.prompt.md
