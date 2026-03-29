@@ -278,25 +278,23 @@ export const useUserTeachers = (userId?: string) => {
     }
   }, [currentUser, isOwnProfile])
 
+  // Zeigt verbleibende Packs aus Tageslimit plus extra_available
   const getRemainingBoosters = useCallback(() => {
     if (!isOwnProfile || !currentProfile) return 0
     const today = getCurrentBoosterDay(config)
     const stats = currentProfile.booster_stats
     const dailyLimit = getDailyAllowance(config)
-    
+
     if (!stats) return dailyLimit
-    
+
     const normalizedStats = sanitizeBoosterStats(stats, today)
     let extra = normalizedStats.extra_available || 0
 
     if (normalizedStats.last_reset !== today) {
       extra += calculateCarryoverExtras(normalizedStats.last_reset, today, dailyLimit)
-    }
-
-    if (normalizedStats.last_reset !== today) {
       return dailyLimit + extra
     }
-    
+
     return Math.max(0, dailyLimit - normalizedStats.count) + extra
   }, [currentProfile, isOwnProfile, config])
 

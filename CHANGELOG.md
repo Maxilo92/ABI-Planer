@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.36.17] - 2026-03-29
+- **Fix (Sammelkarten-Semantik):** `booster_stats.count` wird im Backend wieder korrekt als Tages-Öffnungszähler verwendet (statt als Guthaben).
+- **Backend Consistency:** `openBooster` berechnet verfügbare Packs nun aus Tageslimit (`daily_allowance`) plus `extra_available` und verarbeitet den Tageswechsel über `last_reset`/`reset_hour` konsistent.
+- **UI Consistency:** Die Anzeige der verbleibenden Packs nutzt wieder das Modell `daily_allowance - count + extra_available` (inkl. begrenztem Carryover), damit Frontend und Cloud Function übereinstimmen.
+
+## [0.36.16] - 2026-03-29
+- **Fix (Sammelkarten/Booster):** `openBooster` berücksichtigt nun verfügbare Packs aus `booster_stats.count` und `booster_stats.extra_available` gemeinsam.
+- **Consistency (Backend):** Beim Öffnen werden Packs jetzt konsistent zuerst aus `count` und danach aus `extra_available` abgezogen, damit Anzeige und Server-Prüfung nicht mehr auseinanderlaufen.
+
 ## [0.36.15] - 2026-03-28
 - **UX Reversion:** Die Sortier-Logik und der Funktionsumfang des Dashboards für angemeldete Nutzer wurden vollständig auf den ursprünglichen Stand zurückgesetzt (inkl. Ranking/Leaderboard). Lediglich die Sammelkarten-Werbung bleibt für Konto-Inhaber ausgeblendet, um die Benutzeroberfläche sauber zu halten.
 - **Guest Logic Stability:** Die optimierte "Promo-First" Ansicht für Gäste bleibt erhalten, ohne die Erfahrung für registrierte Nutzer zu beeinflussen.

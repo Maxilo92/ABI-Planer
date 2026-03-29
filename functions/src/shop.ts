@@ -16,6 +16,94 @@ const LIMITS: Record<string, number> = {
   "twelve-boosters": 2
 };
 
+const BERLIN_TIMEZONE = "Europe/Berlin";
+const DEFAULT_DAILY_PACK_ALLOWANCE = 2;
+const DEFAULT_RESET_HOUR = 9;
+
+const formatDatePart = (value: number) => value.toString().padStart(2, "0");
+
+const fromDayStringToUtcMs = (value: string): number | null => {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if (!match) return null;
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const timestamp = Date.UTC(year, month - 1, day);
+
+  return Number.isNaN(timestamp) ? null : timestamp;
+};
+
+const addDaysToDayString = (value: string, delta: number): string => {
+  const base = fromDayStringToUtcMs(value);
+  if (base === null) return value;
+
+  const next = new Date(base + delta * 24 * 60 * 60 * 1000);
+  const year = next.getUTCFullYear();
+  const month = formatDatePart(next.getUTCMonth() + 1);
+  const day = formatDatePart(next.getUTCDate());
+
+  return `${year}-${month}-${day}`;
+};
+
+const toBerlinParts = (date: Date) => {
+  const formatter = new Intl.DateTimeFormat("en-GB", {
+    timeZone: BERLIN_TIMEZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  });
+
+  const parts = formatter.formatToParts(date);
+  const map = new Map(parts.map((part) => [part.type, part.value]));
+
+  return {
+    year: Number(map.get("year")),
+    month: Number(map.get("month")),
+    day: Number(map.get("day")),
+    hour: Number(map.get("hour")),
+  };
+};
+
+const getCurrentBoosterDay = (config: any): string => {
+  const resetHour = Number(config?.global_limits?.reset_hour) || DEFAULT_RESET_HOUR;
+  const now = new Date();
+  const berlin = toBerlinParts(now);
+  const baseDay = `${berlin.year}-${formatDatePart(berlin.month)}-${formatDatePart(berlin.day)}`;
+
+  if (berlin.hour < resetHour) {
+    return addDaysToDayString(baseDay, -1);
+  }
+
+  return baseDay;
+};
+
+const daysBetween = (from: string, to: string): number => {
+  const fromMs = fromDayStringToUtcMs(from);
+  const toMs = fromDayStringToUtcMs(to);
+  if (fromMs === null || toMs === null) return 0;
+
+  const msInDay = 24 * 60 * 60 * 1000;
+  const diff = toMs - fromMs;
+  return Math.max(0, Math.floor(diff / msInDay));
+};
+
+const calculateCarryoverExtras = (lastReset: string, today: string, dailyAllowance: number): number => {
+  const daysMissed = daysBetween(lastReset, today);
+  if (daysMissed <= 0) return 0;
+  return Math.min(daysMissed, 1) * dailyAllowance;
+};
+
+const toSafeInt = (value: unknown): number => {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return 0;
+  return Math.max(0, Math.floor(parsed));
+};
+
 /**
  * Cloud Function zum Erstellen einer Stripe Checkout Session.
  * Sicher: Nutzt client_reference_id (UserID).
@@ -58,7 +146,7 @@ export const createStripeCheckoutSession = onCall({
       }],
       mode: "payment",
       allow_promotion_codes: true,
-      client_reference_id: userId, // Kann null sein für Gäste
+      client_reference_id: userId || undefined, // Muss string oder undefined sein
       billing_address_collection: "required",
       metadata: {
         itemId: itemId,
@@ -328,17 +416,35 @@ export const openBooster = onCall({
 
       const profileData = profileSnap.data() || {};
       const boosterStats = profileData.booster_stats || {};
-      const extraAvailable = Number(boosterStats.extra_available) || 0;
-
-      if (extraAvailable < countToOpen) {
-        throw new HttpsError("failed-precondition", `Nicht genügend Booster verfügbar (${extraAvailable} vorhanden, ${countToOpen} benötigt).`);
-      }
 
       if (!settingsSnap.exists) {
         throw new HttpsError("internal", "Sammelkarten-Konfiguration fehlt.");
       }
 
       const config = settingsSnap.data() as any;
+      const dailyAllowance = Math.max(0, Math.floor(Number(config?.global_limits?.daily_allowance) || DEFAULT_DAILY_PACK_ALLOWANCE));
+      const today = getCurrentBoosterDay(config);
+
+      const rawExtraAvailable = toSafeInt(boosterStats.extra_available);
+      const rawCount = toSafeInt(boosterStats.count);
+      const lastReset = typeof boosterStats.last_reset === "string" && /^\d{4}-\d{2}-\d{2}$/.test(boosterStats.last_reset)
+        ? boosterStats.last_reset
+        : today;
+
+      const isCurrentBoosterDay = lastReset === today;
+      const openedToday = isCurrentBoosterDay ? rawCount : 0;
+      const dailyRemaining = Math.max(0, dailyAllowance - openedToday);
+      const carryoverExtras = isCurrentBoosterDay ? 0 : calculateCarryoverExtras(lastReset, today, dailyAllowance);
+      const effectiveExtraAvailable = rawExtraAvailable + carryoverExtras;
+      const totalAvailable = dailyRemaining + effectiveExtraAvailable;
+
+      if (totalAvailable < countToOpen) {
+        throw new HttpsError(
+          "failed-precondition",
+          `Nicht genügend Booster verfügbar (${totalAvailable} vorhanden, ${countToOpen} benötigt).`
+        );
+      }
+
       const lootTeachers = (config.loot_teachers || []) as any[];
       const rarityWeightsRaw = config.rarity_weights || [];
       const rarityWeights = Array.isArray(rarityWeightsRaw) ? rarityWeightsRaw : [rarityWeightsRaw];
@@ -419,9 +525,16 @@ export const openBooster = onCall({
         allPacks.push({ cards: cardsOpenedInPack });
       }
 
-      // Profile aktualisieren: Booster abziehen, total_opened erhöhen
+      // Profile aktualisieren: Tageslimit zuerst nutzen, dann extra_available
+      const usedFromDaily = Math.min(dailyRemaining, countToOpen);
+      const usedFromExtra = countToOpen - usedFromDaily;
+      const newOpenedToday = openedToday + usedFromDaily;
+      const newExtraAvailable = Math.max(0, effectiveExtraAvailable - usedFromExtra);
+
       transaction.update(profileRef, {
-        "booster_stats.extra_available": FieldValue.increment(-countToOpen),
+        "booster_stats.last_reset": today,
+        "booster_stats.count": newOpenedToday,
+        "booster_stats.extra_available": newExtraAvailable,
         "booster_stats.total_opened": FieldValue.increment(countToOpen),
         updated_at: FieldValue.serverTimestamp()
       });
@@ -436,7 +549,7 @@ export const openBooster = onCall({
         action: "OPEN_BOOSTER",
         details: {
           packCount: countToOpen,
-          packs: allPacks.map(p => p.cards.map((c: any) => ({ id: c.id, variant: c.variant, rarity: c.rarity })))
+          packs: allPacks.flatMap(p => p.cards.map((c: any) => ({ id: c.id, variant: c.variant, rarity: c.rarity })))
         },
         timestamp: FieldValue.serverTimestamp()
       });
