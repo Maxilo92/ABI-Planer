@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.37.19] - 2026-03-29
+- **Referral "Full-Scan" Migration:** Die Migrations-Logik wurde massiv erweitert. Anstatt nur die alte `referrals` Collection zu prüfen, scannt das System nun alle Nutzerprofile. Nutzer, die einen Werber-Code besitzen, aber bisher keine Belohnung erhalten haben, werden nun automatisch erkannt und vergütet. Dies korrigiert alle bisherigen Fehlerfälle gesammelt über die Admin-Oberfläche.
+
 ## [0.37.18] - 2026-03-29
 - **Referral "Super-Search":** Die Werber-Erkennung wurde nochmals erweitert und nutzt nun auch eine Präfix-Suche auf die User-IDs. Dies stellt sicher, dass Referral-Links auch dann funktionieren, wenn das Feld `referral_code` im Werber-Profil noch nicht generiert wurde, die ID aber mit dem Code übereinstimmt.
 

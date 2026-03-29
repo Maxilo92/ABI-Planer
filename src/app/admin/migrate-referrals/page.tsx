@@ -181,11 +181,12 @@ export default function MigrateReferralsPage() {
             <div className="bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 p-4 rounded-lg text-sm text-green-800 dark:text-green-200 flex items-start gap-3">
               <CheckCircle2 className="h-5 w-5 shrink-0 text-green-600" />
               <div>
-                <p className="font-bold">Migration erfolgreich!</p>
+                <p className="font-bold">Migration abgeschlossen!</p>
                 <ul className="mt-2 space-y-1 opacity-90">
-                  <li>Verarbeitet: {result.totalProcessed}</li>
-                  <li>Neu migriert: {result.migratedCount}</li>
-                  <li>Übersprungen: {result.skippedCount}</li>
+                  <li>Gefundene Profile mit Werber: {result.totalProcessed}</li>
+                  <li>Neu verarbeitete Belohnungen: <span className="font-bold">{result.migratedCount}</span></li>
+                  <li>Bereits früher erledigt: {result.alreadyClaimedCount || 0}</li>
+                  <li>Fehlgeschlagen (Werber nicht gefunden): {result.skippedCount}</li>
                 </ul>
               </div>
             </div>

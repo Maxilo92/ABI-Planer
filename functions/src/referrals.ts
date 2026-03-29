@@ -28,17 +28,6 @@ interface Profile {
 }
 
 /**
- * Local interface for Referral to match project convention.
- */
-interface Referral {
-    referrerId: string;
-    referredId: string;
-    timestamp: string;
-    boostersAwarded: number;
-    type: 'standard' | 'milestone';
-}
-
-/**
  * Core logic to process a referral reward.
  * Idempotent: checks for existence of referral claim record.
  */
@@ -68,6 +57,8 @@ async function processReferralReward(uid: string, after: Profile) {
         referrerId = directDoc.id;
         referrerName = (directDoc.data() as Profile).full_name || referrerName;
         console.log(`[Referral] SUCCESS: Resolved referrer via UID: ${referrerId}`);
+    }
+
     // 2. Try finding by referral_code field (Short code match)
     if (!referrerId) {
         console.log(`[Referral] Checking if code is a short_code...`);
@@ -304,6 +295,7 @@ export const claimReferral = onCall({
 
 /**
  * Admin-only function to migrate legacy referrals to the new robust system.
+ * Scans all profiles to find users who have a referrer but haven't claimed their reward yet.
  */
 export const adminMigrateReferrals = onCall({
     region: "europe-west3",
@@ -321,40 +313,52 @@ export const adminMigrateReferrals = onCall({
         throw new HttpsError("permission-denied", "Admin only.");
     }
 
-    console.log("[Referral Migration] Starting migration...");
-    const legacySnapshot = await db.collection("referrals").get();
-    console.log(`[Referral Migration] Found ${legacySnapshot.size} legacy records.`);
+    console.log("[Referral Migration] Starting comprehensive profile scan...");
+    
+    // 1. Get all profiles that have a referrer but no claim mark yet
+    const pendingProfilesQuery = await db.collection("profiles")
+        .where("referred_by", ">", "")
+        .get();
+    
+    console.log(`[Referral Migration] Found ${pendingProfilesQuery.size} profiles with a referrer code.`);
 
     let migratedCount = 0;
-    let skippedCount = 0;
+    let alreadyClaimedCount = 0;
+    let errorCount = 0;
 
-    for (const docSnap of legacySnapshot.docs) {
-        const data = docSnap.data() as Referral;
-        const referredId = data.referredId || docSnap.id.replace('std_', '');
-        
-        const profileSnap = await db.collection("profiles").doc(referredId).get();
-        if (!profileSnap.exists) {
-            console.log(`[Referral Migration] Skipping ${referredId}: Profile not found.`);
-            skippedCount++;
+    for (const docSnap of pendingProfilesQuery.docs) {
+        const uid = docSnap.id;
+        const profile = docSnap.data() as Profile;
+
+        // Skip if already claimed (redundant check due to query but safer)
+        if (profile.is_referral_claimed) {
+            alreadyClaimedCount++;
             continue;
         }
 
-        const profile = profileSnap.data() as Profile;
-        const result = await processReferralReward(referredId, profile);
-        
-        if (result.success) {
-            migratedCount++;
-        } else {
-            console.log(`[Referral Migration] Failed to migrate ${referredId}: ${result.reason}`);
-            skippedCount++;
+        try {
+            const result = await processReferralReward(uid, profile);
+            if (result.success && !result.alreadyClaimed) {
+                migratedCount++;
+                console.log(`[Referral Migration] Successfully rewarded user ${uid}`);
+            } else if (result.alreadyClaimed) {
+                alreadyClaimedCount++;
+            } else {
+                console.warn(`[Referral Migration] Could not reward user ${uid}: ${result.reason}`);
+                errorCount++;
+            }
+        } catch (err) {
+            console.error(`[Referral Migration] Error processing user ${uid}:`, err);
+            errorCount++;
         }
     }
 
     return { 
         success: true, 
         migratedCount, 
-        skippedCount, 
-        totalProcessed: legacySnapshot.size 
+        alreadyClaimedCount,
+        skippedCount: errorCount, 
+        totalProcessed: pendingProfilesQuery.size 
     };
 });
 
