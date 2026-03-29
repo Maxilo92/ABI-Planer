@@ -265,7 +265,7 @@ function ShopContent() {
   return (
     <div className="min-h-screen bg-background text-foreground pb-20">
       {/* Header */}
-      <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-md border-b border-border">
+      <div className="sticky top-0 z-20 bg-background/80 backdrop-blur-md border-b border-border">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <Button 
             variant="ghost" 
@@ -531,19 +531,19 @@ function ShopContent() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[110] flex items-center justify-center bg-background/90 backdrop-blur-xl p-4"
+            className="fixed inset-0 z-[110] flex items-center justify-center bg-background/90 backdrop-blur-xl p-3 sm:p-4"
           >
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-card border border-border p-8 rounded-[2.5rem] shadow-2xl max-w-md w-full space-y-8 relative overflow-hidden"
+              className="bg-card border border-border p-4 sm:p-8 rounded-2xl sm:rounded-[2.5rem] shadow-2xl max-w-md w-full space-y-5 sm:space-y-8 relative overflow-hidden max-h-[90vh] overflow-y-auto"
             >
               <div className="absolute inset-0 bg-gradient-to-tr from-primary/5 via-transparent to-transparent pointer-events-none" />
               
               <div className="flex justify-between items-start relative z-10">
                 <div className="space-y-1">
-                  <h3 className="text-3xl font-black tracking-tight">Bestellung bestätigen</h3>
+                  <h3 className="text-2xl sm:text-3xl font-black tracking-tight">Bestellung bestätigen</h3>
                   <p className="text-sm text-muted-foreground font-bold uppercase tracking-widest">Sicherer Checkout</p>
                 </div>
                 <Button variant="ghost" size="icon" onClick={() => setConfirmItem(null)} className="rounded-full">
@@ -551,7 +551,7 @@ function ShopContent() {
                 </Button>
               </div>
 
-              <div className="p-6 bg-muted/30 rounded-3xl border border-border/50 space-y-4 shadow-inner relative z-10">
+              <div className="p-4 sm:p-6 bg-muted/30 rounded-2xl sm:rounded-3xl border border-border/50 space-y-4 shadow-inner relative z-10">
                 <div className="flex justify-between items-center">
                   <span className="text-xs font-black text-muted-foreground uppercase tracking-wider">Artikel</span>
                   <span className="font-black text-lg">{confirmItem.name}</span>
@@ -614,7 +614,7 @@ function ShopContent() {
                 </div>
                 
                 <Button 
-                  className="w-full h-16 rounded-2xl font-black text-xl shadow-lg hover:shadow-primary/20 transition-all flex items-center justify-center gap-3"
+                  className="w-full h-14 sm:h-16 rounded-2xl font-black text-lg sm:text-xl shadow-lg hover:shadow-primary/20 transition-all flex items-center justify-center gap-3"
                   onClick={() => {
                     handleStripeCheckout(
                       confirmItem,

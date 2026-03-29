@@ -132,14 +132,14 @@ export default function FinancePage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Finanzen</h1>
           <p className="text-muted-foreground">Budgetplanung mit Einnahmen und Ausgaben.</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex w-full md:w-auto flex-wrap gap-2">
           <Link href="/finanzen/spenden">
-            <Button variant="outline" className="gap-2">
+            <Button variant="outline" className="gap-2 w-full sm:w-auto">
               <Heart className="h-4 w-4 text-primary fill-primary/20" />
               Spenden & Hilfe
             </Button>

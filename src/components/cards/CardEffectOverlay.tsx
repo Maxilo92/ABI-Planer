@@ -6,11 +6,9 @@ import { cn } from '@/lib/utils';
 
 export const CardEffectOverlay: React.FC<{ 
   variant: CardVariant; 
-  opacity?: number;
   tintColor?: string;
 }> = ({ 
   variant, 
-  opacity = 0.3,
   tintColor
 }) => {
   if (variant === 'normal') return null;
@@ -23,17 +21,17 @@ export const CardEffectOverlay: React.FC<{
       
       case 'shiny': 
         // 03 Shiny Sparkle: Multi-layered, ultra-soft metallic shimmer
-        // Redesigned with a broad bell-curve to eliminate hard edges and ensure seamless looping
+        // Keep the effect fully local (no remote texture fetch) to avoid first-render network latency.
         return cn(
           "bg-[linear-gradient(110deg,rgba(255,255,255,0)_0%,rgba(255,255,255,0.05)_20%,rgba(255,255,255,0.2)_40%,rgba(255,255,255,0.5)_50%,rgba(255,255,255,0.2)_60%,rgba(255,255,255,0.05)_80%,rgba(255,255,255,0)_100%)]",
           "bg-[length:200%_100%] animate-[shimmer_12s_infinite_linear] mix-blend-overlay opacity-90 shadow-[inset_0_0_100px_rgba(255,255,255,0.2)]",
           "before:absolute before:inset-0 before:bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.2)_0%,transparent_70%)]",
-          "after:absolute after:inset-0 after:bg-[url('https://grainy-gradients.vercel.app/noise.svg')] after:opacity-[0.05] after:mix-blend-color-dodge"
+          "after:absolute after:inset-0 after:bg-[repeating-linear-gradient(45deg,rgba(255,255,255,0.03)_0px,rgba(255,255,255,0.03)_1px,transparent_1px,transparent_3px)] after:opacity-30 after:mix-blend-color-dodge"
         );
 
       case 'black_shiny_holo':
         // Cosmic Void: Deep space effect for Black Shiny
-        return "bg-black opacity-80 after:absolute after:inset-0 after:bg-[radial-gradient(circle_at_50%_50%,rgba(147,51,234,0.4)_0%,transparent_70%),radial-gradient(circle_at_20%_80%,rgba(59,130,246,0.4)_0%,transparent_70%)] after:mix-blend-screen before:absolute before:inset-0 before:bg-[url('https://grainy-gradients.vercel.app/noise.svg')] before:opacity-20 before:mix-blend-overlay after:animate-pulse shadow-[inset_0_0_60px_rgba(255,255,255,0.1)]";
+        return "bg-black opacity-80 after:absolute after:inset-0 after:bg-[radial-gradient(circle_at_50%_50%,rgba(147,51,234,0.4)_0%,transparent_70%),radial-gradient(circle_at_20%_80%,rgba(59,130,246,0.4)_0%,transparent_70%)] after:mix-blend-screen before:absolute before:inset-0 before:bg-[repeating-radial-gradient(circle,rgba(255,255,255,0.09)_0px,rgba(255,255,255,0.09)_1px,transparent_1px,transparent_3px)] before:opacity-20 before:mix-blend-overlay after:animate-pulse shadow-[inset_0_0_60px_rgba(255,255,255,0.1)]";
 
       default:
         return "";
@@ -46,7 +44,7 @@ export const CardEffectOverlay: React.FC<{
   return (
     <div 
       className={cn(
-        "absolute inset-0 pointer-events-none z-20 transition-all duration-500 will-change-transform",
+        "absolute inset-0 pointer-events-none z-20 transition-all duration-500 will-change-transform rounded-[inherit] overflow-hidden",
         getOverlayStyles()
       )}
       style={isBlackShiny && tintColor ? { backgroundColor: `${tintColor}${getTintOpacity()}` } : undefined}

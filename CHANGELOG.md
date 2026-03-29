@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.36.27] - 2026-03-29
+- **Mobile UI (Shop):** Checkout-Modal auf kleinen Displays kompakter gemacht (`max-h`, `overflow-y-auto`, kleinere Abstände/Typografie), damit Inhalte nicht abgeschnitten werden.
+- **Mobile Layering:** Z-Index-Konflikt zwischen Shop-Header und mobilem Menü behoben (Drawer jetzt über App-Content).
+- **Mobile UI (Finanzen):** Header-Actions umbrechbar gemacht, damit `Beitrag erfassen` und `Spenden & Hilfe` auf kleinen Screens nicht mehr abgeschnitten werden.
+- **Cards Performance:** Externe Noise-Textur in Karten-Overlays entfernt und durch lokale CSS-Texturen ersetzt, damit der erste Booster schneller rendert.
+- **Cards Visual Fix:** Overlay-Clipping auf `rounded-[inherit]` gesetzt, um sichtbare Mini-Ecken an Holo/Shiny-Artcards in der Detailansicht zu beseitigen.
+
 ## [0.36.26] - 2026-03-29
 - **Shop Update (Spenden):** Kursauswahl bei Spenden ist jetzt optional (statt verpflichtend).
 - **Spenden-Checkout:** Optionales Namensfeld ergänzt, damit Spendende ihren Namen freiwillig angeben können.

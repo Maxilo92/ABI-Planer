@@ -328,7 +328,7 @@ export function Navbar() {
 
       {/* Mobile drawer */}
       {!loading && isOpen && (
-        <div className="md:hidden fixed inset-0 z-40">
+        <div className="md:hidden fixed inset-0 z-[90]">
           <motion.button 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
