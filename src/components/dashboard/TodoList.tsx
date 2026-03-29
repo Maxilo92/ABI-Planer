@@ -5,6 +5,7 @@ import { Todo } from '@/types/database'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Badge } from '@/components/ui/badge'
+import { Skeleton } from '@/components/ui/skeleton'
 import { db } from '@/lib/firebase'
 import { doc, updateDoc, deleteDoc } from 'firebase/firestore'
 import { useAuth } from '@/context/AuthContext'
@@ -24,6 +25,7 @@ interface TodoListProps {
   canManage?: boolean
   maxItems?: number
   useScrollContainer?: boolean
+  loading?: boolean
 }
 
 export function TodoList({
@@ -31,11 +33,13 @@ export function TodoList({
   canManage = false,
   maxItems,
   useScrollContainer = true,
+  loading = false,
 }: TodoListProps) {
   const { user, profile } = useAuth()
 
   // Flatten the todo tree for rendering with smart sorting
   const displayedTodos = useMemo(() => {
+    if (loading) return []
     const result: (Todo & { depth: number })[] = [];
     const processed = new Set<string>();
 
@@ -182,7 +186,20 @@ export function TodoList({
       </CardHeader>
       <CardContent className="p-0 bg-card">
         <div className={useScrollContainer ? "h-full overflow-y-auto p-4 space-y-3 scrollbar-thin scrollbar-thumb-muted-foreground/20" : "p-4 space-y-3"}>
-          {displayedTodos.length === 0 ? (
+          {loading ? (
+            Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="flex items-start gap-3 rounded-lg border border-border/70 bg-background/80 px-3 py-2">
+                <Skeleton className="h-4 w-4 mt-0.5 rounded" />
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="h-4 w-3/4" />
+                  <div className="flex gap-2">
+                    <Skeleton className="h-3 w-16" />
+                    <Skeleton className="h-3 w-24" />
+                  </div>
+                </div>
+              </div>
+            ))
+          ) : displayedTodos.length === 0 ? (
             <p className="text-sm text-muted-foreground italic py-4">Keine Aufgaben vorhanden.</p>
           ) : (
             displayedTodos.map((todo) => {

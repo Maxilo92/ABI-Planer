@@ -7,6 +7,7 @@ import { Calendar as CalendarIcon, Clock, Trash2, MapPin, User } from 'lucide-re
 import { format } from 'date-fns'
 import { de } from 'date-fns/locale'
 import { toDate } from '@/lib/utils'
+import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
 import { EditEventDialog } from '@/components/modals/EditEventDialog'
 import { db } from '@/lib/firebase'
@@ -22,6 +23,7 @@ interface CalendarEventsProps {
   maxItems?: number
   useScrollContainer?: boolean
   showShareButton?: boolean
+  loading?: boolean
 }
 
 export function CalendarEvents({
@@ -30,6 +32,7 @@ export function CalendarEvents({
   maxItems,
   useScrollContainer = true,
   showShareButton = false,
+  loading = false,
 }: CalendarEventsProps) {
   const { user, profile } = useAuth()
 
@@ -86,16 +89,29 @@ export function CalendarEvents({
           <CalendarIcon className="h-5 w-5 text-primary" />
           Nächste Termine
         </CardTitle>
-      </CardHeader>
       <CardContent className="p-0 bg-card">
         <div className={useScrollContainer ? "h-full overflow-y-auto p-4 space-y-4 scrollbar-thin scrollbar-thumb-muted-foreground/20" : "p-4 space-y-4"}>
-          {displayedEvents.length === 0 ? (
+          {loading ? (
+            Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="flex items-center gap-4 pb-3 border-b last:border-0">
+                <Skeleton className="h-[50px] min-w-[50px] rounded-lg" />
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="h-4 w-1/2" />
+                  <div className="flex flex-col gap-1">
+                    <Skeleton className="h-3 w-24" />
+                    <Skeleton className="h-3 w-32" />
+                  </div>
+                </div>
+              </div>
+            ))
+          ) : displayedEvents.length === 0 ? (
             <p className="text-sm text-muted-foreground italic text-center py-4">
               Keine anstehenden Termine.
             </p>
           ) : (
             displayedEvents.map((event) => {
               const startDate = toDate(event.start_date)
+      ...
               const endDate = toDate(event.end_date)
               const isSameDay = startDate.toDateString() === endDate.toDateString()
               return (

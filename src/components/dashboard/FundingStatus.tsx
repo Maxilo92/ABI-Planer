@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Skeleton } from '@/components/ui/skeleton'
 import { useState, useEffect } from 'react'
 
 const TICKET_SALES_SAVE_DEBOUNCE_MS = 500
@@ -14,9 +15,17 @@ interface FundingStatusProps {
   initialTicketSales?: number
   onTicketSalesChange?: (value: number) => void
   isAuthenticated: boolean
+  loading?: boolean
 }
 
-export function FundingStatus({ current, goal, initialTicketSales = 150, onTicketSalesChange, isAuthenticated }: FundingStatusProps) {
+export function FundingStatus({
+  current,
+  goal,
+  initialTicketSales = 150,
+  onTicketSalesChange,
+  isAuthenticated,
+  loading
+}: FundingStatusProps) {
   const [mounted, setHydrated] = useState(false)
   const [ticketSalesInput, setTicketSalesInput] = useState(String(initialTicketSales))
   
@@ -46,6 +55,49 @@ export function FundingStatus({ current, goal, initialTicketSales = 150, onTicke
   }, [ticketSalesInput, onTicketSalesChange, initialTicketSales])
 
   const ticketSales = ticketSalesInput === '' ? 0 : Number(ticketSalesInput)
+
+  if (loading) {
+    return (
+      <Card className="w-full h-full border-none shadow-card">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-medium uppercase tracking-wider text-muted-foreground flex justify-between">
+            <Skeleton className="h-4 w-32" />
+            <Skeleton className="h-4 w-8" />
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-6">
+            <div className="space-y-4">
+              <div className="flex justify-between items-end">
+                <Skeleton className="h-8 w-32" />
+                <Skeleton className="h-4 w-20 mb-1" />
+              </div>
+              <Skeleton className="h-3 w-full" />
+            </div>
+
+            <div className="pt-4 border-t space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="space-y-1">
+                  <Skeleton className="h-3 w-24" />
+                  <Skeleton className="h-8 w-24" />
+                </div>
+                <div className="text-right flex flex-col items-end">
+                  <Skeleton className="h-3 w-24 mb-1" />
+                  <Skeleton className="h-7 w-20" />
+                </div>
+              </div>
+              <div className="space-y-1">
+                <Skeleton className="h-2 w-full" />
+                <Skeleton className="h-2 w-4/5" />
+              </div>
+            </div>
+            
+            <Skeleton className="h-3 w-48 mx-auto" />
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
 
   const safeGoal = Math.max(goal, 1)
   const percentage = Math.min(Math.round((current / safeGoal) * 100), 100)

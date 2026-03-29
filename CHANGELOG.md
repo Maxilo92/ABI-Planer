@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.37.7] - 2026-03-29
+- **Referral Migration:** Einführung einer Admin-Funktion (`adminMigrateReferrals`), um alle bestehenden Empfehlungsdaten sicher in das neue robuste V2-System zu überführen. Dies korrigiert die Statistiken (`total_referrals`) und stellt sicher, dass alle historischen Boni korrekt in der neuen `referral_claims` Collection erfasst sind.
+
 ## [0.37.6] - 2026-03-29
 - **Logo Update:** Die Projektlogos wurden durch neu erstellte PNG-Grafiken in verschiedenen Größen (groß, mittel, klein) ersetzt, um die Bildqualität und das Branding systemweit zu verbessern.
 

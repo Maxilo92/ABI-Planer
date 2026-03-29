@@ -259,3 +259,58 @@ export const claimReferral = onCall({
         throw new HttpsError("internal", error.message || "Failed to process referral.");
     }
 });
+
+/**
+ * Admin-only function to migrate legacy referrals to the new robust system.
+ */
+export const adminMigrateReferrals = onCall({
+    region: "europe-west3",
+}, async (request) => {
+    if (!request.auth) {
+        throw new HttpsError("unauthenticated", "Auth required.");
+    }
+
+    const db = getFirestore("abi-data");
+    const callerSnap = await db.collection("profiles").doc(request.auth.uid).get();
+    const callerData = callerSnap.data();
+    
+    if (!callerData || !["admin", "admin_main", "admin_co"].includes(callerData.role)) {
+        throw new HttpsError("permission-denied", "Admin only.");
+    }
+
+    console.log("[Referral Migration] Starting migration...");
+    const legacySnapshot = await db.collection("referrals").get();
+    console.log(`[Referral Migration] Found ${legacySnapshot.size} legacy records.`);
+
+    let migratedCount = 0;
+    let skippedCount = 0;
+
+    for (const docSnap of legacySnapshot.docs) {
+        const data = docSnap.data() as Referral;
+        const referredId = data.referredId || docSnap.id.replace('std_', '');
+        
+        const profileSnap = await db.collection("profiles").doc(referredId).get();
+        if (!profileSnap.exists) {
+            console.log(`[Referral Migration] Skipping ${referredId}: Profile not found.`);
+            skippedCount++;
+            continue;
+        }
+
+        const profile = profileSnap.data() as Profile;
+        const result = await processReferralReward(referredId, profile);
+        
+        if (result.success) {
+            migratedCount++;
+        } else {
+            console.log(`[Referral Migration] Failed to migrate ${referredId}: ${result.reason}`);
+            skippedCount++;
+        }
+    }
+
+    return { 
+        success: true, 
+        migratedCount, 
+        skippedCount, 
+        totalProcessed: legacySnapshot.size 
+    };
+});

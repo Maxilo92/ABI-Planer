@@ -2,6 +2,7 @@
 
 import { Poll, PollOption, PollVote } from '@/types/database'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { db } from '@/lib/firebase'
@@ -19,6 +20,7 @@ interface PollListProps {
   canManage?: boolean
   limit?: number
   useScrollContainer?: boolean
+  loading?: boolean
 }
 
 export function PollList({
@@ -28,9 +30,10 @@ export function PollList({
   canManage = false,
   limit,
   useScrollContainer = true,
+  loading = false,
 }: PollListProps) {
   const router = useRouter()
-  const [loading, setLoading] = useState<string | null>(null)
+  const [isVoting, setIsVoting] = useState<string | null>(null)
   const [votesByPoll, setVotesByPoll] = useState<Record<string, PollVote[]>>({})
 
   useEffect(() => {
@@ -40,6 +43,33 @@ export function PollList({
     })
     setVotesByPoll(nextVotes)
   }, [polls])
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        {[1, 2].map((i) => (
+          <Card key={i}>
+            <CardHeader>
+              <Skeleton className="h-6 w-3/4 mb-2" />
+              <Skeleton className="h-4 w-1/2" />
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {[1, 2, 3].map((j) => (
+                <div key={j} className="space-y-2">
+                  <div className="flex justify-between">
+                    <Skeleton className="h-4 w-1/3" />
+                    <Skeleton className="h-4 w-8" />
+                  </div>
+                  <Skeleton className="h-2 w-full" />
+                  <Skeleton className="h-8 w-full mt-1" />
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    )
+  }
 
   const displayedPolls = limit ? polls.slice(0, limit) : polls
 
@@ -72,7 +102,7 @@ export function PollList({
       if (!confirmed) return
     }
 
-    setLoading(optionId)
+    setIsVoting(optionId)
     
     try {
       // One vote per user and poll by storing vote under polls/{pollId}/votes/{userId}
@@ -115,7 +145,7 @@ export function PollList({
       console.error('Error voting:', err)
       toast.error('Abstimmung fehlgeschlagen. Bitte prüfe deine Berechtigungen.')
     } finally {
-      setLoading(null)
+      setIsVoting(null)
     }
   }
 
@@ -130,7 +160,7 @@ export function PollList({
     const confirmed = window.confirm('Möchtest du deine Stimme wirklich zurückziehen?')
     if (!confirmed) return
 
-    setLoading('withdraw-' + pollId)
+    setIsVoting('withdraw-' + pollId)
     
     try {
       const voteRef = doc(db, 'polls', pollId, 'votes', userId)
@@ -146,7 +176,7 @@ export function PollList({
       console.error('Error withdrawing vote:', err)
       toast.error('Zurückziehen fehlgeschlagen. Bitte prüfe deine Berechtigungen.')
     } finally {
-      setLoading(null)
+      setIsVoting(null)
     }
   }
 

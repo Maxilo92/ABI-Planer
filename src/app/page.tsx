@@ -14,6 +14,7 @@ import { Badge } from '@/components/ui/badge'
 import { EditSettingsDialog } from '@/components/modals/EditSettingsDialog'
 import { useAuth } from '@/context/AuthContext'
 import { useDashboardSorting } from '@/hooks/useDashboardSorting'
+import { Skeleton } from '@/components/ui/skeleton'
 import { toDate } from '@/lib/utils'
 import { DashboardComponentKey, Poll, PollOption, PollVote, FinanceEntry } from '@/types/database'
 import Link from 'next/link'
@@ -31,6 +32,7 @@ export default function Dashboard() {
   const [polls, setPolls] = useState<Poll[]>([])
   const [allFinances, setAllFinances] = useState<FinanceEntry[]>([])
   const [currentFunding, setCurrentFunding] = useState(0)
+  const [timeoutReached, setTimeoutReached] = useState(false)
   const [initialLoadState, setInitialLoadState] = useState({
     settings: false,
     todos: false,
@@ -43,6 +45,13 @@ export default function Dashboard() {
   const markLoaded = (key: keyof typeof initialLoadState) => {
     setInitialLoadState((previous) => (previous[key] ? previous : { ...previous, [key]: true }))
   }
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setTimeoutReached(true)
+    }, 3000)
+    return () => clearTimeout(timer)
+  }, [])
 
   useEffect(() => {
     // 1. Listen to Settings - PUBLIC
@@ -227,14 +236,25 @@ export default function Dashboard() {
     cards: '/sammelkarten'
   }
 
-  const NewsPreview = ({ items }: { items: any[] }) => (
+  const NewsPreview = ({ items, loading }: { items: any[], loading?: boolean }) => (
     <Card className="flex flex-col border-border/40 shadow-card overflow-hidden bg-card">
       <CardHeader className="pb-3 border-b border-border bg-muted/10 shrink-0">
         <CardTitle className="text-lg font-bold">Letzte Updates</CardTitle>
       </CardHeader>
       <CardContent className="p-0">
         <div className="p-4 space-y-4">
-          {items && items.length > 0 ? (
+          {loading ? (
+            Array.from({ length: 2 }).map((_, i) => (
+              <div key={i} className="flex gap-4 items-start bg-background rounded-xl p-4 border border-border/40">
+                <Skeleton className="h-16 w-16 shrink-0 rounded-lg" />
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="h-4 w-3/4 rounded" />
+                  <Skeleton className="h-3 w-full rounded" />
+                  <Skeleton className="h-3 w-5/6 rounded" />
+                </div>
+              </div>
+            ))
+          ) : items && items.length > 0 ? (
             items.map((item) => (
               <Link
                 key={item.id}
@@ -295,21 +315,35 @@ export default function Dashboard() {
                 initialTicketSales={settings?.expected_ticket_sales ?? 150}
                 onTicketSalesChange={handleTicketSalesChange}
                 isAuthenticated={!!user}
+                loading={!initialLoadState.settings || !initialLoadState.finances}
               />
             </div>
           )
         case 'news':
-          return <div className="flex flex-col"><NewsPreview key="news" items={news.slice(0, 2)} /></div>
+          return <div className="flex flex-col"><NewsPreview key="news" items={news.slice(0, 2)} loading={!initialLoadState.news} /></div>
         case 'todos':
           return (
             <div className="flex flex-col">
-              <TodoList key="todos" todos={todos || []} canManage={canManage} maxItems={5} useScrollContainer={false} />
+              <TodoList
+                key="todos"
+                todos={todos || []}
+                canManage={canManage}
+                maxItems={5}
+                useScrollContainer={false}
+                loading={!initialLoadState.todos}
+              />
             </div>
           )
         case 'events':
           return (
             <div className="flex flex-col">
-              <CalendarEvents key="events" events={events || []} maxItems={3} useScrollContainer={false} />
+              <CalendarEvents
+                key="events"
+                events={events || []}
+                maxItems={3}
+                useScrollContainer={false}
+                loading={!initialLoadState.events}
+              />
             </div>
           )
         case 'polls':
@@ -323,13 +357,14 @@ export default function Dashboard() {
                 goal={settings?.funding_goal ?? 10000}
                 maxRows={4}
                 useScrollContainer={false}
+                loading={!initialLoadState.finances}
               />
             </div>
           )
         case 'cards':
           return (
             <div className="flex flex-col">
-              <SammelkartenPromo isAuthenticated={!!user} />
+              <SammelkartenPromo isAuthenticated={!!user} loading={authLoading} />
             </div>
           )
         default:
@@ -379,6 +414,7 @@ export default function Dashboard() {
               canVote={!!currentUserId}
               canManage={canManage}
               useScrollContainer={false}
+              loading={!initialLoadState.polls}
             />
           </div>
         </div>
@@ -394,6 +430,10 @@ export default function Dashboard() {
 
   const isInitialDashboardDataLoading = Object.values(initialLoadState).some((isLoaded) => !isLoaded)
 
+  if (!timeoutReached && (authLoading || isInitialDashboardDataLoading)) {
+    return <div className="flex items-center justify-center min-h-[50vh]">Lade Dashboard...</div>
+  }
+
   const dashboardItems = sortedComponentKeys.reduce<DashboardItem[]>((items, key) => {
     if (key === 'polls') {
       return [...items, ...unvotedPolls.map((poll) => ({ type: 'poll' as const, poll }))]
@@ -401,10 +441,6 @@ export default function Dashboard() {
 
     return [...items, { type: 'component' as const, key }]
   }, [])
-
-  if (authLoading || isInitialDashboardDataLoading) {
-    return <div className="flex items-center justify-center min-h-[50vh]">Lade Dashboard...</div>
-  }
 
   return (
     <div className="space-y-6">
