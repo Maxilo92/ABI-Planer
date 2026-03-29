@@ -39,7 +39,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     const triggerClaim = async () => {
       try {
-        console.log('[AuthContext] Triggering referral claim check...')
+        const refCode = String(profile.referred_by).trim()
+        if (!refCode) return
+
+        console.log('[AuthContext] Triggering referral claim check for code:', refCode)
         const claimReferralFn = httpsCallable(functions, 'claimReferral')
         const result = await claimReferralFn()
         console.log('[AuthContext] Referral claim check processed. Result:', result.data)

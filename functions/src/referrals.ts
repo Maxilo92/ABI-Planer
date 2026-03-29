@@ -43,35 +43,50 @@ interface Referral {
  */
 async function processReferralReward(uid: string, after: Profile) {
     const db = getFirestore("abi-data");
+    const referralCode = (after.referred_by || "").trim();
     
-    if (!after.referred_by) {
+    if (!referralCode) {
         console.log(`[Referral] User ${uid} has no referrer code in profile, skipping.`);
         return { success: false, reason: "no_referrer" };
     }
 
-    const referralCode = after.referred_by;
-    console.log(`[Referral] Starting process for user ${uid} with code: ${referralCode}`);
+    console.log(`[Referral] Starting process for user ${uid}. Resolving code: "${referralCode}"`);
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const startOfMonthISO = startOfMonth.toISOString();
     const timestamp = now.toISOString();
 
-    // 0. Find the actual referrer UID from the referral code
-    console.log(`[Referral] Looking up referrer profile with code: ${referralCode}`);
-    const referrerQuery = await db.collection("profiles")
-        .where("referral_code", "==", referralCode)
-        .limit(1)
-        .get();
+    // --- ROBUST REFERRER RESOLUTION ---
+    let referrerId = "";
+    let referrerName = "Ein Freund";
 
-    if (referrerQuery.empty) {
-        console.warn(`[Referral] FAILED: No profile found with referral_code "${referralCode}" for user ${uid}.`);
-        return { success: false, reason: "referrer_not_found" };
+    // 1. Try finding by document ID (Direct UID match)
+    console.log(`[Referral] Checking if code is a direct UID...`);
+    const directDoc = await db.collection("profiles").doc(referralCode).get();
+    if (directDoc.exists) {
+        referrerId = directDoc.id;
+        referrerName = (directDoc.data() as Profile).full_name || referrerName;
+        console.log(`[Referral] SUCCESS: Resolved referrer via UID: ${referrerId}`);
+    } else {
+        // 2. Try finding by referral_code field (Short code match)
+        console.log(`[Referral] Checking if code is a short_code...`);
+        const querySnap = await db.collection("profiles")
+            .where("referral_code", "==", referralCode)
+            .limit(1)
+            .get();
+        
+        if (!querySnap.empty) {
+            const docSnap = querySnap.docs[0];
+            referrerId = docSnap.id;
+            referrerName = (docSnap.data() as Profile).full_name || referrerName;
+            console.log(`[Referral] SUCCESS: Resolved referrer via short code: ${referrerId}`);
+        }
     }
 
-    const referrerDoc = referrerQuery.docs[0];
-    const referrerId = referrerDoc.id;
-    const referrerData = referrerDoc.data() as Profile;
-    console.log(`[Referral] SUCCESS: Found referrer ${referrerId} (${referrerData.full_name}) for code: ${referralCode}`);
+    if (!referrerId) {
+        console.warn(`[Referral] FAILED: Could not resolve code "${referralCode}" to any profile.`);
+        return { success: false, reason: "referrer_not_found" };
+    }
 
     if (referrerId === uid) {
         console.warn(`[Referral] FAILED: User ${uid} tried to refer themselves.`);

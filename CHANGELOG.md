@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.37.11] - 2026-03-29
+- **Referral Robustness Update:** Die Referrer-Suche wurde erheblich verbessert. Das System kann nun sowohl kurze 8-stellige Codes als auch vollständige User-IDs (UIDs) im Feld `referred_by` auflösen. Dies stellt sicher, dass Belohnungen auch dann korrekt zugeordnet werden, wenn historische Daten oder unterschiedliche Link-Formate verwendet wurden.
+
 ## [0.37.10] - 2026-03-29
 - **Referral Diagnostic Update:** Erweitertes Logging sowohl im Frontend (`AuthContext`) als auch im Backend (`functions`) für das Empfehlungssystem hinzugefügt. Dies ermöglicht eine präzise Fehlerdiagnose, warum Belohnungen in bestimmten Fällen nicht gutgeschrieben werden.
 
