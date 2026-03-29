@@ -138,12 +138,11 @@ export default function MigrateReferralsPage() {
                     )}
 
                     {debugResult.reason === 'query_error' && (
-                ...
-                    <p className="text-xs mt-2 opacity-80">
-                      <Info className="h-3 w-3 inline mr-1" />
-                      Hinweis: Ein Datenbank-Fehler deutet oft auf einen fehlenden Firestore-Index hin.
-                    </p>
-                  )}
+                      <p className="text-xs mt-2 opacity-80">
+                        <Info className="h-3 w-3 inline mr-1" />
+                        Hinweis: Ein Datenbank-Fehler deutet oft auf einen fehlenden Firestore-Index hin.
+                      </p>
+                    )}
                 </div>
               )}
             </div>

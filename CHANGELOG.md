@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.37.16] - 2026-03-29
+- **Bugfix (UI):** Behebung eines Syntaxfehlers im Diagnose-Tool der Migrationsseite, der den Seitenaufbau verhinderte.
+
 ## [0.37.15] - 2026-03-29
 - **Diagnostic UX:** Das Referrer-Diagnose-Tool zeigt nun bei einer fehlgeschlagenen Suche Beispiel-Codes aus der Datenbank an. Dies hilft Admins zu erkennen, ob Codes ein falsches Format haben oder ob das `referral_code` Feld in der Datenbank generell fehlt.
 
