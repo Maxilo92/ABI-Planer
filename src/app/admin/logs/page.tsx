@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { collection, getDocs, limit, orderBy, query, startAfter, type DocumentData, type QueryDocumentSnapshot } from 'firebase/firestore'
 import { Activity, Copy, FileJson, ShieldAlert } from 'lucide-react'
-import { useRouter } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { db } from '@/lib/firebase'
 import { useAuth } from '@/context/AuthContext'
@@ -40,6 +40,7 @@ export default function AdminLogsPage() {
   const [lastVisible, setLastVisible] = useState<QueryDocumentSnapshot<DocumentData> | null>(null)
   const sentinelRef = useRef<HTMLDivElement | null>(null)
   const router = useRouter()
+  const pathname = usePathname()
 
   const canManageUsers =
     profile?.role === 'admin' ||
@@ -48,9 +49,9 @@ export default function AdminLogsPage() {
 
   useEffect(() => {
     if (!authLoading && (!profile || !canManageUsers)) {
-      router.push('/')
+      router.replace(`/unauthorized?reason=admin&from=${encodeURIComponent(pathname)}`)
     }
-  }, [profile, authLoading, canManageUsers, router])
+  }, [profile, authLoading, canManageUsers, router, pathname])
 
   const fetchLogsChunk = useCallback(async (cursor: QueryDocumentSnapshot<DocumentData> | null, collectionName: string) => {
     const constraints = [orderBy('timestamp', 'desc'), limit(LOGS_PAGE_SIZE)]

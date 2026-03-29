@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { useAuth } from '@/context/AuthContext'
-import { useRouter } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { toast } from 'sonner'
 import { Loader2, Plus, Trash2, RotateCcw, Cookie, GraduationCap, Sparkles } from 'lucide-react'
@@ -124,6 +124,7 @@ export default function GlobalSettingsPage() {
   const [isGuardOpen, setIsGuardOpen] = useState(false)
   const [nextPath, setNextPath] = useState<string | null>(null)
   const router = useRouter()
+  const pathname = usePathname()
 
   const isAdmin = profile?.role === 'admin_main' || profile?.role === 'admin_co' || profile?.role === 'admin'
 
@@ -181,7 +182,7 @@ export default function GlobalSettingsPage() {
 
   useEffect(() => {
     if (!authLoading && (!profile || !isAdmin)) {
-      router.push('/')
+      router.replace(`/unauthorized?reason=admin&from=${encodeURIComponent(pathname)}`)
       return
     }
 
@@ -206,7 +207,7 @@ export default function GlobalSettingsPage() {
     return () => {
       unsubscribe()
     }
-  }, [profile, authLoading, isAdmin, router])
+  }, [profile, authLoading, isAdmin, router, pathname])
 
   const handleSave = async (settingsToSave?: GlobalSettings): Promise<boolean> => {
     if (!user || !isAdmin) return false

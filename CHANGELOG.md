@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.36.19] - 2026-03-29
+- **Hotfix (Runtime):** Behebung des React-Fehlers "Rendered fewer hooks than expected" auf der Sammelkarten-Seite.
+- **Stability:** Die geschuetzte Gast-Ansicht wird nun im finalen Render-Zweig angezeigt (statt per fruehem Return vor spaeteren Hooks), wodurch die Hook-Reihenfolge stabil bleibt.
+
+## [0.36.18] - 2026-03-29
+- **Routing (403):** Neue Seite unter `/unauthorized` fuer klare Fehlermeldungen bei fehlenden Berechtigungen.
+- **Admin Access UX:** Alle Admin-Routen leiten bei direktem URL-Zugriff ohne Rolle nicht mehr still auf `/` um, sondern auf die neue 403-Seite inklusive angefragtem Pfad.
+- **Routing (404):** Globale `not-found` Seite hinzugefuegt, damit ungültige URLs eine saubere 404-Ansicht anzeigen.
+
 ## [0.36.17] - 2026-03-29
 - **Fix (Sammelkarten-Semantik):** `booster_stats.count` wird im Backend wieder korrekt als Tages-Öffnungszähler verwendet (statt als Guthaben).
 - **Backend Consistency:** `openBooster` berechnet verfügbare Packs nun aus Tageslimit (`daily_allowance`) plus `extra_available` und verarbeitet den Tageswechsel über `last_reset`/`reset_hour` konsistent.

@@ -142,18 +142,6 @@ function SammelkartenContent() {
     return () => clearInterval(timer)
   }, [config])
 
-  if (!loading && !user) {
-    return (
-      <div className="py-12">
-        <ProtectedSystemGate 
-          title="Sammelkarten gesperrt" 
-          description="Sammle Lehrer, levele sie auf und vervollständige dein Album. Um Booster zu öffnen, musst du angemeldet sein."
-          icon={<Sparkles className="h-10 w-10 text-primary" />}
-        />
-      </div>
-    )
-  }
-
   useEffect(() => {
     const unsubscribe = onSnapshot(doc(db, 'settings', 'sammelkarten'), (snapshot) => {
       if (snapshot.exists()) {
@@ -388,6 +376,7 @@ function SammelkartenContent() {
   }, [gameState, flippedCards, getRemainingBoosters, isMassOpening, handleOpenPack, handleOpenTenPacks, handleFlipCard]);
 
   if (loading) return null
+  const shouldShowProtectedGate = !user
 
   const allFlipped = flippedCards.every(v => v === true)
 
@@ -445,7 +434,15 @@ function SammelkartenContent() {
 
   return (
     <div className="container mx-auto py-8">
-      {view === 'sammelkarten' ? (
+      {shouldShowProtectedGate ? (
+        <div className="py-12">
+          <ProtectedSystemGate
+            title="Sammelkarten gesperrt"
+            description="Sammle Lehrer, levele sie auf und vervollständige dein Album. Um Booster zu öffnen, musst du angemeldet sein."
+            icon={<Sparkles className="h-10 w-10 text-primary" />}
+          />
+        </div>
+      ) : view === 'sammelkarten' ? (
         <div className="flex flex-col items-center justify-center min-h-[calc(100vh-16rem)] overflow-hidden pb-[calc(env(safe-area-inset-bottom)+1rem)]">
           <div className="relative flex flex-col items-center space-y-8 sm:space-y-12 w-full max-w-4xl px-6">
             

@@ -21,7 +21,7 @@ import { MoreVertical, Shield, User, Trash2, Clock3, Undo2, Search, Gift, Messag
 import { ResetPasswordDialog } from '@/components/modals/ResetPasswordDialog'
 import { SetTimeoutDialog } from '@/components/modals/SetTimeoutDialog'
 import { useAuth } from '@/context/AuthContext'
-import { useRouter } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useSystemMessage } from '@/context/SystemMessageContext'
 import { logAction } from '@/lib/logging'
@@ -64,6 +64,7 @@ export default function AdminPage() {
   const [planningGroups, setPlanningGroups] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
   const router = useRouter()
+  const pathname = usePathname()
   const canManageUsers =
     profile?.role === 'admin' ||
     profile?.role === 'admin_main' ||
@@ -71,9 +72,9 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (!authLoading && (!profile || !canManageUsers)) {
-      router.push('/')
+      router.replace(`/unauthorized?reason=admin&from=${encodeURIComponent(pathname)}`)
     }
-  }, [profile, authLoading, canManageUsers, router])
+  }, [profile, authLoading, canManageUsers, router, pathname])
 
   useEffect(() => {
     const qProfiles = query(collection(db, 'profiles'), orderBy('created_at', 'desc'))

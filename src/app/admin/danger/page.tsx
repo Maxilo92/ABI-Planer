@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { AlertTriangle, Trash2, X, ShieldAlert, Clock, CheckCircle2, AlertCircle, RefreshCw } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
-import { useRouter } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { DelayedAction } from '@/types/database'
@@ -64,15 +64,16 @@ export default function DangerZonePage() {
   const [totpCode, setTotpCode] = useState('')
   const [dialogOpen, setDialogOpen] = useState(false)
   const router = useRouter()
+  const pathname = usePathname()
 
   const isMainAdmin = profile?.role === 'admin_main'
   const is2FAEnabled = profile?.is_2fa_enabled
 
   useEffect(() => {
     if (!authLoading && (!profile || !isMainAdmin)) {
-      router.push('/')
+      router.replace(`/unauthorized?reason=admin&from=${encodeURIComponent(pathname)}`)
     }
-  }, [profile, authLoading, isMainAdmin, router])
+  }, [profile, authLoading, isMainAdmin, router, pathname])
 
   useEffect(() => {
     if (!isMainAdmin) return

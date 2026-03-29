@@ -1,7 +1,7 @@
 'use client'
 
 import { useAuth } from '@/context/AuthContext'
-import { useRouter } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, ReactNode } from 'react'
 import { Loader2 } from 'lucide-react'
 
@@ -12,11 +12,12 @@ interface AdminGuardProps {
 
 /**
  * Guard component that only allows admins to access its children.
- * Redirects to fallbackPath (default: '/') if not authorized.
+ * Redirects to fallbackPath (default: '/unauthorized') if not authorized.
  */
-export function AdminGuard({ children, fallbackPath = '/' }: AdminGuardProps) {
+export function AdminGuard({ children, fallbackPath = '/unauthorized' }: AdminGuardProps) {
   const { profile, loading } = useAuth()
   const router = useRouter()
+  const pathname = usePathname()
 
   const isAdmin = 
     profile?.role === 'admin' || 
@@ -25,9 +26,13 @@ export function AdminGuard({ children, fallbackPath = '/' }: AdminGuardProps) {
 
   useEffect(() => {
     if (!loading && (!profile || !isAdmin)) {
-      router.push(fallbackPath)
+      if (fallbackPath === '/unauthorized') {
+        router.replace(`/unauthorized?reason=admin&from=${encodeURIComponent(pathname)}`)
+        return
+      }
+      router.replace(fallbackPath)
     }
-  }, [profile, isAdmin, loading, router, fallbackPath])
+  }, [profile, isAdmin, loading, router, fallbackPath, pathname])
 
   if (loading) {
     return (

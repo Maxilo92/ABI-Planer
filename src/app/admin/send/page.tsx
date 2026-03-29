@@ -5,7 +5,7 @@ import { db, functions } from '@/lib/firebase'
 import { collection, query, onSnapshot, getDocs, where } from 'firebase/firestore'
 import { httpsCallable } from 'firebase/functions'
 import { useAuth } from '@/context/AuthContext'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -86,6 +86,7 @@ const NOTIFICATION_ICON_OPTIONS: Array<{ key: NotificationIconKind; label: strin
 function AdminSendContent() {
   const { user, profile, loading: authLoading } = useAuth()
   const router = useRouter()
+  const pathname = usePathname()
   const searchParams = useSearchParams()
   
   const [recipients, setRecipients] = useState<Profile[]>([])
@@ -154,7 +155,7 @@ function AdminSendContent() {
 
   useEffect(() => {
     if (!authLoading && (!profile || !canManage)) {
-      router.push('/')
+      router.replace(`/unauthorized?reason=admin&from=${encodeURIComponent(pathname)}`)
       return
     }
 
@@ -198,7 +199,7 @@ function AdminSendContent() {
     }
 
     loadRecipients()
-  }, [authLoading, profile, canManage, router, searchParams])
+  }, [authLoading, profile, canManage, router, searchParams, pathname])
 
   const handleSend = async () => {
     if (!user || recipients.length === 0) return
