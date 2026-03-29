@@ -324,13 +324,12 @@ export const adminMigrateReferrals = onCall({
 
     let migratedCount = 0;
     let alreadyClaimedCount = 0;
-    let errorCount = 0;
+    let failedCodes: string[] = [];
 
     for (const docSnap of pendingProfilesQuery.docs) {
         const uid = docSnap.id;
         const profile = docSnap.data() as Profile;
 
-        // Skip if already claimed (redundant check due to query but safer)
         if (profile.is_referral_claimed) {
             alreadyClaimedCount++;
             continue;
@@ -340,16 +339,13 @@ export const adminMigrateReferrals = onCall({
             const result = await processReferralReward(uid, profile);
             if (result.success && !result.alreadyClaimed) {
                 migratedCount++;
-                console.log(`[Referral Migration] Successfully rewarded user ${uid}`);
             } else if (result.alreadyClaimed) {
                 alreadyClaimedCount++;
             } else {
-                console.warn(`[Referral Migration] Could not reward user ${uid}: ${result.reason}`);
-                errorCount++;
+                failedCodes.push(`${profile.referred_by} (Nutzer: ${uid})`);
             }
         } catch (err) {
-            console.error(`[Referral Migration] Error processing user ${uid}:`, err);
-            errorCount++;
+            failedCodes.push(`${profile.referred_by} (ERROR: ${uid})`);
         }
     }
 
@@ -357,7 +353,7 @@ export const adminMigrateReferrals = onCall({
         success: true, 
         migratedCount, 
         alreadyClaimedCount,
-        skippedCount: errorCount, 
+        failedCodes,
         totalProcessed: pendingProfilesQuery.size 
     };
 });

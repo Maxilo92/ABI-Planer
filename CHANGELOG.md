@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.37.20] - 2026-03-29
+- **Referral Migration Diagnostic:** Die Migrations-Ergebnisse wurden um eine detaillierte Fehlerliste erweitert. Admins sehen nun direkt, welche Werber-Codes nicht aufgelöst werden konnten, was die Identifizierung von ungültigen oder veralteten Referral-Links in Nutzerprofilen erleichtert.
+
 ## [0.37.19] - 2026-03-29
 - **Referral "Full-Scan" Migration:** Die Migrations-Logik wurde massiv erweitert. Anstatt nur die alte `referrals` Collection zu prüfen, scannt das System nun alle Nutzerprofile. Nutzer, die einen Werber-Code besitzen, aber bisher keine Belohnung erhalten haben, werden nun automatisch erkannt und vergütet. Dies korrigiert alle bisherigen Fehlerfälle gesammelt über die Admin-Oberfläche.
 

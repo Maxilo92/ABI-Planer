@@ -186,8 +186,19 @@ export default function MigrateReferralsPage() {
                   <li>Gefundene Profile mit Werber: {result.totalProcessed}</li>
                   <li>Neu verarbeitete Belohnungen: <span className="font-bold">{result.migratedCount}</span></li>
                   <li>Bereits früher erledigt: {result.alreadyClaimedCount || 0}</li>
-                  <li>Fehlgeschlagen (Werber nicht gefunden): {result.skippedCount}</li>
+                  <li>Fehlgeschlagen: {result.failedCodes?.length || 0}</li>
                 </ul>
+                
+                {result.failedCodes && result.failedCodes.length > 0 && (
+                  <div className="mt-4 pt-4 border-t border-green-200/30">
+                    <p className="text-xs font-bold uppercase tracking-wider mb-2">Diese Codes wurden nicht gefunden:</p>
+                    <ul className="space-y-1 font-mono text-[10px]">
+                      {result.failedCodes.map((c: string, i: number) => (
+                        <li key={i} className="bg-white/20 p-1 rounded">{c}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
             </div>
           )}
