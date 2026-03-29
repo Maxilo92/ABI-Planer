@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.37.6] - 2026-03-29
+- **Logo Update:** Die Projektlogos wurden durch neu erstellte PNG-Grafiken in verschiedenen Größen (groß, mittel, klein) ersetzt, um die Bildqualität und das Branding systemweit zu verbessern.
+
 ## [0.37.5] - 2026-03-29
 - **Robustes Referral-System:** Komplette Überarbeitung des Empfehlungsprogramms für maximale Zuverlässigkeit.
   - Einführung einer `referral_claims` Collection als "Source of Truth" zur Vermeidung von Doppel-Gutschriften.
