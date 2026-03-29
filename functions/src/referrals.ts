@@ -249,6 +249,7 @@ export const awardReferralBoosters = onDocumentWritten({
  */
 export const claimReferral = onCall({
     region: "europe-west3",
+    cors: true,
 }, async (request) => {
     if (!request.auth) {
         throw new HttpsError("unauthenticated", "Auth required.");
@@ -287,6 +288,7 @@ export const claimReferral = onCall({
  */
 export const adminMigrateReferrals = onCall({
     region: "europe-west3",
+    cors: true,
 }, async (request) => {
     if (!request.auth) {
         throw new HttpsError("unauthenticated", "Auth required.");
@@ -342,6 +344,7 @@ export const adminMigrateReferrals = onCall({
  */
 export const debugCheckReferralCode = onCall({
     region: "europe-west3",
+    cors: true,
 }, async (request) => {
     if (!request.auth) throw new HttpsError("unauthenticated", "Auth required.");
     

@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.37.13] - 2026-03-29
+- **Local Dev Fix (CORS):** CORS-Unterstützung für alle Referral-Cloud-Functions aktiviert. Dies ermöglicht den Aufruf der Funktionen von `localhost:3000` gegen das Produktiv-Backend, was die lokale Entwicklung und Diagnose erheblich erleichtert.
+
 ## [0.37.12] - 2026-03-29
 - **Diagnostic Tooling:** Diagnose-Werkzeug ("Referrer-Check") auf der Migrationsseite hinzugefügt. Admins können nun gezielt prüfen, ob Werbe-Codes (UIDs oder Kurz-Codes) korrekt vom System aufgelöst werden können und ob Datenbank-Indizes korrekt funktionieren.
 
