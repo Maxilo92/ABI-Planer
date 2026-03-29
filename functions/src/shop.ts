@@ -4,10 +4,30 @@ import * as logger from "firebase-functions/logger";
 import Stripe from "stripe";
 
 // Die Preise müssen in deinem Stripe-Dashboard angelegt werden (price_123...)
-const STRIPE_PRICES: Record<string, { priceId: string, amount: number }> = {
+type StripeShopProduct = {
+  amount: number;
+  priceId?: string;
+  unitAmountCents?: number;
+  productName?: string;
+  productDescription?: string;
+};
+
+const STRIPE_PRICES: Record<string, StripeShopProduct> = {
   "single-booster": { priceId: "price_1TG2ZZAnqErqKKxAVvM2cXFz", amount: 1 },
   "five-boosters": { priceId: "price_1TG2ZnAnqErqKKxAG9e5Dxpy", amount: 5 },
-  "twelve-boosters": { priceId: "price_1TG2ZxAnqErqKKxAQgKXZCrK", amount: 12 }
+  "twelve-boosters": { priceId: "price_1TG2ZxAnqErqKKxAQgKXZCrK", amount: 12 },
+  "soli-donation-small": {
+    amount: 1,
+    priceId: "price_1TGGzZAnqErqKKxAn2UYcCxq",
+  },
+  "soli-donation-medium": {
+    amount: 1,
+    priceId: "price_1TGGzsAnqErqKKxASTxTWqYj",
+  },
+  "soli-donation-large": {
+    amount: 1,
+    priceId: "price_1TGH03AnqErqKKxABplUroCg",
+  },
 };
 
 const LIMITS: Record<string, number> = {
@@ -135,15 +155,28 @@ export const createStripeCheckoutSession = onCall({
 
   const stripe = new Stripe(stripeKey);
   const userId = request.auth?.uid || null;
+  const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = product.priceId
+    ? [{
+      price: product.priceId,
+      quantity: 1,
+    }]
+    : [{
+      quantity: 1,
+      price_data: {
+        currency: "eur",
+        unit_amount: product.unitAmountCents,
+        product_data: {
+          name: product.productName || itemId,
+          description: product.productDescription,
+        },
+      },
+    }];
 
   logger.info("Creating Stripe session", { userId, itemId, isGuest: !userId });
 
   try {
     const session = await stripe.checkout.sessions.create({
-      line_items: [{
-        price: product.priceId,
-        quantity: 1,
-      }],
+      line_items: lineItems,
       mode: "payment",
       allow_promotion_codes: true,
       client_reference_id: userId || undefined, // Muss string oder undefined sein
@@ -155,11 +188,13 @@ export const createStripeCheckoutSession = onCall({
         legal_notice: "Widerrufsverzicht akzeptiert bei Ausführung"
       },
       automatic_tax: { enabled: true },
-      custom_text: {
-        submit: {
-          message: "Mit dem Kauf stimmst du der sofortigen Ausführung zu und verlierst dein Widerrufsrecht bei digitalen Inhalten."
+      custom_text: isAppProduct
+        ? {
+          submit: {
+            message: "Mit dem Kauf stimmst du der sofortigen Ausführung zu und verlierst dein Widerrufsrecht bei digitalen Inhalten."
+          }
         }
-      },
+        : undefined,
       success_url: isAppProduct 
         ? `https://abi-planer-27.de/sammelkarten?success=true&session_id={CHECKOUT_SESSION_ID}`
         : `https://abi-planer-27.de/shop?success=true&session_id={CHECKOUT_SESSION_ID}`,

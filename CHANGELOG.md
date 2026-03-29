@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.36.24] - 2026-03-29
+- **Shop Text Update:** Bei den drei Spendenartikeln im globalen Shop wurde das Präfix "Soli-" aus den Artikelnamen entfernt.
+
+## [0.36.23] - 2026-03-29
+- **Shop Update (Spenden):** Soli-Beiträge wurden auf drei feste Stufen erweitert: Klein (2,50 €), Mittel (10,00 €), Groß (25,00 €).
+- **Stripe Mapping:** Die Spendenartikel sind jetzt direkt mit den bereitgestellten Stripe-Price-IDs verknüpft:
+    - `soli-donation-small` -> `price_1TGGzZAnqErqKKxAn2UYcCxq`
+    - `soli-donation-medium` -> `price_1TGGzsAnqErqKKxASTxTWqYj`
+    - `soli-donation-large` -> `price_1TGH03AnqErqKKxABplUroCg`
+
+## [0.36.22] - 2026-03-29
+- **Shop Fix (Spendenartikel):** Die Soli-Beiträge im globalen Shop wurden aktiviert und sind nicht mehr als Platzhalter markiert.
+- **Payments (Stripe Checkout):** `createStripeCheckoutSession` unterstützt Spendenartikel jetzt robust per `price_data` (EUR-Cents), auch ohne fest hinterlegte Stripe-Price-ID.
+- **Legal Consistency:** Der Hinweis zum Widerrufsverzicht wird im Checkout nur noch für digitale App-Inhalte (Booster) angezeigt, nicht für Spendenartikel.
+
 ## [0.36.21] - 2026-03-29
 - **Build Fix (App Hosting):** `useSearchParams()` auf der Seite `/unauthorized` in eine `Suspense`-Boundary gekapselt, damit Next.js 16 die Seite beim Prerendern korrekt bauen kann.
 
