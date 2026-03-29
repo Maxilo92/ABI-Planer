@@ -97,7 +97,7 @@ export default function AGBPage() {
 
           <div className="pt-8 border-t space-y-2">
             <p className="text-xs text-muted-foreground italic">
-              Stand: 28. März 2026. Dies ist ein privat betriebenes Schul-Projekt des Abiturjahrgangs 2027.
+              Stand: 29. März 2026. Dies ist ein privat betriebenes Schul-Projekt des Abiturjahrgangs 2027.
             </p>
             <p className="text-xs text-muted-foreground">
               Projekt-Link: <a href="https://github.com/Maxilo92/ABI-Planer" className="underline hover:text-primary">GitHub Repository</a>

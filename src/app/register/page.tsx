@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import Link from 'next/link'
+import Logo from '@/components/Logo'
 import { logAction } from '@/lib/logging'
 
 function RegisterForm() {
@@ -210,185 +211,188 @@ function RegisterForm() {
 
   return (
     <div className="min-h-screen bg-background px-4 py-10 sm:px-6 sm:py-14 lg:px-8 md:flex md:items-center md:justify-center">
-      <Card className="mx-auto w-full max-w-md rounded-2xl border border-border/70 bg-card shadow-sm">
-        <div className="px-5 pt-4 sm:px-7 sm:pt-5">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="-ml-2 text-muted-foreground hover:text-foreground"
-            render={<Link href="/">Zurück zum Dashboard</Link>}
-          />
-        </div>
-        <CardHeader className="space-y-3 px-5 pb-7 pt-3 sm:px-7 sm:pb-8 sm:pt-5">
-          <CardTitle className="text-4xl font-black text-center tracking-tight">Registrieren</CardTitle>
-          <CardDescription className="text-center">
-            Erstelle einen Account, um mitzugestalten oder abzustimmen.
-          </CardDescription>
-          <div className="pt-3 space-y-2.5">
-            <div className="flex gap-2">
-              <div className={`h-1.5 flex-1 rounded-full ${step >= 1 ? 'bg-primary' : 'bg-muted'}`} />
-              <div className={`h-1.5 flex-1 rounded-full ${step >= 2 ? 'bg-primary' : 'bg-muted'}`} />
-              <div className={`h-1.5 flex-1 rounded-full ${step >= 3 ? 'bg-primary' : 'bg-muted'}`} />
-            </div>
-            <p className="text-xs text-muted-foreground text-center">
-              {step === 1 ? 'Schritt 1/3: Name' : step === 2 ? 'Schritt 2/3: E-Mail & Passwort' : 'Schritt 3/3: Kurs'}
-            </p>
+      <div className="mx-auto w-full max-w-md flex flex-col items-center gap-8">
+        <Logo width={120} height={120} />
+        <Card className="w-full rounded-2xl border border-border/70 bg-card shadow-sm">
+          <div className="px-5 pt-4 sm:px-7 sm:pt-5">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="-ml-2 text-muted-foreground hover:text-foreground"
+              render={<Link href="/">Zurück zum Dashboard</Link>}
+            />
           </div>
-        </CardHeader>
-        <form onSubmit={handleRegister}>
-          <CardContent className="space-y-6 px-5 pb-7 sm:px-7 sm:pb-8">
-            {error && (
-              <div className="bg-destructive/15 text-destructive text-sm p-3 rounded-md text-center">
-                {error}
+          <CardHeader className="space-y-3 px-5 pb-7 pt-3 sm:px-7 sm:pb-8 sm:pt-5">
+            <CardTitle className="text-4xl font-black text-center tracking-tight">Registrieren</CardTitle>
+            <CardDescription className="text-center">
+              Erstelle einen Account, um mitzugestalten oder abzustimmen.
+            </CardDescription>
+            <div className="pt-3 space-y-2.5">
+              <div className="flex gap-2">
+                <div className={`h-1.5 flex-1 rounded-full ${step >= 1 ? 'bg-primary' : 'bg-muted'}`} />
+                <div className={`h-1.5 flex-1 rounded-full ${step >= 2 ? 'bg-primary' : 'bg-muted'}`} />
+                <div className={`h-1.5 flex-1 rounded-full ${step >= 3 ? 'bg-primary' : 'bg-muted'}`} />
               </div>
-            )}
-            {step === 1 && (
-              <div className="space-y-2">
-                <Label htmlFor="fullName" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Vollständiger Name</Label>
-                <Input 
-                  id="fullName" 
-                  placeholder="Max Mustermann" 
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  className="h-12 text-base bg-background/70 border-border"
-                  autoComplete="name"
-                  required 
-                />
-              </div>
-            )}
-
-            {step === 2 && (
-              <>
+              <p className="text-xs text-muted-foreground text-center">
+                {step === 1 ? 'Schritt 1/3: Name' : step === 2 ? 'Schritt 2/3: E-Mail & Passwort' : 'Schritt 3/3: Kurs'}
+              </p>
+            </div>
+          </CardHeader>
+          <form onSubmit={handleRegister}>
+            <CardContent className="space-y-6 px-5 pb-7 sm:px-7 sm:pb-8">
+              {error && (
+                <div className="bg-destructive/15 text-destructive text-sm p-3 rounded-md text-center">
+                  {error}
+                </div>
+              )}
+              {step === 1 && (
                 <div className="space-y-2">
-                  <Label htmlFor="email" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">E-Mail</Label>
+                  <Label htmlFor="fullName" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Vollständiger Name</Label>
                   <Input 
-                    id="email" 
-                    type="email" 
-                    placeholder="vorname.nachname@hgr-web.lernsax.de" 
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    id="fullName" 
+                    placeholder="Max Mustermann" 
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
                     className="h-12 text-base bg-background/70 border-border"
-                    autoComplete="email"
+                    autoComplete="name"
                     required 
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="password" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Passwort</Label>
-                  <Input 
-                    id="password" 
-                    type="password" 
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="h-12 text-base bg-background/70 border-border"
-                    autoComplete="new-password"
-                    required 
-                  />
-                </div>
-              </>
-            )}
-
-            {step === 3 && (
-              <div className="space-y-5 mb-1 sm:mb-2">
-                <div className="space-y-2">
-                  <Label htmlFor="course" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Kurs</Label>
-                  <div className="relative">
-                    <select
-                      id="course"
-                      value={selectedCourse}
-                      onChange={(e) => setSelectedCourse(e.target.value)}
-                      className="flex h-12 w-full rounded-md border border-input bg-background/70 px-3 py-2 text-base disabled:opacity-50"
-                      required
-                      disabled={isCoursesLoading}
-                    >
-                      {isCoursesLoading ? (
-                        <option value="">Lade Kurse...</option>
-                      ) : (
-                        courses.map((course) => (
-                          <option key={course} value={course}>
-                            {course}
-                          </option>
-                        ))
-                      )}
-                    </select>
-                    {isCoursesLoading && (
-                      <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="space-y-3 rounded-lg border border-border/70 bg-muted/20 p-3">
-                  <div className="grid grid-cols-[1.25rem_minmax(0,1fr)] items-start gap-x-3 gap-y-1">
-                    <Checkbox
-                      id="age16"
-                      checked={isAtLeast16}
-                      onCheckedChange={(checked) => setIsAtLeast16(checked === true)}
-                      className="mt-0.5 shrink-0"
-                    />
-                    <Label htmlFor="age16" className="!block text-xs leading-relaxed text-muted-foreground font-medium cursor-pointer">
-                      Ich bestätige, dass ich mindestens 16 Jahre alt bin.
-                    </Label>
-                  </div>
-
-                  <div className="grid grid-cols-[1.25rem_minmax(0,1fr)] items-start gap-x-3 gap-y-1">
-                    <Checkbox
-                      id="termsAccepted"
-                      checked={acceptsTerms}
-                      onCheckedChange={(checked) => setAcceptsTerms(checked === true)}
-                      className="mt-0.5 shrink-0"
-                    />
-                    <Label htmlFor="termsAccepted" className="!block text-xs leading-relaxed text-muted-foreground font-medium cursor-pointer">
-                      Ich akzeptiere die{' '}
-                      <Link
-                        href="/agb"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={(e) => e.stopPropagation()}
-                        className="underline hover:text-primary"
-                      >
-                        AGB
-                      </Link>
-                      .
-                    </Label>
-                  </div>
-                </div>
-              </div>
-            )}
-          </CardContent>
-          <CardFooter className="flex flex-col space-y-5 border-0 bg-transparent rounded-none px-5 pb-7 pt-3 sm:px-7 sm:pb-8 sm:pt-4">
-            <div className="w-full flex gap-2">
-              {step > 1 && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="flex-1 h-12"
-                  onClick={() => setStep((prev) => (prev - 1) as 1 | 2 | 3)}
-                  disabled={loading}
-                >
-                  Zurück
-                </Button>
               )}
 
-              <Button type="submit" className="flex-1 h-12" disabled={loading}>
-                {step < 3 ? 'Weiter' : (loading ? 'Erstellung...' : 'Account erstellen')}
-              </Button>
-            </div>
-            <p className="text-sm text-center text-muted-foreground">
-              Bereits einen Account?{' '}
-              <Link href="/login" className="text-primary hover:underline font-medium">
-                Anmelden
-              </Link>
-              <br />
-              <span className="text-xs">
-                <Link href="/datenschutz" className="underline hover:text-primary" target="_blank" rel="noopener noreferrer">
-                  Datenschutzerklärung
+              {step === 2 && (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="email" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">E-Mail</Label>
+                    <Input 
+                      id="email" 
+                      type="email" 
+                      placeholder="vorname.nachname@hgr-web.lernsax.de" 
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="h-12 text-base bg-background/70 border-border"
+                      autoComplete="email"
+                      required 
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="password" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Passwort</Label>
+                    <Input 
+                      id="password" 
+                      type="password" 
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="h-12 text-base bg-background/70 border-border"
+                      autoComplete="new-password"
+                      required 
+                    />
+                  </div>
+                </>
+              )}
+
+              {step === 3 && (
+                <div className="space-y-5 mb-1 sm:mb-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="course" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Kurs</Label>
+                    <div className="relative">
+                      <select
+                        id="course"
+                        value={selectedCourse}
+                        onChange={(e) => setSelectedCourse(e.target.value)}
+                        className="flex h-12 w-full rounded-md border border-input bg-background/70 px-3 py-2 text-base disabled:opacity-50"
+                        required
+                        disabled={isCoursesLoading}
+                      >
+                        {isCoursesLoading ? (
+                          <option value="">Lade Kurse...</option>
+                        ) : (
+                          courses.map((course) => (
+                            <option key={course} value={course}>
+                              {course}
+                            </option>
+                          ))
+                        )}
+                      </select>
+                      {isCoursesLoading && (
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                          <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="space-y-3 rounded-lg border border-border/70 bg-muted/20 p-3">
+                    <div className="grid grid-cols-[1.25rem_minmax(0,1fr)] items-start gap-x-3 gap-y-1">
+                      <Checkbox
+                        id="age16"
+                        checked={isAtLeast16}
+                        onCheckedChange={(checked) => setIsAtLeast16(checked === true)}
+                        className="mt-0.5 shrink-0"
+                      />
+                      <Label htmlFor="age16" className="!block text-xs leading-relaxed text-muted-foreground font-medium cursor-pointer">
+                        Ich bestätige, dass ich mindestens 16 Jahre alt bin.
+                      </Label>
+                    </div>
+
+                    <div className="grid grid-cols-[1.25rem_minmax(0,1fr)] items-start gap-x-3 gap-y-1">
+                      <Checkbox
+                        id="termsAccepted"
+                        checked={acceptsTerms}
+                        onCheckedChange={(checked) => setAcceptsTerms(checked === true)}
+                        className="mt-0.5 shrink-0"
+                      />
+                      <Label htmlFor="termsAccepted" className="!block text-xs leading-relaxed text-muted-foreground font-medium cursor-pointer">
+                        Ich akzeptiere die{' '}
+                        <Link
+                          href="/agb"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="underline hover:text-primary"
+                        >
+                          AGB
+                        </Link>
+                        .
+                      </Label>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+            <CardFooter className="flex flex-col space-y-5 border-0 bg-transparent rounded-none px-5 pb-7 pt-3 sm:px-7 sm:pb-8 sm:pt-4">
+              <div className="w-full flex gap-2">
+                {step > 1 && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="flex-1 h-12"
+                    onClick={() => setStep((prev) => (prev - 1) as 1 | 2 | 3)}
+                    disabled={loading}
+                  >
+                    Zurück
+                  </Button>
+                )}
+
+                <Button type="submit" className="flex-1 h-12" disabled={loading}>
+                  {step < 3 ? 'Weiter' : (loading ? 'Erstellung...' : 'Account erstellen')}
+                </Button>
+              </div>
+              <p className="text-sm text-center text-muted-foreground">
+                Bereits einen Account?{' '}
+                <Link href="/login" className="text-primary hover:underline font-medium">
+                  Anmelden
                 </Link>
-              </span>
-            </p>
-          </CardFooter>
-        </form>
-      </Card>
+                <br />
+                <span className="text-xs">
+                  <Link href="/datenschutz" className="underline hover:text-primary" target="_blank" rel="noopener noreferrer">
+                    Datenschutzerklärung
+                  </Link>
+                </span>
+              </p>
+            </CardFooter>
+          </form>
+        </Card>
+      </div>
     </div>
   )
 }

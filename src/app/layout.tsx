@@ -8,6 +8,9 @@ import { Toaster } from '@/components/ui/sonner'
 import { ThemeProvider } from '@/context/ThemeProvider'
 import { GoogleAdSense } from '@/components/layout/GoogleAdSense'
 
+import { faviconLinks } from '@/components/FaviconLinks'
+import Logo from '@/components/Logo'
+
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' })
 
 export const metadata: Metadata = {
@@ -23,6 +26,8 @@ export default function RootLayout({
   return (
     <html lang="de" className="h-full" suppressHydrationWarning>
       <head>
+        {/* Favicon und Logo */}
+        {faviconLinks}
         <script
           async
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8940687842344229"
@@ -30,6 +35,8 @@ export default function RootLayout({
         ></script>
       </head>
       <body className={`${inter.variable} font-sans antialiased h-full bg-background`}>
+        {/* Optional: Logo prominent platzieren */}
+        {/* <Logo width={250} height={100} style={{ display: 'block', margin: '2rem auto 0 auto' }} /> */}
         <ThemeProvider
           attribute="class"
           defaultTheme="system"

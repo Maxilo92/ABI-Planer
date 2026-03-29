@@ -113,260 +113,270 @@ export const SystemMessageProvider = ({ children }: { children: ReactNode }) => 
     return id
   }, [dismissMessage])
 
-  // --- Firestore Data Watcher ---
+  // --- Global Listeners (Shared) ---
   useEffect(() => {
     if (loading || typeof window === 'undefined' || !db || !(db as any).app) return
+    
+    // A. Global Settings (Popups & Cookies)
+    const globalDocRef = doc(db, 'settings', 'global')
+    const unsubGlobal = onSnapshot(globalDocRef, (docSnap) => {
+      if (!docSnap.exists()) return
+      const settings = docSnap.data()
+      
+      // 1. Popups
+      const messages = (settings.custom_popup_messages || []) as CustomPopupMessage[]
+      messages.forEach((msg) => {
+        if (!msg.enabled) return
+        if (sessionStorage.getItem(`custom_popup_dismissed_${msg.id}`)) return
+        
+        const matches = !msg.routes || msg.routes.length === 0 || msg.routes.some(r => {
+          if (r === '*') return true
+          if (pathname === r) return true
+          if (r.endsWith('/*')) {
+            const prefix = r.slice(0, -2)
+            return pathname === prefix || pathname.startsWith(prefix + '/')
+          }
+          return false
+        })
+        
+        if (matches && Math.random() < (msg.chance ?? 1)) {
+          pushMessage({
+            id: msg.id,
+            type: 'modal',
+            priority: 'info',
+            title: msg.title,
+            content: msg.body,
+            isDismissible: true,
+            actions: msg.ctaLabel ? [{
+              label: msg.ctaLabel,
+              onClick: () => {
+                if (msg.ctaUrl) window.open(msg.ctaUrl, '_blank')
+                sessionStorage.setItem(`custom_popup_dismissed_${msg.id}`, 'true')
+                dismissMessage(msg.id)
+              }
+            }] : undefined,
+            onDismiss: () => sessionStorage.setItem(`custom_popup_dismissed_${msg.id}`, 'true')
+          })
+        }
+      })
+
+      // 2. Cookie Parody
+      const firstVisitDone = localStorage.getItem('cookie_banner_first_visit_done')
+      if (!firstVisitDone) {
+        const cookieMessages = settings.cookie_messages || FALLBACK_MESSAGES
+        const message = cookieMessages[Math.floor(Math.random() * cookieMessages.length)]
+        setTimeout(() => {
+          pushMessage({
+            id: 'cookie-banner-first-visit',
+            type: 'modal',
+            priority: 'info',
+            title: 'Cookie-Einstellungen',
+            content: message,
+            isDismissible: false,
+            actions: [
+              {
+                label: 'Ablehnen',
+                onClick: () => {
+                  localStorage.setItem('cookie_banner_first_visit_done', 'true')
+                  dismissMessage('cookie-banner-first-visit')
+                }
+              },
+              {
+                label: 'Alle akzeptieren',
+                onClick: () => {
+                  localStorage.setItem('cookie_banner_first_visit_done', 'true')
+                  dismissMessage('cookie-banner-first-visit')
+                }
+              }
+            ]
+          })
+        }, 1200)
+      } else if (Math.random() < (settings.ad_banner_chance ?? settings.cookie_banner_chance ?? 0.3)) {
+        const adMessages = settings.ad_messages || PARODY_AD_MESSAGES
+        const message = adMessages[Math.floor(Math.random() * adMessages.length)]
+        setTimeout(() => {
+          pushMessage({
+            id: 'cookie-parody-banner',
+            type: 'banner',
+            priority: 'info',
+            title: 'Werbung',
+            content: message,
+            isDismissible: true
+          })
+        }, 3000)
+      }
+    }, (err) => console.error('SystemMessage: Global Settings Snapshot failed:', err))
+
+    return () => unsubGlobal()
+  }, [loading, pathname, pushMessage, dismissMessage])
+
+  // --- User Specific Listeners ---
+  useEffect(() => {
+    if (loading || !user?.uid || typeof window === 'undefined' || !db || !(db as any).app) return
 
     const unsubscribers: (() => void)[] = []
-
-    // A. Global Settings (Popups & Cookies)
-    try {
-      const globalDocRef = doc(db, 'settings', 'global')
-      const unsubGlobal = onSnapshot(globalDocRef, (docSnap) => {
-        if (!docSnap.exists()) return
-        const settings = docSnap.data()
-        
-        // 1. Popups
-        const messages = (settings.custom_popup_messages || []) as CustomPopupMessage[]
-        messages.forEach((msg) => {
-          if (!msg.enabled) return
-          if (sessionStorage.getItem(`custom_popup_dismissed_${msg.id}`)) return
-          
-          const matches = !msg.routes || msg.routes.length === 0 || msg.routes.some(r => {
-            if (r === '*') return true
-            if (pathname === r) return true
-            if (r.endsWith('/*')) {
-              const prefix = r.slice(0, -2)
-              return pathname === prefix || pathname.startsWith(prefix + '/')
-            }
-            return false
-          })
-          
-          if (matches && Math.random() < (msg.chance ?? 1)) {
-            pushMessage({
-              id: msg.id,
-              type: 'modal',
-              priority: 'info',
-              title: msg.title,
-              content: msg.body,
-              isDismissible: true,
-              actions: msg.ctaLabel ? [{
-                label: msg.ctaLabel,
-                onClick: () => {
-                  if (msg.ctaUrl) window.open(msg.ctaUrl, '_blank')
-                  sessionStorage.setItem(`custom_popup_dismissed_${msg.id}`, 'true')
-                  dismissMessage(msg.id)
-                }
-              }] : undefined,
-              onDismiss: () => sessionStorage.setItem(`custom_popup_dismissed_${msg.id}`, 'true')
-            })
-          }
-        })
-
-        // 2. Cookie Parody
-        const firstVisitDone = localStorage.getItem('cookie_banner_first_visit_done')
-        if (!firstVisitDone) {
-          const cookieMessages = settings.cookie_messages || FALLBACK_MESSAGES
-          const message = cookieMessages[Math.floor(Math.random() * cookieMessages.length)]
-          setTimeout(() => {
-            pushMessage({
-              id: 'cookie-banner-first-visit',
-              type: 'modal',
-              priority: 'info',
-              title: 'Cookie-Einstellungen',
-              content: message,
-              isDismissible: false,
-              actions: [
-                {
-                  label: 'Ablehnen',
-                  onClick: () => {
-                    localStorage.setItem('cookie_banner_first_visit_done', 'true')
-                    dismissMessage('cookie-banner-first-visit')
-                  }
-                },
-                {
-                  label: 'Alle akzeptieren',
-                  onClick: () => {
-                    localStorage.setItem('cookie_banner_first_visit_done', 'true')
-                    dismissMessage('cookie-banner-first-visit')
-                  }
-                }
-              ]
-            })
-          }, 1200)
-        } else if (Math.random() < (settings.cookie_banner_chance ?? 0.3)) {
-          const adMessages = settings.ad_messages || PARODY_AD_MESSAGES
-          const message = adMessages[Math.floor(Math.random() * adMessages.length)]
-          setTimeout(() => {
-            pushMessage({
-              id: 'cookie-parody-banner',
-              type: 'banner',
-              priority: 'info',
-              title: 'Werbung',
-              content: message,
-              isDismissible: true
-            })
-          }, 3000)
-        }
-      }, (err) => console.error('SystemMessage: Global Settings Snapshot failed:', err))
-      unsubscribers.push(unsubGlobal)
-    } catch (e) { console.error('SystemMessage: Failed to setup global listener:', e) }
+    const uid = user.uid
+    const userRole = profile?.role || ''
 
     // B. Admin Delayed Actions
-    if (user && profile) {
-      const isAdmin = ['admin_main', 'admin', 'admin_co'].includes(profile.role || '')
-      if (isAdmin) {
-        try {
-          const q = query(collection(db, 'delayed_actions'), where('status', '==', 'pending'))
-          const unsubDelayed = onSnapshot(q, (snapshot) => {
-            snapshot.docChanges().forEach((change) => {
-              if (change.type === 'added' || change.type === 'modified') {
-                const data = change.doc.data() as DelayedAction
-                const dismissed = JSON.parse(localStorage.getItem('dismissed_delayed_actions') || '[]')
-                if (!dismissed.includes(change.doc.id)) {
-                  pushMessage({
-                    id: `delayed_action_${change.doc.id}`,
-                    type: 'banner',
-                    priority: 'critical',
-                    title: 'Systemwartung geplant',
-                    content: data.description,
-                    isDismissible: true,
-                    onDismiss: () => {
-                      const current = JSON.parse(localStorage.getItem('dismissed_delayed_actions') || '[]')
-                      if (!current.includes(change.doc.id)) {
-                        localStorage.setItem('dismissed_delayed_actions', JSON.stringify([...current, change.doc.id]))
-                      }
+    const isAdmin = ['admin_main', 'admin', 'admin_co'].includes(userRole)
+    if (isAdmin) {
+      try {
+        const q = query(collection(db, 'delayed_actions'), where('status', '==', 'pending'))
+        const unsubDelayed = onSnapshot(q, (snapshot) => {
+          snapshot.docChanges().forEach((change) => {
+            if (change.type === 'added' || change.type === 'modified') {
+              const data = change.doc.data() as DelayedAction
+              const dismissed = JSON.parse(localStorage.getItem('dismissed_delayed_actions') || '[]')
+              if (!dismissed.includes(change.doc.id)) {
+                pushMessage({
+                  id: `delayed_action_${change.doc.id}`,
+                  type: 'banner',
+                  priority: 'critical',
+                  title: 'Systemwartung geplant',
+                  content: data.description,
+                  isDismissible: true,
+                  onDismiss: () => {
+                    const current = JSON.parse(localStorage.getItem('dismissed_delayed_actions') || '[]')
+                    if (!current.includes(change.doc.id)) {
+                      localStorage.setItem('dismissed_delayed_actions', JSON.stringify([...current, change.doc.id]))
                     }
-                  })
-                }
-              } else if (change.type === 'removed') {
-                dismissMessage(`delayed_action_${change.doc.id}`)
+                  }
+                })
               }
-            })
-          }, (err) => console.error('SystemMessage: Delayed Actions Snapshot failed:', err))
-          unsubscribers.push(unsubDelayed)
-        } catch (e) { console.error('SystemMessage: Failed to setup delayed actions listener:', e) }
-      }
+            } else if (change.type === 'removed') {
+              dismissMessage(`delayed_action_${change.doc.id}`)
+            }
+          })
+        }, (err) => console.error('SystemMessage: Delayed Actions Snapshot failed:', err))
+        unsubscribers.push(unsubDelayed)
+      } catch (e) { console.error('SystemMessage: Failed to setup delayed actions listener:', e) }
     }
 
     // C. User Specific Data (Gifts)
-    if (user) {
-      try {
-        const giftsRef = collection(db, 'profiles', user.uid, 'unseen_gifts')
-        const unsubGifts = onSnapshot(giftsRef, (snapshot) => {
-          snapshot.docChanges().forEach((change) => {
-            if (change.type === 'added') {
-              const gift = change.doc.data()
-              const giftRef = doc(db, 'profiles', user.uid, 'unseen_gifts', change.doc.id)
-              const packCount = typeof gift.packCount === 'number' ? Math.max(0, Math.floor(gift.packCount)) : 0
-              const popupTitle = (typeof gift.popupTitle === 'string' && gift.popupTitle.trim().length > 0)
-                ? gift.popupTitle.trim()
-                : 'Neues Geschenk!'
-              const popupBody = (typeof gift.popupBody === 'string' && gift.popupBody.trim().length > 0)
-                ? gift.popupBody.trim()
-                : 'Du hast ein Geschenk erhalten!'
-              const ctaLabel = (typeof gift.ctaLabel === 'string' && gift.ctaLabel.trim().length > 0)
-                ? gift.ctaLabel.trim()
-                : 'Zu den Packs'
-              const ctaUrl = (typeof gift.ctaUrl === 'string' && gift.ctaUrl.startsWith('/'))
-                ? gift.ctaUrl
-                : '/sammelkarten'
-              const dismissLabel = (typeof gift.dismissLabel === 'string' && gift.dismissLabel.trim().length > 0)
-                ? gift.dismissLabel.trim()
-                : 'Später'
-              const notificationType = gift.notificationType === 'banner' || gift.notificationType === 'quickmessage'
-                ? gift.notificationType
-                : 'popup'
+    try {
+      const giftsRef = collection(db, 'profiles', uid, 'unseen_gifts')
+      const unsubGifts = onSnapshot(giftsRef, (snapshot) => {
+        snapshot.docChanges().forEach((change) => {
+          if (change.type === 'added') {
+            const gift = change.doc.data()
+            const giftRef = doc(db, 'profiles', uid, 'unseen_gifts', change.doc.id)
+            const packCount = typeof gift.packCount === 'number' ? Math.max(0, Math.floor(gift.packCount)) : 0
+            const popupTitle = (typeof gift.popupTitle === 'string' && gift.popupTitle.trim().length > 0)
+              ? gift.popupTitle.trim()
+              : 'Neues Geschenk!'
+            const popupBody = (typeof gift.popupBody === 'string' && gift.popupBody.trim().length > 0)
+              ? gift.popupBody.trim()
+              : 'Du hast ein Geschenk erhalten!'
+            const ctaLabel = (typeof gift.ctaLabel === 'string' && gift.ctaLabel.trim().length > 0)
+              ? gift.ctaLabel.trim()
+              : 'Zu den Packs'
+            const ctaUrl = (typeof gift.ctaUrl === 'string' && gift.ctaUrl.startsWith('/'))
+              ? gift.ctaUrl
+              : '/sammelkarten'
+            const dismissLabel = (typeof gift.dismissLabel === 'string' && gift.dismissLabel.trim().length > 0)
+              ? gift.dismissLabel.trim()
+              : 'Später'
+            const notificationType = gift.notificationType === 'banner' || gift.notificationType === 'quickmessage'
+              ? gift.notificationType
+              : 'popup'
 
-              const senderInfo = typeof gift.createdByName === 'string' && gift.createdByName.trim().length > 0
-                ? gift.createdByName.trim()
-                : 'System'
+            const senderInfo = typeof gift.createdByName === 'string' && gift.createdByName.trim().length > 0
+              ? gift.createdByName.trim()
+              : 'System'
 
-              const dismissGift = async () => {
-                try {
-                  await deleteDoc(giftRef)
-                } catch (err) {
-                  console.error('SystemMessage: Failed to delete gift notification:', err)
-                }
+            const dismissGift = async () => {
+              try {
+                await deleteDoc(giftRef)
+              } catch (err) {
+                console.error('SystemMessage: Failed to delete gift notification:', err)
               }
+            }
 
-              const baseContent = `${packCount > 0 ? `Du hast ${packCount} zusätzliche Booster-Packs erhalten. ` : ''}${popupBody}\n\n~ ${senderInfo}`.trim()
+            const baseContent = `${packCount > 0 ? `Du hast ${packCount} zusätzliche Booster-Packs erhalten. ` : ''}${popupBody}\n\n~ ${senderInfo}`.trim()
 
-              const baseActions = [
-                {
-                  label: ctaLabel,
-                  href: ctaUrl,
-                  variant: 'default' as const,
-                },
-                {
-                  label: dismissLabel,
-                  onClick: () => {
-                    void dismissGift()
-                  },
-                  variant: 'ghost' as const,
-                },
-              ]
-
-              const isModal = notificationType === 'popup'
-
-              pushMessage({
-                id: change.doc.id,
-                type: notificationType === 'quickmessage' ? 'toast' : (isModal ? 'modal' : 'banner'),
-                priority: 'high',
-                title: popupTitle,
-                content: baseContent,
-                isDismissible: true,
-                actions: isModal
-                  ? [
-                      {
-                        label: ctaLabel,
-                        href: ctaUrl,
-                        variant: 'default',
-                      },
-                      {
-                        label: 'Album öffnen',
-                        href: '/sammelkarten?view=album',
-                        variant: 'secondary',
-                      },
-                      {
-                        label: dismissLabel,
-                        onClick: () => {
-                          void dismissGift()
-                        },
-                        variant: 'ghost',
-                      },
-                    ]
-                  : baseActions,
-                duration: notificationType === 'quickmessage' ? 7000 : undefined,
-                onDismiss: () => {
+            const baseActions = [
+              {
+                label: ctaLabel,
+                href: ctaUrl,
+                variant: 'default' as const,
+              },
+              {
+                label: dismissLabel,
+                onClick: () => {
                   void dismissGift()
                 },
-              })
-            } else if (change.type === 'removed') {
-              dismissMessage(change.doc.id)
-            }
-          })
-        }, (err) => console.error('SystemMessage: User Gifts Snapshot failed:', err))
-        unsubscribers.push(unsubGifts)
-      } catch (e) { console.error('SystemMessage: Failed to setup gifts listener:', e) }
-    }
+                variant: 'ghost' as const,
+              },
+            ]
+
+            const isModal = notificationType === 'popup'
+
+            pushMessage({
+              id: change.doc.id,
+              type: notificationType === 'quickmessage' ? 'toast' : (isModal ? 'modal' : 'banner'),
+              priority: 'high',
+              title: popupTitle,
+              content: baseContent,
+              isDismissible: true,
+              actions: isModal
+                ? [
+                    {
+                      label: ctaLabel,
+                      href: ctaUrl,
+                      variant: 'default',
+                    },
+                    {
+                      label: 'Album öffnen',
+                      href: '/sammelkarten?view=album',
+                      variant: 'secondary',
+                    },
+                    {
+                      label: dismissLabel,
+                      onClick: () => {
+                        void dismissGift()
+                      },
+                      variant: 'ghost',
+                    },
+                  ]
+                : baseActions,
+              duration: notificationType === 'quickmessage' ? 7000 : undefined,
+              onDismiss: () => {
+                void dismissGift()
+              },
+            })
+          } else if (change.type === 'removed') {
+            dismissMessage(change.doc.id)
+          }
+        })
+      }, (err) => console.error('SystemMessage: User Gifts Snapshot failed:', err))
+      unsubscribers.push(unsubGifts)
+    } catch (e) { console.error('SystemMessage: Failed to setup gifts listener:', e) }
 
     return () => unsubscribers.forEach(unsub => unsub())
-  }, [loading, user, profile, pathname, pushMessage, dismissMessage])
+  }, [loading, user?.uid, profile?.role, pushMessage, dismissMessage])
 
   // --- Pure State Logic (Lockout) ---
   useEffect(() => {
     if (loading || !profile) return
-    const timeoutUntil = profile.timeout_until ? new Date(profile.timeout_until) : null
+    const timeoutUntilStr = profile.timeout_until
+    const timeoutReason = profile.timeout_reason
+    
+    if (!timeoutUntilStr) {
+      dismissMessage('user-lockout')
+      return
+    }
+
+    const timeoutUntil = new Date(timeoutUntilStr)
     const now = new Date()
     
-    if (timeoutUntil && timeoutUntil > now) {
+    if (timeoutUntil > now) {
       pushMessage({
         id: 'user-lockout',
         type: 'modal',
         priority: 'critical',
         title: 'Konto gesperrt',
-        content: profile.timeout_reason || 'Dein Konto wurde vorübergehend gesperrt.',
+        content: timeoutReason || 'Dein Konto wurde vorübergehend gesperrt.',
         isDismissible: false,
         actions: [{
           label: 'Abmelden',
@@ -375,19 +385,19 @@ export const SystemMessageProvider = ({ children }: { children: ReactNode }) => 
       })
     } else {
       dismissMessage('user-lockout')
-      if (profile.timeout_reason && typeof window !== 'undefined' && !sessionStorage.getItem('dismissed_timeout_warning')) {
+      if (timeoutReason && typeof window !== 'undefined' && !sessionStorage.getItem('dismissed_timeout_warning')) {
         pushMessage({
           id: 'user-warning',
           type: 'banner',
           priority: 'critical',
           title: 'Hinweis zu deiner letzten Sperre',
-          content: profile.timeout_reason,
+          content: timeoutReason,
           isDismissible: true,
           onDismiss: () => sessionStorage.setItem('dismissed_timeout_warning', 'true')
         })
       }
     }
-  }, [loading, profile, pushMessage, dismissMessage])
+  }, [loading, profile?.timeout_until, profile?.timeout_reason, pushMessage, dismissMessage])
 
   const contextValue = useMemo(() => ({
     activeMessages,

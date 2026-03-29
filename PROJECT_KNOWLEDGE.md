@@ -1,6 +1,6 @@
 # Projekt-Wissen & Architektur (ABI Planer v1.0.0)
 
-Dieses Dokument sichert das Wissen über die technische Struktur und die getroffenen Entscheidungen für die Production-Release.
+Dieses Dokument sichert das Wissen über die technische Struktur und die getroffenen Entscheidungen für die Production-Release. (Stand: 29. März 2026)
 
 ## 1. Architektur & Stack
 - **Framework:** Next.js 16 (App Router)
@@ -15,6 +15,12 @@ Dieses Dokument sichert das Wissen über die technische Struktur und die getroff
   - `profiles/{uid}`: Nutzerdaten inkl. `role` ('viewer', 'planner', 'admin') und `is_approved`.
   - `settings/config`: Zentrale App-Werte (`ball_date`, `funding_goal`).
   - `finances`, `news`, `events`, `todos`, `polls`, `votes`: Module der App.
+
+### iPad & Tablet Optimierung
+- **Breakpoint:** Die Desktop-Sidebar wird erst ab `lg` (1024px) angezeigt.
+- **Strategie:** iPads im Portrait-Modus (768px - 834px) nutzen den mobilen Drawer. Dies maximiert den Platz für Dashboards und Listen auf Tablets.
+- **Dashboard:** Nutzt ein 2-spaltiges Layout ab `md` (768px), da ohne Sidebar genug Platz auf iPads vorhanden ist.
+
 ## 3. Sicherheits-Konzept (Zero Trust)
 ### Daten-Zugriff (Read Rules)
 - **Öffentlich:** Die `news` Collection ist für alle Nutzer (auch unauthentifiziert) lesbar, um Transparenz zu gewährleisten.
@@ -34,7 +40,10 @@ Dieses Dokument sichert das Wissen über die technische Struktur und die getroff
 - **Job:** Ein 15-minütiger Cron-Job (`syncTeacherRarities`) stabilisiert die Seltenheiten basierend auf globalen Limits (z.B. max. 1 Legendary). Dies verhindert "Rarity Drift".
 
 ### GDPR & Löschung
-- **Vollständig:** Die Lösch-Logik (`onProfileDeleted`) umfasst alle Nutzer-Daten, inkl. der `referrals` Collection. Finanz-Transfers in `stripe_transactions` werden aus GoBD-Gründen (10 Jahre) anonymisiert aufbewahrt.
+- **Vollständig:** Die Lösch-Logik (`onProfileDeleted`) umfasst alle Nutzer-Daten, inkl. der `referrals` Collection, `poll_votes` und Profil-Subcollections.
+- **Anonymisierung:** 
+  - **Finanzen:** Stripe-Transfers werden aus GoBD-Gründen (10 Jahre) anonymisiert aufbewahrt (`masked_userId`).
+  - **Audit Logs:** Log-Einträge in der `logs` Collection werden anonymisiert (`masked_userId`, `user_name` gelöscht), um die Revisionssicherheit bei gleichzeitiger Wahrung des "Rechts auf Vergessenwerden" zu garantieren.
 
 ## 5. Deployment-Workflow
 ...

@@ -6,14 +6,31 @@ import { useSearchParams } from 'next/navigation'
 import { ShieldX, Home, LogIn } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
+const REASON_MESSAGES: Record<string, string> = {
+  admin: 'Dieser Bereich ist nur fuer Admins freigegeben.',
+}
+
+function getReasonMessage(reason: string | null) {
+  if (!reason) {
+    return 'Du hast keine Berechtigung fuer diese Seite.'
+  }
+
+  return REASON_MESSAGES[reason] ?? 'Du hast keine Berechtigung fuer diese Seite.'
+}
+
+function formatRequestedPath(path: string | null) {
+  if (!path) {
+    return null
+  }
+
+  return path.slice(0, 180)
+}
+
 function UnauthorizedContent() {
   const searchParams = useSearchParams()
-  const from = searchParams.get('from')
   const reason = searchParams.get('reason')
-
-  const reasonMessage = reason === 'admin'
-    ? 'Dieser Bereich ist nur fuer Admins freigegeben.'
-    : 'Du hast keine Berechtigung fuer diese Seite.'
+  const requestedPath = formatRequestedPath(searchParams.get('from'))
+  const reasonMessage = getReasonMessage(reason)
 
   return (
     <div className="flex min-h-[70vh] items-center justify-center px-4 py-12">
@@ -28,9 +45,9 @@ function UnauthorizedContent() {
           {reasonMessage}
         </p>
 
-        {from && (
+        {requestedPath && (
           <p className="mt-4 break-all rounded-lg border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
-            Angefragter Pfad: {from}
+            Angefragter Pfad: {requestedPath}
           </p>
         )}
 

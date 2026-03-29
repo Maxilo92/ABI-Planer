@@ -30,6 +30,7 @@ interface CustomPopupMessage {
 
 interface GlobalSettings {
   cookie_banner_chance: number
+  ad_banner_chance: number
   cookie_messages: string[]
   ad_messages: string[]
   custom_popup_messages: CustomPopupMessage[]
@@ -38,6 +39,7 @@ interface GlobalSettings {
 
 const DEFAULT_SETTINGS: GlobalSettings = {
   cookie_banner_chance: 0.3,
+  ad_banner_chance: 0.3,
   cookie_messages: [
     "Diese Webseite nutzt keine Cookies. Aber hast du schon mal drüber nachgedacht, echte Cookies in der Schule zu verkaufen, um Geld für die Abikasse zu sammeln?",
     "Keine Cookies hier! Vielleicht solltet ihr stattdessen einen Kuchenverkauf organisieren? Das bringt deutlich mehr für das Budget.",
@@ -403,7 +405,7 @@ export default function GlobalSettingsPage() {
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="chance">Erscheinungswahrscheinlichkeit (0.0 bis 1.0)</Label>
+              <Label htmlFor="chance">Cookie-Banner Erscheinungswahrscheinlichkeit (0.0 bis 1.0)</Label>
               <div className="flex items-center gap-4">
                 <Input
                   id="chance"
@@ -417,6 +419,25 @@ export default function GlobalSettingsPage() {
                 />
                 <span className="text-sm text-muted-foreground">
                   Aktuell: {(settings.cookie_banner_chance * 100).toFixed(0)}% Chance pro Sitzung.
+                </span>
+              </div>
+            </div>
+
+            <div className="space-y-2 pt-2">
+              <Label htmlFor="ad-chance">Werbe-Parodie Erscheinungswahrscheinlichkeit (0.0 bis 1.0)</Label>
+              <div className="flex items-center gap-4">
+                <Input
+                  id="ad-chance"
+                  type="number"
+                  min="0"
+                  max="1"
+                  step="0.1"
+                  value={settings.ad_banner_chance ?? 0.3}
+                  onChange={(e) => setSettings(prev => ({ ...prev, ad_banner_chance: parseFloat(e.target.value) }))}
+                  className="max-w-[200px]"
+                />
+                <span className="text-sm text-muted-foreground">
+                  Aktuell: {((settings.ad_banner_chance ?? 0.3) * 100).toFixed(0)}% Chance bei jedem Seitenaufruf.
                 </span>
               </div>
             </div>

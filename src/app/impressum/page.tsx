@@ -70,7 +70,7 @@ export default function ImpressumPage() {
           </section>
 
           <section className="pt-4 text-xs text-muted-foreground italic border-t">
-            Stand: 20. März 2026.
+            Stand: 29. März 2026.
           </section>
         </CardContent>
       </Card>

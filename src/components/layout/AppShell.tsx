@@ -25,7 +25,7 @@ export function AppShell({ children }: AppShellProps) {
   }
 
   return (
-    <div className="min-h-[100dvh] bg-background md:flex pb-safe">
+    <div className="min-h-[100dvh] bg-background lg:flex pb-safe">
       <Navbar />
       <div className="flex-1 flex flex-col min-h-[100dvh]">
         <SystemMessageHost />

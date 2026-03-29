@@ -1,11 +1,26 @@
 # Changelog
 
+## [0.37.1] - 2026-03-29
+- **Admin Focus (Settings):** Die Wahrscheinlichkeit für Werbe-Parodie-Banner ist nun in den globalen Einstellungen separat von der Cookie-Wahrscheinlichkeit einstellbar.
+- **Performance Update (Stability):** Behebung eines Fehlers, der bei Hintergrund-Updates (z.B. Online-Status Heartbeat) ein unnötiges Neu-Initialisieren aller Datenbank-Listener auf dem Dashboard und in der System-Benachrichtigung auslöste. Die Seite ist nun deutlich ruhiger und flackert nicht mehr.
+
+## [0.37.0] - 2026-03-29
+- **Branding Update:** Das neue Logo (`ABI Planer Logo.svg`) wurde systemweit integriert und alle Assets (Favicons etc.) regeneriert.
+- **Login Focus (UX):** Einführung eines "Passwort vergessen?" Links direkt auf der Anmeldeseite für eigenständige Passwort-Resets via Lernsax-Mail.
+- **Bugfix (Hydration/DOM Nesting):** Behebung eines kritischen Hydration-Fehlers im `ForgotPasswordDialog` durch Korrektur des `DialogTrigger` Pattern (Umstellung von `asChild` auf `render`).
+- **iPad Focus (Mobile UX):** Anhebung des Breakpoints für die Sidebar auf `lg` (1024px) und Optimierung des Dashboard-Grids (2 Spalten ab `md`) für Tablets.
+- **Finance UX (Tablets):** Optimiertes Grid für Status-Karten (2x2) zur Vermeidung von Layout-Clipping auf iPads.
+- **GDPR Härtung (Backend):** Erweiterung der Löschlogik um die Anonymisierung der `logs` Collection (Recht auf Vergessenwerden).
+- **Legal Compliance:** Aktualisierung und Unifizierung aller Rechtstexte auf den Stand vom 29. März 2026.
+- **Documentation:** Einführung der v1.0.0 Production Release-Checkliste.
+
 ## [0.36.27] - 2026-03-29
 - **Mobile UI (Shop):** Checkout-Modal auf kleinen Displays kompakter gemacht (`max-h`, `overflow-y-auto`, kleinere Abstände/Typografie), damit Inhalte nicht abgeschnitten werden.
 - **Mobile Layering:** Z-Index-Konflikt zwischen Shop-Header und mobilem Menü behoben (Drawer jetzt über App-Content).
 - **Mobile UI (Finanzen):** Header-Actions umbrechbar gemacht, damit `Beitrag erfassen` und `Spenden & Hilfe` auf kleinen Screens nicht mehr abgeschnitten werden.
 - **Cards Performance:** Externe Noise-Textur in Karten-Overlays entfernt und durch lokale CSS-Texturen ersetzt, damit der erste Booster schneller rendert.
 - **Cards Visual Fix:** Overlay-Clipping auf `rounded-[inherit]` gesetzt, um sichtbare Mini-Ecken an Holo/Shiny-Artcards in der Detailansicht zu beseitigen.
+- **403 Page Cleanup:** `/unauthorized` intern bereinigt (Reason-Mapping extrahiert, angefragter Pfad robust formatiert), ohne Verhaltensänderung der Seite.
 
 ## [0.36.26] - 2026-03-29
 - **Shop Update (Spenden):** Kursauswahl bei Spenden ist jetzt optional (statt verpflichtend).

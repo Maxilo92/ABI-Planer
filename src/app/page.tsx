@@ -79,7 +79,11 @@ export default function Dashboard() {
     let unsubscribeFinances = () => { markLoaded('finances') }
     let unsubscribePolls = () => { markLoaded('polls') }
 
-    if (user && profile) {
+    if (user && profile?.id) {
+      const userCourse = profile?.class_name
+      const userPlanningGroup = profile?.planning_group
+      const userUid = user.uid
+
       // 2. Listen to Todos
       unsubscribeTodos = onSnapshot(collection(db, 'todos'), (snapshot) => {
         const allTodosData = snapshot.docs.map((entryDoc) => ({ 
@@ -87,11 +91,10 @@ export default function Dashboard() {
           ...entryDoc.data() 
         })) as any[]
         const openTodos = allTodosData.filter(t => t.status !== 'done')
-        const userCourse = profile?.class_name
-        const userPlanningGroup = profile?.planning_group
+        
         const scoredTodos = openTodos.map(todo => {
           let score = 0
-          if (todo.assigned_to_user === user.uid) score += 100
+          if (todo.assigned_to_user === userUid) score += 100
           if (todo.assigned_to_group && todo.assigned_to_group === userPlanningGroup) score += 50
           if (todo.assigned_to_class && todo.assigned_to_class === userCourse) score += 25
           if (todo.deadline_date) {
@@ -180,7 +183,7 @@ export default function Dashboard() {
       unsubscribeNews()
       unsubscribePolls()
     }
-  }, [user, profile, authLoading])
+  }, [user?.uid, profile?.id, profile?.class_name, profile?.planning_group, authLoading])
 
   const canManage = (
     profile?.role === 'planner' ||
@@ -418,7 +421,7 @@ export default function Dashboard() {
         <p className="text-muted-foreground">Willkommen zurück! Hier ist der aktuelle Stand der Dinge.</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
         <div className="flex flex-col gap-6">
           {dashboardItems
             .filter((_, i) => i % 2 === 0)

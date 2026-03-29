@@ -14,6 +14,7 @@ import { cn } from '@/lib/utils'
 import { useAuth } from '@/context/AuthContext'
 import { CountdownHeader } from './CountdownHeader'
 import { useNotifications } from '@/hooks/useNotifications'
+import Logo from '@/components/Logo'
 
 const auth = getFirebaseAuth()
 
@@ -297,10 +298,11 @@ export function Navbar() {
     <>
       {/* Mobile top bar */}
       {!loading && (
-        <header className="md:hidden fixed top-0 left-0 right-0 z-50 h-16 border-b bg-background/95 backdrop-blur-sm">
+        <header className="lg:hidden fixed top-0 left-0 right-0 z-50 h-16 border-b bg-background/95 backdrop-blur-sm">
           <div className="h-full px-4 flex items-center justify-between">
-            <Link href="/" className="font-extrabold text-xl tracking-tight">
-              ABI Planer
+            <Link href="/" className="flex items-center gap-3">
+              <Logo width={40} height={40} />
+              <span className="font-extrabold text-xl tracking-tight">ABI Planer</span>
             </Link>
             <div className="flex items-center">
               <button
@@ -316,10 +318,10 @@ export function Navbar() {
       )}
 
       {/* Mobile spacer so content is not hidden under fixed top bar */}
-      {!loading && <div className="md:hidden h-16" />}
+      {!loading && <div className="lg:hidden h-16" />}
 
       {!loading && pathname === '/' && (
-        <div className="md:hidden px-4 pt-2 pb-1">
+        <div className="lg:hidden px-4 pt-2 pb-1">
           <div className="flex justify-center">
             <CountdownHeader />
           </div>
@@ -328,7 +330,7 @@ export function Navbar() {
 
       {/* Mobile drawer */}
       {!loading && isOpen && (
-        <div className="md:hidden fixed inset-0 z-[90] pointer-events-none">
+        <div className="lg:hidden fixed inset-0 z-[90] pointer-events-none">
           <motion.button 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -393,10 +395,13 @@ export function Navbar() {
 
       {/* Desktop sidebar */}
       {!loading && (
-        <aside className="hidden md:flex md:sticky md:top-0 md:h-screen md:shrink-0 w-72 border-r bg-background/95 backdrop-blur-sm flex-col">
+        <aside className="hidden lg:flex lg:sticky lg:top-0 lg:h-screen lg:shrink-0 w-72 border-r bg-background/95 backdrop-blur-sm flex-col">
           <div className="h-16 border-b px-5 flex items-center">
-            <Link href="/" className="font-extrabold text-2xl tracking-tight shrink-0">
-              ABI Planer
+            <Link href="/" className="flex items-center gap-3">
+              <Logo width={40} height={40} />
+              <span className="font-extrabold text-2xl tracking-tight shrink-0">
+                ABI Planer
+              </span>
             </Link>
           </div>
 

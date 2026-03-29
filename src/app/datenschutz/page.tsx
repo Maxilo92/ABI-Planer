@@ -170,7 +170,7 @@ export default function DatenschutzPage() {
           </section>
 
           <div className="pt-8 border-t space-y-2">
-            <p className="text-xs text-muted-foreground italic">Stand: 28. März 2026.</p>
+            <p className="text-xs text-muted-foreground italic">Stand: 29. März 2026.</p>
             <p className="text-xs text-muted-foreground">
               Hinweis: Diese App ist ein privat betriebenes Projekt und kein offizielles Angebot der Schule.
             </p>

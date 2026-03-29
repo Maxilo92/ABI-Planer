@@ -89,5 +89,21 @@ export const onProfileDeleted = onDocumentDeleted({
     console.error(`Error pseudonymizing Stripe transactions for user ${userId}:`, error);
   }
 
+  // 7. Anonymize Audit Logs
+  try {
+    const logsSnapshot = await db.collection("logs").where("user_id", "==", userId).get();
+    const anonymizeLogsPromises = logsSnapshot.docs.map(doc => 
+      doc.ref.update({
+        user_id: `masked_${userId.substring(0, 8)}`,
+        user_name: "[Gelöschter Nutzer]",
+        anonymized_at: admin.firestore.FieldValue.serverTimestamp()
+      })
+    );
+    await Promise.all(anonymizeLogsPromises);
+    console.log(`Anonymized ${logsSnapshot.size} audit logs for user ${userId}`);
+  } catch (error) {
+    console.error(`Error anonymizing audit logs for user ${userId}:`, error);
+  }
+
   console.log(`Cleanup finished for user: ${userId}`);
 });

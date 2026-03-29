@@ -2,8 +2,8 @@
 session_id: 2026-03-28-smarter-todo-sorting
 task: Smarter sorting for todos, user-specific based on assignment and expiration date.
 created: '2026-03-28T22:39:42.578Z'
-updated: '2026-03-28T22:41:37.385Z'
-status: in_progress
+updated: '2026-03-29T17:10:27.048Z'
+status: completed
 workflow_mode: standard
 design_document: docs/maestro/plans/2026-03-28-smarter-todo-sorting-design.md
 implementation_plan: docs/maestro/plans/2026-03-28-smarter-todo-sorting-impl-plan.md
