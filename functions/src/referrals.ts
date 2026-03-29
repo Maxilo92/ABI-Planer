@@ -336,3 +336,54 @@ export const adminMigrateReferrals = onCall({
         totalProcessed: legacySnapshot.size 
     };
 });
+
+/**
+ * Diagnostic function to check if a referral code can be resolved.
+ */
+export const debugCheckReferralCode = onCall({
+    region: "europe-west3",
+}, async (request) => {
+    if (!request.auth) throw new HttpsError("unauthenticated", "Auth required.");
+    
+    const code = (request.data.code || "").trim();
+    if (!code) return { found: false, reason: "empty_code" };
+
+    const db = getFirestore("abi-data");
+    
+    try {
+        // Check UID
+        const directDoc = await db.collection("profiles").doc(code).get();
+        if (directDoc.exists) {
+            const data = directDoc.data() as Profile;
+            return { 
+                found: true, 
+                type: "uid", 
+                uid: directDoc.id, 
+                name: data.full_name,
+                hasReferralCodeField: !!data.referral_code 
+            };
+        }
+
+        // Check Short Code
+        const querySnap = await db.collection("profiles")
+            .where("referral_code", "==", code)
+            .limit(1)
+            .get();
+        
+        if (!querySnap.empty) {
+            const docSnap = querySnap.docs[0];
+            const data = docSnap.data() as Profile;
+            return { 
+                found: true, 
+                type: "short_code", 
+                uid: docSnap.id, 
+                name: data.full_name 
+            };
+        }
+
+        return { found: false, reason: "not_found_in_db" };
+    } catch (error: any) {
+        console.error("[Referral Debug] Query failed:", error);
+        return { found: false, reason: "query_error", error: error.message };
+    }
+});

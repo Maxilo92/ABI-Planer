@@ -6,7 +6,8 @@ import { functions } from '@/lib/firebase'
 import { useAuth } from '@/context/AuthContext'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Loader2, AlertCircle, CheckCircle2 } from 'lucide-react'
+import { Input } from '@/components/ui/input'
+import { Loader2, AlertCircle, CheckCircle2, Search, Info } from 'lucide-react'
 import Link from 'next/link'
 
 export default function MigrateReferralsPage() {
@@ -15,7 +16,27 @@ export default function MigrateReferralsPage() {
   const [result, setResult] = useState<any>(null)
   const [error, setError] = useState<string | null>(null)
 
+  // Debug states
+  const [debugCode, setDebugCode] = useState('')
+  const [debugLoading, setDebugLoading] = useState(false)
+  const [debugResult, setDebugResult] = useState<any>(null)
+
   const isAdmin = profile && ['admin', 'admin_main', 'admin_co'].includes(profile.role)
+
+  const handleCheckCode = async () => {
+    if (!debugCode.trim()) return
+    setDebugLoading(true)
+    setDebugResult(null)
+    try {
+      const checkFn = httpsCallable(functions, 'debugCheckReferralCode')
+      const response = await checkFn({ code: debugCode.trim() })
+      setDebugResult(response.data)
+    } catch (err: any) {
+      setDebugResult({ found: false, reason: 'error', error: err.message })
+    } finally {
+      setDebugLoading(false)
+    }
+  }
 
   const handleMigrate = async () => {
     setLoading(true)
@@ -59,6 +80,61 @@ export default function MigrateReferralsPage() {
         <h1 className="text-3xl font-black tracking-tight">System-Migration</h1>
         <Button variant="outline" render={<Link href="/admin">Zurück zur Übersicht</Link>} />
       </div>
+
+      <Card className="border-primary/20 bg-primary/5">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Search className="h-5 w-5" />
+            Referrer-Check (Diagnose)
+          </CardTitle>
+          <CardDescription>
+            Prüfe hier, ob ein Code (UID oder Kurz-Code) vom System gefunden wird.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex gap-2">
+            <Input 
+              placeholder="Code eingeben (z.B. n3BhNhnp)" 
+              value={debugCode}
+              onChange={(e) => setDebugCode(e.target.value)}
+              className="bg-background"
+            />
+            <Button onClick={handleCheckCode} disabled={debugLoading}>
+              {debugLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Prüfen'}
+            </Button>
+          </div>
+
+          {debugResult && (
+            <div className={`p-4 rounded-lg text-sm border ${
+              debugResult.found ? 'bg-green-50 border-green-200 text-green-800' : 'bg-destructive/10 border-destructive/20 text-destructive'
+            }`}>
+              {debugResult.found ? (
+                <div className="space-y-1">
+                  <p className="font-bold flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4" /> Gefunden!
+                  </p>
+                  <p>Name: {debugResult.name || 'Unbekannt'}</p>
+                  <p>UID: <code className="bg-white/50 px-1 rounded">{debugResult.uid}</code></p>
+                  <p>Typ: {debugResult.type === 'uid' ? 'Direkte User-ID' : 'Kurz-Code'}</p>
+                </div>
+              ) : (
+                <div className="space-y-1">
+                  <p className="font-bold flex items-center gap-2">
+                    <AlertCircle className="h-4 w-4" /> Nicht gefunden
+                  </p>
+                  <p>Grund: {debugResult.reason === 'query_error' ? `Datenbank-Fehler (${debugResult.error})` : 'Code existiert nicht.'}</p>
+                  {debugResult.reason === 'query_error' && (
+                    <p className="text-xs mt-2 opacity-80">
+                      <Info className="h-3 w-3 inline mr-1" />
+                      Hinweis: Ein Datenbank-Fehler deutet oft auf einen fehlenden Firestore-Index hin.
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>

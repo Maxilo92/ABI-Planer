@@ -1,6 +1,12 @@
 # Changelog
 
 ## [0.37.12] - 2026-03-29
+- **Diagnostic Tooling:** Diagnose-Werkzeug ("Referrer-Check") auf der Migrationsseite hinzugefügt. Admins können nun gezielt prüfen, ob Werbe-Codes (UIDs oder Kurz-Codes) korrekt vom System aufgelöst werden können und ob Datenbank-Indizes korrekt funktionieren.
+
+## [0.37.11] - 2026-03-29
+- **Profile Card Update (Rarity Priority):** Die "Top 5"-Vorschau im Lehrer-Album auf Profilseiten zeigt nun die seltensten Karten basierend auf der Variante (Version) vor der Basis-Seltenheit an (z.B. Secret Rare > Legendary). Die Vorschau wurde zudem optisch entschlackt (Filter und Statistiken werden erst beim Ausklappen angezeigt), wobei der "Alle anzeigen"-Button erhalten bleibt.
+
+## [0.37.12] - 2026-03-29
 - **Build Fix (Finanzen):** Behebung eines kritischen TypeScript-Fehlers auf der Finanzseite, bei dem eine undefinierte Variable (`estimatedFundingGoal`) im `ClassRanking` Widget den Produktions-Build verhinderte.
 
 ## [0.37.11] - 2026-03-29
