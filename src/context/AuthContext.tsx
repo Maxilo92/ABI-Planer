@@ -1,14 +1,16 @@
 'use client'
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
-import { getFirebaseAuth, getFirebaseDb } from '@/lib/firebase'
+import { getFirebaseAuth, getFirebaseDb, getFirebaseFunctions } from '@/lib/firebase'
 import { onAuthStateChanged, signOut, User } from 'firebase/auth'
 import { doc, onSnapshot, updateDoc, serverTimestamp } from 'firebase/firestore'
+import { httpsCallable } from 'firebase/functions'
 
 import { Profile } from '@/types/database'
 
 const auth = getFirebaseAuth();
 const db = getFirebaseDb();
+const functions = getFirebaseFunctions();
 
 interface AuthContextType {
   user: User | null
@@ -28,6 +30,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
+
+  // Referral claiming logic: Check upon login if a referral needs to be claimed
+  useEffect(() => {
+    if (loading || !user || !profile || !profile.referred_by || profile.is_referral_claimed) {
+      return
+    }
+
+    const triggerClaim = async () => {
+      try {
+        console.log('[AuthContext] Triggering referral claim check...')
+        const claimReferralFn = httpsCallable(functions, 'claimReferral')
+        await claimReferralFn()
+        console.log('[AuthContext] Referral claim check processed.')
+      } catch (error) {
+        // We log but don't block the UI for referral failures
+        console.error('[AuthContext] Failed to claim referral:', error)
+      }
+    }
+
+    triggerClaim()
+  }, [user?.uid, profile?.is_referral_claimed, profile?.referred_by, loading])
 
   useEffect(() => {
     let profileUnsubscribe: (() => void) | null = null;

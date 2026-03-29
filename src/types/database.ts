@@ -47,6 +47,9 @@ export interface Profile {
   } | null;
   referral_code: string;
   referred_by: string | null;
+  is_referral_claimed?: boolean;
+  total_referrals?: number;
+  total_referral_boosters?: number;
   shop_stats?: {
     month: string;
     counts: Record<string, number>;

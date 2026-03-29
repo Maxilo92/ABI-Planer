@@ -8,6 +8,14 @@
       ]
     },
     {
+      "collectionGroup": "referral_claims",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "referrer_uid", "order": "ASCENDING" },
+        { "fieldPath": "timestamp", "order": "DESCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "events",
       "queryScope": "COLLECTION",
       "fields": [

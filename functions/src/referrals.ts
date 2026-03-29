@@ -1,4 +1,5 @@
 import { onDocumentWritten } from "firebase-functions/v2/firestore";
+import { onCall, HttpsError } from "firebase-functions/v2/https";
 import * as admin from "firebase-admin";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
 
@@ -13,6 +14,9 @@ interface Profile {
     full_name: string | null;
     class_name?: string | null;
     referred_by: string | null;
+    is_referral_claimed?: boolean;
+    total_referrals?: number;
+    total_referral_boosters?: number;
     booster_stats?: {
         extra_available?: number;
     } | null;
@@ -34,39 +38,15 @@ interface Referral {
 }
 
 /**
- * Triggered when a user completes their profile.
- * Awards boosters to both referrer and referred user.
+ * Core logic to process a referral reward.
+ * Idempotent: checks for existence of referral claim record.
  */
-export const awardReferralBoosters = onDocumentWritten({
-    document: "profiles/{uid}",
-    database: "abi-data",
-    region: "europe-west3",
-}, async (event) => {
+async function processReferralReward(uid: string, after: Profile) {
     const db = getFirestore("abi-data");
-    const uid = event.params.uid;
-
-    console.log(`[Referral] Triggered for user ${uid}`);
-
-    const before = event.data?.before.data() as Profile | undefined;
-    const after = event.data?.after.data() as Profile | undefined;
-
-    // If document was deleted, do nothing
-    if (!after) {
-        console.log(`[Referral] Document deleted for ${uid}, skipping.`);
-        return;
-    }
-
-    // Detect when full_name and class_name change from empty to non-empty
-    // We also check if it's a new document (creation)
-    const wasCompleted = before ? (!!before.full_name?.trim() && !!before.class_name?.trim()) : false;
-    const isCompleted = (!!after.full_name?.trim() && !!after.class_name?.trim());
-
-    console.log(`[Referral] User ${uid}: wasCompleted=${wasCompleted}, isCompleted=${isCompleted}, referred_by=${after.referred_by}`);
-
-    // Only proceed if the profile was just completed (or created completed) and there is a referrer
-    if (wasCompleted || !isCompleted || !after.referred_by) {
-        console.log(`[Referral] Skipping ${uid}: already completed, not yet completed, or no referrer.`);
-        return;
+    
+    if (!after.referred_by) {
+        console.log(`[Referral] User ${uid} has no referrer, skipping.`);
+        return { success: false, reason: "no_referrer" };
     }
 
     const referralCode = after.referred_by;
@@ -75,132 +55,207 @@ export const awardReferralBoosters = onDocumentWritten({
     const startOfMonthISO = startOfMonth.toISOString();
     const timestamp = now.toISOString();
 
-    try {
-        // 0. Find the actual referrer UID from the referral code
-        console.log(`[Referral] Looking up referrer for code: ${referralCode}`);
-        const referrerQuery = await db.collection("profiles")
-            .where("referral_code", "==", referralCode)
-            .limit(1)
-            .get();
+    // 0. Find the actual referrer UID from the referral code
+    console.log(`[Referral] Looking up referrer for code: ${referralCode}`);
+    const referrerQuery = await db.collection("profiles")
+        .where("referral_code", "==", referralCode)
+        .limit(1)
+        .get();
 
-        if (referrerQuery.empty) {
-            console.warn(`[Referral] No referrer found with code ${referralCode} for user ${uid}.`);
-            return;
-        }
+    if (referrerQuery.empty) {
+        console.warn(`[Referral] No referrer found with code ${referralCode} for user ${uid}.`);
+        return { success: false, reason: "referrer_not_found" };
+    }
 
-        const referrerDoc = referrerQuery.docs[0];
-        const referrerId = referrerDoc.id;
-        const referrerData = referrerDoc.data() as Profile;
-        console.log(`[Referral] Found referrer: ${referrerId} (${referrerData.full_name}) for code: ${referralCode}`);
+    const referrerDoc = referrerQuery.docs[0];
+    const referrerId = referrerDoc.id;
+    const referrerData = referrerDoc.data() as Profile;
+    console.log(`[Referral] Found referrer: ${referrerId} (${referrerData.full_name}) for code: ${referralCode}`);
 
-        // 1. Fetch data for dynamic scaling and caps outside transaction
-        console.log(`[Referral] Calculating rewards for referrer ${referrerId}`);
-        const [totalCountSnap, monthlyRefsSnap] = await Promise.all([
-            db.collection("referrals")
-                .where("referrerId", "==", referrerId)
-                .count()
-                .get(),
-            db.collection("referrals")
-                .where("referrerId", "==", referrerId)
-                .where("timestamp", ">=", startOfMonthISO)
-                .get()
+    if (referrerId === uid) {
+        console.warn(`[Referral] User ${uid} tried to refer themselves.`);
+        return { success: false, reason: "self_referral" };
+    }
+
+    // 1. Fetch data for dynamic scaling and caps outside transaction
+    console.log(`[Referral] Calculating rewards for referrer ${referrerId}`);
+    const [totalCountSnap, monthlyRefsSnap, claimSnap] = await Promise.all([
+        db.collection("referral_claims")
+            .where("referrer_uid", "==", referrerId)
+            .count()
+            .get(),
+        db.collection("referral_claims")
+            .where("referrer_uid", "==", referrerId)
+            .where("timestamp", ">=", startOfMonthISO)
+            .get(),
+        db.collection("referral_claims").doc(uid).get()
+    ]);
+
+    if (claimSnap.exists) {
+        console.log(`[Referral] Reward already claimed for user ${uid}.`);
+        return { success: true, alreadyClaimed: true };
+    }
+
+    const totalPastReferrals = totalCountSnap.data().count;
+    const currentMonthAwarded = monthlyRefsSnap.docs.reduce((sum, doc) => sum + (doc.data().boosters_awarded_referrer || 0), 0);
+
+    // 2. Calculate rewards
+    const baseReward = Math.min(2 + totalPastReferrals, 10);
+    const allowedReward = Math.max(0, Math.min(baseReward, 30 - currentMonthAwarded));
+
+    console.log(`[Referral] Stats for ${referrerId}: totalPast=${totalPastReferrals}, currentMonthAwarded=${currentMonthAwarded}, baseReward=${baseReward}, allowedReward=${allowedReward}`);
+
+    // 3. Apply rewards in a transaction
+    await db.runTransaction(async (transaction) => {
+        const referrerRef = db.collection("profiles").doc(referrerId);
+        const referredRef = db.collection("profiles").doc(uid);
+        const claimRef = db.collection("referral_claims").doc(uid);
+        
+        const [referrerSnap, currentClaimSnap] = await Promise.all([
+            transaction.get(referrerRef),
+            transaction.get(claimRef)
         ]);
 
-        const totalPastReferrals = totalCountSnap.data().count;
-        const currentMonthAwarded = monthlyRefsSnap.docs.reduce((sum, doc) => sum + ((doc.data() as Referral).boostersAwarded || 0), 0);
+        if (!referrerSnap.exists) {
+            throw new Error(`Referrer ${referrerId} does not exist.`);
+        }
 
-        // 2. Calculate rewards
-        // Base reward: min(2 + totalPastReferrals, 10)
-        const baseReward = Math.min(2 + totalPastReferrals, 10);
-        // Monthly cap: max 30 boosters per month
-        const allowedReward = Math.max(0, Math.min(baseReward, 30 - currentMonthAwarded));
+        if (currentClaimSnap.exists) {
+            return; // Concurrent request already handled
+        }
 
-        console.log(`[Referral] Stats for ${referrerId}: totalPast=${totalPastReferrals}, currentMonthAwarded=${currentMonthAwarded}, baseReward=${baseReward}, allowedReward=${allowedReward}`);
+        // --- Awards ---
 
-        // 3. Apply rewards in a transaction
-        await db.runTransaction(async (transaction) => {
-            const referrerRef = db.collection("profiles").doc(referrerId);
-            const referredRef = db.collection("profiles").doc(uid);
-            
-            // Sentinel document to prevent double-spending/rewarding
-            const stdReferralRef = db.collection("referrals").doc(`std_${uid}`);
-            
-            const [referrerSnap, stdReferralSnap] = await Promise.all([
-                transaction.get(referrerRef),
-                transaction.get(stdReferralRef)
-            ]);
+        // Referred User
+        transaction.set(referredRef, {
+            is_referral_claimed: true,
+            booster_stats: {
+                extra_available: FieldValue.increment(5),
+            },
+        }, { merge: true });
 
-            if (!referrerSnap.exists) {
-                throw new Error(`Referrer ${referrerId} does not exist in profiles collection.`);
-            }
+        const referredGiftRef = referredRef.collection("unseen_gifts").doc();
+        transaction.set(referredGiftRef, {
+            packCount: 5,
+            popupTitle: "Willkommens-Bonus",
+            popupBody: "Du hast 5 Packs erhalten, weil du über einen Freunde-Link geworben wurdest!",
+            ctaLabel: "Packs öffnen",
+            ctaUrl: "/sammelkarten",
+            dismissLabel: "Gelesen",
+            createdAt: FieldValue.serverTimestamp(),
+            createdBy: "system_referral",
+        });
 
-            if (stdReferralSnap.exists) {
-                console.log(`[Referral] Referral reward already granted for user ${uid} (std_${uid} exists).`);
-                return;
-            }
-
-            // --- Awards ---
-
-            // Award exactly 5 boosters to the referred user
-            console.log(`[Referral] Awarding 5 boosters to referred user ${uid}`);
-            transaction.set(referredRef, {
+        // Referrer
+        if (allowedReward > 0) {
+            transaction.set(referrerRef, {
+                total_referrals: FieldValue.increment(1),
+                total_referral_boosters: FieldValue.increment(allowedReward),
                 booster_stats: {
-                    extra_available: FieldValue.increment(5),
+                    extra_available: FieldValue.increment(allowedReward),
                 },
             }, { merge: true });
 
-            // Create notification for referred user
-            const referredGiftRef = referredRef.collection("unseen_gifts").doc();
-            transaction.set(referredGiftRef, {
-                packCount: 5,
-                popupTitle: "Willkommens-Bonus",
-                popupBody: "Du hast 5 Packs erhalten, weil du über einen Freunde-Link geworben wurdest!",
+            const referrerGiftRef = referrerRef.collection("unseen_gifts").doc();
+            transaction.set(referrerGiftRef, {
+                packCount: allowedReward,
+                popupTitle: "Erfolgreich geworben!",
+                popupBody: `Du hast ${allowedReward} Packs erhalten, weil ${after.full_name || 'ein Freund'} deinem Einladungs-Link gefolgt ist!`,
                 ctaLabel: "Packs öffnen",
                 ctaUrl: "/sammelkarten",
                 dismissLabel: "Gelesen",
                 createdAt: FieldValue.serverTimestamp(),
                 createdBy: "system_referral",
             });
+        } else {
+            // Still increment referral count even if monthly booster limit reached
+            transaction.set(referrerRef, {
+                total_referrals: FieldValue.increment(1),
+            }, { merge: true });
+        }
 
-            // Award boosters to referrer based on scaling and monthly cap
-            if (allowedReward > 0) {
-                transaction.set(referrerRef, {
-                    booster_stats: {
-                        extra_available: FieldValue.increment(allowedReward),
-                    },
-                }, { merge: true });
-                console.log(`[Referral] Awarded ${allowedReward} boosters to referrer ${referrerId}`);
-
-                // Create notification for referrer
-                const referrerGiftRef = referrerRef.collection("unseen_gifts").doc();
-                transaction.set(referrerGiftRef, {
-                    packCount: allowedReward,
-                    popupTitle: "Erfolgreich geworben!",
-                    popupBody: `Du hast ${allowedReward} Packs erhalten, weil ${after.full_name || 'ein Freund'} deinem Einladungs-Link gefolgt ist!`,
-                    ctaLabel: "Packs öffnen",
-                    ctaUrl: "/sammelkarten",
-                    dismissLabel: "Gelesen",
-                    createdAt: FieldValue.serverTimestamp(),
-                    createdBy: "system_referral",
-                });
-            } else {
-                console.log(`[Referral] Referrer ${referrerId} has reached monthly booster limit (Awarded: ${currentMonthAwarded}/30).`);
-            }
-
-            // Save standard referral document
-            transaction.set(stdReferralRef, {
-                referrerId,
-                referredId: uid,
-                timestamp,
-                boostersAwarded: allowedReward,
-                type: 'standard'
-            });
+        // Save claim document (Source of Truth)
+        transaction.set(claimRef, {
+            referrer_uid: referrerId,
+            referred_uid: uid,
+            timestamp,
+            boosters_awarded_referrer: allowedReward,
+            boosters_awarded_referred: 5,
+            status: 'claimed'
         });
 
-        console.log(`[Referral] Successfully processed referral for user ${uid} by referrer ${referrerId}`);
+        // Backward compatibility: also save to legacy referrals collection if needed
+        const legacyRef = db.collection("referrals").doc(`std_${uid}`);
+        transaction.set(legacyRef, {
+            referrerId,
+            referredId: uid,
+            timestamp,
+            boostersAwarded: allowedReward,
+            type: 'standard'
+        });
+    });
+
+    return { success: true };
+}
+
+/**
+ * Triggered when a user completes their profile. (Safety Fallback)
+ */
+export const awardReferralBoosters = onDocumentWritten({
+    document: "profiles/{uid}",
+    database: "abi-data",
+    region: "europe-west3",
+}, async (event) => {
+    const uid = event.params.uid;
+    const before = event.data?.before.data() as Profile | undefined;
+    const after = event.data?.after.data() as Profile | undefined;
+
+    if (!after) return;
+
+    const wasCompleted = before ? (!!before.full_name?.trim() && !!before.class_name?.trim()) : false;
+    const isCompleted = (!!after.full_name?.trim() && !!after.class_name?.trim());
+
+    // Only proceed if profile was just completed and not yet claimed
+    if (wasCompleted || !isCompleted || after.is_referral_claimed) {
+        return;
+    }
+
+    try {
+        await processReferralReward(uid, after);
     } catch (error) {
-        console.error("[Referral] Error in awardReferralBoosters:", error);
-        throw error; // Rethrow to ensure it's logged as a failure in GCP
+        console.error("[Referral] Error in trigger:", error);
     }
 });
 
+/**
+ * Client-callable function to claim referral reward.
+ * Called on login/registration.
+ */
+export const claimReferral = onCall({
+    region: "europe-west3",
+}, async (request) => {
+    if (!request.auth) {
+        throw new HttpsError("unauthenticated", "Auth required.");
+    }
+
+    const uid = request.auth.uid;
+    const db = getFirestore("abi-data");
+    const profileSnap = await db.collection("profiles").doc(uid).get();
+    
+    if (!profileSnap.exists) {
+        throw new HttpsError("not-found", "Profile not found.");
+    }
+
+    const profile = profileSnap.data() as Profile;
+    
+    if (profile.is_referral_claimed) {
+        return { success: true, alreadyClaimed: true };
+    }
+
+    try {
+        return await processReferralReward(uid, profile);
+    } catch (error: any) {
+        console.error("[Referral] Error in onCall:", error);
+        throw new HttpsError("internal", error.message || "Failed to process referral.");
+    }
+});

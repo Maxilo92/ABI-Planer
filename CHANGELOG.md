@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.37.5] - 2026-03-29
+- **Robustes Referral-System:** Komplette Überarbeitung des Empfehlungsprogramms für maximale Zuverlässigkeit.
+  - Einführung einer `referral_claims` Collection als "Source of Truth" zur Vermeidung von Doppel-Gutschriften.
+  - Neue `claimReferral` Cloud Function (onCall), die bei jeder Anmeldung/Registrierung automatisch prüft, ob eine Belohnung aussteht.
+  - Idempotente Verarbeitung: Belohnungen werden nur einmalig gewährt, auch bei mehrfachen Triggern.
+  - Präzise Statistiken: Der Referrer erhält nun dauerhafte Zähler für `total_referrals` und `total_referral_boosters` in seinem Profil.
+  - Abwärtskompatibilität zur bisherigen `referrals` Collection für das Dashboard bleibt bestehen.
+
 ## [0.37.4] - 2026-03-29
 - **Visual Update:** Das problematische SVG-Logo wurde durch die PNG-Versionen ersetzt, um eine konsistente Darstellung über alle Endgeräte und Browser hinweg zu gewährleisten.
 
