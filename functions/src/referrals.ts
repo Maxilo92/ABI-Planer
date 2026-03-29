@@ -342,10 +342,10 @@ export const adminMigrateReferrals = onCall({
             } else if (result.alreadyClaimed) {
                 alreadyClaimedCount++;
             } else {
-                failedCodes.push(`${profile.referred_by} (Nutzer: ${uid})`);
+                failedCodes.push(`${profile.referred_by} (Nutzer: ${uid}, Grund: ${result.reason})`);
             }
-        } catch (err) {
-            failedCodes.push(`${profile.referred_by} (ERROR: ${uid})`);
+        } catch (err: any) {
+            failedCodes.push(`${profile.referred_by} (ERROR: ${uid}, Message: ${err.message})`);
         }
     }
 

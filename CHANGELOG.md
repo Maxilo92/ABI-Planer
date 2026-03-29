@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.37.21] - 2026-03-29
+- **Referral Migration Härtung:** Präzisere Fehlermeldungen in der Migrations-Zusammenfassung hinzugefügt, um exakt zu bestimmen, warum bestimmte Werber-Codes nicht aufgelöst werden konnten.
+
 ## [0.37.20] - 2026-03-29
 - **Referral Migration Diagnostic:** Die Migrations-Ergebnisse wurden um eine detaillierte Fehlerliste erweitert. Admins sehen nun direkt, welche Werber-Codes nicht aufgelöst werden konnten, was die Identifizierung von ungültigen oder veralteten Referral-Links in Nutzerprofilen erleichtert.
 
