@@ -89,6 +89,7 @@ export function CalendarEvents({
           <CalendarIcon className="h-5 w-5 text-primary" />
           Nächste Termine
         </CardTitle>
+      </CardHeader>
       <CardContent className="p-0 bg-card">
         <div className={useScrollContainer ? "h-full overflow-y-auto p-4 space-y-4 scrollbar-thin scrollbar-thumb-muted-foreground/20" : "p-4 space-y-4"}>
           {loading ? (
@@ -111,7 +112,6 @@ export function CalendarEvents({
           ) : (
             displayedEvents.map((event) => {
               const startDate = toDate(event.start_date)
-      ...
               const endDate = toDate(event.end_date)
               const isSameDay = startDate.toDateString() === endDate.toDateString()
               return (

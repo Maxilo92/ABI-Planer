@@ -128,7 +128,7 @@ export function PollList({
       })
 
       await refreshVotesForPoll(pollId)
-      if (!existingVote) toast.success('Deine Stimme wurde gespeichert. Du hast 1 Booster-Pack als Belohnung erhalten.'); else toast.success('Deine Stimme wurde geändert.')
+      if (!existingVote) toast.success('Deine Stimme wurde gespeichert.' + ' Du hast 1 Booster-Pack als Belohnung erhalten.'); else toast.success('Deine Stimme wurde geändert.')
       
       const optionText = poll?.options?.find(o => o.id === optionId)?.option_text || optionId
       await logAction('VOTE_CAST', userId, null, { 

@@ -48,9 +48,7 @@ export default function MigrateReferralsPage() {
         <AlertCircle className="h-12 w-12 mx-auto mb-4" />
         <h1 className="text-2xl font-bold">Zugriff verweigert</h1>
         <p className="mt-2">Du hast keine Berechtigung, diese Seite aufzurufen.</p>
-        <Button asChild className="mt-4">
-          <Link href="/">Zum Dashboard</Link>
-        </Button>
+        <Button render={<Link href="/">Zum Dashboard</Link>} className="mt-4" />
       </div>
     )
   }
@@ -59,9 +57,7 @@ export default function MigrateReferralsPage() {
     <div className="max-w-2xl mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-black tracking-tight">System-Migration</h1>
-        <Button variant="outline" asChild>
-          <Link href="/admin">Zurück zur Übersicht</Link>
-        </Button>
+        <Button variant="outline" render={<Link href="/admin">Zurück zur Übersicht</Link>} />
       </div>
 
       <Card>
