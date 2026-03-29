@@ -1,11 +1,12 @@
 'use client'
 
+import { Suspense } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { ShieldX, Home, LogIn } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
-export default function UnauthorizedPage() {
+function UnauthorizedContent() {
   const searchParams = useSearchParams()
   const from = searchParams.get('from')
   const reason = searchParams.get('reason')
@@ -45,5 +46,13 @@ export default function UnauthorizedPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function UnauthorizedPage() {
+  return (
+    <Suspense fallback={<div className="min-h-[70vh]" />}>
+      <UnauthorizedContent />
+    </Suspense>
   )
 }

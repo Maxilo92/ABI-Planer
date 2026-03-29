@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.36.21] - 2026-03-29
+- **Build Fix (App Hosting):** `useSearchParams()` auf der Seite `/unauthorized` in eine `Suspense`-Boundary gekapselt, damit Next.js 16 die Seite beim Prerendern korrekt bauen kann.
+
 ## [0.36.20] - 2026-03-29
 - **Git Hygiene:** Root `.gitignore` erweitert, damit KI-Agenten-/Prompt-Konfigs (u.a. `.gemini`, `dotgemini`, `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`) nicht mehr neu in Git aufgenommen werden.
 - **Repository Cleanup:** Bereits getrackte Dateien unter `dotgemini/` wurden per `git rm --cached` aus dem Index entfernt, bleiben lokal aber erhalten.
