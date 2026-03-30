@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.0.30] - 2026-03-30
+- **Shop Visual Hotfix (Rahmen):** Geisterkanten an den Bundle-Bildrahmen weiter reduziert.
+    - **Keine rechteckigen Glow-Layer mehr:** Booster-Visual nutzt jetzt nur noch weiche, runde Glows ohne eckige Inset-Effekte.
+    - **Klare Einzelkante:** Bildcontainer im Shop nutzt eine einfache Border-Kante ohne Ring-Overlay.
+
+## [1.0.29] - 2026-03-30
+- **Shop Visual Hotfix:** Doppelrand-Effekt an den Bundle-Bildrahmen entfernt.
+    - **Sauberer Einzelrahmen:** Visual-Container nutzt jetzt eine klare Ring-Kante statt kombinierter Border/Inner-Edge-Layer.
+
+## [1.0.28] - 2026-03-30
+- **Shop Responsive-Fix (Bundles):** Bundle-Visuals und Preisbutton auf Smartphone/Tablet stabilisiert.
+    - **Festes Visual-Layout:** Bildbereich der Shop-Karten nutzt jetzt feste, responsive Hoehen mit kontrollierter Skalierung.
+    - **iPad-Clipping reduziert:** Faecher-Geometrie und Kartengroessen im Booster-Renderer angepasst, damit weniger abgeschnitten wird.
+    - **Geister-Ecken minimiert:** Hintergrund-/Blur-Layer der Bundle-Visuals auf saubere, gerundete Inset-Layer umgestellt.
+    - **Button-Konsistenz:** Preis-/Status-Button hat nun einheitliches Innenlayout und stabiles Padding in allen Zustaenden (Preis, Limit, Verarbeitung).
+    - **Header-Z-Order:** Rabatt-/Badge-Labels rendern unter dem sticky Header statt darueber.
+
 ## [1.0.27] - 2026-03-30
 - **Sammelkarten UX:** Kleiner Booster-Shop-Button im Booster-Header ergänzt.
     - **Direktzugriff:** Neben Pack-Status/Info ist jetzt ein kompakter Shop-Shortcut zu `/shop?category=sammelkarten` sichtbar.

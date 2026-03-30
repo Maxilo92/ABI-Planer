@@ -201,12 +201,12 @@ export const BoosterPackVisual: React.FC<BoosterPackVisualProps> = ({ amount, co
       // Symmetric fan behind the front card: pair rows (2 + 2 + 2).
       const depth = Math.floor(i / 2);
       const side = i % 2 === 0 ? -1 : 1;
-      const spreadBase = 18 + Math.max(0, backgroundCardCount - 2) * 1.5;
+      const spreadBase = 14 + Math.max(0, backgroundCardCount - 2) * 1.1;
       return {
-        x: side * (spreadBase + depth * 16),
-        y: 14 + depth * 10,
-        rotate: side * (13 + depth * 4),
-        scale: Math.max(0.86, 1 - depth * 0.06),
+        x: side * (spreadBase + depth * 12),
+        y: 12 + depth * 8,
+        rotate: side * (11 + depth * 3),
+        scale: Math.max(0.88, 1 - depth * 0.05),
       };
     }
 
@@ -360,10 +360,9 @@ export const BoosterPackVisual: React.FC<BoosterPackVisualProps> = ({ amount, co
   });
 
   return (
-    <div className={cn("relative flex items-center justify-center h-48 w-full overflow-visible px-3", className)}>
-      <div className="absolute -inset-6 bg-[radial-gradient(circle_at_35%_25%,rgba(255,255,255,0.14),transparent_55%),radial-gradient(circle_at_80%_70%,rgba(255,255,255,0.1),transparent_50%)]" />
-      <div className={cn("absolute -inset-8 blur-[56px] opacity-35 rounded-full", colors.primary)} />
-      <div className={cn("absolute bottom-4 left-1/2 -translate-x-1/2 w-44 h-8 rounded-full blur-2xl opacity-25", colors.secondary)} />
+    <div className={cn("relative flex items-center justify-center h-full w-full overflow-visible", className)}>
+      <div className={cn("pointer-events-none absolute left-1/2 top-1/2 h-40 w-40 -translate-x-1/2 -translate-y-1/2 rounded-full blur-3xl opacity-25", colors.primary)} />
+      <div className={cn("pointer-events-none absolute bottom-7 left-1/2 h-8 w-36 -translate-x-1/2 rounded-full blur-xl opacity-20", colors.secondary)} />
 
       <div className="relative h-full w-full flex items-center justify-center">
         {resolvedLayout === 'crate' && (
@@ -390,7 +389,7 @@ export const BoosterPackVisual: React.FC<BoosterPackVisualProps> = ({ amount, co
             transition={{ duration: 0.28, delay: i * 0.03 }}
             className={cn(
               "absolute rounded-xl shadow-lg",
-              isFanLayout ? "w-24 h-36 border border-white/20" : "w-20 h-[7.5rem] border border-white/10",
+              isFanLayout ? "w-20 h-32 sm:w-24 sm:h-36 border border-white/20" : "w-[4.5rem] h-[6.8rem] sm:w-20 sm:h-[7.5rem] border border-white/10",
               isFanLayout ? cn("bg-gradient-to-b", colors.gradient) : "bg-gradient-to-br from-slate-800 to-slate-950",
               i % 3 === 0 && "brightness-110"
             )}
@@ -422,7 +421,7 @@ export const BoosterPackVisual: React.FC<BoosterPackVisualProps> = ({ amount, co
             ease: "easeInOut"
           }}
           className={cn(
-            "relative z-10 w-32 h-44 rounded-2xl p-0.5 shadow-2xl overflow-hidden",
+            "relative z-10 w-28 h-40 sm:w-32 sm:h-44 rounded-2xl p-0.5 shadow-2xl overflow-hidden",
             isFanLayout && "scale-[0.99]",
             "bg-gradient-to-b", colors.gradient, colors.glow
           )}
