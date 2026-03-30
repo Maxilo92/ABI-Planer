@@ -28,7 +28,8 @@ export default function ImpressumPage() {
             <h3 className="text-lg font-semibold border-b pb-2 mb-3">Angaben gemäß § 5 DDG</h3>
             <p className="text-muted-foreground leading-relaxed">
               Maximilian Priesnitz<br />
-              Wohnhaft in Feldschlösschen<br />
+              Ahornweg 6d<br />
+              01454 Wachau<br />
               Deutschland
             </p>
           </section>
@@ -37,6 +38,7 @@ export default function ImpressumPage() {
             <h3 className="text-lg font-semibold border-b pb-2 mb-3">Kontakt</h3>
             <p className="text-muted-foreground leading-relaxed">
               E-Mail: priesnitz.maximilian@icloud.com<br />
+              Tel: 0176 36370172<br />
               Webseite: https://github.com/Maxilo92/ABI-Planer
             </p>
           </section>

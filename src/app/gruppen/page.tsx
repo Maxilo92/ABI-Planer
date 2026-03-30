@@ -68,8 +68,8 @@ function GroupsPageContent() {
   useEffect(() => {
     if (authLoading) return
 
-    if (!profile) {
-      setLoading(false)
+    if (!profile?.id) {
+      if (!authLoading) setLoading(false)
       return
     }
 
@@ -117,7 +117,7 @@ function GroupsPageContent() {
       unsubscribeTodos()
       unsubscribeEvents()
     }
-  }, [authLoading, profile])
+  }, [authLoading, profile?.id])
 
   if (authLoading || loading) {
     return (

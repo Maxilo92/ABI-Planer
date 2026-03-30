@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.0.42] - 2026-03-30
+- **Guest Experience Refinement:** Erweiterung des Konto-Incentives auf geschützte Bereiche.
+    - **Komponente:** In `ProtectedSystemGate` wurde ebenfalls der Link "Warum ein Konto?" hinzugefügt. Dies betrifft alle für Gäste gesperrten Seiten, wie z.B. die Finanzübersicht.
+
+## [1.0.41] - 2026-03-30
+- **Bugfix (UI):** Behebung einer React-Warnung bezüglich der `asChild`-Prop.
+    - **Komponente:** In `SammelkartenPromo` wurde die inkorrekte Prop `asChild` durch die korrekte Prop `render` ersetzt, die von der zugrundeliegenden `@base-ui/react` Bibliothek erwartet wird.
+
+## [1.0.40] - 2026-03-30
+- **Guest Experience Refinement:** Dezente Platzierung des Konto-Incentives.
+    - **UI/UX:** Entfernung des plakativen Guest-Banners zugunsten einer subtileren Integration.
+    - **Konvertierung:** Ein neuer Link "Warum ein Konto?" wurde direkt unter den Login-Buttons in der Sidebar (Navbar) und der Sammelkarten-Promo auf dem Dashboard platziert. Er führt zur Info-Seite `/promo`.
+
+## [1.0.39] - 2026-03-30
+- **Guest Experience & Conversion (Draft):** Experimentelle Implementierung des `GuestPromoBanner`. (Wurde in 1.0.40 durch ein subtileres Design ersetzt).
+
 ## [1.0.38] - 2026-03-30
 - **Sammelkarten-Promo Balancing:** Anpassung der Anzeige-Wahrscheinlichkeiten für Lehrer-Karten.
     - **Lehrer-Rarität:** Alle Lehrer-Raritäten (von Gewöhnlich bis Legendär) haben nun die gleiche Chance, in der Werbung zu erscheinen, um die Vielfalt des Pools besser zu demonstrieren.

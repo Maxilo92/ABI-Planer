@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { db } from '@/lib/firebase'
 import { doc, onSnapshot } from 'firebase/firestore'
 import { useCountdown } from '@/hooks/useCountdown'
+import { useAuth } from '@/context/AuthContext'
 import { Clock, Calendar, Info, Timer } from 'lucide-react'
 import {
   Dialog,
@@ -15,12 +16,16 @@ import {
 } from '@/components/ui/dialog'
 
 export function CountdownHeader() {
+  const { profile, loading } = useAuth()
   const [targetDate, setTargetDate] = useState<string | null>(null)
   const [mounted, setMounted] = useState(false)
   const { days, hours, minutes, seconds } = useCountdown(targetDate || '')
 
   useEffect(() => {
     setMounted(true)
+    
+    if (loading || !profile?.is_approved) return
+
     const settingsRef = doc(db, 'settings', 'config')
     const unsubscribe = onSnapshot(settingsRef, (doc) => {
       if (doc.exists()) {
@@ -33,7 +38,7 @@ export function CountdownHeader() {
       setTargetDate('2027-06-19T18:00:00Z')
     })
     return () => unsubscribe()
-  }, [])
+  }, [loading, profile?.is_approved])
 
   if (!mounted || !targetDate) return null
 

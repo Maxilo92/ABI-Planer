@@ -11,6 +11,7 @@ import { doc, onSnapshot } from 'firebase/firestore'
 import { TeacherRarity, LootTeacher, CardVariant } from '@/types/database'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
 import { useUserTeachers, getCurrentBoosterDay } from '@/hooks/useUserTeachers'
 import { TeacherAlbum } from '@/components/dashboard/TeacherAlbum'
@@ -143,27 +144,42 @@ function SammelkartenContent() {
   }, [config])
 
   useEffect(() => {
+    let unsubGlobal: (() => void) | null = null;
+
     const unsubscribe = onSnapshot(doc(db, 'settings', 'sammelkarten'), (snapshot) => {
       if (snapshot.exists()) {
         setConfig(snapshot.data() as SammelkartenConfig)
+        if (unsubGlobal) {
+          unsubGlobal();
+          unsubGlobal = null;
+        }
       } else {
         // Fallback to global if sammelkarten settings don't exist yet
-        const unsubGlobal = onSnapshot(doc(db, 'settings', 'global'), (globalSnap) => {
-          if (globalSnap.exists()) {
-            const data = globalSnap.data()
-            setConfig({
-              loot_teachers: data.loot_teachers || DEFAULT_TEACHERS,
-              rarity_weights: DEFAULT_RARITY_WEIGHTS,
-              godpack_weights: DEFAULT_GODPACK_WEIGHTS,
-              variant_probabilities: { shiny: 0.05, holo: 0.15, black_shiny_holo: 0.005 },
-              global_limits: { daily_allowance: 2, reset_hour: 9, godpack_chance: 0.005 }
-            })
-          }
-        })
-        return () => unsubGlobal()
+        if (!unsubGlobal) {
+          unsubGlobal = onSnapshot(doc(db, 'settings', 'global'), (globalSnap) => {
+            if (globalSnap.exists()) {
+              const data = globalSnap.data()
+              setConfig({
+                loot_teachers: data.loot_teachers || DEFAULT_TEACHERS,
+                rarity_weights: DEFAULT_RARITY_WEIGHTS,
+                godpack_weights: DEFAULT_GODPACK_WEIGHTS,
+                variant_probabilities: { shiny: 0.05, holo: 0.15, black_shiny_holo: 0.005 },
+                global_limits: { daily_allowance: 2, reset_hour: 9, godpack_chance: 0.005 }
+              })
+            }
+          }, (error) => {
+            console.error('SammelkartenPage: Error listening to global settings fallback:', error)
+          })
+        }
       }
+    }, (error) => {
+      console.error('SammelkartenPage: Error listening to sammelkarten settings:', error)
     })
-    return () => unsubscribe()
+
+    return () => {
+      unsubscribe()
+      if (unsubGlobal) unsubGlobal()
+    }
   }, [])
 
   const handleOpenTenPacks = useCallback(async () => {
@@ -937,7 +953,25 @@ function SammelkartenContent() {
 
 export default function SammelkartenPage() {
   return (
-    <Suspense fallback={<div className="container mx-auto py-8 text-center"><Sparkles className="h-8 w-8 animate-pulse mx-auto text-primary" /></div>}>
+    <Suspense 
+      fallback={
+        <div className="container mx-auto py-8 space-y-12">
+          <div className="flex flex-col items-center space-y-4">
+            <Skeleton className="h-10 w-64" />
+            <Skeleton className="h-6 w-48 rounded-full" />
+          </div>
+          <div className="flex justify-center">
+            <Skeleton className="w-64 h-[400px] rounded-[2.5rem]" />
+          </div>
+          <div className="flex flex-col items-center gap-4">
+            <div className="flex gap-4">
+              <Skeleton className="h-12 w-40 rounded-full" />
+              <Skeleton className="h-12 w-40 rounded-full" />
+            </div>
+          </div>
+        </div>
+      }
+    >
       <SammelkartenContent />
     </Suspense>
   )

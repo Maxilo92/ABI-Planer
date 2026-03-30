@@ -4,6 +4,7 @@ import { usePathname } from 'next/navigation'
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
 import { SystemMessageHost } from '@/components/layout/SystemMessageHost'
+import { CookieConsent } from '@/components/layout/CookieConsent'
 
 interface AppShellProps {
   children: React.ReactNode
@@ -20,6 +21,7 @@ export function AppShell({ children }: AppShellProps) {
       <div className="min-h-screen bg-background pb-safe">
         <SystemMessageHost />
         <main className="min-h-screen">{children}</main>
+        <CookieConsent />
       </div>
     )
   }
@@ -36,6 +38,7 @@ export function AppShell({ children }: AppShellProps) {
         </main>
         <Footer />
       </div>
+      <CookieConsent />
     </div>
   )
 }

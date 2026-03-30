@@ -1,6 +1,6 @@
 {
   "name": "abi-planer",
-  "version": "0.37.23",
+  "version": "1.0.30",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -29,7 +29,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
-    "firebase": "^12.10.0",
+    "firebase": "^12.11.0",
     "firebase-admin": "^13.7.0",
     "framer-motion": "^12.38.0",
     "lucide-react": "^0.577.0",

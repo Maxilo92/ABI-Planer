@@ -204,6 +204,9 @@ export default function GlobalSettingsPage() {
         setInitialSettings(DEFAULT_SETTINGS)
       }
       setLoading(false)
+    }, (error) => {
+      console.error('GlobalSettingsPage: Error listening to global settings:', error)
+      setLoading(false)
     })
 
     return () => {

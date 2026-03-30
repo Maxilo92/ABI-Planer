@@ -95,6 +95,9 @@ export default function DangerZonePage() {
       })
       setPendingActions(actions)
       setLoading(false)
+    }, (error) => {
+      console.error('DangerZonePage: Error listening to delayed actions:', error)
+      setLoading(false)
     })
 
     return () => unsubscribe()

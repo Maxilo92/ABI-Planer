@@ -1,12 +1,24 @@
 'use client'
 
 import { useAuth } from '@/context/AuthContext'
+import { useEffect, useState } from 'react'
 
 export function GoogleAdSense() {
   const { user } = useAuth()
+  const [hasConsent, setHasConsent] = useState<boolean>(false)
 
-  // Only hide ads if user is definitively logged in
-  if (user) {
+  useEffect(() => {
+    const checkConsent = () => {
+      setHasConsent(localStorage.getItem('cookie-consent-accepted') === 'true')
+    }
+
+    checkConsent()
+    window.addEventListener('cookie-consent-changed', checkConsent)
+    return () => window.removeEventListener('cookie-consent-changed', checkConsent)
+  }, [])
+
+  // Only hide ads if user is definitively logged in OR no consent
+  if (user || !hasConsent) {
     return null
   }
 

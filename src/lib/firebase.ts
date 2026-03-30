@@ -1,6 +1,6 @@
 import { initializeApp, getApp, getApps, FirebaseApp } from 'firebase/app'
 import { getAuth, connectAuthEmulator, Auth } from 'firebase/auth'
-import { getFirestore, connectFirestoreEmulator, Firestore } from 'firebase/firestore'
+import { getFirestore, initializeFirestore, connectFirestoreEmulator, Firestore } from 'firebase/firestore'
 import { getStorage, connectStorageEmulator, FirebaseStorage } from 'firebase/storage'
 import { getFunctions, connectFunctionsEmulator, Functions } from 'firebase/functions'
 
@@ -27,32 +27,46 @@ function initialize() {
 
   if (!getApps().length) {
     app = initializeApp(firebaseConfig);
-    auth = getAuth(app);
-    db = getFirestore(app, 'abi-data');
-    storage = getStorage(app);
-    functions = getFunctions(app, 'europe-west3');
-
-    const useEmulators = process.env.NEXT_PUBLIC_USE_FIREBASE_EMULATOR === 'true';
-
-    if (useEmulators && process.env.NODE_ENV === 'development' && typeof window !== 'undefined') {
-      if (!(window as any)._firebaseEmulatorsConnected) {
-        const host = window.location.hostname;
-        connectFirestoreEmulator(db, host, 8080);
-        connectAuthEmulator(auth, `http://${host}:9099`);
-        connectFunctionsEmulator(functions, host, 5001);
-        connectStorageEmulator(storage, host, 9199);
-        (window as any)._firebaseEmulatorsConnected = true;
-        console.log('--- CONNECTED TO LOCAL FIREBASE EMULATORS ---');
-      }
-    } else if (process.env.NODE_ENV === 'development' && !useEmulators) {
-      console.log('--- USING PRODUCTION FIREBASE (Local Dev) ---');
-    }
   } else {
     app = getApp();
-    auth = getAuth(app);
-    db = getFirestore(app, 'abi-data');
-    storage = getStorage(app);
-    functions = getFunctions(app, 'europe-west3');
+  }
+
+  if (!auth) auth = getAuth(app);
+  
+  if (!db) {
+    const isDevBrowser = process.env.NODE_ENV === 'development' && typeof window !== 'undefined'
+    if (isDevBrowser) {
+      // In development, we use initializeFirestore with forceLongPolling to avoid 
+      // "Unexpected state (ID: ca9)" errors often caused by HMR or proxy issues.
+      db = initializeFirestore(app, {
+        experimentalAutoDetectLongPolling: false,
+        forceLongPolling: true,
+      }, 'abi-data')
+    } else {
+      db = getFirestore(app, 'abi-data')
+    }
+  }
+
+  if (!storage) storage = getStorage(app);
+  if (!functions) functions = getFunctions(app, 'europe-west3');
+
+  const useEmulators = process.env.NEXT_PUBLIC_USE_FIREBASE_EMULATOR === 'true';
+
+  if (useEmulators && process.env.NODE_ENV === 'development' && typeof window !== 'undefined') {
+    if (!(window as any)._firebaseEmulatorsConnected) {
+      const host = window.location.hostname;
+      connectFirestoreEmulator(db, host, 8080);
+      connectAuthEmulator(auth, `http://${host}:9099`);
+      connectFunctionsEmulator(functions, host, 5001);
+      connectStorageEmulator(storage, host, 9199);
+      (window as any)._firebaseEmulatorsConnected = true;
+      console.log('--- CONNECTED TO LOCAL FIREBASE EMULATORS ---');
+    }
+  } else if (process.env.NODE_ENV === 'development' && !useEmulators && typeof window !== 'undefined') {
+    if (!(window as any)._firebaseConnectedLog) {
+      console.log('--- USING PRODUCTION FIREBASE (Local Dev) ---');
+      (window as any)._firebaseConnectedLog = true;
+    }
   }
 }
 

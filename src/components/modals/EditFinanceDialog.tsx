@@ -35,19 +35,23 @@ export function EditFinanceDialog({ entry }: EditFinanceDialogProps) {
   const [loading, setLoading] = useState(false)
   const [loadingCourses, setLoadingCourses] = useState(true)
   const [open, setOpen] = useState(false)
-  const { user, profile } = useAuth()
+  const { user, profile, loading: authLoading } = useAuth()
   const router = useRouter()
 
   useEffect(() => {
+    if (authLoading || !profile?.is_approved) return
     const settingsRef = doc(db, 'settings', 'config')
     const unsubscribe = onSnapshot(settingsRef, (doc) => {
       if (doc.exists() && doc.data().courses) {
         setCourses(doc.data().courses)
       }
       setLoadingCourses(false)
+    }, (error) => {
+      console.error('EditFinanceDialog: Error listening to settings:', error)
+      setLoadingCourses(false)
     })
     return () => unsubscribe()
-  }, [])
+  }, [authLoading, profile?.is_approved])
 
   const dropdownClasses: (ClassName | 'Allgemein')[] = [...courses, 'Allgemein']
 

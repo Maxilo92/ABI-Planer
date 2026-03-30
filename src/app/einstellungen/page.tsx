@@ -157,6 +157,8 @@ export default function SettingsPage() {
             leaderUserId: entry.leader_user_id || '',
           }))
       )
+    }, (error) => {
+      console.error('SettingsPage: Error listening to settings config:', error)
     })
 
     return () => unsubscribe()
@@ -183,6 +185,8 @@ export default function SettingsPage() {
         .filter((entry) => entry.role === 'planner' || entry.role.includes('admin'))
 
       setPlanners(eligibleLeaders)
+    }, (error) => {
+      console.error('SettingsPage: Error listening to approved profiles:', error)
     })
 
     return () => unsubscribe()

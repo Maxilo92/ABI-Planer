@@ -8,6 +8,7 @@ import { CalendarEvents } from '@/components/dashboard/CalendarEvents'
 import { AddEventDialog } from '@/components/modals/AddEventDialog'
 import { Event } from '@/types/database'
 import { Loader2, Search } from 'lucide-react'
+import { Skeleton } from '@/components/ui/skeleton'
 import { toDate } from '@/lib/utils'
 import { Input } from '@/components/ui/input'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -64,8 +65,21 @@ export default function CalendarPage() {
 
   if (authLoading || loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="space-y-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="space-y-2">
+            <Skeleton className="h-10 w-48" />
+            <Skeleton className="h-4 w-64" />
+          </div>
+          <div className="flex items-center gap-2">
+            <Skeleton className="h-10 w-full md:w-64 rounded-md" />
+            <Skeleton className="h-10 w-32 rounded-md" />
+          </div>
+        </div>
+        <div className="space-y-4">
+          <Skeleton className="h-10 w-full max-w-md rounded-md" />
+          <CalendarEvents events={[]} loading={true} />
+        </div>
       </div>
     )
   }

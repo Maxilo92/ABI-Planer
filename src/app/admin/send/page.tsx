@@ -190,6 +190,9 @@ function AdminSendContent() {
           const filtered = allProfiles.filter(p => targetIds.includes(p.id))
           setRecipients(filtered)
           setLoading(false)
+        }, (error) => {
+          console.error('SendAdminPage: Error listening to profiles:', error)
+          setLoading(false)
         })
         return () => unsubscribe()
       } catch (error) {

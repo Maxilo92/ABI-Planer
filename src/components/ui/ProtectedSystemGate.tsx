@@ -50,6 +50,13 @@ export function ProtectedSystemGate({ title, description, icon }: ProtectedSyste
         </Button>
       </div>
 
+      <Link 
+        href="/promo" 
+        className="mt-6 text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors relative z-10"
+      >
+        Warum ein Konto?
+      </Link>
+
       <div className="mt-8 text-[10px] uppercase tracking-[0.2em] font-black text-muted-foreground/40">
         Zutritt nur für Schüler der HGR
       </div>

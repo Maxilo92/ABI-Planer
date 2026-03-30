@@ -56,6 +56,9 @@ export default function NewsDetailPage({ params }: { params: Promise<{ id: strin
         setNews(null)
       }
       setLoading(false)
+    }, (error) => {
+      console.error('NewsDetailPage: Error listening to news article:', error)
+      setLoading(false)
     })
 
     // Subscribe to comments sub-collection - only for authenticated users
@@ -65,7 +68,6 @@ export default function NewsDetailPage({ params }: { params: Promise<{ id: strin
         collection(db, 'news', id, 'comments'),
         orderBy('created_at', 'desc')
       )
-      
       unsubscribeComments = onSnapshot(commentsQuery, (snapshot) => {
         const commentsData = snapshot.docs.map(doc => ({
           id: doc.id,
@@ -73,7 +75,7 @@ export default function NewsDetailPage({ params }: { params: Promise<{ id: strin
         })) as Comment[]
         setComments(commentsData)
       }, (error) => {
-        console.error('Error listening to comments:', error)
+        console.error('NewsDetailPage: Error listening to comments:', error)
       })
     }
 

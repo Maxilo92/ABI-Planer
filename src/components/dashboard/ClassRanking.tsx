@@ -5,6 +5,7 @@ import { ClassName, FinanceEntry } from '@/types/database'
 import { useEffect, useState } from 'react'
 import { db } from '@/lib/firebase'
 import { doc, onSnapshot } from 'firebase/firestore'
+import { useAuth } from '@/context/AuthContext'
 import { Badge } from '@/components/ui/badge'
 import { BarChart3, ChevronRight, Info, Lightbulb, Loader2 } from 'lucide-react'
 import Link from 'next/link'
@@ -33,19 +34,25 @@ export function ClassRanking({
   infoLink = '/finanzen',
   loading: propLoading,
 }: ClassRankingProps) {
+  const { profile, loading } = useAuth()
   const [courses, setCourses] = useState<string[]>(['Kurs 1', 'Kurs 2', 'Kurs 3', 'Kurs 4', 'Kurs 5', 'Kurs 6', 'Kurs 7'])
   const [internalLoading, setInternalLoading] = useState(true)
 
   useEffect(() => {
+    if (loading || !profile?.is_approved) return
+
     const settingsRef = doc(db, 'settings', 'config')
     const unsubscribe = onSnapshot(settingsRef, (doc) => {
       if (doc.exists() && doc.data().courses) {
         setCourses(doc.data().courses)
       }
       setInternalLoading(false)
+    }, (error) => {
+      console.error('ClassRanking: Error listening to settings:', error)
+      setInternalLoading(false)
     })
     return () => unsubscribe()
-  }, [])
+  }, [profile?.is_approved, loading])
   
   const stats: ClassStats[] = courses.map((c) => {
     const amount = finances

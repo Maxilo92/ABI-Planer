@@ -147,13 +147,17 @@ export const useUserTeachers = (userId?: string) => {
   const [error, setError] = useState<Error | null>(null)
 
   useEffect(() => {
+    if (!currentProfile?.is_approved) return
+
     const unsubscribe = onSnapshot(doc(db, 'settings', 'sammelkarten'), (snapshot) => {
       if (snapshot.exists()) {
         setConfig(snapshot.data())
       }
+    }, (error) => {
+      console.error('useUserTeachers: Error listening to sammelkarten settings:', error)
     })
     return () => unsubscribe()
-  }, [])
+  }, [currentProfile?.is_approved])
 
   useEffect(() => {
     if (!activeUserId) {

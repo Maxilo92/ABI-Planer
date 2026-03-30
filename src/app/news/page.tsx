@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button'
 import { format } from 'date-fns'
 import { de } from 'date-fns/locale'
 import { Loader2, Trash2, ArrowRight, Eye, User as UserIcon } from 'lucide-react'
+import { Skeleton } from '@/components/ui/skeleton'
 import { toDate } from '@/lib/utils'
 import { useSystemMessage } from '@/context/SystemMessageContext'
 import Link from 'next/link'
@@ -31,6 +32,9 @@ export default function NewsPage() {
     const q = query(collection(db, 'news'), orderBy('created_at', 'desc'))
     const unsubscribe = onSnapshot(q, (snapshot) => {
       setNews(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as NewsEntry)))
+      setLoading(false)
+    }, (error) => {
+      console.error('NewsPage: Error listening to news:', error)
       setLoading(false)
     })
 
@@ -61,8 +65,31 @@ export default function NewsPage() {
 
   if (authLoading || loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="space-y-7">
+        <div className="relative overflow-hidden rounded-2xl border bg-muted/20 p-6 md:p-8">
+          <Skeleton className="h-10 w-48 mb-2" />
+          <Skeleton className="h-4 w-full max-w-[400px]" />
+        </div>
+
+        <div className="grid grid-cols-1 gap-5">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="rounded-2xl bg-card/65 p-4 md:p-5 md:grid md:grid-cols-[280px_1fr] md:gap-6">
+              <Skeleton className="hidden md:block aspect-[16/10] w-full rounded-2xl" />
+              <div className="space-y-4">
+                <Skeleton className="h-8 w-3/4" />
+                <div className="flex gap-4">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-4 w-24" />
+                </div>
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-2/3" />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     )
   }

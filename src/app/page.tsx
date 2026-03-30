@@ -83,15 +83,13 @@ export default function Dashboard() {
       markLoaded('news')
     })
 
-    if (authLoading) return
-
     // Protected Listeners - Only for Authenticated Users
     let unsubscribeTodos = () => { markLoaded('todos') }
     let unsubscribeEvents = () => { markLoaded('events') }
     let unsubscribeFinances = () => { markLoaded('finances') }
     let unsubscribePolls = () => { markLoaded('polls') }
 
-    if (user && profile?.id) {
+    if (!authLoading && user && profile?.id) {
       const userCourse = profile?.class_name
       const userPlanningGroup = profile?.planning_group
       const userUid = user.uid
@@ -180,7 +178,7 @@ export default function Dashboard() {
         console.error('Error listening to polls:', error)
         markLoaded('polls')
       })
-    } else {
+    } else if (!authLoading) {
       // If no user, mark protected data as loaded (empty)
       markLoaded('todos')
       markLoaded('events')
@@ -445,10 +443,7 @@ export default function Dashboard() {
   const sortedComponentKeys = sortedComponents.map((key) => key)
 
   const isInitialDashboardDataLoading = Object.values(initialLoadState).some((isLoaded) => !isLoaded)
-
-  if (!timeoutReached && (authLoading || isInitialDashboardDataLoading)) {
-    return <div className="flex items-center justify-center min-h-[50vh]">Lade Dashboard...</div>
-  }
+  const globalLoading = !timeoutReached && (authLoading || isInitialDashboardDataLoading)
 
   const dashboardItems = sortedComponentKeys.reduce<DashboardItem[]>((items, key) => {
     if (key === 'polls') {

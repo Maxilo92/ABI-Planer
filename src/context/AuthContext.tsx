@@ -57,6 +57,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     let profileUnsubscribe: (() => void) | null = null;
+    let isSubscribed = true;
 
     const authUnsubscribe = onAuthStateChanged(auth, async (user) => {
       setUser(user)
@@ -72,45 +73,54 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           const docRef = doc(db, 'profiles', user.uid)
           
           // Use onSnapshot to make the profile reactive
-          profileUnsubscribe = onSnapshot(docRef, async (docSnap) => {
-            try {
-              if (docSnap.exists()) {
-                const profileData = docSnap.data() as Profile
-                const normalizedRole = (profileData.role as string) === 'admin' ? 'admin_main' : profileData.role
-                const normalizedProfile = { ...profileData, id: user.uid, role: normalizedRole } as Profile
+          profileUnsubscribe = onSnapshot(docRef, (docSnap) => {
+            const processProfile = async () => {
+              try {
+                if (docSnap.exists()) {
+                  const profileData = docSnap.data() as Profile
+                  const normalizedRole = (profileData.role as string) === 'admin' ? 'admin_main' : profileData.role
+                  const normalizedProfile = { ...profileData, id: user.uid, role: normalizedRole } as Profile
 
-                const timeoutUntilMs = normalizedProfile.timeout_until ? Date.parse(normalizedProfile.timeout_until) : NaN
-                const isTimedOut = Number.isFinite(timeoutUntilMs) && timeoutUntilMs > Date.now()
+                  const timeoutUntilMs = normalizedProfile.timeout_until ? Date.parse(normalizedProfile.timeout_until) : NaN
+                  const isTimedOut = Number.isFinite(timeoutUntilMs) && timeoutUntilMs > Date.now()
 
-                if (isTimedOut) {
-                  console.warn('User is currently timed out. Signing out.')
-                  // Ensure we unsubscribe before signing out to avoid state updates after logout
-                  if (profileUnsubscribe) {
-                    profileUnsubscribe()
-                    profileUnsubscribe = null
+                  if (isTimedOut) {
+                    console.warn('User is currently timed out. Signing out.')
+                    if (isSubscribed) {
+                      // Ensure we unsubscribe before signing out to avoid state updates after logout
+                      if (profileUnsubscribe) {
+                        profileUnsubscribe()
+                        profileUnsubscribe = null
+                      }
+                      await signOut(auth)
+                      setProfile(null)
+                      setLoading(false)
+                      window.location.href = '/login?reason=timeout'
+                    }
+                    return
                   }
-                  await signOut(auth)
-                  setProfile(null)
-                  setLoading(false)
-                  window.location.href = '/login?reason=timeout'
-                  return
-                }
 
-                setProfile(normalizedProfile)
-              } else {
-                console.warn('No profile found for user:', user.uid)
-                setProfile(null)
+                  if (isSubscribed) {
+                    setProfile(normalizedProfile)
+                  }
+                } else {
+                  console.warn('No profile found for user:', user.uid)
+                  if (isSubscribed) setProfile(null)
+                }
+              } catch (error) {
+                console.error('Error in profile snapshot processing:', error)
+                if (isSubscribed) setProfile(null)
+              } finally {
+                if (isSubscribed) setLoading(false)
               }
-            } catch (error) {
-              console.error('Error in profile snapshot:', error)
-              setProfile(null)
-            } finally {
-              setLoading(false)
             }
+            processProfile()
           }, (error) => {
             console.error('Profile snapshot error:', error)
-            setProfile(null)
-            setLoading(false)
+            if (isSubscribed) {
+              setProfile(null)
+              setLoading(false)
+            }
           })
         } else {
           setProfile(null)
@@ -118,12 +128,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
       } catch (error) {
         console.error('Error fetching profile:', error)
-        setProfile(null)
-        setLoading(false)
+        if (isSubscribed) {
+          setProfile(null)
+          setLoading(false)
+        }
       }
     })
 
     return () => {
+      isSubscribed = false
       authUnsubscribe()
       if (profileUnsubscribe) profileUnsubscribe()
     }

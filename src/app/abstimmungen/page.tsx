@@ -19,10 +19,11 @@ export default function PollsPage() {
   const [teacherPollFinished, setTeacherPollFinished] = useState(false)
 
   useEffect(() => {
+    let isSubscribed = true;
     if (authLoading) return
 
-    if (!profile) {
-      setLoading(false)
+    if (!profile?.id) {
+      if (!authLoading) setLoading(false)
       return
     }
 
@@ -32,31 +33,46 @@ export default function PollsPage() {
       orderBy('created_at', 'desc')
     )
 
-    const unsubscribe = onSnapshot(q, async (snapshot) => {
-      const pollsData: Poll[] = []
-      
-      for (const doc of snapshot.docs) {
-        const poll = { id: doc.id, ...doc.data() } as Poll
-        
-        // Fetch options and votes for each poll
-        const optionsSnap = await getDocs(collection(db, 'polls', doc.id, 'options'))
-        const options = optionsSnap.docs.map(d => ({ id: d.id, ...d.data() } as PollOption))
-        
-        const votesSnap = await getDocs(collection(db, 'polls', doc.id, 'votes'))
-        const votes = votesSnap.docs.map(d => ({ id: d.id, ...d.data() } as PollVote))
-        
-        pollsData.push({ ...poll, options, votes })
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const fetchPollDetails = async () => {
+        try {
+          const pollsData: Poll[] = []
+          
+          for (const doc of snapshot.docs) {
+            if (!isSubscribed) break
+            const poll = { id: doc.id, ...doc.data() } as Poll
+            
+            // Fetch options and votes for each poll
+            const optionsSnap = await getDocs(collection(db, 'polls', doc.id, 'options'))
+            const options = optionsSnap.docs.map(d => ({ id: d.id, ...d.data() } as PollOption))
+            
+            const votesSnap = await getDocs(collection(db, 'polls', doc.id, 'votes'))
+            const votes = votesSnap.docs.map(d => ({ id: d.id, ...d.data() } as PollVote))
+            
+            pollsData.push({ ...poll, options, votes })
+          }
+          
+          if (isSubscribed) {
+            setPolls(pollsData)
+            setLoading(false)
+          }
+        } catch (error) {
+          console.error('Error fetching poll details:', error)
+          if (isSubscribed) setLoading(false)
+        }
       }
       
-      setPolls(pollsData)
-      setLoading(false)
+      fetchPollDetails()
     }, (error) => {
       console.error('Error listening to polls:', error)
-      setLoading(false)
+      if (isSubscribed) setLoading(false)
     })
 
-    return () => unsubscribe()
-  }, [authLoading, profile])
+    return () => {
+      isSubscribed = false
+      unsubscribe()
+    }
+  }, [authLoading, profile?.id])
 
   const sortedPolls = [...polls].sort((a, b) => {
     const aVoted = a.votes?.some(v => v.user_id === user?.uid)

@@ -389,9 +389,18 @@ export function Navbar() {
                   </Button>
                 </>
               ) : (
-                <Link href="/login" onClick={() => setIsOpen(false)} className={cn(buttonVariants({ variant: 'default' }), 'w-full h-12 justify-center rounded-xl')}>
-                  Anmelden
-                </Link>
+                <div className="space-y-2">
+                  <Link href="/login" onClick={() => setIsOpen(false)} className={cn(buttonVariants({ variant: 'default' }), 'w-full h-12 justify-center rounded-xl')}>
+                    Anmelden
+                  </Link>
+                  <Link 
+                    href="/promo" 
+                    onClick={() => setIsOpen(false)}
+                    className="block text-center text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors"
+                  >
+                    Warum ein Konto?
+                  </Link>
+                </div>
               )}
             </div>
           </motion.aside>
@@ -438,9 +447,17 @@ export function Navbar() {
                 </Button>
               </>
             ) : (
-                <Link href="/login" className={cn(buttonVariants({ variant: 'default' }), 'w-full justify-center')}>
-                  Anmelden
-                </Link>
+                <div className="space-y-2">
+                  <Link href="/login" className={cn(buttonVariants({ variant: 'default' }), 'w-full justify-center')}>
+                    Anmelden
+                  </Link>
+                  <Link 
+                    href="/promo" 
+                    className="block text-center text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors"
+                  >
+                    Warum ein Konto?
+                  </Link>
+                </div>
             )}
           </div>
         </aside>

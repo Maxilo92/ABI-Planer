@@ -31,6 +31,8 @@ export default function SammelkartenInfoPage() {
       if (snapshot.exists()) {
         setConfig(snapshot.data() as SammelkartenConfig)
       }
+    }, (error) => {
+      console.error('SammelkartenInfoPage: Error listening to sammelkarten settings:', error)
     })
     return () => unsubscribe()
   }, [])

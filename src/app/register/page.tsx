@@ -120,26 +120,10 @@ function RegisterForm() {
     e.preventDefault()
 
     setError(null)
-    setShowError(true)
-    
-    // Final validation check for all required fields
-    if (!fullName.trim()) {
-      setStep(1)
-      setError('Bitte gib deinen vollständigen Namen ein.')
+    if (!validateCurrentStep()) {
+      setShowError(true)
       return
     }
-    if (!email.trim() || !password.trim() || !email.includes('@hgr-web.lernsax.de')) {
-      setStep(2)
-      setError('Bitte überprüfe deine E-Mail und dein Passwort.')
-      return
-    }
-    if (!isAtLeast16 || !acceptsTerms) {
-      setStep(3)
-      setError('Bitte bestätige dein Alter und die AGB.')
-      return
-    }
-
-    if (!validateCurrentStep()) return
 
     if (step < 3) {
       setStep((prev) => (prev + 1) as 1 | 2 | 3)
@@ -181,7 +165,7 @@ function RegisterForm() {
         legal_consents: {
           is_at_least_16: true,
           terms_accepted: true,
-          terms_version: '2026-03-20',
+          terms_version: '2026-03-29',
           accepted_at: new Date().toISOString(),
         },
         referral_code: user.uid.slice(0, 8), // Unique code for sharing
@@ -289,6 +273,9 @@ function RegisterForm() {
                       autoComplete="new-password"
                       required 
                     />
+                    <p className="text-xs text-muted-foreground">
+                      Du kannst hier ein neues Passwort festlegen, es muss nicht dein LernSax-Passwort sein.
+                    </p>
                   </div>
                 </>
               )}

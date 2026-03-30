@@ -159,6 +159,9 @@ export default function CardManagerPage() {
         setLocalConfig(null)
       }
       setLoading(false)
+    }, (error) => {
+      console.error('SammelkartenAdmin: Error listening to sammelkarten settings:', error)
+      setLoading(false)
     })
 
     const fetchVotingData = async () => {

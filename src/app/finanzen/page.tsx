@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button'
 import { format } from 'date-fns'
 import { de } from 'date-fns/locale'
 import { Heart, Loader2, Trash2, Wallet } from 'lucide-react'
+import { Skeleton } from '@/components/ui/skeleton'
 import { toDate } from '@/lib/utils'
 import Link from 'next/link'
 import { toast } from 'sonner'
@@ -43,6 +44,9 @@ export default function FinancePage() {
       } else {
         setSettings({ id: 1, ball_date: '2027-06-19T18:00:00Z', funding_goal: 10000 })
       }
+    }, (error) => {
+      console.error('FinanzenPage: Error listening to settings:', error)
+      setSettings({ id: 1, ball_date: '2027-06-19T18:00:00Z', funding_goal: 10000 })
     })
 
     // 2. Listen to Finances
@@ -64,8 +68,49 @@ export default function FinancePage() {
 
   if (authLoading || loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="space-y-6">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div className="space-y-2">
+            <Skeleton className="h-10 w-48" />
+            <Skeleton className="h-4 w-64" />
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Skeleton className="h-10 w-32 rounded-md" />
+            <Skeleton className="h-10 w-32 rounded-md" />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map((i) => (
+            <Card key={i}>
+              <CardHeader className="pb-2">
+                <Skeleton className="h-4 w-24" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-8 w-32" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        <FundingStatus current={0} goal={10000} isAuthenticated={true} loading={true} />
+
+        <div className="grid grid-cols-1 gap-6">
+          <ClassRanking finances={[]} goal={10000} loading={true} />
+        </div>
+
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-6 w-32" />
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <Skeleton key={i} className="h-12 w-full rounded-md" />
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     )
   }

@@ -237,10 +237,16 @@ export function SammelkartenPromo({
                   Jetzt sammeln <ArrowRight className="h-5 w-5 group-hover/btn:translate-x-1 transition-transform" />
                 </Button>
               ) : (
-                <div className="space-y-3">
-                  <Button render={<Link href="/register" />} className="w-full bg-white text-indigo-950 hover:bg-white/90 font-black rounded-xl h-12 text-base gap-2 shadow-xl group/btn">
+                <div className="space-y-3 text-center">
+                  <Button render={<Link href="/register" />} className="w-full bg-white text-indigo-950 hover:bg-white/90 font-black rounded-xl h-12 text-base gap-2 shadow-xl group/btn transition-all active:scale-95">
                     Konto erstellen <ArrowRight className="h-5 w-5 group-hover/btn:translate-x-1 transition-transform" />
                   </Button>
+                  <Link 
+                    href="/promo" 
+                    className="inline-block text-[10px] font-black uppercase tracking-widest text-white/50 hover:text-white transition-colors"
+                  >
+                    Warum ein Konto?
+                  </Link>
                 </div>
               )}
             </div>

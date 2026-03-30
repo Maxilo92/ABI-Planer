@@ -33,7 +33,7 @@ const AVAILABLE_ROLES: { id: UserRole; label: string }[] = [
 ]
 
 export function EditEventDialog({ event }: EditEventDialogProps) {
-  const { user, profile } = useAuth()
+  const { user, profile, loading: authLoading } = useAuth()
   const [open, setOpen] = useState(false)
   const [title, setTitle] = useState(event.title)
   const [description, setDescription] = useState(event.description || '')
@@ -52,12 +52,14 @@ export function EditEventDialog({ event }: EditEventDialogProps) {
   const router = useRouter()
 
   useEffect(() => {
-    if (!open) return
+    if (!open || authLoading || !profile?.is_approved) return
 
     const profilesUnsubscribe = onSnapshot(
       query(collection(db, 'profiles'), orderBy('full_name')),
       (snapshot) => {
         setProfiles(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Profile)))
+      }, (error) => {
+        console.error('EditEventDialog: Error listening to profiles:', error)
       }
     )
 
@@ -75,13 +77,15 @@ export function EditEventDialog({ event }: EditEventDialogProps) {
           : []
         setAvailableGroups(normalizedGroups)
       }
+    }, (error) => {
+      console.error('EditEventDialog: Error listening to settings config:', error)
     })
 
     return () => {
       profilesUnsubscribe()
       settingsUnsubscribe()
     }
-  }, [open])
+  }, [open, authLoading, profile?.is_approved])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

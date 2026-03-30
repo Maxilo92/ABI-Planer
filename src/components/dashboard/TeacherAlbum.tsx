@@ -38,6 +38,7 @@ import {
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { TeacherCard } from "@/components/cards/TeacherCard";
@@ -494,7 +495,7 @@ export function TeacherAlbum({
   initialLimit?: number;
 }) {
   const router = useRouter();
-  const { profile: currentProfile } = useAuth();
+  const { profile: currentProfile, loading } = useAuth();
   const activeProfile =
     targetProfile !== undefined ? targetProfile : currentProfile;
   const { teachers: userTeachers, loading: loadingUserTeachers } =
@@ -559,6 +560,8 @@ export function TeacherAlbum({
   };
 
   useEffect(() => {
+    if (loading || !currentProfile?.is_approved) return;
+
     let unsubscribeGlobal: (() => void) | null = null;
 
     const deduplicate = (teachers: LootTeacher[]) => {
@@ -610,16 +613,24 @@ export function TeacherAlbum({
               }
               setLoadingGlobal(false);
             },
+            (error) => {
+              console.error('TeacherAlbum: Error listening to global settings fallback:', error);
+              setLoadingGlobal(false);
+            }
           );
         }
       },
+      (error) => {
+        console.error('TeacherAlbum: Error listening to sammelkarten settings:', error);
+        setLoadingGlobal(false);
+      }
     );
 
     return () => {
       unsubscribeSammelkarten();
       if (unsubscribeGlobal) unsubscribeGlobal();
     };
-  }, []);
+  }, [currentProfile?.is_approved, loading]);
 
   const filteredTeachers = useMemo(() => {
     const searchLower = search.toLowerCase();
@@ -788,6 +799,34 @@ export function TeacherAlbum({
     variantFilters.length +
     (ownershipFilter !== "all" ? 1 : 0) +
     (sortKey !== "rarity" || sortOrder !== "desc" ? 1 : 0);
+
+  if (loading || loadingUserTeachers || loadingGlobal) {
+    return (
+      <div className="space-y-6">
+        {!isPreview && (
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="space-y-2">
+              <Skeleton className="h-8 w-48" />
+              <Skeleton className="h-4 w-64" />
+            </div>
+            <div className="flex gap-2">
+              <Skeleton className="h-10 w-32 rounded-full" />
+              <Skeleton className="h-10 w-32 rounded-full" />
+            </div>
+          </div>
+        )}
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4 md:gap-6">
+          {Array.from({ length: initialLimit || 12 }).map((_, i) => (
+            <div key={i} className="flex flex-col items-center w-full mx-auto space-y-2">
+              <Skeleton className="w-full aspect-[2.5/3.5] rounded-2xl" />
+              <Skeleton className="h-4 w-2/3" />
+              <Skeleton className="h-4 w-1/3" />
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">

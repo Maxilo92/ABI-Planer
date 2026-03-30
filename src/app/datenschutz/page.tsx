@@ -36,6 +36,10 @@ export default function DatenschutzPage() {
               <br />
               Maximilian Priesnitz
               <br />
+              Ahornweg 6d
+              <br />
+              01454 Wachau
+              <br />
               E-Mail: priesnitz.maximilian@icloud.com
             </p>
           </section>
@@ -121,10 +125,10 @@ export default function DatenschutzPage() {
                 Die durch Cookies und Web Beacons erzeugten Informationen über die Benutzung dieser Website (einschließlich Ihrer IP-Adresse) und Auslieferung von Werbeformaten werden an einen Server von Google in den USA oder anderen Drittstaaten übertragen und dort gespeichert. Diese Informationen können von Google an Vertragspartner von Google weitergegeben werden. Google wird Ihre IP-Adresse jedoch nicht mit anderen von Ihnen gespeicherten Daten zusammenführen.
               </p>
               <p>
-                Die Speicherung von AdSense-Cookies erfolgt auf Grundlage von Art. 6 Abs. 1 lit. f DSGVO. Der Websitebetreiber hat ein berechtigtes Interesse an der Analyse des Nutzerverhaltens, um sowohl sein Webangebot als auch seine Werbung zu optimieren.
+                <strong>Einwilligungsvorbehalt:</strong> Die Speicherung von AdSense-Cookies und die Aktivierung von Web Beacons erfolgen ausschließlich nach Ihrer ausdrücklichen Einwilligung über unseren Cookie-Banner (Art. 6 Abs. 1 lit. a DSGVO). Ohne Ihre Zustimmung werden keine Cookies durch Google AdSense gesetzt.
               </p>
               <p>
-                Sie können die Installation der Cookies durch eine entsprechende Einstellung Ihrer Browser-Software verhindern; wir weisen Sie jedoch darauf hin, dass Sie in diesem Fall gegebenenfalls nicht sämtliche Funktionen dieser Website vollumfänglich nutzen können. Durch die Nutzung dieser Website erklären Sie sich mit der Bearbeitung der über Sie erhobenen Daten durch Google in der zuvor beschriebenen Art und Weise und zu dem zuvor benannten Zweck einverstanden.
+                Sie können Ihre Einwilligung jederzeit mit Wirkung für die Zukunft über die Cookie-Einstellungen widerrufen. Alternativ können Sie die Installation der Cookies durch eine entsprechende Einstellung Ihrer Browser-Software verhindern; wir weisen Sie jedoch darauf hin, dass Sie in diesem Fall gegebenenfalls nicht sämtliche Funktionen dieser Website vollumfänglich nutzen können.
               </p>
             </div>
           </section>

@@ -7,6 +7,7 @@ import { SystemMessageProvider } from '@/context/SystemMessageContext'
 import { Toaster } from '@/components/ui/sonner'
 import { ThemeProvider } from '@/context/ThemeProvider'
 import { GoogleAdSense } from '@/components/layout/GoogleAdSense'
+import { AdSenseScript } from '@/components/layout/AdSenseScript'
 
 import { faviconLinks } from '@/components/FaviconLinks'
 import Logo from '@/components/Logo'
@@ -15,7 +16,7 @@ const inter = Inter({ subsets: ['latin'], variable: '--font-sans' })
 
 export const metadata: Metadata = {
   title: 'ABI Planer',
-  description: 'Zentrale Plattform für die Planung des Abiturs',
+  description: 'Zentrale Plattform für die Planung des Abiballs',
 }
 
 export default function RootLayout({
@@ -28,11 +29,6 @@ export default function RootLayout({
       <head>
         {/* Favicon und Logo */}
         {faviconLinks}
-        <script
-          async
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8940687842344229"
-          crossOrigin="anonymous"
-        ></script>
       </head>
       <body className={`${inter.variable} font-sans antialiased h-full bg-background`}>
         {/* Optional: Logo prominent platzieren */}
@@ -45,6 +41,7 @@ export default function RootLayout({
         >
           <AuthProvider>
             <SystemMessageProvider>
+              <AdSenseScript />
               <AppShell>{children}</AppShell>
               <GoogleAdSense />
               <Toaster />

@@ -68,7 +68,7 @@ export function GroupWall({ groupName, canManage = false, type = 'internal' }: G
   }, [type])
 
   useEffect(() => {
-    if (!groupName) return
+    if (!groupName || !profile?.is_approved) return
 
     const q = query(
       collection(db, 'group_messages'),
@@ -79,10 +79,12 @@ export function GroupWall({ groupName, canManage = false, type = 'internal' }: G
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       setMessages(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as GroupMessage)))
+    }, (error) => {
+      console.error('GroupWall: Error listening to messages:', error)
     })
 
     return () => unsubscribe()
-  }, [groupName, type])
+  }, [groupName, type, profile?.is_approved])
 
   useEffect(() => {
     if (scrollRef.current) {

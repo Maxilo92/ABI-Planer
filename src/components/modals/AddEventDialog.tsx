@@ -38,15 +38,17 @@ export function AddEventDialog() {
   
   const [profiles, setProfiles] = useState<Profile[]>([])
   const [availableGroups, setAvailableGroups] = useState<string[]>([])
-  const { user, profile } = useAuth()
+  const { user, profile, loading: authLoading } = useAuth()
 
   useEffect(() => {
-    if (!open) return
+    if (!open || authLoading || !profile?.is_approved) return
 
     const profilesUnsubscribe = onSnapshot(
       query(collection(db, 'profiles'), orderBy('full_name')),
       (snapshot) => {
         setProfiles(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Profile)))
+      }, (error) => {
+        console.error('AddEventDialog: Error listening to profiles:', error)
       }
     )
 
@@ -64,13 +66,15 @@ export function AddEventDialog() {
           : []
         setAvailableGroups(normalizedGroups)
       }
+    }, (error) => {
+      console.error('AddEventDialog: Error listening to settings config:', error)
     })
 
     return () => {
       profilesUnsubscribe()
       settingsUnsubscribe()
     }
-  }, [open])
+  }, [open, authLoading, profile?.is_approved])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

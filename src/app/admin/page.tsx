@@ -81,6 +81,9 @@ export default function AdminPage() {
     const unsubscribeProfiles = onSnapshot(qProfiles, (snapshot) => {
       setProfiles(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Profile)))
       setLoading(false)
+    }, (error) => {
+      console.error('AdminPage: Error listening to profiles:', error)
+      setLoading(false)
     })
 
     return () => {
@@ -121,6 +124,8 @@ export default function AdminPage() {
 
       setCourses(normalizedCourses)
       setPlanningGroups(normalizedGroups)
+    }, (error) => {
+      console.error('AdminPage: Error listening to settings config:', error)
     })
 
     return () => unsubscribe()

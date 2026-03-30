@@ -31,6 +31,9 @@ export default function CalendarEventPage({ params }: { params: Promise<{ id: st
         setEvent(null)
       }
       setLoading(false)
+    }, (error) => {
+      console.error('CalendarDetailPage: Error listening to event:', error)
+      setLoading(false)
     })
 
     return () => unsubscribe()

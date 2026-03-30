@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
+import { Skeleton } from '@/components/ui/skeleton'
 import { User, Mail, Shield, Calendar, Users } from 'lucide-react'
 import { format } from 'date-fns'
 import { de } from 'date-fns/locale'
@@ -63,7 +64,40 @@ export default function ProfilePage() {
   }, [profile?.full_name, profile?.class_name])
 
   if (loading) {
-    return <div className="flex items-center justify-center min-h-[50vh]">Lade Profil...</div>
+    return (
+      <div className="space-y-12 pb-20">
+        <div className="max-w-2xl mx-auto space-y-8">
+          <div className="space-y-2">
+            <Skeleton className="h-10 w-48" />
+            <Skeleton className="h-4 w-64" />
+          </div>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center gap-4 space-y-0 border-b pb-6">
+              <Skeleton className="h-16 w-16 rounded-full" />
+              <div className="space-y-2">
+                <Skeleton className="h-8 w-48" />
+                <div className="flex gap-2">
+                  <Skeleton className="h-4 w-20" />
+                  <Skeleton className="h-4 w-20" />
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="grid gap-6 py-6">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div key={i} className="flex items-center gap-4">
+                  <Skeleton className="h-10 w-10 rounded-full" />
+                  <div className="space-y-1">
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-4 w-48" />
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    )
   }
 
   if (!user || !profile) {
