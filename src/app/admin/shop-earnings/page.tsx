@@ -38,9 +38,11 @@ type ShopEarning = {
 
 export default function ShopEarningsPage() {
   const { profile, loading: authLoading } = useAuth()
+  const now = new Date()
+  const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
   const [entries, setEntries] = useState<ShopEarning[]>([])
   const [loading, setLoading] = useState(true)
-  const [selectedMonth, setSelectedMonth] = useState<string>('all')
+  const [selectedMonth, setSelectedMonth] = useState<string>(currentMonthKey)
   const [permissionError, setPermissionError] = useState<string | null>(null)
   const [isBackfilling, setIsBackfilling] = useState(false)
   const router = useRouter()
@@ -50,10 +52,7 @@ export default function ShopEarningsPage() {
 
   const availableMonths = useMemo(() => {
     const months = new Set<string>()
-    const now = new Date()
-    const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
-
-    months.add(currentMonth)
+    months.add(currentMonthKey)
     for (const entry of entries) {
       if (typeof entry.month_key === 'string' && /^\d{4}-\d{2}$/.test(entry.month_key)) {
         months.add(entry.month_key)
@@ -61,7 +60,7 @@ export default function ShopEarningsPage() {
     }
 
     return Array.from(months).sort().reverse()
-  }, [entries])
+  }, [entries, currentMonthKey])
 
   const filteredEntries = useMemo(() => {
     if (selectedMonth === 'all') return entries
@@ -112,12 +111,6 @@ export default function ShopEarningsPage() {
 
     return () => unsubscribe()
   }, [canManageUsers])
-
-  useEffect(() => {
-    if (selectedMonth !== 'all') return
-    if (availableMonths.length === 0) return
-    setSelectedMonth(availableMonths[0])
-  }, [selectedMonth, availableMonths])
 
   const formatCurrency = (value: number) => {
     return value.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })
