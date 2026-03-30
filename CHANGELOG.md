@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.0.47] - 2026-03-30
+- **Build Fix (Firebase):** Behebung eines TypeScript-Fehlers bei der Firestore-Initialisierung.
+    - **Fehler:** Das Feld `forceLongPolling` wurde in neueren Firebase-Versionen entfernt und verhinderte den Build in der Cloud. Es wurde durch das korrekte Feld `experimentalForceLongPolling` ersetzt.
+
 ## [1.0.46] - 2026-03-30
 - **Reactions UX Improvement:** Festlegen von Standard-Emojis.
     - **Änderung:** Die Daumen-hoch (👍) und Daumen-runter (👎) Emojis werden nun standardmäßig in der Reaktionsleiste angezeigt, auch wenn noch keine Reaktionen vorhanden sind. Alle weiteren Emojis erscheinen weiterhin dynamisch bei Benutzung.

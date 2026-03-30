@@ -36,11 +36,10 @@ function initialize() {
   if (!db) {
     const isDevBrowser = process.env.NODE_ENV === 'development' && typeof window !== 'undefined'
     if (isDevBrowser) {
-      // In development, we use initializeFirestore with forceLongPolling to avoid 
+      // In development, we use initializeFirestore with experimentalForceLongPolling to avoid 
       // "Unexpected state (ID: ca9)" errors often caused by HMR or proxy issues.
       db = initializeFirestore(app, {
-        experimentalAutoDetectLongPolling: false,
-        forceLongPolling: true,
+        experimentalForceLongPolling: true,
       }, 'abi-data')
     } else {
       db = getFirestore(app, 'abi-data')
