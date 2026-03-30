@@ -68,14 +68,7 @@ const SHOP_ITEM_LABELS: Record<string, string> = {
   "soli-donation-large": "Großer Beitrag",
 };
 
-const HOME_COUNTRY = "DE";
 const SETTLEMENT_CURRENCY = "eur";
-
-const EEA_COUNTRIES = new Set([
-  "AT", "BE", "BG", "HR", "CY", "CZ", "DK", "EE", "FI", "FR", "DE", "GR", "HU", "IE",
-  "IT", "LV", "LT", "LU", "MT", "NL", "PL", "PT", "RO", "SK", "SI", "ES", "SE",
-  "IS", "LI", "NO",
-]);
 
 type StripeFeeBreakdown = {
   totalFeeCents: number;
@@ -85,14 +78,11 @@ type StripeFeeBreakdown = {
   percentageRate: number;
   cardCountry: string | null;
   chargeCurrency: string;
-  tier: "domestic_eu" | "eea" | "uk_or_international";
+  tier: "observed_default";
 };
 
-// Gebührenmodell:
-// - Inlaendische Karten (DE): 1,2% + 0,25 EUR
-// - EWR Karten: 1,5% + 0,25 EUR
-// - UK/International: 2,5% + 0,25 EUR
-// - Waehrungsumrechnung: +2,0% falls nicht in EUR belastet
+// Gebührenmodell (nach realen Shop-Daten):
+// 1,5% + 0,25 EUR pro erfolgreicher Transaktion.
 const calculateStripeFee = (
   grossAmountCents: number,
   cardCountryRaw: string | null,
@@ -111,24 +101,16 @@ const calculateStripeFee = (
       percentageRate: 0,
       cardCountry,
       chargeCurrency,
-      tier: "eea",
+      tier: "observed_default",
     };
   }
 
-  let percentageRate = 0.015;
-  let tier: StripeFeeBreakdown["tier"] = "eea";
-
-  if (cardCountry === HOME_COUNTRY) {
-    percentageRate = 0.012;
-    tier = "domestic_eu";
-  } else if (cardCountry === "GB" || (cardCountry && !EEA_COUNTRIES.has(cardCountry))) {
-    percentageRate = 0.025;
-    tier = "uk_or_international";
-  }
+  const percentageRate = 0.015;
+  const tier: StripeFeeBreakdown["tier"] = "observed_default";
 
   const fixedFeeCents = 25;
   const percentageFeeCents = Math.round(safeGross * percentageRate);
-  const fxFeeCents = chargeCurrency !== SETTLEMENT_CURRENCY ? Math.round(safeGross * 0.02) : 0;
+  const fxFeeCents = 0;
   const totalFeeCents = percentageFeeCents + fixedFeeCents + fxFeeCents;
 
   return {
@@ -141,50 +123,6 @@ const calculateStripeFee = (
     chargeCurrency,
     tier,
   };
-};
-
-const resolveStripeChargeContext = async (
-  stripe: Stripe,
-  session: Stripe.Checkout.Session,
-): Promise<{ cardCountry: string | null; chargeCurrency: string | null }> => {
-  let cardCountry: string | null = null;
-  let chargeCurrency: string | null = typeof session.currency === "string" ? session.currency : null;
-
-  if (!session.payment_intent) {
-    return { cardCountry, chargeCurrency };
-  }
-
-  try {
-    const paymentIntentId = typeof session.payment_intent === "string"
-      ? session.payment_intent
-      : session.payment_intent.id;
-
-    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId, {
-      expand: ["latest_charge"],
-    });
-
-    let charge: Stripe.Charge | null = null;
-    if (paymentIntent.latest_charge && typeof paymentIntent.latest_charge !== "string") {
-      charge = paymentIntent.latest_charge;
-    } else if (typeof paymentIntent.latest_charge === "string") {
-      charge = await stripe.charges.retrieve(paymentIntent.latest_charge);
-    }
-
-    if (charge) {
-      cardCountry =
-        charge.payment_method_details?.card?.country ||
-        charge.billing_details?.address?.country ||
-        null;
-      chargeCurrency = charge.currency || chargeCurrency;
-    }
-  } catch (error) {
-    logger.warn("Could not resolve Stripe charge context, using defaults", {
-      sessionId: session.id,
-      error,
-    });
-  }
-
-  return { cardCountry, chargeCurrency };
 };
 
 const LIMITS: Record<string, number> = {
@@ -433,8 +371,7 @@ export const stripeWebhook = onRequest({
     const donorName = donorNameRaw.length > 0 ? donorNameRaw : null;
     const amountTotalCents = Number(session.amount_total || 0);
     const amountTotalEur = amountTotalCents > 0 ? amountTotalCents / 100 : 0;
-    const chargeContext = await resolveStripeChargeContext(stripe, session);
-    const fee = calculateStripeFee(amountTotalCents, chargeContext.cardCountry, chargeContext.chargeCurrency);
+    const fee = calculateStripeFee(amountTotalCents, null, session.currency || null);
     const stripeFeeCents = fee.totalFeeCents;
     const payoutNetCents = Math.max(0, amountTotalCents - stripeFeeCents);
 
@@ -618,7 +555,6 @@ export const backfillShopEarnings = onCall({
   maxInstances: 1,
   memory: "256MiB",
   region: "europe-west3",
-  secrets: ["STRIPE_SECRET_KEY"],
 }, async (request) => {
   if (!request.auth?.uid) {
     throw new HttpsError("unauthenticated", "Anmeldung erforderlich.");
@@ -634,8 +570,6 @@ export const backfillShopEarnings = onCall({
   }
 
   const stripeSnapshot = await db.collection("stripe_transactions").get();
-  const stripeKey = process.env.STRIPE_SECRET_KEY;
-  const stripe = stripeKey ? new Stripe(stripeKey) : null;
 
   let created = 0;
   let updated = 0;
@@ -670,22 +604,8 @@ export const backfillShopEarnings = onCall({
     const customerEmail = typeof tx.customer_email === "string" && tx.customer_email.trim().length > 0 ? tx.customer_email.trim() : null;
     const stripeSessionId = typeof tx.stripe_session_id === "string" ? tx.stripe_session_id : txDoc.id;
 
-    let cardCountry: string | null = typeof tx.stripe_card_country === "string" ? tx.stripe_card_country : null;
-    let chargeCurrency: string | null = typeof tx.stripe_charge_currency === "string" ? tx.stripe_charge_currency : null;
-
-    if (stripe && stripeSessionId) {
-      try {
-        const checkoutSession = await stripe.checkout.sessions.retrieve(stripeSessionId);
-        const ctx = await resolveStripeChargeContext(stripe, checkoutSession);
-        cardCountry = ctx.cardCountry || cardCountry;
-        chargeCurrency = ctx.chargeCurrency || chargeCurrency;
-      } catch (error) {
-        logger.warn("Could not fetch checkout session during backfill, using stored defaults", {
-          stripeSessionId,
-          error,
-        });
-      }
-    }
+    const cardCountry: string | null = typeof tx.stripe_card_country === "string" ? tx.stripe_card_country : null;
+    const chargeCurrency: string | null = typeof tx.stripe_charge_currency === "string" ? tx.stripe_charge_currency : SETTLEMENT_CURRENCY;
 
     const fee = calculateStripeFee(amountTotalCents, cardCountry, chargeCurrency);
     const stripeFeeCents = fee.totalFeeCents;

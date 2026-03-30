@@ -176,7 +176,7 @@ export default function ShopEarningsPage() {
         <div className="space-y-2">
           <h1 className="text-3xl md:text-4xl font-black tracking-tight">Shop Einnahmen</h1>
           <p className="text-muted-foreground font-medium">
-            Eigene Shop-Einnahmen-Tabelle mit Stripe-Gebuehren (0,15 EUR + 1,5%) und 90/10-Aufteilung auf den Netto-Betrag.
+            Eigene Shop-Einnahmen-Tabelle mit Stripe-Gebuehren (1,5% + 0,25 EUR) und 90/10-Aufteilung auf den Netto-Betrag.
           </p>
         </div>
 
