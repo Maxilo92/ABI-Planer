@@ -204,7 +204,7 @@ export interface NewsEntry {
   image_mime_type?: string | null;
   view_count?: number;
   viewed_by?: string[];
-  ratings?: { [uid: string]: 'up' | 'down' };
+  reactions?: { [emoji: string]: string[] };
   comment_count?: number;
   is_small_update?: boolean;
 }

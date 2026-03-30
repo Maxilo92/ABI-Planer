@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { format } from 'date-fns'
 import { de } from 'date-fns/locale'
-import { Loader2, ArrowLeft, Eye, Calendar, User as UserIcon, ThumbsUp, ThumbsDown, MessageSquare, Send } from 'lucide-react'
+import { Loader2, ArrowLeft, Eye, Calendar, User as UserIcon, MessageSquare, Send, Plus, Smile } from 'lucide-react'
 import { toDate } from '@/lib/utils'
 import Link from 'next/link'
 import { useAuth } from '@/context/AuthContext'
@@ -19,6 +19,7 @@ import { logAction } from '@/lib/logging'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { ShareResourceButton } from '@/components/ui/share-resource-button'
+import { motion, AnimatePresence } from 'framer-motion'
 
 export default function NewsDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
@@ -28,6 +29,7 @@ export default function NewsDetailPage({ params }: { params: Promise<{ id: strin
   const [loading, setLoading] = useState(true)
   const [commentText, setCommentText] = useState('')
   const [submittingComment, setSubmittingComment] = useState(false)
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false)
 
   useEffect(() => {
     if (authLoading) return
@@ -85,10 +87,10 @@ export default function NewsDetailPage({ params }: { params: Promise<{ id: strin
     }
   }, [id, user, profile, authLoading])
 
-  const handleVote = async (type: 'up' | 'down') => {
+  const handleReaction = async (emoji: string) => {
     if (!user || !news) {
       toast.error('Anmeldung erforderlich', {
-        description: 'Um News zu bewerten, musst du angemeldet sein.'
+        description: 'Um auf News zu reagieren, musst du angemeldet sein.'
       })
       return
     }
@@ -99,25 +101,36 @@ export default function NewsDetailPage({ params }: { params: Promise<{ id: strin
     }
 
     try {
-      const currentVote = news.ratings?.[user.uid]
-      const newRatings = { ...(news.ratings || {}) }
-
-      if (currentVote === type) {
-        delete newRatings[user.uid]
+      const reactions = news.reactions || {}
+      const userReactionsForEmoji = reactions[emoji] || []
+      const hasReacted = userReactionsForEmoji.includes(user.uid)
+      
+      const newReactions = { ...reactions }
+      
+      if (hasReacted) {
+        // Remove reaction
+        newReactions[emoji] = userReactionsForEmoji.filter(uid => uid !== user.uid)
+        // Cleanup empty emoji lists
+        if (newReactions[emoji].length === 0) {
+          delete newReactions[emoji]
+        }
       } else {
-        newRatings[user.uid] = type
+        // Add reaction
+        newReactions[emoji] = [...userReactionsForEmoji, user.uid]
       }
 
       await updateDoc(doc(db, 'news', id), {
-        ratings: newRatings
+        reactions: newReactions
       })
 
-      if (currentVote !== type) {
-        logAction('NEWS_RATE', user.uid, profile?.full_name, { id, type })
+      if (!hasReacted) {
+        logAction('NEWS_REACTION', user.uid, profile?.full_name, { id, emoji })
       }
+      
+      setShowEmojiPicker(false)
     } catch (err) {
-      console.error('Error voting:', err)
-      toast.error('Fehler beim Abstimmen.')
+      console.error('Error adding reaction:', err)
+      toast.error('Fehler beim Reagieren.')
     }
   }
 
@@ -179,9 +192,16 @@ export default function NewsDetailPage({ params }: { params: Promise<{ id: strin
 
   const isPlanner = (profile?.role === 'planner' || profile?.role === 'admin_co' || profile?.role === 'admin_main' || profile?.role === 'admin') && profile?.is_approved
 
-  const upVotes = Object.values(news.ratings || {}).filter(v => v === 'up').length
-  const downVotes = Object.values(news.ratings || {}).filter(v => v === 'down').length
-  const userVote = user ? news.ratings?.[user.uid] : null
+  const reactions = news.reactions || {}
+  // Daumen hoch/runter sind immer da, andere Emojis kommen dynamisch dazu
+  const defaultEmojis = ['👍', '👎']
+  const otherActiveEmojis = Object.keys(reactions)
+    .filter(key => Array.isArray(reactions[key]) && !defaultEmojis.includes(key))
+    .sort((a, b) => (reactions[b]?.length || 0) - (reactions[a]?.length || 0))
+  
+  const activeEmojis = [...defaultEmojis, ...otherActiveEmojis]
+  
+  const quickEmojis = ['👍', '❤️', '🔥', '😂', '😮', '😢', '🎓', '🥂', '🚀', '💸', '📝', '🎉', '🍦', '🍕', '🍺', '✅']
 
   return (
     <div className="max-w-4xl mx-auto py-4 md:py-8 space-y-6">
@@ -320,40 +340,110 @@ export default function NewsDetailPage({ params }: { params: Promise<{ id: strin
             {news.content}
           </ReactMarkdown>
 
-          {/* Ratings Section */}
-          <div className="pt-8 flex items-center gap-4">
-            <div className="flex items-center gap-1">
-              <Button
-                variant={userVote === 'up' ? 'default' : 'outline'}
-                size="sm"
-                className="gap-2 rounded-full"
-                onClick={() => handleVote('up')}
-                disabled={!user || !profile?.is_approved}
-              >
-                <ThumbsUp className={`h-4 w-4 ${userVote === 'up' ? 'fill-current' : ''}`} />
-                <span>{upVotes}</span>
-              </Button>
-              <Button
-                variant={userVote === 'down' ? 'default' : 'outline'}
-                size="sm"
-                className="gap-2 rounded-full"
-                onClick={() => handleVote('down')}
-                disabled={!user || !profile?.is_approved}
-              >
-                <ThumbsDown className={`h-4 w-4 ${userVote === 'down' ? 'fill-current' : ''}`} />
-                <span>{downVotes}</span>
-              </Button>
+          {/* Reactions Section */}
+          <div className="pt-8 space-y-4">
+            <div className="flex flex-wrap items-center gap-2">
+              {activeEmojis.map((emoji) => {
+                const uids = reactions[emoji] || []
+                const count = uids.length
+                const isActive = user && uids.includes(user.uid)
+                
+                return (
+                  <Button
+                    key={emoji}
+                    variant={isActive ? 'default' : 'outline'}
+                    size="sm"
+                    className={`gap-2 rounded-full h-9 px-3 transition-all hover:scale-105 ${isActive ? 'bg-primary text-primary-foreground shadow-sm border-primary' : 'hover:bg-muted border-muted-foreground/20'}`}
+                    onClick={() => handleReaction(emoji)}
+                    disabled={!user || !profile?.is_approved}
+                  >
+                    <span className="text-lg">{emoji}</span>
+                    {count > 0 && <span className="font-bold tabular-nums">{count}</span>}
+                  </Button>
+                )
+              })}
+
+              {user && profile?.is_approved && (
+                <div className="relative">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="rounded-full h-9 w-9 p-0 hover:bg-muted border-dashed border-primary/40 text-primary transition-all hover:rotate-90"
+                    onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                    title="Emoji hinzufügen"
+                  >
+                    <Plus className="h-5 w-5" />
+                  </Button>
+
+                  <AnimatePresence>
+                    {showEmojiPicker && (
+                      <>
+                        <motion.div 
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          className="fixed inset-0 z-40 bg-transparent"
+                          onClick={() => setShowEmojiPicker(false)}
+                        />
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0.9, y: 10 }}
+                          animate={{ opacity: 1, scale: 1, y: 0 }}
+                          exit={{ opacity: 0, scale: 0.9, y: 10 }}
+                          className="absolute bottom-full left-0 mb-3 z-50 p-3 bg-card border shadow-xl rounded-2xl w-64 md:w-72"
+                        >
+                          <div className="text-[10px] font-bold uppercase text-muted-foreground mb-3 px-1 flex items-center justify-between">
+                            <span className="flex items-center gap-2"><Smile className="h-3 w-3" /> Emojis</span>
+                            <span className="text-[8px] opacity-60">Wählen oder tippen</span>
+                          </div>
+                          
+                          {/* Native Input Field für schnelles Tippen/Native Picker */}
+                          <div className="mb-3 px-1">
+                            <input
+                              autoFocus
+                              type="text"
+                              placeholder="Emoji tippen..."
+                              className="w-full h-9 bg-muted/50 border border-muted-foreground/20 rounded-lg px-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50"
+                              onChange={(e) => {
+                                const val = e.target.value.trim()
+                                if (val) {
+                                  // Nimm das letzte Zeichen (das gerade eingefügte Emoji)
+                                  const char = Array.from(val).pop()
+                                  if (char) handleReaction(char)
+                                  e.target.value = ''
+                                }
+                              }}
+                            />
+                          </div>
+
+                          <div className="grid grid-cols-6 gap-1 max-h-32 overflow-y-auto pr-1">
+                            {quickEmojis.map((emoji) => (
+                              <button
+                                key={emoji}
+                                type="button"
+                                className="h-9 w-9 flex items-center justify-center text-xl hover:bg-primary/10 rounded-lg transition-colors"
+                                onClick={() => handleReaction(emoji)}
+                              >
+                                {emoji}
+                              </button>
+                            ))}
+                          </div>
+                          
+                          <div className="mt-3 pt-2 border-t border-muted text-[9px] text-muted-foreground italic px-1 flex justify-between">
+                            <span>Win+. / Cmd+Ctrl+Space</span>
+                            <span className="opacity-60">Abitur 🎓</span>
+                          </div>
+                        </motion.div>
+                      </>
+                    )}
+                  </AnimatePresence>
+                </div>
+              )}
             </div>
             {!user && (
               <p className="text-[10px] text-muted-foreground font-medium italic">
-                Anmelden zum Abstimmen
+                Anmelden zum Reagieren
               </p>
             )}
-            <div className="h-4 w-px bg-border/50" />
-            <div className="flex items-center gap-2 text-muted-foreground text-sm">
-              <MessageSquare className="h-4 w-4" />
-              <span>{user ? comments.length : '??'} {comments.length === 1 ? 'Kommentar' : 'Kommentare'}</span>
-            </div>
           </div>
         </div>
       </article>

@@ -11,7 +11,7 @@ import { CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { format } from 'date-fns'
 import { de } from 'date-fns/locale'
-import { Loader2, Trash2, ArrowRight, Eye, User as UserIcon } from 'lucide-react'
+import { Loader2, Trash2, ArrowRight, Eye, User as UserIcon, Smile, MessageSquare } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { toDate } from '@/lib/utils'
 import { useSystemMessage } from '@/context/SystemMessageContext'
@@ -206,6 +206,16 @@ export default function NewsPage() {
                     <span className="inline-flex items-center gap-1.5 normal-case tracking-normal">
                       <Eye className="h-3.5 w-3.5" /> {item.view_count || 0}
                     </span>
+                    {item.reactions && Object.keys(item.reactions).length > 0 && (
+                      <span className="inline-flex items-center gap-1.5 normal-case tracking-normal">
+                        <Smile className="h-3.5 w-3.5" /> {Object.values(item.reactions).reduce((sum, uids) => sum + (uids?.length || 0), 0)}
+                      </span>
+                    )}
+                    {item.comment_count !== undefined && item.comment_count > 0 && (
+                      <span className="inline-flex items-center gap-1.5 normal-case tracking-normal">
+                        <MessageSquare className="h-3.5 w-3.5" /> {item.comment_count}
+                      </span>
+                    )}
                   </div>
 
                   <div className={`text-foreground/80 leading-relaxed text-sm md:text-base ${!item.is_small_update ? 'line-clamp-4' : ''}`}>

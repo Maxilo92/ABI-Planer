@@ -1,5 +1,25 @@
 # Changelog
 
+## [1.0.46] - 2026-03-30
+- **Reactions UX Improvement:** Festlegen von Standard-Emojis.
+    - **Änderung:** Die Daumen-hoch (👍) und Daumen-runter (👎) Emojis werden nun standardmäßig in der Reaktionsleiste angezeigt, auch wenn noch keine Reaktionen vorhanden sind. Alle weiteren Emojis erscheinen weiterhin dynamisch bei Benutzung.
+
+## [1.0.45] - 2026-03-30
+- **UI Refinement (News):** Reduzierung visuellen Rauschens in der Detailansicht.
+    - **Änderung:** Die redundante Anzeige der Kommentaranzahl direkt unter den Reaktionen wurde entfernt, um das Layout sauberer zu gestalten.
+
+## [1.0.44] - 2026-03-30
+- **Social Engagement Update (v2):** Verbesserung des Emoji-Reaktionssystems.
+    - **Native Interaction:** Ein neues auto-fokussiertes Eingabefeld im Picker ermöglicht nun das sofortige Nutzen von System-Emoji-Tastaturen (Mobil/PC).
+    - **Bugfix:** Korrektur eines Anzeige-Bugs, bei dem alte Reaktions-Daten (User-IDs) fälschlicherweise als Emojis interpretiert wurden.
+
+## [1.0.43] - 2026-03-30
+- **Social Engagement Update:** Implementierung eines dynamischen "Slack-Style" Emoji-Reaktionssystems für News-Beiträge.
+    - **Funktionalität:** Nutzer können nun mit mehreren Emojis reagieren (z.B. ❤️, 😂, 🔥, 🎓, 🥂). Jedes Emoji zeigt die Anzahl der Reaktionen an.
+    - **UI:** Neuer "+"-Button mit einem animierten Emoji-Picker-Menü (Vorschlagsliste inklusive Jahrgangs-relevanter Emojis).
+    - **System-Integration:** Unterstützung für native System-Emoji-Picker (Win+. / Cmd+Ctrl+Space).
+    - **News-Feed:** In der Übersicht wird nun die Gesamtzahl aller abgegebenen Reaktionen angezeigt.
+
 ## [1.0.42] - 2026-03-30
 - **Guest Experience Refinement:** Erweiterung des Konto-Incentives auf geschützte Bereiche.
     - **Komponente:** In `ProtectedSystemGate` wurde ebenfalls der Link "Warum ein Konto?" hinzugefügt. Dies betrifft alle für Gäste gesperrten Seiten, wie z.B. die Finanzübersicht.

@@ -135,11 +135,11 @@ service cloud.firestore {
       allow write: if isPlanner(); 
       
       allow update: if isPlanner() || (isApproved() && (
-        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['ratings', 'comment_count', 'view_count', 'viewed_by']) &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reactions', 'comment_count', 'view_count', 'viewed_by']) &&
         (
-          (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['ratings'])) ||
-          (resource.data.ratings == null && request.resource.data.ratings.keys().hasOnly([request.auth.uid])) ||
-          (resource.data.ratings != null && request.resource.data.ratings.diff(resource.data.ratings).affectedKeys().hasOnly([request.auth.uid]))
+          (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['reactions'])) ||
+          (resource.data.reactions == null && request.resource.data.reactions.keys().hasOnly([request.auth.uid])) ||
+          (resource.data.reactions != null && request.resource.data.reactions.diff(resource.data.reactions).affectedKeys().hasOnly([request.auth.uid]))
         )
       ));
 
