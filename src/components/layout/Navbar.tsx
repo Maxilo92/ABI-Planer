@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { LayoutDashboard, CheckSquare, Calendar, Euro, Megaphone, BarChart2, LogOut, Menu, X, ShieldCheck, User, MessageSquareHeart, Settings, Users, ChevronDown, ChevronRight, Sparkles, HelpCircle, Gift, Trophy, AlertTriangle, ShoppingBag, MessageSquare } from 'lucide-react'
+import { LayoutDashboard, CheckSquare, Calendar, Euro, DollarSign, Megaphone, BarChart2, LogOut, Menu, X, ShieldCheck, User, MessageSquareHeart, Settings, Users, ChevronDown, ChevronRight, Sparkles, HelpCircle, Gift, Trophy, AlertTriangle, ShoppingBag, MessageSquare } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button, buttonVariants } from '@/components/ui/button'
@@ -134,6 +134,7 @@ export function Navbar() {
       { href: '/admin', label: 'Benutzer', icon: Users },
       { href: '/admin/sammelkarten', label: 'Sammelkarten Manager', icon: Sparkles },
       { href: '/admin/global-settings', label: 'Globale Einstellungen', icon: Settings },
+      { href: '/admin/shop-earnings', label: 'Shop Einnahmen', icon: DollarSign },
       { href: '/admin/logs', label: 'Logs', icon: BarChart2, isBeta: false },
       { href: '/admin/feedback', label: 'Feedback Admin', icon: MessageSquareHeart },
     ]
