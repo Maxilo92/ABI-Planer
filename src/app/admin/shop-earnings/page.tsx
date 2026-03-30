@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { db } from '@/lib/firebase'
 import { collection, query, orderBy, onSnapshot, where } from 'firebase/firestore'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge'
 import { useAuth } from '@/context/AuthContext'
 import { useRouter, usePathname } from 'next/navigation'
-import { Euro, TrendingUp, PiggyBank, Briefcase } from 'lucide-react'
+import { Euro, TrendingUp, PiggyBank, Briefcase, Calendar as CalendarIcon } from 'lucide-react'
 
 type StripeTransaction = {
   id: string
@@ -29,6 +29,7 @@ export default function ShopEarningsPage() {
   const { profile, loading: authLoading } = useAuth()
   const [transactions, setTransactions] = useState<StripeTransaction[]>([])
   const [loading, setLoading] = useState(true)
+  const [selectedMonth, setSelectedMonth] = useState<string>('all')
   const router = useRouter()
   const pathname = usePathname()
 
@@ -68,7 +69,18 @@ export default function ShopEarningsPage() {
     return null
   }
 
-  const totalEarnings = transactions.reduce((sum, tx) => sum + (tx.charged_amount_eur || 0), 0)
+  const filteredTransactions = useMemo(() => {
+    if (selectedMonth === 'all') return transactions
+    
+    return transactions.filter(tx => {
+      if (!tx.processed_at || !tx.processed_at.toDate) return false
+      const date = tx.processed_at.toDate()
+      const monthStr = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}`
+      return monthStr === selectedMonth
+    })
+  }, [transactions, selectedMonth])
+
+  const totalEarnings = filteredTransactions.reduce((sum, tx) => sum + (tx.charged_amount_eur || 0), 0)
   const stufeShare = totalEarnings * 0.9
   const devShare = totalEarnings * 0.1
 
@@ -84,13 +96,63 @@ export default function ShopEarningsPage() {
     })
   }
 
+  // Generate available months for the dropdown
+  const availableMonths = useMemo(() => {
+    const months = new Set<string>()
+    transactions.forEach(tx => {
+      if (tx.processed_at && tx.processed_at.toDate) {
+        const date = tx.processed_at.toDate()
+        months.add(`${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}`)
+      }
+    })
+    
+    // Always include current month
+    const now = new Date()
+    months.add(`${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`)
+    
+    return Array.from(months).sort().reverse()
+  }, [transactions])
+
+  const formatMonthLabel = (monthStr: string) => {
+    const [year, month] = monthStr.split('-')
+    const date = new Date(parseInt(year), parseInt(month) - 1)
+    return date.toLocaleString('de-DE', { month: 'long', year: 'numeric' })
+  }
+
+  // Set default to current month on load if selectedMonth is 'all' and it's the first time
+  useEffect(() => {
+    if (!loading && transactions.length > 0 && selectedMonth === 'all') {
+      const now = new Date()
+      const currentMonth = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`
+      if (availableMonths.includes(currentMonth)) {
+        setSelectedMonth(currentMonth)
+      }
+    }
+  }, [loading, transactions.length, availableMonths, selectedMonth])
+
   return (
     <div className="container mx-auto p-4 md:p-8 space-y-8 animate-in fade-in zoom-in-95 duration-300">
-      <div className="space-y-2">
-        <h1 className="text-3xl md:text-4xl font-black tracking-tight">Shop Einnahmen</h1>
-        <p className="text-muted-foreground font-medium">
-          Detaillierte Übersicht aller Shop-Käufe und Spenden, aufgeteilt in 90% Abikasse und 10% Entwickler-Support.
-        </p>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="space-y-2">
+          <h1 className="text-3xl md:text-4xl font-black tracking-tight">Shop Einnahmen</h1>
+          <p className="text-muted-foreground font-medium">
+            Detaillierte Übersicht aller Shop-Käufe und Spenden, aufgeteilt in 90% Abikasse und 10% Entwickler-Support.
+          </p>
+        </div>
+        
+        <div className="flex items-center gap-2 bg-muted/50 p-2 rounded-xl border border-border">
+          <CalendarIcon className="w-4 h-4 text-muted-foreground ml-2" />
+          <select 
+            value={selectedMonth}
+            onChange={(e) => setSelectedMonth(e.target.value)}
+            className="bg-transparent border-none text-sm font-bold outline-none focus:ring-0 cursor-pointer pr-4 py-1"
+          >
+            <option value="all">Gesamte Zeit</option>
+            {availableMonths.map(month => (
+              <option key={month} value={month}>{formatMonthLabel(month)}</option>
+            ))}
+          </select>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -157,14 +219,14 @@ export default function ShopEarningsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {transactions.length === 0 ? (
+                {filteredTransactions.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={5} className="text-center py-8 text-muted-foreground font-medium">
-                      Bisher keine Transaktionen vorhanden.
+                      Bisher keine Transaktionen in diesem Zeitraum vorhanden.
                     </TableCell>
                   </TableRow>
                 ) : (
-                  transactions.map((tx) => (
+                  filteredTransactions.map((tx) => (
                     <TableRow key={tx.id}>
                       <TableCell className="whitespace-nowrap tabular-nums text-xs">
                         {formatDate(tx.processed_at)}
