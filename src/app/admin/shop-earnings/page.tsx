@@ -35,6 +35,16 @@ export default function ShopEarningsPage() {
 
   const canManageUsers = profile?.role === 'admin' || profile?.role === 'admin_main' || profile?.role === 'admin_co'
 
+  // Set default to current month on load if selectedMonth is 'all' and it's the first time
+  useEffect(() => {
+    // Determine the current month
+    const now = new Date()
+    const currentMonth = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`
+    if (selectedMonth === 'all') {
+      setSelectedMonth(currentMonth)
+    }
+  }, [selectedMonth])
+
   useEffect(() => {
     if (!authLoading && (!profile || !canManageUsers)) {
       router.replace(`/unauthorized?reason=admin&from=${encodeURIComponent(pathname)}`)
@@ -118,17 +128,6 @@ export default function ShopEarningsPage() {
     const date = new Date(parseInt(year), parseInt(month) - 1)
     return date.toLocaleString('de-DE', { month: 'long', year: 'numeric' })
   }
-
-  // Set default to current month on load if selectedMonth is 'all' and it's the first time
-  useEffect(() => {
-    if (!loading && transactions.length > 0 && selectedMonth === 'all') {
-      const now = new Date()
-      const currentMonth = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`
-      if (availableMonths.includes(currentMonth)) {
-        setSelectedMonth(currentMonth)
-      }
-    }
-  }, [loading, transactions.length, availableMonths, selectedMonth])
 
   return (
     <div className="container mx-auto p-4 md:p-8 space-y-8 animate-in fade-in zoom-in-95 duration-300">
