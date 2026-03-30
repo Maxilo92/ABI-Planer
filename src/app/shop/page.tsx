@@ -1,20 +1,15 @@
-'use client'
-
-import { useState, useEffect, Suspense, useMemo } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { useRouter, useSearchParams } from 'next/navigation'
-import { useUserTeachers } from '@/hooks/useUserTeachers'
+"use client"
 import { useAuth } from '@/context/AuthContext'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { 
-  ChevronLeft, 
-  Zap, 
-  ShoppingBag, 
-  Star, 
-  Sparkles, 
-  CheckCircle2, 
-  TrendingUp, 
+  ChevronLeft,
+  Zap,
+  ShoppingBag,
+  Star,
+  Sparkles,
+  CheckCircle2,
+  TrendingUp,
   CreditCard,
   Package,
   Info,
@@ -35,9 +30,12 @@ import { getFunctions, httpsCallable } from 'firebase/functions'
 import { doc, getDoc } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import { cn } from '@/lib/utils'
+import React, { useState, useEffect, useMemo, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { AnimatePresence, motion } from 'framer-motion'
+import { useUserTeachers } from '@/hooks/useUserTeachers'
 
-// Shop Item definition
-interface ShopItem {
+type ShopItem = {
   id: string
   category: 'sammelkarten' | 'extras' | 'merch'
   name: string
@@ -49,9 +47,12 @@ interface ShopItem {
   color: 'blue' | 'purple' | 'amber' | 'emerald' | 'slate' | 'rose'
   badge?: string
   isBooster?: boolean
+  fanCardCount?: number
   isPlaceholder?: boolean
   requireAuth?: boolean
 }
+
+const BASE_PACK_PRICE = 0.60
 
 const CATEGORIES = [
   { id: 'all', name: 'Alle Artikel', icon: LayoutGrid },
@@ -60,51 +61,44 @@ const CATEGORIES = [
   { id: 'extras', name: 'Sonstiges', icon: Tags },
 ]
 
+// Preisstaffel: Je größer das Bundle, desto günstiger pro Karte
+const BUNDLE_DEFS = [
+  { amount: 1,  price: 0.60 },    // 0,60 €/Karte
+  { amount: 3,  price: 1.70 },   // 0,57 €/Karte
+  { amount: 5,  price: 2.70 },   // 0,54 €/Karte
+  { amount: 10, price: 5.20 },   // 0,52 €/Karte
+  { amount: 20, price: 10.00 },  // 0,50 €/Karte
+  { amount: 50, price: 23.00 },  // 0,46 €/Karte
+  { amount: 100, price: 44.00 }, // 0,44 €/Karte
+]
+
 const ALL_ITEMS: ShopItem[] = [
-  {
-    id: 'single-booster',
-    category: 'sammelkarten',
-    name: 'Starter Pack',
-    amount: 1,
-    limit: 10,
-    price: '0,99 €',
-    priceNum: 0.99,
-    description: '1 Booster Pack (3 Lehrerkarten).',
-    color: 'blue',
-    isBooster: true,
-    requireAuth: true
-  },
-  {
-    id: 'five-boosters',
-    category: 'sammelkarten',
-    name: 'Booster Bundle',
-    amount: 5,
-    limit: 5,
-    price: '3,99 €',
-    priceNum: 3.99,
-    description: '5 Booster Packs (15 Lehrerkarten).',
-    color: 'purple',
-    badge: 'Beliebt',
-    isBooster: true,
-    requireAuth: true
-  },
-  {
-    id: 'twelve-boosters',
-    category: 'sammelkarten',
-    name: 'Elite Box',
-    amount: 12,
-    limit: 2,
-    price: '8,99 €',
-    priceNum: 8.99,
-    description: '12 Booster Packs (36 Lehrerkarten).',
-    color: 'amber',
-    badge: 'Bester Wert',
-    isBooster: true,
-    requireAuth: true
-  },
+  ...BUNDLE_DEFS.map((def, idx) => {
+    const id = `booster-bundle-${def.amount}`;
+    // Farbverlauf von Einstiegs- zu Premium-Bundles.
+    const colors = ['slate', 'blue', 'emerald', 'purple', 'amber', 'rose', 'rose'];
+    const color = colors[idx % colors.length] as ShopItem['color'];
+    const badge = def.amount === 1 ? 'Einsteiger' : def.amount === 100 ? 'Maximaler Support' : def.amount >= 20 ? 'Top Deal' : def.amount >= 10 ? 'Beliebt' : undefined;
+    return {
+      id,
+      category: 'sammelkarten' as const,
+      name: `Booster-Bundle ${def.amount}`,
+      amount: def.amount,
+      fanCardCount: idx + 1,
+      limit: def.amount === 1 ? 20 : def.amount === 3 ? 10 : def.amount === 5 ? 5 : def.amount === 10 ? 3 : def.amount === 20 ? 2 : def.amount === 50 ? 1 : 1,
+      price: def.price.toLocaleString('de-DE', { minimumFractionDigits: 2 }) + ' €',
+      priceNum: def.price,
+      description: `${def.amount} Booster Packs (${def.amount * 3} Lehrerkarten).`,
+      color,
+      badge,
+      isBooster: true,
+      requireAuth: true
+    }
+  }),
+  // Spendenartikel wie gehabt:
   {
     id: 'soli-donation-small',
-    category: 'extras',
+    category: 'extras' as const,
     name: 'Kleiner Beitrag',
     amount: 1,
     limit: 100,
@@ -116,27 +110,26 @@ const ALL_ITEMS: ShopItem[] = [
   },
   {
     id: 'soli-donation-medium',
-    category: 'extras',
+    category: 'extras' as const,
     name: 'Mittlerer Beitrag',
     amount: 1,
     limit: 100,
-    price: '10,00 €',
-    priceNum: 10.00,
+    price: '5,00 €',
+    priceNum: 5.00,
     description: 'Starke Unterstützung für eure Abikasse.',
     color: 'rose',
     requireAuth: false
   },
   {
     id: 'soli-donation-large',
-    category: 'extras',
+    category: 'extras' as const,
     name: 'Großer Beitrag',
     amount: 1,
     limit: 100,
-    price: '25,00 €',
-    priceNum: 25.00,
-    description: 'Maximale Unterstützung für eure Abikasse.',
-    color: 'amber',
-    badge: 'Ehren-Aktion',
+    price: '10,00 €',
+    priceNum: 10.00,
+    description: 'Unterstütze deine Stufe direkt mit einem großen Beitrag.',
+    color: 'emerald',
     requireAuth: false
   }
 ]
@@ -323,6 +316,9 @@ function ShopContent() {
             {filteredItems.map((item) => {
               const currentPurchases = shopStats[item.id] || 0
               const isLimitReached = !item.isPlaceholder && currentPurchases >= item.limit
+              const fullPrice = item.amount * BASE_PACK_PRICE
+              const savings = fullPrice - item.priceNum
+              const hasDiscount = item.isBooster && savings > 0.001
 
               return (
                 <motion.div
@@ -339,10 +335,10 @@ function ShopContent() {
                 >
                   <div className="absolute inset-0 bg-gradient-to-tr from-white/5 via-transparent to-transparent pointer-events-none" />
 
-                  {item.amount > 1 && !isLimitReached && item.isBooster && (
+                  {hasDiscount && !isLimitReached && (
                     <div className="absolute top-6 left-6 z-20">
                       <Badge className="bg-success text-success-foreground px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter shadow-lg border-none">
-                        -{Math.round((1 - item.priceNum! / (item.amount * 0.99)) * 100)}% Rabatt
+                        -{Math.round((1 - item.priceNum! / fullPrice) * 100)}% Rabatt
                       </Badge>
                     </div>
                   )}
@@ -359,9 +355,16 @@ function ShopContent() {
                   )}
 
                   <div className="relative px-8 pb-8 pt-16 flex-1 flex flex-col space-y-8">
-                    <div className="py-4 min-h-[180px] flex items-center justify-center">
+                    <div className="relative isolate py-4 min-h-[180px] flex items-center justify-center rounded-[1.75rem] border border-border/70 bg-muted/20 shadow-inner overflow-hidden">
                        {item.isBooster ? (
-                         <BoosterPackVisual amount={item.amount} color={item.color as any} />
+                         <BoosterPackVisual
+                           amount={item.amount}
+                           color={item.color as any}
+                           mode="experimental"
+                           layoutStyle="fan"
+                           fanCardCount={item.fanCardCount}
+                           density={item.amount >= 50 ? 'dense' : 'normal'}
+                         />
                        ) : (
                          <div className={cn(
                            "w-32 h-32 rounded-3xl flex items-center justify-center border-4 rotate-3 shadow-2xl relative",
@@ -377,10 +380,10 @@ function ShopContent() {
                       <h3 className="text-3xl font-black tracking-tight">{item.name}</h3>
                       <div className="flex flex-col items-center">
                         <p className="text-sm text-muted-foreground font-bold uppercase tracking-widest">{item.description}</p>
-                        {item.amount > 1 && item.isBooster && (
+                        {hasDiscount && (
                           <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-success/10 border border-success/20 text-success text-[10px] font-black uppercase tracking-wider">
                             <Sparkles className="w-3 h-3 fill-current" />
-                            Spare {(item.amount * 0.99 - item.priceNum!).toLocaleString('de-DE', { minimumFractionDigits: 2 })} €
+                            Spare {savings.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
                           </div>
                         )}
                         <div className={cn("h-1 w-12 rounded-full mt-2", `bg-${item.color}-500/20`)} />
@@ -434,9 +437,9 @@ function ShopContent() {
                       ) : (
                         <div className="flex flex-col items-center">
                           <div className="flex items-center justify-center gap-4">
-                            {item.amount > 1 && item.isBooster && (
+                            {hasDiscount && (
                               <span className="text-sm line-through opacity-40 decoration-1 font-medium">
-                                {(item.amount * 0.99).toLocaleString('de-DE', { minimumFractionDigits: 2 })}€
+                                {fullPrice.toLocaleString('de-DE', { minimumFractionDigits: 2 })}€
                               </span>
                             )}
                             <span className="text-2xl tracking-tighter">{item.price}</span>

@@ -105,11 +105,7 @@ async function processReferralReward(uid: string, after: Profile) {
 
     // 1. Fetch data for dynamic scaling and caps outside transaction
     console.log(`[Referral] Checking for existing claims for referred user ${uid}...`);
-    const [totalCountSnap, monthlyRefsSnap, claimSnap] = await Promise.all([
-        db.collection("referral_claims")
-            .where("referrer_uid", "==", referrerId)
-            .count()
-            .get(),
+    const [monthlyRefsSnap, claimSnap] = await Promise.all([
         db.collection("referral_claims")
             .where("referrer_uid", "==", referrerId)
             .where("timestamp", ">=", startOfMonthISO)
@@ -123,6 +119,11 @@ async function processReferralReward(uid: string, after: Profile) {
     }
 
     const pastMonthlyReferrals = monthlyRefsSnap.size;
+    const currentMonthAwarded = monthlyRefsSnap.docs.reduce((sum, docSnap) => {
+        const data = docSnap.data();
+        const awarded = Number(data.boosters_awarded_referrer || 0);
+        return sum + (Number.isFinite(awarded) ? awarded : 0);
+    }, 0);
     
     // NEW SCALE: 4, 5, 6, 7, 8 (total 30 for 5 referrals). Resets monthly.
     const baseReward = pastMonthlyReferrals < 5 ? (4 + pastMonthlyReferrals) : 0;

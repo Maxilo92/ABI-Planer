@@ -13,9 +13,34 @@ type StripeShopProduct = {
 };
 
 const STRIPE_PRICES: Record<string, StripeShopProduct> = {
-  "single-booster": { priceId: "price_1TG2ZZAnqErqKKxAVvM2cXFz", amount: 1 },
-  "five-boosters": { priceId: "price_1TG2ZnAnqErqKKxAG9e5Dxpy", amount: 5 },
-  "twelve-boosters": { priceId: "price_1TG2ZxAnqErqKKxAQgKXZCrK", amount: 12 },
+  "booster-bundle-1": {
+    amount: 1,
+    priceId: "price_1TGgZIAnqErqKKxANg6Vc9zT",
+  },
+  "booster-bundle-3": {
+    amount: 3,
+    priceId: "price_1TGgZXAnqErqKKxA617iNBcY",
+  },
+  "booster-bundle-5": {
+    amount: 5,
+    priceId: "price_1TGga5AnqErqKKxA9RwnDU7l",
+  },
+  "booster-bundle-10": {
+    amount: 10,
+    priceId: "price_1TGgaNAnqErqKKxAHijgndIu",
+  },
+  "booster-bundle-20": {
+    amount: 20,
+    priceId: "price_1TGgagAnqErqKKxAxUit6wg6",
+  },
+  "booster-bundle-50": {
+    amount: 50,
+    priceId: "price_1TGgauAnqErqKKxA6mYjvTwQ",
+  },
+  "booster-bundle-100": {
+    amount: 100,
+    priceId: "price_1TGgb8AnqErqKKxAXnpfj07T",
+  },
   "soli-donation-small": {
     amount: 1,
     priceId: "price_1TGGzZAnqErqKKxAn2UYcCxq",
@@ -31,9 +56,13 @@ const STRIPE_PRICES: Record<string, StripeShopProduct> = {
 };
 
 const LIMITS: Record<string, number> = {
-  "single-booster": 10,
-  "five-boosters": 5,
-  "twelve-boosters": 2
+  "booster-bundle-1": 20,
+  "booster-bundle-3": 10,
+  "booster-bundle-5": 5,
+  "booster-bundle-10": 3,
+  "booster-bundle-20": 2,
+  "booster-bundle-50": 1,
+  "booster-bundle-100": 1,
 };
 
 const BERLIN_TIMEZONE = "Europe/Berlin";
@@ -354,9 +383,13 @@ export const stripeWebhook = onRequest({
         if (amountTotalEur > 0) {
           const financeRef = db.collection("finances").doc();
           const itemLabelMap: Record<string, string> = {
-            "single-booster": "Starter Pack",
-            "five-boosters": "Booster Bundle",
-            "twelve-boosters": "Elite Box",
+            "booster-bundle-1": "Booster-Bundle 1",
+            "booster-bundle-3": "Booster-Bundle 3",
+            "booster-bundle-5": "Booster-Bundle 5",
+            "booster-bundle-10": "Booster-Bundle 10",
+            "booster-bundle-20": "Booster-Bundle 20",
+            "booster-bundle-50": "Booster-Bundle 50",
+            "booster-bundle-100": "Booster-Bundle 100",
             "soli-donation-small": "Kleiner Beitrag",
             "soli-donation-medium": "Mittlerer Beitrag",
             "soli-donation-large": "Großer Beitrag",

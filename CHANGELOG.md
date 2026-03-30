@@ -1,5 +1,122 @@
 # Changelog
 
+## [1.0.27] - 2026-03-30
+- **Sammelkarten UX:** Kleiner Booster-Shop-Button im Booster-Header ergänzt.
+    - **Direktzugriff:** Neben Pack-Status/Info ist jetzt ein kompakter Shop-Shortcut zu `/shop?category=sammelkarten` sichtbar.
+
+## [1.0.26] - 2026-03-30
+- **Functions Build-Fix (Referrals):** TypeScript-Fehler in der Referral-Belohnungslogik behoben.
+    - **Monatsauswertung stabilisiert:** `currentMonthAwarded` wird jetzt aus den Monats-Claims korrekt aggregiert.
+    - **Build-Blocker entfernt:** Unbenutzte Variable in `referrals.ts` entfernt.
+
+## [1.0.25] - 2026-03-30
+- **Stripe Bundle-Preis-IDs aktualisiert:** Booster-Bundles im Checkout nutzen jetzt feste Stripe-`priceId`-Zuordnungen.
+    - **Bundle-Mapping gesetzt:** 1, 3, 5, 10, 20, 50 und 100 Packs sind auf die neuen Live-Preisobjekte gemappt.
+
+## [1.0.24] - 2026-03-30
+- **Shop Visual Frame (Clip):** Der Rahmen der Bundle-Visuals schneidet Blur jetzt bewusst innerhalb der Form ab.
+    - **Saubere Kante:** Visual-Container nutzt `overflow-hidden` mit runden Ecken, damit Blur nicht ueber den Rahmen hinauslaeuft.
+
+## [1.0.23] - 2026-03-30
+- **Shop Visual Masking:** Visual-Bereich der Bundle-Karten hat jetzt einen dezenten Rahmen mit Innen-Schatten.
+    - **Blur-Kanten kaschiert:** Falls Blur an Card-Grenzen abgeschnitten wird, ist der Uebergang deutlich unauffaelliger.
+
+## [1.0.22] - 2026-03-30
+- **Shop Visual Polish (Blur):** Blur-Hintergruende der Booster-Visuals laufen jetzt weicher aus und wirken nicht mehr hart abgeschnitten.
+    - **Mehr Auslauf:** Blur-Layer in `BoosterPackVisual` wurden vergroessert (negative Insets) und auf sichtbaren Overflow abgestimmt.
+
+## [1.0.21] - 2026-03-30
+- **Korrektur (Live-Bundles):** Echte Booster-Bundles im Shop verwenden jetzt explizit die Faecher-Designs aus der Demo.
+    - **Fan statt Auto:** Live-Visuals laufen fuer Bundles mit `experimental` + `fan`.
+    - **Staffel wie Demo:** Pro Bundle-Stufe wird die Faecher-Kartenzahl um `+1` erhoeht.
+
+## [1.0.20] - 2026-03-30
+- **Live-Shop Bundle-Designs aktiviert:** Die experimentellen Booster-Bundle-Visuals laufen jetzt direkt in `/shop` als Standard.
+    - **Produktiv statt Demo:** Booster-Karten nutzen jetzt `experimental` + `auto` Layout im echten Shop.
+    - **Dichte fuer große Bundles:** Große Bundles (ab 50) werden im Live-Shop dichter dargestellt.
+- **Demo-Route entfernt:** Die Route `/shop/demo-bundles` und der Hero-Link dorthin wurden entfernt.
+
+## [1.0.19] - 2026-03-30
+- **Bundle-Farblogik (Wert-Staffel):** Farben der Bundle-Karten auf eine klare Wertigkeit nach Preis umgestellt.
+    - **Von Einstieg zu Premium:** Kleine Bundles starten in `slate/blue`, mittlere wandern zu `emerald/purple`, große zu `amber/rose`.
+    - **Konsistent in Shop + Demo:** Die Preis-Wert-Progression gilt sowohl in `/shop` als auch im Bundle-Faecher-Vergleich auf `/shop/demo-bundles`.
+
+## [1.0.18] - 2026-03-30
+- **Demo Bundles (Faecher-Staffel + Sichtbarkeit):** Faecher in der Bundle-Demo so angepasst, dass jede naechste Bundle-Karte genau eine weitere Karte im Faecher zeigt.
+    - **Stufenvergleich klarer:** Im Abschnitt "Ein Faecher pro Bundle" steigt die Anzahl sichtbarer Faecherkarten nun strikt pro Bundle-Schritt (`+1`).
+    - **Farbiger Faecher:** Die hinteren Faecherkarten nutzen jetzt dieselbe Farbwelt wie die Vorderkarte statt neutraler Dark-Cards.
+    - **Staerkere Praesenz:** Fan-Karten im Hintergrund vergroessert und die Demo-Kartenflaeche erhoeht, damit der Faecher nicht mehr klein untergeht.
+
+## [1.0.17] - 2026-03-30
+- **Demo Bundles (Faecher-Feinschliff):** `fan` so angepasst, dass die Hauptkarte visuell Teil des Faechers ist statt isoliert davor zu stehen.
+    - **Vorderkarte integriert:** Fan-spezifische Position/Animation der Hauptkarte reduziert den Abstand zum Hintergrund-Faecher.
+    - **Geometrie nachgezogen:** Symmetrische Layer bleiben erhalten, wirken aber enger und wie ein zusammenhaengender Kartenfuecher.
+
+## [1.0.16] - 2026-03-30
+- **Demo Bundles (Symmetrischer Faecher):** Faecher-Anordnung im Experimental-Renderer auf klare, symmetrische Layer hinter der Frontkarte umgestellt.
+    - **Neues Prinzip fuer `fan`:** Vorne 1 Hauptkarte, dahinter paarweise links/rechts in Ebenen (`2 + 2 + 2`, je nach Bundlegroesse auch weniger Ebenen).
+    - **Bundle-Lesbarkeit verbessert:** Kleine Bundles zeigen weniger Hinterkarten, groessere Bundles den vollen symmetrischen Faecher.
+
+## [1.0.15] - 2026-03-30
+- **Demo Bundles (Faecher verbessert):** Faecher-Darstellung auf `/shop/demo-bundles` visuell verfeinert.
+    - **Praezisere Faecher-Geometrie:** `fan`, `fan-wide`, `fan-cascade` und `fan-ring` im Experimental-Renderer mit besserer Spreizung, Tiefe und Rotation aktualisiert.
+    - **Neuer Bundle-Vergleich:** Eigener Abschnitt "Ein Faecher pro Bundle" mit genau einem Fan fuer jede Bundle-Groesse (1, 3, 5, 10, 20, 50, 100 Packs).
+    - **Bessere Lesbarkeit:** Bundle-Faecher lassen sich jetzt direkt nach Menge vergleichen.
+
+## [1.0.14] - 2026-03-30
+- **Demo Bundles (Faecher-Fokus):** Experimentier-Route `/shop/demo-bundles` gezielt um viele weitere Faecher-Anordnungen erweitert.
+    - **Neue Fan-Layouts:** `fan-wide`, `fan-cascade`, `fan-ring`.
+    - **Mehr Beispielkarten:** Umfangreicher neuer Bereich "Faecher-Labor" mit vielen Kombinationen aus Pack-Mengen, Farben und Dichten.
+    - **Auto-Mix verfeinert:** Kleine/mittlere Bundles nutzen im Experimental-Modus staerker faecherartige Anordnungen.
+- **Live-Shop unveraendert:** Produktive Shop-Karten bleiben weiterhin im klassischen Design.
+
+## [1.0.13] - 2026-03-30
+- **Demo Bundles massiv erweitert:** Deutlich mehr Anordnungen fuer Packs auf der Extra-Route `/shop/demo-bundles` hinzugefuegt.
+    - **Neue Layout-Typen:** `pile` (Haufen), `pyramid`, `wall`, `zigzag`, `double-crate`.
+    - **Bestehende Layouts behalten:** `fan`, `tower`, `crate`, `mountain`, `auto`.
+    - **Mehr Varianten insgesamt:** Viele neue Kombinationen aus Layout, Pack-Menge, Farbe und Dichte in gruppierten Sektionen (Haufen/Berge/Stapel/Kisten/Waende/Auto-Mix).
+- **Sicherer Rollout:** Live-Shop bleibt weiterhin beim klassischen Bundle-Design; Experimente bleiben isoliert auf der Demo-Route.
+
+## [1.0.12] - 2026-03-30
+- **Shop Visual Routing:** Live-Shop wieder auf das klassische Bundle-Design zurückgestellt.
+    - Alte Booster-Optik ist nun wieder Standard in den Produktkarten unter `/shop`.
+    - Die neuen experimentellen Bundle-Designs bleiben bewusst auf der Extra-Route isoliert.
+- **Experimentier-Route:** `/shop/demo-bundles` nutzt jetzt explizit den `experimental` Modus der Bundle-Visual-Komponente.
+    - Alle neuen Layout-Experimente (Berge/Kisten/Stapel) werden dort weiterentwickelt, ohne das Live-Shop-Bild zu verändern.
+
+## [1.0.11] - 2026-03-30
+- **Shop Visual Upgrade (Bundles):** Booster-Bundle-Bilder deutlich aufgewertet und für große Mengen visuell klarer gemacht.
+    - **Neue Visual-Stile:** Dynamische Darstellungen für `Pack-Berge`, `Kisten mit Packs` und `Stapel an Packs` ergänzt.
+    - **Auto-Layout nach Bundle-Größe:** Kleine Bundles bleiben kompakt, große Bundles wechseln automatisch auf massivere Szenen (mehr Tiefenwirkung und besseres Mengen-Gefühl).
+    - **Farbunterstützung erweitert:** Bundle-Visuals unterstützen jetzt zusätzlich `emerald`, `slate` und `rose`.
+- **Neue Shop-Unterseite:** Demo-Galerie unter `/shop/demo-bundles` erstellt.
+    - Enthält viele Beispielbilder/Varianten zum direkten Vergleich der Bundle-Optiken.
+    - Inklusive kurzer Vorschlagssektion mit konkreten Ideen für Berge/Kisten/Stapel.
+- **Shop UX:** Direktlink zur neuen Demo-Galerie im Shop-Hero ergänzt.
+
+## [1.0.10] - 2026-03-30
+- **Shop Update (Sammelkarten):** Preisstrategie erneut angepasst und Bundle-Namen überarbeitet.
+    - **Einzelkartenpreis im Schnupper-Pack:** 0,20 € pro Karte (1 Pack = 0,60 € bei 3 Karten).
+    - **Progressive Bundle-Staffel:** Mit jedem größeren Bundle sinkt der effektive Kartenpreis.
+        - `Schnupper-Pack` (1 Pack / 3 Karten): 0,60 € (0,20 €/Karte)
+        - `Starter-Box` (3 Packs / 9 Karten): 1,62 € (0,18 €/Karte)
+        - `Fan-Bundle` (5 Packs / 15 Karten): 2,55 € (0,17 €/Karte)
+        - `Sammler-Box` (12 Packs / 36 Karten): 5,40 € (0,15 €/Karte)
+        - `Ultra-Tresor` (20 Packs / 60 Karten): 7,80 € (0,13 €/Karte)
+    - **Backend-Sync:** Checkout- und Finanzlabels auf die neuen Preise und Bundle-Namen synchronisiert.
+
+## [1.0.9] - 2026-03-30
+- **Shop Update (Sammelkarten):** Booster-Preise auf neue Kartenpreis-Logik umgestellt (max. 0,11 € pro zufälliger Karte).
+    - **Neue Preisbasis:** 1 Booster Pack (3 Karten) kostet nun 0,33 €.
+    - **Starter Pack angepasst:** `Starter Pack` enthält jetzt 3 Packs für 0,99 €.
+    - **Bestehende Bundles neu bepreist:**
+        - `Booster Bundle` (5 Packs): 1,65 €
+        - `Elite Box` (12 Packs): 3,96 €
+    - **Neue Bundles ergänzt:**
+        - `Einzelpack` (1 Pack): 0,33 €
+        - `Mega Kiste` (20 Packs): 6,60 €
+    - **Checkout/Backend synchronisiert:** Stripe-Produktzuordnung und Monatslimits für neue/angepasste Booster-Produkte aktualisiert.
+
 ## [1.0.8] - 2026-03-29
 - **Hotfix (News Editor):** Console-Warnung im Dialog-Rendering behoben.
     - **Dialog API-Kompatibilität:** Ungültiges Prop `onInteractOutside` aus News-Dialogen entfernt (Base-UI kompatibel).

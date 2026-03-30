@@ -475,6 +475,17 @@ function SammelkartenContent() {
                       {getRemainingBoosters() > 0 ? `${getRemainingBoosters()} Packs verfügbar` : `Nächste Packs in ${timeLeft}`}
                     </Badge>
 
+                    <Link href="/shop?category=sammelkarten">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+                        title="Booster-Shop"
+                      >
+                        <ShoppingBag className="h-4 w-4" />
+                      </Button>
+                    </Link>
+
                     <Link href="/sammelkarten/info">
                       <Button
                         variant="ghost"
