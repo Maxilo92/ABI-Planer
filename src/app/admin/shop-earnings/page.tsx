@@ -22,6 +22,10 @@ type ShopEarning = {
   item_label: string
   amount_total_eur: number
   amount_total_cents: number
+  stripe_fee_eur: number
+  stripe_fee_cents: number
+  payout_net_eur: number
+  payout_net_cents: number
   abi_share_eur: number
   platform_share_eur: number
   selected_course: string | null
@@ -68,11 +72,13 @@ export default function ShopEarningsPage() {
     return filteredEntries.reduce(
       (acc, entry) => {
         acc.total += Number(entry.amount_total_eur) || 0
+        acc.fee += Number(entry.stripe_fee_eur) || 0
+        acc.net += Number(entry.payout_net_eur) || 0
         acc.abi += Number(entry.abi_share_eur) || 0
         acc.platform += Number(entry.platform_share_eur) || 0
         return acc
       },
-      { total: 0, abi: 0, platform: 0 }
+      { total: 0, fee: 0, net: 0, abi: 0, platform: 0 }
     )
   }, [filteredEntries])
 
@@ -177,7 +183,7 @@ export default function ShopEarningsPage() {
         <div className="space-y-2">
           <h1 className="text-3xl md:text-4xl font-black tracking-tight">Shop Einnahmen</h1>
           <p className="text-muted-foreground font-medium">
-            Eigene Shop-Einnahmen-Tabelle mit Zeitraumfilter und 90/10-Aufteilung.
+            Eigene Shop-Einnahmen-Tabelle mit Stripe-Gebuehren und 90/10-Aufteilung auf den Netto-Betrag.
           </p>
         </div>
 
@@ -218,23 +224,47 @@ export default function ShopEarningsPage() {
         </Card>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-6">
         <Card className="border-primary/20 bg-primary/5 shadow-sm">
           <CardHeader className="pb-2">
             <CardDescription className="font-bold flex items-center gap-2 text-primary">
-              <Euro className="w-4 h-4" /> Gesamteinnahmen
+              <Euro className="w-4 h-4" /> Gesamtumsatz (Brutto)
             </CardDescription>
             <CardTitle className="text-3xl">{formatCurrency(totals.total)}</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-xs text-muted-foreground font-semibold">100% im ausgewaehlten Zeitraum</p>
+            <p className="text-xs text-muted-foreground font-semibold">Vor Stripe-Gebuehren</p>
+          </CardContent>
+        </Card>
+
+        <Card className="border-red-500/20 bg-red-500/5 shadow-sm">
+          <CardHeader className="pb-2">
+            <CardDescription className="font-bold flex items-center gap-2 text-red-600 dark:text-red-400">
+              <Euro className="w-4 h-4" /> Stripe Gebuehren
+            </CardDescription>
+            <CardTitle className="text-3xl text-red-700 dark:text-red-400">{formatCurrency(totals.fee)}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-xs text-muted-foreground font-semibold">Von Stripe einbehalten</p>
+          </CardContent>
+        </Card>
+
+        <Card className="border-sky-500/20 bg-sky-500/5 shadow-sm">
+          <CardHeader className="pb-2">
+            <CardDescription className="font-bold flex items-center gap-2 text-sky-600 dark:text-sky-400">
+              <Euro className="w-4 h-4" /> Netto zur Verteilung
+            </CardDescription>
+            <CardTitle className="text-3xl text-sky-700 dark:text-sky-400">{formatCurrency(totals.net)}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-xs text-muted-foreground font-semibold">Brutto minus Stripe-Gebuehren</p>
           </CardContent>
         </Card>
 
         <Card className="border-emerald-500/20 bg-emerald-500/5 shadow-sm">
           <CardHeader className="pb-2">
             <CardDescription className="font-bold flex items-center gap-2 text-emerald-600 dark:text-emerald-400">
-              <PiggyBank className="w-4 h-4" /> Anteil Abikasse (90%)
+              <PiggyBank className="w-4 h-4" /> Anteil Abikasse (90% Netto)
             </CardDescription>
             <CardTitle className="text-3xl text-emerald-700 dark:text-emerald-400">
               {formatCurrency(totals.abi)}
@@ -248,7 +278,7 @@ export default function ShopEarningsPage() {
         <Card className="border-amber-500/20 bg-amber-500/5 shadow-sm">
           <CardHeader className="pb-2">
             <CardDescription className="font-bold flex items-center gap-2 text-amber-600 dark:text-amber-400">
-              <Briefcase className="w-4 h-4" /> Anteil Plattform (10%)
+              <Briefcase className="w-4 h-4" /> Anteil Plattform (10% Netto)
             </CardDescription>
             <CardTitle className="text-3xl text-amber-700 dark:text-amber-400">
               {formatCurrency(totals.platform)}
@@ -280,7 +310,9 @@ export default function ShopEarningsPage() {
                   <TableHead>Zahler</TableHead>
                   <TableHead>Artikel</TableHead>
                   <TableHead>Kurs</TableHead>
-                  <TableHead className="text-right">Gesamt</TableHead>
+                  <TableHead className="text-right">Brutto</TableHead>
+                  <TableHead className="text-right">Stripe</TableHead>
+                  <TableHead className="text-right">Netto</TableHead>
                   <TableHead className="text-right">90%</TableHead>
                   <TableHead className="text-right">10%</TableHead>
                 </TableRow>
@@ -288,7 +320,7 @@ export default function ShopEarningsPage() {
               <TableBody>
                 {filteredEntries.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground font-medium">
+                    <TableCell colSpan={9} className="text-center py-8 text-muted-foreground font-medium">
                       Keine Shop-Einnahmen in diesem Zeitraum vorhanden.
                     </TableCell>
                   </TableRow>
@@ -318,6 +350,12 @@ export default function ShopEarningsPage() {
                         )}
                       </TableCell>
                       <TableCell className="text-right font-black">{formatCurrency(entry.amount_total_eur || 0)}</TableCell>
+                      <TableCell className="text-right font-bold text-red-700 dark:text-red-400">
+                        {formatCurrency(entry.stripe_fee_eur || 0)}
+                      </TableCell>
+                      <TableCell className="text-right font-bold text-sky-700 dark:text-sky-400">
+                        {formatCurrency(entry.payout_net_eur || 0)}
+                      </TableCell>
                       <TableCell className="text-right font-bold text-emerald-700 dark:text-emerald-400">
                         {formatCurrency(entry.abi_share_eur || 0)}
                       </TableCell>

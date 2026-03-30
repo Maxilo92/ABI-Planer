@@ -314,6 +314,56 @@ export const stripeWebhook = onRequest({
     const donorName = donorNameRaw.length > 0 ? donorNameRaw : null;
     const amountTotalCents = Number(session.amount_total || 0);
     const amountTotalEur = amountTotalCents > 0 ? amountTotalCents / 100 : 0;
+    let stripeFeeCents = 0;
+    let payoutNetCents = amountTotalCents;
+
+    // Stripe Gebühren und Netto-Auszahlung ermitteln (falls Stripe Balance-Transaktion vorhanden)
+    if (session.payment_intent) {
+      try {
+        const paymentIntentId = typeof session.payment_intent === "string"
+          ? session.payment_intent
+          : session.payment_intent.id;
+
+        const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId, {
+          expand: ["latest_charge.balance_transaction"],
+        });
+
+        let balanceTransaction: Stripe.BalanceTransaction | null = null;
+
+        if (paymentIntent.latest_charge && typeof paymentIntent.latest_charge !== "string") {
+          const bt = paymentIntent.latest_charge.balance_transaction;
+          if (bt && typeof bt !== "string") {
+            balanceTransaction = bt;
+          } else if (typeof bt === "string") {
+            balanceTransaction = await stripe.balanceTransactions.retrieve(bt);
+          }
+        } else if (typeof paymentIntent.latest_charge === "string") {
+          const charge = await stripe.charges.retrieve(paymentIntent.latest_charge, {
+            expand: ["balance_transaction"],
+          });
+          const bt = charge.balance_transaction;
+          if (bt && typeof bt !== "string") {
+            balanceTransaction = bt;
+          } else if (typeof bt === "string") {
+            balanceTransaction = await stripe.balanceTransactions.retrieve(bt);
+          }
+        }
+
+        if (balanceTransaction) {
+          stripeFeeCents = Number(balanceTransaction.fee || 0);
+          payoutNetCents = Number(balanceTransaction.net || Math.max(0, amountTotalCents - stripeFeeCents));
+        }
+      } catch (feeError) {
+        logger.warn("Could not resolve Stripe fee details, fallback to gross amount", {
+          sessionId: session.id,
+          paymentIntent: session.payment_intent,
+          error: feeError,
+        });
+      }
+    }
+
+    const stripeFeeEur = stripeFeeCents > 0 ? stripeFeeCents / 100 : 0;
+    const payoutNetEur = payoutNetCents > 0 ? payoutNetCents / 100 : Math.max(0, amountTotalEur - stripeFeeEur);
 
     if (!itemId) {
       logger.error("Missing ItemId in Session:", session.id);
@@ -383,6 +433,10 @@ export const stripeWebhook = onRequest({
           amount: amount,
           charged_amount_eur: amountTotalEur,
           charged_amount_cents: amountTotalCents,
+          stripe_fee_eur: stripeFeeEur,
+          stripe_fee_cents: stripeFeeCents,
+          payout_net_eur: payoutNetEur,
+          payout_net_cents: payoutNetCents,
           item_id: itemId,
           selected_course: responsibleClass,
           donor_name: donorName,
@@ -406,8 +460,12 @@ export const stripeWebhook = onRequest({
             item_label: itemLabel,
             amount_total_eur: amountTotalEur,
             amount_total_cents: amountTotalCents,
-            abi_share_eur: Number((amountTotalEur * 0.9).toFixed(2)),
-            platform_share_eur: Number((amountTotalEur * 0.1).toFixed(2)),
+            stripe_fee_eur: stripeFeeEur,
+            stripe_fee_cents: stripeFeeCents,
+            payout_net_eur: payoutNetEur,
+            payout_net_cents: payoutNetCents,
+            abi_share_eur: Number((payoutNetEur * 0.9).toFixed(2)),
+            platform_share_eur: Number((payoutNetEur * 0.1).toFixed(2)),
             selected_course: responsibleClass,
             payer_name: payerName,
             customer_email: session.customer_details?.email || null,
@@ -442,6 +500,8 @@ export const stripeWebhook = onRequest({
             item: itemId,
             booster_count: isAppProduct ? amount : 0,
             charged_amount_eur: amountTotalEur,
+            stripe_fee_eur: stripeFeeEur,
+            payout_net_eur: payoutNetEur,
             responsible_class: responsibleClass,
             is_guest: !userId
           },
@@ -468,6 +528,7 @@ export const backfillShopEarnings = onCall({
   maxInstances: 1,
   memory: "256MiB",
   region: "europe-west3",
+  secrets: ["STRIPE_SECRET_KEY"],
 }, async (request) => {
   if (!request.auth?.uid) {
     throw new HttpsError("unauthenticated", "Anmeldung erforderlich.");
@@ -483,6 +544,8 @@ export const backfillShopEarnings = onCall({
   }
 
   const stripeSnapshot = await db.collection("stripe_transactions").get();
+  const stripeKey = process.env.STRIPE_SECRET_KEY;
+  const stripeClient = stripeKey ? new Stripe(stripeKey) : null;
 
   let created = 0;
   let skipped = 0;
@@ -519,17 +582,55 @@ export const backfillShopEarnings = onCall({
     const payerName = typeof tx.donor_name === "string" && tx.donor_name.trim().length > 0 ? tx.donor_name.trim() : null;
     const selectedCourse = typeof tx.selected_course === "string" && tx.selected_course.trim().length > 0 ? tx.selected_course.trim() : null;
     const customerEmail = typeof tx.customer_email === "string" && tx.customer_email.trim().length > 0 ? tx.customer_email.trim() : null;
+    let stripeFeeCents = Number(tx.stripe_fee_cents || 0);
+    let payoutNetCents = Number(tx.payout_net_cents || Math.max(0, amountTotalCents - stripeFeeCents));
+
+    const stripeSessionId = typeof tx.stripe_session_id === "string" ? tx.stripe_session_id : txDoc.id;
+    if (stripeClient && stripeSessionId && (!Number.isFinite(stripeFeeCents) || stripeFeeCents <= 0)) {
+      try {
+        const stripeSession = await stripeClient.checkout.sessions.retrieve(stripeSessionId, {
+          expand: ["payment_intent.latest_charge.balance_transaction"],
+        });
+
+        if (stripeSession.payment_intent && typeof stripeSession.payment_intent !== "string") {
+          const latestCharge = stripeSession.payment_intent.latest_charge;
+          if (latestCharge && typeof latestCharge !== "string") {
+            const bt = latestCharge.balance_transaction;
+            if (bt && typeof bt !== "string") {
+              stripeFeeCents = Number(bt.fee || 0);
+              payoutNetCents = Number(bt.net || Math.max(0, amountTotalCents - stripeFeeCents));
+            } else if (typeof bt === "string") {
+              const fetchedBt = await stripeClient.balanceTransactions.retrieve(bt);
+              stripeFeeCents = Number(fetchedBt.fee || 0);
+              payoutNetCents = Number(fetchedBt.net || Math.max(0, amountTotalCents - stripeFeeCents));
+            }
+          }
+        }
+      } catch (error) {
+        logger.warn("Could not resolve fee during backfill, using fallback values", {
+          stripeSessionId,
+          error,
+        });
+      }
+    }
+
+    const stripeFeeEur = stripeFeeCents > 0 ? stripeFeeCents / 100 : 0;
+    const payoutNetEur = payoutNetCents > 0 ? payoutNetCents / 100 : Math.max(0, amountTotalEur - stripeFeeEur);
 
     batch.set(shopRef, {
-      stripe_session_id: typeof tx.stripe_session_id === "string" ? tx.stripe_session_id : txDoc.id,
+      stripe_session_id: stripeSessionId,
       user_id: typeof tx.user_id === "string" ? tx.user_id : "guest",
       is_guest: Boolean(tx.is_guest),
       item_id: itemId,
       item_label: itemLabel,
       amount_total_eur: amountTotalEur,
       amount_total_cents: Number.isFinite(amountTotalCents) ? amountTotalCents : Math.round(amountTotalEur * 100),
-      abi_share_eur: Number((amountTotalEur * 0.9).toFixed(2)),
-      platform_share_eur: Number((amountTotalEur * 0.1).toFixed(2)),
+      stripe_fee_eur: stripeFeeEur,
+      stripe_fee_cents: Number.isFinite(stripeFeeCents) ? stripeFeeCents : 0,
+      payout_net_eur: payoutNetEur,
+      payout_net_cents: Number.isFinite(payoutNetCents) ? payoutNetCents : Math.max(0, amountTotalCents - stripeFeeCents),
+      abi_share_eur: Number((payoutNetEur * 0.9).toFixed(2)),
+      platform_share_eur: Number((payoutNetEur * 0.1).toFixed(2)),
       selected_course: selectedCourse,
       payer_name: payerName,
       customer_email: customerEmail,
