@@ -1,5 +1,72 @@
 # Changelog
 
+## [1.0.38] - 2026-03-30
+- **Sammelkarten-Promo Balancing:** Anpassung der Anzeige-Wahrscheinlichkeiten für Lehrer-Karten.
+    - **Lehrer-Rarität:** Alle Lehrer-Raritäten (von Gewöhnlich bis Legendär) haben nun die gleiche Chance, in der Werbung zu erscheinen, um die Vielfalt des Pools besser zu demonstrieren.
+    - **Varianten-Gewichtung:** Die Gewichtung der Karten-Varianten (Holo, Shiny, Secret Rare) bleibt bestehen, sodass spektakuläre Effekte weiterhin als besondere Highlights wahrgenommen werden.
+
+## [1.0.37] - 2026-03-30
+- **Dashboard Layout Update (Gäste):** Optimierung der vertikalen Anordnung für eine bessere Lesbarkeit.
+    - **Spalten-Logik:** Die Sammelkarten-Promo wurde direkt unter die News-Vorschau in die linke Spalte verschoben. Dies verhindert ein unruhiges "Zick-Zack"-Layout und bündelt Informations-Inhalte logisch untereinander.
+
+## [1.0.36] - 2026-03-30
+- **Marketing & Guest Experience (Sammelkarten):** Behebung der fehlenden Sammelkarten-Promo für nicht angemeldete Nutzer.
+    - **Firestore-Regeln:** Die `settings/sammelkarten` Dokumente sind nun öffentlich lesbar, damit die Werbung auch Gästen echte Lehrer-Karten präsentieren kann.
+    - **Promo-Komponente:** Entfernung der Authentifizierungs-Sperre in `SammelkartenPromo`. Die Komponente lädt nun auch für Gäste den Lehrer-Pool und nutzt attraktive Fallback-Karten (`Herr Schmidt`, `Frau Müller`) während der Initialisierung.
+    - **Visuelle Stabilität:** Sicherstellung, dass der Promo-Banner auch bei Berechtigungsfehlern oder leeren Konfigurationen immer mit Demonstrations-Inhalten sichtbar bleibt.
+
+## [1.0.33] - 2026-03-30
+- **Firestore Stabilitaet & Sicherheit:** Behebung interner Firestore SDK Assertion Failures (ca9, b815) durch Optimierung von Listener-Lifecycles und Berechtigungen.
+    - **Regel-Update:** Lesezugriff fuer `settings/config` und `settings/global` auf oeffentlich umgestellt, um Basis-Konfigurationen und System-Meldungen (z.B. Cookie-Banner) fehlerfrei zu laden.
+    - **Listener Haertung:** In `Dashboard.tsx` wird nun sichergestellt, dass `onSnapshot` Unsubscribe-Funktionen immer zurueckgegeben werden, was Listener-Leaks waehrend des Auth-Prozesses verhindert.
+    - **Defensive Komponenten:** Die `SammelkartenPromo` wartet nun explizit auf die Authentifizierung, bevor sie geschuetzte Einstellungen abonniert, was Konsolenfehler und SDK-Instabilitaeten reduziert.
+    - **Ressourcen-Effizienz:** Vermeidung redundanter Listener-Initialisierungen waehrend Profil-Ladevorgaengen.
+
+## [1.0.32] - 2026-03-30
+- **UI Design Polish (Dashboard):** Das Lade-Skeleton der Sammelkarten-Werbung wurde neutralisiert.
+    - **Visuelle Konsistenz:** Entfernung der bunten Verlaeufe und Hintergruende im Ladezustand, damit die Werbung optisch exakt den anderen Dashboard-Widgets entspricht.
+    - **Branding:** Nutzt nun die Standard-Card-Klassen (`elevated-card`) fuer einen einheitlichen Look waehrend des Initialisierungsprozesses.
+
+## [1.0.31] - 2026-03-30
+- **UX & Performance (Skeletons):** Grundlegende Überarbeitung des Ladesystems zur Vermeidung von Layout-Flimmern und zur Verbesserung der wahrgenommenen Performance.
+    - **Resilientes Dashboard:** Der vollflächige "Lade Dashboard"-Sperrbildschirm wurde entfernt. Die App rendert nun sofort die Struktur und nutzt punktuelle, pulsierende Skeletons für noch ladende Daten.
+    - **Systemweite Skeleton-Integration:** Einführung von strukturierten Platzhaltern für News, Termine, Aufgaben, Finanzen, Profile und Sammelkarten.
+    - **Lehrer-Album Polish:** Das Album nutzt nun ein hochqualitatives Grid-Skeleton, das exakt die Dimensionen der späteren Karten widerspiegelt.
+    - **Optimierte Transitions:** Weichere Übergänge von Ladezuständen zu echten Inhalten durch konsistente Skeleton-Animationen (Pulse-Effekt).
+
+## [1.0.30] - 2026-03-30
+- **Legal Readiness & Compliance:** Umfassende Pruefung und Aktualisierung aller Rechtstexte fuer den v1.0.0 Release.
+    - **Impressum vervollstaendigt:** Anschrift und Telefonnummer gemaess § 5 DDG (ehem. TMG) ergaenzt.
+    - **Cookie Consent (DSGVO):** Implementierung eines rechtssicheren Cookie-Consent-Banners (Opt-in) fuer Google AdSense.
+    - **Dynamisches Script-Loading:** Das Google AdSense Script wird nun erst nach ausdruecklicher Zustimmung (`localStorage`) in den Document Head injiziert.
+    - **Privacy Policy Update:** Abschnitt 8 (Google AdSense) aktualisiert, um den neuen Einwilligungsvorbehalt (Art. 6 Abs. 1 lit. a DSGVO) korrekt abzubilden.
+    - **Version-Sync:** Die `terms_version` in der Registrierung wurde auf den Stand der aktuellen AGB (`2026-03-29`) synchronisiert.
+    - **UI Integration:** Der Cookie-Banner nutzt das `shadcn/ui` Design und ist nahtlos in die `AppShell` integriert.
+
+## [1.0.29] - 2026-03-30
+- **Firestore-Stabilitaet:** Systematische `permission-denied`-Fehler behoben, indem Autorisierungs-Guards zu Firestore-Listenern hinzugefuegt wurden.
+    - **Race-Conditions beseitigt:** Komponenten wie `CountdownHeader`, `ClassRanking` und `GroupWall` warten nun korrekt, bis das Nutzerprofil geladen und der "Approved"-Status bestätigt wurde, bevor sie Daten abfragen.
+    - **Haertung von Hooks & Modals:** Auch der `useUserTeachers`-Hook und alle Finanz-/Event-Dialoge pruefen nun aktiv die Berechtigungen vor dem Starten von Snapshot-Listenern auf geschuetzte Sammlungen.
+    - **Saubere Konsole:** Verhindert stoerende Fehlermeldungen in der Browser-Konsole waehrend des App-Initialisierungsprozesses.
+
+## [1.0.28] - 2026-03-30
+- **Dashboard Redesign (Sammelkarten-Werbung):** Die statische Werbung fuer Sammelkarten wurde durch ein dynamisches Karussell ersetzt.
+    - **Live-Vorschau:** Es wird nun alle 5 Sekunden ein zufaelliger Lehrer mit einer zufaelligen Karten-Variante (Normal, Holo, Shiny, BlackHolo) angezeigt.
+    - **Integration:** Die `SammelkartenPromo`-Komponente nutzt nun direkt die `TeacherCard`-Logik fuer eine authentische Vorschau.
+    - **Echtzeit-Daten:** Die Liste der verfuegbaren Lehrer wird live aus den Systemeinstellungen geladen.
+
+## [1.0.27] - 2026-03-30
+- **Notifications stabilisiert:** Firestore `onSnapshot`-Listener in `useNotifications` haben jetzt durchgaengig Error-Callbacks, damit `permission-denied` nicht mehr als uncaught Listener-Fehler hochlaeuft.
+- **Graceful Degradation:** Bei fehlenden Rechten werden betroffene Notification-Badges gezielt deaktiviert statt die Konsole mit ungefangenen Snapshot-Fehlern zu fluten.
+
+## [1.0.26] - 2026-03-30
+- **Firestore Stabilitaet (Dev):** Firebase Web SDK auf `12.11.0` aktualisiert, um bekannte interne Watch-Stream-Probleme zu vermeiden.
+- **Firestore Init gehaertet:** In der Entwicklung wird Firestore jetzt mit robusterer Transport-Konfiguration initialisiert (`experimentalAutoDetectLongPolling`, `useFetchStreams: false`) inklusive sicherem Fallback.
+
+## [1.0.25] - 2026-03-30
+- **Registrierung (Passwort-Hinweis):** Im Schritt "E-Mail & Passwort" steht jetzt ein klarer Hinweis, dass ein neues Passwort vergeben werden kann und nicht das LernSax-Passwort genutzt werden muss.
+- **Registrierung (Validierung gefixt):** Fehlermeldungen erscheinen nun erst nach aktiver Aktion im aktuellen Schritt; beim Wechsel zu Schritt 2 werden keine vorzeitigen Fehler mehr fuer noch nicht ausgefuellte Felder angezeigt.
+
 ## [1.0.24] - 2026-03-30
 - **Admin Shop-Einnahmen stabilisiert:** Hook-Reihenfolge in der Admin-Seite korrigiert, sodass keine React-Fehler mehr durch wechselnde Hook-Order entstehen.
 - **Eigene Einnahmen-Tabelle:** Neue dedizierte Collection `shop_earnings` fuer Shop-Umsaetze eingebunden (inkl. `month_key`, `90%` und `10%` Split pro Transaktion).

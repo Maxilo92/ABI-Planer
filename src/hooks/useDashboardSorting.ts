@@ -16,9 +16,9 @@ export function useDashboardSorting(
   news: NewsEntry[]
 ): DashboardComponentKey[] {
   return useMemo(() => {
-    // Guest View: Promotional First Impression
+    // Guest View: News first, then Funding, then Promotional cards (to keep news/cards in the same column)
     if (!profile) {
-      return ['cards', 'news', 'polls', 'funding'];
+      return ['news', 'funding', 'cards', 'polls'];
     }
 
     // Authenticated View: Original logic, promo hidden

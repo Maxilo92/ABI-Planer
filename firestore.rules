@@ -97,6 +97,21 @@ service cloud.firestore {
       }
     }
 
+    match /settings/config {
+      allow read: if true;
+      allow write: if isPlanner();
+    }
+
+    match /settings/global {
+      allow read: if true;
+      allow write: if isPlanner();
+    }
+
+    match /settings/sammelkarten {
+      allow read: if true;
+      allow write: if isPlanner();
+    }
+
     match /settings/{docId} {
       allow read: if isApproved();
       allow write: if isPlanner();
