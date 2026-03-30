@@ -420,19 +420,6 @@ export const stripeWebhook = onRequest({
         // 3. Kauf in Finanzen eintragen (alle Shop-Käufe)
         if (amountTotalEur > 0) {
           const financeRef = db.collection("finances").doc();
-          const itemLabelMap: Record<string, string> = {
-            "booster-bundle-1": "Booster-Bundle 1",
-            "booster-bundle-3": "Booster-Bundle 3",
-            "booster-bundle-5": "Booster-Bundle 5",
-            "booster-bundle-10": "Booster-Bundle 10",
-            "booster-bundle-20": "Booster-Bundle 20",
-            "booster-bundle-50": "Booster-Bundle 50",
-            "booster-bundle-100": "Booster-Bundle 100",
-            "soli-donation-small": "Kleiner Beitrag",
-            "soli-donation-medium": "Mittlerer Beitrag",
-            "soli-donation-large": "Großer Beitrag",
-          };
-
           const itemLabel = itemId ? (SHOP_ITEM_LABELS[itemId] || itemId) : "Shop-Kauf";
 
           transaction.set(financeRef, {
