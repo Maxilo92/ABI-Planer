@@ -68,14 +68,123 @@ const SHOP_ITEM_LABELS: Record<string, string> = {
   "soli-donation-large": "Großer Beitrag",
 };
 
-// Stripe Standardgebuehr: 0,15 EUR + 1,5%
-const calculateStripeFeeCents = (grossAmountCents: number): number => {
-  const safeGross = Math.max(0, Math.floor(Number(grossAmountCents) || 0));
-  if (safeGross <= 0) return 0;
+const HOME_COUNTRY = "DE";
+const SETTLEMENT_CURRENCY = "eur";
 
-  const percentageFee = Math.round(safeGross * 0.015);
-  const fixedFee = 15;
-  return percentageFee + fixedFee;
+const EEA_COUNTRIES = new Set([
+  "AT", "BE", "BG", "HR", "CY", "CZ", "DK", "EE", "FI", "FR", "DE", "GR", "HU", "IE",
+  "IT", "LV", "LT", "LU", "MT", "NL", "PL", "PT", "RO", "SK", "SI", "ES", "SE",
+  "IS", "LI", "NO",
+]);
+
+type StripeFeeBreakdown = {
+  totalFeeCents: number;
+  percentageFeeCents: number;
+  fixedFeeCents: number;
+  fxFeeCents: number;
+  percentageRate: number;
+  cardCountry: string | null;
+  chargeCurrency: string;
+  tier: "domestic_eu" | "eea" | "uk_or_international";
+};
+
+// Gebührenmodell:
+// - Inlaendische Karten (DE): 1,2% + 0,25 EUR
+// - EWR Karten: 1,5% + 0,25 EUR
+// - UK/International: 2,5% + 0,25 EUR
+// - Waehrungsumrechnung: +2,0% falls nicht in EUR belastet
+const calculateStripeFee = (
+  grossAmountCents: number,
+  cardCountryRaw: string | null,
+  chargeCurrencyRaw: string | null,
+): StripeFeeBreakdown => {
+  const safeGross = Math.max(0, Math.floor(Number(grossAmountCents) || 0));
+  const cardCountry = cardCountryRaw ? cardCountryRaw.toUpperCase() : null;
+  const chargeCurrency = (chargeCurrencyRaw || SETTLEMENT_CURRENCY).toLowerCase();
+
+  if (safeGross <= 0) {
+    return {
+      totalFeeCents: 0,
+      percentageFeeCents: 0,
+      fixedFeeCents: 0,
+      fxFeeCents: 0,
+      percentageRate: 0,
+      cardCountry,
+      chargeCurrency,
+      tier: "eea",
+    };
+  }
+
+  let percentageRate = 0.015;
+  let tier: StripeFeeBreakdown["tier"] = "eea";
+
+  if (cardCountry === HOME_COUNTRY) {
+    percentageRate = 0.012;
+    tier = "domestic_eu";
+  } else if (cardCountry === "GB" || (cardCountry && !EEA_COUNTRIES.has(cardCountry))) {
+    percentageRate = 0.025;
+    tier = "uk_or_international";
+  }
+
+  const fixedFeeCents = 25;
+  const percentageFeeCents = Math.round(safeGross * percentageRate);
+  const fxFeeCents = chargeCurrency !== SETTLEMENT_CURRENCY ? Math.round(safeGross * 0.02) : 0;
+  const totalFeeCents = percentageFeeCents + fixedFeeCents + fxFeeCents;
+
+  return {
+    totalFeeCents,
+    percentageFeeCents,
+    fixedFeeCents,
+    fxFeeCents,
+    percentageRate,
+    cardCountry,
+    chargeCurrency,
+    tier,
+  };
+};
+
+const resolveStripeChargeContext = async (
+  stripe: Stripe,
+  session: Stripe.Checkout.Session,
+): Promise<{ cardCountry: string | null; chargeCurrency: string | null }> => {
+  let cardCountry: string | null = null;
+  let chargeCurrency: string | null = typeof session.currency === "string" ? session.currency : null;
+
+  if (!session.payment_intent) {
+    return { cardCountry, chargeCurrency };
+  }
+
+  try {
+    const paymentIntentId = typeof session.payment_intent === "string"
+      ? session.payment_intent
+      : session.payment_intent.id;
+
+    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId, {
+      expand: ["latest_charge"],
+    });
+
+    let charge: Stripe.Charge | null = null;
+    if (paymentIntent.latest_charge && typeof paymentIntent.latest_charge !== "string") {
+      charge = paymentIntent.latest_charge;
+    } else if (typeof paymentIntent.latest_charge === "string") {
+      charge = await stripe.charges.retrieve(paymentIntent.latest_charge);
+    }
+
+    if (charge) {
+      cardCountry =
+        charge.payment_method_details?.card?.country ||
+        charge.billing_details?.address?.country ||
+        null;
+      chargeCurrency = charge.currency || chargeCurrency;
+    }
+  } catch (error) {
+    logger.warn("Could not resolve Stripe charge context, using defaults", {
+      sessionId: session.id,
+      error,
+    });
+  }
+
+  return { cardCountry, chargeCurrency };
 };
 
 const LIMITS: Record<string, number> = {
@@ -324,7 +433,9 @@ export const stripeWebhook = onRequest({
     const donorName = donorNameRaw.length > 0 ? donorNameRaw : null;
     const amountTotalCents = Number(session.amount_total || 0);
     const amountTotalEur = amountTotalCents > 0 ? amountTotalCents / 100 : 0;
-    const stripeFeeCents = calculateStripeFeeCents(amountTotalCents);
+    const chargeContext = await resolveStripeChargeContext(stripe, session);
+    const fee = calculateStripeFee(amountTotalCents, chargeContext.cardCountry, chargeContext.chargeCurrency);
+    const stripeFeeCents = fee.totalFeeCents;
     const payoutNetCents = Math.max(0, amountTotalCents - stripeFeeCents);
 
     const stripeFeeEur = stripeFeeCents > 0 ? stripeFeeCents / 100 : 0;
@@ -400,6 +511,13 @@ export const stripeWebhook = onRequest({
           charged_amount_cents: amountTotalCents,
           stripe_fee_eur: stripeFeeEur,
           stripe_fee_cents: stripeFeeCents,
+          stripe_fee_percentage_rate: fee.percentageRate,
+          stripe_fee_percentage_cents: fee.percentageFeeCents,
+          stripe_fee_fixed_cents: fee.fixedFeeCents,
+          stripe_fee_fx_cents: fee.fxFeeCents,
+          stripe_fee_tier: fee.tier,
+          stripe_card_country: fee.cardCountry,
+          stripe_charge_currency: fee.chargeCurrency,
           payout_net_eur: payoutNetEur,
           payout_net_cents: payoutNetCents,
           item_id: itemId,
@@ -427,6 +545,13 @@ export const stripeWebhook = onRequest({
             amount_total_cents: amountTotalCents,
             stripe_fee_eur: stripeFeeEur,
             stripe_fee_cents: stripeFeeCents,
+            stripe_fee_percentage_rate: fee.percentageRate,
+            stripe_fee_percentage_cents: fee.percentageFeeCents,
+            stripe_fee_fixed_cents: fee.fixedFeeCents,
+            stripe_fee_fx_cents: fee.fxFeeCents,
+            stripe_fee_tier: fee.tier,
+            stripe_card_country: fee.cardCountry,
+            stripe_charge_currency: fee.chargeCurrency,
             payout_net_eur: payoutNetEur,
             payout_net_cents: payoutNetCents,
             abi_share_eur: Number((payoutNetEur * 0.9).toFixed(2)),
@@ -493,6 +618,7 @@ export const backfillShopEarnings = onCall({
   maxInstances: 1,
   memory: "256MiB",
   region: "europe-west3",
+  secrets: ["STRIPE_SECRET_KEY"],
 }, async (request) => {
   if (!request.auth?.uid) {
     throw new HttpsError("unauthenticated", "Anmeldung erforderlich.");
@@ -508,6 +634,8 @@ export const backfillShopEarnings = onCall({
   }
 
   const stripeSnapshot = await db.collection("stripe_transactions").get();
+  const stripeKey = process.env.STRIPE_SECRET_KEY;
+  const stripe = stripeKey ? new Stripe(stripeKey) : null;
 
   let created = 0;
   let updated = 0;
@@ -540,12 +668,31 @@ export const backfillShopEarnings = onCall({
     const payerName = typeof tx.donor_name === "string" && tx.donor_name.trim().length > 0 ? tx.donor_name.trim() : null;
     const selectedCourse = typeof tx.selected_course === "string" && tx.selected_course.trim().length > 0 ? tx.selected_course.trim() : null;
     const customerEmail = typeof tx.customer_email === "string" && tx.customer_email.trim().length > 0 ? tx.customer_email.trim() : null;
-    const stripeFeeCents = calculateStripeFeeCents(amountTotalCents);
+    const stripeSessionId = typeof tx.stripe_session_id === "string" ? tx.stripe_session_id : txDoc.id;
+
+    let cardCountry: string | null = typeof tx.stripe_card_country === "string" ? tx.stripe_card_country : null;
+    let chargeCurrency: string | null = typeof tx.stripe_charge_currency === "string" ? tx.stripe_charge_currency : null;
+
+    if (stripe && stripeSessionId) {
+      try {
+        const checkoutSession = await stripe.checkout.sessions.retrieve(stripeSessionId);
+        const ctx = await resolveStripeChargeContext(stripe, checkoutSession);
+        cardCountry = ctx.cardCountry || cardCountry;
+        chargeCurrency = ctx.chargeCurrency || chargeCurrency;
+      } catch (error) {
+        logger.warn("Could not fetch checkout session during backfill, using stored defaults", {
+          stripeSessionId,
+          error,
+        });
+      }
+    }
+
+    const fee = calculateStripeFee(amountTotalCents, cardCountry, chargeCurrency);
+    const stripeFeeCents = fee.totalFeeCents;
     const payoutNetCents = Math.max(0, amountTotalCents - stripeFeeCents);
 
     const stripeFeeEur = stripeFeeCents > 0 ? stripeFeeCents / 100 : 0;
     const payoutNetEur = payoutNetCents > 0 ? payoutNetCents / 100 : 0;
-    const stripeSessionId = typeof tx.stripe_session_id === "string" ? tx.stripe_session_id : txDoc.id;
 
     batch.set(shopRef, {
       stripe_session_id: stripeSessionId,
@@ -557,6 +704,13 @@ export const backfillShopEarnings = onCall({
       amount_total_cents: Number.isFinite(amountTotalCents) ? amountTotalCents : Math.round(amountTotalEur * 100),
       stripe_fee_eur: stripeFeeEur,
       stripe_fee_cents: Number.isFinite(stripeFeeCents) ? stripeFeeCents : 0,
+      stripe_fee_percentage_rate: fee.percentageRate,
+      stripe_fee_percentage_cents: fee.percentageFeeCents,
+      stripe_fee_fixed_cents: fee.fixedFeeCents,
+      stripe_fee_fx_cents: fee.fxFeeCents,
+      stripe_fee_tier: fee.tier,
+      stripe_card_country: fee.cardCountry,
+      stripe_charge_currency: fee.chargeCurrency,
       payout_net_eur: payoutNetEur,
       payout_net_cents: Number.isFinite(payoutNetCents) ? payoutNetCents : Math.max(0, amountTotalCents - stripeFeeCents),
       abi_share_eur: Number((payoutNetEur * 0.9).toFixed(2)),

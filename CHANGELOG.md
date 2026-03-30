@@ -9,6 +9,12 @@
 - **Admin-Trigger:** In der Admin-Seite gibt es nun den Button **Altkäufe importieren**, um den Backfill einmalig sicher auszufuehren.
 - **Stripe-Gebuehren einberechnet:** Shop-Einnahmen speichern jetzt Brutto, Stripe-Fee und Netto; die 90/10-Aufteilung basiert auf dem Netto-Betrag.
 - **Gebuehrenformel fixiert:** Stripe-Fee wird automatisch als `0,15 EUR + 1,5%` des Brutto-Betrags berechnet (neu und beim Backfill).
+- **Gebuehrenmodell erweitert:** Berechnung jetzt nach Kartenherkunft und Waehrung:
+    - Inlaendisch (DE): `1,2% + 0,25 EUR`
+    - EWR: `1,5% + 0,25 EUR`
+    - UK/International: `2,5% + 0,25 EUR`
+    - Waehrungsumrechnung: zusaetzlich `2,0%` bei Nicht-EUR-Belastung
+    - Backfill aktualisiert bestehende Datensaetze entsprechend automatisch.
 
 ## [1.0.23] - 2026-03-30
 - **Shop Visual Masking:** Visual-Bereich der Bundle-Karten hat jetzt einen dezenten Rahmen mit Innen-Schatten.
