@@ -258,7 +258,7 @@ function ShopContent() {
   return (
     <div className="min-h-screen bg-background text-foreground pb-20">
       {/* Header */}
-      <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-md border-b border-border">
+      <div className="sticky top-0 z-20 bg-background/80 backdrop-blur-md border-b border-border">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <Button 
             variant="ghost" 
@@ -279,39 +279,39 @@ function ShopContent() {
 
       <main className="container mx-auto max-w-6xl px-4 py-8 space-y-12">
         {/* Hero Section */}
-        <section className="text-center space-y-4">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-black uppercase tracking-widest">
+        <section className="text-center space-y-3 sm:space-y-4">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-[10px] sm:text-xs font-black uppercase tracking-widest">
             <Heart className="w-3 h-3 fill-current" />
             Einnahmen für eure Abikasse
           </div>
-          <h2 className="text-4xl font-black tracking-tighter sm:text-6xl italic">Alles für die Stufe</h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto leading-relaxed text-lg font-medium">
+          <h2 className="text-4xl sm:text-5xl md:text-6xl font-black tracking-tighter italic">Alles für die Stufe</h2>
+          <p className="text-muted-foreground max-w-2xl mx-auto leading-relaxed text-base sm:text-lg md:text-xl font-medium px-2">
             Entdecke Booster-Packs, exklusiven Merch und mehr. 
-            <span className="text-foreground block mt-1">90% aller Einnahmen fließen direkt in eure Abikasse!</span>
+            <span className="text-foreground block mt-1 sm:mt-2">90% aller Einnahmen fließen direkt in eure Abikasse!</span>
           </p>
         </section>
 
         {/* Categories */}
-        <div className="flex flex-wrap justify-center gap-2">
+        <div className="flex flex-wrap justify-center gap-1.5 sm:gap-2">
           {availableCategories.map((cat) => (
             <button
               key={cat.id}
               onClick={() => setActiveCategory(cat.id)}
               className={cn(
-                "flex items-center gap-2 px-4 py-2 rounded-full text-xs font-black uppercase tracking-wider transition-all border-2",
+                "flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-[10px] sm:text-xs font-black uppercase tracking-wider transition-all border-2",
                 activeCategory === cat.id 
                   ? "bg-primary border-primary text-primary-foreground shadow-lg shadow-primary/20" 
                   : "bg-muted/50 border-transparent text-muted-foreground hover:bg-muted hover:border-border"
               )}
             >
-              <cat.icon className="w-3.5 h-3.5" />
+              <cat.icon className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
               {cat.name}
             </button>
           ))}
         </div>
 
         {/* Shop Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6 lg:gap-8">
           <AnimatePresence mode="popLayout">
             {filteredItems.map((item) => {
               const currentPurchases = shopStats[item.id] || 0
@@ -336,17 +336,17 @@ function ShopContent() {
                   <div className="absolute inset-0 bg-gradient-to-tr from-white/5 via-transparent to-transparent pointer-events-none" />
 
                   {hasDiscount && !isLimitReached && (
-                    <div className="absolute top-6 left-6 z-10">
-                      <Badge className="bg-success text-success-foreground px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter shadow-lg border-none">
+                    <div className="absolute top-4 sm:top-6 left-4 sm:left-6 z-20">
+                      <Badge className="bg-success text-success-foreground px-2.5 sm:px-3 py-1 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-tighter shadow-lg border-none">
                         -{Math.round((1 - item.priceNum! / fullPrice) * 100)}% Rabatt
                       </Badge>
                     </div>
                   )}
 
                   {(item.badge || isLimitReached) && (
-                    <div className="absolute top-6 right-6 z-10">
+                    <div className="absolute top-4 sm:top-6 right-4 sm:right-6 z-20">
                       <Badge className={cn(
-                        "px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter shadow-lg border-none",
+                        "px-3 sm:px-4 py-1 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-tighter shadow-lg border-none",
                         isLimitReached ? "bg-destructive text-destructive-foreground" : "bg-primary text-primary-foreground"
                       )}>
                         {isLimitReached ? 'Limit erreicht' : item.badge}
@@ -354,9 +354,8 @@ function ShopContent() {
                     </div>
                   )}
 
-                  <div className="relative px-5 sm:px-8 pb-8 pt-16 flex-1 flex flex-col space-y-8">
-                    <div className="relative isolate h-[220px] sm:h-[236px] md:h-[248px] w-full rounded-[1.75rem] bg-muted/20 border border-border/60 overflow-hidden">
-                      <div className="relative z-[1] h-full w-full flex items-center justify-center overflow-visible px-2 sm:px-3">
+                  <div className="relative px-5 sm:px-6 md:px-8 pb-6 md:pb-8 pt-12 sm:pt-16 flex-1 flex flex-col space-y-6 sm:space-y-8">
+                    <div className="py-4 min-h-[160px] sm:min-h-[180px] flex items-center justify-center rounded-[1.75rem] border border-border/70 bg-muted/20 shadow-inner">
                        {item.isBooster ? (
                          <BoosterPackVisual
                            amount={item.amount}
@@ -365,7 +364,6 @@ function ShopContent() {
                            layoutStyle="fan"
                            fanCardCount={item.fanCardCount}
                            density={item.amount >= 50 ? 'dense' : 'normal'}
-                           className="h-full w-full max-w-[320px] scale-[0.82] sm:scale-[0.9] md:scale-[0.96] lg:scale-100 origin-center"
                          />
                        ) : (
                          <div className={cn(
@@ -376,13 +374,12 @@ function ShopContent() {
                             {item.category === 'merch' ? <ShoppingBag className="w-16 h-16" /> : <Heart className="w-16 h-16 fill-current" />}
                          </div>
                        )}
-                      </div>
                     </div>
 
-                    <div className="space-y-3 text-center">
-                      <h3 className="text-3xl font-black tracking-tight">{item.name}</h3>
+                    <div className="space-y-2 sm:space-y-3 text-center">
+                      <h3 className="text-2xl sm:text-3xl font-black tracking-tight">{item.name}</h3>
                       <div className="flex flex-col items-center">
-                        <p className="text-sm text-muted-foreground font-bold uppercase tracking-widest">{item.description}</p>
+                        <p className="text-xs sm:text-sm text-muted-foreground font-bold uppercase tracking-widest">{item.description}</p>
                         {hasDiscount && (
                           <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-success/10 border border-success/20 text-success text-[10px] font-black uppercase tracking-wider">
                             <Sparkles className="w-3 h-3 fill-current" />
@@ -411,11 +408,11 @@ function ShopContent() {
                     )}
                   </div>
 
-                  <div className="px-5 sm:px-8 pb-8 pt-0">
+                  <div className="p-5 sm:p-6 md:p-8 pt-0">
                     <Button
                       className={cn(
-                        "w-full font-black h-[4.6rem] sm:h-20 rounded-2xl shadow-xl transition-all duration-300 relative overflow-hidden px-4 py-3",
-                        isLimitReached ? "bg-muted text-muted-foreground cursor-not-allowed" : "bg-primary text-primary-foreground hover:bg-primary/90"
+                        "w-full font-black h-16 sm:h-20 rounded-2xl shadow-xl transition-all duration-300 relative overflow-hidden text-lg sm:text-xl active:scale-[0.98]",
+                        isLimitReached ? "bg-muted text-muted-foreground cursor-not-allowed" : "bg-primary text-primary-foreground hover:bg-primary/90 hover:shadow-primary/20"
                       )}
                       disabled={isPurchasing !== null || isLimitReached}
                       onClick={() => {
@@ -431,29 +428,27 @@ function ShopContent() {
                       }}
                     >
                       {isPurchasing === item.id ? (
-                        <div className="flex h-full w-full items-center justify-center gap-3 leading-none">
+                        <div className="flex items-center gap-3">
                           <div className="w-6 h-6 border-3 border-current border-t-transparent rounded-full animate-spin" />
-                          <span className="text-base sm:text-xl">Verarbeite...</span>
+                          Verarbeite...
                         </div>
                       ) : isLimitReached ? (
-                        <span className="flex h-full w-full items-center justify-center text-base sm:text-xl leading-none">Limit erreicht</span>
+                        <span>Limit erreicht</span>
                       ) : (
-                        <div className="flex h-full w-full flex-col items-center justify-center">
-                          <div className="flex items-center justify-center gap-3 sm:gap-4 leading-none">
+                        <div className="flex flex-col items-center justify-center">
+                          <div className="flex items-center justify-center gap-2 sm:gap-4">
                             {hasDiscount && (
-                              <span className="text-xs sm:text-sm line-through opacity-40 decoration-1 font-medium leading-none">
+                              <span className="text-xs sm:text-sm line-through opacity-50 decoration-2 font-semibold">
                                 {fullPrice.toLocaleString('de-DE', { minimumFractionDigits: 2 })}€
                               </span>
                             )}
-                            <span className="text-xl sm:text-2xl tracking-tighter leading-none">{item.price}</span>
+                            <span className="text-xl sm:text-2xl tracking-tighter">{item.price}</span>
                           </div>
-                          <span className="mt-1 h-3 sm:h-4 text-[9px] uppercase tracking-widest opacity-60 flex items-center gap-1 font-bold leading-none">
-                            {item.requireAuth && !user ? (
-                              <>
-                                <Lock className="w-2.5 h-2.5" /> Login erforderlich
-                              </>
-                            ) : null}
-                          </span>
+                          {item.requireAuth && !user && (
+                            <span className="text-[9px] uppercase tracking-widest opacity-70 mt-1 flex items-center gap-1 font-black">
+                              <Lock className="w-2.5 h-2.5" /> Login erforderlich
+                            </span>
+                          )}
                         </div>
                       )}
                     </Button>
