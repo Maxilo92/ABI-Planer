@@ -68,6 +68,16 @@ const SHOP_ITEM_LABELS: Record<string, string> = {
   "soli-donation-large": "Großer Beitrag",
 };
 
+// Stripe Standardgebuehr: 0,15 EUR + 1,5%
+const calculateStripeFeeCents = (grossAmountCents: number): number => {
+  const safeGross = Math.max(0, Math.floor(Number(grossAmountCents) || 0));
+  if (safeGross <= 0) return 0;
+
+  const percentageFee = Math.round(safeGross * 0.015);
+  const fixedFee = 15;
+  return percentageFee + fixedFee;
+};
+
 const LIMITS: Record<string, number> = {
   "booster-bundle-1": 20,
   "booster-bundle-3": 10,
@@ -314,56 +324,11 @@ export const stripeWebhook = onRequest({
     const donorName = donorNameRaw.length > 0 ? donorNameRaw : null;
     const amountTotalCents = Number(session.amount_total || 0);
     const amountTotalEur = amountTotalCents > 0 ? amountTotalCents / 100 : 0;
-    let stripeFeeCents = 0;
-    let payoutNetCents = amountTotalCents;
-
-    // Stripe Gebühren und Netto-Auszahlung ermitteln (falls Stripe Balance-Transaktion vorhanden)
-    if (session.payment_intent) {
-      try {
-        const paymentIntentId = typeof session.payment_intent === "string"
-          ? session.payment_intent
-          : session.payment_intent.id;
-
-        const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId, {
-          expand: ["latest_charge.balance_transaction"],
-        });
-
-        let balanceTransaction: Stripe.BalanceTransaction | null = null;
-
-        if (paymentIntent.latest_charge && typeof paymentIntent.latest_charge !== "string") {
-          const bt = paymentIntent.latest_charge.balance_transaction;
-          if (bt && typeof bt !== "string") {
-            balanceTransaction = bt;
-          } else if (typeof bt === "string") {
-            balanceTransaction = await stripe.balanceTransactions.retrieve(bt);
-          }
-        } else if (typeof paymentIntent.latest_charge === "string") {
-          const charge = await stripe.charges.retrieve(paymentIntent.latest_charge, {
-            expand: ["balance_transaction"],
-          });
-          const bt = charge.balance_transaction;
-          if (bt && typeof bt !== "string") {
-            balanceTransaction = bt;
-          } else if (typeof bt === "string") {
-            balanceTransaction = await stripe.balanceTransactions.retrieve(bt);
-          }
-        }
-
-        if (balanceTransaction) {
-          stripeFeeCents = Number(balanceTransaction.fee || 0);
-          payoutNetCents = Number(balanceTransaction.net || Math.max(0, amountTotalCents - stripeFeeCents));
-        }
-      } catch (feeError) {
-        logger.warn("Could not resolve Stripe fee details, fallback to gross amount", {
-          sessionId: session.id,
-          paymentIntent: session.payment_intent,
-          error: feeError,
-        });
-      }
-    }
+    const stripeFeeCents = calculateStripeFeeCents(amountTotalCents);
+    const payoutNetCents = Math.max(0, amountTotalCents - stripeFeeCents);
 
     const stripeFeeEur = stripeFeeCents > 0 ? stripeFeeCents / 100 : 0;
-    const payoutNetEur = payoutNetCents > 0 ? payoutNetCents / 100 : Math.max(0, amountTotalEur - stripeFeeEur);
+    const payoutNetEur = payoutNetCents > 0 ? payoutNetCents / 100 : 0;
 
     if (!itemId) {
       logger.error("Missing ItemId in Session:", session.id);
@@ -528,7 +493,6 @@ export const backfillShopEarnings = onCall({
   maxInstances: 1,
   memory: "256MiB",
   region: "europe-west3",
-  secrets: ["STRIPE_SECRET_KEY"],
 }, async (request) => {
   if (!request.auth?.uid) {
     throw new HttpsError("unauthenticated", "Anmeldung erforderlich.");
@@ -544,10 +508,9 @@ export const backfillShopEarnings = onCall({
   }
 
   const stripeSnapshot = await db.collection("stripe_transactions").get();
-  const stripeKey = process.env.STRIPE_SECRET_KEY;
-  const stripeClient = stripeKey ? new Stripe(stripeKey) : null;
 
   let created = 0;
+  let updated = 0;
   let skipped = 0;
   let invalid = 0;
 
@@ -558,11 +521,6 @@ export const backfillShopEarnings = onCall({
     const tx = txDoc.data() || {};
     const shopRef = db.collection("shop_earnings").doc(txDoc.id);
     const shopDoc = await shopRef.get();
-
-    if (shopDoc.exists) {
-      skipped++;
-      continue;
-    }
 
     const amountTotalEur = Number(tx.charged_amount_eur || 0);
     const amountTotalCents = Number(tx.charged_amount_cents || 0);
@@ -582,40 +540,12 @@ export const backfillShopEarnings = onCall({
     const payerName = typeof tx.donor_name === "string" && tx.donor_name.trim().length > 0 ? tx.donor_name.trim() : null;
     const selectedCourse = typeof tx.selected_course === "string" && tx.selected_course.trim().length > 0 ? tx.selected_course.trim() : null;
     const customerEmail = typeof tx.customer_email === "string" && tx.customer_email.trim().length > 0 ? tx.customer_email.trim() : null;
-    let stripeFeeCents = Number(tx.stripe_fee_cents || 0);
-    let payoutNetCents = Number(tx.payout_net_cents || Math.max(0, amountTotalCents - stripeFeeCents));
-
-    const stripeSessionId = typeof tx.stripe_session_id === "string" ? tx.stripe_session_id : txDoc.id;
-    if (stripeClient && stripeSessionId && (!Number.isFinite(stripeFeeCents) || stripeFeeCents <= 0)) {
-      try {
-        const stripeSession = await stripeClient.checkout.sessions.retrieve(stripeSessionId, {
-          expand: ["payment_intent.latest_charge.balance_transaction"],
-        });
-
-        if (stripeSession.payment_intent && typeof stripeSession.payment_intent !== "string") {
-          const latestCharge = stripeSession.payment_intent.latest_charge;
-          if (latestCharge && typeof latestCharge !== "string") {
-            const bt = latestCharge.balance_transaction;
-            if (bt && typeof bt !== "string") {
-              stripeFeeCents = Number(bt.fee || 0);
-              payoutNetCents = Number(bt.net || Math.max(0, amountTotalCents - stripeFeeCents));
-            } else if (typeof bt === "string") {
-              const fetchedBt = await stripeClient.balanceTransactions.retrieve(bt);
-              stripeFeeCents = Number(fetchedBt.fee || 0);
-              payoutNetCents = Number(fetchedBt.net || Math.max(0, amountTotalCents - stripeFeeCents));
-            }
-          }
-        }
-      } catch (error) {
-        logger.warn("Could not resolve fee during backfill, using fallback values", {
-          stripeSessionId,
-          error,
-        });
-      }
-    }
+    const stripeFeeCents = calculateStripeFeeCents(amountTotalCents);
+    const payoutNetCents = Math.max(0, amountTotalCents - stripeFeeCents);
 
     const stripeFeeEur = stripeFeeCents > 0 ? stripeFeeCents / 100 : 0;
-    const payoutNetEur = payoutNetCents > 0 ? payoutNetCents / 100 : Math.max(0, amountTotalEur - stripeFeeEur);
+    const payoutNetEur = payoutNetCents > 0 ? payoutNetCents / 100 : 0;
+    const stripeSessionId = typeof tx.stripe_session_id === "string" ? tx.stripe_session_id : txDoc.id;
 
     batch.set(shopRef, {
       stripe_session_id: stripeSessionId,
@@ -637,9 +567,14 @@ export const backfillShopEarnings = onCall({
       month_key: monthKey,
       processed_at: processedAt || FieldValue.serverTimestamp(),
       created_by: "system:backfill_shop_earnings",
-    });
+    }, { merge: true });
 
-    created++;
+    if (shopDoc.exists) {
+      updated++;
+    } else {
+      created++;
+    }
+
     operationCount++;
 
     if (operationCount >= 400) {
@@ -656,6 +591,7 @@ export const backfillShopEarnings = onCall({
   logger.info("backfillShopEarnings completed", {
     actor: request.auth.uid,
     created,
+    updated,
     skipped,
     invalid,
     total: stripeSnapshot.size,
@@ -664,6 +600,7 @@ export const backfillShopEarnings = onCall({
   return {
     success: true,
     created,
+    updated,
     skipped,
     invalid,
     total: stripeSnapshot.size,
