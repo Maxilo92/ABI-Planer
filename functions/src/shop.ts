@@ -379,6 +379,44 @@ export const stripeWebhook = onRequest({
           status: "completed"
         });
 
+        // 2b. Dedizierte Shop-Einnahmen-Tabelle für Admin-Auswertungen
+        if (amountTotalEur > 0) {
+          const processedDate = new Date();
+          const monthKey = `${processedDate.getFullYear()}-${String(processedDate.getMonth() + 1).padStart(2, "0")}`;
+          const itemLabelMap: Record<string, string> = {
+            "booster-bundle-1": "Booster-Bundle 1",
+            "booster-bundle-3": "Booster-Bundle 3",
+            "booster-bundle-5": "Booster-Bundle 5",
+            "booster-bundle-10": "Booster-Bundle 10",
+            "booster-bundle-20": "Booster-Bundle 20",
+            "booster-bundle-50": "Booster-Bundle 50",
+            "booster-bundle-100": "Booster-Bundle 100",
+            "soli-donation-small": "Kleiner Beitrag",
+            "soli-donation-medium": "Mittlerer Beitrag",
+            "soli-donation-large": "Großer Beitrag",
+          };
+
+          const itemLabel = itemId ? (itemLabelMap[itemId] || itemId) : "Shop-Kauf";
+          const shopEarningsRef = db.collection("shop_earnings").doc(session.id);
+          transaction.set(shopEarningsRef, {
+            stripe_session_id: session.id,
+            user_id: userId || "guest",
+            is_guest: !userId,
+            item_id: itemId,
+            item_label: itemLabel,
+            amount_total_eur: amountTotalEur,
+            amount_total_cents: amountTotalCents,
+            abi_share_eur: Number((amountTotalEur * 0.9).toFixed(2)),
+            platform_share_eur: Number((amountTotalEur * 0.1).toFixed(2)),
+            selected_course: responsibleClass,
+            payer_name: payerName,
+            customer_email: session.customer_details?.email || null,
+            month_key: monthKey,
+            processed_at: FieldValue.serverTimestamp(),
+            created_by: "system:stripe",
+          });
+        }
+
         // 3. Kauf in Finanzen eintragen (alle Shop-Käufe)
         if (amountTotalEur > 0) {
           const financeRef = db.collection("finances").doc();

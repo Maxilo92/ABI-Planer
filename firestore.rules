@@ -111,6 +111,10 @@ service cloud.firestore {
       allow write: if isPlanner(); 
     }
     match /finances/{id} { allow read: if isAuthenticated() && isLernsax(); allow write: if isPlanner(); }
+    match /shop_earnings/{id} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
     match /news/{id} { 
       allow read: if true; 
       allow write: if isPlanner(); 

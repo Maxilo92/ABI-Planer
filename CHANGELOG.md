@@ -1,38 +1,10 @@
 # Changelog
 
-## [1.0.30] - 2026-03-30
-- **Shop Visual Hotfix (Rahmen):** Geisterkanten an den Bundle-Bildrahmen weiter reduziert.
-    - **Keine rechteckigen Glow-Layer mehr:** Booster-Visual nutzt jetzt nur noch weiche, runde Glows ohne eckige Inset-Effekte.
-    - **Klare Einzelkante:** Bildcontainer im Shop nutzt eine einfache Border-Kante ohne Ring-Overlay.
-
-## [1.0.29] - 2026-03-30
-- **Shop Visual Hotfix:** Doppelrand-Effekt an den Bundle-Bildrahmen entfernt.
-    - **Sauberer Einzelrahmen:** Visual-Container nutzt jetzt eine klare Ring-Kante statt kombinierter Border/Inner-Edge-Layer.
-
-## [1.0.28] - 2026-03-30
-- **Shop Responsive-Fix (Bundles):** Bundle-Visuals und Preisbutton auf Smartphone/Tablet stabilisiert.
-    - **Festes Visual-Layout:** Bildbereich der Shop-Karten nutzt jetzt feste, responsive Hoehen mit kontrollierter Skalierung.
-    - **iPad-Clipping reduziert:** Faecher-Geometrie und Kartengroessen im Booster-Renderer angepasst, damit weniger abgeschnitten wird.
-    - **Geister-Ecken minimiert:** Hintergrund-/Blur-Layer der Bundle-Visuals auf saubere, gerundete Inset-Layer umgestellt.
-    - **Button-Konsistenz:** Preis-/Status-Button hat nun einheitliches Innenlayout und stabiles Padding in allen Zustaenden (Preis, Limit, Verarbeitung).
-    - **Header-Z-Order:** Rabatt-/Badge-Labels rendern unter dem sticky Header statt darueber.
-
-## [1.0.27] - 2026-03-30
-- **Sammelkarten UX:** Kleiner Booster-Shop-Button im Booster-Header ergänzt.
-    - **Direktzugriff:** Neben Pack-Status/Info ist jetzt ein kompakter Shop-Shortcut zu `/shop?category=sammelkarten` sichtbar.
-
-## [1.0.26] - 2026-03-30
-- **Functions Build-Fix (Referrals):** TypeScript-Fehler in der Referral-Belohnungslogik behoben.
-    - **Monatsauswertung stabilisiert:** `currentMonthAwarded` wird jetzt aus den Monats-Claims korrekt aggregiert.
-    - **Build-Blocker entfernt:** Unbenutzte Variable in `referrals.ts` entfernt.
-
-## [1.0.25] - 2026-03-30
-- **Stripe Bundle-Preis-IDs aktualisiert:** Booster-Bundles im Checkout nutzen jetzt feste Stripe-`priceId`-Zuordnungen.
-    - **Bundle-Mapping gesetzt:** 1, 3, 5, 10, 20, 50 und 100 Packs sind auf die neuen Live-Preisobjekte gemappt.
-
 ## [1.0.24] - 2026-03-30
-- **Shop Visual Frame (Clip):** Der Rahmen der Bundle-Visuals schneidet Blur jetzt bewusst innerhalb der Form ab.
-    - **Saubere Kante:** Visual-Container nutzt `overflow-hidden` mit runden Ecken, damit Blur nicht ueber den Rahmen hinauslaeuft.
+- **Admin Shop-Einnahmen stabilisiert:** Hook-Reihenfolge in der Admin-Seite korrigiert, sodass keine React-Fehler mehr durch wechselnde Hook-Order entstehen.
+- **Eigene Einnahmen-Tabelle:** Neue dedizierte Collection `shop_earnings` fuer Shop-Umsaetze eingebunden (inkl. `month_key`, `90%` und `10%` Split pro Transaktion).
+- **Admin-Auswertung umgestellt:** `src/app/admin/shop-earnings/page.tsx` liest nun aus `shop_earnings` statt `stripe_transactions`.
+- **Regeln erweitert:** Firestore-Regel fuer `shop_earnings` hinzugefuegt (`read` nur fuer Admin-Rollen, `write` gesperrt fuer Clients).
 
 ## [1.0.23] - 2026-03-30
 - **Shop Visual Masking:** Visual-Bereich der Bundle-Karten hat jetzt einen dezenten Rahmen mit Innen-Schatten.
