@@ -55,6 +55,19 @@ const STRIPE_PRICES: Record<string, StripeShopProduct> = {
   },
 };
 
+const SHOP_ITEM_LABELS: Record<string, string> = {
+  "booster-bundle-1": "Booster-Bundle 1",
+  "booster-bundle-3": "Booster-Bundle 3",
+  "booster-bundle-5": "Booster-Bundle 5",
+  "booster-bundle-10": "Booster-Bundle 10",
+  "booster-bundle-20": "Booster-Bundle 20",
+  "booster-bundle-50": "Booster-Bundle 50",
+  "booster-bundle-100": "Booster-Bundle 100",
+  "soli-donation-small": "Kleiner Beitrag",
+  "soli-donation-medium": "Mittlerer Beitrag",
+  "soli-donation-large": "Großer Beitrag",
+};
+
 const LIMITS: Record<string, number> = {
   "booster-bundle-1": 20,
   "booster-bundle-3": 10,
@@ -383,20 +396,7 @@ export const stripeWebhook = onRequest({
         if (amountTotalEur > 0) {
           const processedDate = new Date();
           const monthKey = `${processedDate.getFullYear()}-${String(processedDate.getMonth() + 1).padStart(2, "0")}`;
-          const itemLabelMap: Record<string, string> = {
-            "booster-bundle-1": "Booster-Bundle 1",
-            "booster-bundle-3": "Booster-Bundle 3",
-            "booster-bundle-5": "Booster-Bundle 5",
-            "booster-bundle-10": "Booster-Bundle 10",
-            "booster-bundle-20": "Booster-Bundle 20",
-            "booster-bundle-50": "Booster-Bundle 50",
-            "booster-bundle-100": "Booster-Bundle 100",
-            "soli-donation-small": "Kleiner Beitrag",
-            "soli-donation-medium": "Mittlerer Beitrag",
-            "soli-donation-large": "Großer Beitrag",
-          };
-
-          const itemLabel = itemId ? (itemLabelMap[itemId] || itemId) : "Shop-Kauf";
+          const itemLabel = itemId ? (SHOP_ITEM_LABELS[itemId] || itemId) : "Shop-Kauf";
           const shopEarningsRef = db.collection("shop_earnings").doc(session.id);
           transaction.set(shopEarningsRef, {
             stripe_session_id: session.id,
@@ -433,7 +433,7 @@ export const stripeWebhook = onRequest({
             "soli-donation-large": "Großer Beitrag",
           };
 
-          const itemLabel = itemId ? (itemLabelMap[itemId] || itemId) : "Shop-Kauf";
+          const itemLabel = itemId ? (SHOP_ITEM_LABELS[itemId] || itemId) : "Shop-Kauf";
 
           transaction.set(financeRef, {
             amount: amountTotalEur,
@@ -471,6 +471,115 @@ export const stripeWebhook = onRequest({
   }
 
   res.status(200).send({ received: true });
+});
+
+/**
+ * Migriert historische stripe_transactions in die dedizierte shop_earnings Tabelle.
+ * Nur fuer Admin-Rollen aufrufbar.
+ */
+export const backfillShopEarnings = onCall({
+  maxInstances: 1,
+  memory: "256MiB",
+  region: "europe-west3",
+}, async (request) => {
+  if (!request.auth?.uid) {
+    throw new HttpsError("unauthenticated", "Anmeldung erforderlich.");
+  }
+
+  const db = getFirestore("abi-data");
+  const callerProfile = await db.collection("profiles").doc(request.auth.uid).get();
+  const role = callerProfile.exists ? callerProfile.data()?.role : null;
+  const isAdmin = role === "admin" || role === "admin_main" || role === "admin_co";
+
+  if (!isAdmin) {
+    throw new HttpsError("permission-denied", "Nur Admins duerfen den Backfill ausfuehren.");
+  }
+
+  const stripeSnapshot = await db.collection("stripe_transactions").get();
+
+  let created = 0;
+  let skipped = 0;
+  let invalid = 0;
+
+  let batch = db.batch();
+  let operationCount = 0;
+
+  for (const txDoc of stripeSnapshot.docs) {
+    const tx = txDoc.data() || {};
+    const shopRef = db.collection("shop_earnings").doc(txDoc.id);
+    const shopDoc = await shopRef.get();
+
+    if (shopDoc.exists) {
+      skipped++;
+      continue;
+    }
+
+    const amountTotalEur = Number(tx.charged_amount_eur || 0);
+    const amountTotalCents = Number(tx.charged_amount_cents || 0);
+    if (!Number.isFinite(amountTotalEur) || amountTotalEur <= 0) {
+      invalid++;
+      continue;
+    }
+
+    const processedAt = tx.processed_at;
+    const processedDate = processedAt && typeof processedAt.toDate === "function"
+      ? processedAt.toDate()
+      : new Date();
+    const monthKey = `${processedDate.getFullYear()}-${String(processedDate.getMonth() + 1).padStart(2, "0")}`;
+
+    const itemId = typeof tx.item_id === "string" ? tx.item_id : "shop-unknown";
+    const itemLabel = SHOP_ITEM_LABELS[itemId] || itemId;
+    const payerName = typeof tx.donor_name === "string" && tx.donor_name.trim().length > 0 ? tx.donor_name.trim() : null;
+    const selectedCourse = typeof tx.selected_course === "string" && tx.selected_course.trim().length > 0 ? tx.selected_course.trim() : null;
+    const customerEmail = typeof tx.customer_email === "string" && tx.customer_email.trim().length > 0 ? tx.customer_email.trim() : null;
+
+    batch.set(shopRef, {
+      stripe_session_id: typeof tx.stripe_session_id === "string" ? tx.stripe_session_id : txDoc.id,
+      user_id: typeof tx.user_id === "string" ? tx.user_id : "guest",
+      is_guest: Boolean(tx.is_guest),
+      item_id: itemId,
+      item_label: itemLabel,
+      amount_total_eur: amountTotalEur,
+      amount_total_cents: Number.isFinite(amountTotalCents) ? amountTotalCents : Math.round(amountTotalEur * 100),
+      abi_share_eur: Number((amountTotalEur * 0.9).toFixed(2)),
+      platform_share_eur: Number((amountTotalEur * 0.1).toFixed(2)),
+      selected_course: selectedCourse,
+      payer_name: payerName,
+      customer_email: customerEmail,
+      month_key: monthKey,
+      processed_at: processedAt || FieldValue.serverTimestamp(),
+      created_by: "system:backfill_shop_earnings",
+    });
+
+    created++;
+    operationCount++;
+
+    if (operationCount >= 400) {
+      await batch.commit();
+      batch = db.batch();
+      operationCount = 0;
+    }
+  }
+
+  if (operationCount > 0) {
+    await batch.commit();
+  }
+
+  logger.info("backfillShopEarnings completed", {
+    actor: request.auth.uid,
+    created,
+    skipped,
+    invalid,
+    total: stripeSnapshot.size,
+  });
+
+  return {
+    success: true,
+    created,
+    skipped,
+    invalid,
+    total: stripeSnapshot.size,
+  };
 });
 
 /**

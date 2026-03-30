@@ -3,12 +3,15 @@
 import { useState, useEffect, useMemo } from 'react'
 import { db } from '@/lib/firebase'
 import { collection, query, orderBy, onSnapshot } from 'firebase/firestore'
+import { getFunctions, httpsCallable } from 'firebase/functions'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { useAuth } from '@/context/AuthContext'
 import { useRouter, usePathname } from 'next/navigation'
 import { Euro, TrendingUp, PiggyBank, Briefcase, Calendar as CalendarIcon } from 'lucide-react'
+import { toast } from 'sonner'
 
 type ShopEarning = {
   id: string
@@ -35,6 +38,7 @@ export default function ShopEarningsPage() {
   const [loading, setLoading] = useState(true)
   const [selectedMonth, setSelectedMonth] = useState<string>('all')
   const [permissionError, setPermissionError] = useState<string | null>(null)
+  const [isBackfilling, setIsBackfilling] = useState(false)
   const router = useRouter()
   const pathname = usePathname()
 
@@ -131,6 +135,34 @@ export default function ShopEarningsPage() {
     return date.toLocaleString('de-DE', { month: 'long', year: 'numeric' })
   }
 
+  const handleBackfill = async () => {
+    setIsBackfilling(true)
+    try {
+      const functions = getFunctions(undefined, 'europe-west3')
+      const runBackfill = httpsCallable<undefined, { success: boolean; created: number; skipped: number; invalid: number; total: number }>(
+        functions,
+        'backfillShopEarnings'
+      )
+      const result = await runBackfill()
+      const data = result.data
+
+      if (data?.success) {
+        toast.success('Backfill abgeschlossen', {
+          description: `Neu: ${data.created}, bereits vorhanden: ${data.skipped}, ungültig: ${data.invalid}`,
+        })
+      } else {
+        toast.error('Backfill konnte nicht abgeschlossen werden.')
+      }
+    } catch (error: any) {
+      console.error('Backfill error:', error)
+      toast.error('Backfill fehlgeschlagen', {
+        description: error?.message || 'Unbekannter Fehler.',
+      })
+    } finally {
+      setIsBackfilling(false)
+    }
+  }
+
   if (authLoading || loading) {
     return <div className="flex items-center justify-center min-h-[50vh]">Lade Shop Einnahmen...</div>
   }
@@ -150,6 +182,15 @@ export default function ShopEarningsPage() {
         </div>
 
         <div className="flex items-center gap-2 bg-muted/50 p-2 rounded-xl border border-border">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleBackfill}
+            disabled={isBackfilling}
+            className="font-bold"
+          >
+            {isBackfilling ? 'Backfill läuft...' : 'Altkäufe importieren'}
+          </Button>
           <CalendarIcon className="w-4 h-4 text-muted-foreground ml-2" />
           <select
             value={selectedMonth}

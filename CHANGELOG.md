@@ -5,6 +5,8 @@
 - **Eigene Einnahmen-Tabelle:** Neue dedizierte Collection `shop_earnings` fuer Shop-Umsaetze eingebunden (inkl. `month_key`, `90%` und `10%` Split pro Transaktion).
 - **Admin-Auswertung umgestellt:** `src/app/admin/shop-earnings/page.tsx` liest nun aus `shop_earnings` statt `stripe_transactions`.
 - **Regeln erweitert:** Firestore-Regel fuer `shop_earnings` hinzugefuegt (`read` nur fuer Admin-Rollen, `write` gesperrt fuer Clients).
+- **Historische Kaeufe nachtragen:** Neue Callable Function `backfillShopEarnings` migriert bestehende `stripe_transactions` in `shop_earnings`.
+- **Admin-Trigger:** In der Admin-Seite gibt es nun den Button **Altkäufe importieren**, um den Backfill einmalig sicher auszufuehren.
 
 ## [1.0.23] - 2026-03-30
 - **Shop Visual Masking:** Visual-Bereich der Bundle-Karten hat jetzt einen dezenten Rahmen mit Innen-Schatten.
