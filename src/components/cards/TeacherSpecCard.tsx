@@ -13,11 +13,11 @@ interface TeacherSpecCardProps {
   styleVariant?: CardStyle;
 }
 
-export const TeacherSpecCard: React.FC<TeacherSpecCardProps> = ({ 
+export const TeacherSpecCard = React.memo(({ 
   data, 
   className, 
   styleVariant = 'modern-flat'
-}) => {
+}: TeacherSpecCardProps) => {
   const isBlckShiny = data.variant === 'black_shiny_holo';
   const isShiny = data.variant === 'shiny';
   const isGlass = data.variant === 'holo';
@@ -27,7 +27,7 @@ export const TeacherSpecCard: React.FC<TeacherSpecCardProps> = ({
       case 'modern-flat':
         return {
           card: cn(
-            "transition-all rounded-[10cqw]",
+            "transition-all rounded-[3.5cqw]",
             !isBlckShiny && !isShiny && "border-black shadow-[2cqw_2cqw_0px_0px_rgba(0,0,0,1)] border-[0.8cqw]",
             isShiny && "shadow-[0_0_10px_rgba(255,255,255,0.4)] border-slate-300 border-[1cqw]",
             isBlckShiny && "shadow-[0_0_8cqw_rgba(147,51,234,0.5)] border-purple-500/50 border-[1cqw]"
@@ -48,7 +48,7 @@ export const TeacherSpecCard: React.FC<TeacherSpecCardProps> = ({
       
       default:
         return {
-          card: "border-white/40 shadow-2xl backdrop-blur-xl border-[2cqw] rounded-[10cqw]",
+          card: "border-white/40 shadow-2xl backdrop-blur-xl border-[2cqw] rounded-[3.5cqw]",
           header: "text-white",
           text: "text-white font-sans font-black leading-[0.9]",
           bgOverlay: "bg-white/10",
@@ -150,4 +150,20 @@ export const TeacherSpecCard: React.FC<TeacherSpecCardProps> = ({
       </div>
     </div>
   );
-};
+}, (prevProps, nextProps) => {
+  return (
+    prevProps.className === nextProps.className &&
+    prevProps.styleVariant === nextProps.styleVariant &&
+    prevProps.data.id === nextProps.data.id &&
+    prevProps.data.name === nextProps.data.name &&
+    prevProps.data.hp === nextProps.data.hp &&
+    prevProps.data.rarity === nextProps.data.rarity &&
+    prevProps.data.variant === nextProps.data.variant &&
+    prevProps.data.description === nextProps.data.description &&
+    prevProps.data.cardNumber === nextProps.data.cardNumber &&
+    prevProps.data.color === nextProps.data.color &&
+    JSON.stringify(prevProps.data.attacks) === JSON.stringify(nextProps.data.attacks)
+  );
+});
+
+TeacherSpecCard.displayName = 'TeacherSpecCard';

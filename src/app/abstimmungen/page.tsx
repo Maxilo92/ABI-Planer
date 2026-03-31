@@ -5,18 +5,18 @@ import { db } from '@/lib/firebase'
 import { collection, query, where, orderBy, onSnapshot, getDocs, doc, updateDoc } from 'firebase/firestore'
 import { useAuth } from '@/context/AuthContext'
 import { Card, CardContent } from '@/components/ui/card'
-import { BarChart2, Loader2 } from 'lucide-react'
+import { BarChart2, Loader2, Sparkles } from 'lucide-react'
 import { PollList } from '@/components/dashboard/PollList'
-import { TeacherRarityVoting } from '@/components/dashboard/TeacherRarityVoting'
+import { CardProposalForm } from '@/components/dashboard/CardProposalForm'
 import { AddPollDialog } from '@/components/modals/AddPollDialog'
 import { Poll, PollOption, PollVote } from '@/types/database'
 import { ProtectedSystemGate } from '@/components/ui/ProtectedSystemGate'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 export default function PollsPage() {
   const { user, profile, loading: authLoading } = useAuth()
   const [polls, setPolls] = useState<Poll[]>([])
   const [loading, setLoading] = useState(true)
-  const [teacherPollFinished, setTeacherPollFinished] = useState(false)
 
   useEffect(() => {
     let isSubscribed = true;
@@ -134,44 +134,47 @@ export default function PollsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Umfragen</h1>
-          <p className="text-muted-foreground">Stimme über wichtige Entscheidungen ab.</p>
+          <h1 className="text-3xl font-bold tracking-tight">Umfragen & Ideen</h1>
+          <p className="text-muted-foreground">Stimme ab oder gestalte das Lehrer-Album mit.</p>
         </div>
         {isPlanner && <AddPollDialog />}
       </div>
 
-      <div className="grid grid-cols-1 gap-8">
-        {/* Featured Teacher Poll at the top if not finished */}
-        {!teacherPollFinished && (
-          <div className="relative group">
-             {/* Background ambient glow matching standard width */}
-             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[110%] h-[120%] bg-primary/5 blur-3xl rounded-full -z-10 opacity-60" />
-             <TeacherRarityVoting onStatusChange={setTeacherPollFinished} />
-          </div>
-        )}
+      <Tabs defaultValue="polls" className="w-full space-y-6">
+        <TabsList className="w-fit">
+          <TabsTrigger value="polls" className="gap-2">
+            <BarChart2 className="h-4 w-4" />
+            Umfragen
+          </TabsTrigger>
+          <TabsTrigger value="proposals" className="gap-2">
+            <Sparkles className="h-4 w-4" />
+            Kreativ-Labor
+          </TabsTrigger>
+        </TabsList>
 
-        {/* Regular Polls (Sorted) */}
-        {sortedPolls.length === 0 ? (
-          <Card className="border-dashed border-2">
-            <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-              <BarChart2 className="h-12 w-12 text-muted-foreground mb-4 opacity-20" />
-              <h3 className="text-xl font-bold">Aktuell keine aktiven Umfragen</h3>
-              <p className="text-muted-foreground max-w-xs mt-2">
-                Sobald es wichtige Entscheidungen gibt (z.B. Motto oder Menü), findest du sie hier.
-              </p>
-            </CardContent>
-          </Card>
-        ) : (
-          <PollList polls={sortedPolls} userId={user?.uid || ''} canVote={canVote} canManage={isPlanner} />
-        )}
-
-        {/* Finished Teacher Poll at the very bottom */}
-        {teacherPollFinished && (
-          <div className="opacity-80 scale-[0.98] transition-all hover:scale-100">
-             <TeacherRarityVoting onStatusChange={setTeacherPollFinished} />
+        <TabsContent value="polls" className="space-y-8 outline-none">
+          <div className="grid grid-cols-1 gap-8">
+            {/* Regular Polls (Sorted) */}
+            {sortedPolls.length === 0 ? (
+              <Card className="border-dashed border-2">
+                <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+                  <BarChart2 className="h-12 w-12 text-muted-foreground mb-4 opacity-20" />
+                  <h3 className="text-xl font-bold">Aktuell keine aktiven Umfragen</h3>
+                  <p className="text-muted-foreground max-w-xs mt-2">
+                    Sobald es wichtige Entscheidungen gibt (z.B. Motto oder Menü), findest du sie hier.
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              <PollList polls={sortedPolls} userId={user?.uid || ''} canVote={canVote} canManage={isPlanner} />
+            )}
           </div>
-        )}
-      </div>
+        </TabsContent>
+
+        <TabsContent value="proposals" className="outline-none">
+          <CardProposalForm />
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }

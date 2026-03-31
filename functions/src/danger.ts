@@ -7,7 +7,7 @@ import { authenticator } from "otplib";
  * Authorize a danger action with 2FA and create a delayed action.
  */
 export const authorizeDangerAction = onCall({
-  cors: ["https://abi-planer-27.de", "https://abi-planer-75319.web.app", "https://abi-planer-75319.firebaseapp.app"],
+  cors: true,
   region: "europe-west3",
 }, async (request) => {
   // 1. Verify Authentication

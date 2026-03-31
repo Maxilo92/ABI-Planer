@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
-import { User, Mail, Shield, Calendar, Users } from 'lucide-react'
+import { User, Mail, Shield, Calendar, Users, ShieldCheck } from 'lucide-react'
 import { format } from 'date-fns'
 import { de } from 'date-fns/locale'
 import { useEffect, useState } from 'react'
@@ -289,10 +289,19 @@ export default function ProfilePage() {
                 <Shield className="h-5 w-5 text-muted-foreground" />
               </div>
               <div className="flex-1">
-                <p className="text-sm font-medium leading-none">Mitglied-Status</p>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {profile.is_approved ? 'Verifiziertes Mitglied' : 'Wartet auf Freischaltung'}
-                </p>
+                <p className="text-sm font-medium leading-none">Verifizierungs-Status</p>
+                <div className="mt-1">
+                  {user.emailVerified ? (
+                    <Badge variant="secondary" className="gap-1.5 bg-emerald-500/10 text-emerald-600 border-emerald-500/20 hover:bg-emerald-500/20">
+                      <ShieldCheck className="h-3.5 w-3.5" />
+                      Verifiziertes Mitglied
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="text-muted-foreground">
+                      Wartet auf Verifizierung
+                    </Badge>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -380,17 +389,15 @@ export default function ProfilePage() {
               </Button>
             </div>
 
-            {['admin', 'admin_main', 'admin_co'].includes(profile.role) && (
-              <div className="space-y-3 border-t pt-4">
-                <Label>Zwei-Faktor-Authentisierung (2FA)</Label>
-                <p className="text-sm text-muted-foreground">
-                  Schützen Sie Ihr Administratorkonto zusätzlich mit einer Authenticator-App.
-                </p>
-                <div className="w-full sm:w-auto">
-                  <TOTPSetup profile={profile} />
-                </div>
+            <div className="space-y-3 border-t pt-4">
+              <Label>Zwei-Faktor-Authentisierung (2FA)</Label>
+              <p className="text-sm text-muted-foreground">
+                Schütze dein Konto zusätzlich mit einer Authenticator-App (z.B. Google Authenticator).
+              </p>
+              <div className="w-full sm:w-auto">
+                <TOTPSetup profile={profile} />
               </div>
-            )}
+            </div>
 
             <div className="space-y-3 border-t pt-4">
               <Label className="text-destructive">Konto löschen</Label>

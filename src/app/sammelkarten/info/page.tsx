@@ -11,9 +11,9 @@ import { Button } from '@/components/ui/button'
 import { ChevronLeft, Scale, ShieldCheck, AlertCircle, Info, CreditCard, Heart } from 'lucide-react'
 
 const DEFAULT_RARITY_WEIGHTS = [
-  { common: 0.8, rare: 0.15, epic: 0.04, mythic: 0.008, legendary: 0.002 },
-  { common: 0.6, rare: 0.25, epic: 0.11, mythic: 0.03, legendary: 0.01 },
-  { common: 0.4, rare: 0.35, epic: 0.17, mythic: 0.06, legendary: 0.02 }
+  { common: 0.8, rare: 0.15, epic: 0.04, mythic: 0.008, legendary: 0.0015, iconic: 0.0005 },
+  { common: 0.6, rare: 0.25, epic: 0.11, mythic: 0.03, legendary: 0.008, iconic: 0.002 },
+  { common: 0.4, rare: 0.35, epic: 0.17, mythic: 0.06, legendary: 0.015, iconic: 0.005 }
 ]
 
 const DEFAULT_VARIANTS_PROBABILITIES = {

@@ -20,6 +20,7 @@ const getRarityColor = (rarity: string) => {
     case 'epic': return 'bg-purple-600';
     case 'mythic': return 'bg-red-600';
     case 'legendary': return 'bg-amber-500 text-black';
+    case 'iconic': return 'bg-indigo-950 text-white font-black ring-2 ring-amber-500';
     default: return 'bg-slate-500';
   }
 };
@@ -39,7 +40,8 @@ export const ProbabilityInfo: React.FC<ProbabilityInfoProps> = ({
     rare: 0,
     epic: 0,
     mythic: 0,
-    legendary: 0
+    legendary: 0,
+    iconic: 0
   };
 
   rarityWeights.forEach(slot => {

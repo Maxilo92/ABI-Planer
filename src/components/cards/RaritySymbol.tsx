@@ -50,6 +50,17 @@ export const RaritySymbol: React.FC<RaritySymbolProps> = ({
           />
         );
       
+      case 'iconic':
+        return (
+          <path 
+            d="M10,80 L90,80 L90,35 L70,55 L50,20 L30,55 L10,35 Z" 
+            fill="#000000"
+            stroke="#D4AF37"
+            strokeWidth="6"
+            strokeLinejoin="round"
+          />
+        );
+      
       default:
         return null;
     }

@@ -120,6 +120,8 @@ const getRarityColor = (rarity: TeacherRarity) => {
       return "text-red-500";
     case "legendary":
       return "text-amber-500";
+    case "iconic":
+      return "text-amber-200 dark:text-amber-400 font-black";
     default:
       return "";
   }
@@ -137,6 +139,8 @@ const getRarityBadge = (rarity: TeacherRarity) => {
       return "bg-red-500";
     case "legendary":
       return "bg-amber-500";
+    case "iconic":
+      return "bg-neutral-950 border border-amber-500/50 text-amber-500";
     default:
       return "";
   }
@@ -154,6 +158,8 @@ const getRarityLabel = (rarity: TeacherRarity) => {
       return "Mythisch";
     case "legendary":
       return "Legendär";
+    case "iconic":
+      return "Ikonen";
     default:
       return rarity;
   }
@@ -171,6 +177,8 @@ const getRarityGlow = (rarity: TeacherRarity) => {
       return "shadow-[0_0_35px_rgba(220,38,38,0.7)]";
     case "legendary":
       return "shadow-[0_0_40px_rgba(245,158,11,0.8)]";
+    case "iconic":
+      return "shadow-[0_0_50px_rgba(251,191,36,0.6)]";
     default:
       return "";
   }
@@ -188,17 +196,20 @@ function getTeacherRarityHex(rarity: TeacherRarity) {
       return "#dc2626";
     case "legendary":
       return "#f59e0b";
+    case "iconic":
+      return "#000000";
     default:
       return "#64748b";
   }
 }
 
 const RARITY_MAP: Record<string, number> = {
-  legendary: 0,
-  mythic: 1,
-  epic: 2,
-  rare: 3,
-  common: 4,
+  iconic: 0,
+  legendary: 1,
+  mythic: 2,
+  epic: 3,
+  rare: 4,
+  common: 5,
 };
 
 const VARIANT_MAP: Record<string, number> = {
@@ -276,6 +287,12 @@ function TeacherCardDetail({
   const [activeCard, setActiveCard] = useState<"visual" | "spec">("visual");
   const [direction, setDirection] = useState(0);
 
+  // Sync state when teacher/userData changes during navigation
+  useEffect(() => {
+    setDisplayVariant(getBestVariant(userData?.variants));
+    setActiveCard("visual");
+  }, [teacher.id, teacher.name, userData]);
+
   const cardData = mapTeacherToCardData(
     teacher,
     userData,
@@ -331,16 +348,19 @@ function TeacherCardDetail({
               else if (info.offset.x > 70) handlePrev();
             }}
             className="w-full h-full cursor-pointer touch-none"
-            onClick={() =>
-              setActiveCard(activeCard === "visual" ? "spec" : "visual")
-            }
+            onClick={() => {
+              if (isOwned) {
+                setActiveCard(activeCard === "visual" ? "spec" : "visual");
+              }
+            }}
           >
             {activeCard === "visual" ? (
               <TeacherCard
                 data={cardData}
                 className="w-full h-auto"
                 styleVariant="modern-flat"
-                isFlippedExternally={true}
+                isFlippedExternally={isOwned}
+                isLocked={!isOwned}
                 interactive={false}
               />
             ) : (
@@ -394,13 +414,15 @@ function TeacherCardDetail({
               activeCard === "visual" ? "bg-white w-6" : "bg-white/20 w-3",
             )}
           />
-          <button
-            onClick={() => setActiveCard("spec")}
-            className={cn(
-              "h-1 rounded-full transition-all",
-              activeCard === "spec" ? "bg-white w-6" : "bg-white/20 w-3",
-            )}
-          />
+          {isOwned && (
+            <button
+              onClick={() => setActiveCard("spec")}
+              className={cn(
+                "h-1 rounded-full transition-all",
+                activeCard === "spec" ? "bg-white w-6" : "bg-white/20 w-3",
+              )}
+            />
+          )}
         </div>
       </div>
 
@@ -1009,9 +1031,10 @@ export function TeacherAlbum({
                     <DropdownMenuLabel className="text-[10px] font-black uppercase tracking-widest opacity-50 px-2 py-1">
                       Seltenheit
                     </DropdownMenuLabel>
-                    <div className="grid grid-cols-5 gap-1 px-1">
+                    <div className="grid grid-cols-6 gap-1 px-1">
                       {(
                         [
+                          "iconic",
                           "legendary",
                           "mythic",
                           "epic",

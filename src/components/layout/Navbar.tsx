@@ -31,10 +31,12 @@ export function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
   const [openSubmenus, setOpenSubmenus] = useState<Record<string, boolean>>({})
   const [currentSearch, setCurrentSearch] = useState('')
-  const { profile, loading } = useAuth()
+  const { user, profile, loading } = useAuth()
   const notifications = useNotifications()
   const router = useRouter()
   const pathname = usePathname()
+
+  const isVerified = user?.emailVerified || false
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -374,8 +376,13 @@ export function Navbar() {
                     <Avatar size="default">
                       <AvatarFallback className="bg-primary/10 text-primary font-bold">{userInitial}</AvatarFallback>
                     </Avatar>
-                    <div className="min-w-0">
-                      <div className="font-semibold leading-none truncate">{profile.full_name}</div>
+                    <div className="min-w-0 flex-1">
+                      <div className="font-semibold leading-none truncate flex items-center gap-1.5">
+                        {profile.full_name}
+                        {isVerified && (
+                          <ShieldCheck className="h-4 w-4 text-emerald-500 shrink-0" />
+                        )}
+                      </div>
                       <div className="text-xs text-muted-foreground uppercase mt-1">{getRoleLabel(profile.role)}</div>
                     </div>
                   </Link>
@@ -432,12 +439,17 @@ export function Navbar() {
           <div className="p-4 border-t">
             {profile ? (
               <>
-                <Link href="/profil" className="flex items-center gap-3 rounded-md px-3 py-2.5 hover:bg-secondary transition-colors">
+                  <Link href="/profil" className="flex items-center gap-3 rounded-md px-3 py-2.5 hover:bg-secondary transition-colors">
                   <Avatar size="default">
                     <AvatarFallback className="bg-primary/10 text-primary font-bold">{userInitial}</AvatarFallback>
                   </Avatar>
-                  <div className="min-w-0">
-                    <div className="text-sm font-semibold truncate">{profile.full_name}</div>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-sm font-semibold truncate flex items-center gap-1.5">
+                      {profile.full_name}
+                      {isVerified && (
+                        <ShieldCheck className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                      )}
+                    </div>
                     <div className="text-[10px] text-muted-foreground uppercase mt-0.5">{getRoleLabel(profile.role)}</div>
                   </div>
                 </Link>

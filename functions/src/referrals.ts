@@ -40,6 +40,18 @@ async function processReferralReward(uid: string, after: Profile) {
         return { success: false, reason: "no_referrer" };
     }
 
+    // --- SECURITY CHECK: EMAIL VERIFICATION ---
+    try {
+        const user = await admin.auth().getUser(uid);
+        if (!user.emailVerified) {
+            console.log(`[Referral] User ${uid} is not email verified, aborting reward distribution.`);
+            return { success: false, reason: "email_not_verified" };
+        }
+    } catch (authErr) {
+        console.error(`[Referral] Error fetching auth user ${uid}:`, authErr);
+        return { success: false, reason: "auth_error" };
+    }
+
     console.log(`[Referral] Starting process for user ${uid}. Resolving code: "${referralCode}"`);
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);

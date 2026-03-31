@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
 import { getFirebaseAuth, getFirebaseDb, getFirebaseFunctions } from '@/lib/firebase'
-import { onAuthStateChanged, signOut, User } from 'firebase/auth'
+import { onAuthStateChanged, signOut, User, sendEmailVerification } from 'firebase/auth'
 import { doc, onSnapshot, updateDoc, serverTimestamp } from 'firebase/firestore'
 import { httpsCallable } from 'firebase/functions'
 
@@ -16,24 +16,94 @@ interface AuthContextType {
   user: User | null
   profile: Profile | null
   loading: boolean
+  is2FAVerified: boolean
+  is2FAInitialCheckDone: boolean
+  resendVerification: () => Promise<void>
+  refreshAuth: () => Promise<void>
+  set2FAVerified: (val: boolean) => void
 }
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
   profile: null,
   loading: true,
+  is2FAVerified: false,
+  is2FAInitialCheckDone: false,
+  resendVerification: async () => {},
+  refreshAuth: async () => {},
+  set2FAVerified: () => {},
 })
 
 export const useAuth = () => useContext(AuthContext)
 
-export const AuthProvider = ({ children }: { children: ReactNode }) => {
+export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
+  const [is2FAVerified, setIs2FAVerifiedState] = useState(false)
+  const [is2FAInitialCheckDone, setIs2FAInitialCheckDone] = useState(false)
+
+  // Load 2FA status from sessionStorage on mount/init
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const stored = sessionStorage.getItem('is_2fa_verified')
+      if (stored === 'true') {
+        setIs2FAVerifiedState(true)
+      }
+      setIs2FAInitialCheckDone(true)
+    }
+  }, [])
+
+  const set2FAVerified = (val: boolean) => {
+    setIs2FAVerifiedState(val)
+    if (typeof window !== 'undefined') {
+      if (val) {
+        sessionStorage.setItem('is_2fa_verified', 'true')
+      } else {
+        sessionStorage.removeItem('is_2fa_verified')
+      }
+    }
+  }
+
+  const resendVerification = async () => {
+    const currentUser = auth.currentUser
+    if (currentUser && !currentUser.emailVerified) {
+      await sendEmailVerification(currentUser)
+    }
+  }
+
+  const refreshAuth = async () => {
+    const currentUser = auth.currentUser
+    if (currentUser) {
+      await currentUser.reload()
+      setUser(auth.currentUser)
+    }
+  }
+
+  // Sync email verification status to Firestore is_approved field
+  useEffect(() => {
+    if (loading || !user || !profile) return
+    
+    if (user.emailVerified && !profile.is_approved) {
+      console.log('[AuthContext] Syncing emailVerified to profile.is_approved')
+      updateDoc(doc(db, 'profiles', user.uid), { 
+        is_approved: true,
+        updated_at: serverTimestamp()
+      }).catch(err => {
+        console.error('[AuthContext] Failed to sync verification status:', err)
+      })
+    }
+  }, [user?.emailVerified, profile?.is_approved, loading])
 
   // Referral claiming logic: Check upon login if a referral needs to be claimed
   useEffect(() => {
     if (loading || !user || !profile || !profile.referred_by || profile.is_referral_claimed) {
+      return
+    }
+
+    // MANDATORY: Skip reward trigger if email is not verified
+    if (!user.emailVerified) {
+      console.log('[AuthContext] Skipping referral claim: Email not verified.')
       return
     }
 
@@ -53,7 +123,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
 
     triggerClaim()
-  }, [user?.uid, profile?.is_referral_claimed, profile?.referred_by, loading])
+  }, [user?.uid, user?.emailVerified, profile?.is_referral_claimed, profile?.referred_by, loading])
 
   useEffect(() => {
     let profileUnsubscribe: (() => void) | null = null;
@@ -190,7 +260,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [user?.uid])
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      profile, 
+      loading, 
+      is2FAVerified, 
+      is2FAInitialCheckDone,
+      resendVerification, 
+      refreshAuth, 
+      set2FAVerified 
+    }}>
       {children}
     </AuthContext.Provider>
   )

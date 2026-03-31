@@ -229,6 +229,7 @@ const toSafeInt = (value: unknown): number => {
  * Legal: Enthält Hinweis auf Widerrufsverzicht bei digitalen Gütern.
  */
 export const createStripeCheckoutSession = onCall({
+  cors: true,
   maxInstances: 10,
   memory: "256MiB",
   region: "europe-west3",
@@ -337,6 +338,7 @@ export const createStripeCheckoutSession = onCall({
  * Legal: Bietet Audit-Log in Firestore.
  */
 export const stripeWebhook = onRequest({
+  cors: true,
   region: "europe-west3",
   secrets: ["STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET"],
 }, async (req, res) => {
@@ -552,6 +554,7 @@ export const stripeWebhook = onRequest({
  * Nur fuer Admin-Rollen aufrufbar.
  */
 export const backfillShopEarnings = onCall({
+  cors: true,
   maxInstances: 1,
   memory: "256MiB",
   region: "europe-west3",
@@ -685,6 +688,7 @@ export const backfillShopEarnings = onCall({
  * Cloud Function zum (Demo-)Kauf von Boostern mit monatlichem Limit.
  */
 export const purchaseBoosters = onCall({ 
+  cors: true,
   maxInstances: 10,
   memory: "256MiB",
   region: "europe-west3",
@@ -794,6 +798,7 @@ export const purchaseBoosters = onCall({
  * Zieht Karten basierend auf gewichteten Zufallswerten.
  */
 export const openBooster = onCall({
+  cors: true,
   maxInstances: 10,
   memory: "256MiB",
   region: "europe-west3",
@@ -870,7 +875,7 @@ export const openBooster = onCall({
         // Jedes Pack enthält so viele Karten wie rarityWeights definiert sind (normalerweise 3)
         for (const weights of rarityWeights) {
           // 1. Seltenheit rollen
-          const rarities = ["common", "rare", "epic", "mythic", "legendary"];
+          const rarities = ["common", "rare", "epic", "mythic", "legendary", "iconic"];
           const totalWeight = rarities.reduce((sum, r) => sum + (Number(weights[r]) || 0), 0);
           let randomRarityValue = Math.random() * totalWeight;
           let selectedRarity = "common";

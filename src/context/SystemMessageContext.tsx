@@ -4,11 +4,11 @@ import React, { createContext, useContext, useState, useCallback, ReactNode, use
 import { SystemMessage } from '@/types/systemMessages'
 import { toast } from 'sonner'
 import { useAuth } from './AuthContext'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { auth, db } from '@/lib/firebase'
 import { signOut } from 'firebase/auth'
 import { collection, query, where, onSnapshot, doc, deleteDoc } from 'firebase/firestore'
-import { DelayedAction, CustomPopupMessage } from '@/types/database'
+import { DelayedAction, CustomPopupMessage, Settings } from '@/types/database'
 
 const FALLBACK_MESSAGES = [
   "Diese Webseite nutzt keine Cookies. Aber hast du schon mal drüber nachgedacht, echte Cookies in der Schule zu verkaufen, um Geld für die Abikasse zu sammeln?",
@@ -30,12 +30,13 @@ const PARODY_AD_MESSAGES = [
   'Werbeblock Ende: Wenn jeder im Team eine Mini-Aufgabe übernimmt, wird der Abiball plötzlich machbar.'
 ]
 
-const AUTH_ROUTES = ['/login', '/register', '/waiting', '/unauthorized']
+const AUTH_ROUTES = ['/login', '/register', '/waiting', '/unauthorized', '/maintenance']
 
 interface SystemMessageContextType {
   activeMessages: SystemMessage[]
   pushMessage: (msg: Omit<SystemMessage, 'id' | 'createdAt'> & { id?: string }) => string
   dismissMessage: (id: string) => void
+  maintenance: Settings['maintenance'] | null
 }
 
 const SystemMessageContext = createContext<SystemMessageContextType | undefined>(undefined)
@@ -52,6 +53,8 @@ export const SystemMessageProvider = ({ children }: { children: ReactNode }) => 
   const [activeMessages, setActiveMessages] = useState<SystemMessage[]>([])
   const { user, profile, loading } = useAuth()
   const pathname = usePathname()
+  const router = useRouter()
+  const [maintenance, setMaintenance] = useState<Settings['maintenance'] | null>(null)
 
   // Diagnostic: Log initialization
   useEffect(() => {
@@ -124,6 +127,8 @@ export const SystemMessageProvider = ({ children }: { children: ReactNode }) => 
     const unsubGlobal = onSnapshot(globalDocRef, (docSnap) => {
       if (!docSnap.exists()) return
       const settings = docSnap.data()
+      
+      setMaintenance(settings.maintenance || null)
       
       const isAuthRoute = AUTH_ROUTES.includes(pathname)
 
@@ -404,11 +409,46 @@ export const SystemMessageProvider = ({ children }: { children: ReactNode }) => 
     }
   }, [loading, profile?.timeout_until, profile?.timeout_reason, pushMessage, dismissMessage])
 
+  // --- Maintenance Logic ---
+  useEffect(() => {
+    if (loading || typeof window === 'undefined') return
+    const userRole = profile?.role || ''
+    const isAdmin = ['admin_main', 'admin', 'admin_co'].includes(userRole)
+    
+    const checkMaintenance = () => {
+      if (!maintenance) return
+
+      const now = new Date()
+      const startTime = maintenance.start ? new Date(maintenance.start) : null
+      const isActuallyActive = maintenance.active || (startTime && now >= startTime)
+
+      if (isActuallyActive) {
+        const isMaintenancePath = pathname === '/maintenance'
+        const isLoginPath = pathname === '/login'
+        const isNewsPath = pathname?.startsWith('/news/')
+
+        if (!isAdmin && !isMaintenancePath && !isLoginPath && !isNewsPath) {
+          // Use location.href to force a full reload and stop all app logic
+          window.location.href = '/maintenance'
+        }
+      } else {
+        if (pathname === '/maintenance') {
+          window.location.href = '/'
+        }
+      }
+    }
+
+    checkMaintenance()
+    const interval = setInterval(checkMaintenance, 10000)
+    return () => clearInterval(interval)
+  }, [loading, maintenance, profile?.role, pathname])
+
   const contextValue = useMemo(() => ({
     activeMessages,
     pushMessage,
-    dismissMessage
-  }), [activeMessages, pushMessage, dismissMessage])
+    dismissMessage,
+    maintenance
+  }), [activeMessages, pushMessage, dismissMessage, maintenance])
 
   return (
     <SystemMessageContext.Provider value={contextValue}>

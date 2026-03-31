@@ -37,8 +37,11 @@ export function MemberItem({
         </Avatar>
         <div className="flex flex-col min-w-0">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-medium truncate">
+            <span className="text-sm font-medium truncate flex items-center gap-1.5">
               {member.full_name || 'Unbekannter Nutzer'}
+              {member.is_approved && (
+                <ShieldCheck className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+              )}
             </span>
             {isLeader && (
               <Badge variant="secondary" className="h-5 px-1.5 gap-1 text-[10px] font-bold uppercase tracking-wider bg-primary/10 text-primary border-primary/20">

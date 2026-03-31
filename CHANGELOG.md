@@ -1,5 +1,236 @@
 # Changelog
 
+## [1.0.81] - 2026-03-31
+- **Fix (Maintenance Page):** Behebung eines kritischen Hydration-Fehlers durch verschachtelte HTML-Links.
+    - **DOM Structure:** Die News-Vorschau auf der Wartungsseite nutzt nun eine bereinigte Text-Vorschau anstelle von gerendertem Markdown, um unzulässige Link-in-Link Verschachtelungen zu vermeiden.
+
+## [1.0.80] - 2026-03-31
+- **Ops (Update):** Vorbereitung des Systems für die neuen Sammelkarten-Features (Ikonen-Glanz, Inventar-Bereinigung & Compensation-Logik).
+- **Versioning:** Inkrementierung der Projektversion für das anstehende Deployment der Cloud Functions.
+
+## [1.0.79] - 2026-03-31
+- **Feature (Sammelkarten Management):** Einführung eines fairen Seltenheits-Änderungssystems.
+    - **Inventory Sync:** Bei einer Änderung der Seltenheit eines Lehrers wird dieser automatisch aus den Inventaren aller Schüler entfernt, um Konsistenz zu wahren.
+    - **Fair Compensation:** Betroffene Nutzer werden automatisch entschädigt und erhalten pro entfernter Karte einen Gratis-Booster-Pack gutgeschrieben.
+    - **Admin Safety:** Ein Bestätigungsdialog informiert den Admin vorab über die Auswirkungen und den Kompensationsprozess.
+
+## [1.0.78] - 2026-03-31
+
+- **Feature (Maintenance Mode):** News sind nun während der Wartungspause vollständig aufrufbar.
+    - **Interactivity:** News-Einträge auf der Wartungsseite sind jetzt verlinkt und führen zur vollständigen Detailseite.
+    - **Layout Adaptation:** Die News-Detailseiten werden während der Wartung in einem vereinfachten Layout (ohne App-Navigation) angezeigt.
+    - **Navigation:** Der Zurück-Button auf der News-Seite führt während der Wartung automatisch zurück zur Wartungsseite.
+
+## [1.0.79] - 2026-03-31
+- **Fix (Maintenance Mode):** Fehlerbehebung beim Admin-Login während einer aktiven Wartungspause.
+    - **Login Access:** Die Route `/login` wurde von der automatischen Weiterleitung auf die Wartungsseite ausgeschlossen.
+    - **Admin Flow:** Admins können sich nun auch bei aktiver Wartung über den Button auf der Wartungsseite anmelden, ohne sofort wieder auf die Wartungsseite zurückgeworfen zu werden.
+
+## [1.0.78] - 2026-03-31
+- **Fix (Database):** Behebung von Firestore-Fehlern durch `undefined` Werte beim Speichern.
+    - **Data Sanitization:** Implementierung einer rekursiven `sanitizeDataForFirestore` Funktion, die ungültige Felder vor dem Speichervorgang bereinigt.
+    - **Stability:** Höhere Robustheit des Sammelkarten-Managers gegenüber unvollständigen oder migrierten Datensätzen.
+
+## [1.0.77] - 2026-03-31
+- **Fix (Admin UX):** Stabilisierung des automatischen Speicherns im Sammelkarten-Manager.
+    - **Reliability:** Der Autosave-Timer wird nicht mehr bei jedem Tastendruck zurückgesetzt. Änderungen werden nun zuverlässig 10 Sekunden nach der letzten Interaktion im Hintergrund gespeichert.
+    - **Debugging:** Hinzufügen von Error-Logging für fehlgeschlagene Speicherversuche.
+
+## [1.0.76] - 2026-03-31
+- **Upgrade (Card Design):** Exklusives Design für die "IKONISCH"-Seltenheit.
+    - **Visual FX:** Einführung eines luxuriösen "Golden Sparkle" Overlays mit animiertem Sternenstaub und dynamischen Lichtreflexen.
+    - **Differentiation:** Klare visuelle Abgrenzung von der "Secret Rare" (Black Shiny) durch permanente, edle Gold-Effekte über der gesamten Karte.
+
+## [1.0.75] - 2026-03-31
+- **Feature (Admin UI):** Lehrerliste im Sammelkarten-Manager jetzt sortierbar.
+    - **Sortieroptionen:** Einführung von Sortierfunktionen für Name (A-Z, Z-A) und Seltenheit (aufsteigend, absteigend).
+    - **UI Integration:** Kompakte Sortier-Leiste mit intuitiven Icons direkt über der Lehrerliste.
+
+## [1.0.74] - 2026-03-31
+- **Fix (Logging):** Behebung von Fehlern im Action-Logging-System.
+    - **Parameter-Korrektur:** Fix der `logAction` Aufrufe im Sammelkarten-Manager (falsche Parameter-Reihenfolge führte zu Firestore-Fehlern).
+    - **Type-Safety:** Ergänzung der neuen Action-Typen `CLEANUP_INVENTORIES` und `CLEANUP_POOL` im globalen Logging-System.
+
+## [1.0.73] - 2026-03-31
+- **Fix (Cloud Function):** Fehlerbehebung beim `FieldValue` Import in der globalen Inventar-Bereinigung.
+    - **CORS & Reliability:** Korrektur des fehlerhaften `admin.firestore.FieldValue` Aufrufs in `cleanupNonExistentTeachers` zur Vermeidung interner Fehler beim Preflight.
+
+## [1.0.72] - 2026-03-31
+- **Fix (Admin UI):** Korrektur der Seltenheits-Anzeige im Sammelkarten-Manager.
+    - **Reihenfolge:** Einführung einer festen Sortierung (`RARITY_ORDER`) für Drop-Rates, um eine konsistente Darstellung von "Gewöhnlich" bis "Ikonisch" zu gewährleisten.
+    - **Vollständigkeit:** Sicherstellung, dass die neue Seltenheit "IKONISCH" auch dann in den Einstellungen erscheint, wenn sie in den Bestandsdaten der Datenbank noch nicht initialisiert wurde.
+
+## [1.0.71] - 2026-03-31
+- **Feature (Sammelkarten):** Vollständige Integration der neuen Seltenheit "IKONISCH".
+    - **Drop Rates:** Aktivierung von "Ikonisch"-Drops in den Standard- und Godpack-Gewichten (Cloud Function & Admin Panel).
+    - **Transparenz:** Aktualisierung der Wahrscheinlichkeitsanzeige in den Karten-Informationen für Schüler.
+    - **Systemweite Logik:** Einbindung in die `openBooster` Cloud Function und die globalen Seltenheits-Limits.
+    - **UI:** Konsistente Darstellung der neuen Seltenheit in allen Verwaltungs- und Anzeige-Komponenten.
+
+## [1.0.70] - 2026-03-31
+- **Admin Tool (Sammelkarten):** Implementierung einer globalen Inventar-Bereinigung.
+    - **Cleanup Inventories:** Neuer Button im Sammelkarten-Manager zum Entfernen von nicht mehr existierenden Lehrern aus den Inventaren aller Schüler.
+    - **Cloud Function:** Einführung der `cleanupNonExistentTeachers` Cloud Function zur sicheren und effizienten Verarbeitung großer Datenmengen im Batch-Verfahren.
+    - **UI Enhancement:** Umbenennung des bisherigen "Cleanup" Buttons in "Cleanup Pool" zur besseren Unterscheidung.
+
+## [1.0.69] - 2026-03-31
+- **Fix (Auth & Verification):** Behebung des kritischen Fehlers `user.getIdToken is not a function` beim Senden von Verifizierungs-E-Mails und beim Aktualisieren des Auth-Status.
+    - **Proto-Safe Auth:** Entfernung von fehlerhaftem Object-Spreading des Firebase-User-Objekts im `AuthContext`, welches die internen Methoden des Objekts zerstörte.
+    - **Reliability:** Überarbeitung der `resendVerification` und `refreshAuth` Logik, um direkt auf den aktuellsten `auth.currentUser` zuzugreifen.
+    - **Email Feature:** Bestätigung der Nutzung des nativen Firebase `sendEmailVerification` Features durch den Fix der Client-seitigen Implementierung.
+
+## [1.0.68] - 2026-03-31
+- **Fix (Sammelkarten Preview):** Behebung von Darstellungsfehlern und Performance-Problemen im Lehrer-Edit-Dialog.
+    - **Shape Fix:** Die Karten werden nicht mehr als "Pillen" (elliptisch) dargestellt. Der Border-Radius wurde korrigiert und störende Container-Clippings entfernt.
+    - **Orientation Fix:** Die Art-Karte in der Vorschau wird nun korrekt von vorne angezeigt.
+    - **Performance Optimization:** Drastische Reduzierung des Lags beim Bearbeiten durch konsequente Memoïsierung von `cardData` und der `TeacherSpecCard`-Komponente.
+
+## [1.0.67] - 2026-03-31
+- **Upgrade (Admin UI):** Umfassendes Upgrade des Lehrerpool-Managers für bessere Usability und Performance.
+    - **Live-Vorschau:** Integration einer Echtzeit-Kartenvorschau im Edit-Dialog. Admins sehen sofort, wie die Art- und Spec-Karten im Album aussehen werden.
+    - **Performance-Boost:** Vollständige Entkopplung des Edit-States vom Haupt-Dashboard. Das Tippen im Dialog verzögert nun nicht mehr die gesamte App.
+    - **Optimiertes Rendering:** Einführung memoïsierter Listen-Komponenten (`TeacherList`, `TeacherListItem`) für flüssiges Scrollen und Filtern bei großen Datenmengen.
+    - **Refactoring:** Migration von `getRarityColor` und `getRarityLabel` in zentrale Utilities.
+- **Build-Stabilität:** Bereinigung veralteter Abstimmungs-Komponenten und Optimierung der `tsconfig.json` (Ausschluss von Archiv-Verzeichnissen) zur Beschleunigung des Build-Prozesses.
+
+## [1.0.66] - 2026-03-31
+- **Fix (Admin UI):** Behebung eines `ReferenceError` im Sammelkarten-Manager (`handleSyncRarities is not defined`).
+    - **Cleanup:** Endgültige Entfernung des "Sync Polls" Buttons und aller verbleibenden Logikfragmente des veralteten Teacher-Rarity-Voting-Systems aus dem Admin-Panel.
+    - **UI-Bereinigung:** Entfernung von Live-Voting-Badges im Lehrerpool-Dashboard.
+
+## [1.0.65] - 2026-03-31
+- **Critical Stability Fix (2FA & CORS):** Endgültige Behebung von Preflight-CORS-Fehlern (`Access-Control-Allow-Origin`) in der lokalen Entwicklung.
+    - **Explicit CORS Configuration:** Alle Cloud Functions (MFA, Shop, Danger, Gifts, Referrals) nutzen nun explizit `cors: true` in ihren Definitionen, um globale Einstellungen sicher zu überschreiben und Anfragen von `localhost:3000` zuverlässig zu erlauben.
+    - **Region Alignment:** Alle Funktionen sind nun explizit auf `europe-west3` konfiguriert, passend zur Frontend-Initialisierung.
+
+## [1.0.64] - 2026-03-31
+- **Fix (Admin UI):** Behebung eines Syntaxfehlers im Sammelkarten-Manager, der den Build blockierte.
+
+## [1.0.63] - 2026-03-31
+- **Critical Stability Fix (CORS):** Vollständige Behebung von Preflight-Fehlern (`Access-Control-Allow-Origin`) bei lokalen Tests.
+    - **Global Middleware:** Umstellung der CORS-Handhabung von funktionsspezifischen Definitionen auf eine globale Middleware in `index.ts`. Dies ist die zuverlässigste Methode in Firebase Functions v2.
+    - **Permissive Mode:** Das Backend akzeptiert nun dynamisch Anfragen von autorisierten Frontend-Umgebungen (inkl. `localhost`).
+
+## [1.0.62] - 2026-03-31
+- **Diagnostics Update (2FA & Login):** Erweiterte Fehlerdiagnose zur Behebung des persistenten "internal" Fehlers.
+    - **Enhanced Login Logs:** Die Anmeldeseite loggt nun detailliert jeden Schritt (Auth, Profil-Abruf, 2FA-Check) in die Browser-Konsole.
+    - **Backend Resilience:** Die 2FA-Cloud-Function versucht nun robuster auf die Datenbank zuzugreifen (Fallback von 'abi-data' auf Standard-Instanz).
+    - **Detailed Error Messages:** Im Fehlerfall liefert das Backend nun präzisere Informationen an die App zurück, anstatt eines generischen "internal" Fehlers.
+
+## [1.0.61] - 2026-03-31
+- **Critical Fix (2FA Backend):** Behebung des "internal" Fehlers bei der 2FA-Verifizierung.
+    - **CORS Alignment:** Vervollständigung der `ALLOWED_ORIGINS` um die `.app`-Domain-Endung, um Übereinstimmung mit dem Hosting-Projekt sicherzustellen.
+    - **Safe Initialization:** Explizite Initialisierung des Firebase-Admin-SDKs innerhalb der MFA-Module, um Laufzeitfehler beim Zugriff auf Auth und Firestore zu vermeiden.
+    - **Robust Logging:** Implementierung einer detaillierten Fehlerprotokollierung (Try-Catch) in allen 2FA-Cloud-Functions zur schnelleren Diagnose zukünftiger Probleme.
+
+## [1.0.60] - 2026-03-31
+- **Neu (Sammelkarten):** Einführung der Seltenheitsstufe **"Ikonen" (Iconic)** oberhalb von Legendär.
+    - **Visuals:** Edles Schwarz-Gold-Design mit einem neuen Kronen-Symbol in `RaritySymbol.tsx`.
+    - **Administrative Kontrolle:** Umstellung von Crowdsourcing auf ein rein administratives Modell. Die Seltenheit wird nun fest vom Admin vergeben.
+    - **System-Cleanup:** Restlose Entfernung aller Überreste des Teacher-Rarity-Votings.
+        - Deaktivierung der Cloud Functions (`voteForTeacher`, `calculateTeacherRarity`).
+        - Bereinigung der Datenbank-Modelle (`avg_rating` und `vote_count` entfernt).
+        - Vollständige Entfernung der Abstimmungs-UI von der Umfragen-Seite.
+    - **Migration:** Bereitstellung eines Cleanup-Scripts (`scripts/cleanup-voting-data.ts`) zur Bereinigung der Bestandsdaten.
+
+## [1.0.59] - 2026-03-31
+- **Neu (Kreativ-Labor):** Einführung eines Formulars für eigene Kartenvorschläge in der Umfragen-Sektion.
+    - **Mitgestaltung:** Nutzer können nun für jeden Lehrer Vorschläge für Lebenspunkte (HP), Beschreibungen und bis zu 3 Angriffe (Name, Schaden, Effekt) einreichen.
+    - **Belohnungssystem:** Einreichungen, die vom Admin für das offizielle Album übernommen werden, werden mit **2 Booster-Packs** pro Karte belohnt.
+    - **Strukturierte Erfassung:** Vorschläge werden in einer neuen Datenbank-Collection (`card_proposals`) gespeichert und dem Admin zur Inspiration vorgelegt.
+    - **UI-Update:** Die Umfragen-Seite wurde auf ein Tab-Layout umgestellt, um zwischen regulären Abstimmungen und dem Kreativ-Labor wechseln zu können.
+
+## [1.0.58] - 2026-03-31
+
+- **Security & Stability (2FA):** Optimierung des Zwei-Faktor-Authentisierungssystems.
+    - **CORS Fix:** Behebung eines "internal" Fehlers bei lokalen Tests durch Aktualisierung der erlaubten Ursprünge (`localhost`) in den Cloud Functions.
+    - **UX Polish:** Das 2FA-Gate wartet nun auf die Initialisierung des Session-Status, wodurch ein kurzes Aufblinken des Sperrbildschirms beim Neuladen der Seite verhindert wird.
+    - **Session Persistence:** Bestätigte 2FA-Sitzungen bleiben nun zuverlässig über Page-Refreshes hinweg aktiv (via `sessionStorage`), solange der Tab geöffnet bleibt.
+
+## [1.0.58] - 2026-03-31
+- **Fix (Sammelkarten):** Behebung eines UI-Bugs in der Karten-Detailansicht beim Wischen.
+    - **State-Sync:** Die Kartenvariante (Folie/Effekt) wird nun beim Navigieren zwischen Karten korrekt auf die jeweils beste verfügbare Variante des neuen Lehrers zurückgesetzt.
+    - **Locked-State Navigation:** Beim Wischen zu noch nicht freigeschalteten Karten wird nun korrekt die Rückseite der Karte angezeigt (`isLocked`), anstatt die Vorderseite mit dem Effekt der vorherigen Karte zu "vererben".
+    - **Stats-Schutz:** Der Zugriff auf die Detail-Statistiken (Spec-Ansicht) sowie die Pagination-Punkte wurden für gesperrte Karten deaktiviert, um Mystery-Cards-Geheimnisse zu wahren.
+
+## [1.0.57] - 2026-03-31
+- **Security Feature (2FA):** Einführung der optionalen Zwei-Faktor-Authentisierung (2FA) für alle Nutzer.
+    - **Self-Service Setup:** Jeder Nutzer kann nun in seinem Profil unter "Mein Konto" 2FA via Authenticator-App (z.B. Google Authenticator, Authy) aktivieren.
+    - **Login Protection:** Bei aktiviertem 2FA wird nach der Passworteingabe automatisch ein zweiter Schritt zur Code-Verifizierung eingeblendet.
+    - **Session-Sicherheit:** Ein neues Sicherheitssystem (`TwoFactorGate`) stellt sicher, dass der Zugriff auf die App erst nach erfolgreicher 2FA-Bestätigung freigegeben wird. Die Verifizierung bleibt für die Dauer der aktuellen Sitzung bestehen.
+    - **Backend-Validierung:** Die Prüfung der 6-stelligen Codes erfolgt manipulationssicher über eine neue Cloud Function (`verifyLogin2FA`).
+    - **Admin-Funktionen:** Admins können den 2FA-Status von Nutzern bei Bedarf (z.B. Verlust des Geräts) über die Benutzerverwaltung zurücksetzen.
+
+## [1.0.56] - 2026-03-31
+- **Fix (Maintenance Mode):** Behebung von UI- und Logikfehlern in den Wartungseinstellungen.
+    - **Timezone-Fix:** Korrektur der Zeitangaben in den `datetime-local` Inputs. Diese werden nun korrekt in die lokale Browser-Zeit umgerechnet, anstatt UTC-Werte anzuzeigen.
+    - **UI Enhancement:** Neuer expliziter Button "Wartungspause planen" für mehr Sicherheit beim Speichern.
+    - **Sicherheitsabfrage:** Bestätigungsdialog beim Löschen einer geplanten Wartung ergänzt.
+
+## [1.0.55] - 2026-03-31
+- **Hotfix (Card Manager):** Behebung eines `ReferenceError: fileInputRef is not defined`.
+    - `useRef` fehlte in den React-Imports.
+    - Deklaration von `fileInputRef` wurde in der Komponente ergänzt.
+
+## [1.0.54] - 2026-03-31
+- **UX Alignment (Verification):** Vollständige Vereinheitlichung des Verifizierungs-Status.
+    - **Single Source of Truth:** Der "Verifiziertes Mitglied" Status ist nun direkt an die technische E-Mail-Bestätigung (`emailVerified`) gekoppelt. Dies beseitigt Verwirrungen, bei denen das Profil "verifiziert" anzeigte, aber der Banner weiterhin zur Bestätigung aufforderte.
+    - **Auto-Sync:** Das System gleicht nun automatisch den internen Freischalt-Status (`is_approved`) mit der E-Mail-Verifizierung ab. Sobald ein Nutzer seine E-Mail bestätigt, wird er systemweit als verifiziertes Mitglied geführt.
+    - **Admin Sync:** Die Admin-Massenaktionen aktualisieren nun ebenfalls synchron beide Status (Auth & Datenbank).
+
+## [1.0.53] - 2026-03-31
+- **UX Improvement (Profile):** Klarere Unterscheidung zwischen technischer E-Mail-Verifizierung und administrativer Freischaltung.
+    - **Status-Anzeige:** Das Profil zeigt nun explizit zwei getrennte Status-Zeilen: "E-Mail Status" (Bestätigt/Unbestätigt) und "Account-Freischaltung" (Verifiziertes Mitglied/Wartet).
+    - **Branding:** Umbenennung von "Mitglied-Status" zu "Account-Freischaltung", um Verwirrung mit dem E-Mail-Verifizierungsbanner zu vermeiden.
+
+## [1.0.52] - 2026-03-31
+- **Build Fix (Admin Page):** Behebung eines Syntaxfehlers in der Benutzerverwaltung, der durch falsch platzierte Import-Statements verursacht wurde.
+
+## [1.0.51] - 2026-03-31
+
+- **System Feature (Maintenance Mode):** Einführung eines umfassenden Wartungssystems für Admins.
+    - **Planung:** Wartungspausen können nun im Admin-Bereich (`Globale Einstellungen`) mit Start- und geschätztem Endzeitpunkt geplant werden.
+    - **Countdown-Banner:** Nutzer sehen vor Beginn der Wartung einen nicht entfernbaren Banner mit Echtzeit-Countdown. Bei weniger als 15 Minuten Restzeit wird dieser rot und pulsierend hervorgehoben.
+    - **Automatischer Lockout:** Bei Beginn der Wartung werden alle Nicht-Admins sofort blockiert und auf eine spezielle Wartungsseite umgeleitet.
+    - **Wartungsseite:** Eine neue, minimalistische Seite (`/maintenance`) informiert über die Wartung, zeigt die geschätzte Restzeit und integriert den aktuellen News-Feed.
+    - **Admin-Exemption:** Admins behalten während der Wartung vollen Zugriff auf die Plattform, um Arbeiten durchzuführen und die Wartung zu beenden.
+    - **Auto-Recovery:** Sobald die Wartung vom Admin beendet wird, werden alle Nutzer auf der Wartungsseite automatisch zurück auf die Startseite geleitet.
+
+## [1.0.51] - 2026-03-31
+- **Admin Suite (Email Verification):** Neue Massenaktionen zur manuellen Steuerung des Verifizierungsstatus.
+    - **Bulk Actions:** Admins können nun ausgewählte Nutzer gesammelt verifizieren oder die Verifizierung entziehen. Dies nutzt die neue Cloud Function `toggleUserEmailVerification`.
+    - **Cloud Function:** Implementierung einer sicheren administrativen Funktion zur Manipulation des Firebase Auth `emailVerified` Status.
+- **UI Enhancement (Verification Banner):** Der Banner zeigt nun direkt die Ziel-E-Mail-Adresse an ("Verifizierungs-E-Mail an [email] gesendet"), um Klarheit über den Posteingang zu schaffen.
+
+## [1.0.50] - 2026-03-31
+
+- **Admin Overhaul (Teacher Management):** Umfassende Überarbeitung der Lehrerverwaltung im Karten-Manager.
+    - **Bulk Import (CSV):** Neuer Datei-Upload für CSV-Listen (`name,rarity,hp`). Bietet nun die Wahl zwischen "Merge" (neue hinzufügen/existierende aktualisieren) und "Overwrite" (komplette Ersetzung des Pools).
+    - **Duplicate Bugfix:** Einführung einer ID-Normalisierung und Deduplizierung. IDs werden nun konsistent aus dem Namen generiert und bei jedem Import/Speichervorgang bereinigt.
+    - **Rarity Sync Fix:** Synchronisation der Seltenheiten wurde stabilisiert. Änderungen im Manager werden nun zuverlässig in das globale Metadaten-Array (`settings/sammelkarten`) und die Voting-Collection (`teachers`) übertragen, wodurch sie sofort im Nutzer-Album sichtbar sind.
+    - **Cleanup Tool:** Neuer "Cleanup" Button im Dashboard zum manuellen Entfernen von Namensduplikaten.
+    - **Import Preview:** Der Import-Dialog zeigt nun eine Vorschau aller in der Datei gefundenen Lehrer vor dem Bestätigen an.
+
+## [1.0.50] - 2026-03-31
+- **UX Refinement (Verification Banner):** Dynamische Textanpassung des Verifizierungs-Banners.
+    - **Kontext-Logik:** Der Hinweis auf Willkommens-Booster wird nun nur noch Nutzern angezeigt, die tatsächlich über einen Empfehlungslink geworben wurden (`referred_by`).
+    - **Allgemeiner Hinweis:** Für alle anderen Nutzer wurde der Text auf die Freischaltung des Empfehlungssystems (eigene Freunde werben) fokussiert.
+
+## [1.0.49] - 2026-03-31
+- **UI Integration (Verified Member):** Einführung eines visuellen "Verifiziertes Mitglied"-Status basierend auf dem administrativen Approval.
+    - **Branding:** Nutzung des `ShieldCheck` Icons (Smaragd-grün) als einheitliches Symbol für Vertrauenswürdigkeit.
+    - **Profil:** Der Mitglied-Status wurde von einer reinen Textanzeige auf ein hochwertiges Badge-System umgestellt.
+    - **Navbar:** Verifizierte Nutzer erhalten ein dezentes Icon neben ihrem Namen in der Desktop-Sidebar und im mobilen Drawer.
+    - **Gruppen:** In Mitgliederlisten wird der Verifizierungs-Status nun ebenfalls durch das Shield-Icon direkt am Namen visualisiert, um echte Mitschüler leichter erkennbar zu machen.
+
+## [1.0.48] - 2026-03-31
+- **Security & Anti-Fraud (Referrals):** Einführung einer verpflichtenden E-Mail-Verifizierung zur Bekämpfung von Fake-Accounts.
+    - **Verification Gate:** Referral-Belohnungen (sowohl für Werber als auch Geworbene) werden erst nach erfolgreicher Verifizierung der `@hgr-web.lernsax.de` Adresse ausgeschüttet.
+    - **Registration Flow:** Nach der Registrierung wird automatisch eine Verifizierungs-E-Mail gesendet. Nutzer werden über einen neuen Status-Schritt informiert.
+    - **UI Reminder:** Ein neuer globaler Banner (`EmailVerificationBanner`) erinnert unverifizierte Nutzer an die Aktivierung und bietet Funktionen zum erneuten Senden sowie zur Status-Prüfung.
+    - **Backend Protection:** Die Cloud Function `processReferralReward` prüft nun serverseitig den `emailVerified` Status via Firebase Auth, bevor Booster gutgeschrieben werden.
+    - **UX:** Unverifizierte Nutzer können die App weiterhin eingeschränkt nutzen, erhalten aber keine Boni und können keine anderen Nutzer werben.
+
 ## [1.0.47] - 2026-03-30
 - **Build Fix (Firebase):** Behebung eines TypeScript-Fehlers bei der Firestore-Initialisierung.
     - **Fehler:** Das Feld `forceLongPolling` wurde in neueren Firebase-Versionen entfernt und verhinderte den Build in der Cloud. Es wurde durch das korrekte Feld `experimentalForceLongPolling` ersetzt.

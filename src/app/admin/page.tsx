@@ -2,8 +2,9 @@
 
 import { Profile } from '@/types/database'
 import { useState, useEffect } from 'react'
-import { db } from '@/lib/firebase'
+import { db, getFirebaseFunctions } from '@/lib/firebase'
 import { collection, query, orderBy, onSnapshot, doc, updateDoc, deleteDoc } from 'firebase/firestore'
+import { httpsCallable } from 'firebase/functions'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
@@ -17,7 +18,7 @@ import {
   ContextMenuSeparator,
   ContextMenuTrigger,
 } from '@/components/ui/context-menu'
-import { MoreVertical, Shield, User, Trash2, Clock3, Undo2, Search, Gift, MessageSquare, AlertTriangle } from 'lucide-react'
+import { MoreVertical, Shield, User, Trash2, Clock3, Undo2, Search, Gift, MessageSquare, AlertTriangle, ShieldOff } from 'lucide-react'
 import { ResetPasswordDialog } from '@/components/modals/ResetPasswordDialog'
 import { SetTimeoutDialog } from '@/components/modals/SetTimeoutDialog'
 import { useAuth } from '@/context/AuthContext'
@@ -40,6 +41,9 @@ import {
 type BulkActionType =
   | 'approve'
   | 'unapprove'
+  | 'verify_email'
+  | 'unverify_email'
+  | 'reset_2fa'
   | 'set_course'
   | 'set_group'
   | 'clear_group'
@@ -50,6 +54,7 @@ type BulkActionType =
 export default function AdminPage() {
   const { user, profile, loading: authLoading } = useAuth()
   const { pushMessage } = useSystemMessage()
+  const functions = getFirebaseFunctions()
   const [profiles, setProfiles] = useState<Profile[]>([])
   const [userSearch, setUserSearch] = useState('')
   const [selectedGiftRecipients, setSelectedGiftRecipients] = useState<string[]>([])
@@ -307,6 +312,8 @@ export default function AdminPage() {
       const failedIds: string[] = []
       const skippedIds: string[] = []
 
+      const toggleEmailVerif = httpsCallable(functions, 'toggleUserEmailVerification')
+
       for (const target of selectedProfiles) {
         const targetIsMainAdmin = target.role === 'admin' || target.role === 'admin_main'
         const isAssignmentAction = bulkAction === 'set_course' || bulkAction === 'set_group' || bulkAction === 'clear_group'
@@ -322,6 +329,12 @@ export default function AdminPage() {
             await updateDoc(targetRef, { is_approved: true })
           } else if (bulkAction === 'unapprove') {
             await updateDoc(targetRef, { is_approved: false })
+          } else if (bulkAction === 'verify_email') {
+            await toggleEmailVerif({ targetUid: target.id, emailVerified: true })
+          } else if (bulkAction === 'unverify_email') {
+            await toggleEmailVerif({ targetUid: target.id, emailVerified: false })
+          } else if (bulkAction === 'reset_2fa') {
+            await updateDoc(targetRef, { is_2fa_enabled: false, two_factor_secret_id: null })
           } else if (bulkAction === 'set_course') {
             await updateDoc(targetRef, { class_name: bulkCourse })
           } else if (bulkAction === 'set_group') {
@@ -432,7 +445,7 @@ export default function AdminPage() {
           <h1 className="text-3xl font-bold tracking-tight">Benutzerverwaltung</h1>
           <p className="text-muted-foreground text-sm">Verwalte Profile, Rollen und Berechtigungen.</p>
         </div>
-        <div className="relative w-full max-w-sm">
+        <div className="relative w-full max-sm:max-w-none max-w-sm">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Nutzer suchen..."
@@ -577,6 +590,11 @@ export default function AdminPage() {
                                 Sperre
                               </Badge>
                             )}
+                            {p.is_2fa_enabled && (
+                              <Badge variant="secondary" className="ml-2 bg-green-500/10 text-green-600 border-green-500/20">
+                                2FA
+                              </Badge>
+                            )}
                           </TableCell>
                           <TableCell>
                             <select
@@ -635,6 +653,9 @@ export default function AdminPage() {
                                 </DropdownMenuItem>
                                 <DropdownMenuItem disabled={!canManageRoleActions} onClick={() => handleClearTimeout(p.id)}>
                                   <Undo2 className="mr-2 h-4 w-4" /> Timeout aufheben
+                                </DropdownMenuItem>
+                                <DropdownMenuItem disabled={!canManageRoleActions || !p.is_2fa_enabled} onClick={() => handleUpdateProfile(p.id, { is_2fa_enabled: false, two_factor_secret_id: null })}>
+                                  <ShieldOff className="mr-2 h-4 w-4" /> 2FA zurücksetzen
                                 </DropdownMenuItem>
                                 <ResetPasswordDialog userEmail={p.email} userName={p.full_name || 'User'} />
                                 <DropdownMenuItem className="text-destructive" disabled={!canManageRoleActions} onClick={() => handleDeleteProfile(p.id)}>
@@ -713,6 +734,9 @@ export default function AdminPage() {
                           <DropdownMenuItem disabled={!canManageRoleActions} onClick={() => handleClearTimeout(p.id)}>
                             <Undo2 className="mr-2 h-4 w-4" /> Timeout aufheben
                           </DropdownMenuItem>
+                          <DropdownMenuItem disabled={!canManageRoleActions || !p.is_2fa_enabled} onClick={() => handleUpdateProfile(p.id, { is_2fa_enabled: false, two_factor_secret_id: null })}>
+                            <ShieldOff className="mr-2 h-4 w-4" /> 2FA zurücksetzen
+                          </DropdownMenuItem>
                           <ResetPasswordDialog userEmail={p.email} userName={p.full_name || 'User'} />
                           <DropdownMenuItem className="text-destructive" disabled={!canManageRoleActions} onClick={() => handleDeleteProfile(p.id)}>
                             <Trash2 className="mr-2 h-4 w-4" /> Löschen
@@ -789,6 +813,9 @@ export default function AdminPage() {
               >
                 <option value="approve">Accounts freischalten</option>
                 <option value="unapprove">Freischaltung entfernen</option>
+                <option value="verify_email">E-Mails verifizieren</option>
+                <option value="unverify_email">Verifizierung entfernen</option>
+                <option value="reset_2fa">2FA zurücksetzen</option>
                 <option value="set_course">Kurs setzen</option>
                 <option value="set_group">Planungsgruppe setzen</option>
                 <option value="clear_group">Planungsgruppe entfernen</option>

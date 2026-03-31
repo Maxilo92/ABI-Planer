@@ -74,8 +74,16 @@ export function TOTPSetup({ profile }: TOTPSetupProps) {
     setLoading(true)
     setMessage(null)
     try {
-      const disable2FA = httpsCallable<object, { success: boolean }>(functions, 'disable2FA')
-      await disable2FA()
+      const disable2FA = httpsCallable<{ code?: string }, { success: boolean }>(functions, 'disable2FA')
+      // For disabling, we might need a code too if we want it extra secure, 
+      // but current implementation doesn't strictly require it or we can prompt.
+      // The backend 'disable2FA' expects a 'code'.
+      const code = prompt('Bitte gib zur Deaktivierung einen aktuellen 2FA-Code ein:')
+      if (!code) {
+        setLoading(false)
+        return
+      }
+      await disable2FA({ code })
       setMessage({ type: 'success', text: 'Zwei-Faktor-Authentisierung wurde deaktiviert.' })
       setTimeout(() => setOpen(false), 2000)
     } catch (err: any) {
@@ -116,7 +124,7 @@ export function TOTPSetup({ profile }: TOTPSetupProps) {
         <DialogHeader>
           <DialogTitle>Zwei-Faktor-Authentisierung (2FA)</DialogTitle>
           <DialogDescription>
-            Sichern Sie Ihr Administratorkonto zusätzlich ab.
+            Sichere dein Konto zusätzlich ab.
           </DialogDescription>
         </DialogHeader>
 
@@ -131,7 +139,7 @@ export function TOTPSetup({ profile }: TOTPSetupProps) {
             <div className="space-y-4">
               <div className="flex items-center gap-3 p-4 bg-green-50 dark:bg-green-950/20 text-green-700 dark:text-green-400 rounded-lg">
                 <ShieldCheck className="h-6 w-6 shrink-0" />
-                <p className="text-sm font-medium">Die Zwei-Faktor-Authentisierung ist für Ihr Konto aktiviert.</p>
+                <p className="text-sm font-medium">Die Zwei-Faktor-Authentisierung ist für dein Konto aktiviert.</p>
               </div>
               <Button 
                 variant="destructive" 
@@ -146,8 +154,8 @@ export function TOTPSetup({ profile }: TOTPSetupProps) {
             <div className="space-y-4 text-center">
               <Shield className="h-12 w-12 mx-auto text-muted-foreground mb-2" />
               <p className="text-sm text-muted-foreground">
-                Durch die Aktivierung der 2FA wird Ihr Konto durch einen zusätzlichen Code geschützt, 
-                den Sie mit einer Authenticator-App (z.B. Google Authenticator, Authy) generieren.
+                Durch die Aktivierung der 2FA wird dein Konto durch einen zusätzlichen Code geschützt, 
+                den du mit einer Authenticator-App (z.B. Google Authenticator, Authy) generierst.
               </p>
               <Button className="w-full" onClick={handleStartSetup} disabled={loading}>
                 {loading ? 'Laden...' : 'Setup starten'}
@@ -156,18 +164,18 @@ export function TOTPSetup({ profile }: TOTPSetupProps) {
           ) : step === 'setup' && setupData ? (
             <div className="space-y-6">
               <div className="space-y-2">
-                <Label>1. Scannen Sie diesen QR-Code</Label>
+                <Label>1. Scanne diesen QR-Code</Label>
                 <div className="flex justify-center p-4 bg-white rounded-lg">
                   <img src={setupData.qrCodeUrl} alt="2FA QR Code" className="w-48 h-48" />
                 </div>
                 <p className="text-xs text-muted-foreground text-center">
-                  Oder geben Sie diesen Code manuell ein: <code className="bg-muted px-1 rounded">{setupData.secret}</code>
+                  Oder gib diesen Code manuell ein: <code className="bg-muted px-1 rounded">{setupData.secret}</code>
                 </p>
               </div>
 
               <form onSubmit={handleVerify} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="verification-code">2. Geben Sie den 6-stelligen Code ein</Label>
+                  <Label htmlFor="verification-code">2. Gib den 6-stelligen Code ein</Label>
                   <Input
                     id="verification-code"
                     placeholder="000000"

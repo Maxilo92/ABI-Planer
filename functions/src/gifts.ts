@@ -25,18 +25,8 @@ const isAdminRole = (role: unknown): boolean => {
     return role === "admin" || role === "admin_main" || role === "admin_co";
 };
 
-const ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "http://localhost:3001",
-    "http://127.0.0.1:3001",
-    "https://abi-planer-27.de",
-    "https://abi-planer-75319.web.app",
-    "https://abi-planer-75319.firebaseapp.com",
-];
-
 export const giftBoosterPack = onCall({
-    cors: ALLOWED_ORIGINS,
+    cors: true,
     region: "europe-west3",
 }, async (request) => {
     if (!request.auth?.uid) {

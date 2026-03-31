@@ -29,6 +29,7 @@ export interface RarityWeights {
   epic: number;
   mythic: number;
   legendary: number;
+  iconic: number;
 }
 
 export interface VariantProbabilities {
@@ -41,6 +42,7 @@ export interface GlobalCardLimits {
   daily_allowance: number;
   reset_hour: number;
   godpack_chance: number; // e.g., 0.005 for 1/200
+  rarity_limits?: Record<string, number>;
 }
 
 export interface SammelkartenConfig {

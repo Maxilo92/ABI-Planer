@@ -2,9 +2,40 @@ import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 import { formatDistanceToNow } from 'date-fns'
 import { de } from 'date-fns/locale'
+import { TeacherRarity } from '@/types/database'
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
+}
+
+/**
+ * Returns the color class for a given teacher rarity.
+ */
+export const getRarityColor = (rarity: TeacherRarity) => {
+  switch (rarity) {
+    case 'common': return 'text-slate-500'
+    case 'rare': return 'text-emerald-500'
+    case 'epic': return 'text-purple-500'
+    case 'mythic': return 'text-red-500'
+    case 'legendary': return 'text-amber-500'
+    case 'iconic': return 'text-indigo-950 dark:text-indigo-400 font-black'
+    default: return 'text-slate-500'
+  }
+}
+
+/**
+ * Returns the display label for a given teacher rarity.
+ */
+export const getRarityLabel = (rarity: TeacherRarity) => {
+  switch (rarity) {
+    case 'common': return 'Gewöhnlich'
+    case 'rare': return 'Selten'
+    case 'epic': return 'Episch'
+    case 'mythic': return 'Mythisch'
+    case 'legendary': return 'Legendär'
+    case 'iconic': return 'IKONISCH'
+    default: return rarity
+  }
 }
 
 /**

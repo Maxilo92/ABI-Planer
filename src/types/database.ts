@@ -37,7 +37,6 @@ export interface Profile {
   last_visited?: Record<string, string> | null;
   isOnline: boolean;
   lastOnline: Timestamp | Date;
-  rated_teachers?: string[]; // Array of teacher IDs already voted on
   booster_stats?: {
     last_reset: string; // ISO date string (YYYY-MM-DD)
     count: number;      // Open count for that day
@@ -80,17 +79,7 @@ export interface DelayedAction {
 export interface Teacher {
   id: string;
   name: string;
-  avg_rating: number; // 0.0 to 1.0
-  vote_count: number;
   description?: string;
-}
-
-export interface TeacherRating {
-  userId: string;
-  teacherId: string;
-  rating: number; // 0.0, 0.25, 0.5, 0.75, 1.0
-  created_at: string;
-  created_by_name?: string | null;
 }
 
 export interface GroupMessage {
@@ -112,7 +101,7 @@ export interface TeacherAttack {
   description?: string;
 }
 
-export type TeacherRarity = 'common' | 'rare' | 'epic' | 'mythic' | 'legendary';
+export type TeacherRarity = 'common' | 'rare' | 'epic' | 'mythic' | 'legendary' | 'iconic';
 
 export interface LootTeacher {
   id: string;
@@ -145,6 +134,12 @@ export interface Settings {
   loot_teachers?: LootTeacher[];
   custom_popup_messages?: CustomPopupMessage[];
   rarity_limits?: Record<TeacherRarity, number>;
+  maintenance?: {
+    start: string | null;
+    end?: string | null;
+    active: boolean;
+    message?: string;
+  };
 }
 
 export interface Todo {
@@ -268,6 +263,21 @@ export interface PollVote {
   poll_id: string;
   user_id: string;
   option_id: string;
+}
+
+export interface CardProposal {
+  id: string;
+  teacher_id: string;
+  teacher_name: string;
+  hp: number;
+  description: string;
+  attacks: TeacherAttack[];
+  created_at: string;
+  created_by: string;
+  created_by_name: string;
+  status: 'pending' | 'accepted' | 'rejected';
+  admin_note?: string;
+  reward_claimed?: boolean;
 }
 
 export interface NewsImage {

@@ -1,6 +1,54 @@
 import { onDocumentDeleted } from "firebase-functions/v2/firestore";
+import { onCall, HttpsError } from "firebase-functions/v2/https";
 import * as admin from "firebase-admin";
-import { getFirestore } from "firebase-admin/firestore";
+import { getFirestore, FieldValue } from "firebase-admin/firestore";
+
+if (admin.apps.length === 0) {
+  admin.initializeApp();
+}
+
+/**
+ * Admin-only function to toggle a user's email verification status.
+ */
+export const toggleUserEmailVerification = onCall({
+  region: "europe-west3",
+  cors: true,
+}, async (request) => {
+  if (!request.auth) {
+    throw new HttpsError("unauthenticated", "Auth required.");
+  }
+
+  const db = getFirestore("abi-data");
+  const callerSnap = await db.collection("profiles").doc(request.auth.uid).get();
+  const callerData = callerSnap.data();
+
+  if (!callerData || !["admin", "admin_main", "admin_co"].includes(callerData.role)) {
+    throw new HttpsError("permission-denied", "Admin only.");
+  }
+
+  const { targetUid, emailVerified } = request.data;
+  if (!targetUid || typeof emailVerified !== "boolean") {
+    throw new HttpsError("invalid-argument", "Missing targetUid or emailVerified.");
+  }
+
+  console.log(`[Admin] Toggling email verification for ${targetUid} to ${emailVerified}`);
+
+  try {
+    await admin.auth().updateUser(targetUid, {
+      emailVerified: emailVerified
+    });
+
+    // Sync to Firestore is_approved field
+    await db.collection("profiles").doc(targetUid).update({
+      is_approved: emailVerified
+    });
+
+    return { success: true };
+  } catch (error: any) {
+    console.error(`[Admin] Failed to update email verification for ${targetUid}:`, error);
+    throw new HttpsError("internal", error.message || "Failed to update user.");
+  }
+});
 
 /**
  * Triggered when a user profile is deleted from Firestore.
@@ -106,4 +154,191 @@ export const onProfileDeleted = onDocumentDeleted({
   }
 
   console.log(`Cleanup finished for user: ${userId}`);
+});
+
+/**
+ * Admin-only function to cleanup user inventories by removing teachers that no longer exist in the settings.
+ */
+export const cleanupNonExistentTeachers = onCall({
+  region: "europe-west3",
+  cors: true,
+  maxInstances: 1,
+  memory: "512MiB",
+  timeoutSeconds: 300,
+}, async (request) => {
+  if (!request.auth) {
+    throw new HttpsError("unauthenticated", "Auth required.");
+  }
+
+  const db = getFirestore("abi-data");
+  const callerSnap = await db.collection("profiles").doc(request.auth.uid).get();
+  const callerData = callerSnap.data();
+
+  if (!callerData || !["admin", "admin_main", "admin_co"].includes(callerData.role)) {
+    throw new HttpsError("permission-denied", "Admin only.");
+  }
+
+  console.log(`[Admin] Starting global inventory cleanup triggered by ${request.auth.uid}`);
+
+  try {
+    // 1. Get valid teacher IDs
+    const settingsSnap = await db.collection("settings").doc("sammelkarten").get();
+    if (!settingsSnap.exists) {
+      throw new HttpsError("not-found", "Sammelkarten settings not found.");
+    }
+
+    const settingsData = settingsSnap.data() || {};
+    const validTeachers = (settingsData.loot_teachers || []) as { id: string }[];
+    const validTeacherIds = new Set(validTeachers.map(t => t.id));
+
+    console.log(`[Admin] Found ${validTeacherIds.size} valid teachers in settings.`);
+
+    // 2. Iterate through all user inventories
+    const userTeachersSnap = await db.collection("user_teachers").get();
+    let usersProcessed = 0;
+    let usersUpdated = 0;
+    let cardsRemoved = 0;
+
+    const batchSize = 400;
+    let currentBatch = db.batch();
+    let currentBatchOpCount = 0;
+
+    for (const userDoc of userTeachersSnap.docs) {
+      usersProcessed++;
+      const inventory = userDoc.data();
+      const updates: Record<string, any> = {};
+      let hasInvalid = false;
+
+      for (const teacherId of Object.keys(inventory)) {
+        if (!validTeacherIds.has(teacherId)) {
+          updates[teacherId] = FieldValue.delete();
+          hasInvalid = true;
+          cardsRemoved++;
+        }
+      }
+
+      if (hasInvalid) {
+        currentBatch.update(userDoc.ref, updates);
+        currentBatchOpCount++;
+        usersUpdated++;
+
+        if (currentBatchOpCount >= batchSize) {
+          await currentBatch.commit();
+          currentBatch = db.batch();
+          currentBatchOpCount = 0;
+          console.log(`[Admin] Committed batch of ${batchSize} inventory updates.`);
+        }
+      }
+    }
+
+    // Commit final batch if needed
+    if (currentBatchOpCount > 0) {
+      await currentBatch.commit();
+    }
+
+    console.log(`[Admin] Inventory cleanup finished. Processed ${usersProcessed} users, updated ${usersUpdated}, removed ${cardsRemoved} cards.`);
+
+    return {
+      success: true,
+      usersProcessed,
+      usersUpdated,
+      cardsRemoved
+    };
+  } catch (error: any) {
+    console.error(`[Admin] Global inventory cleanup failed:`, error);
+    if (error instanceof HttpsError) throw error;
+    throw new HttpsError("internal", error.message || "Failed to cleanup inventories.");
+  }
+});
+
+/**
+ * Admin-only function called when a teacher's rarity is changed.
+ * Removes the teacher from all user inventories and adds 1 booster pack per removed card as compensation.
+ */
+export const handleTeacherRarityChange = onCall({
+  region: "europe-west3",
+  cors: true,
+  maxInstances: 1,
+  memory: "512MiB",
+  timeoutSeconds: 300,
+}, async (request) => {
+  if (!request.auth) {
+    throw new HttpsError("unauthenticated", "Auth required.");
+  }
+
+  const { teacherId, teacherName } = request.data;
+  if (!teacherId) {
+    throw new HttpsError("invalid-argument", "Missing teacherId.");
+  }
+
+  const db = getFirestore("abi-data");
+  const callerSnap = await db.collection("profiles").doc(request.auth.uid).get();
+  const callerData = callerSnap.data();
+
+  if (!callerData || !["admin", "admin_main", "admin_co"].includes(callerData.role)) {
+    throw new HttpsError("permission-denied", "Admin only.");
+  }
+
+  console.log(`[Admin] Starting teacher rarity change cleanup for ${teacherName} (${teacherId})`);
+
+  try {
+    const userTeachersSnap = await db.collection("user_teachers").get();
+    let usersUpdated = 0;
+    let totalCompensatedBoosters = 0;
+
+    const batchSize = 250; // Smaller batch because we do two updates (user_teachers and profiles)
+    let currentBatch = db.batch();
+    let currentBatchOpCount = 0;
+
+    for (const userDoc of userTeachersSnap.docs) {
+      const inventory = userDoc.data();
+      
+      if (inventory[teacherId]) {
+        const userId = userDoc.id;
+        const cardCount = Number(inventory[teacherId].count) || 0;
+
+        if (cardCount > 0) {
+          // 1. Remove teacher from inventory
+          currentBatch.update(userDoc.ref, {
+            [teacherId]: FieldValue.delete()
+          });
+          currentBatchOpCount++;
+
+          // 2. Add compensation boosters to profile
+          const profileRef = db.collection("profiles").doc(userId);
+          currentBatch.update(profileRef, {
+            "booster_stats.extra_available": FieldValue.increment(cardCount),
+            updated_at: FieldValue.serverTimestamp()
+          });
+          currentBatchOpCount++;
+
+          usersUpdated++;
+          totalCompensatedBoosters += cardCount;
+
+          if (currentBatchOpCount >= batchSize) {
+            await currentBatch.commit();
+            currentBatch = db.batch();
+            currentBatchOpCount = 0;
+            console.log(`[Admin] Committed batch of ${usersUpdated} compensation updates.`);
+          }
+        }
+      }
+    }
+
+    if (currentBatchOpCount > 0) {
+      await currentBatch.commit();
+    }
+
+    console.log(`[Admin] Rarity change cleanup finished. Updated ${usersUpdated} users, added ${totalCompensatedBoosters} compensation boosters.`);
+
+    return {
+      success: true,
+      usersUpdated,
+      totalCompensatedBoosters
+    };
+  } catch (error: any) {
+    console.error(`[Admin] Teacher rarity change cleanup failed:`, error);
+    if (error instanceof HttpsError) throw error;
+    throw new HttpsError("internal", error.message || "Failed to cleanup inventories on rarity change.");
+  }
 });

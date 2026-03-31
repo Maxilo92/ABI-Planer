@@ -24,12 +24,15 @@ import { motion, AnimatePresence } from 'framer-motion'
 export default function NewsDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const { user, profile, loading: authLoading } = useAuth()
+  const { maintenance } = useSystemMessage()
   const [news, setNews] = useState<NewsEntry | null>(null)
   const [comments, setComments] = useState<Comment[]>([])
   const [loading, setLoading] = useState(true)
   const [commentText, setCommentText] = useState('')
   const [submittingComment, setSubmittingComment] = useState(false)
   const [showEmojiPicker, setShowEmojiPicker] = useState(false)
+
+  const isMaintenanceActive = maintenance?.active || (maintenance?.start && new Date(maintenance.start) <= new Date())
 
   useEffect(() => {
     if (authLoading) return
@@ -211,8 +214,8 @@ export default function NewsDetailPage({ params }: { params: Promise<{ id: strin
           size="sm"
           className="gap-2 -ml-2 text-muted-foreground hover:text-foreground transition-colors"
           render={
-            <Link href="/news">
-              <ArrowLeft className="h-4 w-4" /> Zurück
+            <Link href={isMaintenanceActive ? "/maintenance" : "/news"}>
+              <ArrowLeft className="h-4 w-4" /> {isMaintenanceActive ? "Zurück zur Wartung" : "Zurück"}
             </Link>
           }
         />

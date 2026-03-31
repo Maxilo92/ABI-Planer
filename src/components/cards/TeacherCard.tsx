@@ -123,6 +123,7 @@ export const TeacherCard = React.memo(({
   }, [upgradeInfo?.newLevel, upgradeInfo?.oldLevel, isFlipped, controls, displayLevel]);
 
   const isBlckShiny = data.variant === 'black_shiny_holo';
+  const isIconic = data.rarity === 'iconic';
   const isShiny = data.variant === 'shiny';
   const isGlass = data.variant === 'holo';
 
@@ -131,30 +132,33 @@ export const TeacherCard = React.memo(({
       case 'modern-flat':
         return {
           card: cn(
-            "transition-all rounded-[10cqw]",
-            !isBlckShiny && !isShiny && "border-black shadow-[2cqw_2cqw_0px_0px_rgba(0,0,0,1)] hover:shadow-[3cqw_3cqw_0px_0px_rgba(0,0,0,1)] border-[0.8cqw]",
+            "transition-all rounded-[3.5cqw]",
+            !isBlckShiny && !isShiny && !isIconic && "border-black shadow-[2cqw_2cqw_0px_0px_rgba(0,0,0,1)] hover:shadow-[3cqw_3cqw_0px_0px_rgba(0,0,0,1)] border-[0.8cqw]",
+            isIconic && "border-amber-500/60 shadow-[0_0_15px_rgba(251,191,36,0.4)] border-[1.2cqw]",
             isShiny && "shadow-[0_0_10px_rgba(255,255,255,0.4)] border-slate-300 border-[1cqw]",
             isBlckShiny && "shadow-[0_0_8cqw_rgba(147,51,234,0.5)] border-purple-500/50 border-[1cqw]"
           ),
           iconWrapper: cn(
             "bg-white border-[0.8cqw] border-black rounded-[4cqw] -rotate-2 shadow-[1cqw_1cqw_0px_0px_rgba(0,0,0,1)] flex items-center justify-center w-[35cqw] h-[35cqw]",
+            isIconic && "bg-neutral-900 border-amber-500/30 shadow-[0_0_15px_rgba(251,191,36,0.2)]",
             isBlckShiny && "bg-neutral-900 border-purple-500/30 shadow-[0_0_15px_rgba(147,51,234,0.3)]",
             isShiny && "bg-slate-100 border-slate-300 shadow-none",
             isGlass && "bg-white/40 border-white/30 backdrop-blur-md shadow-none"
           ),
           headerIcon: "w-[18cqw] h-[18cqw]",
-          header: (isBlckShiny || isGlass || isShiny) ? (isShiny ? "text-slate-600" : "text-white") : "text-black",
+          header: (isBlckShiny || isGlass || isShiny || isIconic) ? (isShiny ? "text-slate-600" : "text-white") : "text-black",
           text: cn(
             "font-sans uppercase font-black tracking-tighter text-[11cqw] leading-[0.95] break-words w-full py-[1cqw]",
-            isBlckShiny ? "text-transparent bg-clip-text bg-gradient-to-b from-white to-purple-200 drop-shadow-[0_0_10px_rgba(147,51,234,0.8)]" : 
+            isIconic ? "text-transparent bg-clip-text bg-gradient-to-b from-amber-100 via-amber-200 to-amber-500 drop-shadow-[0_0_10px_rgba(251,191,36,0.5)]" :
+            (isBlckShiny ? "text-transparent bg-clip-text bg-gradient-to-b from-white to-purple-200 drop-shadow-[0_0_10px_rgba(147,51,234,0.8)]" : 
             (isShiny ? "text-slate-800 drop-shadow-[0_2px_2px_rgba(255,255,255,0.8)]" : 
-            (isGlass ? "text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.4)]" : "text-black"))
+            (isGlass ? "text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.4)]" : "text-black")))
           ),
           border: "", 
-          bgOverlay: isBlckShiny ? "bg-black/40" : (isShiny ? "bg-white/30" : (isGlass ? "bg-transparent" : "bg-white/5")),
+          bgOverlay: (isBlckShiny || isIconic) ? "bg-black/40" : (isShiny ? "bg-white/30" : (isGlass ? "bg-transparent" : "bg-white/5")),
           numberTag: cn(
             "px-[2cqw] py-[0.5cqw] text-[3.5cqw] font-black rounded-[0.5cqw] transform rotate-1 border-[0.3cqw] border-black shadow-[0.5cqw_0.5cqw_0px_0px_rgba(0,0,0,1)]",
-            (isBlckShiny || isGlass || isShiny) ? "bg-white text-black" : "bg-black text-white"
+            (isBlckShiny || isGlass || isShiny || isIconic) ? "bg-white text-black" : "bg-black text-white"
           ),
           numberPos: "top-[8cqw] right-[8cqw]",
           rarityPos: "bottom-[8cqw] right-[8cqw]",
@@ -163,7 +167,7 @@ export const TeacherCard = React.memo(({
       
       default:
         return {
-          card: "border-white/40 shadow-2xl backdrop-blur-xl border-[2cqw] rounded-[10cqw]",
+          card: "border-white/40 shadow-2xl backdrop-blur-xl border-[2cqw] rounded-[3.5cqw]",
           iconWrapper: "bg-white/30 rounded-full w-[35cqw] h-[35cqw] flex items-center justify-center",
           headerIcon: "w-[18cqw] h-[18cqw]",
           header: "text-white",
@@ -200,7 +204,7 @@ export const TeacherCard = React.memo(({
           <div 
             className={cn(
               "absolute inset-0 backface-hidden p-[8%] flex flex-col items-center justify-center overflow-hidden",
-              "border-[2cqw] border-white/20 bg-neutral-950 shadow-2xl rounded-[10cqw]",
+              "border-[2cqw] border-white/20 bg-neutral-950 shadow-2xl rounded-[3.5cqw]",
               isLocked ? "grayscale-[0.5] opacity-90" : ""
             )}
             style={{ transform: "rotateY(180deg) translateZ(1px)" }}
@@ -251,7 +255,7 @@ export const TeacherCard = React.memo(({
                 transform: "translateZ(1px)"
               }}
             >
-              <CardEffectOverlay variant={data.variant} tintColor={data.color} />
+              <CardEffectOverlay variant={data.variant} tintColor={data.color} isIconic={isIconic} />
 
               <div className={cn("absolute inset-0 pointer-events-none", styleClasses.bgOverlay)} />
               

@@ -12,7 +12,7 @@ import { useAuth } from '@/context/AuthContext'
 import { usePathname, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { toast } from 'sonner'
-import { Loader2, Plus, Trash2, RotateCcw, Cookie, GraduationCap, Sparkles } from 'lucide-react'
+import { Loader2, Plus, Trash2, RotateCcw, Cookie, GraduationCap, Sparkles, Construction } from 'lucide-react'
 import { logAction } from '@/lib/logging'
 import { Badge } from '@/components/ui/badge'
 
@@ -34,6 +34,12 @@ interface GlobalSettings {
   cookie_messages: string[]
   ad_messages: string[]
   custom_popup_messages: CustomPopupMessage[]
+  maintenance?: {
+    start: string | null
+    end?: string | null
+    active: boolean
+    message?: string
+  }
   loot_teachers?: any[] // Legacy, moved to settings/sammelkarten
 }
 
@@ -99,7 +105,13 @@ const DEFAULT_SETTINGS: GlobalSettings = {
       enabled: true,
       routes: ['/', '/sammelkarten'],
     },
-  ]
+  ],
+  maintenance: {
+    start: null,
+    end: null,
+    active: false,
+    message: ''
+  }
 }
 
 export default function GlobalSettingsPage() {
@@ -129,6 +141,20 @@ export default function GlobalSettingsPage() {
   const pathname = usePathname()
 
   const isAdmin = profile?.role === 'admin_main' || profile?.role === 'admin_co' || profile?.role === 'admin'
+
+  const formatDateForInput = (isoString: string | null | undefined) => {
+    if (!isoString) return ''
+    try {
+      const date = new Date(isoString)
+      if (isNaN(date.getTime())) return ''
+      // Adjust for local timezone to show correct time in datetime-local input
+      const offset = date.getTimezoneOffset() * 60000
+      const localDate = new Date(date.getTime() - offset)
+      return localDate.toISOString().slice(0, 16)
+    } catch (e) {
+      return ''
+    }
+  }
 
   const hasUnsavedChanges = JSON.stringify(settings) !== JSON.stringify(initialSettings)
   
@@ -691,6 +717,113 @@ export default function GlobalSettingsPage() {
                   <Plus className="h-4 w-4 mr-2" /> Custom Popup hinzufügen
                 </Button>
               </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className={settings.maintenance?.active ? "border-destructive bg-destructive/5" : ""}>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Construction className="h-5 w-5 text-amber-500" />
+              Wartungsmodus
+            </CardTitle>
+            <CardDescription>
+              Plane eine Wartungspause oder aktiviere sie sofort. Alle Nutzer außer Admins werden währenddessen blockiert.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <Label htmlFor="m-start">Beginn der Wartung</Label>
+                <Input
+                  id="m-start"
+                  type="datetime-local"
+                  value={formatDateForInput(settings.maintenance?.start)}
+                  onChange={(e) => {
+                    const val = e.target.value ? new Date(e.target.value).toISOString() : null
+                    setSettings(prev => ({ 
+                      ...prev, 
+                      maintenance: { ...(prev.maintenance || DEFAULT_SETTINGS.maintenance!), start: val } 
+                    }))
+                  }}
+                />
+                <p className="text-[10px] text-muted-foreground">Ab diesem Zeitpunkt wird die App für alle Nutzer gesperrt.</p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="m-end">Voraussichtliches Ende</Label>
+                <Input
+                  id="m-end"
+                  type="datetime-local"
+                  value={formatDateForInput(settings.maintenance?.end)}
+                  onChange={(e) => {
+                    const val = e.target.value ? new Date(e.target.value).toISOString() : null
+                    setSettings(prev => ({ 
+                      ...prev, 
+                      maintenance: { ...(prev.maintenance || DEFAULT_SETTINGS.maintenance!), end: val } 
+                    }))
+                  }}
+                />
+                <p className="text-[10px] text-muted-foreground">Wird den Nutzern als Countdown auf der Wartungsseite angezeigt.</p>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="m-message">Wartungsmeldung</Label>
+              <Textarea
+                id="m-message"
+                placeholder="Wir führen Wartungsarbeiten durch..."
+                value={settings.maintenance?.message || ''}
+                onChange={(e) => setSettings(prev => ({ 
+                  ...prev, 
+                  maintenance: { ...(prev.maintenance || DEFAULT_SETTINGS.maintenance!), message: e.target.value } 
+                }))}
+              />
+            </div>
+
+            <div className="flex items-center justify-between p-4 rounded-xl border bg-muted/30">
+              <div className="space-y-0.5">
+                <Label className="text-base font-bold">Sofortige Sperre</Label>
+                <p className="text-xs text-muted-foreground">Aktiviert den Wartungsmodus unabhängig vom geplanten Zeitpunkt.</p>
+              </div>
+              <Button 
+                variant={settings.maintenance?.active ? "destructive" : "outline"}
+                onClick={() => setSettings(prev => ({ 
+                  ...prev, 
+                  maintenance: { ...(prev.maintenance || DEFAULT_SETTINGS.maintenance!), active: !prev.maintenance?.active } 
+                }))}
+              >
+                {settings.maintenance?.active ? "Wartung beenden" : "Wartung jetzt starten"}
+              </Button>
+            </div>
+            
+            <div className="flex flex-wrap items-center gap-3 pt-4 border-t">
+              <Button 
+                onClick={() => handleSave()} 
+                disabled={saving || !hasUnsavedChanges}
+                className="gap-2 font-bold"
+              >
+                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                Wartungspause planen
+              </Button>
+
+              {settings.maintenance?.start && (
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="text-xs text-destructive hover:bg-destructive/5"
+                  onClick={() => {
+                    const resetM = { start: null, end: null, active: false, message: '' }
+                    if (confirm('Möchtest du die geplante Wartung wirklich löschen?')) {
+                      setSettings(prev => ({ ...prev, maintenance: resetM }))
+                      setTimeout(() => handleSave({ ...settings, maintenance: resetM }), 50)
+                    }
+                  }}
+                >
+                  <Trash2 className="h-3 w-3 mr-2" />
+                  Planung löschen
+                </Button>
+              )}
             </div>
           </CardContent>
         </Card>

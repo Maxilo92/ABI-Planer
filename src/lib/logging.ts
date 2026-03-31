@@ -45,10 +45,13 @@ export type LogActionType =
   | 'TEACHER_VOTE'
   | 'BOOSTER_GIFT_SENT'
   | 'CARDS_MIGRATED'
+  | 'CARDS_BULK_IMPORT'
   | 'DANGER_ACTION_QUEUED'
   | 'DANGER_ACTION_CANCELLED'
   | 'DANGER_ACTION_EXECUTED'
   | 'DANGER_ACTION_FAILED'
+  | 'CLEANUP_INVENTORIES'
+  | 'CLEANUP_POOL'
 
 export interface LogEntry {
   action: LogActionType

@@ -10,15 +10,9 @@ const isAdminRole = (role: unknown): boolean => {
     return role === "admin" || role === "admin_main" || role === "admin_co";
 };
 
-const ALLOWED_ORIGINS = [
-    "https://abi-planer-27.de",
-    "https://abi-planer-75319.web.app",
-    "https://abi-planer-75319.firebaseapp.app",
-];
-
 // Nur Packs schenken, kein Popup
 export const giftOnlyPacks = onCall({
-    cors: ALLOWED_ORIGINS,
+    cors: true,
     region: "europe-west3",
 }, async (request) => {
     if (!request.auth?.uid) {
@@ -107,7 +101,7 @@ export const giftOnlyPacks = onCall({
 
 // Nur Popup schicken, keine Packs
 export const sendUserPopup = onCall({
-    cors: ALLOWED_ORIGINS,
+    cors: true,
     region: "europe-west3",
 }, async (request) => {
     if (!request.auth?.uid) {

@@ -38,6 +38,7 @@ const RARITY_COLORS: Record<string, string> = {
   epic: '#a855f7',      // purple-500
   mythic: '#ef4444',    // red-500
   legendary: '#f59e0b', // amber-500
+  iconic: '#000000',    // black
 }
 
 const RARITY_WEIGHTS: Record<string, number> = {
@@ -45,7 +46,8 @@ const RARITY_WEIGHTS: Record<string, number> = {
   rare: 100,
   epic: 100,
   mythic: 100,
-  legendary: 100
+  legendary: 100,
+  iconic: 100
 }
 
 const VARIANT_WEIGHTS: { variant: CardVariant; weight: number }[] = [
