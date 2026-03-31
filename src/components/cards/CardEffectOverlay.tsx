@@ -7,13 +7,20 @@ import { cn } from '@/lib/utils';
 export const CardEffectOverlay: React.FC<{ 
   variant: CardVariant; 
   tintColor?: string;
+  isIconic?: boolean;
 }> = ({ 
   variant, 
-  tintColor
+  tintColor,
+  isIconic
 }) => {
-  if (variant === 'normal') return null;
+  if (variant === 'normal' && !isIconic) return null;
 
   const getOverlayStyles = () => {
+    if (isIconic) {
+      // Iconic Golden Aura: Premium gold shimmer with particles
+      return "bg-[radial-gradient(circle_at_50%_50%,rgba(251,191,36,0.15)_0%,transparent_70%)] after:absolute after:inset-0 after:bg-[repeating-conic-gradient(from_0deg,rgba(251,191,36,0.05)_0deg,rgba(251,191,36,0.05)_10deg,transparent_10deg,transparent_20deg)] after:animate-[spin_20s_linear_infinite] after:opacity-20 shadow-[inset_0_0_80px_rgba(251,191,36,0.2)]";
+    }
+
     switch (variant) {
       case 'holo':
         // 02 Holo Oil-Slick: More intense, complex iridescent oil film

@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.0.82] - 2026-03-31
+- **Fix (News Detail Page):** Behebung eines Build-Fehlers durch einen fehlenden Import von `useSystemMessage`.
+    - **TypeScript Safety:** Die News-Detailseite kann nun wieder fehlerfrei gebaut werden.
+
 ## [1.0.81] - 2026-03-31
 - **Fix (Maintenance Page):** Behebung eines kritischen Hydration-Fehlers durch verschachtelte HTML-Links.
     - **DOM Structure:** Die News-Vorschau auf der Wartungsseite nutzt nun eine bereinigte Text-Vorschau anstelle von gerendertem Markdown, um unzulässige Link-in-Link Verschachtelungen zu vermeiden.
