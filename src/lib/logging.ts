@@ -52,6 +52,7 @@ export type LogActionType =
   | 'DANGER_ACTION_FAILED'
   | 'CLEANUP_INVENTORIES'
   | 'CLEANUP_POOL'
+  | 'GLOBAL_RARITY_SYNC_TRIGGERED'
 
 export interface LogEntry {
   action: LogActionType

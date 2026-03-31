@@ -140,6 +140,7 @@ export default function CardManagerPage() {
   const [editingTeacher, setEditingTeacher] = useState<LootTeacher | null>(null)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [isCleaningInventory, setIsCleaningInventory] = useState(false)
+  const [isSyncing, setIsSyncing] = useState(false)
   
   const [importing, setImporting] = useState(false)
   
@@ -456,6 +457,33 @@ export default function CardManagerPage() {
       toast.error(err.message || 'Fehler bei der Bereinigung der Inventare.')
     } finally {
       setIsCleaningInventory(false)
+    }
+  }
+
+  const handleGlobalSync = async () => {
+    if (!confirm('Dies startet eine globale Synchronisierung aller Nutzer-Inventare basierend auf den aktuellen Seltenheits-Limits pro Nutzer. Nutzer, die Karten verlieren, erhalten EINE einmalige Entschädigung. Dieser Vorgang kann nicht rückgängig gemacht werden. Fortfahren?')) return
+
+    setIsSyncing(true)
+    const syncFn = httpsCallable<void, { success: boolean, message: string }>(functions, 'runGlobalRaritySync')
+    const toastId = toast.loading('Starte globale Inventar-Synchronisierung...')
+
+    try {
+      const result = await syncFn()
+      toast.success('Synchronisierung erfolgreich!', {
+        id: toastId,
+        description: result.data.message,
+      })
+
+      if (user) {
+        await logAction('GLOBAL_RARITY_SYNC_TRIGGERED', user.uid, profile?.full_name, {
+          result: result.data.message
+        })
+      }
+    } catch (err: any) {
+      console.error('Error running global sync:', err)
+      toast.error(err.message || 'Fehler bei der globalen Synchronisierung.', { id: toastId })
+    } finally {
+      setIsSyncing(false)
     }
   }
 
@@ -1014,79 +1042,118 @@ export default function CardManagerPage() {
                 </TabsContent>
 
                 <TabsContent value="limits" className="mt-6 space-y-6">
-                   <Card>
-                    <CardHeader>
-                      <CardTitle className="text-lg flex items-center gap-2">
-                        <Activity className="h-5 w-5 text-emerald-500" />
-                        Globale Parameter & Varianten
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                      {/* Limits */}
-                      <div className="space-y-6">
-                        <h4 className="text-sm font-bold border-b pb-2">Limits & Reset</h4>
-                        <div className="space-y-4">
-                          <div className="space-y-2">
-                            <Label className="text-xs">Tägliche Packs pro User</Label>
-                            <SmartNumericInput 
-                              isInteger
-                              value={localConfig!.global_limits.daily_allowance}
-                              onChange={(val) => handleSaveConfig({ global_limits: { ...localConfig!.global_limits, daily_allowance: val }})}
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label className="text-xs">Reset Stunde (Berlin Zeit, 0-23)</Label>
+                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-lg flex items-center gap-2">
+                          <Users className="h-5 w-5 text-fuchsia-500" />
+                          Besitz-Limits pro Nutzer
+                        </CardTitle>
+                        <CardDescription>Maximale Anzahl an Karten einer Seltenheit, die ein einzelner Nutzer besitzen darf.</CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        {RARITY_ORDER.map((rarity) => (
+                          <div key={rarity} className="flex items-center justify-between gap-4">
+                            <Label className={cn("font-bold", getRarityColor(rarity))}>{getRarityLabel(rarity)}</Label>
                             <SmartNumericInput 
                               isInteger
                               min="0"
-                              max="23"
-                              value={localConfig!.global_limits.reset_hour}
-                              onChange={(val) => handleSaveConfig({ global_limits: { ...localConfig!.global_limits, reset_hour: val }})}
+                              value={localConfig!.per_user_card_limits?.[rarity] ?? 99}
+                              onChange={(val) => handleSaveConfig({ per_user_card_limits: { ...localConfig!.per_user_card_limits, [rarity]: val }})}
+                              className="w-24 h-9"
                             />
                           </div>
-                          <div className="space-y-2">
-                            <Label className="text-xs">Godpack Wahrscheinlichkeit {formatProbability(localConfig!.global_limits.godpack_chance)}</Label>
-                            <SmartNumericInput 
-                              step="0.0001"
-                              value={localConfig!.global_limits.godpack_chance}
-                              onChange={(val) => handleSaveConfig({ global_limits: { ...localConfig!.global_limits, godpack_chance: val }})}
-                            />
+                        ))}
+                        <div className="!mt-8">
+                          <Button 
+                            variant="destructive" 
+                            className="w-full gap-2"
+                            onClick={handleGlobalSync}
+                            disabled={isSyncing}
+                          >
+                            {isSyncing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                            Run Global Sync
+                          </Button>
+                          <p className="text-[10px] text-muted-foreground mt-2 text-center">
+                            <strong>Achtung:</strong> Gleicht alle Inventare mit den Limits ab. Nutzer erhalten 1 Pack pro Verlust.
+                          </p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-lg flex items-center gap-2">
+                          <Activity className="h-5 w-5 text-emerald-500" />
+                          Globale Parameter & Varianten
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        {/* Limits */}
+                        <div className="space-y-6">
+                          <h4 className="text-sm font-bold border-b pb-2">Limits & Reset</h4>
+                          <div className="space-y-4">
+                            <div className="space-y-2">
+                              <Label className="text-xs">Tägliche Packs pro User</Label>
+                              <SmartNumericInput 
+                                isInteger
+                                value={localConfig!.global_limits.daily_allowance}
+                                onChange={(val) => handleSaveConfig({ global_limits: { ...localConfig!.global_limits, daily_allowance: val }})}
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label className="text-xs">Reset Stunde (Berlin Zeit, 0-23)</Label>
+                              <SmartNumericInput 
+                                isInteger
+                                min="0"
+                                max="23"
+                                value={localConfig!.global_limits.reset_hour}
+                                onChange={(val) => handleSaveConfig({ global_limits: { ...localConfig!.global_limits, reset_hour: val }})}
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label className="text-xs">Godpack Wahrscheinlichkeit {formatProbability(localConfig!.global_limits.godpack_chance)}</Label>
+                              <SmartNumericInput 
+                                step="0.0001"
+                                value={localConfig!.global_limits.godpack_chance}
+                                onChange={(val) => handleSaveConfig({ global_limits: { ...localConfig!.global_limits, godpack_chance: val }})}
+                              />
+                            </div>
                           </div>
                         </div>
-                      </div>
 
-                      {/* Variant Probabilities */}
-                      <div className="space-y-6">
-                        <h4 className="text-sm font-bold border-b pb-2">Varianten-Wahrscheinlichkeiten</h4>
-                        <div className="space-y-4">
-                          <div className="space-y-2">
-                            <Label className="text-xs">Shiny (Silber-Effekt) {formatProbability(localConfig!.variant_probabilities.shiny)}</Label>
-                            <SmartNumericInput 
-                              step="0.001"
-                              value={localConfig!.variant_probabilities.shiny}
-                              onChange={(val) => handleSaveConfig({ variant_probabilities: { ...localConfig!.variant_probabilities, shiny: val }})}
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label className="text-xs">Holo (Regenbogen-Effekt) {formatProbability(localConfig!.variant_probabilities.holo)}</Label>
-                            <SmartNumericInput 
-                              step="0.001"
-                              value={localConfig!.variant_probabilities.holo}
-                              onChange={(val) => handleSaveConfig({ variant_probabilities: { ...localConfig!.variant_probabilities, holo: val }})}
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label className="text-xs">Black Shiny Holo (Secret Rare) {formatProbability(localConfig!.variant_probabilities.black_shiny_holo)}</Label>
-                            <SmartNumericInput 
-                              step="0.0001"
-                              value={localConfig!.variant_probabilities.black_shiny_holo}
-                              onChange={(val) => handleSaveConfig({ variant_probabilities: { ...localConfig!.variant_probabilities, black_shiny_holo: val }})}
-                            />
+                        {/* Variant Probabilities */}
+                        <div className="space-y-6">
+                          <h4 className="text-sm font-bold border-b pb-2">Varianten-Wahrscheinlichkeiten</h4>
+                          <div className="space-y-4">
+                            <div className="space-y-2">
+                              <Label className="text-xs">Shiny (Silber-Effekt) {formatProbability(localConfig!.variant_probabilities.shiny)}</Label>
+                              <SmartNumericInput 
+                                step="0.001"
+                                value={localConfig!.variant_probabilities.shiny}
+                                onChange={(val) => handleSaveConfig({ variant_probabilities: { ...localConfig!.variant_probabilities, shiny: val }})}
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label className="text-xs">Holo (Regenbogen-Effekt) {formatProbability(localConfig!.variant_probabilities.holo)}</Label>
+                              <SmartNumericInput 
+                                step="0.001"
+                                value={localConfig!.variant_probabilities.holo}
+                                onChange={(val) => handleSaveConfig({ variant_probabilities: { ...localConfig!.variant_probabilities, holo: val }})}
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label className="text-xs">Black Shiny Holo (Secret Rare) {formatProbability(localConfig!.variant_probabilities.black_shiny_holo)}</Label>
+                              <SmartNumericInput 
+                                step="0.0001"
+                                value={localConfig!.variant_probabilities.black_shiny_holo}
+                                onChange={(val) => handleSaveConfig({ variant_probabilities: { ...localConfig!.variant_probabilities, black_shiny_holo: val }})}
+                              />
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+                      </CardContent>
+                    </Card>
+                   </div>
                 </TabsContent>
               </Tabs>
             </div>

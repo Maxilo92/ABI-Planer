@@ -134,6 +134,7 @@ export interface Settings {
   loot_teachers?: LootTeacher[];
   custom_popup_messages?: CustomPopupMessage[];
   rarity_limits?: Record<TeacherRarity, number>;
+  per_user_card_limits?: Record<TeacherRarity, number>;
   maintenance?: {
     start: string | null;
     end?: string | null;
