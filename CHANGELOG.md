@@ -16,6 +16,9 @@
 - **User Transparency:** Betroffene Nutzer erhalten eine klarere Übersicht mit Gesamtverlust, berechneter Kompensation und Detailliste der entfernten Karten.
 - **Copy Fix (Lernsax Vorlage):** E-Mail-Beispiele wurden auf das gewünschte Muster `nachname.vorname@hgr-web.lernsax.de` korrigiert (Register, Login, Passwort-Reset, Hilfe).
 - **Verification UX:** Im Verifizierungs-Banner werden Nutzer jetzt explizit aufgefordert, ihre E-Mail zu prüfen und können sie bei Bedarf direkt ändern (inkl. Bestätigungs-Mail an die neue Adresse).
+- **Admin Cleanup (Sammelkarten):** Neue Funktion `syncOpenedPacksToInventory` synchronisiert `booster_stats.total_opened` pro Nutzer mit dem Inventar über `ceil(total_cards / 3)`.
+- **Legacy Cleanup:** `cleanupLegacyTeachersVoted` entfernt jetzt beide veralteten Profilfelder `teachers_voted` und `rated_teachers` aus allen Nutzerprofilen.
+- **Admin UI:** Neue Buttons `Sync Packs` und `Cleanup Legacy` im Karten-Manager für beide Aufräumaktionen.
 
 ## [1.0.83] - 2026-03-31
 - **Feature (Sammelkarten Management):** Entfernung des Besitz-Limits-Systems und Einführung eines neuen Button-basierten Kartenverwaltungssystems.

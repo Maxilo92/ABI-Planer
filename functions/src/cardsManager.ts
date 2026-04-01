@@ -501,3 +501,221 @@ export const validateAndFixRarities = onCall({
     );
   }
 });
+
+/**
+ * Recalculates booster_stats.total_opened for each user based on current inventory:
+ * total_opened = Math.ceil(total_cards_in_inventory / 3)
+ */
+export const syncOpenedPacksToInventory = onCall({
+  cors: true,
+  region: "europe-west3",
+}, async (request) => {
+  if (!request.auth?.uid) {
+    throw new HttpsError("unauthenticated", "Authentication is required.");
+  }
+
+  const db = getFirestore("abi-data");
+  const callerProfileRef = db.collection("profiles").doc(request.auth.uid);
+  const callerProfileDoc = await callerProfileRef.get();
+
+  if (!isAdminRole(callerProfileDoc.data()?.role)) {
+    throw new HttpsError("permission-denied", "Must be an administrative user to call this function.");
+  }
+
+  const { dryRun } = request.data || {};
+
+  try {
+    const [profilesSnap, inventoriesSnap] = await Promise.all([
+      db.collection("profiles").get(),
+      db.collection("user_teachers").get(),
+    ]);
+
+    const inventoryByUserId = new Map<string, UserCards>();
+    inventoriesSnap.forEach((docSnap) => {
+      inventoryByUserId.set(docSnap.id, docSnap.data() as UserCards);
+    });
+
+    let usersChecked = 0;
+    let usersUpdated = 0;
+    const updates: Array<{ userId: string; oldTotalOpened: number; newTotalOpened: number; totalCards: number }> = [];
+    let batch = db.batch();
+    let batchOps = 0;
+
+    const commitBatchIfNeeded = async (force = false) => {
+      if (batchOps === 0) return;
+      if (!force && batchOps < 450) return;
+      await batch.commit();
+      batch = db.batch();
+      batchOps = 0;
+    };
+
+    for (const profileSnap of profilesSnap.docs) {
+      usersChecked++;
+      const userId = profileSnap.id;
+      const profileData = profileSnap.data() as any;
+      const userCards = inventoryByUserId.get(userId) || {};
+
+      const totalCards = Object.values(userCards).reduce((sum, cardData: any) => {
+        const count = Number(cardData?.count) || 0;
+        return sum + Math.max(0, count);
+      }, 0);
+
+      const recalculatedTotalOpened = Math.ceil(totalCards / 3);
+      const currentTotalOpened = Number(profileData?.booster_stats?.total_opened) || 0;
+
+      if (currentTotalOpened !== recalculatedTotalOpened) {
+        usersUpdated++;
+        updates.push({
+          userId,
+          oldTotalOpened: currentTotalOpened,
+          newTotalOpened: recalculatedTotalOpened,
+          totalCards,
+        });
+
+        if (!dryRun) {
+          batch.set(
+            db.collection("profiles").doc(userId),
+            {
+              booster_stats: {
+                total_opened: recalculatedTotalOpened,
+              },
+            },
+            { merge: true }
+          );
+          batchOps++;
+          await commitBatchIfNeeded();
+        }
+      }
+    }
+
+    if (!dryRun) {
+      await commitBatchIfNeeded(true);
+      await db.collection("logs").add({
+        type: "ADMIN_ACTION",
+        action: "SYNC_OPENED_PACKS_TO_INVENTORY",
+        user_id: request.auth.uid,
+        user_name: callerProfileDoc.data()?.full_name || "Unknown Admin",
+        timestamp: new Date(),
+        details: `Synced booster_stats.total_opened for ${usersUpdated}/${usersChecked} users based on inventory card counts.`,
+        stats: {
+          users_checked: usersChecked,
+          users_updated: usersUpdated,
+        },
+        updates,
+      });
+    }
+
+    return {
+      success: true,
+      dryRun: Boolean(dryRun),
+      stats: {
+        usersChecked,
+        usersUpdated,
+      },
+      updates,
+    };
+  } catch (error: any) {
+    logger.error("syncOpenedPacksToInventory failed", { error });
+    if (error instanceof HttpsError) throw error;
+    throw new HttpsError("internal", `syncOpenedPacksToInventory failed: ${error?.message || "unknown error"}`);
+  }
+});
+
+/**
+ * Removes legacy voting fields from all profiles.
+ * Legacy keys seen in production: `teachers_voted`, `rated_teachers`.
+ */
+export const cleanupLegacyTeachersVoted = onCall({
+  cors: true,
+  region: "europe-west3",
+}, async (request) => {
+  if (!request.auth?.uid) {
+    throw new HttpsError("unauthenticated", "Authentication is required.");
+  }
+
+  const db = getFirestore("abi-data");
+  const callerProfileRef = db.collection("profiles").doc(request.auth.uid);
+  const callerProfileDoc = await callerProfileRef.get();
+
+  if (!isAdminRole(callerProfileDoc.data()?.role)) {
+    throw new HttpsError("permission-denied", "Must be an administrative user to call this function.");
+  }
+
+  const { dryRun } = request.data || {};
+
+  try {
+    const profilesSnap = await db.collection("profiles").get();
+    let batch = db.batch();
+    let batchOps = 0;
+
+    const commitBatchIfNeeded = async (force = false) => {
+      if (batchOps === 0) return;
+      if (!force && batchOps < 450) return;
+      await batch.commit();
+      batch = db.batch();
+      batchOps = 0;
+    };
+    let usersChecked = 0;
+    let usersUpdated = 0;
+    let removedTeachersVotedCount = 0;
+    let removedRatedTeachersCount = 0;
+    const legacyFields = ["teachers_voted", "rated_teachers"] as const;
+
+    for (const profileSnap of profilesSnap.docs) {
+      usersChecked++;
+      const data = profileSnap.data() as any;
+
+      const fieldsToDelete = legacyFields.filter((fieldName) => Object.prototype.hasOwnProperty.call(data, fieldName));
+
+      if (fieldsToDelete.length > 0) {
+        usersUpdated++;
+        if (fieldsToDelete.includes("teachers_voted")) removedTeachersVotedCount++;
+        if (fieldsToDelete.includes("rated_teachers")) removedRatedTeachersCount++;
+
+        if (!dryRun) {
+          const updatePayload = fieldsToDelete.reduce<Record<string, any>>((acc, fieldName) => {
+            acc[fieldName] = admin.firestore.FieldValue.delete();
+            return acc;
+          }, {});
+
+          batch.update(profileSnap.ref, updatePayload);
+          batchOps++;
+          await commitBatchIfNeeded();
+        }
+      }
+    }
+
+    if (!dryRun) {
+      await commitBatchIfNeeded(true);
+      await db.collection("logs").add({
+        type: "ADMIN_ACTION",
+        action: "CLEANUP_LEGACY_TEACHERS_VOTED",
+        user_id: request.auth.uid,
+        user_name: callerProfileDoc.data()?.full_name || "Unknown Admin",
+        timestamp: new Date(),
+        details: `Removed legacy voting fields from ${usersUpdated}/${usersChecked} profiles (teachers_voted: ${removedTeachersVotedCount}, rated_teachers: ${removedRatedTeachersCount}).`,
+        stats: {
+          users_checked: usersChecked,
+          users_updated: usersUpdated,
+          removed_teachers_voted: removedTeachersVotedCount,
+          removed_rated_teachers: removedRatedTeachersCount,
+        },
+      });
+    }
+
+    return {
+      success: true,
+      dryRun: Boolean(dryRun),
+      stats: {
+        usersChecked,
+        usersUpdated,
+        removedTeachersVoted: removedTeachersVotedCount,
+        removedRatedTeachers: removedRatedTeachersCount,
+      },
+    };
+  } catch (error: any) {
+    logger.error("cleanupLegacyTeachersVoted failed", { error });
+    if (error instanceof HttpsError) throw error;
+    throw new HttpsError("internal", `cleanupLegacyTeachersVoted failed: ${error?.message || "unknown error"}`);
+  }
+});

@@ -141,6 +141,8 @@ export default function CardManagerPage() {
   const [editingTeacher, setEditingTeacher] = useState<LootTeacher | null>(null)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [isCleaningInventory, setIsCleaningInventory] = useState(false)
+  const [isSyncingOpenedPacks, setIsSyncingOpenedPacks] = useState(false)
+  const [isCleaningLegacyVotes, setIsCleaningLegacyVotes] = useState(false)
   const [isSyncing, setIsSyncing] = useState(false)
   
   const [importing, setImporting] = useState(false)
@@ -553,6 +555,74 @@ export default function CardManagerPage() {
       toast.error(err.message || 'Fehler bei der Bereinigung der Inventare.')
     } finally {
       setIsCleaningInventory(false)
+    }
+  }
+
+  const handleSyncOpenedPacksToInventory = async () => {
+    if (!confirm('Packs geöffnet mit Inventar synchronisieren? Formel: ceil(Anzahl Karten / 3).')) return
+
+    setIsSyncingOpenedPacks(true)
+    const syncFn = httpsCallable<void, { success: boolean; stats: { usersChecked: number; usersUpdated: number } }>(
+      functions,
+      'syncOpenedPacksToInventory'
+    )
+
+    try {
+      const result = await syncFn()
+      const { usersChecked, usersUpdated } = result.data.stats
+      toast.success(`Pack-Sync fertig: ${usersUpdated}/${usersChecked} Profile aktualisiert.`)
+
+      if (user) {
+        await logAction('SYNC_OPENED_PACKS_TO_INVENTORY', user.uid, profile?.full_name, {
+          usersChecked,
+          usersUpdated,
+        })
+      }
+    } catch (err: any) {
+      console.error('Error syncing opened packs:', err)
+      toast.error(err.message || 'Fehler beim Pack-Sync.')
+    } finally {
+      setIsSyncingOpenedPacks(false)
+    }
+  }
+
+  const handleCleanupLegacyTeachersVoted = async () => {
+    if (!confirm('Legacy-Felder teachers_voted / rated_teachers aus Profilen entfernen?')) return
+
+    setIsCleaningLegacyVotes(true)
+    const cleanupFn = httpsCallable<void, {
+      success: boolean;
+      stats: {
+        usersChecked: number;
+        usersUpdated: number;
+        removedTeachersVoted?: number;
+        removedRatedTeachers?: number;
+      }
+    }>(
+      functions,
+      'cleanupLegacyTeachersVoted'
+    )
+
+    try {
+      const result = await cleanupFn()
+      const { usersChecked, usersUpdated, removedTeachersVoted = 0, removedRatedTeachers = 0 } = result.data.stats
+      toast.success(
+        `Legacy-Cleanup fertig: ${usersUpdated}/${usersChecked} Profile bereinigt (teachers_voted: ${removedTeachersVoted}, rated_teachers: ${removedRatedTeachers}).`
+      )
+
+      if (user) {
+        await logAction('CLEANUP_LEGACY_TEACHERS_VOTED', user.uid, profile?.full_name, {
+          usersChecked,
+          usersUpdated,
+          removedTeachersVoted,
+          removedRatedTeachers,
+        })
+      }
+    } catch (err: any) {
+      console.error('Error cleaning legacy teachers_voted:', err)
+      toast.error(err.message || 'Fehler beim Legacy-Cleanup.')
+    } finally {
+      setIsCleaningLegacyVotes(false)
     }
   }
 
@@ -1070,6 +1140,26 @@ export default function CardManagerPage() {
                             <Button variant="outline" size="sm" onClick={handleCleanupInventory} disabled={isCleaningInventory} title="Entfernt nicht mehr existierende Lehrer aus allen Inventaren">
                               {isCleaningInventory ? <Loader2 className="h-3 w-3 animate-spin mr-2" /> : <Database className="h-3 w-3 mr-2" />}
                               Cleanup Inventories
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={handleSyncOpenedPacksToInventory}
+                              disabled={isSyncingOpenedPacks}
+                              title="Synchronisiert booster_stats.total_opened anhand Inventar (ceil(Karten/3))"
+                            >
+                              {isSyncingOpenedPacks ? <Loader2 className="h-3 w-3 animate-spin mr-2" /> : <RefreshCw className="h-3 w-3 mr-2" />}
+                              Sync Packs
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={handleCleanupLegacyTeachersVoted}
+                              disabled={isCleaningLegacyVotes}
+                              title="Entfernt die alten Felder teachers_voted und rated_teachers aus Profilen"
+                            >
+                              {isCleaningLegacyVotes ? <Loader2 className="h-3 w-3 animate-spin mr-2" /> : <Trash2 className="h-3 w-3 mr-2" />}
+                              Cleanup Legacy
                             </Button>
                             <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} disabled={importing}>
 
