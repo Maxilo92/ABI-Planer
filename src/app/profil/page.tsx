@@ -3,7 +3,7 @@
 import { useAuth } from '@/context/AuthContext'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -335,7 +335,7 @@ export default function ProfilePage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Freundesystem</CardTitle>
+            <CardTitle>Freunde</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="grid grid-cols-3 gap-4 text-sm">

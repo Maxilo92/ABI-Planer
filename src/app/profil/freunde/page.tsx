@@ -183,7 +183,7 @@ export default function FriendsPage() {
             className="gap-2 -ml-2 text-muted-foreground"
             render={<Link href="/profil"><ArrowLeft className="h-4 w-4" /> Zurück zum Profil</Link>}
           />
-          <h1 className="text-3xl font-bold tracking-tight">Freundesystem</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Freunde</h1>
         </div>
 
         <div className="flex items-center gap-3 rounded-2xl border bg-card px-4 py-3 shadow-sm">
@@ -191,7 +191,6 @@ export default function FriendsPage() {
             <Sparkles className="h-4 w-4" />
           </div>
           <div>
-            <p className="text-xs uppercase tracking-widest text-muted-foreground">Aktive Verbindungen</p>
             <p className="text-lg font-semibold">{friendships.length} Freunde</p>
           </div>
         </div>
@@ -238,7 +237,7 @@ export default function FriendsPage() {
                 }}
                 placeholder="Name, Kurs oder Gruppe suchen..."
               />
-              <Button variant="outline" onClick={applySearch}>Suchen</Button>
+              <Button variant="outline" onClick={() => applySearch()}>Suchen</Button>
             </div>
           </CardHeader>
           <CardContent className="space-y-3 py-6">

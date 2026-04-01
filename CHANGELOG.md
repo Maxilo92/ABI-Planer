@@ -1,6 +1,12 @@
 # Changelog
 
 
+## [1.0.91] - 2026-04-01
+- **Bugfix (Build):** Syntax- und Type-Errors in Profil-Seiten behoben, die den Build verhinderten.
+    - **Profil (Public):** Syntax-Fehler in `handleFriendAction` behoben und fehlendes `return` sowie `Button`-Tag ergaenzt.
+    - **Profil (Main):** Fehlende `CardDescription` Importe in `src/app/profil/page.tsx` und `src/app/profil/[id]/page.tsx` ergaenzt.
+    - **Freunde:** Type-Mismatch in `applySearch` onClick Handler in `src/app/profil/freunde/page.tsx` korrigiert.
+
 ## [1.0.90] - 2026-04-01
 - **Feature (Freundesystem):** Grundlage fuer spaeteren Kartentausch als echtes Beziehungsmodell eingefuehrt.
     - **Friend Requests:** Nutzer koennen Freundschaftsanfragen senden, annehmen, ablehnen und zurueckziehen.

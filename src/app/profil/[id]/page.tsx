@@ -4,7 +4,7 @@ import { useEffect, useState, use } from 'react'
 import { db } from '@/lib/firebase'
 import { doc, getDoc } from 'firebase/firestore'
 import { Profile, UserRole } from '@/types/database'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Loader2, ArrowLeft, Shield, Calendar, Users, User, UserPlus, UserCheck, UserX } from 'lucide-react'
@@ -109,6 +109,9 @@ export default function PublicProfilePage({ params }: { params: Promise<{ id: st
         }
         return
       }
+
+      if (relationshipState === 'friends') {
+        await removeFriend(id)
         toast.success('Freundschaft entfernt.')
       }
     } catch (error: any) {
@@ -117,9 +120,10 @@ export default function PublicProfilePage({ params }: { params: Promise<{ id: st
     }
   }
 
+  return (
     <div className="space-y-12 pb-20">
       <div className="max-w-2xl mx-auto space-y-6">
-                <p>Freundebereich verfügbar.</p>
+        <Button
           variant="ghost"
           size="sm"
           className="gap-2 -ml-2 text-muted-foreground"
@@ -222,7 +226,7 @@ export default function PublicProfilePage({ params }: { params: Promise<{ id: st
           <CardHeader className="border-b pb-4">
             <CardTitle className="text-lg flex items-center gap-2">
               <UserPlus className="h-4 w-4 text-primary" />
-              Freundesystem
+              Freunde
             </CardTitle>
             <CardDescription>
               Freundschaften bilden später die Basis für Kartentausch und gemeinsame Kontakte.
