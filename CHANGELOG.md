@@ -1,6 +1,12 @@
 # Changelog
 
 
+## [1.0.92] - 2026-04-01
+- **UX (Freunde):** Oben auf der Freunde-Seite ein Toggle zwischen `Freunde`, `Vorgeschlagen` und `Einladungen` ergaenzt.
+    - **Schnellzugriff:** Ein prominenter `Freunde hinzufügen`-Button springt direkt in die Vorschlaege.
+    - **Layout:** Die Seite zeigt je nach Auswahl nur die jeweils relevante Ansicht statt alle Bereiche gleichzeitig.
+
+
 ## [1.0.91] - 2026-04-01
 - **Bugfix (Build):** Syntax- und Type-Errors in Profil-Seiten behoben, die den Build verhinderten.
     - **Profil (Public):** Syntax-Fehler in `handleFriendAction` behoben und fehlendes `return` sowie `Button`-Tag ergaenzt.
