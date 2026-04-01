@@ -1,5 +1,29 @@
 # Changelog
 
+## [1.0.84] - 2026-04-01
+- **Feature (Sammelkarten Admin):** Lehrer-Bearbeitungsansicht im Karten-Manager um neue Kurz-Aktionen erweitert.
+    - **Speich.:** Speichert nur die Lehrer-Änderungen.
+    - **Speich. + Alb-:** Speichert und entfernt danach die Lehrer-Karten aus allen Alben (ohne Kompensation).
+    - **Speich. + Alb- + Komp:** Speichert und entfernt danach aus allen Alben (mit Kompensation).
+    - **Nur Alb-:** Entfernt nur aus allen Alben (ohne Speichern).
+- **Backend (Cloud Function):** `removeTeacherCards` unterstützt jetzt optionales Entfernen ohne Kompensation über den Parameter `compensate`.
+- **Fix (Admin Actions):** `Speich. + Alb-` triggert keine Seltenheits-Entschädigung mehr im Hintergrund und bleibt damit strikt ohne Kompensation.
+- **Fix (Admin Actions):** `Speich.` ändert Lehrer-Daten nun still ohne Inventar-Eingriffe (kein Löschen, keine Kompensation).
+- **Fix (Cloud Functions):** Stabilisierung von `removeTeacherCards`/`validateAndFixRarities` gegen `INTERNAL`-Batch-Fehler bei fehlenden Profil-Dokumenten (kompensierende Writes laufen nun fehlertolerant via Merge-Set).
+- **UX (Mismatch Preview):** Überarbeitetes, größeres und mobiles Vorschau-Modal mit scanbarer, standardmäßig eingeklappter Nutzerliste, roten/grünen Summen je Nutzer sowie abwählbaren Schülern.
+- **Execution Filter:** `validateAndFixRarities` unterstützt jetzt eine Nutzer-Auswahl (`targetUserIds`), sodass nur markierte Schüler verarbeitet werden.
+- **Compensation Update:** Kompensation wird nun pro betroffenem Nutzer aus der Gesamtsumme der entfernten Karten berechnet: `Math.ceil(total_removed_cards / 3)`.
+- **User Transparency:** Betroffene Nutzer erhalten eine klarere Übersicht mit Gesamtverlust, berechneter Kompensation und Detailliste der entfernten Karten.
+
+## [1.0.83] - 2026-03-31
+- **Feature (Sammelkarten Management):** Entfernung des Besitz-Limits-Systems und Einführung eines neuen Button-basierten Kartenverwaltungssystems.
+    - **Card Removal:** Neue Admin-Funktion zur gezielten Entfernung aller Karten eines Lehrers aus allen Nutzer-Inventaren.
+    - **Smart Compensation:** Betroffene Nutzer erhalten faire Entschädigung basierend auf Duplikaten: Math.ceil(duplicate_count / 3) Booster-Packs.
+    - **Rarity Validation:** Neue Funktion zur Validierung und Bereinigung von Rarity-Mismatches in allen Nutzer-Alben.
+    - **Deprecation:** Entfernung des alten `per_user_card_limits` Systems. Neue, flexible Admin-Kontrolle ersetzt starre Limits.
+    - **Admin UX:** Neuer "Blitz"-Button (⚡) in der Lehrerliste ermöglicht schnelle, sichere Kartenverwaltung mit Bestätigung und detailliertem Feedback.
+    - **Logging:** Vollständige Audit-Logs zeigen betroffene Nutzer, entfernte Karten und verteilte Kompensation.
+
 ## [1.0.82] - 2026-03-31
 - **Fix (News Detail Page):** Behebung eines Build-Fehlers durch einen fehlenden Import von `useSystemMessage`.
     - **TypeScript Safety:** Die News-Detailseite kann nun wieder fehlerfrei gebaut werden.

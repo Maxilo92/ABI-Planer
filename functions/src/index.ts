@@ -20,3 +20,4 @@ export * from "./giftUtils";
 export * from "./referrals";
 export * from "./users";
 export * from "./inventory";
+export * from "./cardsManager";

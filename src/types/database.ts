@@ -134,7 +134,6 @@ export interface Settings {
   loot_teachers?: LootTeacher[];
   custom_popup_messages?: CustomPopupMessage[];
   rarity_limits?: Record<TeacherRarity, number>;
-  per_user_card_limits?: Record<TeacherRarity, number>;
   maintenance?: {
     start: string | null;
     end?: string | null;
@@ -284,4 +283,30 @@ export interface CardProposal {
 export interface NewsImage {
   url: string;
   path: string;
+}
+
+export interface RemovedCardInfo {
+  teacherId: string;
+  teacherName: string;
+  rarity: TeacherRarity;
+  variants: {
+    [key in CardVariant]?: number;
+  };
+  totalRemoved: number;
+  duplicateCount: number;
+}
+
+export interface CardRemovalNotification {
+  id: string;
+  userId: string;
+  type: 'card_removal' | 'admin_action';
+  title: string;
+  message: string;
+  timestamp: string;
+  removedCards?: RemovedCardInfo[];
+  boosterCompensation?: {
+    amount: number;
+    reason: string;
+  };
+  read: boolean;
 }

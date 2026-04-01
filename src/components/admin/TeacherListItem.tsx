@@ -19,7 +19,7 @@ interface TeacherListItemProps {
 export const TeacherListItem = React.memo(function TeacherListItem({ 
   teacher, 
   onEdit, 
-  onRemove 
+  onRemove
 }: TeacherListItemProps) {
   return (
     <div className="flex items-center justify-between p-3 rounded-xl border bg-card hover:border-primary/30 transition-all group">
@@ -31,11 +31,11 @@ export const TeacherListItem = React.memo(function TeacherListItem({
           {getRarityLabel(teacher.rarity)}
         </span>
       </div>
-      <div className="flex gap-1 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
+      <div className="flex gap-1 opacity-100 transition-opacity">
         <Button 
           variant="ghost" 
           size="icon" 
-          className="h-8 w-8" 
+          className="h-8 w-8 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity" 
           onClick={() => onEdit(teacher)}
           title="Bearbeiten"
         >
@@ -44,7 +44,7 @@ export const TeacherListItem = React.memo(function TeacherListItem({
         <Button 
           variant="ghost" 
           size="icon" 
-          className="h-8 w-8 text-destructive" 
+          className="h-8 w-8 text-destructive opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity" 
           onClick={() => onRemove(teacher)}
           title="Entfernen"
         >

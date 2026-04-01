@@ -29,6 +29,7 @@ import { TeacherRarity, LootTeacher } from '@/types/database'
 import { SammelkartenConfig } from '@/types/cards'
 import { cn, getRarityColor, getRarityLabel } from '@/lib/utils'
 import { TeacherEditDialog } from '@/components/admin/TeacherEditDialog'
+import { NotificationPreviewDialog } from '@/components/admin/NotificationPreviewDialog'
 import { TeacherList } from '@/components/admin/TeacherList'
 
 interface SmartNumericInputProps {
@@ -143,6 +144,40 @@ export default function CardManagerPage() {
   const [isSyncing, setIsSyncing] = useState(false)
   
   const [importing, setImporting] = useState(false)
+  
+  // Dry-Run Dialog State
+  const [showDryRunDialog, setShowDryRunDialog] = useState(false)
+  const [dryRunPreview, setDryRunPreview] = useState<any>(null)
+  const [isDryRunning, setIsDryRunning] = useState(false)
+  const [pendingDryRunAction, setPendingDryRunAction] = useState<string | null>(null)
+  const [userNameCache, setUserNameCache] = useState<Record<string, string>>({})
+
+  type RarityFixDetail = {
+    userId: string
+    teacherId: string
+    cardsRemoved: number
+    duplicates: number
+    compensationPacks: number
+    rarity?: string
+    variants?: Record<string, number>
+  }
+
+  type PreviewNotification = {
+    userId: string
+    userName?: string
+    totalCardsRemoved: number
+    totalCompensation: number
+    removedCards: Array<{
+      teacherId: string
+      teacherName: string
+      rarity: string
+      variants: Record<string, number>
+      totalRemoved: number
+      duplicates: number
+      compensationPacks: number
+    }>
+  }
+
   
   // CSV Import State
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false)
@@ -353,11 +388,15 @@ export default function CardManagerPage() {
     setIsEditDialogOpen(true)
   }, [])
 
-  const handleUpdateTeacher = useCallback(async (updatedTeacher: LootTeacher) => {
+  const handleUpdateTeacher = useCallback(async (
+    updatedTeacher: LootTeacher,
+    options?: { skipRaritySync?: boolean }
+  ) => {
     const oldTeacher = localConfig?.loot_teachers.find(t => t.id === updatedTeacher.id)
     const rarityChanged = oldTeacher && oldTeacher.rarity !== updatedTeacher.rarity
+    const shouldRunRaritySync = Boolean(rarityChanged && !options?.skipRaritySync)
 
-    if (rarityChanged) {
+    if (shouldRunRaritySync) {
       if (!confirm(`Du hast die Seltenheit von ${updatedTeacher.name} geändert. \n\nDies wird die Karte aus den Inventaren ALLER Schüler entfernen, aber sie erhalten pro entfernter Karte 1 Booster-Pack als Entschädigung. \n\nFortfahren?`)) {
         return
       }
@@ -375,8 +414,11 @@ export default function CardManagerPage() {
     setIsDirty(true)
     setIsEditDialogOpen(false)
 
-    if (rarityChanged) {
-      const rarityChangeFn = httpsCallable<{ teacherId: string, teacherName: string }, { success: boolean, usersUpdated: number, totalCompensatedBoosters: number }>(functions, 'handleTeacherRarityChange')
+    if (shouldRunRaritySync) {
+      const rarityChangeFn = httpsCallable<
+        { teacherId: string, teacherName: string },
+        { success: boolean, usersUpdated: number, totalCompensatedBoosters: number, notificationsCreated?: number }
+      >(functions, 'handleTeacherRarityChange')
       
       const toastId = toast.loading(`${updatedTeacher.name} wird aus Inventaren entfernt und Nutzer entschädigt...`)
       
@@ -386,8 +428,11 @@ export default function CardManagerPage() {
           teacherName: updatedTeacher.name 
         })
         
-        const { usersUpdated, totalCompensatedBoosters } = result.data
-        toast.success(`Inventare bereinigt: ${usersUpdated} Nutzer erhielten insgesamt ${totalCompensatedBoosters} Booster.`, { id: toastId })
+        const { usersUpdated, totalCompensatedBoosters, notificationsCreated } = result.data
+        toast.success(
+          `Inventare bereinigt: ${usersUpdated} Nutzer erhielten insgesamt ${totalCompensatedBoosters} Booster. Nachrichten erstellt: ${notificationsCreated ?? usersUpdated}.`,
+          { id: toastId }
+        )
         
         if (user) {
           await logAction('TEACHERS_RARITY_SYNC', user.uid, profile?.full_name, {
@@ -403,6 +448,57 @@ export default function CardManagerPage() {
       }
     }
   }, [localConfig, user, profile])
+
+  const runRemoveTeacherFromAlbums = useCallback(async (teacher: LootTeacher, compensate: boolean) => {
+    const removeFn = httpsCallable<
+      { teacherId: string; dryRun?: boolean; compensate?: boolean },
+      {
+        success: boolean
+        message: string
+        stats: {
+          usersAffected: number
+          cardsRemoved: number
+          compensationPacks: number
+        }
+      }
+    >(functions, 'removeTeacherCards')
+
+    const toastId = toast.loading(`Entferne ${teacher.name} aus Alben${compensate ? ' (mit Kompensation)' : ''}...`)
+
+    try {
+      const result = await removeFn({ teacherId: teacher.id, dryRun: false, compensate })
+      const stats = result.data.stats
+
+      toast.success(
+        `Fertig: ${stats.usersAffected} Nutzer, ${stats.cardsRemoved} Karten entfernt${compensate ? `, ${stats.compensationPacks} Booster kompensiert` : ''}.`,
+        { id: toastId }
+      )
+
+      if (user) {
+        await logAction('REMOVE_TEACHER_CARDS', user.uid, profile?.full_name, {
+          teacherId: teacher.id,
+          teacherName: teacher.name,
+          compensate,
+          usersAffected: stats.usersAffected,
+          cardsRemoved: stats.cardsRemoved,
+          compensationPacks: stats.compensationPacks,
+        })
+      }
+    } catch (err: any) {
+      console.error('Error removing teacher from albums:', err)
+      toast.error(err.message || 'Fehler beim Entfernen aus Alben.', { id: toastId })
+      throw err
+    }
+  }, [user, profile])
+
+  const handleSaveAndRemoveTeacher = useCallback(async (updatedTeacher: LootTeacher, options: { compensate: boolean }) => {
+    await handleUpdateTeacher(updatedTeacher, { skipRaritySync: true })
+    await runRemoveTeacherFromAlbums(updatedTeacher, options.compensate)
+  }, [handleUpdateTeacher, runRemoveTeacherFromAlbums])
+
+  const handleRemoveTeacherOnly = useCallback(async (teacher: LootTeacher, options: { compensate: boolean }) => {
+    await runRemoveTeacherFromAlbums(teacher, options.compensate)
+  }, [runRemoveTeacherFromAlbums])
 
   const handleCleanupDuplicates = () => {
     if (!localConfig) return
@@ -486,6 +582,172 @@ export default function CardManagerPage() {
       setIsSyncing(false)
     }
   }
+
+  const buildDryRunNotifications = useCallback((details: RarityFixDetail[]): PreviewNotification[] => {
+    if (!localConfig) return []
+
+    const teacherNameById = new Map(localConfig.loot_teachers.map((teacher) => [teacher.id, teacher.name]))
+    const groupedByUser = new Map<string, PreviewNotification>()
+
+    details.forEach((detail) => {
+      const existing = groupedByUser.get(detail.userId)
+      const teacherName = teacherNameById.get(detail.teacherId) || detail.teacherId
+      const removedCard = {
+        teacherId: detail.teacherId,
+        teacherName,
+        rarity: detail.rarity || 'unknown',
+        variants: detail.variants || {},
+        totalRemoved: detail.cardsRemoved,
+        duplicates: detail.duplicates,
+        compensationPacks: detail.compensationPacks,
+      }
+
+      if (!existing) {
+        groupedByUser.set(detail.userId, {
+          userId: detail.userId,
+          totalCardsRemoved: detail.cardsRemoved,
+          totalCompensation: 0,
+          removedCards: [removedCard],
+        })
+        return
+      }
+
+      existing.totalCardsRemoved += detail.cardsRemoved
+      existing.removedCards.push(removedCard)
+    })
+
+    return Array.from(groupedByUser.values()).map((entry) => ({
+      ...entry,
+      totalCompensation: Math.ceil(entry.totalCardsRemoved / 3),
+    }))
+  }, [localConfig])
+
+  const hydrateUserNames = useCallback(async (notifications: PreviewNotification[]) => {
+    const missingUserIds = notifications
+      .map((entry) => entry.userId)
+      .filter((userId) => !userNameCache[userId])
+
+    if (missingUserIds.length === 0) {
+      return notifications.map((entry) => ({
+        ...entry,
+        userName: userNameCache[entry.userId],
+      }))
+    }
+
+    const resolvedEntries = await Promise.all(missingUserIds.map(async (userId) => {
+      try {
+        const profileSnap = await getDoc(doc(db, 'profiles', userId))
+        if (!profileSnap.exists()) return [userId, userId] as const
+
+        const data = profileSnap.data() as { full_name?: string; email?: string }
+        return [userId, data.full_name || data.email || userId] as const
+      } catch {
+        return [userId, userId] as const
+      }
+    }))
+
+    const nextCache = resolvedEntries.reduce<Record<string, string>>((acc, [userId, userName]) => {
+      acc[userId] = userName
+      return acc
+    }, {})
+
+    setUserNameCache((prev) => ({ ...prev, ...nextCache }))
+
+    return notifications.map((entry) => ({
+      ...entry,
+      userName: nextCache[entry.userId] || userNameCache[entry.userId] || entry.userId,
+    }))
+  }, [userNameCache])
+
+  const handleRemoveAllMismatches = useCallback(async () => {
+    if (isDryRunning || isSyncing) return
+
+    setIsDryRunning(true)
+    setPendingDryRunAction('validate_rarities')
+
+    try {
+      const dryRunFn = httpsCallable<{ dryRun: boolean }, {
+        success: boolean
+        dryRun: boolean
+        stats: { details: RarityFixDetail[] }
+      }>(functions, 'validateAndFixRarities')
+
+      const result = await dryRunFn({ dryRun: true })
+      const details = result.data.stats?.details || []
+
+      if (details.length === 0) {
+        setPendingDryRunAction(null)
+        toast.success('Keine Rarity-Mismatches gefunden.')
+        return
+      }
+
+      const notifications = buildDryRunNotifications(details)
+      const notificationsWithNames = await hydrateUserNames(notifications)
+      setDryRunPreview({
+        notifications: notificationsWithNames,
+        details,
+      })
+      setShowDryRunDialog(true)
+    } catch (error) {
+      console.error('Error checking rarity mismatches:', error)
+      toast.error('Dry-Run fehlgeschlagen. Bitte erneut versuchen.')
+      setPendingDryRunAction(null)
+    } finally {
+      setIsDryRunning(false)
+    }
+  }, [buildDryRunNotifications, hydrateUserNames, isDryRunning, isSyncing])
+
+  const handleConfirmDryRun = useCallback(async (selectedUserIds: string[]) => {
+    if (pendingDryRunAction !== 'validate_rarities') {
+      setShowDryRunDialog(false)
+      return
+    }
+
+    if (!selectedUserIds || selectedUserIds.length === 0) {
+      toast.info('Keine Nutzer ausgewählt.')
+      return
+    }
+
+    setIsSyncing(true)
+    const runToastId = toast.loading('Reparatur wird ausgeführt...')
+
+    try {
+      const executeFn = httpsCallable<{ dryRun: boolean; targetUserIds?: string[] }, {
+        success: boolean
+        stats: {
+          usersAffected: number
+          cardsRemoved: number
+          compensationPacks: number
+        }
+      }>(functions, 'validateAndFixRarities')
+
+      const result = await executeFn({ dryRun: false, targetUserIds: selectedUserIds })
+      const stats = result.data.stats
+
+      toast.success(
+        `Reparatur abgeschlossen: ${stats.usersAffected} Nutzer, ${stats.cardsRemoved} Karten entfernt, ${stats.compensationPacks} Booster vergeben.`,
+        { id: runToastId }
+      )
+
+      if (user) {
+        await logAction('VALIDATE_AND_FIX_RARITIES', user.uid, profile?.full_name, {
+          selectedUsers: selectedUserIds.length,
+          usersAffected: stats.usersAffected,
+          cardsRemoved: stats.cardsRemoved,
+          compensationPacks: stats.compensationPacks,
+        })
+      }
+
+      setShowDryRunDialog(false)
+      setDryRunPreview(null)
+      setPendingDryRunAction(null)
+    } catch (error) {
+      console.error('Error fixing rarity mismatches:', error)
+      toast.error('Reparatur fehlgeschlagen.', { id: runToastId })
+    } finally {
+      setIsSyncing(false)
+    }
+  }, [pendingDryRunAction, user, profile])
 
   const handleCSVUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -814,6 +1076,16 @@ export default function CardManagerPage() {
                               {importing ? <Loader2 className="h-3 w-3 animate-spin mr-2" /> : <Upload className="h-3 w-3 mr-2" />}
                               Bulk Import
                             </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={handleRemoveAllMismatches}
+                              disabled={isDryRunning || isSyncing}
+                              title="Dry-Run für Rarity-Mismatches"
+                            >
+                              {isDryRunning ? <Loader2 className="h-3 w-3 animate-spin mr-2" /> : <Zap className="h-3 w-3 mr-2" />}
+                              Mismatches prüfen
+                            </Button>
                             <Badge variant="secondary">
                               {localConfig!.loot_teachers.length} Lehrer
                             </Badge>
@@ -1046,43 +1318,6 @@ export default function CardManagerPage() {
                     <Card>
                       <CardHeader>
                         <CardTitle className="text-lg flex items-center gap-2">
-                          <Users className="h-5 w-5 text-fuchsia-500" />
-                          Besitz-Limits pro Nutzer
-                        </CardTitle>
-                        <CardDescription>Maximale Anzahl an Karten einer Seltenheit, die ein einzelner Nutzer besitzen darf.</CardDescription>
-                      </CardHeader>
-                      <CardContent className="space-y-4">
-                        {RARITY_ORDER.map((rarity) => (
-                          <div key={rarity} className="flex items-center justify-between gap-4">
-                            <Label className={cn("font-bold", getRarityColor(rarity))}>{getRarityLabel(rarity)}</Label>
-                            <SmartNumericInput 
-                              isInteger
-                              min="0"
-                              value={localConfig!.per_user_card_limits?.[rarity] ?? 99}
-                              onChange={(val) => handleSaveConfig({ per_user_card_limits: { ...localConfig!.per_user_card_limits, [rarity]: val }})}
-                              className="w-24 h-9"
-                            />
-                          </div>
-                        ))}
-                        <div className="!mt-8">
-                          <Button 
-                            variant="destructive" 
-                            className="w-full gap-2"
-                            onClick={handleGlobalSync}
-                            disabled={isSyncing}
-                          >
-                            {isSyncing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-                            Run Global Sync
-                          </Button>
-                          <p className="text-[10px] text-muted-foreground mt-2 text-center">
-                            <strong>Achtung:</strong> Gleicht alle Inventare mit den Limits ab. Nutzer erhalten 1 Pack pro Verlust.
-                          </p>
-                        </div>
-                      </CardContent>
-                    </Card>
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="text-lg flex items-center gap-2">
                           <Activity className="h-5 w-5 text-emerald-500" />
                           Globale Parameter & Varianten
                         </CardTitle>
@@ -1244,8 +1479,10 @@ export default function CardManagerPage() {
         <TeacherEditDialog 
           isOpen={isEditDialogOpen}
           teacher={editingTeacher}
-          onSave={handleUpdateTeacher}
+          onSave={(updatedTeacher) => handleUpdateTeacher(updatedTeacher, { skipRaritySync: true })}
           onClose={() => setIsEditDialogOpen(false)}
+          onSaveAndRemove={handleSaveAndRemoveTeacher}
+          onRemoveOnly={handleRemoveTeacherOnly}
         />
         {/* Import Dialog */}
         <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
@@ -1318,6 +1555,15 @@ export default function CardManagerPage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        {/* Notification Preview Dialog */}
+        <NotificationPreviewDialog
+          open={showDryRunDialog}
+          onOpenChange={setShowDryRunDialog}
+          notifications={dryRunPreview?.notifications || []}
+          isLoading={isSyncing}
+          onConfirm={handleConfirmDryRun}
+          actionType="validate_rarities"
+        />
       </div>
     </AdminGuard>
   )

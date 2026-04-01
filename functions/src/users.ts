@@ -285,6 +285,7 @@ export const handleTeacherRarityChange = onCall({
     const userTeachersSnap = await db.collection("user_teachers").get();
     let usersUpdated = 0;
     let totalCompensatedBoosters = 0;
+    let notificationsCreated = 0;
 
     const batchSize = 250; // Smaller batch because we do two updates (user_teachers and profiles)
     let currentBatch = db.batch();
@@ -296,6 +297,8 @@ export const handleTeacherRarityChange = onCall({
       if (inventory[teacherId]) {
         const userId = userDoc.id;
         const cardCount = Number(inventory[teacherId].count) || 0;
+        const variants = inventory[teacherId].variants || {};
+        const duplicateCount = Math.max(0, cardCount - 1);
 
         if (cardCount > 0) {
           // 1. Remove teacher from inventory
@@ -311,6 +314,42 @@ export const handleTeacherRarityChange = onCall({
             updated_at: FieldValue.serverTimestamp()
           });
           currentBatchOpCount++;
+
+          // 3. Create in-app notification for affected user
+          const notificationRef = db
+            .collection("notifications")
+            .doc(userId)
+            .collection("messages")
+            .doc();
+
+          const variantSummary = Object.entries(variants)
+            .map(([variant, count]) => `${count}x ${variant}`)
+            .join(", ");
+
+          currentBatch.set(notificationRef, {
+            id: notificationRef.id,
+            userId,
+            type: "card_removal",
+            title: `Karte entfernt: ${teacherName || teacherId}`,
+            message: `Die Karte \"${teacherName || teacherId}\" wurde wegen einer Seltenheitsanpassung aus deinem Album entfernt. ${variantSummary ? `Entfernte Varianten: ${variantSummary}. ` : ""}Du hast ${cardCount} Booster als Entschadigung erhalten.`,
+            removedCards: [
+              {
+                teacherId,
+                teacherName: teacherName || teacherId,
+                variants,
+                totalRemoved: cardCount,
+                duplicateCount,
+              },
+            ],
+            boosterCompensation: {
+              amount: cardCount,
+              reason: "Entschadigung bei Seltenheitsanderung",
+            },
+            read: false,
+            timestamp: FieldValue.serverTimestamp(),
+          });
+          currentBatchOpCount++;
+          notificationsCreated++;
 
           usersUpdated++;
           totalCompensatedBoosters += cardCount;
@@ -334,7 +373,8 @@ export const handleTeacherRarityChange = onCall({
     return {
       success: true,
       usersUpdated,
-      totalCompensatedBoosters
+      totalCompensatedBoosters,
+      notificationsCreated,
     };
   } catch (error: any) {
     console.error(`[Admin] Teacher rarity change cleanup failed:`, error);

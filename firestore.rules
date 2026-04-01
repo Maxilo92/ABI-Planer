@@ -5,6 +5,10 @@ service cloud.firestore {
     function isAuthenticated() {
       return request.auth != null;
     }
+
+    function isServiceAccount() {
+      return request.auth == null;
+    }
     
     function isLernsax() {
       return isAuthenticated() && request.auth.token.email.matches('.*@hgr-web\\.lernsax\\.de$');
@@ -51,10 +55,13 @@ service cloud.firestore {
     }
 
     match /profiles/{userId} {
-      allow read: if isAuthenticated();
+      allow read: if isAuthenticated() || isServiceAccount();
       allow create: if isLernsax() && request.auth.uid == userId;
       
       allow update: if (
+        // Cloud Functions can update specific fields like booster_stats
+        (isServiceAccount() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['booster_stats'])) ||
+
         // Case 1: Self-update for non-admin users (cannot change role, approval, course, group, or referral flags)
         (request.auth.uid == userId && !isAdmin() &&
          !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'is_approved', 'planning_group', 'class_name', 'timeout_until', 'timeout_reason', 'is_group_leader', 'referral_code', 'referred_by'])) ||
@@ -97,6 +104,18 @@ service cloud.firestore {
       }
     }
 
+    match /notifications/{userId} {
+      allow read: if isAuthenticated() && request.auth.uid == userId || isServiceAccount();
+      allow create: if isServiceAccount();
+
+      match /messages/{notificationId} {
+        allow read: if isAuthenticated() && request.auth.uid == userId;
+        allow create: if isServiceAccount();
+        allow update: if isAuthenticated() && request.auth.uid == userId;
+        allow delete: if isAuthenticated() && request.auth.uid == userId || isServiceAccount();
+      }
+    }
+
     match /settings/config {
       allow read: if true;
       allow write: if isPlanner();
@@ -108,7 +127,7 @@ service cloud.firestore {
     }
 
     match /settings/sammelkarten {
-      allow read: if true;
+      allow read: if true; // Public read, Cloud Functions can read
       allow write: if isPlanner();
     }
 
@@ -151,8 +170,8 @@ service cloud.firestore {
     }
 
     match /user_teachers/{userId} {
-      allow read: if isAuthenticated();
-      allow write: if false; // Only via Admin SDK
+      allow read: if isAuthenticated() || isServiceAccount();
+      allow write: if isServiceAccount() || isAdmin(); // Cloud Functions or Admin
     }
 
     match /teachers/{teacherId} {
@@ -206,9 +225,9 @@ service cloud.firestore {
 
     match /logs/{logId} {
       allow read: if isAdmin();
-      allow create: if isApproved()
+      allow create: if isServiceAccount() || (isApproved()
         && request.resource.data.user_id == request.auth.uid
-        && request.resource.data.action is string;
+        && request.resource.data.action is string);
       allow update, delete: if false;
     }
     

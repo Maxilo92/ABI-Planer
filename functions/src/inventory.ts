@@ -1,54 +1,57 @@
-import * as functions from 'firebase-functions'
 import * as admin from 'firebase-admin'
-import { LootTeacher, TeacherRarity, Settings, UserTeacher } from '../../src/types/database'
-import { applyRarityLimits } from './rarity'
-import { regionales_settings } from './_settings'
+import { onCall, HttpsError } from 'firebase-functions/v2/https'
+
+if (admin.apps.length === 0) {
+  admin.initializeApp();
+}
 
 const db = admin.firestore()
 
-export const runGlobalRaritySync = functions
-  .region(regionales_settings.project_region)
-  .https.onCall(async (data, context) => {
-    if (!context.auth || !['admin', 'admin_main'].includes(context.auth.token.role)) {
-      throw new functions.https.HttpsError('permission-denied', 'Nur Admins können diese Funktion ausführen.')
-    }
+interface UserTeacher {
+  [teacherId: string]: {
+    count: number;
+    variants?: Record<string, number>;
+  };
+}
 
+export const runGlobalRaritySync = onCall({
+  cors: true,
+  region: "europe-west3",
+}, async (request) => {
+  if (!request.auth?.uid) {
+    throw new HttpsError('unauthenticated', 'Authentication is required.')
+  }
+
+  const callerProfileRef = db.collection('profiles').doc(request.auth.uid)
+  const callerProfileDoc = await callerProfileRef.get()
+  
+  const role = callerProfileDoc.data()?.role
+  if (!['admin', 'admin_main', 'admin_co'].includes(role)) {
+    throw new HttpsError('permission-denied', 'Must be an administrative user to call this function.')
+  }
+
+  try {
     const settingsRef = db.collection('settings').doc('sammelkarten')
     const settingsSnap = await settingsRef.get()
     if (!settingsSnap.exists) {
-      throw new functions.https.HttpsError('not-found', 'Sammelkarten-Einstellungen nicht gefunden.')
+      throw new HttpsError('not-found', 'Sammelkarten settings not found.')
     }
-    const settings = settingsSnap.data() as Settings
+    const settings = settingsSnap.data() as any
 
     const teachers = settings.loot_teachers || []
-    const globalLimits = settings.rarity_limits
-    const userLimits = settings.per_user_card_limits
-
-    if (!globalLimits || !userLimits) {
-      throw new functions.https.HttpsError('failed-precondition', 'Seltenheits-Limits (global oder pro Nutzer) sind nicht gesetzt.')
-    }
-
-    // 1. Globale Seltenheiten neu berechnen
-    const { updatedTeachers, changes } = applyRarityLimits(teachers, globalLimits)
-    if (changes.length > 0) {
-      await settingsRef.update({ loot_teachers: updatedTeachers })
-    }
+    const teacherRarityMap = new Map(
+      teachers.map((t: any) => [t.id, t.rarity])
+    )
     
-    const teacherRarityMap = new Map<string, TeacherRarity>(updatedTeachers.map(t => [t.id, t.rarity]))
-    
-    // 2. Alle Nutzer-Inventare durchgehen
-    const profilesSnap = await db.collection('profiles').get()
+    // Get all user inventories
     const userInventoriesSnap = await db.collection('user_teachers').get()
-    
-    let compensatedUsersCount = 0
-    const compensationLog: string[] = []
 
     const batch = db.batch()
+    let changedCount = 0
 
     for (const userDoc of userInventoriesSnap.docs) {
       const userId = userDoc.id
       const userInventory = userDoc.data() as UserTeacher
-      let userWasCompensated = false
       
       const newInventory: UserTeacher = {}
       let inventoryChanged = false
@@ -57,50 +60,38 @@ export const runGlobalRaritySync = functions
         const currentData = userInventory[teacherId]
         const newRarity = teacherRarityMap.get(teacherId)
 
-        if (!newRarity) { // Lehrer existiert nicht mehr im Pool
+        if (!newRarity) { // Teacher no longer exists in pool
           inventoryChanged = true
           continue 
         }
 
-        const limitForRarity = userLimits[newRarity]
-        
-        if (currentData.count > limitForRarity) {
-          inventoryChanged = true
-          userWasCompensated = true
-          newInventory[teacherId] = { ...currentData, count: limitForRarity };
-          compensationLog.push(`Nutzer ${userId} verliert ${currentData.count - limitForRarity}x '${teacherId}' (${newRarity})`)
-        } else {
-          newInventory[teacherId] = currentData;
-        }
+        // Keep the card with updated rarity info if needed
+        newInventory[teacherId] = currentData;
       }
 
       if (inventoryChanged) {
         batch.set(db.collection('user_teachers').doc(userId), newInventory)
-      }
-      
-      if (userWasCompensated) {
-        compensatedUsersCount++
-        const profileRef = db.collection('profiles').doc(userId)
-        batch.update(profileRef, { 'booster_stats.extra_available': admin.firestore.FieldValue.increment(1) })
+        changedCount++
       }
     }
 
     await batch.commit()
 
-    const message = `Globale Synchronisierung abgeschlossen. ${changes.length} Lehrer-Seltenheiten aktualisiert. ${compensatedUsersCount} Nutzer für Kartenverluste mit 1 Pack entschädigt.`
-    console.log(message, { compensationLog })
+    const message = `Global rarity synchronization completed. ${changedCount} user inventories updated.`
     
-    // Log-Eintrag für den Admin erstellen
-    const adminProfile = profilesSnap.docs.find(doc => doc.id === context.auth?.uid)?.data()
+    // Log entry for admin
     await db.collection('logs').add({
       type: 'ADMIN_ACTION',
       action: 'GLOBAL_RARITY_SYNC',
-      user_id: context.auth?.uid,
-      user_name: adminProfile?.full_name || 'Unbekannter Admin',
+      user_id: request.auth.uid,
+      user_name: callerProfileDoc.data()?.full_name || 'Unknown Admin',
       timestamp: new Date(),
-      details: message,
-      full_log: compensationLog
+      details: message
     })
 
     return { success: true, message }
-  })
+  } catch (error) {
+    throw error
+  }
+})
+

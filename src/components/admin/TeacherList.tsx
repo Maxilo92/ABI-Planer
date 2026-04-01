@@ -17,7 +17,7 @@ interface TeacherListProps {
 export const TeacherList = React.memo(function TeacherList({ 
   teachers, 
   onEdit, 
-  onRemove 
+  onRemove
 }: TeacherListProps) {
   if (teachers.length === 0) {
     return (
@@ -34,7 +34,7 @@ export const TeacherList = React.memo(function TeacherList({
           key={teacher.id} 
           teacher={teacher} 
           onEdit={onEdit} 
-          onRemove={onRemove} 
+          onRemove={onRemove}
         />
       ))}
     </div>
