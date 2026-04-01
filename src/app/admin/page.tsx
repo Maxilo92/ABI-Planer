@@ -3,7 +3,7 @@
 import { Profile } from '@/types/database'
 import { useState, useEffect } from 'react'
 import { db, getFirebaseFunctions } from '@/lib/firebase'
-import { collection, query, orderBy, onSnapshot, doc, updateDoc, deleteDoc } from 'firebase/firestore'
+import { collection, query, orderBy, onSnapshot, doc, updateDoc, deleteDoc, arrayUnion, arrayRemove } from 'firebase/firestore'
 import { httpsCallable } from 'firebase/functions'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
@@ -18,7 +18,7 @@ import {
   ContextMenuSeparator,
   ContextMenuTrigger,
 } from '@/components/ui/context-menu'
-import { MoreVertical, Shield, User, Trash2, Clock3, Undo2, Search, Gift, MessageSquare, AlertTriangle, ShieldOff } from 'lucide-react'
+import { MoreVertical, Shield, User, Trash2, Clock3, Undo2, Search, Gift, MessageSquare, AlertTriangle, ShieldOff, X, Plus } from 'lucide-react'
 import { ResetPasswordDialog } from '@/components/modals/ResetPasswordDialog'
 import { SetTimeoutDialog } from '@/components/modals/SetTimeoutDialog'
 import { useAuth } from '@/context/AuthContext'
@@ -136,12 +136,12 @@ export default function AdminPage() {
     return () => unsubscribe()
   }, [])
 
-  const handleUpdateProfile = async (id: string, updates: Partial<Profile>) => {
+  const handleUpdateProfile = async (id: string, updates: any) => {
     const target = profiles.find((entry) => entry.id === id)
     if (!target) return
 
     const updateKeys = Object.keys(updates)
-    const isAssignmentOnlyUpdate = updateKeys.every((key) => key === 'class_name' || key === 'planning_group')
+    const isAssignmentOnlyUpdate = updateKeys.every((key) => key === 'class_name' || key === 'planning_groups')
     const targetIsMainAdmin = target.role === 'admin_main' || target.role === 'admin'
     if (targetIsMainAdmin && profile?.id !== id && !isAssignmentOnlyUpdate) {
       return
@@ -338,9 +338,9 @@ export default function AdminPage() {
           } else if (bulkAction === 'set_course') {
             await updateDoc(targetRef, { class_name: bulkCourse })
           } else if (bulkAction === 'set_group') {
-            await updateDoc(targetRef, { planning_group: bulkGroup })
+            await updateDoc(targetRef, { planning_groups: arrayUnion(bulkGroup) })
           } else if (bulkAction === 'clear_group') {
-            await updateDoc(targetRef, { planning_group: null })
+            await updateDoc(targetRef, { planning_groups: [] })
           } else if (bulkAction === 'timeout_24h') {
             await updateDoc(targetRef, {
               timeout_until: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
@@ -609,16 +609,47 @@ export default function AdminPage() {
                             </select>
                           </TableCell>
                           <TableCell>
-                            <select
-                              className="h-9 w-full rounded-md border bg-background px-2 text-sm"
-                              value={p.planning_group || ''}
-                              onChange={(e) => handleUpdateProfile(p.id, { planning_group: e.target.value || null })}
-                            >
-                              <option value="">Keine Gruppe</option>
-                              {planningGroups.map((groupName) => (
-                                <option key={groupName} value={groupName}>{groupName}</option>
+                            <div className="flex flex-wrap gap-1 max-w-[200px]">
+                              {(p.planning_groups || []).map((groupName) => (
+                                <Badge 
+                                  key={groupName} 
+                                  variant="secondary" 
+                                  className="text-[10px] h-5 px-1.5 flex items-center gap-1"
+                                >
+                                  {groupName}
+                                  <button 
+                                    onClick={() => handleUpdateProfile(p.id, { planning_groups: arrayRemove(groupName) })}
+                                    className="hover:text-destructive transition-colors"
+                                  >
+                                    <X className="h-3 w-3" />
+                                  </button>
+                                </Badge>
                               ))}
-                            </select>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger
+                                  render={
+                                    <Button variant="outline" size="icon" className="h-5 w-5 rounded-md">
+                                      <Plus className="h-3 w-3" />
+                                    </Button>
+                                  }
+                                />
+                                <DropdownMenuContent align="start" className="w-56">
+                                  {planningGroups
+                                    .filter(gn => !(p.planning_groups || []).includes(gn))
+                                    .map((groupName) => (
+                                    <DropdownMenuItem 
+                                      key={groupName}
+                                      onClick={() => handleUpdateProfile(p.id, { planning_groups: arrayUnion(groupName) })}
+                                    >
+                                      {groupName}
+                                    </DropdownMenuItem>
+                                  ))}
+                                  {planningGroups.filter(gn => !(p.planning_groups || []).includes(gn)).length === 0 && (
+                                    <div className="p-2 text-xs text-muted-foreground italic">Alle Gruppen zugewiesen</div>
+                                  )}
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </div>
                           </TableCell>
                           <TableCell className="text-right">
                             <DropdownMenu>
@@ -774,17 +805,43 @@ export default function AdminPage() {
                       </select>
                     </div>
                     <div className="space-y-1.5">
-                      <label className="text-[10px] font-bold uppercase text-muted-foreground ml-1">Gruppe</label>
-                      <select
-                        className="h-9 w-full rounded-md border bg-background px-2 text-xs"
-                        value={p.planning_group || ''}
-                        onChange={(e) => handleUpdateProfile(p.id, { planning_group: e.target.value || null })}
-                      >
-                        <option value="">Keine Gruppe</option>
-                        {planningGroups.map((groupName) => (
-                          <option key={groupName} value={groupName}>{groupName}</option>
+                      <label className="text-[10px] font-bold uppercase text-muted-foreground ml-1">Gruppen</label>
+                      <div className="flex flex-wrap gap-1 min-h-[36px] p-2 rounded-md border bg-muted/20">
+                        {(p.planning_groups || []).map((groupName) => (
+                          <Badge 
+                            key={groupName} 
+                            variant="secondary" 
+                            className="text-[9px] h-4 px-1 flex items-center gap-1"
+                          >
+                            {groupName}
+                            <button onClick={() => handleUpdateProfile(p.id, { planning_groups: arrayRemove(groupName) })}>
+                              <X className="h-2 w-2" />
+                            </button>
+                          </Badge>
                         ))}
-                      </select>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger
+                            render={
+                              <Button variant="outline" size="icon" className="h-4 w-4">
+                                <Plus className="h-2 w-2" />
+                              </Button>
+                            }
+                          />
+                          <DropdownMenuContent className="w-48">
+                            {planningGroups
+                              .filter(gn => !(p.planning_groups || []).includes(gn))
+                              .map((groupName) => (
+                              <DropdownMenuItem 
+                                key={groupName}
+                                onClick={() => handleUpdateProfile(p.id, { planning_groups: arrayUnion(groupName) })}
+                                className="text-xs"
+                              >
+                                {groupName}
+                              </DropdownMenuItem>
+                            ))}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
                     </div>
                   </div>
                 </div>

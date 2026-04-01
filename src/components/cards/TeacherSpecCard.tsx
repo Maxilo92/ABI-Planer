@@ -19,8 +19,10 @@ export const TeacherSpecCard = React.memo(({
   styleVariant = 'modern-flat'
 }: TeacherSpecCardProps) => {
   const isBlckShiny = data.variant === 'black_shiny_holo';
+  const isIconic = data.rarity === 'iconic';
   const isShiny = data.variant === 'shiny';
   const isGlass = data.variant === 'holo';
+  const useLightText = isBlckShiny || isIconic || isGlass || isShiny;
 
   const getStyleClasses = () => {
     switch (styleVariant) {
@@ -28,21 +30,23 @@ export const TeacherSpecCard = React.memo(({
         return {
           card: cn(
             "transition-all rounded-[3.5cqw]",
-            !isBlckShiny && !isShiny && "border-black shadow-[2cqw_2cqw_0px_0px_rgba(0,0,0,1)] border-[0.8cqw]",
+            !isBlckShiny && !isShiny && !isIconic && "border-black shadow-[2cqw_2cqw_0px_0px_rgba(0,0,0,1)] border-[0.8cqw]",
+            isIconic && "border-amber-500/60 shadow-[0_0_15px_rgba(251,191,36,0.4)] border-[1.2cqw]",
             isShiny && "shadow-[0_0_10px_rgba(255,255,255,0.4)] border-slate-300 border-[1cqw]",
             isBlckShiny && "shadow-[0_0_8cqw_rgba(147,51,234,0.5)] border-purple-500/50 border-[1cqw]"
           ),
-          header: (isBlckShiny || isGlass || isShiny) ? (isShiny ? "text-slate-600" : "text-white") : "text-black",
+          header: useLightText ? (isShiny ? "text-slate-600" : "text-white") : "text-black",
           text: cn(
             "font-sans uppercase font-black tracking-tighter leading-[0.95]",
+            isIconic ? "text-transparent bg-clip-text bg-gradient-to-b from-amber-100 via-amber-200 to-amber-500 drop-shadow-[0_0_10px_rgba(251,191,36,0.5)]" :
             isBlckShiny ? "text-transparent bg-clip-text bg-gradient-to-b from-white to-purple-200" : 
             (isShiny ? "text-slate-800" : 
             (isGlass ? "text-white" : "text-black"))
           ),
-          bgOverlay: isBlckShiny ? "bg-black/40" : (isShiny ? "bg-white/30" : (isGlass ? "bg-transparent" : "bg-white/5")),
+          bgOverlay: (isBlckShiny || isIconic) ? "bg-black/40" : (isShiny ? "bg-white/30" : (isGlass ? "bg-transparent" : "bg-white/5")),
           numberTag: cn(
             "px-[1.5cqw] py-[0.5cqw] text-[3cqw] font-black rounded-[0.5cqw] border-[0.3cqw] border-black",
-            (isBlckShiny || isGlass || isShiny) ? "bg-white text-black" : "bg-black text-white"
+            useLightText ? "bg-white text-black" : "bg-black text-white"
           ),
         };
       
@@ -70,7 +74,7 @@ export const TeacherSpecCard = React.memo(({
           styleClasses.card
         )}
         style={{ 
-          backgroundColor: isBlckShiny ? '#0a0a0a' : (isGlass ? data.color : data.color),
+          backgroundColor: (isBlckShiny || isIconic) ? '#0a0a0a' : data.color,
         }}
       >
         <CardEffectOverlay variant={data.variant} tintColor={data.color} />
@@ -78,7 +82,7 @@ export const TeacherSpecCard = React.memo(({
 
         <div className="relative z-10 h-full w-full p-[7%] flex flex-col space-y-[3%]">
           {/* Header: Name & HP */}
-          <div className="flex justify-between items-center w-full border-b-[0.5cqw] border-current pb-[1%]" style={{ color: (isBlckShiny || isGlass || isShiny) ? 'white' : 'black' }}>
+          <div className="flex justify-between items-center w-full border-b-[0.5cqw] border-current pb-[1%]" style={{ color: useLightText ? 'white' : 'black' }}>
             <h2 className={cn("text-[6.5cqw] truncate max-w-[65%] font-black uppercase tracking-tighter leading-none", styleClasses.text)}>
               {data.name}
             </h2>
@@ -92,14 +96,14 @@ export const TeacherSpecCard = React.memo(({
           </div>
 
           {/* Small Artwork Box */}
-          <div className="w-full aspect-[2/1] bg-black/10 rounded-[3%] flex items-center justify-center border-[0.4cqw] border-current/20 shrink-0" style={{ color: (isBlckShiny || isGlass || isShiny) ? 'white' : 'black' }}>
+          <div className="w-full aspect-[2/1] bg-black/10 rounded-[3%] flex items-center justify-center border-[0.4cqw] border-current/20 shrink-0" style={{ color: useLightText ? 'white' : 'black' }}>
             <GraduationCap className="w-[12cqw] h-[12cqw] opacity-30" />
           </div>
 
           {/* Attacks List */}
           <div className="flex-1 space-y-[3%] overflow-hidden pt-[1%]">
-            {data.attacks?.slice(0, 3).map((attack, idx) => (
-              <div key={idx} className="flex flex-col border-b-[0.2cqw] border-current/10 pb-[2%]" style={{ color: (isBlckShiny || isGlass || isShiny) ? 'white' : 'black' }}>
+            {data.attacks?.slice(0, 2).map((attack, idx) => (
+              <div key={idx} className="flex flex-col border-b-[0.2cqw] border-current/10 pb-[2%]" style={{ color: useLightText ? 'white' : 'black' }}>
                 <div className="flex justify-between items-center">
                   <div className="flex items-center gap-[1.5%]">
                     <Swords className="w-[4cqw] h-[4cqw] text-blue-500" />
@@ -124,7 +128,7 @@ export const TeacherSpecCard = React.memo(({
               <div 
                 className={cn(
                   "rounded-[2.5%] p-[3%] border-[0.3cqw] border-current/20 italic shadow-inner",
-                  (isBlckShiny || isGlass || isShiny) ? "bg-black/30 text-white/90" : "bg-white/40 text-black/90"
+                  useLightText ? "bg-black/30 text-white/90" : "bg-white/40 text-black/90"
                 )}
               >
                 <p className="text-[3.2cqw] leading-snug line-clamp-3">
@@ -142,7 +146,7 @@ export const TeacherSpecCard = React.memo(({
                 variant={data.variant}
                 size={0} 
                 className="w-[12cqw] h-[12cqw]"
-                color={isBlckShiny ? 'white' : (styleVariant === 'modern-flat' ? 'black' : 'white')} 
+                color={useLightText ? 'white' : (styleVariant === 'modern-flat' ? 'black' : 'white')} 
               />
             </div>
           </div>

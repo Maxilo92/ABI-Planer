@@ -167,7 +167,9 @@ function RegisterForm() {
         email: normalizedEmail,
         role: isFirstUser ? 'admin' : 'viewer',
         class_name: selectedCourse,
-        planning_group: null,
+        planning_groups: [],
+        led_groups: [],
+        is_group_leader: false,
         is_approved: true, // Auto-approve for MVP
         created_at: new Date().toISOString(),
         legal_consents: {

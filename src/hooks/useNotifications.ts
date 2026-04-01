@@ -35,7 +35,7 @@ export function useNotifications() {
 
     const profileId = profile.id
     const profileClass = profile.class_name
-    const profileGroup = profile.planning_group
+    const profileGroups = profile.planning_groups || []
     const lastVisitedTodos = profile.last_visited?.todos
     const lastVisitedKalender = profile.last_visited?.kalender
     const lastVisitedUmfragen = profile.last_visited?.umfragen
@@ -61,7 +61,7 @@ export function useNotifications() {
         // Show notification if it's assigned to user/class/group AND created since last visit
         const isAssigned = data.assigned_to_user === profileId || 
                            data.assigned_to_class === profileClass || 
-                           data.assigned_to_group === profileGroup
+                           (data.assigned_to_group && profileGroups.includes(data.assigned_to_group))
         
         return isAssigned && createdAt > lastVisited
       })
@@ -172,7 +172,7 @@ export function useNotifications() {
     authLoading, 
     profile?.id, 
     profile?.class_name, 
-    profile?.planning_group, 
+    profile?.planning_groups, 
     profile?.last_visited?.todos,
     profile?.last_visited?.kalender,
     profile?.last_visited?.umfragen,
@@ -180,4 +180,5 @@ export function useNotifications() {
   ])
 
   return notifications
-}
+  }
+

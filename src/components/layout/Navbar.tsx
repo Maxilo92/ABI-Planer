@@ -1,8 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { LayoutDashboard, CheckSquare, Calendar, Euro, DollarSign, Megaphone, BarChart2, LogOut, Menu, X, ShieldCheck, User, MessageSquareHeart, Settings, Users, ChevronDown, ChevronRight, Sparkles, HelpCircle, Gift, Trophy, AlertTriangle, ShoppingBag, MessageSquare } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { LayoutDashboard, CheckSquare, Calendar, Euro, DollarSign, Megaphone, BarChart2, LogOut, Menu, X, ShieldCheck, User, MessageSquareHeart, Settings, Users, ChevronRight, Sparkles, HelpCircle, Gift, Trophy, AlertTriangle, ShoppingBag, MessageSquare, UserPlus } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -31,10 +31,13 @@ export function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
   const [openSubmenus, setOpenSubmenus] = useState<Record<string, boolean>>({})
   const [currentSearch, setCurrentSearch] = useState('')
+  const [quickActions, setQuickActions] = useState<Array<{ href: string; label: string }>>([])
+  const skipQuickActionTrackingRef = useRef(false)
   const { user, profile, loading } = useAuth()
   const notifications = useNotifications()
   const router = useRouter()
   const pathname = usePathname()
+  const hasPlanningGroups = profile?.planning_groups && profile.planning_groups.length > 0
 
   const isVerified = user?.emailVerified || false
 
@@ -56,13 +59,13 @@ export function Navbar() {
     router.push('/login')
   }
 
-  const toggleSubmenu = (href: string, e: React.MouseEvent) => {
+  const toggleSubmenu = (submenuKey: string, e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
     setOpenSubmenus(prev => {
-      const isCurrentlyOpen = !!prev[href]
-      // Close all other submenus and toggle the current one
-      return { [href]: !isCurrentlyOpen }
+      const isCurrentlyOpen = !!prev[submenuKey]
+      // Keep submenu behavior exclusive: only one section open at a time.
+      return { [submenuKey]: !isCurrentlyOpen }
     })
   }
 
@@ -89,7 +92,7 @@ export function Navbar() {
         subItems: [
           { href: '/kalender', label: 'Kalender', icon: Calendar, notify: notifications.kalender },
           { href: '/todos', label: 'Todos', icon: CheckSquare, notify: notifications.todos },
-          ...(profile?.planning_group ? [
+          ...(hasPlanningGroups ? [
             { href: '/gruppen?bereich=mein-team', label: 'Mein Team', icon: Users },
           ] : []),
           { href: '/gruppen?bereich=alle-gruppen', label: 'Alle Gruppen', icon: Users },
@@ -120,14 +123,26 @@ export function Navbar() {
     })
   }
 
+  if (profile) {
+    navItems.push({
+      href: '/konto-root',
+      label: 'Konto',
+      icon: User,
+      subItems: [
+        { href: '/profil', label: 'Profil', icon: User },
+        { href: '/profil/freunde', label: 'Freunde', icon: UserPlus },
+        { href: '/einstellungen', label: 'Einstellungen', icon: Settings },
+      ]
+    })
+  }
+
   navItems.push({
-    href: '/support-root',
-    label: 'Support',
+    href: '/hilfe-root',
+    label: 'Hilfe',
     icon: HelpCircle,
     subItems: [
       { href: '/hilfe', label: 'Hilfe & Info', icon: HelpCircle },
       { href: '/feedback', label: 'Feedback geben', icon: MessageSquareHeart },
-      { href: '/einstellungen', label: 'Einstellungen', icon: Settings },
     ]
   })
 
@@ -153,8 +168,6 @@ export function Navbar() {
     })
   }
 
-  navItems.push({ href: '/hilfe', label: 'Hilfe', icon: HelpCircle })
-
   const isAuthPage = ['/login', '/register', '/waiting'].includes(pathname)
 
   const userInitial = profile?.full_name?.substring(0, 1).toUpperCase() || 'U'
@@ -166,7 +179,8 @@ export function Navbar() {
   }
 
   const isActive = (href: string) => {
-    const [path, queryString] = href.split('?')
+    const [pathWithQuery] = href.split('#')
+    const [path, queryString] = pathWithQuery.split('?')
 
     if (href === '/') return pathname === '/'
     if (href === '/admin-root') return pathname.startsWith('/admin')
@@ -174,7 +188,8 @@ export function Navbar() {
     if (href === '/planung-root') return pathname.startsWith('/kalender') || pathname.startsWith('/todos') || pathname.startsWith('/gruppen')
     if (href === '/finanzen-root') return pathname.startsWith('/finanzen') || pathname.startsWith('/shop')
     if (href === '/sammelkarten-root') return pathname.startsWith('/sammelkarten')
-    if (href === '/support-root') return pathname.startsWith('/hilfe') || pathname.startsWith('/feedback') || pathname.startsWith('/einstellungen')
+    if (href === '/konto-root') return pathname.startsWith('/profil') || pathname.startsWith('/einstellungen')
+    if (href === '/hilfe-root') return pathname.startsWith('/hilfe') || pathname.startsWith('/feedback')
 
     if (queryString) {
       if (pathname !== path) return false
@@ -193,24 +208,150 @@ export function Navbar() {
     return pathname === path || pathname.startsWith(`${path}/`)
   }
 
+  const getQuickActionLabel = (href: string) => {
+    const findLabel = (items: NavItem[]): string | null => {
+      for (const item of items) {
+        if (item.href === href && !item.href.endsWith('-root')) {
+          return item.label
+        }
+
+        const nested = findLabel(item.subItems ?? [])
+        if (nested) {
+          return nested
+        }
+      }
+
+      return null
+    }
+
+    const matchedLabel = findLabel(navItems)
+    if (matchedLabel) {
+      return matchedLabel
+    }
+
+    const [pathPart] = href.split(/[?#]/)
+    if (pathPart === '/') {
+      return 'Dashboard'
+    }
+
+    const clean = pathPart.replace(/^\//, '')
+    if (!clean) {
+      return 'Seite'
+    }
+
+    const readable = clean
+      .split('/')
+      .pop()
+      ?.replace(/[-_]/g, ' ') ?? 'Seite'
+
+    return readable.charAt(0).toUpperCase() + readable.slice(1)
+  }
+
+  useEffect(() => {
+    if (skipQuickActionTrackingRef.current) {
+      skipQuickActionTrackingRef.current = false
+      return
+    }
+
+    const href = `${pathname}${currentSearch}`
+    if (!href) return
+
+    const label = getQuickActionLabel(href)
+
+    setQuickActions((prev) => {
+      if (prev[0]?.href === href) {
+        return prev
+      }
+
+      const next = [{ href, label }, ...prev.filter((entry) => entry.href !== href)]
+      return next.slice(0, 3)
+    })
+  }, [pathname, currentSearch, profile?.role, hasPlanningGroups])
+
+  const renderQuickActions = (isMobile: boolean = false) => {
+    if (quickActions.length === 0) {
+      return null
+    }
+
+    return (
+      <div className="mb-2 border-b pb-2">
+        <div className="space-y-0.5">
+          {quickActions.map((action, index) => (
+            <Link
+              key={action.href}
+              href={action.href}
+              onClick={() => {
+                skipQuickActionTrackingRef.current = true
+
+                if (isMobile) setIsOpen(false)
+
+                const queryIndex = action.href.indexOf('?')
+                setCurrentSearch(queryIndex >= 0 ? action.href.slice(queryIndex) : '')
+              }}
+              className={cn(
+                'block px-2 py-1.5 text-sm font-medium transition-colors',
+                isActive(action.href)
+                  ? 'text-primary'
+                  : index === 0
+                    ? 'text-foreground hover:text-primary'
+                    : 'text-muted-foreground hover:text-foreground'
+              )}
+            >
+              {action.label}
+            </Link>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  const coreNavItems = navItems.filter((item) =>
+    item.href !== '/konto-root' && item.href !== '/hilfe-root' && item.href !== '/admin-root'
+  )
+  const accountHelpItems = navItems.filter((item) => item.href === '/konto-root' || item.href === '/hilfe-root')
+  const adminNavItems = navItems.filter((item) => item.href === '/admin-root')
+
+  const renderNavSection = (title: string, items: NavItem[], isMobile: boolean = false) => {
+    if (items.length === 0) {
+      return null
+    }
+
+    return (
+      <div className="space-y-0.5">
+        <p className="px-2 pt-2 pb-1 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+          {title}
+        </p>
+        {items.map((item) => renderNavItem(item, isMobile))}
+      </div>
+    )
+  }
+
+  const renderGroupedNav = (isMobile: boolean = false) => (
+    <>
+      {renderNavSection('Arbeitsbereiche', coreNavItems, isMobile)}
+      {renderNavSection('Konto & Hilfe', accountHelpItems, isMobile)}
+      {renderNavSection('Admin', adminNavItems, isMobile)}
+    </>
+  )
+
   const renderNavItem = (item: NavItem, isMobile: boolean = false) => {
     const hasSubItems = item.subItems && item.subItems.length > 0
     const isExpanded = openSubmenus[item.href] || (hasSubItems && isActive(item.href) && Object.keys(openSubmenus).length === 0)
     const active = isActive(item.href)
 
     return (
-      <div key={item.href} className="space-y-1">
+      <div key={item.href} className="space-y-0.5">
         {hasSubItems ? (
           <button
             onClick={(e) => toggleSubmenu(item.href, e)}
             className={cn(
-              'flex w-full items-center justify-between rounded-xl px-4 py-3 text-sm font-medium transition-colors',
+              'flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
               active ? 'bg-secondary/50 text-primary' : 'hover:bg-secondary'
             )}
           >
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2.5">
               <div className="relative">
-                <item.icon className="h-5 w-5" />
+                <item.icon className="h-4 w-4" />
                 {item.notify && (
                   <span className="absolute -right-0.5 -top-0.5 flex h-2.5 w-2.5 rounded-full bg-red-500 border-2 border-background" />
                 )}
@@ -232,14 +373,19 @@ export function Navbar() {
         ) : (
           <Link
             href={item.href}
-            onClick={() => isMobile && setIsOpen(false)}
+            onClick={() => {
+              if (isMobile) setIsOpen(false)
+
+              const queryIndex = item.href.indexOf('?')
+              setCurrentSearch(queryIndex >= 0 ? item.href.slice(queryIndex) : '')
+            }}
             className={cn(
-              'flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-colors',
+              'flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
               active ? 'bg-secondary text-primary' : 'hover:bg-secondary'
             )}
           >
             <div className="relative">
-              <item.icon className="h-5 w-5" />
+              <item.icon className="h-4 w-4" />
               {item.notify && (
                 <span className="absolute -right-0.5 -top-0.5 flex h-2.5 w-2.5 rounded-full bg-red-500 border-2 border-background" />
               )}
@@ -259,10 +405,10 @@ export function Navbar() {
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.2, ease: "easeInOut" }}
+              transition={{ duration: 0.2, ease: 'easeInOut' }}
               className="overflow-hidden"
             >
-              <div className={cn("ml-6 pl-4 border-l-2 space-y-1 py-1", isMobile ? "mt-1" : "mt-1")}>
+              <div className="ml-5 pl-3 border-l-2 space-y-0.5 py-0.5 mt-0.5">
                 {item.subItems!.map((subItem) => (
                   <Link
                     key={subItem.href}
@@ -271,12 +417,10 @@ export function Navbar() {
                       if (isMobile) setIsOpen(false)
 
                       const queryIndex = subItem.href.indexOf('?')
-                      if (queryIndex >= 0) {
-                        setCurrentSearch(subItem.href.slice(queryIndex))
-                      }
+                      setCurrentSearch(queryIndex >= 0 ? subItem.href.slice(queryIndex) : '')
                     }}
                     className={cn(
-                      'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
+                      'flex items-center gap-2 rounded-md px-2.5 py-2 text-sm font-medium transition-colors',
                       isActive(subItem.href) ? 'text-primary bg-secondary/30' : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
                     )}
                   >
@@ -361,8 +505,9 @@ export function Navbar() {
             }}
             className="absolute left-0 top-16 bottom-0 w-[85vw] max-w-80 border-r bg-background flex flex-col shadow-2xl touch-pan-y pt-4 pointer-events-auto"
           >
-            <div className="flex-1 px-4 pb-4 overflow-y-auto space-y-1">
-              {navItems.map((item) => renderNavItem(item, true))}
+            <div className="flex-1 px-4 pb-4 overflow-y-auto space-y-0.5">
+              {renderQuickActions(true)}
+              {renderGroupedNav(true)}
             </div>
 
             <div className="p-4 border-t space-y-2 pb-8">
@@ -431,8 +576,9 @@ export function Navbar() {
           </div>
 
           <nav className="flex-1 p-4 overflow-y-auto">
-            <div className="space-y-1">
-              {navItems.map((item) => renderNavItem(item))}
+            <div className="space-y-0.5">
+              {renderQuickActions()}
+              {renderGroupedNav()}
             </div>
           </nav>
 

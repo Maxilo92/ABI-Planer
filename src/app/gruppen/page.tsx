@@ -2,7 +2,7 @@
 
 import { useEffect, useState, Suspense } from 'react'
 import { db } from '@/lib/firebase'
-import { collection, query, onSnapshot, doc, updateDoc, getDoc, orderBy, writeBatch } from 'firebase/firestore'
+import { collection, query, onSnapshot, doc, updateDoc, getDoc, orderBy, writeBatch, arrayUnion, arrayRemove } from 'firebase/firestore'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/context/AuthContext'
 import { Profile, PlanningGroup, Settings, Todo, Event } from '@/types/database'
@@ -27,7 +27,8 @@ import {
   PieChart,
   Info,
   TrendingUp,
-  ArrowRight
+  ArrowRight,
+  ChevronDown
 } from 'lucide-react'
 import { Progress } from '@/components/ui/progress'
 import { Input } from '@/components/ui/input'
@@ -48,6 +49,7 @@ import { GroupCard } from '@/components/groups/GroupCard'
 import { MemberItem } from '@/components/groups/MemberItem'
 import { AddTodoDialog } from '@/components/modals/AddTodoDialog'
 import { ProtectedSystemGate } from '@/components/ui/ProtectedSystemGate'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 type GroupsMainTab = 'mein-team' | 'alle-gruppen' | 'shared-hub'
 
@@ -61,9 +63,10 @@ function GroupsPageContent() {
   const [events, setEvents] = useState<Event[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
+  const [activeTeamTab, setActiveTeamTab] = useState<string>('')
 
   const isPlanner = (profile?.role === 'planner' || profile?.role === 'admin_main' || profile?.role === 'admin_co' || profile?.role === 'admin') && profile?.is_approved
-  const isGroupLeader = profile?.is_group_leader
+  const isGroupLeader = profile?.led_groups && profile.led_groups.length > 0
 
   useEffect(() => {
     if (authLoading) return
@@ -71,6 +74,10 @@ function GroupsPageContent() {
     if (!profile?.id) {
       if (!authLoading) setLoading(false)
       return
+    }
+
+    if (profile.planning_groups && profile.planning_groups.length > 0 && !activeTeamTab) {
+      setActiveTeamTab(profile.planning_groups[0])
     }
 
     // 1. Listen to Profiles
@@ -119,6 +126,12 @@ function GroupsPageContent() {
     }
   }, [authLoading, profile?.id])
 
+  useEffect(() => {
+    if (profile?.planning_groups && profile.planning_groups.length > 0 && !activeTeamTab) {
+      setActiveTeamTab(profile.planning_groups[0])
+    }
+  }, [profile?.planning_groups])
+
   if (authLoading || loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -139,40 +152,45 @@ function GroupsPageContent() {
     )
   }
 
-  const handleUpdateMember = async (userId: string, groupName: string | null) => {
+  const handleUpdateMember = async (userId: string, groupToAdd: string | null, groupToRemoveOverride?: string | null) => {
     const targetProfile = profiles.find(p => p.id === userId)
-    const isTargetingOwnGroup = groupName === profile?.planning_group || 
-                                (groupName === null && targetProfile?.planning_group === profile?.planning_group)
+    
+    // Check permissions
+    const isPlanner = (profile?.role === 'planner' || profile?.role === 'admin_main' || profile?.role === 'admin_co' || profile?.role === 'admin') && profile?.is_approved
+    
+    const groupContext = groupToAdd || groupToRemoveOverride || (profile?.planning_groups?.[0] || null)
+    const isOwnLedGroup = groupContext ? profile?.led_groups?.includes(groupContext) : false
 
-    if (!isPlanner && !(isGroupLeader && isTargetingOwnGroup)) return
+    if (!isPlanner && !isOwnLedGroup) return
     
     try {
       const profileRef = doc(db, 'profiles', userId)
       
-      const updateData: any = {
-        planning_group: groupName
-      }
-
-      if (groupName === null) {
-        updateData.is_group_leader = false
-      }
-      
-      await updateDoc(profileRef, updateData)
-
-      if (groupName) {
-        toast.success(`${targetProfile?.full_name || 'Nutzer'} zur Gruppe "${groupName}" hinzugefügt.`)
+      if (groupToAdd) {
+        await updateDoc(profileRef, {
+          planning_groups: arrayUnion(groupToAdd)
+        })
+        toast.success(`${targetProfile?.full_name || 'Nutzer'} zur Gruppe "${groupToAdd}" hinzugefügt.`)
         await logAction('GROUP_MEMBER_ADDED', user!.uid, profile?.full_name, { 
           target_user_id: userId, 
           target_user_name: targetProfile?.full_name,
-          group_name: groupName 
+          group_name: groupToAdd 
         })
       } else {
-        toast.success(`Nutzer aus der Gruppe entfernt.`)
-        await logAction('GROUP_MEMBER_REMOVED', user!.uid, profile?.full_name, { 
-          target_user_id: userId, 
-          target_user_name: targetProfile?.full_name,
-          previous_group: targetProfile?.planning_group
-        })
+        const groupToRemove = groupToRemoveOverride || profile?.led_groups?.find(g => targetProfile?.planning_groups?.includes(g)) || targetProfile?.planning_groups?.[0]
+        
+        if (groupToRemove) {
+          await updateDoc(profileRef, {
+            planning_groups: arrayRemove(groupToRemove),
+            led_groups: arrayRemove(groupToRemove)
+          })
+          toast.success(`Nutzer aus der Gruppe "${groupToRemove}" entfernt.`)
+          await logAction('GROUP_MEMBER_REMOVED', user!.uid, profile?.full_name, { 
+            target_user_id: userId, 
+            target_user_name: targetProfile?.full_name,
+            previous_group: groupToRemove
+          })
+        }
       }
     } catch (error) {
       console.error('Error updating group member:', error)
@@ -214,12 +232,14 @@ function GroupsPageContent() {
 
         if (previousLeaderId && previousLeaderId !== leaderUserId) {
           batch.update(doc(db, 'profiles', previousLeaderId), {
-            is_group_leader: false
+            led_groups: arrayRemove(groupName),
+            is_group_leader: profiles.find(p => p.id === previousLeaderId)?.led_groups?.filter(g => g !== groupName).length! > 0
           })
         }
 
         if (leaderUserId) {
           batch.update(doc(db, 'profiles', leaderUserId), {
+            led_groups: arrayUnion(groupName),
             is_group_leader: true
           })
         }
@@ -239,31 +259,39 @@ function GroupsPageContent() {
     }
   }
 
-  if (authLoading || loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    )
-  }
-
-  const unassignedProfiles = profiles.filter(p => !p.planning_group && p.is_approved)
+  const unassignedProfiles = profiles.filter(p => (!p.planning_groups || p.planning_groups.length === 0) && p.is_approved)
   const filteredUnassignedProfiles = unassignedProfiles.filter(p => 
     p.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     p.email.toLowerCase().includes(searchQuery.toLowerCase())
   )
-  const canManageTeamMembers = isGroupLeader || isPlanner
-  const myTeamTodos = todos.filter(t => t.assigned_to_group === profile?.planning_group)
-  const myTeamMembers = profiles.filter(p => p.planning_group === profile?.planning_group)
-  const myTeamLeader = planningGroups.find(g => g.name === profile?.planning_group)?.leader_user_id
+  
+  const currentTeamName = activeTeamTab || profile?.planning_groups?.[0]
+  const isCurrentTeamLeader = profile?.led_groups?.includes(currentTeamName || '')
+  const canManageCurrentTeamMembers = isCurrentTeamLeader || isPlanner
+  
+  const myTeamTodos = todos.filter(t => t.assigned_to_group === currentTeamName)
+  const myTeamMembers = profiles.filter(p => p.planning_groups?.includes(currentTeamName || ''))
+  const currentTeamLeaderId = planningGroups.find(g => g.name === currentTeamName)?.leader_user_id
 
-  const defaultMainTab: GroupsMainTab = profile?.planning_group ? 'mein-team' : 'alle-gruppen'
+  const defaultMainTab: GroupsMainTab = profile?.planning_groups && profile.planning_groups.length > 0 ? 'mein-team' : 'alle-gruppen'
   const requestedMainTab = searchParams.get('bereich')
   const mainTab: GroupsMainTab =
     requestedMainTab === 'mein-team' || requestedMainTab === 'alle-gruppen' || requestedMainTab === 'shared-hub'
       ? requestedMainTab
       : defaultMainTab
-  const safeMainTab: GroupsMainTab = mainTab === 'mein-team' && !profile?.planning_group ? 'alle-gruppen' : mainTab
+  const safeMainTab: GroupsMainTab = mainTab === 'mein-team' && (!profile?.planning_groups || profile.planning_groups.length === 0) ? 'alle-gruppen' : mainTab
+
+  // Hierarchical grouping for "Alle Gruppen"
+  const parentGroups = planningGroups.filter(g => g.is_parent)
+  const subGroupsByParent = planningGroups.reduce((acc, group) => {
+    if (group.parent_name) {
+      if (!acc[group.parent_name]) acc[group.parent_name] = []
+      acc[group.parent_name].push(group)
+    }
+    return acc
+  }, {} as Record<string, PlanningGroup[]>)
+  
+  const standaloneGroups = planningGroups.filter(g => !g.is_parent && !g.parent_name)
 
   return (
     <div className="flex flex-col gap-10 pb-20">
@@ -285,8 +313,28 @@ function GroupsPageContent() {
       <div className="w-full flex flex-col gap-8">
         {safeMainTab === 'mein-team' && (
           <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            {profile?.planning_group ? (
+            {profile?.planning_groups && profile.planning_groups.length > 0 ? (
               <div className="space-y-10">
+                {/* Multi-Team Selector if in multiple groups */}
+                {profile.planning_groups.length > 1 && (
+                  <Tabs value={activeTeamTab} onValueChange={setActiveTeamTab} className="w-full">
+                    <TabsList className="bg-muted/50 p-1 rounded-2xl h-auto flex-wrap justify-start gap-1">
+                      {profile.planning_groups.map((groupName) => (
+                        <TabsTrigger 
+                          key={groupName} 
+                          value={groupName}
+                          className="rounded-xl px-6 py-2.5 font-bold data-[state=active]:bg-background data-[state=active]:shadow-sm"
+                        >
+                          {groupName}
+                          {profile.led_groups?.includes(groupName) && (
+                            <ShieldCheck className="h-3.5 w-3.5 ml-2 text-primary" />
+                          )}
+                        </TabsTrigger>
+                      ))}
+                    </TabsList>
+                  </Tabs>
+                )}
+
                 <div className="relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-6 bg-gradient-to-br from-primary/10 via-primary/5 to-background p-8 rounded-[2.5rem] border border-primary/10 shadow-2xl shadow-primary/5 group">
                   <div className="absolute -right-20 -top-20 w-64 h-64 bg-primary/5 rounded-full blur-3xl group-hover:bg-primary/10 transition-all duration-1000" />
                   
@@ -296,8 +344,8 @@ function GroupsPageContent() {
                     </div>
                     <div>
                       <div className="flex flex-wrap items-center gap-3">
-                        <h2 className="text-3xl font-black tracking-tight text-primary drop-shadow-sm">{profile.planning_group}</h2>
-                        {isGroupLeader && (
+                        <h2 className="text-3xl font-black tracking-tight text-primary drop-shadow-sm">{currentTeamName}</h2>
+                        {isCurrentTeamLeader && (
                           <Badge variant="secondary" className="bg-amber-100/80 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 border-amber-200/50 dark:border-amber-800/50 backdrop-blur-sm px-3 py-1 rounded-xl flex items-center gap-2 animate-pulse">
                             <ShieldCheck className="h-3.5 w-3.5 fill-amber-500/20" />
                             <span className="text-[10px] font-black uppercase tracking-widest">Team-Leader</span>
@@ -308,16 +356,18 @@ function GroupsPageContent() {
                     </div>
                   </div>
                   <div className="flex items-center gap-3 relative z-10">
-                    <AddTodoDialog defaultGroup={profile.planning_group} />
+                    {currentTeamName && <AddTodoDialog defaultGroup={currentTeamName} />}
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
                   <div className="lg:col-span-7 2xl:col-span-8 min-w-0">
-                    <GroupWall
-                      groupName={profile.planning_group}
-                      canManage={isGroupLeader || isPlanner}
-                    />
+                    {currentTeamName && (
+                      <GroupWall
+                        groupName={currentTeamName}
+                        canManage={isCurrentTeamLeader || isPlanner}
+                      />
+                    )}
                   </div>
 
                   <div className="lg:col-span-5 2xl:col-span-4 min-w-0 space-y-8">
@@ -327,7 +377,7 @@ function GroupsPageContent() {
                         memberCount={myTeamMembers.length}
                         className="border-none pt-8 pb-2"
                         actions={
-                          canManageTeamMembers && (
+                          canManageCurrentTeamMembers && (
                             <div className="p-2 bg-primary/5 rounded-full">
                               <UserPlus className="h-5 w-5 text-primary opacity-40" />
                             </div>
@@ -350,10 +400,11 @@ function GroupsPageContent() {
                             <MemberItem
                               key={member.id}
                               member={member}
-                              isLeader={member.id === myTeamLeader || !!member.is_group_leader}
-                              showActions={canManageTeamMembers}
-                              onMakeLeader={isPlanner ? (id) => handleAssignLeader(profile.planning_group!, id) : undefined}
-                              onRemove={(id) => handleUpdateMember(id, null)}
+                              isLeader={member.id === currentTeamLeaderId || member.led_groups?.includes(currentTeamName || '')}
+                              showActions={canManageCurrentTeamMembers}
+                              onMakeLeader={isPlanner && currentTeamName ? (id) => handleAssignLeader(currentTeamName, id) : undefined}
+                              onRemove={(id) => handleUpdateMember(id, null, currentTeamName)}
+                              currentGroupName={currentTeamName || undefined}
                             />
                           ))}
                         </div>
@@ -362,7 +413,7 @@ function GroupsPageContent() {
 
                     <TodoList
                       todos={myTeamTodos}
-                      canManage={isGroupLeader || isPlanner}
+                      canManage={isCurrentTeamLeader || isPlanner}
                       maxItems={8}
                     />
 
@@ -374,7 +425,7 @@ function GroupsPageContent() {
                   </div>
                 </div>
 
-                {canManageTeamMembers && (
+                {canManageCurrentTeamMembers && (
                   <Card className="border-primary/10 bg-muted/30 rounded-[2.5rem] border-dashed overflow-hidden relative group/assign">
                     <div className="absolute top-0 right-0 p-8 opacity-[0.02] pointer-events-none group-hover/assign:scale-110 transition-transform duration-700">
                       <UserPlus className="h-48 w-48" />
@@ -464,7 +515,7 @@ function GroupsPageContent() {
                                     variant="outline"
                                     size="sm"
                                     className="h-10 px-4 text-[10px] font-black uppercase tracking-widest gap-2 rounded-xl bg-primary/5 border-primary/20 text-primary hover:bg-primary hover:text-white transition-all shadow-md active:scale-95"
-                                    onClick={() => handleUpdateMember(p.id, profile?.planning_group || null)}
+                                    onClick={() => handleUpdateMember(p.id, currentTeamName || null)}
                                   >
                                     <PlusCircle className="h-4 w-4" />
                                     Hinzufügen
@@ -497,7 +548,7 @@ function GroupsPageContent() {
         {safeMainTab === 'alle-gruppen' && (
           <div className="space-y-8 animate-in fade-in duration-700">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-              <div className="lg:col-span-8 space-y-8">
+              <div className="lg:col-span-8 space-y-12">
                 {/* Header Section */}
                 <div className="relative overflow-hidden bg-primary/5 border border-primary/10 rounded-3xl p-8 flex flex-col md:flex-row md:items-center justify-between gap-6 group">
                   <div className="absolute -right-8 -bottom-8 w-48 h-48 bg-primary/5 rounded-full blur-3xl group-hover:bg-primary/10 transition-colors" />
@@ -535,69 +586,74 @@ function GroupsPageContent() {
                     </CardContent>
                   </Card>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {planningGroups.map((group, idx) => {
-                      const members = profiles.filter((p) => p.planning_group === group.name)
-                      const leader = profiles.find((p) => p.id === group.leader_user_id)
-                      const colors = ['border-blue-500', 'border-purple-500', 'border-amber-500', 'border-emerald-500', 'border-rose-500', 'border-indigo-500']
-                      const colorClass = colors[idx % colors.length]
-
-                      return (
-                        <GroupCard key={group.name} className={cn(
-                          "border-primary/5 hover:border-primary/20 hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 rounded-3xl overflow-hidden border-t-4",
-                          colorClass.replace('border-', 'border-t-')
-                        )}>
-                          <GroupCard.Header 
-                            name={group.name} 
-                            memberCount={members.length}
-                            className="bg-muted/10 border-none pb-2 pt-6"
-                            actions={
-                              leader && (
-                                <Badge variant="secondary" className="bg-white/50 dark:bg-black/20 text-foreground border-border/50 backdrop-blur-sm gap-1.5 px-2 py-1 shadow-sm">
-                                  <Trophy className="h-3 w-3 text-amber-500" />
-                                  <span className="text-[10px] font-bold uppercase tracking-tight">{leader.full_name?.split(' ')[0]}</span>
-                                </Badge>
-                              )
-                            }
-                          />
-                          <GroupCard.MemberList 
-                            emptyState={
-                              <div className="py-12 text-center bg-muted/5 rounded-2xl border border-dashed mx-4 my-2">
-                                <Users className="h-8 w-8 text-muted-foreground/10 mx-auto mb-2" />
-                                <p className="text-xs text-muted-foreground italic">Noch keine Mitglieder</p>
-                              </div>
-                            }
-                            className="max-h-[350px] overflow-y-auto scrollbar-thin px-4"
-                          >
-                            <div className="space-y-1 mt-2">
-                              {members.map((member) => (
-                                <MemberItem
-                                  key={member.id}
-                                  member={member}
-                                  isLeader={member.id === group.leader_user_id || !!member.is_group_leader}
-                                  showActions={!!isPlanner || !!(isGroupLeader && group.name === profile?.planning_group)}
-                                  onMakeLeader={isPlanner ? (id) => handleAssignLeader(group.name, id) : undefined}
-                                  onRemove={(id) => handleUpdateMember(id, null)}
-                                />
-                              ))}
-                            </div>
-                          </GroupCard.MemberList>
-                          {isPlanner && (
-                            <GroupCard.Actions className="bg-transparent border-none pb-6 px-4 pt-2">
-                              <Button 
-                                variant="outline" 
-                                size="sm" 
-                                className="w-full h-10 text-[11px] font-bold uppercase tracking-widest rounded-xl hover:bg-primary hover:text-primary-foreground transition-all group/btn"
-                                onClick={() => router.push('/einstellungen')}
-                              >
-                                <span>Team Konfigurieren</span>
-                                <ArrowRight className="h-3 w-3 ml-2 group-hover/btn:translate-x-1 transition-transform" />
-                              </Button>
-                            </GroupCard.Actions>
+                  <div className="space-y-16">
+                    {/* Render Hierarchical Sections */}
+                    {parentGroups.map((parent) => (
+                      <section key={parent.name} className="space-y-6">
+                        <div className="flex items-center gap-4 px-2">
+                          <h3 className="text-2xl font-black tracking-tight text-foreground/80">{parent.name}</h3>
+                          <div className="h-px flex-1 bg-gradient-to-r from-border to-transparent" />
+                          <Badge variant="outline" className="rounded-lg font-bold uppercase tracking-widest text-[10px]">Hauptgruppe</Badge>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          {/* Parent itself as a card? Or just header? 
+                              Let's check if the parent itself is a functional group or just a container. 
+                              If it has members, show it. */}
+                          {(profiles.some(p => p.planning_groups?.includes(parent.name)) || parent.leader_user_id) && (
+                            <GroupGridItem 
+                              group={parent} 
+                              profiles={profiles} 
+                              isPlanner={!!isPlanner} 
+                              isGroupLeader={!!isGroupLeader} 
+                              profile={profile}
+                              router={router}
+                              handleAssignLeader={handleAssignLeader}
+                              handleUpdateMember={handleUpdateMember}
+                            />
                           )}
-                        </GroupCard>
-                      )
-                    })}
+                          
+                          {subGroupsByParent[parent.name]?.map((sub) => (
+                            <GroupGridItem 
+                              key={sub.name}
+                              group={sub} 
+                              profiles={profiles} 
+                              isPlanner={!!isPlanner} 
+                              isGroupLeader={!!isGroupLeader} 
+                              profile={profile}
+                              router={router}
+                              handleAssignLeader={handleAssignLeader}
+                              handleUpdateMember={handleUpdateMember}
+                            />
+                          ))}
+                        </div>
+                      </section>
+                    ))}
+
+                    {/* Render Standalone Groups */}
+                    {standaloneGroups.length > 0 && (
+                      <section className="space-y-6">
+                        <div className="flex items-center gap-4 px-2">
+                          <h3 className="text-2xl font-black tracking-tight text-foreground/80">Weitere Teams</h3>
+                          <div className="h-px flex-1 bg-gradient-to-r from-border to-transparent" />
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          {standaloneGroups.map((group) => (
+                            <GroupGridItem 
+                              key={group.name}
+                              group={group} 
+                              profiles={profiles} 
+                              isPlanner={!!isPlanner} 
+                              isGroupLeader={!!isGroupLeader} 
+                              profile={profile}
+                              router={router}
+                              handleAssignLeader={handleAssignLeader}
+                              handleUpdateMember={handleUpdateMember}
+                            />
+                          ))}
+                        </div>
+                      </section>
+                    )}
                   </div>
                 )}
               </div>
@@ -626,16 +682,16 @@ function GroupsPageContent() {
                       <div className="space-y-2">
                         <div className="flex items-center justify-between text-xs font-bold uppercase tracking-tighter text-muted-foreground">
                           <span>Team-Zuweisung</span>
-                          <span>{Math.round((profiles.filter((p) => p.planning_group).length / profiles.length) * 100 || 0)}%</span>
+                          <span>{Math.round((profiles.filter((p) => p.planning_groups && p.planning_groups.length > 0).length / profiles.length) * 100 || 0)}%</span>
                         </div>
                         <Progress 
-                          value={(profiles.filter((p) => p.planning_group).length / profiles.length) * 100 || 0} 
+                          value={(profiles.filter((p) => p.planning_groups && p.planning_groups.length > 0).length / profiles.length) * 100 || 0} 
                           className="h-2 bg-muted rounded-full"
                         />
                         <div className="flex justify-between items-center text-[10px] text-muted-foreground font-medium pt-1">
                           <div className="flex items-center gap-1.5">
                             <div className="w-2 h-2 rounded-full bg-primary" />
-                            <span>{profiles.filter((p) => p.planning_group).length} im Team</span>
+                            <span>{profiles.filter((p) => p.planning_groups && p.planning_groups.length > 0).length} im Team</span>
                           </div>
                           <div className="flex items-center gap-1.5">
                             <div className="w-2 h-2 rounded-full bg-muted-foreground/30" />
@@ -649,7 +705,7 @@ function GroupsPageContent() {
                       <div className="bg-muted/30 p-4 rounded-2xl border border-border/50 text-center space-y-1">
                         <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Avg. Team</p>
                         <p className="text-xl font-bold">
-                          {planningGroups.length > 0 ? Math.round(profiles.filter(p => p.planning_group).length / planningGroups.length) : 0}
+                          {planningGroups.length > 0 ? Math.round(profiles.filter(p => p.planning_groups && p.planning_groups.length > 0).length / planningGroups.length) : 0}
                         </p>
                       </div>
                       <div className="bg-muted/30 p-4 rounded-2xl border border-border/50 text-center space-y-1">
@@ -753,7 +809,7 @@ function GroupsPageContent() {
                                     variant="outline"
                                     size="sm"
                                     className="w-full h-10 text-[10px] font-bold uppercase tracking-widest gap-2 bg-primary/5 border-primary/20 text-primary hover:bg-primary hover:text-white transition-all rounded-xl shadow-sm"
-                                    onClick={() => handleUpdateMember(p.id, profile?.planning_group || null)}
+                                    onClick={() => handleUpdateMember(p.id, currentTeamName || null)}
                                   >
                                     <PlusCircle className="h-4 w-4" />
                                     In mein Team
@@ -817,13 +873,13 @@ function GroupsPageContent() {
               
               <div className="flex items-center gap-4 relative z-10 bg-white/50 dark:bg-black/20 backdrop-blur-md p-4 rounded-3xl border border-border/50">
                 <div className="flex -space-x-4 overflow-hidden">
-                  {profiles.filter(p => p.planning_group).slice(0, 5).map((p, i) => (
+                  {profiles.filter(p => p.planning_groups && p.planning_groups.length > 0).slice(0, 5).map((p, i) => (
                     <Avatar key={i} className="h-10 w-10 border-2 border-background ring-1 ring-muted">
                       <AvatarFallback className="bg-muted text-[10px] font-black">{p.full_name?.charAt(0)}</AvatarFallback>
                     </Avatar>
                   ))}
                   <div className="flex items-center justify-center h-10 w-10 rounded-full bg-primary text-primary-foreground ring-2 ring-background text-[10px] font-black shadow-lg">
-                    +{profiles.filter(p => p.planning_group).length - 5}
+                    +{profiles.filter(p => p.planning_groups && p.planning_groups.length > 0).length - 5}
                   </div>
                 </div>
                 <div className="pr-2">
@@ -900,6 +956,85 @@ function GroupsPageContent() {
           </div>
         )}
       </div>    </div>
+  )
+}
+
+function GroupGridItem({ 
+  group, 
+  profiles, 
+  isPlanner, 
+  isGroupLeader, 
+  profile, 
+  router,
+  handleAssignLeader,
+  handleUpdateMember
+}: { 
+  group: PlanningGroup, 
+  profiles: Profile[], 
+  isPlanner: boolean, 
+  isGroupLeader: boolean, 
+  profile: Profile | null,
+  router: any,
+  handleAssignLeader: (groupName: string, id: string | null) => void,
+  handleUpdateMember: (id: string, groupToAdd: string | null, groupToRemoveOverride?: string | null) => void
+}) {
+  const members = profiles.filter((p) => p.planning_groups?.includes(group.name))
+  const leader = profiles.find((p) => p.id === group.leader_user_id)
+  
+  return (
+    <GroupCard className={cn(
+      "border-primary/5 hover:border-primary/20 hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 rounded-3xl overflow-hidden border-t-4 border-t-primary"
+    )}>
+      <GroupCard.Header 
+        name={group.name} 
+        memberCount={members.length}
+        className="bg-muted/10 border-none pb-2 pt-6"
+        actions={
+          leader && (
+            <Badge variant="secondary" className="bg-white/50 dark:bg-black/20 text-foreground border-border/50 backdrop-blur-sm gap-1.5 px-2 py-1 shadow-sm">
+              <Trophy className="h-3 w-3 text-amber-500" />
+              <span className="text-[10px] font-bold uppercase tracking-tight">{leader.full_name?.split(' ')[0]}</span>
+            </Badge>
+          )
+        }
+      />
+      <GroupCard.MemberList 
+        emptyState={
+          <div className="py-12 text-center bg-muted/5 rounded-2xl border border-dashed mx-4 my-2">
+            <Users className="h-8 w-8 text-muted-foreground/10 mx-auto mb-2" />
+            <p className="text-xs text-muted-foreground italic">Noch keine Mitglieder</p>
+          </div>
+        }
+        className="max-h-[350px] overflow-y-auto scrollbar-thin px-4"
+      >
+        <div className="space-y-1 mt-2">
+          {members.map((member) => (
+            <MemberItem
+              key={member.id}
+              member={member}
+              isLeader={member.id === group.leader_user_id || member.led_groups?.includes(group.name)}
+              showActions={!!isPlanner || !!(isGroupLeader && profile?.led_groups?.includes(group.name))}
+              onMakeLeader={isPlanner ? (id) => handleAssignLeader(group.name, id) : undefined}
+              onRemove={(id) => handleUpdateMember(id, null, group.name)}
+              currentGroupName={group.name}
+            />
+          ))}
+        </div>
+      </GroupCard.MemberList>
+      {isPlanner && (
+        <GroupCard.Actions className="bg-transparent border-none pb-6 px-4 pt-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="w-full h-10 text-[11px] font-bold uppercase tracking-widest rounded-xl hover:bg-primary hover:text-primary-foreground transition-all group/btn"
+            onClick={() => router.push('/einstellungen')}
+          >
+            <span>Team Konfigurieren</span>
+            <ArrowRight className="h-3 w-3 ml-2 group-hover/btn:translate-x-1 transition-transform" />
+          </Button>
+        </GroupCard.Actions>
+      )}
+    </GroupCard>
   )
 }
 

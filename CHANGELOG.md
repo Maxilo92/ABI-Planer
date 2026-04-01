@@ -1,5 +1,82 @@
 # Changelog
 
+
+## [1.0.90] - 2026-04-01
+- **Feature (Freundesystem):** Grundlage fuer spaeteren Kartentausch als echtes Beziehungsmodell eingefuehrt.
+    - **Friend Requests:** Nutzer koennen Freundschaftsanfragen senden, annehmen, ablehnen und zurueckziehen.
+    - **Friendships:** Bestaetigte Freundschaften werden in einer eigenen Firestore-Collection gespeichert und sind fuer beide Seiten sichtbar.
+    - **Profil-Integration:** Auf dem eigenen Profil gibt es jetzt einen Einstieg in die Freundeverwaltung, auf fremden Profilen direkte Freundschaftsaktionen.
+    - **Navigation:** Der Bereich `Freunde` ist in der Konto-Navigation sichtbar und fuehrt zur neuen Uebersichtsseite.
+- **Firestore (Security):** Neue Regeln fuer `friend_requests` und `friendships` ergaenzt.
+    - **Sicherheit:** Nur beteiligte Nutzer koennen ihre Anfragen und Freundschaften lesen oder bearbeiten.
+    - **Acceptance Flow:** Freundschaftsbeziehungen koennen nur auf Basis einer bestehenden Anfrage angelegt werden.
+
+## [1.0.89] - 2026-04-01
+- **UX (Einstellungen):** Interne Seitentoggles entfernt und durch eine klarere Abschnitts-Navigation ersetzt.
+    - **Kein Tab-Umschalten mehr:** `Allgemein`, `Konto & Boni` und `Verwaltung` sind jetzt als durchgehende, logisch sortierte Abschnitte aufgebaut.
+    - **Schnellzugriff oben:** Direkte Sprung-Buttons zu `Profil`, `Darstellung`, `Feedback`, `Boni`, `Konto` sowie Admin-Bereichen.
+    - **Bessere Auffindbarkeit:** Alle Optionen sind auf einer Seite sichtbar statt hinter Tabs versteckt.
+- **Testing (Navigation):** Regressions-Test fuer den Menue-Pfad zu `Einstellungen` ergaenzt.
+    - **Automatisiert:** `scripts/regression-guard.mjs` prueft die Menuestruktur (`Konto` -> `Einstellungen`) in der Navbar.
+    - **Manuell:** `testing/TESTING_CHECKLIST.md` enthaelt einen expliziten Testfall fuer den Klickpfad bis `/einstellungen`.
+- **UX (Navigation):** Unter-Unter-Menues wurden wieder entfernt.
+    - **Struktur:** Sidebar bleibt bei maximal 2 Ebenen fuer bessere Uebersicht (`Konto` -> `Einstellungen`).
+- **Fix (Navigation):** Beim Klick auf `Einstellungen` bleibt das uebergeordnete Menue `Konto` nun geoeffnet.
+    - **Ursache behoben:** Submenu-Toggle setzt nicht mehr alle anderen offenen Menues zurueck.
+- **UX (Navigation):** Menueverhalten wieder auf exklusiv gestellt.
+    - **Einfachere Orientierung:** Es ist immer nur ein Menueabschnitt gleichzeitig geoeffnet.
+
+## [1.0.88] - 2026-04-01
+- **Feature (Navigation):** Neue `QuickActions` in der Menueleiste mit den letzten bis zu 3 besuchten Seiten.
+    - **Verlauf oben:** Die aktuelle Seite steht immer oben, darunter die vorherigen Seiten (max. 3 Eintraege).
+    - **Kontextsensitiv:** Seiten mit Query-Parametern (z. B. Sammelkarten-Views) werden als eigene QuickAction beruecksichtigt.
+    - **Mobile + Desktop:** QuickActions erscheinen sowohl im mobilen Drawer als auch in der Desktop-Seitenleiste oberhalb der normalen Navigation.
+    - **Stabile Hierarchie:** Aufruf ueber QuickActions oeffnet Seiten direkt, ohne die bestehende QuickAction-Reihenfolge umzubauen.
+    - **Kompakter Aufbau:** Menuepunkte und Unterpunkte sind enger gesetzt, um vertikal Platz zu sparen.
+    - **Bessere Scanbarkeit:** Navigation ist in klare Bereiche (`Arbeitsbereiche`, `Konto & Hilfe`, `Admin`) gegliedert; der `QuickActions`-Titel wurde entfernt.
+
+## [1.0.87] - 2026-04-01
+- **UX (Navigation):** Menueleiste neu strukturiert, damit wichtige Bereiche schneller auffindbar sind.
+    - **Konto als Hauptpunkt:** `Profil` und `Einstellungen` sind jetzt in einer eigenen Kategorie `Konto` statt unter `Support` versteckt.
+    - **Hilfe klar getrennt:** `Hilfe & Info` und `Feedback geben` wurden in eine eigene Hauptkategorie `Hilfe` verschoben.
+    - **Aufgeraeumt:** Doppelter Hilfelink in der Hauptnavigation entfernt, aktive Menuezustaende an die neue Struktur angepasst.
+
+## [1.0.86] - 2026-04-01
+- **UX (Finanzen/Dashboard):** Kurs-Ranking bewusst vereinfacht (cleaner Listenstil).
+    - **Layout:** Keine Trennstriche und keine zusaetzlichen Kurs-Kacheln pro Eintrag.
+    - **Look:** Ruhige, reduzierte Reihen mit dezentem Hover statt Box-Optik.
+    - **Loading State:** Skeleton-Ansicht auf denselben minimalistischen Stil angepasst.
+
+## [1.0.85] - 2026-04-01
+- **Fix (Feedback Privacy):** Toggles `Anonym posten` und `Privat senden` greifen wieder korrekt.
+    - **Frontend Role Gate:** `viewer` wird auf der Feedback-Seite nicht mehr als privilegierte Rolle behandelt und sieht damit keine privaten Eintraege mehr.
+    - **Firestore Rules:** Pauschales Leserecht fuer `viewer` auf `feedback` entfernt.
+    - **Resultat:** Private Eintraege sind nur noch fuer Ersteller und Planer/Admins sichtbar, anonyme Eintraege bleiben fuer normale Nutzer anonym.
+- **Fix (Sammelkarten UI):** Speccards fuer `IKONISCH` und `Secret Rare` nutzen jetzt kontrastreiche helle Schrift auf dunklem Hintergrund.
+    - **Kontrastlogik:** `iconic` wird in `TeacherSpecCard` als Dark-Theme behandelt (wie bereits bei der Art-Karte).
+    - **Lesbarkeit:** Header, Attacken, Beschreibung und Seltenheitssymbol bleiben auf dunklen Karten klar lesbar.
+- **UX (Karten Detail-View):** Animationen und Navigation im Detail-Modal verbessert.
+    - **Flip Animation:** Wechsel zwischen Art-Card und Spec-Card erfolgt als klare 180-Grad-Drehung.
+    - **Swipe Logik:** Wischrichtung ist jetzt konsistent zur Bewegungsrichtung beim Kartenwechsel.
+    - **Ansicht beibehalten:** Beim Wischen zur naechsten/vorherigen Karte bleibt die aktuelle Ansicht (`Spec` oder `Art`) erhalten.
+    - **Spec-Swipe Fix:** Wenn `Spec` aktiv ist, erscheint die naechste Karte direkt in der Spec-Ansicht ohne zusaetzliche Nach-Drehung.
+    - **Entry Fix:** Einlauf-/Auslaufrichtung beim Swipe wurde fuer `next/prev` eindeutig und stabilisiert.
+    - **Tempo:** Swipe-Transition verkuerzt (schnellerer Kartenwechsel).
+- **Balancing/UX (Sammelkarten):** Globales Maximum fuer Angriffe auf 2 gesetzt.
+    - **Rendering:** Speccards zeigen hoechstens 2 Angriffe.
+    - **Admin/Edit & Vorschlaege:** Formulare erlauben und beschriften nur noch 1-2 Angriffe.
+- **Admin (Sammelkarten Manager):** Neuer Tab `Kreativ-Labor` fuer die Auslese eingereichter Kartenvorschlaege.
+    - **Data Source:** Live-Auslese aus Firestore-Collection `card_proposals`.
+    - **Uebersicht:** Status-Badges, HP, Beschreibung, bis zu 2 Angriffe, Autor und Datum werden pro Vorschlag angezeigt.
+- **Fix (Firestore Permissions):** Regeln fuer `card_proposals` ergaenzt.
+    - **Create:** Verifizierte Nutzer duerfen eigene Vorschlaege als `pending` erstellen.
+    - **Read:** Planer/Admin lesen alle Vorschlaege; Nutzer nur die eigenen.
+    - **Moderation:** Update/Delete nur durch Planer/Admin.
+- **Feature (Kreativ-Labor Moderation):** Vorschlaege koennen im Sammelkarten-Manager angenommen oder abgelehnt werden.
+    - **Accept Flow:** Beim Annehmen werden automatisch 2 Booster als Belohnung an den Ersteller gutgeschrieben.
+    - **Automation:** Vorschlag-Status, Admin-Notiz, Belohnung und Nutzer-Benachrichtigung werden serverseitig ueber `moderateCardProposal` verarbeitet.
+    - **Safety:** Nur `pending` Vorschlaege sind moderierbar, doppelte Belohnungen sind ausgeschlossen.
+
 ## [1.0.84] - 2026-04-01
 - **Feature (Sammelkarten Admin):** Lehrer-Bearbeitungsansicht im Karten-Manager um neue Kurz-Aktionen erweitert.
     - **Speich.:** Speichert nur die Lehrer-Änderungen.

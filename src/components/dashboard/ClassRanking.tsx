@@ -82,7 +82,7 @@ export function ClassRanking({
         </CardHeader>
         <CardContent className="p-0 flex-1">
           {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="flex items-center justify-between p-3 border-b border-border/70 last:border-b-0">
+            <div key={i} className="flex items-center justify-between p-3 min-h-[58px] hover:bg-muted/20 transition-colors">
               <div className="flex items-center gap-3">
                 <Skeleton className="h-7 w-7 rounded-full" />
                 <div className="space-y-2">
@@ -121,7 +121,7 @@ export function ClassRanking({
       <CardContent className="p-0 flex-1 flex flex-col min-h-0 bg-card">
         <div className={useScrollContainer ? "flex-1 overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-muted-foreground/20" : "overflow-x-hidden"}>
           {displayedStats.map((s, index) => (
-            <div key={s.className} className="flex items-center justify-between p-3 min-h-[58px] border-b border-border/70 last:border-b-0 transition-colors hover:bg-muted/30 group">
+            <div key={s.className} className="flex items-center justify-between p-3 min-h-[58px] transition-colors hover:bg-muted/20 group">
               <div className="flex items-center gap-3">
                 <div className={`flex items-center justify-center h-7 w-7 rounded-full text-[10px] font-bold ${
                   index === 0 ? 'bg-yellow-500/20 text-yellow-600 dark:text-yellow-500' : 

@@ -49,7 +49,7 @@ export function CardProposalForm() {
   }, [])
 
   const addAttack = () => {
-    if (attacks.length < 3) {
+    if (attacks.length < 2) {
       setAttacks([...attacks, { name: '', damage: 10, description: '' }])
     }
   }
@@ -208,14 +208,14 @@ export function CardProposalForm() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-primary">
                 <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-black">4</div>
-                <Label className="text-sm font-black uppercase tracking-widest">Angriffe (1-3)</Label>
+                <Label className="text-sm font-black uppercase tracking-widest">Angriffe (1-2)</Label>
               </div>
               <Button 
                 type="button" 
                 variant="outline" 
                 size="sm" 
                 onClick={addAttack}
-                disabled={attacks.length >= 3}
+                disabled={attacks.length >= 2}
                 className="h-8 text-[10px] font-black uppercase tracking-tighter"
               >
                 <Plus className="h-3 w-3 mr-1" /> Angriff hinzufügen

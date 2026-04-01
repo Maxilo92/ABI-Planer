@@ -9,6 +9,8 @@ export interface PlanningGroup {
   name: string;
   leader_user_id?: string | null;
   leader_name?: string | null;
+  parent_name?: string | null;
+  is_parent?: boolean;
 }
 
 export interface Profile {
@@ -16,7 +18,8 @@ export interface Profile {
   full_name: string | null;
   email: string;
   role: UserRole;
-  planning_group?: string | null;
+  planning_groups: string[];
+  led_groups: string[];
   class_name?: string | null;
   timeout_until?: string | null;
   timeout_reason?: string | null;
@@ -53,6 +56,29 @@ export interface Profile {
     month: string;
     counts: Record<string, number>;
   } | null;
+}
+
+export type FriendRequestStatus = 'pending' | 'accepted' | 'declined' | 'cancelled';
+
+export interface FriendRequest {
+  id: string;
+  fromUserId: string;
+  toUserId: string;
+  status: FriendRequestStatus;
+  created_at: string | Timestamp | Date;
+  updated_at?: string | Timestamp | Date | null;
+  responded_at?: string | Timestamp | Date | null;
+  responded_by?: string | null;
+  friendship_id?: string | null;
+}
+
+export interface Friendship {
+  id: string;
+  members: string[];
+  request_id: string;
+  created_by: string;
+  created_at: string | Timestamp | Date;
+  accepted_at?: string | Timestamp | Date | null;
 }
 
 export interface UserSecret {

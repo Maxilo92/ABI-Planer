@@ -74,6 +74,16 @@ const checks = [
     patterns: [/useNotifications/, /notify: notifications/, /rounded-full bg-red-500/],
   },
   {
+    name: 'Navbar keeps nested Einstellungen submenu path',
+    file: 'src/components/layout/Navbar.tsx',
+    patterns: [
+      /href: '\/konto-root'/,
+      /\{ href: '\/einstellungen', label: 'Einstellungen', icon: Settings \}/,
+      /renderNavSection\('Konto & Hilfe', accountHelpItems, isMobile\)/,
+      /if \(href === '\/konto-root'\) return pathname\.startsWith\('\/profil'\) \|\| pathname\.startsWith\('\/einstellungen'\)/,
+    ],
+  },
+  {
     name: 'Dashboard scoring logic is correct',
     file: 'src/hooks/useDashboardSorting.ts',
     patterns: [

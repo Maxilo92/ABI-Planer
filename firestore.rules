@@ -40,7 +40,7 @@ service cloud.firestore {
     }
 
     function isGroupLeader(groupName) {
-      return isAuthenticated() && getProfile().planning_group == groupName && getProfile().is_group_leader == true;
+      return isAuthenticated() && groupName in getProfile().get('led_groups', []);
     }
 
     function isMainAdmin() {
@@ -64,14 +64,14 @@ service cloud.firestore {
 
         // Case 1: Self-update for non-admin users (cannot change role, approval, course, group, or referral flags)
         (request.auth.uid == userId && !isAdmin() &&
-         !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'is_approved', 'planning_group', 'class_name', 'timeout_until', 'timeout_reason', 'is_group_leader', 'referral_code', 'referred_by'])) ||
+         !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'is_approved', 'planning_groups', 'led_groups', 'class_name', 'timeout_until', 'timeout_reason', 'is_group_leader', 'referral_code', 'referred_by'])) ||
 
         // Case 1b: Self-update for rated_teachers
         (request.auth.uid == userId && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['rated_teachers'])) ||
 
         // Case 2: Self-update for admin users (can switch own course/group but not own timeout/referral flags)
         (request.auth.uid == userId && isAdmin() &&
-         !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'is_approved', 'timeout_until', 'timeout_reason', 'is_group_leader', 'referral_code', 'referred_by'])) ||
+         !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'is_approved', 'led_groups', 'timeout_until', 'timeout_reason', 'is_group_leader', 'referral_code', 'referred_by'])) ||
         
         // Case 3: Main Admin (can do anything EXCEPT demoting themselves from their role)
         (isMainAdmin() && (
@@ -81,17 +81,17 @@ service cloud.firestore {
         
         // Case 4: Co-Admin assignment-only update (can set course/group for all accounts, including admins)
         (isCoAdmin() && request.auth.uid != userId &&
-         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['class_name', 'planning_group'])) ||
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['class_name', 'planning_groups'])) ||
 
         // Case 5: Co-Admin general update (can approve but NOT change roles and NOT touch Main Admins)
         (isCoAdmin() && resource.data.role != 'admin_main' && resource.data.role != 'admin' && request.auth.uid != userId &&
          !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'email'])) ||
 
-        // Case 6: Group Leader member management (can add unassigned to own group OR remove from own group)
-        (isGroupLeader(getProfile().planning_group) && request.auth.uid != userId && (
-          (resource.data.planning_group == null && request.resource.data.planning_group == getProfile().planning_group) ||
-          (resource.data.planning_group == getProfile().planning_group && request.resource.data.planning_group == null)
-        ) && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'is_approved', 'is_group_leader', 'email']))
+        // Case 6: Group Leader member management (can add/remove groups they lead)
+        (getProfile().get('led_groups', []).size() > 0 && request.auth.uid != userId &&
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['planning_groups']) &&
+         request.resource.data.planning_groups.toSet().difference(resource.data.get('planning_groups', []).toSet()).hasOnly(getProfile().get('led_groups', [])) &&
+         resource.data.get('planning_groups', []).toSet().difference(request.resource.data.planning_groups.toSet()).hasOnly(getProfile().get('led_groups', [])))
       );
       
       allow delete: if isMainAdmin() && resource.data.role != 'admin_main' && resource.data.role != 'admin';
@@ -102,6 +102,62 @@ service cloud.firestore {
         allow update: if false;
         allow delete: if isAuthenticated() && request.auth.uid == userId;
       }
+    }
+
+    match /friend_requests/{requestId} {
+      allow read: if isAuthenticated() && (
+        resource.data.fromUserId == request.auth.uid ||
+        resource.data.toUserId == request.auth.uid
+      );
+
+      allow create: if isApproved()
+        && request.resource.data.fromUserId == request.auth.uid
+        && request.resource.data.fromUserId is string
+        && request.resource.data.toUserId is string
+        && request.resource.data.fromUserId != request.resource.data.toUserId
+        && request.resource.data.status == 'pending';
+
+      allow update: if isAuthenticated() && (
+        (
+          request.auth.uid == resource.data.toUserId &&
+          resource.data.status == 'pending' &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'responded_at', 'responded_by', 'updated_at', 'friendship_id']) &&
+          request.resource.data.responded_by == request.auth.uid &&
+          request.resource.data.status in ['accepted', 'declined']
+        ) ||
+        (
+          request.auth.uid == resource.data.fromUserId &&
+          resource.data.status == 'pending' &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updated_at']) &&
+          request.resource.data.status == 'cancelled'
+        )
+      );
+
+      allow delete: if isAuthenticated() &&
+        request.auth.uid == resource.data.fromUserId &&
+        resource.data.status == 'pending';
+    }
+
+    match /friendships/{friendshipId} {
+      allow read: if isAuthenticated() && request.auth.uid in resource.data.members;
+
+      allow create: if isApproved()
+        && request.resource.data.members is list
+        && request.resource.data.members.size() == 2
+        && request.resource.data.members[0] != request.resource.data.members[1]
+        && request.resource.data.members[0] < request.resource.data.members[1]
+        && request.auth.uid in request.resource.data.members
+        && request.resource.data.created_by == request.auth.uid
+        && request.resource.data.request_id is string
+        && get(/databases/$(database)/documents/friend_requests/$(request.resource.data.request_id)).data.status == 'pending'
+        && get(/databases/$(database)/documents/friend_requests/$(request.resource.data.request_id)).data.toUserId == request.auth.uid
+        && get(/databases/$(database)/documents/friend_requests/$(request.resource.data.request_id)).data.fromUserId in request.resource.data.members
+        && get(/databases/$(database)/documents/profiles/$(request.resource.data.members[0])).data.is_approved == true
+        && get(/databases/$(database)/documents/profiles/$(request.resource.data.members[1])).data.is_approved == true;
+
+      allow update: if false;
+
+      allow delete: if isAuthenticated() && request.auth.uid in resource.data.members;
     }
 
     match /notifications/{userId} {
@@ -230,9 +286,22 @@ service cloud.firestore {
         && request.resource.data.action is string);
       allow update, delete: if false;
     }
+
+    match /card_proposals/{proposalId} {
+      // Admin/Planer koennen alle Vorschlaege einsehen; Nutzer nur ihre eigenen.
+      allow read: if isPlanner() || (isAuthenticated() && resource.data.created_by == request.auth.uid);
+
+      // Kreativ-Labor: Nur verifizierte Mitglieder duerfen eigene Vorschlaege als pending erstellen.
+      allow create: if isApproved()
+        && request.resource.data.created_by == request.auth.uid
+        && request.resource.data.status == 'pending';
+
+      // Moderation (accepted/rejected/admin_note/reward_claimed) nur durch Planer/Admin.
+      allow update, delete: if isPlanner();
+    }
     
     match /feedback/{feedbackId} {
-        allow read: if isPlanner() || getProfile().role == 'viewer' || (isAuthenticated() && resource.data.created_by == request.auth.uid) || (isApproved() && resource.data.is_private == false);
+      allow read: if isPlanner() || (isAuthenticated() && resource.data.created_by == request.auth.uid) || (isApproved() && resource.data.is_private == false);
         allow create: if isApproved();
         allow update, delete: if isAdmin();
     }
@@ -244,7 +313,7 @@ service cloud.firestore {
     match /group_messages/{id} {
         allow read: if isApproved();
         allow create: if isApproved() && (
-          (request.resource.data.type == 'internal' && request.resource.data.group_name == getProfile().planning_group) || 
+          (request.resource.data.type == 'internal' && request.resource.data.group_name in getProfile().get('planning_groups', [])) || 
           (request.resource.data.type == 'hub')
         );
         allow update, delete: if isAdmin() || isGroupLeader(resource.data.group_name) || (isAuthenticated() && resource.data.created_by == request.auth.uid);

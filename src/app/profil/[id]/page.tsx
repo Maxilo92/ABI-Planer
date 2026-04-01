@@ -7,16 +7,27 @@ import { Profile, UserRole } from '@/types/database'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
-import { Loader2, ArrowLeft, Mail, Shield, Calendar, Users, User } from 'lucide-react'
+import { Loader2, ArrowLeft, Shield, Calendar, Users, User, UserPlus, UserCheck, UserX } from 'lucide-react'
 import { format } from 'date-fns'
 import { de } from 'date-fns/locale'
 import { toDate, getOnlineStatus, cn } from '@/lib/utils'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { TeacherAlbum } from '@/components/dashboard/TeacherAlbum'
+import { useAuth } from '@/context/AuthContext'
+import { useFriendSystem } from '@/hooks/useFriendSystem'
+import { toast } from 'sonner'
 
 export default function PublicProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
+  const { user, profile: currentProfile } = useAuth()
+  const {
+    getRelationshipState,
+    sendFriendRequest,
+    respondToFriendRequest,
+    cancelFriendRequest,
+    removeFriend,
+  } = useFriendSystem()
   const [targetProfile, setTargetProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -27,7 +38,7 @@ export default function PublicProfilePage({ params }: { params: Promise<{ id: st
         const docSnap = await getDoc(docRef)
         
         if (docSnap.exists()) {
-          setTargetProfile({ id: docSnap.id, ...docSnap.data() } as Profile)
+          setTargetProfile({ ...(docSnap.data() as Omit<Profile, 'id'>), id: docSnap.id } as Profile)
         }
       } catch (err) {
         console.error('Error fetching profile:', err)
@@ -62,8 +73,11 @@ export default function PublicProfilePage({ params }: { params: Promise<{ id: st
 
   const userInitial = targetProfile.full_name?.substring(0, 1).toUpperCase() || 'U'
   const userCourse = targetProfile.class_name
-  const plannerGroup = targetProfile.planning_group
+  const plannerGroup = targetProfile.planning_groups?.join(', ')
   const { isOnline, label: onlineLabel } = getOnlineStatus(targetProfile.isOnline, targetProfile.lastOnline)
+  const relationshipState = currentProfile?.is_approved ? getRelationshipState(id) : 'none'
+  const canManageFriendship = !!user && !!currentProfile?.is_approved && id !== user.uid
+  const canOpenFriendDashboard = !!user && !!currentProfile?.is_approved
 
   const getRoleLabel = (role: UserRole) => {
     if (role === 'admin_main' || role === 'admin') return 'Main Admin'
@@ -71,10 +85,41 @@ export default function PublicProfilePage({ params }: { params: Promise<{ id: st
     return role === 'planner' ? 'Planer' : 'Zuschauer'
   }
 
-  return (
+  const handleFriendAction = async (accepted?: boolean) => {
+    try {
+      if (relationshipState === 'none') {
+        await sendFriendRequest(id)
+        toast.success('Freundschaftsanfrage gesendet.')
+        return
+      }
+
+      if (relationshipState === 'pending_outgoing') {
+        await cancelFriendRequest(`${user?.uid}_${id}`)
+        toast.success('Freundschaftsanfrage zurückgezogen.')
+        return
+      }
+
+      if (relationshipState === 'pending_incoming') {
+        if (accepted) {
+          await respondToFriendRequest(`${id}_${user?.uid}`, true)
+          toast.success('Freundschaft bestätigt.')
+        } else {
+          await respondToFriendRequest(`${id}_${user?.uid}`, false)
+          toast.success('Freundschaftsanfrage abgelehnt.')
+        }
+        return
+      }
+        toast.success('Freundschaft entfernt.')
+      }
+    } catch (error: any) {
+      console.error('[PublicProfile] Friend action failed:', error)
+      toast.error(error?.message || 'Aktion konnte nicht ausgeführt werden.')
+    }
+  }
+
     <div className="space-y-12 pb-20">
       <div className="max-w-2xl mx-auto space-y-6">
-        <Button
+                <p>Freundebereich verfügbar.</p>
           variant="ghost"
           size="sm"
           className="gap-2 -ml-2 text-muted-foreground"
@@ -169,6 +214,52 @@ export default function PublicProfilePage({ params }: { params: Promise<{ id: st
                   {targetProfile.created_at ? format(toDate(targetProfile.created_at), 'PPP', { locale: de }) : 'Unbekannt'}
                 </p>
               </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="border-b pb-4">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <UserPlus className="h-4 w-4 text-primary" />
+              Freundesystem
+            </CardTitle>
+            <CardDescription>
+              Freundschaften bilden später die Basis für Kartentausch und gemeinsame Kontakte.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-4 py-6 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-1 text-sm text-muted-foreground">
+              {canManageFriendship ? (
+                <>
+                  <p>
+                    Status: {relationshipState === 'friends' ? 'Befreundet' : relationshipState === 'pending_outgoing' ? 'Anfrage offen' : relationshipState === 'pending_incoming' ? 'Anfrage erhalten' : 'Noch kein Kontakt'}
+                  </p>
+                  <p>Du kannst die Beziehung direkt hier verwalten oder im eigenen Freundebereich organisieren.</p>
+                </>
+              ) : (
+                <p>Öffne deinen Freundebereich, um Kontakte zu verwalten.</p>
+              )}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {canManageFriendship ? (
+                <>
+                  <Button variant={relationshipState === 'friends' ? 'outline' : 'default'} onClick={() => handleFriendAction(true)}>
+                    {relationshipState === 'friends' ? <UserX className="h-4 w-4" /> : relationshipState === 'pending_incoming' ? <UserCheck className="h-4 w-4" /> : <UserPlus className="h-4 w-4" />}
+                    {relationshipState === 'friends' ? 'Freundschaft entfernen' : relationshipState === 'pending_outgoing' ? 'Anfrage zurückziehen' : relationshipState === 'pending_incoming' ? 'Anfrage annehmen' : 'Freundschaft anfragen'}
+                  </Button>
+                  {relationshipState === 'pending_incoming' && (
+                    <Button variant="outline" onClick={() => handleFriendAction(false)}>
+                      Ablehnen
+                    </Button>
+                  )}
+                  <Button variant="outline" render={<Link href="/profil/freunde">Freunde öffnen</Link>} />
+                </>
+              ) : canOpenFriendDashboard ? (
+                <Button variant="outline" render={<Link href="/profil/freunde">Freunde öffnen</Link>} />
+              ) : (
+                <span className="text-sm text-muted-foreground">Melde dich an, um Freundschaften zu verwalten.</span>
+              )}
             </div>
           </CardContent>
         </Card>

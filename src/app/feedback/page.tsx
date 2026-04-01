@@ -46,7 +46,7 @@ export default function FeedbackPage() {
   const [preparedImageUpload, setPreparedImageUpload] = useState<{ url: string } | null>(null)
   const [isPreparingImageUpload, setIsPreparingImageUpload] = useState(false)
 
-  const isAdmin = profile?.role && ['admin', 'admin_main', 'admin_co', 'planner', 'viewer'].includes(profile.role)
+  const canViewAllFeedback = profile?.role && ['admin', 'admin_main', 'admin_co', 'planner'].includes(profile.role)
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -58,7 +58,7 @@ export default function FeedbackPage() {
     if (authLoading || !user) return
 
     const feedbackRef = collection(db, 'feedback')
-    const q = isAdmin 
+    const q = canViewAllFeedback 
       ? query(feedbackRef, orderBy('created_at', 'desc'))
       : query(
           feedbackRef, 
@@ -78,7 +78,7 @@ export default function FeedbackPage() {
     })
 
     return () => unsubscribe()
-  }, [isAdmin, authLoading, user])
+  }, [canViewAllFeedback, authLoading, user])
 
   useEffect(() => {
     return () => {
@@ -258,7 +258,7 @@ export default function FeedbackPage() {
   })
 
   const filteredItems = sortedItems.filter(item => {
-    if (isAdmin) return true
+    if (canViewAllFeedback) return true
     return !item.is_private || item.created_by === user?.uid
   })
 
@@ -453,7 +453,7 @@ export default function FeedbackPage() {
                       Privat senden
                     </label>
                     <p className="text-xs text-muted-foreground">
-                      Nur für Admins sichtbar.
+                      Nur fuer Planer/Admins sichtbar.
                     </p>
                   </div>
                 </div>
@@ -493,11 +493,11 @@ export default function FeedbackPage() {
                     {getStatusBadge(item.status)}
                   </div>
                   <CardDescription>
-                    {(item.is_anonymous && !isAdmin) ? 'Anonym' : (item.created_by_name || 'Unbekannt')} • {toDate(item.created_at).toLocaleDateString('de-DE')}
-                    {isAdmin && item.is_anonymous && (
+                    {(item.is_anonymous && !canViewAllFeedback) ? 'Anonym' : (item.created_by_name || 'Unbekannt')} • {toDate(item.created_at).toLocaleDateString('de-DE')}
+                    {canViewAllFeedback && item.is_anonymous && (
                       <Badge variant="outline" className="ml-2 text-[10px] h-4 px-1">Anonym</Badge>
                     )}
-                    {isAdmin && item.is_private && (
+                    {canViewAllFeedback && item.is_private && (
                       <Badge variant="outline" className="ml-2 text-[10px] h-4 px-1 border-warning/50 text-warning">Privat</Badge>
                     )}
                   </CardDescription>

@@ -18,6 +18,7 @@ interface MemberItemProps {
   showActions?: boolean
   onMakeLeader?: (id: string) => void
   onRemove?: (id: string) => void
+  currentGroupName?: string
 }
 
 export function MemberItem({ 
@@ -25,8 +26,11 @@ export function MemberItem({
   isLeader, 
   showActions, 
   onMakeLeader, 
-  onRemove 
+  onRemove,
+  currentGroupName
 }: MemberItemProps) {
+  const otherGroups = member.planning_groups?.filter(g => g !== currentGroupName) || []
+
   return (
     <div className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors group">
       <div className="flex items-center gap-3 min-w-0">
@@ -50,7 +54,18 @@ export function MemberItem({
               </Badge>
             )}
           </div>
-          <span className="text-xs text-muted-foreground truncate">{member.email}</span>
+          <div className="flex items-center gap-2 overflow-hidden">
+            <span className="text-xs text-muted-foreground truncate">{member.email}</span>
+            {otherGroups.length > 0 && (
+              <div className="flex gap-1 shrink-0">
+                {otherGroups.map(g => (
+                  <Badge key={g} variant="outline" className="text-[8px] px-1 py-0 h-3 font-medium text-muted-foreground/60 border-muted-foreground/20">
+                    {g}
+                  </Badge>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
       

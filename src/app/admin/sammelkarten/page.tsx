@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { db, functions } from '@/lib/firebase'
-import { doc, onSnapshot, updateDoc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore'
+import { doc, onSnapshot, updateDoc, setDoc, getDoc, serverTimestamp, collection, query, orderBy } from 'firebase/firestore'
 import { httpsCallable } from 'firebase/functions'
 import { useAuth } from '@/context/AuthContext'
 import { AdminGuard } from '@/components/auth/AdminGuard'
@@ -25,7 +25,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { toast } from 'sonner'
 import { logAction } from '@/lib/logging'
-import { TeacherRarity, LootTeacher } from '@/types/database'
+import { TeacherRarity, LootTeacher, CardProposal } from '@/types/database'
 import { SammelkartenConfig } from '@/types/cards'
 import { cn, getRarityColor, getRarityLabel } from '@/lib/utils'
 import { TeacherEditDialog } from '@/components/admin/TeacherEditDialog'
@@ -218,6 +218,11 @@ export default function CardManagerPage() {
     teachersFound: Record<string, number>
   } | null>(null)
 
+  // Kreativ-Labor Proposals (read-only)
+  const [cardProposals, setCardProposals] = useState<CardProposal[]>([])
+  const [proposalsLoading, setProposalsLoading] = useState(true)
+  const [moderatingProposalId, setModeratingProposalId] = useState<string | null>(null)
+
   useEffect(() => {
     const unsubscribe = onSnapshot(doc(db, 'settings', 'sammelkarten'), (snapshot) => {
       if (snapshot.exists()) {
@@ -237,6 +242,24 @@ export default function CardManagerPage() {
 
     return () => unsubscribe()
   }, [isDirty])
+
+  useEffect(() => {
+    const proposalsQuery = query(collection(db, 'card_proposals'), orderBy('created_at', 'desc'))
+
+    const unsubscribe = onSnapshot(proposalsQuery, (snapshot) => {
+      const items = snapshot.docs.map((proposalDoc) => ({
+        id: proposalDoc.id,
+        ...(proposalDoc.data() as Omit<CardProposal, 'id'>)
+      }))
+      setCardProposals(items)
+      setProposalsLoading(false)
+    }, (error) => {
+      console.error('Error loading card proposals:', error)
+      setProposalsLoading(false)
+    })
+
+    return () => unsubscribe()
+  }, [])
 
   const configRef = useRef<SammelkartenConfig | null>(null)
   useEffect(() => {
@@ -1017,6 +1040,76 @@ export default function CardManagerPage() {
     return dist
   }, [localConfig])
 
+  const proposalStatusCounts = useMemo(() => {
+    return cardProposals.reduce((acc, proposal) => {
+      acc[proposal.status] = (acc[proposal.status] || 0) + 1
+      return acc
+    }, { pending: 0, accepted: 0, rejected: 0 } as Record<'pending' | 'accepted' | 'rejected', number>)
+  }, [cardProposals])
+
+  const getProposalStatusBadge = (status: CardProposal['status']) => {
+    if (status === 'accepted') return <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20">Angenommen</Badge>
+    if (status === 'rejected') return <Badge variant="destructive">Abgelehnt</Badge>
+    return <Badge variant="secondary">Offen</Badge>
+  }
+
+  const handleModerateProposal = async (proposal: CardProposal, action: 'accept' | 'reject') => {
+    if (!user) return
+
+    const rewardPacks = 2
+    const shouldContinue = action === 'accept'
+      ? confirm(`Vorschlag von ${proposal.created_by_name} annehmen und ${rewardPacks} Booster als Belohnung gutschreiben?`)
+      : confirm(`Vorschlag von ${proposal.created_by_name} ablehnen?`)
+
+    if (!shouldContinue) return
+
+    const adminNote = window.prompt(
+      action === 'accept' ? 'Optionale Admin-Notiz (wird beim Vorschlag gespeichert):' : 'Ablehnungsgrund / Notiz (optional):',
+      proposal.admin_note || ''
+    )
+
+    if (adminNote === null) return
+
+    setModeratingProposalId(proposal.id)
+    try {
+      const moderateFn = httpsCallable<{
+        proposalId: string
+        action: 'accept' | 'reject'
+        adminNote?: string
+        rewardPacks?: number
+      }, {
+        success: boolean
+        status: 'accepted' | 'rejected'
+        rewardGranted: number
+      }>(functions, 'moderateCardProposal')
+
+      const result = await moderateFn({
+        proposalId: proposal.id,
+        action,
+        adminNote,
+        rewardPacks,
+      })
+
+      if (action === 'accept') {
+        toast.success(`Vorschlag angenommen. Belohnung: ${result.data.rewardGranted} Booster.`)
+      } else {
+        toast.success('Vorschlag abgelehnt.')
+      }
+
+      await logAction('CARDS_SETTINGS_UPDATED', user.uid, profile?.full_name, {
+        section: 'card_proposals',
+        proposal_id: proposal.id,
+        moderation_action: action,
+        reward_granted: result.data.rewardGranted,
+      })
+    } catch (error: any) {
+      console.error('Error moderating proposal:', error)
+      toast.error(error?.message || 'Fehler bei der Moderation des Vorschlags.')
+    } finally {
+      setModeratingProposalId(null)
+    }
+  }
+
   if (loading) {
     return (
       <AdminGuard>
@@ -1113,6 +1206,10 @@ export default function CardManagerPage() {
                   <TabsTrigger value="limits" className="px-4 py-1.5 text-xs gap-2 transition-all">
                     <Settings2 className="h-3.5 w-3.5" />
                     <span>Parameter</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="proposals" className="px-4 py-1.5 text-xs gap-2 transition-all">
+                    <Sparkles className="h-3.5 w-3.5" />
+                    <span>Kreativ-Labor</span>
                   </TabsTrigger>
                 </TabsList>
 
@@ -1479,6 +1576,110 @@ export default function CardManagerPage() {
                       </CardContent>
                     </Card>
                    </div>
+                </TabsContent>
+
+                <TabsContent value="proposals" className="mt-6 space-y-6">
+                  <Card>
+                    <CardHeader>
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                          <CardTitle className="text-lg flex items-center gap-2">
+                            <Sparkles className="h-5 w-5 text-primary" />
+                            Kreativ-Labor Vorschlaege
+                          </CardTitle>
+                          <CardDescription>
+                            Eingereichte Kartenvorschlaege aus dem Kreativ-Labor (Collection: card_proposals).
+                          </CardDescription>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="secondary">Offen: {proposalStatusCounts.pending}</Badge>
+                          <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20">Angenommen: {proposalStatusCounts.accepted}</Badge>
+                          <Badge variant="destructive">Abgelehnt: {proposalStatusCounts.rejected}</Badge>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      {proposalsLoading ? (
+                        <div className="flex items-center justify-center py-10 text-muted-foreground gap-3">
+                          <Loader2 className="h-5 w-5 animate-spin" />
+                          <span>Lade Vorschlaege...</span>
+                        </div>
+                      ) : cardProposals.length === 0 ? (
+                        <div className="text-center py-10 text-muted-foreground italic border rounded-lg bg-muted/20">
+                          Noch keine Vorschlaege vorhanden.
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          {cardProposals.map((proposal) => (
+                            <Card key={proposal.id} className="border-border/70">
+                              <CardContent className="pt-4 space-y-3">
+                                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                                  <div>
+                                    <p className="font-bold text-sm">{proposal.teacher_name}</p>
+                                    <p className="text-xs text-muted-foreground">
+                                      von {proposal.created_by_name || 'Unbekannt'} • {new Date(proposal.created_at).toLocaleDateString('de-DE')}
+                                    </p>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    {getProposalStatusBadge(proposal.status)}
+                                    <Badge variant="outline">HP {proposal.hp}</Badge>
+                                    {proposal.status === 'pending' && (
+                                      <>
+                                        <Button
+                                          size="sm"
+                                          variant="outline"
+                                          className="h-7 text-[11px]"
+                                          onClick={() => handleModerateProposal(proposal, 'reject')}
+                                          disabled={moderatingProposalId === proposal.id}
+                                        >
+                                          {moderatingProposalId === proposal.id ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Ablehnen'}
+                                        </Button>
+                                        <Button
+                                          size="sm"
+                                          className="h-7 text-[11px]"
+                                          onClick={() => handleModerateProposal(proposal, 'accept')}
+                                          disabled={moderatingProposalId === proposal.id}
+                                        >
+                                          {moderatingProposalId === proposal.id ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Annehmen + 2 Booster'}
+                                        </Button>
+                                      </>
+                                    )}
+                                  </div>
+                                </div>
+
+                                {proposal.description && (
+                                  <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                                    {proposal.description}
+                                  </p>
+                                )}
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                  {(proposal.attacks || []).slice(0, 2).map((attack, idx) => (
+                                    <div key={`${proposal.id}-attack-${idx}`} className="rounded-md border bg-muted/20 p-2">
+                                      <p className="text-xs font-bold uppercase tracking-wide">
+                                        {attack.name || `Angriff ${idx + 1}`}
+                                        {attack.damage !== undefined ? ` • ${attack.damage} DMG` : ''}
+                                      </p>
+                                      {attack.description && (
+                                        <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{attack.description}</p>
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
+
+                                {proposal.admin_note && (
+                                  <div className="rounded-md border border-primary/20 bg-primary/5 p-2">
+                                    <p className="text-xs font-semibold text-primary">Admin-Notiz</p>
+                                    <p className="text-xs mt-1 whitespace-pre-wrap">{proposal.admin_note}</p>
+                                  </div>
+                                )}
+                              </CardContent>
+                            </Card>
+                          ))}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
                 </TabsContent>
               </Tabs>
             </div>

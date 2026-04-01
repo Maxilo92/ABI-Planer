@@ -202,8 +202,8 @@ export function TeacherEditDialog({
             </div>
 
             <div className="space-y-4 pt-4 border-t">
-              <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground">Angriffe (Max. 3)</Label>
-              {[0, 1, 2].map((idx) => (
+              <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground">Angriffe (Max. 2)</Label>
+              {[0, 1].map((idx) => (
                 <div key={idx} className="space-y-2 p-3 bg-muted/30 rounded-lg border">
                   <div className="flex justify-between items-center mb-1">
                     <Label className="text-[10px] uppercase font-bold text-muted-foreground">Angriff {idx + 1}</Label>

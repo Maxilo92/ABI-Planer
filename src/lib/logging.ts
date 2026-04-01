@@ -57,6 +57,7 @@ export type LogActionType =
   | 'SYNC_OPENED_PACKS_TO_INVENTORY'
   | 'CLEANUP_LEGACY_TEACHERS_VOTED'
   | 'GLOBAL_RARITY_SYNC_TRIGGERED'
+  | 'CARDS_SETTINGS_UPDATED'
 
 export interface LogEntry {
   action: LogActionType

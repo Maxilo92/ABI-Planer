@@ -201,6 +201,7 @@ Konkrete Test-Cases für systematisches Testen aller Features.
 - [ ] **Test 26.1:** Dark Mode Toggle → Theme ändert sich
 - [ ] **Test 26.2:** Theme persistiert (nach Refresh noch dunkel)
 - [ ] **Test 26.3:** Auf Mobile: Hamburger-Menü funktioniert
+- [ ] **Test 26.4:** Untermenü-Navigation: `Konto & Hilfe` öffnen → `Konto` öffnen → `Einstellungen` klicken → Seite `/einstellungen` lädt korrekt
 
 ### Kurse & Gruppen (Admin)
 - [ ] **Test 27.1:** Kurs hinzufügen → Neue Reihe

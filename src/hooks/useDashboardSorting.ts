@@ -37,7 +37,7 @@ export function useDashboardSorting(
       (todo.status === 'open' || todo.status === 'in_progress') && 
       (
         todo.assigned_to_user === profile.id ||
-        (profile.planning_group && todo.assigned_to_group === profile.planning_group) ||
+        (profile.planning_groups && todo.assigned_to_group && profile.planning_groups.includes(todo.assigned_to_group)) ||
         (profile.class_name && todo.assigned_to_class === profile.class_name)
       )
     );

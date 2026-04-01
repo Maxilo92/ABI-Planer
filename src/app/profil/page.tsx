@@ -2,7 +2,8 @@
 
 import { useAuth } from '@/context/AuthContext'
 import { useRouter } from 'next/navigation'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import Link from 'next/link'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -21,9 +22,11 @@ import { toast } from 'sonner'
 import { logAction } from '@/lib/logging'
 import { TeacherAlbum } from '@/components/dashboard/TeacherAlbum'
 import { TOTPSetup } from '@/components/admin/TOTPSetup'
+import { useFriendSystem } from '@/hooks/useFriendSystem'
 
 export default function ProfilePage() {
   const { user, profile, loading } = useAuth()
+  const { friendships, incomingRequests, outgoingRequests } = useFriendSystem()
   const [fullName, setFullName] = useState('')
   const [savingName, setSavingName] = useState(false)
   const [courses, setCourses] = useState<string[]>(['Kurs 1', 'Kurs 2', 'Kurs 3', 'Kurs 4', 'Kurs 5', 'Kurs 6', 'Kurs 7'])
@@ -106,7 +109,7 @@ export default function ProfilePage() {
 
   const userInitial = profile.full_name?.substring(0, 1).toUpperCase() || 'U'
   const userCourse = profile.class_name
-  const plannerGroup = profile.planning_group
+  const plannerGroup = profile.planning_groups?.join(', ')
 
   const getRoleLabel = (role: string) => {
     if (role === 'admin_main' || role === 'admin') return 'Main Admin'
@@ -237,9 +240,6 @@ export default function ProfilePage() {
       <div className="max-w-2xl mx-auto space-y-8">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Mein Konto</h1>
-          <p className="text-muted-foreground">
-            Verwalte deine persönlichen Informationen und Einstellungen.
-          </p>
         </div>
 
         <Card>
@@ -335,10 +335,30 @@ export default function ProfilePage() {
 
         <Card>
           <CardHeader>
+            <CardTitle>Freundesystem</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="grid grid-cols-3 gap-4 text-sm">
+              <div>
+                <p className="text-muted-foreground">Freunde</p>
+                <p className="font-semibold">{friendships.length}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Eingang</p>
+                <p className="font-semibold">{incomingRequests.length}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Ausgang</p>
+                <p className="font-semibold">{outgoingRequests.length}</p>
+              </div>
+            </div>
+            <Button variant="outline" className="sm:w-auto" render={<Link href="/profil/freunde">Freunde verwalten</Link>} />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
             <CardTitle>Kontoverwaltung</CardTitle>
-            <CardDescription>
-              Verwalte hier deinen Namen, dein Passwort und auf Wunsch dein komplettes Konto.
-            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <form onSubmit={handleUpdateName} className="space-y-3">
@@ -381,9 +401,6 @@ export default function ProfilePage() {
 
             <div className="space-y-3 border-t pt-4">
               <Label>Passwort ändern</Label>
-              <p className="text-sm text-muted-foreground">
-                Wir schicken dir eine E-Mail mit einem sicheren Link zum Ändern deines Passworts.
-              </p>
               <Button variant="outline" className="w-full sm:w-auto" onClick={handlePasswordReset} disabled={sendingReset}>
                 {sendingReset ? 'Sende E-Mail...' : 'Passwort ändern'}
               </Button>
@@ -391,9 +408,6 @@ export default function ProfilePage() {
 
             <div className="space-y-3 border-t pt-4">
               <Label>Zwei-Faktor-Authentisierung (2FA)</Label>
-              <p className="text-sm text-muted-foreground">
-                Schütze dein Konto zusätzlich mit einer Authenticator-App (z.B. Google Authenticator).
-              </p>
               <div className="w-full sm:w-auto">
                 <TOTPSetup profile={profile} />
               </div>
@@ -401,9 +415,6 @@ export default function ProfilePage() {
 
             <div className="space-y-3 border-t pt-4">
               <Label className="text-destructive">Konto löschen</Label>
-              <p className="text-sm text-muted-foreground">
-                Das löscht dein Profil und deinen Login dauerhaft. Dieser Schritt kann nicht rückgängig gemacht werden.
-              </p>
               <Button variant="destructive" onClick={handleDeleteAccount} disabled={deletingAccount}>
                 {deletingAccount ? 'Lösche Konto...' : 'Konto löschen'}
               </Button>

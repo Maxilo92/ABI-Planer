@@ -48,7 +48,7 @@ export function TodoList({
       
       // 2. Relevance Score (Personal > Group > Class)
       if (todo.assigned_to_user === user?.uid) score += 100;
-      if (todo.assigned_to_group === profile?.planning_group) score += 50;
+      if (todo.assigned_to_group && profile?.planning_groups?.includes(todo.assigned_to_group)) score += 50;
       if (todo.assigned_to_class === profile?.class_name) score += 25;
       
       // 3. Deadline Urgency (Overdue > Soon > Far)
@@ -118,7 +118,7 @@ export function TodoList({
     
     // Finally, apply maxItems slice if necessary
     return typeof maxItems === 'number' ? result.slice(0, maxItems) : result;
-  }, [todos, maxItems, user?.uid, profile?.planning_group, profile?.class_name])
+  }, [todos, maxItems, user?.uid, profile?.planning_groups, profile?.class_name])
 
   const handleToggle = async (id: string, completed: boolean) => {
     if (!canManage) return
@@ -205,9 +205,8 @@ export function TodoList({
             displayedTodos.map((todo) => {
               const isAssignedToMe = todo.assigned_to_user === user?.uid
               const userCourse = profile?.class_name
-              const userPlanningGroup = profile?.planning_group
               const isAssignedToMyClass = todo.assigned_to_class && todo.assigned_to_class === userCourse
-              const isAssignedToMyGroup = todo.assigned_to_group && todo.assigned_to_group === userPlanningGroup
+              const isAssignedToMyGroup = todo.assigned_to_group && profile?.planning_groups?.includes(todo.assigned_to_group)
 
               const isOverdue = todo.deadline_date && todo.status !== 'done' && isBefore(toDate(todo.deadline_date), startOfDay(new Date()))
 

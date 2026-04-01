@@ -719,3 +719,135 @@ export const cleanupLegacyTeachersVoted = onCall({
     throw new HttpsError("internal", `cleanupLegacyTeachersVoted failed: ${error?.message || "unknown error"}`);
   }
 });
+
+/**
+ * Moderates a card proposal (accept/reject) and optionally grants booster rewards.
+ * Accepting a proposal grants reward packs once by incrementing booster_stats.extra_available.
+ */
+export const moderateCardProposal = onCall({
+  cors: true,
+  region: "europe-west3",
+}, async (request) => {
+  if (!request.auth?.uid) {
+    throw new HttpsError("unauthenticated", "Authentication is required.");
+  }
+
+  const db = getFirestore("abi-data");
+  const callerProfileRef = db.collection("profiles").doc(request.auth.uid);
+  const callerProfileDoc = await callerProfileRef.get();
+
+  if (!isAdminRole(callerProfileDoc.data()?.role)) {
+    throw new HttpsError("permission-denied", "Must be an administrative user to call this function.");
+  }
+
+  const {
+    proposalId,
+    action,
+    adminNote,
+    rewardPacks,
+  } = request.data || {};
+
+  if (!proposalId || typeof proposalId !== "string") {
+    throw new HttpsError("invalid-argument", "proposalId is required and must be a string.");
+  }
+
+  if (action !== "accept" && action !== "reject") {
+    throw new HttpsError("invalid-argument", "action must be either 'accept' or 'reject'.");
+  }
+
+  const safeRewardPacks = Number.isFinite(Number(rewardPacks))
+    ? Math.max(0, Math.floor(Number(rewardPacks)))
+    : 2;
+
+  const proposalRef = db.collection("card_proposals").doc(proposalId);
+  const proposalSnap = await proposalRef.get();
+
+  if (!proposalSnap.exists) {
+    throw new HttpsError("not-found", "Proposal not found.");
+  }
+
+  const proposalData = proposalSnap.data() as any;
+  const currentStatus = proposalData?.status;
+  const rewardAlreadyClaimed = proposalData?.reward_claimed === true;
+  const userId = proposalData?.created_by;
+
+  if (!userId || typeof userId !== "string") {
+    throw new HttpsError("failed-precondition", "Proposal is missing created_by.");
+  }
+
+  if (currentStatus !== "pending") {
+    throw new HttpsError("failed-precondition", "Only pending proposals can be moderated.");
+  }
+
+  const batch = db.batch();
+  const now = new Date();
+  const adminName = callerProfileDoc.data()?.full_name || "Unknown Admin";
+
+  const updatePayload: Record<string, any> = {
+    status: action === "accept" ? "accepted" : "rejected",
+    admin_note: typeof adminNote === "string" ? adminNote : "",
+    moderated_at: now.toISOString(),
+    moderated_by: request.auth.uid,
+    moderated_by_name: adminName,
+  };
+
+  let grantedPacks = 0;
+
+  if (action === "accept" && !rewardAlreadyClaimed && safeRewardPacks > 0) {
+    grantedPacks = safeRewardPacks;
+    updatePayload.reward_claimed = true;
+
+    const profileRef = db.collection("profiles").doc(userId);
+    batch.set(
+      profileRef,
+      {
+        booster_stats: {
+          extra_available: admin.firestore.FieldValue.increment(grantedPacks),
+        },
+      },
+      { merge: true }
+    );
+
+    const notificationRef = db
+      .collection("notifications")
+      .doc(userId)
+      .collection("messages")
+      .doc();
+
+    batch.set(notificationRef, {
+      id: notificationRef.id,
+      userId,
+      type: "card_proposal_accepted",
+      title: "Kreativ-Labor: Vorschlag angenommen",
+      message: `Dein Vorschlag fuer ${proposalData?.teacher_name || "einen Lehrer"} wurde angenommen. Du hast ${grantedPacks} Booster als Belohnung erhalten.`,
+      read: false,
+      timestamp: admin.firestore.FieldValue.serverTimestamp(),
+      reward_packs: grantedPacks,
+      proposal_id: proposalId,
+    });
+  }
+
+  batch.update(proposalRef, updatePayload);
+
+  await batch.commit();
+
+  await db.collection("logs").add({
+    type: "ADMIN_ACTION",
+    action: "CARD_PROPOSAL_MODERATED",
+    user_id: request.auth.uid,
+    user_name: adminName,
+    timestamp: now,
+    details: `Proposal ${proposalId} ${action}${grantedPacks > 0 ? `, granted ${grantedPacks} boosters` : ""}.`,
+    proposal_id: proposalId,
+    proposal_author_id: userId,
+    moderation_action: action,
+    reward_packs_granted: grantedPacks,
+  });
+
+  return {
+    success: true,
+    proposalId,
+    status: action === "accept" ? "accepted" : "rejected",
+    rewardGranted: grantedPacks,
+  };
+});

@@ -91,7 +91,7 @@ export default function Dashboard() {
 
     if (!authLoading && user && profile?.id) {
       const userCourse = profile?.class_name
-      const userPlanningGroup = profile?.planning_group
+      const userPlanningGroups = profile?.planning_groups || []
       const userUid = user.uid
 
       // 2. Listen to Todos
@@ -105,7 +105,7 @@ export default function Dashboard() {
         const scoredTodos = openTodos.map(todo => {
           let score = 0
           if (todo.assigned_to_user === userUid) score += 100
-          if (todo.assigned_to_group && todo.assigned_to_group === userPlanningGroup) score += 50
+          if (todo.assigned_to_group && userPlanningGroups.includes(todo.assigned_to_group)) score += 50
           if (todo.assigned_to_class && todo.assigned_to_class === userCourse) score += 25
           if (todo.deadline_date) {
             const daysToDeadline = (toDate(todo.deadline_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
@@ -194,7 +194,7 @@ export default function Dashboard() {
       unsubscribeNews()
       unsubscribePolls()
     }
-  }, [user?.uid, profile?.id, profile?.class_name, profile?.planning_group, authLoading])
+  }, [user?.uid, profile?.id, profile?.class_name, profile?.planning_groups, authLoading])
 
   const canManage = (
     profile?.role === 'planner' ||

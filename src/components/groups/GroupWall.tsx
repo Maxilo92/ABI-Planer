@@ -102,7 +102,7 @@ export function GroupWall({ groupName, canManage = false, type = 'internal' }: G
         content: newMessage.trim(),
         created_by: user.uid,
         author_name: profile.full_name || user.displayName || 'Unbekannt',
-        author_group: profile.planning_group || null,
+        author_group: (profile.planning_groups && profile.planning_groups.length > 0) ? profile.planning_groups[0] : null,
         target_group: targetGroup,
         group_name: groupName,
         type: type,

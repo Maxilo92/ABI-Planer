@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { signOut } from 'firebase/auth'
-import { User, MoonStar, MessageSquarePlus, LogOut, Users, Save, Plus, Trash2, Sparkles, AlertTriangle } from 'lucide-react'
+import { User, MoonStar, MessageSquarePlus, LogOut, Users, Save, Plus, Trash2, Sparkles, AlertTriangle, ChevronRight, Layers } from 'lucide-react'
 import { collection, doc, getDocs, onSnapshot, query, setDoc, updateDoc, where, writeBatch } from 'firebase/firestore'
 
 import { auth, db } from '@/lib/firebase'
@@ -19,12 +19,6 @@ import {
   DialogHeader, 
   DialogTitle 
 } from '@/components/ui/dialog'
-import { 
-  Tabs, 
-  TabsContent, 
-  TabsList, 
-  TabsTrigger 
-} from '@/components/ui/tabs'
 import { ThemeToggle } from '@/components/layout/ThemeToggle'
 import { AddFeedbackDialog } from '@/components/modals/AddFeedbackDialog'
 import { Input } from '@/components/ui/input'
@@ -43,6 +37,8 @@ interface PlanningGroupRow {
   before: string
   after: string
   leaderUserId: string
+  parentName: string
+  isParent: boolean
 }
 
 export default function SettingsPage() {
@@ -50,7 +46,7 @@ export default function SettingsPage() {
   const [courseRows, setCourseRows] = useState<CourseRow[]>([])
   const [originalCourses, setOriginalCourses] = useState<string[]>([])
   const [planningGroupRows, setPlanningGroupRows] = useState<PlanningGroupRow[]>([])
-  const [originalGroups, setOriginalGroups] = useState<{name: string, leader_user_id: string | null}[]>([])
+  const [originalGroups, setOriginalGroups] = useState<{name: string, leader_user_id: string | null, parent_name?: string | null, is_parent?: boolean}[]>([])
   const [planners, setPlanners] = useState<Profile[]>([])
   const [savingCourses, setSavingCourses] = useState(false)
   const [savingGroups, setSavingGroups] = useState(false)
@@ -67,7 +63,9 @@ export default function SettingsPage() {
     // Check groups
     const currentGroups = planningGroupRows.map(r => ({ 
       name: r.after.trim(), 
-      leader_user_id: r.leaderUserId || null 
+      leader_user_id: r.leaderUserId || null,
+      parent_name: r.parentName || null,
+      is_parent: r.isParent
     })).filter(g => g.name)
     const groupsChanged = JSON.stringify(currentGroups) !== JSON.stringify(originalGroups)
     
@@ -133,9 +131,31 @@ export default function SettingsPage() {
       const courses = settingsDoc.exists() ? settingsDoc.data().courses : undefined
       const planningGroups = settingsDoc.exists() ? settingsDoc.data().planning_groups : undefined
       const normalizedCourses = Array.isArray(courses) && courses.length > 0 ? courses : ['Kurs 1', 'Kurs 2', 'Kurs 3', 'Kurs 4', 'Kurs 5', 'Kurs 6', 'Kurs 7']
-      const normalizedGroups = Array.isArray(planningGroups) && planningGroups.length > 0
+      
+      let normalizedGroups = Array.isArray(planningGroups) && planningGroups.length > 0
         ? planningGroups
-        : [{ name: 'Ballplanung', leader_user_id: null }, { name: 'Gelder sammeln', leader_user_id: null }]
+        : [{ name: 'Ballplanung', leader_user_id: null, is_parent: true }, { name: 'Gelder sammeln', leader_user_id: null }]
+
+      // Ensure mandatory parents exist
+      const mandatoryParents = ['Ballplanung', 'FinanzTeam']
+      mandatoryParents.forEach(name => {
+        const existing = normalizedGroups.find((g: any) => g.name === name)
+        if (!existing) {
+          normalizedGroups.push({ name, leader_user_id: null, is_parent: true })
+        } else {
+          // Force is_parent for mandatory groups
+          existing.is_parent = true
+        }
+      })
+
+      // Sort: Mandatory parents first, then by name
+      normalizedGroups.sort((a: any, b: any) => {
+        const aIsMandatory = mandatoryParents.includes(a.name)
+        const bIsMandatory = mandatoryParents.includes(b.name)
+        if (aIsMandatory && !bIsMandatory) return -1
+        if (!aIsMandatory && bIsMandatory) return 1
+        return a.name.localeCompare(b.name)
+      })
 
       setOriginalCourses(normalizedCourses)
       setCourseRows(
@@ -146,15 +166,23 @@ export default function SettingsPage() {
         }))
       )
 
-      setOriginalGroups(normalizedGroups.map((g: any) => ({ name: g.name, leader_user_id: g.leader_user_id || null })))
+      setOriginalGroups(normalizedGroups.map((g: any) => ({ 
+        name: g.name, 
+        leader_user_id: g.leader_user_id || null,
+        parent_name: g.parent_name || null,
+        is_parent: !!g.is_parent
+      })))
+      
       setPlanningGroupRows(
         normalizedGroups
           .filter((entry: { name?: string }) => typeof entry?.name === 'string' && entry.name.trim().length > 0)
-          .map((entry: { name: string; leader_user_id?: string | null }, index: number) => ({
+          .map((entry: { name: string; leader_user_id?: string | null; parent_name?: string | null; is_parent?: boolean }, index: number) => ({
             id: `group-${index}`,
             before: entry.name,
             after: entry.name,
             leaderUserId: entry.leader_user_id || '',
+            parentName: entry.parent_name || '',
+            isParent: !!entry.is_parent,
           }))
       )
     }, (error) => {
@@ -260,7 +288,7 @@ export default function SettingsPage() {
   const addPlanningGroupRow = () => {
     setPlanningGroupRows((prev) => [
       ...prev,
-      { id: `group-new-${Date.now()}`, before: '', after: '', leaderUserId: '' },
+      { id: `group-new-${Date.now()}`, before: '', after: '', leaderUserId: '', parentName: '', isParent: false },
     ])
   }
 
@@ -277,6 +305,12 @@ export default function SettingsPage() {
   const updatePlanningGroupLeader = (id: string, leaderUserId: string) => {
     setPlanningGroupRows((prev) =>
       prev.map((row) => (row.id === id ? { ...row, leaderUserId } : row))
+    )
+  }
+
+  const updatePlanningGroupParent = (id: string, parentName: string) => {
+    setPlanningGroupRows((prev) =>
+      prev.map((row) => (row.id === id ? { ...row, parentName } : row))
     )
   }
 
@@ -378,10 +412,13 @@ export default function SettingsPage() {
       })
       .map((row) => {
         const leader = planners.find((entry) => entry.id === row.leaderUserId)
+        const isMandatoryParent = ['Ballplanung', 'FinanzTeam'].includes(row.after)
         return {
           name: row.after,
           leader_user_id: leader?.id || null,
           leader_name: leader?.full_name || null,
+          parent_name: row.parentName || null,
+          is_parent: isMandatoryParent || !!row.isParent,
         }
       })
 
@@ -396,7 +433,30 @@ export default function SettingsPage() {
 
     try {
       setSavingGroups(true)
-      await setDoc(doc(db, 'settings', 'config'), { planning_groups }, { merge: true })
+      
+      // Leadership Sync: Find all users whose leadership might have changed
+      const affectedUserIds = new Set<string>()
+      originalGroups.forEach(g => { if (g.leader_user_id) affectedUserIds.add(g.leader_user_id) })
+      planning_groups.forEach(g => { if (g.leader_user_id) affectedUserIds.add(g.leader_user_id) })
+
+      const batch = writeBatch(db)
+      
+      // Update affected user profiles
+      for (const userId of Array.from(affectedUserIds)) {
+        const userNewLedGroups = planning_groups
+          .filter(g => g.leader_user_id === userId)
+          .map(g => g.name)
+        
+        batch.update(doc(db, 'profiles', userId), {
+          led_groups: userNewLedGroups,
+          is_group_leader: userNewLedGroups.length > 0
+        })
+      }
+
+      // Save settings
+      batch.set(doc(db, 'settings', 'config'), { planning_groups }, { merge: true })
+      
+      await batch.commit()
 
       if (renamedGroups.length > 0) {
         if (!canMigrateGroups) {
@@ -438,168 +498,205 @@ export default function SettingsPage() {
     <div className="max-w-3xl mx-auto space-y-6">
       <div>
         <h1 className="text-3xl font-extrabold tracking-tight">Einstellungen</h1>
-        <p className="text-muted-foreground mt-1">Hier findest du persönliche Optionen, ohne den Header zu überladen.</p>
+        <p className="text-muted-foreground mt-1">Alle Optionen in einer klaren Reihenfolge statt versteckter Seitentoggles.</p>
       </div>
 
-      <Tabs defaultValue="general" className="w-full">
-        <TabsList className="w-fit">
-          <TabsTrigger value="general">Allgemein</TabsTrigger>
-          <TabsTrigger value="account">Konto & Boni</TabsTrigger>
-          {canManageCourses && <TabsTrigger value="admin">Verwaltung</TabsTrigger>}
-        </TabsList>
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">Schnellzugriff</CardTitle>
+          <CardDescription>Springe direkt zum gesuchten Bereich.</CardDescription>
+        </CardHeader>
+        <CardContent className="pt-0 flex flex-wrap gap-2">
+          <a href="#profil" className="inline-flex"><Button variant="outline" size="sm">Profil</Button></a>
+          <a href="#darstellung" className="inline-flex"><Button variant="outline" size="sm">Darstellung</Button></a>
+          <a href="#feedback" className="inline-flex"><Button variant="outline" size="sm">Feedback</Button></a>
+          <a href="#boni" className="inline-flex"><Button variant="outline" size="sm">Boni</Button></a>
+          <a href="#konto" className="inline-flex"><Button variant="outline" size="sm">Konto</Button></a>
+          {canManageCourses && (
+            <>
+              <a href="#kurssystem" className="inline-flex"><Button variant="outline" size="sm">Kurssystem</Button></a>
+              <a href="#planungsgruppen" className="inline-flex"><Button variant="outline" size="sm">Planungsgruppen</Button></a>
+            </>
+          )}
+        </CardContent>
+      </Card>
 
-        <TabsContent value="general" className="space-y-6 mt-6">
-          <Card>
+      <section className="space-y-3" id="profil">
+        <h2 className="text-lg font-bold tracking-tight">Persönlich</h2>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-xl">
+              <User className="h-5 w-5" /> Profil
+            </CardTitle>
+            <CardDescription>Dein öffentliches Profil ansehen und bearbeiten.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button
+              variant="outline"
+              className="w-full sm:w-auto"
+              render={
+                <Link href="/profil">
+                  Profil öffnen
+                </Link>
+              }
+            />
+          </CardContent>
+        </Card>
+      </section>
+
+      <section className="space-y-3" id="darstellung">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-xl">
+              <MoonStar className="h-5 w-5" /> Darstellung
+            </CardTitle>
+            <CardDescription>Hell, dunkel oder automatisch nach System.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ThemeToggle />
+          </CardContent>
+        </Card>
+      </section>
+
+      <section className="space-y-3" id="feedback">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-xl">
+              <MessageSquarePlus className="h-5 w-5" /> Feedback
+            </CardTitle>
+            <CardDescription>Teile Bugs, Ideen und Feature-Wünsche.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <AddFeedbackDialog />
+          </CardContent>
+        </Card>
+      </section>
+
+      <section className="space-y-3" id="boni">
+        <h2 className="text-lg font-bold tracking-tight">Boni</h2>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-xl">
+              <Sparkles className="h-5 w-5 text-primary" /> Freunde einladen
+            </CardTitle>
+            <CardDescription>Sammle Bonus-Booster für dich und deine Freunde.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button 
+              variant="outline" 
+              className="w-full sm:w-auto gap-2"
+              render={
+                <Link href="/einstellungen/referrals">
+                  <Users className="h-4 w-4" /> Einladungs-Dashboard öffnen
+                </Link>
+              }
+            />
+          </CardContent>
+        </Card>
+      </section>
+
+      <section className="space-y-3" id="konto">
+        <h2 className="text-lg font-bold tracking-tight">Konto</h2>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-xl">
+              <LogOut className="h-5 w-5 text-destructive" /> Abmelden
+            </CardTitle>
+            <CardDescription>Beende deine aktuelle Sitzung auf diesem Gerät.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button variant="destructive" onClick={handleSignOut} className="w-full sm:w-auto gap-2">
+              <LogOut className="h-4 w-4" /> Abmelden
+            </Button>
+          </CardContent>
+        </Card>
+      </section>
+
+      {canManageCourses && (
+        <section className="space-y-6" id="verwaltung">
+          <h2 className="text-lg font-bold tracking-tight">Verwaltung</h2>
+          <Card id="kurssystem">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-xl">
-                <User className="h-5 w-5" /> Profil
+                <Users className="h-5 w-5" /> Kurssystem
               </CardTitle>
-              <CardDescription>Dein öffentliches Profil ansehen und bearbeiten.</CardDescription>
+              <CardDescription>
+                Kurse umbenennen, hinzufügen oder entfernen. Umbenennungen werden auf bestehende Zuordnungen angewendet.
+              </CardDescription>
             </CardHeader>
-            <CardContent>
-              <Button
-                variant="outline"
-                className="w-full sm:w-auto"
-                render={
-                  <Link href="/profil">
-                    Profil öffnen
-                  </Link>
-                }
-              />
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-xl">
-                <MoonStar className="h-5 w-5" /> Darstellung
-              </CardTitle>
-              <CardDescription>Hell, dunkel oder automatisch nach System.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ThemeToggle />
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-xl">
-                <MessageSquarePlus className="h-5 w-5" /> Feedback
-              </CardTitle>
-              <CardDescription>Teile Bugs, Ideen und Feature-Wünsche.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <AddFeedbackDialog />
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="account" className="space-y-6 mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-xl">
-                <Sparkles className="h-5 w-5 text-primary" /> Freunde einladen
-              </CardTitle>
-              <CardDescription>Sammle Bonus-Booster für dich und deine Freunde.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button 
-                variant="outline" 
-                className="w-full sm:w-auto gap-2"
-                render={
-                  <Link href="/einstellungen/referrals">
-                    <Users className="h-4 w-4" /> Einladungs-Dashboard öffnen
-                  </Link>
-                }
-              />
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-xl">
-                <LogOut className="h-5 w-5 text-destructive" /> Abmelden
-              </CardTitle>
-              <CardDescription>Beende deine aktuelle Sitzung auf diesem Gerät.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button variant="destructive" onClick={handleSignOut} className="w-full sm:w-auto gap-2">
-                <LogOut className="h-4 w-4" /> Abmelden
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                {courseRows.map((row) => (
+                  <div key={row.id} className="flex items-center gap-2">
+                    <Input
+                      value={row.after}
+                      onChange={(e) => updateCourseRow(row.id, e.target.value)}
+                      placeholder="z.B. Kurs 1"
+                      disabled={!canManageCourses}
+                    />
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => removeCourseRow(row.id)}
+                      disabled={!canManageCourses || courseRows.length <= 1}
+                      title="Kurs entfernen"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+              <Button variant="outline" onClick={addCourseRow} disabled={!canManageCourses} className="gap-2">
+                <Plus className="h-4 w-4" /> Kurs hinzufügen
               </Button>
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-xs text-muted-foreground">
+                  {canManageCourses
+                    ? canMigrateCourses
+                      ? 'Als Admin werden Umbenennungen automatisch in Profilen, Todos und Finanzen übernommen.'
+                      : 'Du kannst Kurse ändern, aber Datenmigration bei Umbenennungen erfordert Admin-Rechte.'
+                    : 'Nur Planer/Admins können das Kurssystem bearbeiten.'}
+                </p>
+                <Button onClick={handleSaveCourses} disabled={!canManageCourses || savingCourses} className="gap-2">
+                  <Save className="h-4 w-4" /> {savingCourses ? 'Speichern...' : 'Kurse speichern'}
+                </Button>
+              </div>
             </CardContent>
           </Card>
-        </TabsContent>
 
-        {canManageCourses && (
-          <TabsContent value="admin" className="space-y-6 mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-xl">
-                  <Users className="h-5 w-5" /> Kurssystem
-                </CardTitle>
-                <CardDescription>
-                  Kurse umbenennen, hinzufügen oder entfernen. Umbenennungen werden auf bestehende Zuordnungen angewendet.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  {courseRows.map((row) => (
-                    <div key={row.id} className="flex items-center gap-2">
-                      <Input
-                        value={row.after}
-                        onChange={(e) => updateCourseRow(row.id, e.target.value)}
-                        placeholder="z.B. Kurs 1"
-                        disabled={!canManageCourses}
-                      />
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => removeCourseRow(row.id)}
-                        disabled={!canManageCourses || courseRows.length <= 1}
-                        title="Kurs entfernen"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-                <Button variant="outline" onClick={addCourseRow} disabled={!canManageCourses} className="gap-2">
-                  <Plus className="h-4 w-4" /> Kurs hinzufügen
-                </Button>
-                <div className="flex items-center justify-between gap-3">
-                  <p className="text-xs text-muted-foreground">
-                    {canManageCourses
-                      ? canMigrateCourses
-                        ? 'Als Admin werden Umbenennungen automatisch in Profilen, Todos und Finanzen übernommen.'
-                        : 'Du kannst Kurse ändern, aber Datenmigration bei Umbenennungen erfordert Admin-Rechte.'
-                      : 'Nur Planer/Admins können das Kurssystem bearbeiten.'}
-                  </p>
-                  <Button onClick={handleSaveCourses} disabled={!canManageCourses || savingCourses} className="gap-2">
-                    <Save className="h-4 w-4" /> {savingCourses ? 'Speichern...' : 'Kurse speichern'}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-xl">
-                  <Users className="h-5 w-5" /> Planungsgruppen
-                </CardTitle>
-                <CardDescription>
-                  Plane Teams wie Ballplanung oder Gelder sammeln. Jede Gruppe kann einen Gruppenleiter erhalten.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  {planningGroupRows.map((row) => (
-                    <div key={row.id} className="grid grid-cols-1 md:grid-cols-[1fr_1fr_auto] gap-2 items-center">
-                      <Input
-                        value={row.after}
-                        onChange={(e) => updatePlanningGroupName(row.id, e.target.value)}
-                        placeholder="z.B. Ballplanung"
-                        disabled={!canManageCourses}
-                      />
+          <Card id="planungsgruppen">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-xl">
+                <Users className="h-5 w-5" /> Planungsgruppen
+              </CardTitle>
+              <CardDescription>
+                Plane Teams wie Ballplanung oder Gelder sammeln. Jede Gruppe kann einen Gruppenleiter erhalten.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                {planningGroupRows.map((row) => {
+                  const isMandatory = ['Ballplanung', 'FinanzTeam'].includes(row.before)
+                  return (
+                    <div key={row.id} className="grid grid-cols-1 md:grid-cols-[1fr_1fr_1fr_auto] gap-2 items-center">
+                      <div className="relative flex items-center">
+                        {!isMandatory && row.parentName && (
+                          <div className="absolute left-[-1.2rem] opacity-50">
+                            <ChevronRight className="h-4 w-4" />
+                          </div>
+                        )}
+                        {isMandatory && (
+                          <div className="absolute left-[-1.2rem] opacity-50 text-primary">
+                            <Layers className="h-4 w-4" />
+                          </div>
+                        )}
+                        <Input
+                          value={row.after}
+                          onChange={(e) => updatePlanningGroupName(row.id, e.target.value)}
+                          placeholder="z.B. Ballplanung"
+                          disabled={!canManageCourses || isMandatory}
+                        />
+                      </div>
                       <select
                         className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                         value={row.leaderUserId}
@@ -613,38 +710,48 @@ export default function SettingsPage() {
                           </option>
                         ))}
                       </select>
+                      <select
+                        className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                        value={row.parentName}
+                        onChange={(e) => updatePlanningGroupParent(row.id, e.target.value)}
+                        disabled={!canManageCourses || isMandatory}
+                      >
+                        <option value="">Keine Eltern-Gruppe</option>
+                        <option value="Ballplanung">Ballplanung</option>
+                        <option value="FinanzTeam">FinanzTeam</option>
+                      </select>
                       <Button
                         variant="ghost"
                         size="icon"
                         onClick={() => removePlanningGroupRow(row.id)}
-                        disabled={!canManageCourses || planningGroupRows.length <= 1}
-                        title="Planungsgruppe entfernen"
+                        disabled={!canManageCourses || isMandatory || planningGroupRows.length <= 1}
+                        title={isMandatory ? "Basis-Gruppen können nicht gelöscht werden" : "Planungsgruppe entfernen"}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
-                  ))}
-                </div>
-                <Button variant="outline" onClick={addPlanningGroupRow} disabled={!canManageCourses} className="gap-2">
-                  <Plus className="h-4 w-4" /> Planungsgruppe hinzufügen
+                  )
+                })}
+              </div>
+              <Button variant="outline" onClick={addPlanningGroupRow} disabled={!canManageCourses} className="gap-2">
+                <Plus className="h-4 w-4" /> Planungsgruppe hinzufügen
+              </Button>
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-xs text-muted-foreground">
+                  {canManageCourses
+                    ? canMigrateGroups
+                      ? 'Als Admin werden Umbenennungen automatisch in Profilen und Todos übernommen.'
+                      : 'Du kannst Gruppen ändern, aber Datenmigration bei Umbenennungen erfordert Admin-Rechte.'
+                    : 'Nur Planer/Admins können Planungsgruppen bearbeiten.'}
+                </p>
+                <Button onClick={handleSavePlanningGroups} disabled={!canManageCourses || savingGroups} className="gap-2">
+                  <Save className="h-4 w-4" /> {savingGroups ? 'Speichern...' : 'Gruppen speichern'}
                 </Button>
-                <div className="flex items-center justify-between gap-3">
-                  <p className="text-xs text-muted-foreground">
-                    {canManageCourses
-                      ? canMigrateGroups
-                        ? 'Als Admin werden Umbenennungen automatisch in Profilen und Todos übernommen.'
-                        : 'Du kannst Gruppen ändern, aber Datenmigration bei Umbenennungen erfordert Admin-Rechte.'
-                      : 'Nur Planer/Admins können Planungsgruppen bearbeiten.'}
-                  </p>
-                  <Button onClick={handleSavePlanningGroups} disabled={!canManageCourses || savingGroups} className="gap-2">
-                    <Save className="h-4 w-4" /> {savingGroups ? 'Speichern...' : 'Gruppen speichern'}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        )}
-      </Tabs>
+              </div>
+            </CardContent>
+          </Card>
+        </section>
+      )}
 
       {/* Navigation Guard Dialog */}
       <Dialog open={isGuardOpen} onOpenChange={setIsGuardOpen}>

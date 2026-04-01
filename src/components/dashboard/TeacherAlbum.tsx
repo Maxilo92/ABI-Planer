@@ -290,7 +290,6 @@ function TeacherCardDetail({
   // Sync state when teacher/userData changes during navigation
   useEffect(() => {
     setDisplayVariant(getBestVariant(userData?.variants));
-    setActiveCard("visual");
   }, [teacher.id, teacher.name, userData]);
 
   const cardData = mapTeacherToCardData(
@@ -326,20 +325,20 @@ function TeacherCardDetail({
       <div className="relative w-full max-w-[280px] sm:max-w-[320px] aspect-[2.5/3.5] mb-4 group">
         <AnimatePresence mode="wait" custom={direction}>
           <motion.div
-            key={`${teacher.id || teacher.name}-${activeCard}`}
+            key={teacher.id || teacher.name}
             custom={direction}
             initial={{
-              x: direction > 0 ? 100 : direction < 0 ? -100 : 0,
+              x: direction > 0 ? 120 : direction < 0 ? -120 : 0,
               opacity: 0,
               scale: 0.9,
             }}
             animate={{ x: 0, opacity: 1, scale: 1 }}
             exit={{
-              x: direction > 0 ? -100 : direction < 0 ? 100 : 0,
+              x: direction > 0 ? -120 : direction < 0 ? 120 : 0,
               opacity: 0,
               scale: 0.9,
             }}
-            transition={{ type: "spring", damping: 25, stiffness: 200 }}
+            transition={{ duration: 0.22, ease: "easeOut" }}
             drag="x"
             dragConstraints={{ left: 0, right: 0 }}
             dragElastic={0.2}
@@ -354,22 +353,36 @@ function TeacherCardDetail({
               }
             }}
           >
-            {activeCard === "visual" ? (
-              <TeacherCard
-                data={cardData}
-                className="w-full h-auto"
-                styleVariant="modern-flat"
-                isFlippedExternally={isOwned}
-                isLocked={!isOwned}
-                interactive={false}
-              />
-            ) : (
-              <TeacherSpecCard
-                data={cardData}
-                className="w-full h-auto"
-                styleVariant="modern-flat"
-              />
-            )}
+            <div className="w-full h-full [perspective:1600px]">
+              <motion.div
+                className="relative w-full h-full preserve-3d"
+                initial={false}
+                animate={{ rotateY: activeCard === "spec" ? 180 : 0 }}
+                transition={{ duration: 0.45, ease: "easeInOut" }}
+              >
+                <div className="absolute inset-0 backface-hidden">
+                  <TeacherCard
+                    data={cardData}
+                    className="w-full h-auto"
+                    styleVariant="modern-flat"
+                    isFlippedExternally={isOwned}
+                    isLocked={!isOwned}
+                    interactive={false}
+                  />
+                </div>
+
+                <div
+                  className="absolute inset-0 backface-hidden"
+                  style={{ transform: "rotateY(180deg)" }}
+                >
+                  <TeacherSpecCard
+                    data={cardData}
+                    className="w-full h-auto"
+                    styleVariant="modern-flat"
+                  />
+                </div>
+              </motion.div>
+            </div>
           </motion.div>
         </AnimatePresence>
 
