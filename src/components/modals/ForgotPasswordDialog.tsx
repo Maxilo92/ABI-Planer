@@ -78,7 +78,7 @@ export function ForgotPasswordDialog({ initialEmail = '' }: ForgotPasswordDialog
             <Input 
               id="reset-email" 
               type="email" 
-              placeholder="vorname.nachname@hgr-web.lernsax.de" 
+                placeholder="nachname.vorname@hgr-web.lernsax.de" 
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="bg-background/70 border-border h-12 text-base focus:bg-background transition-all"

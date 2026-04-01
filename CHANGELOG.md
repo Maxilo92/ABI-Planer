@@ -14,6 +14,8 @@
 - **Execution Filter:** `validateAndFixRarities` unterstützt jetzt eine Nutzer-Auswahl (`targetUserIds`), sodass nur markierte Schüler verarbeitet werden.
 - **Compensation Update:** Kompensation wird nun pro betroffenem Nutzer aus der Gesamtsumme der entfernten Karten berechnet: `Math.ceil(total_removed_cards / 3)`.
 - **User Transparency:** Betroffene Nutzer erhalten eine klarere Übersicht mit Gesamtverlust, berechneter Kompensation und Detailliste der entfernten Karten.
+- **Copy Fix (Lernsax Vorlage):** E-Mail-Beispiele wurden auf das gewünschte Muster `nachname.vorname@hgr-web.lernsax.de` korrigiert (Register, Login, Passwort-Reset, Hilfe).
+- **Verification UX:** Im Verifizierungs-Banner werden Nutzer jetzt explizit aufgefordert, ihre E-Mail zu prüfen und können sie bei Bedarf direkt ändern (inkl. Bestätigungs-Mail an die neue Adresse).
 
 ## [1.0.83] - 2026-03-31
 - **Feature (Sammelkarten Management):** Entfernung des Besitz-Limits-Systems und Einführung eines neuen Button-basierten Kartenverwaltungssystems.

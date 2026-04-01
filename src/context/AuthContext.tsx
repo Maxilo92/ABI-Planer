@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
 import { getFirebaseAuth, getFirebaseDb, getFirebaseFunctions } from '@/lib/firebase'
-import { onAuthStateChanged, signOut, User, sendEmailVerification } from 'firebase/auth'
+import { onAuthStateChanged, signOut, User, sendEmailVerification, verifyBeforeUpdateEmail } from 'firebase/auth'
 import { doc, onSnapshot, updateDoc, serverTimestamp } from 'firebase/firestore'
 import { httpsCallable } from 'firebase/functions'
 
@@ -19,6 +19,7 @@ interface AuthContextType {
   is2FAVerified: boolean
   is2FAInitialCheckDone: boolean
   resendVerification: () => Promise<void>
+  requestEmailChange: (newEmail: string) => Promise<void>
   refreshAuth: () => Promise<void>
   set2FAVerified: (val: boolean) => void
 }
@@ -30,6 +31,7 @@ const AuthContext = createContext<AuthContextType>({
   is2FAVerified: false,
   is2FAInitialCheckDone: false,
   resendVerification: async () => {},
+  requestEmailChange: async () => {},
   refreshAuth: async () => {},
   set2FAVerified: () => {},
 })
@@ -70,6 +72,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     if (currentUser && !currentUser.emailVerified) {
       await sendEmailVerification(currentUser)
     }
+  }
+
+  const requestEmailChange = async (newEmail: string) => {
+    const currentUser = auth.currentUser
+    if (!currentUser) {
+      throw new Error('Kein aktiver Nutzer gefunden.')
+    }
+
+    const normalizedEmail = newEmail.trim().toLowerCase()
+    if (!normalizedEmail.endsWith('@hgr-web.lernsax.de')) {
+      throw new Error('Nur @hgr-web.lernsax.de Adressen sind erlaubt.')
+    }
+
+    await verifyBeforeUpdateEmail(currentUser, normalizedEmail)
   }
 
   const refreshAuth = async () => {
@@ -267,6 +283,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       is2FAVerified, 
       is2FAInitialCheckDone,
       resendVerification, 
+      requestEmailChange,
       refreshAuth, 
       set2FAVerified 
     }}>

@@ -30,7 +30,7 @@ export default function HilfePage() {
         },
         {
           q: 'Ich habe meine Lernsax-Email vergessen.',
-          a: 'Deine Lernsax-Email sollte so aussehen: vorname.nachname@hgr-web.lernsax.de. Frag einen Lehrer oder Admin im Sekretariat nach deiner genauen Adresse.'
+          a: 'Deine Lernsax-Email sollte so aussehen: nachname.vorname@hgr-web.lernsax.de. Frag einen Lehrer oder Admin im Sekretariat nach deiner genauen Adresse.'
         },
         {
           q: 'Wie setze ich mein Passwort zurück?',

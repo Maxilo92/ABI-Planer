@@ -180,10 +180,10 @@ export default function LoginPage() {
                 
                 <div className="space-y-2">
                   <Label htmlFor="email" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">E-Mail</Label>
-                  <Input 
-                    id="email" 
-                    type="email" 
-                    placeholder="vorname.nachname@hgr-web.lernsax.de" 
+                   <Input 
+                     id="email" 
+                     type="email" 
+                     placeholder="nachname.vorname@hgr-web.lernsax.de" 
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="bg-background/70 border-border h-12 text-base focus:bg-background transition-all"
