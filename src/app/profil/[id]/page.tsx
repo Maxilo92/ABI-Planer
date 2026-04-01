@@ -20,8 +20,10 @@ import { toast } from 'sonner'
 
 export default function PublicProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
-  const { user, profile: currentProfile } = useAuth()
+  const { user } = useAuth()
   const {
+    outgoingRequests,
+    incomingRequests,
     getRelationshipState,
     sendFriendRequest,
     respondToFriendRequest,
@@ -75,9 +77,9 @@ export default function PublicProfilePage({ params }: { params: Promise<{ id: st
   const userCourse = targetProfile.class_name
   const plannerGroup = targetProfile.planning_groups?.join(', ')
   const { isOnline, label: onlineLabel } = getOnlineStatus(targetProfile.isOnline, targetProfile.lastOnline)
-  const relationshipState = currentProfile?.is_approved ? getRelationshipState(id) : 'none'
-  const canManageFriendship = !!user && !!currentProfile?.is_approved && id !== user.uid
-  const canOpenFriendDashboard = !!user && !!currentProfile?.is_approved
+  const relationshipState = user ? getRelationshipState(id) : 'none'
+  const canManageFriendship = !!user && id !== user.uid
+  const canOpenFriendDashboard = !!user
 
   const getRoleLabel = (role: UserRole) => {
     if (role === 'admin_main' || role === 'admin') return 'Main Admin'
@@ -94,17 +96,25 @@ export default function PublicProfilePage({ params }: { params: Promise<{ id: st
       }
 
       if (relationshipState === 'pending_outgoing') {
-        await cancelFriendRequest(`${user?.uid}_${id}`)
+        const request = outgoingRequests.find((entry) => entry.toUserId === id)
+        if (!request) {
+          throw new Error('Anfrage nicht gefunden.')
+        }
+        await cancelFriendRequest(request.id)
         toast.success('Freundschaftsanfrage zurückgezogen.')
         return
       }
 
       if (relationshipState === 'pending_incoming') {
+        const request = incomingRequests.find((entry) => entry.fromUserId === id)
+        if (!request) {
+          throw new Error('Anfrage nicht gefunden.')
+        }
         if (accepted) {
-          await respondToFriendRequest(`${id}_${user?.uid}`, true)
+          await respondToFriendRequest(request.id, true)
           toast.success('Freundschaft bestätigt.')
         } else {
-          await respondToFriendRequest(`${id}_${user?.uid}`, false)
+          await respondToFriendRequest(request.id, false)
           toast.success('Freundschaftsanfrage abgelehnt.')
         }
         return

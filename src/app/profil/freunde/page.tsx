@@ -48,18 +48,12 @@ export default function FriendsPage() {
 
   useEffect(() => {
     const loadDirectory = async () => {
-      if (!profile?.is_approved) {
-        setDirectoryProfiles([])
-        setDirectoryLoading(false)
-        return
-      }
-
       try {
         setDirectoryLoading(true)
         const profilesSnap = await getDocs(collection(db, 'profiles'))
         const profiles = profilesSnap.docs
           .map((snapshotDoc) => ({ ...snapshotDoc.data(), id: snapshotDoc.id } as Profile))
-          .filter((entry) => entry.id !== user?.uid && entry.is_approved)
+          .filter((entry) => entry.id !== user?.uid)
           .sort((left, right) => {
             const leftName = (left.full_name || '').toLowerCase()
             const rightName = (right.full_name || '').toLowerCase()
@@ -76,7 +70,7 @@ export default function FriendsPage() {
     }
 
     loadDirectory()
-  }, [profile?.is_approved, user?.uid])
+  }, [user?.uid])
 
   const filteredProfiles = useMemo(() => {
     const normalizedSearch = appliedSearchTerm.trim().toLowerCase()
@@ -174,8 +168,8 @@ export default function FriendsPage() {
   }
 
   return (
-    <div className="space-y-8 pb-20">
-      <div className="flex flex-wrap items-center justify-between gap-4">
+    <div className="space-y-6 pb-20 sm:space-y-8">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="space-y-2">
           <Button
             variant="ghost"
@@ -183,10 +177,10 @@ export default function FriendsPage() {
             className="gap-2 -ml-2 text-muted-foreground"
             render={<Link href="/profil"><ArrowLeft className="h-4 w-4" /> Zurück zum Profil</Link>}
           />
-          <h1 className="text-3xl font-bold tracking-tight">Freunde</h1>
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Freunde</h1>
         </div>
 
-        <div className="flex items-center gap-3 rounded-2xl border bg-card px-4 py-3 shadow-sm">
+        <div className="flex w-full items-center justify-center gap-3 rounded-2xl border bg-card px-4 py-3 shadow-sm sm:w-auto sm:justify-start">
           <div className="rounded-full bg-primary/10 p-2 text-primary">
             <Sparkles className="h-4 w-4" />
           </div>
@@ -196,29 +190,8 @@ export default function FriendsPage() {
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm text-muted-foreground">Eingehende Anfragen</CardTitle>
-            <CardTitle className="text-2xl">{incomingRequests.length}</CardTitle>
-          </CardHeader>
-        </Card>
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm text-muted-foreground">Ausgehende Anfragen</CardTitle>
-            <CardTitle className="text-2xl">{outgoingRequests.length}</CardTitle>
-          </CardHeader>
-        </Card>
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm text-muted-foreground">Gespeicherte Freunde</CardTitle>
-            <CardTitle className="text-2xl">{friendships.length}</CardTitle>
-          </CardHeader>
-        </Card>
-      </div>
-
       <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
-        <Card className="border-border/70 shadow-sm">
+        <Card className="order-2 border-border/70 shadow-sm lg:order-1">
           <CardHeader className="space-y-3 border-b pb-6">
             <div className="flex items-center gap-2">
               <div className="rounded-full bg-primary/10 p-2 text-primary">
@@ -226,7 +199,7 @@ export default function FriendsPage() {
               </div>
               <CardTitle>Mitglieder finden</CardTitle>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-col gap-2 sm:flex-row">
               <Input
                 ref={searchInputRef}
                 onKeyDown={(event) => {
@@ -237,7 +210,7 @@ export default function FriendsPage() {
                 }}
                 placeholder="Name, Kurs oder Gruppe suchen..."
               />
-              <Button variant="outline" onClick={() => applySearch()}>Suchen</Button>
+              <Button className="w-full sm:w-auto" variant="outline" onClick={() => applySearch()}>Suchen</Button>
             </div>
           </CardHeader>
           <CardContent className="space-y-3 py-6">
@@ -256,26 +229,27 @@ export default function FriendsPage() {
                 const relationshipState = getRelationshipState(entry.id)
                 const friendSinceProfile = relatedProfiles[entry.id]
                 const planningGroups = Array.isArray(entry.planning_groups) ? entry.planning_groups : []
+                const roleLabel = typeof entry.role === 'string' ? entry.role : 'viewer'
 
                 return (
                   <div key={entry.id} className="flex flex-col gap-4 border-b py-4 last:border-b-0 md:flex-row md:items-center">
-                    <div className="flex items-center gap-4">
+                    <div className="flex min-w-0 items-center gap-3 sm:gap-4">
                       <Avatar>
                         <AvatarFallback className="bg-primary/10 text-primary font-bold">
                           {(entry.full_name || entry.email || '?').slice(0, 1).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
-                      <div className="space-y-1">
+                      <div className="min-w-0 space-y-1">
                         <div className="flex flex-wrap items-center gap-2">
-                          <p className="font-semibold leading-none">{entry.full_name || 'Unbekannt'}</p>
-                          <Badge variant={entry.role.includes('admin') ? 'default' : 'secondary'} className="uppercase text-[10px]">
-                            {entry.role}
+                          <p className="truncate font-semibold leading-none">{entry.full_name || 'Unbekannt'}</p>
+                          <Badge variant={roleLabel.includes('admin') ? 'default' : 'secondary'} className="uppercase text-[10px]">
+                            {roleLabel}
                           </Badge>
                           {relationshipState === 'friends' && <Badge variant="secondary">Freund</Badge>}
                           {relationshipState === 'pending_incoming' && <Badge variant="outline">Anfrage erhalten</Badge>}
                           {relationshipState === 'pending_outgoing' && <Badge variant="outline">Anfrage offen</Badge>}
                         </div>
-                        <p className="text-sm text-muted-foreground">{entry.email}</p>
+                        <p className="truncate text-sm text-muted-foreground">{entry.email}</p>
                         <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
                           {entry.class_name && <span className="rounded-full bg-muted px-2 py-1">Kurs {entry.class_name}</span>}
                           {planningGroups.length > 0 && <span className="rounded-full bg-muted px-2 py-1">{planningGroups.join(', ')}</span>}
@@ -286,9 +260,10 @@ export default function FriendsPage() {
                       </div>
                     </div>
 
-                    <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
-                      <Button variant="outline" size="sm" render={<Link href={`/profil/${entry.id}`}>Profil öffnen</Link>} />
+                    <div className="flex w-full flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end md:ml-auto md:w-auto">
+                      <Button className="w-full sm:w-auto" variant="outline" size="sm" render={<Link href={`/profil/${entry.id}`}>Profil öffnen</Link>} />
                       <Button
+                        className="w-full sm:w-auto"
                         size="sm"
                         variant={relationshipState === 'friends' ? 'outline' : 'default'}
                         onClick={() => handleDirectoryAction(entry.id, relationshipState)}
@@ -305,7 +280,7 @@ export default function FriendsPage() {
           </CardContent>
         </Card>
 
-        <div className="space-y-6">
+        <div className="order-1 space-y-6 lg:order-2">
           <Card className="border-border/70 shadow-sm">
             <CardHeader className="border-b pb-4">
               <CardTitle className="text-lg">Eingehende Anfragen</CardTitle>
@@ -317,16 +292,16 @@ export default function FriendsPage() {
                 incomingRequests.map((request) => {
                   const requester = relatedProfiles[request.fromUserId]
                   return (
-                    <div key={request.id} className="flex items-center justify-between gap-3 border-b py-3 last:border-b-0">
+                    <div key={request.id} className="flex flex-col gap-3 border-b py-3 last:border-b-0 sm:flex-row sm:items-center sm:justify-between">
                       <div>
                         <p className="font-medium">{requester?.full_name || 'Unbekannt'}</p>
                         <p className="text-xs text-muted-foreground">Hat dir eine Anfrage gesendet</p>
                       </div>
-                      <div className="flex gap-2">
-                        <Button size="sm" onClick={() => respondToFriendRequest(request.id, true).then(() => toast.success('Freundschaft bestätigt.')).catch((error: any) => toast.error(error?.message || 'Aktion fehlgeschlagen.'))}>
+                      <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+                        <Button className="w-full sm:w-auto" size="sm" onClick={() => respondToFriendRequest(request.id, true).then(() => toast.success('Freundschaft bestätigt.')).catch((error: any) => toast.error(error?.message || 'Aktion fehlgeschlagen.'))}>
                           Annehmen
                         </Button>
-                        <Button variant="outline" size="sm" onClick={() => respondToFriendRequest(request.id, false).then(() => toast.success('Freundschaftsanfrage abgelehnt.')).catch((error: any) => toast.error(error?.message || 'Aktion fehlgeschlagen.'))}>
+                        <Button className="w-full sm:w-auto" variant="outline" size="sm" onClick={() => respondToFriendRequest(request.id, false).then(() => toast.success('Freundschaftsanfrage abgelehnt.')).catch((error: any) => toast.error(error?.message || 'Aktion fehlgeschlagen.'))}>
                           Ablehnen
                         </Button>
                       </div>
@@ -350,12 +325,12 @@ export default function FriendsPage() {
                   const friendProfile = relatedProfiles[friendId]
 
                   return (
-                    <div key={friendship.id} className="flex items-center justify-between gap-3 border-b py-3 last:border-b-0">
+                    <div key={friendship.id} className="flex flex-col gap-3 border-b py-3 last:border-b-0 sm:flex-row sm:items-center sm:justify-between">
                       <div>
                         <p className="font-medium">{friendProfile?.full_name || friendId}</p>
                         <p className="text-xs text-muted-foreground">Seit {format(toDate(friendship.created_at), 'PPP', { locale: de })}</p>
                       </div>
-                      <Button variant="outline" size="sm" onClick={() => removeFriend(friendId)}>
+                      <Button className="w-full sm:w-auto" variant="outline" size="sm" onClick={() => removeFriend(friendId)}>
                         Entfernen
                       </Button>
                     </div>
@@ -376,12 +351,12 @@ export default function FriendsPage() {
                 outgoingRequests.map((request) => {
                   const targetProfile = relatedProfiles[request.toUserId]
                   return (
-                    <div key={request.id} className="flex items-center justify-between gap-3 border-b py-3 last:border-b-0">
+                    <div key={request.id} className="flex flex-col gap-3 border-b py-3 last:border-b-0 sm:flex-row sm:items-center sm:justify-between">
                       <div>
                         <p className="font-medium">{targetProfile?.full_name || 'Unbekannt'}</p>
                         <p className="text-xs text-muted-foreground">Anfrage wartet auf Antwort</p>
                       </div>
-                      <Button variant="outline" size="sm" onClick={() => cancelFriendRequest(request.id)}>
+                      <Button className="w-full sm:w-auto" variant="outline" size="sm" onClick={() => cancelFriendRequest(request.id)}>
                         Zurückziehen
                       </Button>
                     </div>

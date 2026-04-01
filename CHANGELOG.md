@@ -6,6 +6,9 @@
     - **Profil (Public):** Syntax-Fehler in `handleFriendAction` behoben und fehlendes `return` sowie `Button`-Tag ergaenzt.
     - **Profil (Main):** Fehlende `CardDescription` Importe in `src/app/profil/page.tsx` und `src/app/profil/[id]/page.tsx` ergaenzt.
     - **Freunde:** Type-Mismatch in `applySearch` onClick Handler in `src/app/profil/freunde/page.tsx` korrigiert.
+- **Feature (Freunde):** Freundesystem fuer `viewer` freigeschaltet.
+    - **Rules:** `friend_requests`/`friendships` Create nicht mehr an `is_approved` gebunden, sondern an Authentifizierung.
+    - **UI/Hook:** Approval-Gates in Freundesystem-Ansichten entfernt, damit angemeldete Viewer Anfragen senden, annehmen und verwalten koennen.
 
 ## [1.0.90] - 2026-04-01
 - **Feature (Freundesystem):** Grundlage fuer spaeteren Kartentausch als echtes Beziehungsmodell eingefuehrt.

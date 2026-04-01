@@ -38,16 +38,15 @@ function getFriendshipId(userA: string, userB: string) {
 }
 
 export function useFriendSystem() {
-  const { user, profile } = useAuth()
+  const { user } = useAuth()
   const currentUserId = user?.uid ?? ''
-  const isApproved = profile?.is_approved === true
   const [outgoingRequests, setOutgoingRequests] = useState<FriendRequest[]>([])
   const [incomingRequests, setIncomingRequests] = useState<FriendRequest[]>([])
   const [friendships, setFriendships] = useState<Friendship[]>([])
   const [relatedProfiles, setRelatedProfiles] = useState<Record<string, Profile>>({})
 
   useEffect(() => {
-    if (!currentUserId || !isApproved) {
+    if (!currentUserId) {
       setOutgoingRequests([])
       setIncomingRequests([])
       setFriendships([])
@@ -90,7 +89,7 @@ export function useFriendSystem() {
       unsubscribeIncoming()
       unsubscribeFriendships()
     }
-  }, [currentUserId, isApproved])
+  }, [currentUserId])
 
   const relatedUserIds = useMemo(() => {
     const ids = new Set<string>()
@@ -160,16 +159,15 @@ export function useFriendSystem() {
   }, [relatedUserIds])
 
   const sendFriendRequest = useCallback(async (targetUserId: string) => {
-    if (!user || !profile?.is_approved) {
-      throw new Error('Nur verifizierte Mitglieder können Freundschaften anfragen.')
+    if (!user) {
+      throw new Error('Du musst angemeldet sein, um Freundschaften anzufragen.')
     }
 
     if (!targetUserId || targetUserId === user.uid) {
       throw new Error('Du kannst keine Freundschaft mit dir selbst anfragen.')
     }
 
-    const requestId = `${user.uid}_${targetUserId}`
-    const requestRef = doc(db, 'friend_requests', requestId)
+    const requestRef = doc(collection(db, 'friend_requests'))
 
     // Important: do not pre-read foreign/non-existing docs here.
     // Those reads can be rejected by Firestore Rules and cause noisy 403s.
@@ -180,11 +178,11 @@ export function useFriendSystem() {
       created_at: serverTimestamp(),
       updated_at: serverTimestamp(),
     })
-  }, [profile?.is_approved, user])
+  }, [user])
 
   const respondToFriendRequest = useCallback(async (requestId: string, accepted: boolean) => {
-    if (!user || !profile?.is_approved) {
-      throw new Error('Nur verifizierte Mitglieder können Freundschaften verwalten.')
+    if (!user) {
+      throw new Error('Du musst angemeldet sein, um Freundschaften zu verwalten.')
     }
 
     const requestRef = doc(db, 'friend_requests', requestId)
@@ -213,11 +211,6 @@ export function useFriendSystem() {
 
       const friendshipId = getFriendshipId(requestData.fromUserId, requestData.toUserId)
       const friendshipRef = doc(db, 'friendships', friendshipId)
-      const friendshipSnap = await transaction.get(friendshipRef)
-
-      if (friendshipSnap.exists()) {
-        throw new Error('Ihr seid bereits befreundet.')
-      }
 
       transaction.set(friendshipRef, {
         members: [requestData.fromUserId, requestData.toUserId].sort(),
@@ -235,11 +228,11 @@ export function useFriendSystem() {
         updated_at: serverTimestamp(),
       })
     })
-  }, [profile?.is_approved, user])
+  }, [user])
 
   const cancelFriendRequest = useCallback(async (requestId: string) => {
-    if (!user || !profile?.is_approved) {
-      throw new Error('Nur verifizierte Mitglieder können Freundschaften verwalten.')
+    if (!user) {
+      throw new Error('Du musst angemeldet sein, um Freundschaften zu verwalten.')
     }
 
     const requestRef = doc(db, 'friend_requests', requestId)
@@ -255,38 +248,20 @@ export function useFriendSystem() {
     }
 
     await deleteDoc(requestRef)
-  }, [profile?.is_approved, user])
+  }, [user])
 
   const removeFriend = useCallback(async (targetUserId: string) => {
-    if (!user || !profile?.is_approved) {
-      throw new Error('Nur verifizierte Mitglieder können Freundschaften verwalten.')
+    if (!user) {
+      throw new Error('Du musst angemeldet sein, um Freundschaften zu verwalten.')
     }
 
     const friendshipId = getFriendshipId(user.uid, targetUserId)
     const friendshipRef = doc(db, 'friendships', friendshipId)
-    const outgoingRequestRef = doc(db, 'friend_requests', `${user.uid}_${targetUserId}`)
-    const incomingRequestRef = doc(db, 'friend_requests', `${targetUserId}_${user.uid}`)
 
-    await runTransaction(db, async (transaction) => {
-      const friendshipSnap = await transaction.get(friendshipRef)
-
-      if (!friendshipSnap.exists()) {
-        throw new Error('Diese Freundschaft existiert nicht mehr.')
-      }
-
-      transaction.delete(friendshipRef)
-
-      const outgoingRequestSnap = await transaction.get(outgoingRequestRef)
-      if (outgoingRequestSnap.exists() && outgoingRequestSnap.data()?.status === 'pending') {
-        transaction.delete(outgoingRequestRef)
-      }
-
-      const incomingRequestSnap = await transaction.get(incomingRequestRef)
-      if (incomingRequestSnap.exists() && incomingRequestSnap.data()?.status === 'pending') {
-        transaction.delete(incomingRequestRef)
-      }
-    })
-  }, [profile?.is_approved, user])
+    // Avoid pre-reading docs that may be denied by rules when non-existent.
+    // Deleting the friendship doc is sufficient for ending the relationship.
+    await deleteDoc(friendshipRef)
+  }, [user])
 
   const getRelationshipState = useCallback((targetUserId: string): RelationshipState => {
     if (!currentUserId || targetUserId === currentUserId) {
