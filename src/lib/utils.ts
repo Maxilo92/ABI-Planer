@@ -1,8 +1,41 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
+import { formatDistanceToNow } from 'date-fns'
+import { de } from 'date-fns/locale'
+import { TeacherRarity } from '@/types/database'
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
+}
+
+/**
+ * Returns the color class for a given teacher rarity.
+ */
+export const getRarityColor = (rarity: TeacherRarity) => {
+  switch (rarity) {
+    case 'common': return 'text-slate-500'
+    case 'rare': return 'text-emerald-500'
+    case 'epic': return 'text-purple-500'
+    case 'mythic': return 'text-red-500'
+    case 'legendary': return 'text-amber-500'
+    case 'iconic': return 'text-indigo-950 dark:text-indigo-400 font-black'
+    default: return 'text-slate-500'
+  }
+}
+
+/**
+ * Returns the display label for a given teacher rarity.
+ */
+export const getRarityLabel = (rarity: TeacherRarity) => {
+  switch (rarity) {
+    case 'common': return 'Gewöhnlich'
+    case 'rare': return 'Selten'
+    case 'epic': return 'Episch'
+    case 'mythic': return 'Mythisch'
+    case 'legendary': return 'Legendär'
+    case 'iconic': return 'IKONISCH'
+    default: return rarity
+  }
 }
 
 /**
@@ -26,3 +59,37 @@ export function toDate(date: any): Date {
   const parsed = new Date(date)
   return isNaN(parsed.getTime()) ? new Date() : parsed
 }
+
+/**
+ * Returns the online status and a formatted label for the user.
+ * Implements a 5-minute stale session fallback.
+ */
+export function getOnlineStatus(isOnline: boolean, lastOnline: any): { isOnline: boolean; label: string } {
+  const lastOnlineDate = toDate(lastOnline)
+  const now = new Date()
+  const diffInMinutes = (now.getTime() - lastOnlineDate.getTime()) / (1000 * 60)
+  
+  // Stale session fallback: if isOnline is true but lastOnline is more than 5 minutes old
+  const effectiveOnline = isOnline && diffInMinutes < 5
+
+  if (effectiveOnline) {
+    return { isOnline: true, label: 'Online' }
+  }
+
+  const relativeTime = formatDistanceToNow(lastOnlineDate, { addSuffix: true, locale: de })
+  return { isOnline: false, label: `Zuletzt online: ${relativeTime}` }
+}
+
+/**
+ * Normalizes special characters (ä, ö, ü, ß) to their non-special counterparts.
+ * This can be used for searching or when special characters are not supported.
+ */
+export function normalizeChars(str: string): string {
+  if (typeof str !== 'string') return ''
+  const charMap: Record<string, string> = {
+    'ä': 'ae', 'ö': 'oe', 'ü': 'ue', 'ß': 'ss',
+    'Ä': 'Ae', 'Ö': 'Oe', 'Ü': 'Ue'
+  }
+  return str.replace(/[äöüßÄÖÜ]/g, match => charMap[match])
+}
+

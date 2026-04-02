@@ -1,4 +1,4 @@
-# Release Checklist & Installation
+# Installation & Setup (v1.0.0 Release)
 
 Folge diesen Schritten, um den ABI Planer produktiv zu setzen.
 
@@ -26,7 +26,7 @@ Damit das Dashboard (Countdown & Finanzziel) korrekt funktioniert, musst du **ei
 - **Collection:** `settings`
 - **Document ID:** `config`
 - **Felder:**
-  - `ball_date` (string): `2026-06-20T18:00:00Z` (Beispiel)
+  - `ball_date` (string): `2027-06-19T18:00:00Z` (Beispiel)
   - `funding_goal` (number): `10000`
 
 ## 4. Sicherheitsregeln anwenden

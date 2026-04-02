@@ -1,0 +1,33 @@
+
+# ABI Planer startet in die Vollversion: Ein Meilenstein für alle Nutzer
+
+Mit großer Freude verkündet das Team des ABI Planers die Veröffentlichung der Vollversion! Nach intensiver Entwicklungszeit und wertvollem Nutzerfeedback steht nun allen Anwenderinnen und Anwendern der komplette Funktionsumfang zur Verfügung. Die neue Version bringt nicht nur zahlreiche Verbesserungen in Sachen Performance und Stabilität, sondern setzt mit dem innovativen Markdown-Feature auch neue Maßstäbe in der Kommunikation innerhalb der App.
+
+## Ein Quantensprung für die Organisation
+
+Der ABI Planer hat sich in den letzten Monaten als unverzichtbares Tool für die Organisation und Planung rund um das Abitur etabliert. Mit der Vollversion werden nun sämtliche Features freigeschaltet, die bisher nur eingeschränkt nutzbar waren. Dazu zählen unter anderem erweiterte Gruppenfunktionen, ein optimiertes Aufgabenmanagement sowie neue Möglichkeiten zur individuellen Anpassung des eigenen Profils.
+
+## Markdown: Mehr Ausdruck für News und Guides
+
+Ein echtes Highlight der neuen Version ist das integrierte Markdown-Feature. Damit können News, Hinweise und Guides ab sofort im modernen Markdown-Format verfasst und gelesen werden. Überschriften, Listen, Links, Hervorhebungen – all das lässt sich nun einfach und übersichtlich gestalten. Das macht die Kommunikation nicht nur ansprechender, sondern auch deutlich strukturierter.
+
+**Beispiel für eine News im Markdown-Format:**
+
+```
+# Update: Neue Funktionen verfügbar
+- Markdown-Unterstützung für News
+- Verbesserte Gruppenverwaltung
+- Mehr Datenschutz
+```
+
+## Datenschutz und Transparenz im Fokus
+
+Gerade im Umgang mit sensiblen Daten legt der ABI Planer größten Wert auf Datenschutz und Transparenz. Die Vollversion erfüllt sämtliche Anforderungen der DSGVO und gibt den Nutzern volle Kontrolle über ihre Daten. Alle Änderungen werden transparent kommuniziert – auch dank des neuen News-Systems.
+
+## Ein Dank an die Community
+
+Das gesamte Team bedankt sich herzlich bei allen, die mit ihrem Feedback zur Weiterentwicklung beigetragen haben. Die Vollversion ist ein Gemeinschaftswerk und lebt vom Engagement der Nutzerinnen und Nutzer. Auch in Zukunft sind Rückmeldungen jederzeit willkommen!
+
+---
+
+*Viel Spaß mit der Vollversion wünscht das Team des ABI Planers!* 🚀

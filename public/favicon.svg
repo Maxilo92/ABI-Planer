@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg width="32" height="32" viewBox="0 0 2000 2000" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+    <g transform="matrix(2.633087,0,0,2.873163,-1835.285729,-1185.274449)">
+        <g transform="matrix(767.754083,0,0,767.754083,1390.802905,1021.61792)">
+        </g>
+        <text x="791.955px" y="1021.618px" style="font-family:'LEDLIGHT';font-size:767.754px;fill:url(#_Linear1);">A</text>
+    </g>
+    <defs>
+        <linearGradient id="_Linear1" x1="0" y1="0" x2="1" y2="0" gradientUnits="userSpaceOnUse" gradientTransform="matrix(546.886588,-476.826469,520.301823,501.189865,750.938226,1051.550093)"><stop offset="0" style="stop-color:rgb(33,196,85);stop-opacity:1"/><stop offset="1" style="stop-color:rgb(255,250,36);stop-opacity:1"/></linearGradient>
+    </defs>
+</svg>

@@ -17,19 +17,34 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Plus, Users, User as UserIcon } from 'lucide-react'
+import { Plus, Users, User as UserIcon, Calendar } from 'lucide-react'
 import { Profile } from '@/types/database'
+import { logAction } from '@/lib/logging'
 
-export function AddTodoDialog() {
+interface AddTodoDialogProps {
+  defaultGroup?: string
+  parentId?: string
+}
+
+export function AddTodoDialog({ defaultGroup, parentId }: AddTodoDialogProps) {
   const [title, setTitle] = useState('')
   const [assignedUser, setAssignedUser] = useState('')
   const [assignedClass, setAssignedClass] = useState('')
+  const [assignedGroup, setAssignedGroup] = useState(defaultGroup || '')
+  const [deadline, setDeadline] = useState('')
   const [users, setUsers] = useState<Profile[]>([])
   const [classes, setClasses] = useState<string[]>([])
+  const [planningGroups, setPlanningGroups] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
   const [open, setOpen] = useState(false)
   const { user, profile } = useAuth()
   const router = useRouter()
+
+  useEffect(() => {
+    if (defaultGroup) {
+      setAssignedGroup(defaultGroup)
+    }
+  }, [defaultGroup, open])
 
   useEffect(() => {
     const fetchData = async () => {
@@ -44,6 +59,12 @@ export function AddTodoDialog() {
       const settingsSnap = await getDoc(settingsRef)
       if (settingsSnap.exists()) {
         setClasses(settingsSnap.data().courses || [])
+        const groups = settingsSnap.data().planning_groups || []
+        setPlanningGroups(
+          groups
+            .map((group: { name?: string }) => group.name)
+            .filter((name: string | undefined): name is string => typeof name === 'string' && name.trim().length > 0)
+        )
       }
     }
 
@@ -61,6 +82,7 @@ export function AddTodoDialog() {
         const selectedUser = users.find(u => u.id === assignedUser)
         await addDoc(collection(db, 'todos'), {
           title,
+          parentId: parentId || null,
           created_by: user.uid,
           created_by_name: profile?.full_name || user.displayName || 'Unbekannt',
           status: 'open',
@@ -68,11 +90,25 @@ export function AddTodoDialog() {
           assigned_to_user: assignedUser || null,
           assigned_to_user_name: selectedUser?.full_name || null,
           assigned_to_class: assignedClass || null,
+          assigned_to_group: assignedGroup || null,
+          deadline_date: deadline || null,
+        })
+
+        await logAction(parentId ? 'SUBTODO_CREATED' : 'TODO_CREATED', user.uid, profile?.full_name, {
+          title,
+          parentId: parentId || null,
+          assigned_to_user: assignedUser || null,
+          assigned_to_user_name: selectedUser?.full_name || null,
+          assigned_to_class: assignedClass || null,
+          assigned_to_group: assignedGroup || null,
+          deadline_date: deadline || null,
         })
 
         setTitle('')
         setAssignedUser('')
         setAssignedClass('')
+        setAssignedGroup('')
+        setDeadline('')
         setOpen(false)
         router.refresh()
       } catch (error) {
@@ -86,16 +122,22 @@ export function AddTodoDialog() {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger
         render={
-          <Button size="sm" className="gap-2">
-            <Plus className="h-4 w-4" /> Aufgabe hinzufügen
-          </Button>
+          parentId ? (
+            <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-7 sm:w-7 text-muted-foreground hover:text-primary transition-opacity" title="Unteraufgabe hinzufügen">
+              <Plus className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
+            </Button>
+          ) : (
+            <Button size="sm" className="gap-2">
+              <Plus className="h-4 w-4" /> Aufgabe hinzufügen
+            </Button>
+          )
         }
       />
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Neue Aufgabe erstellen</DialogTitle>
+          <DialogTitle>{parentId ? 'Neue Unteraufgabe' : 'Neue Aufgabe erstellen'}</DialogTitle>
           <DialogDescription>
-            Was muss für das Abi noch erledigt werden?
+            {parentId ? 'Füge eine detailliertere Teilaufgabe hinzu.' : 'Was muss für das Abi noch erledigt werden?'}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
@@ -111,49 +153,70 @@ export function AddTodoDialog() {
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="assigned-user" className="flex items-center gap-2">
-                  <UserIcon className="h-3 w-3" /> Zuweisen an Person
+                <Label htmlFor="assignment" className="flex items-center gap-2">
+                  <Users className="h-3 w-3" /> Zuständigkeit
                 </Label>
                 <select
-                  id="assigned-user"
+                  id="assignment"
                   className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                  value={assignedUser}
+                  value={assignedUser ? `user:${assignedUser}` : assignedClass ? `class:${assignedClass}` : assignedGroup ? `group:${assignedGroup}` : ''}
                   onChange={(e) => {
-                    setAssignedUser(e.target.value)
-                    if (e.target.value) setAssignedClass('')
+                    const val = e.target.value
+                    setAssignedUser('')
+                    setAssignedClass('')
+                    setAssignedGroup('')
+                    
+                    if (val.startsWith('user:')) setAssignedUser(val.replace('user:', ''))
+                    else if (val.startsWith('class:')) setAssignedClass(val.replace('class:', ''))
+                    else if (val.startsWith('group:')) setAssignedGroup(val.replace('group:', ''))
                   }}
                 >
-                  <option value="">Niemand</option>
-                  {users.map((u) => (
-                    <option key={u.id} value={u.id}>
-                      {u.full_name}
-                    </option>
-                  ))}
+                  <option value="">Niemand / Alle</option>
+                  
+                  {users.length > 0 && (
+                    <optgroup label="Personen">
+                      {users.map((u) => (
+                        <option key={u.id} value={`user:${u.id}`}>
+                          {u.full_name}
+                        </option>
+                      ))}
+                    </optgroup>
+                  )}
+
+                  {classes.length > 0 && (
+                    <optgroup label="Kurse">
+                      {classes.map((c) => (
+                        <option key={c} value={`class:${c}`}>
+                          Kurs {c}
+                        </option>
+                      ))}
+                    </optgroup>
+                  )}
+
+                  {planningGroups.length > 0 && (
+                    <optgroup label="Planungsgruppen">
+                      {planningGroups.map((g) => (
+                        <option key={g} value={`group:${g}`}>
+                          {g}
+                        </option>
+                      ))}
+                    </optgroup>
+                  )}
                 </select>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="assigned-class" className="flex items-center gap-2">
-                  <Users className="h-3 w-3" /> Zuweisen an Kurs
+                <Label htmlFor="deadline" className="flex items-center gap-2">
+                  <Calendar className="h-3 w-3" /> Deadline (Optional)
                 </Label>
-                <select
-                  id="assigned-class"
-                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                  value={assignedClass}
-                  onChange={(e) => {
-                    setAssignedClass(e.target.value)
-                    if (e.target.value) setAssignedUser('')
-                  }}
-                >
-                  <option value="">Kein Kurs</option>
-                  {classes.map((c) => (
-                    <option key={c} value={c}>
-                      {c}
-                    </option>
-                  ))}
-                </select>
+                <Input 
+                  id="deadline" 
+                  type="date"
+                  value={deadline}
+                  onChange={(e) => setDeadline(e.target.value)}
+                />
               </div>
             </div>
           </div>

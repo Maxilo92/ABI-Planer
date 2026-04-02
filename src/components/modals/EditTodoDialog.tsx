@@ -16,20 +16,26 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Pencil, Users, User as UserIcon } from 'lucide-react'
+import { Pencil, Users, User as UserIcon, Calendar } from 'lucide-react'
 import { Todo, Profile } from '@/types/database'
 import { toast } from 'sonner'
+import { useAuth } from '@/context/AuthContext'
+import { logAction } from '@/lib/logging'
 
 interface EditTodoDialogProps {
   todo: Todo
 }
 
 export function EditTodoDialog({ todo }: EditTodoDialogProps) {
+  const { user, profile } = useAuth()
   const [title, setTitle] = useState(todo.title)
   const [assignedUser, setAssignedUser] = useState(todo.assigned_to_user || '')
   const [assignedClass, setAssignedClass] = useState(todo.assigned_to_class || '')
+  const [assignedGroup, setAssignedGroup] = useState(todo.assigned_to_group || '')
+  const [deadline, setDeadline] = useState(todo.deadline_date || '')
   const [users, setUsers] = useState<Profile[]>([])
   const [classes, setClasses] = useState<string[]>([])
+  const [planningGroups, setPlanningGroups] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
   const [open, setOpen] = useState(false)
   const router = useRouter()
@@ -47,6 +53,12 @@ export function EditTodoDialog({ todo }: EditTodoDialogProps) {
       const settingsSnap = await getDoc(settingsRef)
       if (settingsSnap.exists()) {
         setClasses(settingsSnap.data().courses || [])
+        const groups = settingsSnap.data().planning_groups || []
+        setPlanningGroups(
+          groups
+            .map((group: { name?: string }) => group.name)
+            .filter((name: string | undefined): name is string => typeof name === 'string' && name.trim().length > 0)
+        )
       }
     }
 
@@ -68,7 +80,21 @@ export function EditTodoDialog({ todo }: EditTodoDialogProps) {
         assigned_to_user: assignedUser || null,
         assigned_to_user_name: selectedUser?.full_name || null,
         assigned_to_class: assignedClass || null,
+        assigned_to_group: assignedGroup || null,
+        deadline_date: deadline || null,
       })
+
+      if (user) {
+        await logAction('TODO_EDITED', user.uid, profile?.full_name, {
+          todo_id: todo.id,
+          title,
+          assigned_to_user: assignedUser || null,
+          assigned_to_user_name: selectedUser?.full_name || null,
+          assigned_to_class: assignedClass || null,
+          assigned_to_group: assignedGroup || null,
+          deadline_date: deadline || null,
+        })
+      }
 
       toast.success('Aufgabe aktualisiert.')
       setOpen(false)
@@ -84,8 +110,8 @@ export function EditTodoDialog({ todo }: EditTodoDialogProps) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger
         render={
-          <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-primary md:opacity-0 md:group-hover:opacity-100 transition-opacity">
-            <Pencil className="h-3.5 w-3.5" />
+          <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-7 sm:w-7 text-muted-foreground hover:text-primary transition-opacity">
+            <Pencil className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
           </Button>
         }
       />
@@ -108,49 +134,70 @@ export function EditTodoDialog({ todo }: EditTodoDialogProps) {
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="edit-assigned-user" className="flex items-center gap-2">
-                  <UserIcon className="h-3 w-3" /> Zuweisen an Person
+                <Label htmlFor="edit-assignment" className="flex items-center gap-2">
+                  <Users className="h-3 w-3" /> Zuständigkeit
                 </Label>
                 <select
-                  id="edit-assigned-user"
+                  id="edit-assignment"
                   className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                  value={assignedUser}
+                  value={assignedUser ? `user:${assignedUser}` : assignedClass ? `class:${assignedClass}` : assignedGroup ? `group:${assignedGroup}` : ''}
                   onChange={(e) => {
-                    setAssignedUser(e.target.value)
-                    if (e.target.value) setAssignedClass('')
+                    const val = e.target.value
+                    setAssignedUser('')
+                    setAssignedClass('')
+                    setAssignedGroup('')
+                    
+                    if (val.startsWith('user:')) setAssignedUser(val.replace('user:', ''))
+                    else if (val.startsWith('class:')) setAssignedClass(val.replace('class:', ''))
+                    else if (val.startsWith('group:')) setAssignedGroup(val.replace('group:', ''))
                   }}
                 >
-                  <option value="">Niemand</option>
-                  {users.map((u) => (
-                    <option key={u.id} value={u.id}>
-                      {u.full_name}
-                    </option>
-                  ))}
+                  <option value="">Niemand / Alle</option>
+                  
+                  {users.length > 0 && (
+                    <optgroup label="Personen">
+                      {users.map((u) => (
+                        <option key={u.id} value={`user:${u.id}`}>
+                          {u.full_name}
+                        </option>
+                      ))}
+                    </optgroup>
+                  )}
+
+                  {classes.length > 0 && (
+                    <optgroup label="Kurse">
+                      {classes.map((c) => (
+                        <option key={c} value={`class:${c}`}>
+                          Kurs {c}
+                        </option>
+                      ))}
+                    </optgroup>
+                  )}
+
+                  {planningGroups.length > 0 && (
+                    <optgroup label="Planungsgruppen">
+                      {planningGroups.map((g) => (
+                        <option key={g} value={`group:${g}`}>
+                          {g}
+                        </option>
+                      ))}
+                    </optgroup>
+                  )}
                 </select>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="edit-assigned-class" className="flex items-center gap-2">
-                  <Users className="h-3 w-3" /> Zuweisen an Kurs
+                <Label htmlFor="edit-deadline" className="flex items-center gap-2">
+                  <Calendar className="h-3 w-3" /> Deadline (Optional)
                 </Label>
-                <select
-                  id="edit-assigned-class"
-                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                  value={assignedClass}
-                  onChange={(e) => {
-                    setAssignedClass(e.target.value)
-                    if (e.target.value) setAssignedUser('')
-                  }}
-                >
-                  <option value="">Kein Kurs</option>
-                  {classes.map((c) => (
-                    <option key={c} value={c}>
-                      {c}
-                    </option>
-                  ))}
-                </select>
+                <Input 
+                  id="edit-deadline" 
+                  type="date"
+                  value={deadline}
+                  onChange={(e) => setDeadline(e.target.value)}
+                />
               </div>
             </div>
           </div>

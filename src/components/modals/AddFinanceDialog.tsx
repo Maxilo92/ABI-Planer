@@ -20,28 +20,33 @@ import { Label } from '@/components/ui/label'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Plus, ChevronDown, Loader2 } from 'lucide-react'
 import { ClassName } from '@/types/database'
+import { logAction } from '@/lib/logging'
 
 export function AddFinanceDialog() {
   const [amount, setAmount] = useState('')
   const [description, setDescription] = useState('')
   const [responsibleClass, setResponsibleClass] = useState<ClassName | 'Allgemein'>('Allgemein')
-  const [courses, setCourses] = useState<string[]>(['12A', '12B', '12C', '12D'])
+  const [courses, setCourses] = useState<string[]>(['Kurs 1', 'Kurs 2', 'Kurs 3', 'Kurs 4', 'Kurs 5', 'Kurs 6', 'Kurs 7'])
   const [loading, setLoading] = useState(false)
   const [loadingCourses, setLoadingCourses] = useState(true)
   const [open, setOpen] = useState(false)
-  const { user, profile } = useAuth()
+  const { user, profile, loading: authLoading } = useAuth()
   const router = useRouter()
 
   useEffect(() => {
+    if (authLoading || !profile?.is_approved) return
     const settingsRef = doc(db, 'settings', 'config')
     const unsubscribe = onSnapshot(settingsRef, (doc) => {
       if (doc.exists() && doc.data().courses) {
         setCourses(doc.data().courses)
       }
       setLoadingCourses(false)
+    }, (error) => {
+      console.error('AddFinanceDialog: Error listening to settings:', error)
+      setLoadingCourses(false)
     })
     return () => unsubscribe()
-  }, [])
+  }, [authLoading, profile?.is_approved])
 
   const dropdownClasses: (ClassName | 'Allgemein')[] = [...courses, 'Allgemein']
 
@@ -51,13 +56,20 @@ export function AddFinanceDialog() {
 
     if (user) {
       try {
+        const numericAmount = parseFloat(amount.replace(',', '.'))
         await addDoc(collection(db, 'finances'), { 
-          amount: parseFloat(amount.replace(',', '.')), 
+          amount: numericAmount, 
           description,
           responsible_class: responsibleClass === 'Allgemein' ? null : responsibleClass,
           responsible_user_name: profile?.full_name || user.displayName || 'Unbekannt',
           created_by: user.uid,
           entry_date: serverTimestamp() 
+        })
+
+        await logAction('FINANCE_ADDED', user.uid, profile?.full_name, { 
+          amount: numericAmount, 
+          description,
+          responsible_class: responsibleClass
         })
 
         setAmount('')

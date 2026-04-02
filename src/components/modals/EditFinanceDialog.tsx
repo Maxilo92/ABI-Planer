@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react'
 import { db } from '@/lib/firebase'
 import { doc, updateDoc, onSnapshot } from 'firebase/firestore'
 import { useRouter } from 'next/navigation'
+import { useAuth } from '@/context/AuthContext'
+import { logAction } from '@/lib/logging'
 import { 
   Dialog, 
   DialogContent, 
@@ -29,22 +31,27 @@ export function EditFinanceDialog({ entry }: EditFinanceDialogProps) {
   const [amount, setAmount] = useState(entry.amount.toString())
   const [description, setDescription] = useState(entry.description || '')
   const [responsibleClass, setResponsibleClass] = useState<ClassName | 'Allgemein'>(entry.responsible_class || 'Allgemein')
-  const [courses, setCourses] = useState<string[]>(['12A', '12B', '12C', '12D'])
+  const [courses, setCourses] = useState<string[]>(['Kurs 1', 'Kurs 2', 'Kurs 3', 'Kurs 4', 'Kurs 5', 'Kurs 6', 'Kurs 7'])
   const [loading, setLoading] = useState(false)
   const [loadingCourses, setLoadingCourses] = useState(true)
   const [open, setOpen] = useState(false)
+  const { user, profile, loading: authLoading } = useAuth()
   const router = useRouter()
 
   useEffect(() => {
+    if (authLoading || !profile?.is_approved) return
     const settingsRef = doc(db, 'settings', 'config')
     const unsubscribe = onSnapshot(settingsRef, (doc) => {
       if (doc.exists() && doc.data().courses) {
         setCourses(doc.data().courses)
       }
       setLoadingCourses(false)
+    }, (error) => {
+      console.error('EditFinanceDialog: Error listening to settings:', error)
+      setLoadingCourses(false)
     })
     return () => unsubscribe()
-  }, [])
+  }, [authLoading, profile?.is_approved])
 
   const dropdownClasses: (ClassName | 'Allgemein')[] = [...courses, 'Allgemein']
 
@@ -52,23 +59,32 @@ export function EditFinanceDialog({ entry }: EditFinanceDialogProps) {
     e.preventDefault()
     setLoading(true)
 
-    try {
-      const docRef = doc(db, 'finances', entry.id)
-      await updateDoc(docRef, { 
-        amount: parseFloat(amount.replace(',', '.')), 
-        description,
-        responsible_class: responsibleClass === 'Allgemein' ? null : responsibleClass,
-      })
+    if (user) {
+      try {
+        const numericAmount = parseFloat(amount.replace(',', '.'))
+        const docRef = doc(db, 'finances', entry.id)
+        await updateDoc(docRef, { 
+          amount: numericAmount, 
+          description,
+          responsible_class: responsibleClass === 'Allgemein' ? null : responsibleClass,
+        })
 
-      toast.success('Eintrag aktualisiert.')
-      setOpen(false)
-      router.refresh()
-    } catch (error) {
-      console.error('Error updating finance entry:', error)
-      toast.error('Fehler beim Aktualisieren.')
-    } finally {
-      setLoading(false)
+        await logAction('FINANCE_EDITED', user.uid, profile?.full_name, { 
+          id: entry.id,
+          amount: numericAmount, 
+          description,
+          responsible_class: responsibleClass
+        })
+
+        toast.success('Eintrag aktualisiert.')
+        setOpen(false)
+        router.refresh()
+      } catch (error) {
+        console.error('Error updating finance entry:', error)
+        toast.error('Fehler beim Aktualisieren.')
+      }
     }
+    setLoading(false)
   }
 
   return (

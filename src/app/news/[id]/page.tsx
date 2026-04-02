@@ -2,54 +2,176 @@
 
 import { useEffect, useState, use } from 'react'
 import { db } from '@/lib/firebase'
-import { doc, getDoc, updateDoc, increment, arrayUnion } from 'firebase/firestore'
-import { NewsEntry } from '@/types/database'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { doc, getDoc, updateDoc, increment, arrayUnion, collection, onSnapshot, query, orderBy, addDoc, serverTimestamp } from 'firebase/firestore'
+import { NewsEntry, Comment } from '@/types/database'
+import { CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Textarea } from '@/components/ui/textarea'
 import { format } from 'date-fns'
 import { de } from 'date-fns/locale'
-import { Loader2, ArrowLeft, Eye, Calendar, User as UserIcon } from 'lucide-react'
+import { Loader2, ArrowLeft, Eye, Calendar, User as UserIcon, MessageSquare, Send, Plus, Smile } from 'lucide-react'
 import { toDate } from '@/lib/utils'
 import Link from 'next/link'
 import { useAuth } from '@/context/AuthContext'
+import { useSystemMessage } from '@/context/SystemMessageContext'
 import { EditNewsDialog } from '@/components/modals/EditNewsDialog'
+import { toast } from 'sonner'
+import { logAction } from '@/lib/logging'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
+import { ShareResourceButton } from '@/components/ui/share-resource-button'
+import { motion, AnimatePresence } from 'framer-motion'
 
 export default function NewsDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
-  const { user, profile } = useAuth()
+  const { user, profile, loading: authLoading } = useAuth()
+  const { maintenance } = useSystemMessage()
   const [news, setNews] = useState<NewsEntry | null>(null)
+  const [comments, setComments] = useState<Comment[]>([])
   const [loading, setLoading] = useState(true)
+  const [commentText, setCommentText] = useState('')
+  const [submittingComment, setSubmittingComment] = useState(false)
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false)
+
+  const isMaintenanceActive = maintenance?.active || (maintenance?.start && new Date(maintenance.start) <= new Date())
 
   useEffect(() => {
-    const fetchNews = async () => {
-      if (!user) return
-      
-      try {
-        const docRef = doc(db, 'news', id)
-        const docSnap = await getDoc(docRef)
+    if (authLoading) return
+
+    const docRef = doc(db, 'news', id)
+    
+    // Subscribe to news document
+    const unsubscribeNews = onSnapshot(docRef, (docSnap) => {
+      if (docSnap.exists()) {
+        const data = { id: docSnap.id, ...docSnap.data() } as NewsEntry
+        setNews(data)
         
-        if (docSnap.exists()) {
-          const data = { id: docSnap.id, ...docSnap.data() } as NewsEntry
-          setNews(data)
-          
-          // One view per user logic
+        // View count logic
+        if (user && profile?.is_approved) {
           const viewedBy = data.viewed_by || []
           if (!viewedBy.includes(user.uid)) {
-            await updateDoc(docRef, {
+            updateDoc(docRef, {
               view_count: increment(1),
               viewed_by: arrayUnion(user.uid)
+            }).catch(err => {
+              console.error('Error updating view count:', err)
             })
           }
         }
-      } catch (err) {
-        console.error('Error fetching news detail:', err)
-      } finally {
-        setLoading(false)
+      } else {
+        setNews(null)
       }
+      setLoading(false)
+    }, (error) => {
+      console.error('NewsDetailPage: Error listening to news article:', error)
+      setLoading(false)
+    })
+
+    // Subscribe to comments sub-collection - only for authenticated users
+    let unsubscribeComments = () => {}
+    if (user && profile) {
+      const commentsQuery = query(
+        collection(db, 'news', id, 'comments'),
+        orderBy('created_at', 'desc')
+      )
+      unsubscribeComments = onSnapshot(commentsQuery, (snapshot) => {
+        const commentsData = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })) as Comment[]
+        setComments(commentsData)
+      }, (error) => {
+        console.error('NewsDetailPage: Error listening to comments:', error)
+      })
     }
 
-    fetchNews()
-  }, [id, user])
+    return () => {
+      unsubscribeNews()
+      unsubscribeComments()
+    }
+  }, [id, user, profile, authLoading])
+
+  const handleReaction = async (emoji: string) => {
+    if (!user || !news) {
+      toast.error('Anmeldung erforderlich', {
+        description: 'Um auf News zu reagieren, musst du angemeldet sein.'
+      })
+      return
+    }
+
+    if (!profile?.is_approved) {
+      toast.error('Dein Account muss erst freigeschaltet werden.')
+      return
+    }
+
+    try {
+      const reactions = news.reactions || {}
+      const userReactionsForEmoji = reactions[emoji] || []
+      const hasReacted = userReactionsForEmoji.includes(user.uid)
+      
+      const newReactions = { ...reactions }
+      
+      if (hasReacted) {
+        // Remove reaction
+        newReactions[emoji] = userReactionsForEmoji.filter(uid => uid !== user.uid)
+        // Cleanup empty emoji lists
+        if (newReactions[emoji].length === 0) {
+          delete newReactions[emoji]
+        }
+      } else {
+        // Add reaction
+        newReactions[emoji] = [...userReactionsForEmoji, user.uid]
+      }
+
+      await updateDoc(doc(db, 'news', id), {
+        reactions: newReactions
+      })
+
+      if (!hasReacted) {
+        logAction('NEWS_REACTION', user.uid, profile?.full_name, { id, emoji })
+      }
+      
+      setShowEmojiPicker(false)
+    } catch (err) {
+      console.error('Error adding reaction:', err)
+      toast.error('Fehler beim Reagieren.')
+    }
+  }
+
+  const handleSubmitComment = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!user || !profile || !commentText.trim() || submittingComment) return
+
+    if (!profile.is_approved) {
+      toast.error('Dein Account muss erst freigeschaltet werden.')
+      return
+    }
+
+    setSubmittingComment(true)
+    try {
+      await addDoc(collection(db, 'news', id, 'comments'), {
+        content: commentText.trim(),
+        created_at: serverTimestamp(),
+        created_by: user.uid,
+        author_name: profile.full_name || 'Anonymer Nutzer'
+      })
+      
+      // Update comment count on main document
+      await updateDoc(doc(db, 'news', id), {
+        comment_count: increment(1)
+      })
+      
+      logAction('NEWS_COMMENT', user.uid, profile.full_name, { id, content: commentText.trim() })
+      
+      setCommentText('')
+      toast.success('Kommentar hinzugefügt.')
+    } catch (err) {
+      console.error('Error submitting comment:', err)
+      toast.error('Fehler beim Senden des Kommentars.')
+    } finally {
+      setSubmittingComment(false)
+    }
+  }
 
   if (loading) {
     return (
@@ -74,6 +196,17 @@ export default function NewsDetailPage({ params }: { params: Promise<{ id: strin
 
   const isPlanner = (profile?.role === 'planner' || profile?.role === 'admin_co' || profile?.role === 'admin_main' || profile?.role === 'admin') && profile?.is_approved
 
+  const reactions = news.reactions || {}
+  // Daumen hoch/runter sind immer da, andere Emojis kommen dynamisch dazu
+  const defaultEmojis = ['👍', '👎']
+  const otherActiveEmojis = Object.keys(reactions)
+    .filter(key => Array.isArray(reactions[key]) && !defaultEmojis.includes(key))
+    .sort((a, b) => (reactions[b]?.length || 0) - (reactions[a]?.length || 0))
+  
+  const activeEmojis = [...defaultEmojis, ...otherActiveEmojis]
+  
+  const quickEmojis = ['👍', '❤️', '🔥', '😂', '😮', '😢', '🎓', '🥂', '🚀', '💸', '📝', '🎉', '🍦', '🍕', '🍺', '✅']
+
   return (
     <div className="max-w-4xl mx-auto py-4 md:py-8 space-y-6">
       <div className="px-2">
@@ -82,32 +215,50 @@ export default function NewsDetailPage({ params }: { params: Promise<{ id: strin
           size="sm"
           className="gap-2 -ml-2 text-muted-foreground hover:text-foreground transition-colors"
           render={
-            <Link href="/news">
-              <ArrowLeft className="h-4 w-4" /> Zurück
+            <Link href={isMaintenanceActive ? "/maintenance" : "/news"}>
+              <ArrowLeft className="h-4 w-4" /> {isMaintenanceActive ? "Zurück zur Wartung" : "Zurück"}
             </Link>
           }
         />
       </div>
 
-      <Card className="border shadow-sm overflow-hidden">
-        <CardHeader className="space-y-6 p-6 md:p-10 pb-4 md:pb-6">
+      <article className="space-y-6">
+        {news.image_url && (
+          <div className="relative h-56 md:h-72 lg:h-80 w-full overflow-hidden rounded-2xl bg-muted">
+            <img
+              src={news.image_url}
+              alt={`Titelbild zu ${news.title}`}
+              className="h-full w-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/15 to-transparent" />
+            <div className="absolute bottom-0 left-0 right-0 p-5 md:p-8">
+              <span className="inline-flex rounded-full bg-background/90 px-3 py-1 text-xs font-semibold text-foreground shadow-sm">
+                News
+              </span>
+            </div>
+          </div>
+        )}
+        <div className="space-y-5">
           <div className="flex justify-between items-start gap-4">
-            <CardTitle className="text-3xl md:text-5xl font-black tracking-tight leading-[1.15] text-foreground">
+            <CardTitle className="text-3xl md:text-5xl font-black tracking-tight leading-[1.12] text-foreground">
               {news.title}
             </CardTitle>
-            {isPlanner && (
-              <div className="shrink-0 mt-1">
-                <EditNewsDialog news={news} />
-              </div>
-            )}
+            <div className="shrink-0 mt-1 flex items-center gap-1">
+              <ShareResourceButton
+                resourcePath={`/news/${news.id}`}
+                title={news.title}
+                text="Schau dir diese News im ABI Planer an."
+              />
+              {isPlanner && <EditNewsDialog news={news} />}
+            </div>
           </div>
-          
+
           <div className="flex flex-wrap items-center gap-y-3 gap-x-6 text-sm md:text-base text-muted-foreground font-medium">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4 text-primary/70" />
               {news.created_at ? format(toDate(news.created_at), 'dd. MMMM yyyy', { locale: de }) : 'Neu'}
             </div>
-            
+
             <Link 
               href={`/profil/${news.created_by}`}
               className="flex items-center gap-2 hover:text-primary transition-colors group"
@@ -123,14 +274,260 @@ export default function NewsDetailPage({ params }: { params: Promise<{ id: strin
               {news.view_count || 0} {news.view_count === 1 ? 'Aufruf' : 'Aufrufe'}
             </div>
           </div>
-        </CardHeader>
-        
-        <CardContent className="p-6 md:p-10 pt-6 md:pt-8 border-t bg-muted/5">
-          <div className="whitespace-pre-wrap text-base md:text-xl text-foreground/90 leading-relaxed max-w-none">
+          <div className="h-px bg-border/50" />
+          <ReactMarkdown
+            className="text-base md:text-xl text-foreground/90 leading-relaxed max-w-none prose dark:prose-invert"
+            remarkPlugins={[remarkGfm]}
+            components={{
+              p: ({ children }) => <p className="mb-4 last:mb-0">{children}</p>,
+              strong: ({ children }) => <strong className="font-bold text-foreground">{children}</strong>,
+              em: ({ children }) => <em className="italic">{children}</em>,
+              ul: ({ children }) => <ul className="list-disc pl-6 mb-4 space-y-2">{children}</ul>,
+              ol: ({ children }) => <ol className="list-decimal pl-6 mb-4 space-y-2">{children}</ol>,
+              li: ({ children, ...props }) => {
+                const isTask = (props as any).checked !== undefined;
+                return (
+                  <li className={isTask ? 'list-none flex items-start gap-2 -ml-6' : 'pl-1'}>
+                    {children}
+                  </li>
+                );
+              },
+              h1: ({ children }) => <h1 className="text-3xl font-black mb-4 mt-8">{children}</h1>,
+              h2: ({ children }) => <h2 className="text-2xl font-bold mb-3 mt-6">{children}</h2>,
+              h3: ({ children }) => <h3 className="text-xl font-bold mb-2 mt-4">{children}</h3>,
+              blockquote: ({ children }) => (
+                <blockquote className="border-l-4 border-primary/50 pl-4 italic my-4 text-muted-foreground">
+                  {children}
+                </blockquote>
+              ),
+              hr: () => <hr className="my-8 border-border/50" />,
+              a: ({ href, children }) => (
+                <a 
+                  href={href} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="text-primary underline decoration-primary/30 underline-offset-4 hover:decoration-primary transition-all"
+                >
+                  {children}
+                </a>
+              ),
+              table: ({ children }) => (
+                <div className="overflow-x-auto my-6 rounded-lg border">
+                  <table className="w-full text-sm border-collapse">{children}</table>
+                </div>
+              ),
+              thead: ({ children }) => <thead className="bg-muted/50">{children}</thead>,
+              th: ({ children }) => <th className="p-3 text-left font-bold border-b">{children}</th>,
+              td: ({ children }) => <td className="p-3 border-b border-muted/30">{children}</td>,
+              code: ({ className, children }) => {
+                const match = /language-(\w+)/.exec(className || '');
+                const isInline = !match;
+                return isInline ? (
+                  <code className="bg-muted px-1.5 py-0.5 rounded text-sm font-mono text-primary-foreground/90">{children}</code>
+                ) : (
+                  <pre className="bg-zinc-950 p-4 rounded-xl overflow-x-auto my-6 border border-white/5">
+                    <code className={`${className} text-sm font-mono text-zinc-100`}>{children}</code>
+                  </pre>
+                );
+              },
+              input: ({ checked }) => (
+                <input 
+                  type="checkbox" 
+                  checked={checked} 
+                  readOnly 
+                  className="h-4 w-4 mt-1 rounded border-primary text-primary focus:ring-primary"
+                />
+              ),
+              del: ({ children }) => <del className="line-through opacity-60">{children}</del>,
+            }}
+          >
             {news.content}
+          </ReactMarkdown>
+
+          {/* Reactions Section */}
+          <div className="pt-8 space-y-4">
+            <div className="flex flex-wrap items-center gap-2">
+              {activeEmojis.map((emoji) => {
+                const uids = reactions[emoji] || []
+                const count = uids.length
+                const isActive = user && uids.includes(user.uid)
+                
+                return (
+                  <Button
+                    key={emoji}
+                    variant={isActive ? 'default' : 'outline'}
+                    size="sm"
+                    className={`gap-2 rounded-full h-9 px-3 transition-all hover:scale-105 ${isActive ? 'bg-primary text-primary-foreground shadow-sm border-primary' : 'hover:bg-muted border-muted-foreground/20'}`}
+                    onClick={() => handleReaction(emoji)}
+                    disabled={!user || !profile?.is_approved}
+                  >
+                    <span className="text-lg">{emoji}</span>
+                    {count > 0 && <span className="font-bold tabular-nums">{count}</span>}
+                  </Button>
+                )
+              })}
+
+              {user && profile?.is_approved && (
+                <div className="relative">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="rounded-full h-9 w-9 p-0 hover:bg-muted border-dashed border-primary/40 text-primary transition-all hover:rotate-90"
+                    onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                    title="Emoji hinzufügen"
+                  >
+                    <Plus className="h-5 w-5" />
+                  </Button>
+
+                  <AnimatePresence>
+                    {showEmojiPicker && (
+                      <>
+                        <motion.div 
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          className="fixed inset-0 z-40 bg-transparent"
+                          onClick={() => setShowEmojiPicker(false)}
+                        />
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0.9, y: 10 }}
+                          animate={{ opacity: 1, scale: 1, y: 0 }}
+                          exit={{ opacity: 0, scale: 0.9, y: 10 }}
+                          className="absolute bottom-full left-0 mb-3 z-50 p-3 bg-card border shadow-xl rounded-2xl w-64 md:w-72"
+                        >
+                          <div className="text-[10px] font-bold uppercase text-muted-foreground mb-3 px-1 flex items-center justify-between">
+                            <span className="flex items-center gap-2"><Smile className="h-3 w-3" /> Emojis</span>
+                            <span className="text-[8px] opacity-60">Wählen oder tippen</span>
+                          </div>
+                          
+                          {/* Native Input Field für schnelles Tippen/Native Picker */}
+                          <div className="mb-3 px-1">
+                            <input
+                              autoFocus
+                              type="text"
+                              placeholder="Emoji tippen..."
+                              className="w-full h-9 bg-muted/50 border border-muted-foreground/20 rounded-lg px-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50"
+                              onChange={(e) => {
+                                const val = e.target.value.trim()
+                                if (val) {
+                                  // Nimm das letzte Zeichen (das gerade eingefügte Emoji)
+                                  const char = Array.from(val).pop()
+                                  if (char) handleReaction(char)
+                                  e.target.value = ''
+                                }
+                              }}
+                            />
+                          </div>
+
+                          <div className="grid grid-cols-6 gap-1 max-h-32 overflow-y-auto pr-1">
+                            {quickEmojis.map((emoji) => (
+                              <button
+                                key={emoji}
+                                type="button"
+                                className="h-9 w-9 flex items-center justify-center text-xl hover:bg-primary/10 rounded-lg transition-colors"
+                                onClick={() => handleReaction(emoji)}
+                              >
+                                {emoji}
+                              </button>
+                            ))}
+                          </div>
+                          
+                          <div className="mt-3 pt-2 border-t border-muted text-[9px] text-muted-foreground italic px-1 flex justify-between">
+                            <span>Win+. / Cmd+Ctrl+Space</span>
+                            <span className="opacity-60">Abitur 🎓</span>
+                          </div>
+                        </motion.div>
+                      </>
+                    )}
+                  </AnimatePresence>
+                </div>
+              )}
+            </div>
+            {!user && (
+              <p className="text-[10px] text-muted-foreground font-medium italic">
+                Anmelden zum Reagieren
+              </p>
+            )}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </article>
+
+      <div className="h-px bg-border/50 my-8" />
+
+      {/* Comments Section */}
+      <section className="space-y-8 pb-12">
+        <h3 className="text-2xl font-bold flex items-center gap-2">
+          <MessageSquare className="h-6 w-6 text-primary" />
+          Kommentare
+        </h3>
+
+        {user ? (
+          profile?.is_approved ? (
+            <form onSubmit={handleSubmitComment} className="space-y-3">
+              <Textarea
+                placeholder="Schreibe einen Kommentar..."
+                value={commentText}
+                onChange={(e) => setCommentText(e.target.value)}
+                className="min-h-[100px] resize-none focus-visible:ring-primary"
+              />
+              <div className="flex justify-end">
+                <Button 
+                  type="submit" 
+                  disabled={!commentText.trim() || submittingComment}
+                  className="gap-2"
+                >
+                  {submittingComment ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Send className="h-4 w-4" />
+                  )}
+                  Kommentieren
+                </Button>
+              </div>
+            </form>
+          ) : (
+            <div className="bg-muted p-6 rounded-xl text-center">
+              <p className="text-muted-foreground">Dein Account muss erst freigeschaltet werden, um kommentieren zu können.</p>
+            </div>
+          )
+        ) : (
+          <div className="bg-muted p-6 rounded-xl text-center">
+            <p className="text-muted-foreground mb-4">Du musst angemeldet sein, um zu kommentieren.</p>
+            <Button variant="outline" render={<Link href="/login">Jetzt anmelden</Link>} />
+          </div>
+        )}
+
+        <div className="space-y-6">
+          {comments.length > 0 ? (
+            comments.map((comment) => (
+              <div key={comment.id} className="flex gap-4 group">
+                <div className="mt-1">
+                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
+                    {comment.author_name?.charAt(0) || '?'}
+                  </div>
+                </div>
+                <div className="flex-1 space-y-1">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-sm">{comment.author_name}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {comment.created_at ? format(toDate(comment.created_at), 'dd.MM.yyyy HH:mm', { locale: de }) : 'Gerade eben'}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="text-foreground/90 text-sm md:text-base whitespace-pre-wrap">
+                    {comment.content}
+                  </div>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="text-center py-12 text-muted-foreground italic">
+              Noch keine Kommentare. Sei der Erste!
+            </div>
+          )}
+        </div>
+      </section>
     </div>
   )
 }

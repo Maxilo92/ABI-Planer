@@ -1,16 +1,22 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
-import { Navbar } from '@/components/layout/Navbar'
+import { AppShell } from '@/components/layout/AppShell'
 import { AuthProvider } from '@/context/AuthContext'
+import { SystemMessageProvider } from '@/context/SystemMessageContext'
 import { Toaster } from '@/components/ui/sonner'
 import { ThemeProvider } from '@/context/ThemeProvider'
+import { GoogleAdSense } from '@/components/layout/GoogleAdSense'
+import { AdSenseScript } from '@/components/layout/AdSenseScript'
+
+import { faviconLinks } from '@/components/FaviconLinks'
+import Logo from '@/components/Logo'
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' })
 
 export const metadata: Metadata = {
   title: 'ABI Planer',
-  description: 'Zentrale Plattform für die Planung des Abiturs',
+  description: 'Zentrale Plattform für die Planung des Abiballs',
 }
 
 export default function RootLayout({
@@ -20,7 +26,13 @@ export default function RootLayout({
 }) {
   return (
     <html lang="de" className="h-full" suppressHydrationWarning>
+      <head>
+        {/* Favicon und Logo */}
+        {faviconLinks}
+      </head>
       <body className={`${inter.variable} font-sans antialiased h-full bg-background`}>
+        {/* Optional: Logo prominent platzieren */}
+        {/* <Logo width={250} height={100} style={{ display: 'block', margin: '2rem auto 0 auto' }} /> */}
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
@@ -28,15 +40,12 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <AuthProvider>
-            <div className="md:flex md:min-h-screen">
-              <Navbar />
-              <main className="flex-1 px-4 sm:px-6 lg:px-8 py-8">
-                <div className="max-w-7xl mx-auto">
-                  {children}
-                </div>
-              </main>
-            </div>
-            <Toaster />
+            <SystemMessageProvider>
+              <AdSenseScript />
+              <AppShell>{children}</AppShell>
+              <GoogleAdSense />
+              <Toaster />
+            </SystemMessageProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>

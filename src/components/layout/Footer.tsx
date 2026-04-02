@@ -1,0 +1,101 @@
+'use client'
+
+import Link from 'next/link'
+import { useState } from 'react'
+import { useAuth } from '@/context/AuthContext'
+import { toast } from 'sonner'
+import { useUserTeachers } from '@/hooks/useUserTeachers'
+
+export function Footer() {
+  const version = process.env.NEXT_PUBLIC_APP_VERSION ?? '0.0.0'
+  const { profile, user } = useAuth()
+  const { claimExtraBoosters } = useUserTeachers()
+  const [clickCount, setClickCount] = useState(0)
+  const [showFeedback, setShowFeedback] = useState<string | null>(null)
+
+  const handleVersionClick = async () => {
+    const alreadyClaimed = profile?.booster_stats?.extra_boosters_claimed
+
+    const newCount = clickCount + 1
+    setClickCount(newCount)
+
+    if (newCount === 1) {
+      setShowFeedback('?')
+    } else if (newCount === 2) {
+      setShowFeedback('😠')
+    } else if (newCount === 3) {
+      if (user && !alreadyClaimed) {
+        try {
+          await claimExtraBoosters()
+          toast.success('Hör auf zu klicken! Hier hast du 5 Booster, jetzt lass mich in Ruhe!', {
+            icon: '🎁',
+            duration: 5000
+          })
+          setShowFeedback('🎉')
+        } catch (error: any) {
+          if (error.message === 'Belohnung bereits abgeholt!') {
+            setShowFeedback('🙄')
+          } else {
+            console.error('Error claiming boosters:', error)
+          }
+        }
+      } else if (alreadyClaimed) {
+        setShowFeedback('🙄')
+      }
+      setClickCount(0)
+    }
+
+    // Reset feedback after 2 seconds
+    setTimeout(() => {
+      setShowFeedback(null)
+    }, 2000)
+  }
+
+  return (
+    <footer className="mt-auto border-t bg-background/95 backdrop-blur-sm py-6 px-6 md:px-8">
+      <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6 text-xs text-muted-foreground">
+        <div className="w-full md:w-auto flex flex-wrap items-center justify-center md:justify-start gap-x-2 gap-y-2 font-medium">
+          <span className="text-center md:text-left">&copy; {new Date().getFullYear()} Maximilian Priesnitz</span>
+          <div className="flex flex-wrap items-center justify-center md:justify-start gap-1.5">
+            <Link href="/impressum" className="hover:text-primary transition-colors py-1 px-2 rounded-md hover:bg-secondary/50">
+              Impressum
+            </Link>
+            <span className="hidden md:inline text-muted-foreground/30 mx-1">•</span>
+            <Link href="/agb" className="hover:text-primary transition-colors py-1 px-2 rounded-md hover:bg-secondary/50">
+              AGB
+            </Link>
+            <span className="hidden md:inline text-muted-foreground/30 mx-1">•</span>
+            <Link href="/uber" className="hover:text-primary transition-colors py-1 px-2 rounded-md hover:bg-secondary/50">
+              Über
+            </Link>
+            <span className="hidden md:inline text-muted-foreground/30 mx-1">•</span>
+            <Link href="/datenschutz" className="hover:text-primary transition-colors py-1 px-2 rounded-md hover:bg-secondary/50">
+              Datenschutz
+            </Link>
+          </div>
+        </div>
+        
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            {showFeedback && (
+              <div className="absolute -top-10 left-1/2 -translate-x-1/2 px-2 py-1 bg-primary text-primary-foreground rounded-md text-[10px] font-bold animate-bounce shadow-md whitespace-nowrap z-10">
+                {showFeedback === '?' ? (
+                  <div className="flex items-center gap-1">
+                    <span>Was suchst du?</span>
+                  </div>
+                ) : showFeedback}
+                <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-primary rotate-45" />
+              </div>
+            )}
+            <span 
+              onClick={handleVersionClick}
+              className={`px-2.5 py-1 rounded-full bg-secondary border border-border/50 text-[10px] font-bold tracking-wider cursor-pointer select-none transition-all ${clickCount > 0 ? 'scale-110 border-primary/50' : 'hover:bg-secondary/80'}`}
+            >
+              v{version}
+            </span>
+          </div>
+        </div>
+      </div>
+    </footer>
+  )
+}

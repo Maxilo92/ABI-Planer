@@ -5,22 +5,13 @@ import { db } from '@/lib/firebase'
 import { useState, useEffect } from 'react'
 import { FeedbackList } from '@/components/admin/FeedbackList'
 import { useAuth } from '@/context/AuthContext'
-import { useRouter } from 'next/navigation'
-
-type Feedback = {
-  id: string
-  title: string
-  description: string
-  type: 'bug' | 'feature' | 'other'
-  status: 'new' | 'in_progress' | 'implemented' | 'rejected'
-  created_at: string
-  created_by: string
-  created_by_name?: string
-}
+import { usePathname, useRouter } from 'next/navigation'
+import { Feedback } from '@/types/database'
 
 export default function AdminFeedbackPage() {
   const { profile, loading: authLoading } = useAuth()
   const router = useRouter()
+  const pathname = usePathname()
   const [feedback, setFeedback] = useState<Feedback[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -29,7 +20,7 @@ export default function AdminFeedbackPage() {
   useEffect(() => {
     if (authLoading) return
     if (!isAdmin) {
-      router.push('/')
+      router.replace(`/unauthorized?reason=admin&from=${encodeURIComponent(pathname)}`)
       return
     }
 
@@ -45,7 +36,7 @@ export default function AdminFeedbackPage() {
     })
 
     return () => unsubscribe()
-  }, [authLoading, isAdmin, router])
+  }, [authLoading, isAdmin, router, pathname])
 
   if (authLoading || loading) {
     return <div className="flex items-center justify-center min-h-[50vh]">Lade Feedback...</div>
