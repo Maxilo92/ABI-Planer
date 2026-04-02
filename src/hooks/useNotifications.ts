@@ -20,6 +20,7 @@ export function useNotifications() {
     kalender: false,
     umfragen: false,
     news: false,
+    karten: false,
   })
 
   useEffect(() => {
@@ -29,6 +30,7 @@ export function useNotifications() {
         kalender: false,
         umfragen: false,
         news: false,
+        karten: false,
       })
       return
     }
