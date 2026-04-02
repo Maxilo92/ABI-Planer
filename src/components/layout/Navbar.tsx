@@ -1,14 +1,15 @@
 'use client'
 
 import Link from 'next/link'
-import { LayoutDashboard, CheckSquare, Calendar, Euro, DollarSign, Megaphone, BarChart2, LogOut, Menu, X, ShieldCheck, User, MessageSquareHeart, Settings, Users, ChevronRight, Sparkles, HelpCircle, Gift, Trophy, AlertTriangle, ShoppingBag, MessageSquare, UserPlus } from 'lucide-react'
+import { LayoutDashboard, CheckSquare, Calendar, Euro, DollarSign, Megaphone, BarChart2, LogOut, Menu, X, ShieldCheck, User, MessageSquareHeart, Settings, Users, ChevronRight, Sparkles, HelpCircle, Gift, Trophy, AlertTriangle, ShoppingBag, MessageSquare, UserPlus, Server, ArrowLeftRight } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
-import { getFirebaseAuth } from '@/lib/firebase'
+import { db, getFirebaseAuth } from '@/lib/firebase'
 import { signOut } from 'firebase/auth'
+import { onSnapshot, doc, getDoc } from 'firebase/firestore'
 import { useRouter, usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/context/AuthContext'
@@ -27,11 +28,17 @@ interface NavItem {
   subItems?: NavItem[]
 }
 
+interface QuickAction {
+  href: string
+  label: string
+}
+
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
   const [openSubmenus, setOpenSubmenus] = useState<Record<string, boolean>>({})
   const [currentSearch, setCurrentSearch] = useState('')
-  const [quickActions, setQuickActions] = useState<Array<{ href: string; label: string }>>([])
+  const [quickActions, setQuickActions] = useState<QuickAction[]>([])
+  const [quickActionsHydrated, setQuickActionsHydrated] = useState(false)
   const skipQuickActionTrackingRef = useRef(false)
   const { user, profile, loading } = useAuth()
   const notifications = useNotifications()
@@ -70,6 +77,15 @@ export function Navbar() {
   }
 
   const isAdmin = profile?.role === 'admin_main' || profile?.role === 'admin_co' || profile?.role === 'admin'
+
+  const [isTradingEnabled, setIsTradingEnabled] = useState(false)
+
+  useEffect(() => {
+    const unsub = onSnapshot(doc(db, 'settings', 'features'), (snap) => {
+      if (snap.exists()) setIsTradingEnabled(!!snap.data().is_trading_enabled)
+    })
+    return () => unsub()
+  }, [])
 
   const navItems: NavItem[] = [
     {
@@ -112,14 +128,20 @@ export function Navbar() {
   ]
 
   if (profile) {
+    const sammelkartenSubItems: NavItem[] = [
+      { href: '/sammelkarten?view=sammelkarten', label: 'Booster öffnen', icon: Gift },
+      { href: '/sammelkarten?view=album', label: 'Lehrer-Album', icon: Trophy },
+    ]
+
+    if (isTradingEnabled) {
+      sammelkartenSubItems.push({ href: '/sammelkarten/tausch', label: 'Tausch-Zentrum', icon: ArrowLeftRight, notify: notifications.karten })
+    }
+
     navItems.push({
       href: '/sammelkarten-root',
       label: 'Sammelkarten',
       icon: Sparkles,
-      subItems: [
-        { href: '/sammelkarten?view=sammelkarten', label: 'Booster öffnen', icon: Gift },
-        { href: '/sammelkarten?view=album', label: 'Lehrer-Album', icon: Trophy },
-      ]
+      subItems: sammelkartenSubItems
     })
   }
 
@@ -148,8 +170,10 @@ export function Navbar() {
 
   if (isAdmin) {
     const adminSubItems = [
+      { href: '/admin/system', label: 'Control Center', icon: Server },
       { href: '/admin', label: 'Benutzer', icon: Users },
       { href: '/admin/sammelkarten', label: 'Sammelkarten Manager', icon: Sparkles },
+      { href: '/admin/trades', label: 'Trade Moderation', icon: ArrowLeftRight },
       { href: '/admin/global-settings', label: 'Globale Einstellungen', icon: Settings },
       { href: '/admin/shop-earnings', label: 'Shop Einnahmen', icon: DollarSign },
       { href: '/admin/logs', label: 'Logs', icon: BarChart2, isBeta: false },
@@ -176,6 +200,32 @@ export function Navbar() {
     if (role === 'admin_main' || role === 'admin') return 'Main Admin'
     if (role === 'admin_co') return 'Co-Admin'
     return role
+  }
+
+  const getProfileIdFromHref = (href: string) => {
+    const [pathPart] = href.split(/[?#]/)
+    const match = pathPart.match(/^\/profil\/([^/]+)$/)
+    return match ? decodeURIComponent(match[1]) : null
+  }
+
+  const resolveProfileLabel = async (profileId: string) => {
+    if (profileId === user?.uid) {
+      return profile?.full_name?.trim() || 'Profil'
+    }
+
+    try {
+      const profileSnap = await getDoc(doc(db, 'profiles', profileId))
+      if (profileSnap.exists()) {
+        const fullName = (profileSnap.data() as { full_name?: string | null }).full_name?.trim()
+        if (fullName) {
+          return fullName
+        }
+      }
+    } catch (error) {
+      console.error('[Navbar] Failed to resolve profile quick action label:', error)
+    }
+
+    return 'Profil'
   }
 
   const isActive = (href: string) => {
@@ -208,7 +258,12 @@ export function Navbar() {
     return pathname === path || pathname.startsWith(`${path}/`)
   }
 
-  const getQuickActionLabel = (href: string) => {
+  const getQuickActionLabel = async (href: string) => {
+    const profileId = getProfileIdFromHref(href)
+    if (profileId) {
+      return await resolveProfileLabel(profileId)
+    }
+
     const findLabel = (items: NavItem[]): string | null => {
       for (const item of items) {
         if (item.href === href && !item.href.endsWith('-root')) {
@@ -248,25 +303,115 @@ export function Navbar() {
   }
 
   useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    let cancelled = false
+    setQuickActionsHydrated(false)
+
+    const loadQuickActions = async () => {
+      if (!user?.uid) {
+        setQuickActions([])
+        setQuickActionsHydrated(true)
+        return
+      }
+
+      try {
+        const stored = window.localStorage.getItem(`quick_actions:${user.uid}`)
+
+        if (!stored) {
+          setQuickActions([])
+          setQuickActionsHydrated(true)
+          return
+        }
+
+        const parsed = JSON.parse(stored)
+        if (Array.isArray(parsed)) {
+          const normalized = parsed
+            .filter((entry): entry is QuickAction => {
+              return entry
+                && typeof entry.href === 'string'
+                && typeof entry.label === 'string'
+            })
+            .slice(0, 3)
+
+          const resolved = await Promise.all(
+            normalized.map(async (entry) => {
+              const label = await getQuickActionLabel(entry.href)
+              return label && label !== entry.label ? { ...entry, label } : entry
+            })
+          )
+
+          if (!cancelled) {
+            setQuickActions(resolved)
+          }
+        } else {
+          setQuickActions([])
+        }
+      } catch (error) {
+        console.error('[Navbar] Failed to load quick actions:', error)
+        setQuickActions([])
+      } finally {
+        if (!cancelled) {
+          setQuickActionsHydrated(true)
+        }
+      }
+    }
+
+    void loadQuickActions()
+
+    return () => {
+      cancelled = true
+    }
+  }, [user?.uid])
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !quickActionsHydrated || !user?.uid) return
+
+    try {
+      if (quickActions.length === 0) {
+        window.localStorage.removeItem(`quick_actions:${user.uid}`)
+        return
+      }
+
+      window.localStorage.setItem(`quick_actions:${user.uid}`, JSON.stringify(quickActions))
+    } catch (error) {
+      console.error('[Navbar] Failed to persist quick actions:', error)
+    }
+  }, [quickActions, quickActionsHydrated, user?.uid])
+
+  useEffect(() => {
     if (skipQuickActionTrackingRef.current) {
       skipQuickActionTrackingRef.current = false
       return
     }
 
+    if (!quickActionsHydrated) return
+
     const href = `${pathname}${currentSearch}`
     if (!href) return
 
-    const label = getQuickActionLabel(href)
+    let cancelled = false
 
-    setQuickActions((prev) => {
-      if (prev[0]?.href === href) {
-        return prev
-      }
+    const trackQuickAction = async () => {
+      const label = await getQuickActionLabel(href)
+      if (cancelled) return
 
-      const next = [{ href, label }, ...prev.filter((entry) => entry.href !== href)]
-      return next.slice(0, 3)
-    })
-  }, [pathname, currentSearch, profile?.role, hasPlanningGroups])
+      setQuickActions((prev) => {
+        if (prev[0]?.href === href) {
+          return prev
+        }
+
+        const next = [{ href, label }, ...prev.filter((entry) => entry.href !== href)]
+        return next.slice(0, 3)
+      })
+    }
+
+    void trackQuickAction()
+
+    return () => {
+      cancelled = true
+    }
+  }, [pathname, currentSearch, profile?.role, hasPlanningGroups, quickActionsHydrated, user?.uid, profile?.full_name])
 
   const renderQuickActions = (isMobile: boolean = false) => {
     if (quickActions.length === 0) {

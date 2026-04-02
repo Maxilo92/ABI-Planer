@@ -1,5 +1,156 @@
 # Changelog
 
+## [Unreleased]
+
+- **UX (Quick Actions):** Profil-Quick-Actions zeigen jetzt den Namen des geöffneten Profils statt der UID.
+    - **Nachladung:** Bereits gespeicherte Quick-Actions werden beim Laden aufgelöst, damit alte UID-Einträge automatisch ersetzt werden.
+
+## [1.2.12] - 2026-04-02
+- **Fix (Trading/Permissions):** Das Starten eines Tauschs läuft jetzt ausschließlich über die Cloud Function `sendTradeOffer`.
+    - **Client-Sicherheit:** Der frühere Firestore-Fallback im Browser wurde entfernt, damit der Trade-Start nicht mehr an gesperrten Direktwrites auf `card_trades` und `notifications` scheitert.
+    - **Root Cause:** Die serverseitige Validierung bleibt erhalten, während der Client keinen ungeschützten Schreibpfad mehr nutzt.
+
+
+## [1.2.11] - 2026-04-02
+- **Fix (Migration):** Die Firestore-Migrationsskripte verwenden jetzt explizit die projektweite `abi-data`-Datenbank.
+    - **Hierarchische Gruppen:** `scripts/migrate_to_hierarchical_groups.ts` schreibt und liest nicht mehr gegen die Default-Datenbank.
+    - **Card Settings:** `scripts/migrate_card_settings.ts` wurde auf dieselbe Datenbank-Instanz ausgerichtet, damit Admin-Migrationen konsistent laufen.
+    - **Projektkontext:** Beide Skripte setzen jetzt auch die Firebase-Projekt-ID explizit, damit `ts-node` nicht an fehlenden lokalen ADC-Metadaten scheitert.
+- **Fix (Firestore Permissions):** `settings/features` ist jetzt öffentlich lesbar, damit globale Client-Listener nicht mehr mit `Missing or insufficient permissions` fehlschlagen.
+- **Feature (Trading/Viewer):** Viewer können jetzt die Sammelkarten-Konfig und das Album ebenfalls laden, damit der Tauschfluss nicht mehr an den bisherigen Approval-Guards hängt.
+- **Wording (Rollen):** Die Nutzertexte unterscheiden jetzt klar zwischen "Gast" ohne Konto und "Zuschauer" mit Konto.
+
+
+## [1.2.10] - 2026-04-01
+- **Trading (Regeln):** `black_shiny_holo` (Secret Rare) ist jetzt explizit nicht mehr tradebar.
+    - **Backend-Schutz:** Die Cloud-Function-Validierung blockiert Secret-Rare-Varianten serverseitig.
+    - **UI-Schutz:** Die Folien-Auswahl fuer neue Trades zeigt nur noch tradebare Varianten (`normal`, `holo`, `shiny`).
+- **Trading (Auswahlalbum):** Die Zielkarten-Auswahl zeigt jetzt Artcards und wechselt beim Klick auf die Speccard.
+ - **Trading (Qualitaet):** Zielkarten werden im Auswahlalbum jetzt nach Seltenheit absteigend sortiert.
+ - **Trading (Sicherheit):** Beim Senden von Angeboten/Gegenangeboten wird serverseitig geprueft, dass die angebotene Karte wirklich im eigenen Inventar liegt.
+ - **Trading (Klarstellung):** `mythic` ist wieder regulär tauschbar; gesperrt bleibt nur `iconic` (plus Secret Rare Variante).
+ - **Trading (Anfrage):** Wunschkarten duerfen weiterhin Karten sein, die man selbst noch nicht gezogen hat.
+ - **Trading (UI):** `iconic`-Karten werden im Anfragealbum nicht mehr angezeigt.
+ - **Trading (Dev-Stabilitaet):** Bei CORS-Problemen auf `getFriendsWithCard` nutzt das Frontend automatisch einen Firestore-Fallback fuer die Freundesliste.
+ - **Trading (Mobile):** Der gesamte Tausch-Flow ist auf kleine Displays kompakter geworden, mit einspaltigen Kartenrastern und schmaleren Containern.
+
+
+## [1.2.09] - 2026-04-01
+- **UX (Trading):** Neuer Tausch laeuft jetzt ueber eine eigene Seite statt ueber ein Modal.
+    - **Navigation:** `Neuer Tausch` leitet direkt auf `/sammelkarten/tausch/neu` weiter.
+    - **Auswahl:** Auf der neuen Seite gibt es ein kompaktes Album mit allen Lehrer-Karten und ein separates Dropdown fuer die Folien-Variante.
+
+
+## [1.2.08] - 2026-04-01
+- **UX (Trading):** Der erste Schritt im Tausch-Modal ist jetzt deutlich leichter und schneller.
+    - **Selektion:** Lehrer und Folie werden ueber zwei Dropdowns festgelegt statt ueber die vorherige schwere Kartenansicht.
+    - **Performance:** Die Auswahl reduziert das Rendern grosser Listen und macht den Einstieg in den Tausch spuerbar fluessiger.
+
+
+## [1.2.07] - 2026-04-01
+- **Fix (Sammelkarten/Trading):** Die Tausch-Sperre nutzt jetzt den echten Kartenbestand statt eines stale Profile-Caches.
+    - **UI:** Die Trade-Seite liest die Anzahl direkt aus dem Inventar (`user_teachers`) und zeigt keine falschen `0 Karten`-Meldungen mehr an.
+    - **Backend:** Die Tausch-Validierung prüft denselben Inventarbestand serverseitig und gleicht den Profil-Cache bei Bedarf nach.
+
+
+## [1.2.06] - 2026-04-01
+- **UX (Navigation):** Quick Actions in der Navbar bleiben jetzt ueber Browser-Sessions hinweg erhalten.
+    - **Persistence:** Die zuletzt genutzten Navigationsziele werden pro Nutzer im `localStorage` gespeichert und nach dem erneuten Login wiederhergestellt.
+    - **Stabilitaet:** Beim ersten Laden wird die gespeicherte Liste sauber rehydriert, ohne den initialen Zustand zu ueberschreiben.
+
+
+## [1.2.05] - 2026-04-01
+- **Fix (Database):** Hinzufügen des fehlenden zusammengesetzten Firestore-Indexes für `card_trades`.
+    - Behebt den `FirebaseError` beim Laden der aktiven und vergangenen Tauschgeschäfte durch Optimierung der Abfragen (`members` array-contains + `status` + `updatedAt` desc).
+
+
+## [1.2.04] - 2026-04-01
+- **UX (Accessibility):** Behebung von Textkontrast-Problemen im System Control Center und auf der Wartungsseite.
+    - **Maintenance Mode:** Optimierung der Farbschemata (`text-red-700`, `text-amber-700`) für bessere Lesbarkeit auf hellen Hintergründen gemäß WCAG-Prinzipien.
+    - **Admin Dashboard:** Verbesserung der visuellen Hierarchie und Kontraste bei kritischen Feature-Toggles im Admin-Bereich.
+
+
+## [1.2.03] - 2026-04-01
+- **UX (Gruppensystem Redesign):** Komplette optische Überarbeitung des Gruppensystems für ein konsistentes Premium-Design.
+    - **Branding:** Einführung von High-Impact Gradient-Headern und 3D-Effekten, die an das Dashboard und die Finanzseite angelehnt sind.
+    - **Glassmorphism:** Systemweite Anwendung von `backdrop-blur-xl` und `bg-background/60` für eine moderne, luftige Ästhetik.
+    - **Layout:** Optimierung der Grid-Systeme und Abstände (`rounded-[2.5rem]`) für bessere Lesbarkeit und Struktur.
+    - **Chat-UI:** Überarbeitung der `GroupWall` mit modernen Message-Bubbles, verbesserten Hover-Zuständen und intuitiverer Navigation.
+    - **Empty States:** Liebevoll gestaltete Platzhalter mit Lucide-Icons zur besseren Nutzerführung in leeren Gruppen.
+
+
+## [1.2.02] - 2026-04-01
+- **Fix (Security):** Behebung von "Missing or insufficient permissions" Fehlern in der Trade-Moderation und den Danger-Logs.
+    - **Firestore Rules:** Ergänzung fehlender Sicherheitsregeln für die Kollektionen `card_trades`, `danger_logs` und `audit_archives`.
+    - **Admin Access:** Sicherstellung, dass Administratoren vollen Lesezugriff auf alle Tauschvorgänge und System-Logs zur Moderation haben.
+    - **User Privacy:** Implementierung von granularem Lesezugriff für Nutzer auf ihre eigenen `card_trades`, während andere Tauschvorgänge geschützt bleiben.
+
+
+## [1.2.01] - 2026-04-01
+- **Fix (Cloud Functions):** Kritische Behebung von "Firebase internal" und CORS Fehlern in `getGlobalStats` und anderen Tausch-Funktionen.
+    - **Database Refactoring:** Umstellung aller betroffenen Funktionen auf die projekt-spezifische `abi-data` Datenbank-Instanz.
+    - **CORS Support:** Aktivierung von expliziter CORS-Konfiguration für v2 onCall Funktionen, um Blockaden beim Aufruf von `localhost` zu vermeiden.
+    - **Error Logging:** Implementierung von serverseitigem Error-Logging für Admin-Aggregations-Stats zur schnelleren Diagnose.
+- **Improvement (Dashboard):** Einführung von Aktivitäts-Tracking für das Dashboard.
+    - **Live-Stats:** Nutzerbesuche auf dem Dashboard werden nun alle 5 Minuten erfasst, um akkurate "Online-Nutzer" Statistiken im Admin-Bereich zu ermöglichen.
+    - **Performance:** Throttling der Schreibzugriffe auf 5-Minuten-Intervalle zur Schonung des Firestore-Kontingents.
+
+
+## [1.2.00] - 2026-04-01
+- **Feature (Gruppensystem Upgrade):** Umfassende Überarbeitung des Gruppensystems von einer statischen Liste zu einem dynamischen Kollaborations-Hub.
+    - **UI Refactor:** Modularisierung der Gruppenseite durch Einführung von `GroupNav` und `GroupContent` für eine bessere Wartbarkeit und ein flüssigeres Nutzungserlebnis.
+    - **Threading:** Einführung von 1-stufigem Message-Nesting (Antwort-Funktion), um Diskussionen innerhalb von Gruppen übersichtlicher zu gestalten.
+    - **Rich Media:** Vollständige Unterstützung für Bild- und PDF-Anhänge in Gruppennachrichten inklusive Vorschaubildern und sicherem Download.
+    - **Read-Tracking:** Automatische Erfassung gelesener Nachrichten, damit Nutzer sofort sehen, welche Diskussionen neu für sie sind.
+    - **Onboarding:** Neuer 'Open Joining' Mechanismus, der es Schülern erlaubt, öffentlichen Planungsgruppen selbstständig beizutreten.
+    - **Cloud Integration:** Neue Cloud Function `groupMessages` für zuverlässige Benachrichtigungen bei neuen Antworten in abonnierten Threads.
+
+
+## [1.1.00] - 2026-04-01
+- **Feature (Sammelkarten):** Einführung eines komplexen Tausch-Systems für Freunde.
+    - **Trading-Zentrum:** Neue Seite zum Verwalten von aktiven und vergangenen Tauschvorgängen.
+    - **Multi-Step Wizard:** Benutzerfreundlicher Prozess zum Finden von Tauschpartnern und Erstellen von Angeboten.
+    - **Verhandlungs-Logik:** Unterstützung von Gegenangeboten (bis zu 3 Runden pro Trade).
+    - **Sicherheit & Balancing:** 
+        - Mindesthürde von 100 Karten zur Teilnahme.
+        - Strikter Rarity & Foil Match (1-zu-1 Tausch gleicher Seltenheit und Folierung).
+        - Täglicher Limit von 3 erfolgreichen Tauschen pro Nutzer.
+        - Ausschluss von Iconic und Secret Rare Karten zum Werterhalt.
+    - **Admin-Tools:** Neue Moderations-Seite für Administratoren zur Überwachung aller Tauschvorgänge.
+    - **Atomicity:** Alle Tauschvorgänge sind durch Firestore-Transaktionen gegen Kartenverlust oder -duplizierung geschützt.
+
+
+## [1.0.95] - 2026-04-01
+- **Security (Auth):** 2FA-Verifizierung wird nun für 30 Tage gespeichert (statt nur pro Sitzung), um die Benutzererfahrung zu verbessern.
+    - **Persistence:** Speicherung der Verifizierung in `localStorage` mit Zeitstempel-Prüfung.
+    - **Sicherheit:** Der Status wird bei manuellem Logout oder Timeout weiterhin zuverlässig gelöscht.
+- **UX (Freunde):** Die Freundesliste ist nun sortierbar.
+    - **Sortierung:** Neue Optionen für Name (A-Z, Z-A) und Hinzufügedatum (Neueste, Älteste).
+    - **Integration:** Das Sortier-Dropdown wurde direkt in die neue Filterleiste integriert.
+
+
+## [1.0.94] - 2026-04-01
+- **UX (Freunde):** Neue Filterleiste für die bestehende Freundesliste hinzugefügt.
+    - **Suche:** Textsuche nach Namen und E-Mails direkt in der Freundesliste möglich.
+    - **Kategorien:** Filterung nach Kurs/Klasse über ein Dropdown-Menü integriert.
+    - **Zurücksetzen:** Ein "Filter löschen"-Button erlaubt das schnelle Zurückkehren zur vollständigen Liste.
+    - **Feedback:** Elegante Anzeige von Suchergebnissen und Hinweis bei leeren Filtertreffern.
+
+
+## [1.0.93] - 2026-04-01
+- **UX (Freunde):** Freunde-Seite auf eine kompakte Discovery-Ansicht umgebaut.
+    - **Suchen-Tab:** Der Button `Freunde hinzufügen` wechselt jetzt direkt in den neuen Toggle-Bereich `Suchen` statt ein Modal zu oeffnen.
+    - **Suche:** Ergebnisse werden nur nach aktiver Eingabe angezeigt (Name, Kurs, Gruppe, E-Mail), um die UI leichtgewichtig zu halten.
+    - **Debounce:** Suche reagiert mit bis zu 1 Sekunde Verzoegerung nach Tasteneingaben, um Lastspitzen zu reduzieren.
+    - **Bestehende Freunde:** In der Suche werden bereits befreundete Nutzer ebenfalls angezeigt, aber immer am Ende der Trefferliste und als `Schon befreundet` markiert.
+    - **Mobile:** Toggle auf kleinen Displays fuer bessere Lesbarkeit und Touch-Bedienung als 2x2 Grid optimiert, inklusive kompakterer Abstaende.
+    - **Vorschlaege:** Empfehlungen priorisieren jetzt gleichen Kurs, gleiche Gruppen und das Freundesnetzwerk und zeigen nur relevante Treffer.
+    - **UI-Detail:** Die Lupe wurde bei `Vorgeschlagen` durch ein passenderes Vorschlags-Icon ersetzt.
+- **Fix (Admin/System):** `Switch is changing from uncontrolled to controlled` Warnung im System-Dashboard behoben.
+    - **Stabilisierung:** `ToggleRow` normalisiert `enabled` auf einen festen Boolean (`isEnabled`), sodass der Switch durchgehend kontrolliert bleibt.
+- **Fix (Cloud Functions/CORS):** `getGlobalStats` Aufruf aus Local Dev (`localhost:3000`) wird nicht mehr durch fehlende CORS-Preflight-Antwort blockiert.
+    - **Functions v2:** Globale Options um `invoker: "public"` erweitert, damit Browser-Callable Requests die Function erreichen koennen.
+
 
 ## [1.0.92] - 2026-04-01
 - **UX (Freunde):** Oben auf der Freunde-Seite ein Toggle zwischen `Freunde`, `Vorgeschlagen` und `Einladungen` ergaenzt.
