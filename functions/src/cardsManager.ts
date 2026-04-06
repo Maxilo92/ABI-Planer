@@ -562,8 +562,9 @@ export const syncOpenedPacksToInventory = onCall({
 
       const recalculatedTotalOpened = Math.ceil(totalCards / 3);
       const currentTotalOpened = Number(profileData?.booster_stats?.total_opened) || 0;
+      const currentTotalCards = Number(profileData?.booster_stats?.total_cards) || 0;
 
-      if (currentTotalOpened !== recalculatedTotalOpened) {
+      if (currentTotalOpened !== recalculatedTotalOpened || currentTotalCards !== totalCards) {
         usersUpdated++;
         updates.push({
           userId,
@@ -578,6 +579,7 @@ export const syncOpenedPacksToInventory = onCall({
             {
               booster_stats: {
                 total_opened: recalculatedTotalOpened,
+                total_cards: totalCards,
               },
             },
             { merge: true }
@@ -818,7 +820,7 @@ export const moderateCardProposal = onCall({
       id: notificationRef.id,
       userId,
       type: "card_proposal_accepted",
-      title: "Kreativ-Labor: Vorschlag angenommen",
+      title: "Ideen-Labor: Vorschlag angenommen",
       message: `Dein Vorschlag fuer ${proposalData?.teacher_name || "einen Lehrer"} wurde angenommen. Du hast ${grantedPacks} Booster als Belohnung erhalten.`,
       read: false,
       timestamp: admin.firestore.FieldValue.serverTimestamp(),

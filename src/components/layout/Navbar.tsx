@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { LayoutDashboard, CheckSquare, Calendar, Euro, DollarSign, Megaphone, BarChart2, LogOut, Menu, X, ShieldCheck, User, MessageSquareHeart, Settings, Users, ChevronRight, Sparkles, HelpCircle, Gift, Trophy, AlertTriangle, ShoppingBag, MessageSquare, UserPlus, Server, ArrowLeftRight } from 'lucide-react'
+import { LayoutDashboard, CheckSquare, Calendar, Euro, DollarSign, Megaphone, BarChart2, LogOut, Menu, X, ShieldCheck, User, MessageSquareHeart, Settings, Users, ChevronRight, Sparkles, HelpCircle, Gift, Trophy, AlertTriangle, ShoppingBag, UserPlus, Server, ArrowLeftRight, Pin, PinOff, Swords } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button, buttonVariants } from '@/components/ui/button'
@@ -31,7 +31,10 @@ interface NavItem {
 interface QuickAction {
   href: string
   label: string
+  pinned?: boolean
 }
+
+const MAX_QUICK_ACTIONS = 3
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
@@ -105,14 +108,11 @@ export function Navbar() {
         href: '/planung-root',
         label: 'Planung',
         icon: Calendar,
+        notify: notifications.gruppen,
         subItems: [
           { href: '/kalender', label: 'Kalender', icon: Calendar, notify: notifications.kalender },
           { href: '/todos', label: 'Todos', icon: CheckSquare, notify: notifications.todos },
-          ...(hasPlanningGroups ? [
-            { href: '/gruppen?bereich=mein-team', label: 'Mein Team', icon: Users },
-          ] : []),
-          { href: '/gruppen?bereich=alle-gruppen', label: 'Alle Gruppen', icon: Users },
-          { href: '/gruppen?bereich=shared-hub', label: 'Shared Hub', icon: MessageSquare },
+          { href: '/gruppen', label: 'Gruppen', icon: Users, notify: notifications.gruppen },
         ],
       }
     ] : []),
@@ -131,11 +131,14 @@ export function Navbar() {
     const sammelkartenSubItems: NavItem[] = [
       { href: '/sammelkarten?view=sammelkarten', label: 'Booster öffnen', icon: Gift },
       { href: '/sammelkarten?view=album', label: 'Lehrer-Album', icon: Trophy },
+      { href: '/sammelkarten?view=decks', label: 'Meine Decks', icon: LayoutDashboard },
     ]
 
     if (isTradingEnabled) {
       sammelkartenSubItems.push({ href: '/sammelkarten/tausch', label: 'Tausch-Zentrum', icon: ArrowLeftRight, notify: notifications.karten })
     }
+
+    sammelkartenSubItems.push({ href: '/sammelkarten/kaempfe', label: 'Kämpfe', icon: Swords, isBeta: true })
 
     navItems.push({
       href: '/sammelkarten-root',
@@ -226,6 +229,12 @@ export function Navbar() {
     }
 
     return 'Profil'
+  }
+
+  const orderQuickActions = (actions: QuickAction[]) => {
+    const pinnedActions = actions.filter((action) => action.pinned)
+    const regularActions = actions.filter((action) => !action.pinned)
+    return [...pinnedActions, ...regularActions].slice(0, MAX_QUICK_ACTIONS)
   }
 
   const isActive = (href: string) => {
@@ -332,7 +341,10 @@ export function Navbar() {
                 && typeof entry.href === 'string'
                 && typeof entry.label === 'string'
             })
-            .slice(0, 3)
+            .map((entry) => ({
+              ...entry,
+              pinned: !!entry.pinned,
+            }))
 
           const resolved = await Promise.all(
             normalized.map(async (entry) => {
@@ -342,7 +354,7 @@ export function Navbar() {
           )
 
           if (!cancelled) {
-            setQuickActions(resolved)
+            setQuickActions(orderQuickActions(resolved))
           }
         } else {
           setQuickActions([])
@@ -373,7 +385,7 @@ export function Navbar() {
         return
       }
 
-      window.localStorage.setItem(`quick_actions:${user.uid}`, JSON.stringify(quickActions))
+      window.localStorage.setItem(`quick_actions:${user.uid}`, JSON.stringify(orderQuickActions(quickActions)))
     } catch (error) {
       console.error('[Navbar] Failed to persist quick actions:', error)
     }
@@ -397,12 +409,14 @@ export function Navbar() {
       if (cancelled) return
 
       setQuickActions((prev) => {
-        if (prev[0]?.href === href) {
-          return prev
+        const existing = prev.find((entry) => entry.href === href)
+        if (existing?.pinned) {
+          return orderQuickActions(prev.map((entry) => entry.href === href ? { ...entry, label } : entry))
         }
 
-        const next = [{ href, label }, ...prev.filter((entry) => entry.href !== href)]
-        return next.slice(0, 3)
+        const pinnedActions = prev.filter((entry) => entry.pinned)
+        const regularActions = prev.filter((entry) => !entry.pinned && entry.href !== href)
+        return orderQuickActions([{ href, label }, ...pinnedActions, ...regularActions])
       })
     }
 
@@ -413,6 +427,14 @@ export function Navbar() {
     }
   }, [pathname, currentSearch, profile?.role, hasPlanningGroups, quickActionsHydrated, user?.uid, profile?.full_name])
 
+  const handlePinQuickAction = (href: string) => {
+    setQuickActions((prev) => orderQuickActions(prev.map((entry) => entry.href === href ? { ...entry, pinned: !entry.pinned } : entry)))
+  }
+
+  const handleRemoveQuickAction = (href: string) => {
+    setQuickActions((prev) => orderQuickActions(prev.filter((entry) => entry.href !== href)))
+  }
+
   const renderQuickActions = (isMobile: boolean = false) => {
     if (quickActions.length === 0) {
       return null
@@ -421,30 +443,61 @@ export function Navbar() {
     return (
       <div className="mb-2 border-b pb-2">
         <div className="space-y-0.5">
-          {quickActions.map((action, index) => (
-            <Link
-              key={action.href}
-              href={action.href}
-              onClick={() => {
-                skipQuickActionTrackingRef.current = true
+          {quickActions.map((action, index) => {
+            const active = isActive(action.href)
 
-                if (isMobile) setIsOpen(false)
+            return (
+              <div key={action.href} className="group flex items-center gap-2 px-2 py-1.5">
+                <Link
+                  href={action.href}
+                  onClick={() => {
+                    skipQuickActionTrackingRef.current = true
 
-                const queryIndex = action.href.indexOf('?')
-                setCurrentSearch(queryIndex >= 0 ? action.href.slice(queryIndex) : '')
-              }}
-              className={cn(
-                'block px-2 py-1.5 text-sm font-medium transition-colors',
-                isActive(action.href)
-                  ? 'text-primary'
-                  : index === 0
-                    ? 'text-foreground hover:text-primary'
-                    : 'text-muted-foreground hover:text-foreground'
-              )}
-            >
-              {action.label}
-            </Link>
-          ))}
+                    if (isMobile) setIsOpen(false)
+
+                    const queryIndex = action.href.indexOf('?')
+                    setCurrentSearch(queryIndex >= 0 ? action.href.slice(queryIndex) : '')
+                  }}
+                  className={cn(
+                    'block min-w-0 flex-1 truncate text-sm font-medium transition-colors',
+                    active
+                      ? 'text-primary'
+                      : index === 0
+                        ? 'text-foreground hover:text-primary'
+                        : 'text-muted-foreground hover:text-foreground'
+                  )}
+                >
+                  {action.label}
+                </Link>
+
+                <div className="flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                  <button
+                    type="button"
+                    onClick={() => handlePinQuickAction(action.href)}
+                    className={cn(
+                      'inline-flex h-7 w-7 items-center justify-center rounded-lg border transition-colors',
+                      action.pinned
+                        ? 'border-brand/30 bg-brand/10 text-brand'
+                        : 'border-border/70 bg-background text-muted-foreground hover:border-brand/30 hover:text-brand'
+                    )}
+                    aria-label={action.pinned ? 'Quick Action lösen' : 'Quick Action anpinnen'}
+                    title={action.pinned ? 'Quick Action lösen' : 'Quick Action anpinnen'}
+                  >
+                    {action.pinned ? <PinOff className="h-3.5 w-3.5" /> : <Pin className="h-3.5 w-3.5" />}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveQuickAction(action.href)}
+                    className="inline-flex h-7 w-7 items-center justify-center rounded-lg border border-border/70 bg-background text-muted-foreground transition-colors hover:border-destructive/30 hover:text-destructive"
+                    aria-label="Quick Action entfernen"
+                    title="Quick Action entfernen"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              </div>
+            )
+          })}
         </div>
       </div>
     )
@@ -569,7 +622,12 @@ export function Navbar() {
                       isActive(subItem.href) ? 'text-primary bg-secondary/30' : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
                     )}
                   >
-                    <subItem.icon className="h-4 w-4" />
+                    <div className="relative">
+                      <subItem.icon className="h-4 w-4" />
+                      {subItem.notify && (
+                        <span className="absolute -right-0.5 -top-0.5 flex h-2.5 w-2.5 rounded-full bg-red-500 border-2 border-background" />
+                      )}
+                    </div>
                     <span className="truncate">{subItem.label}</span>
                     {subItem.isBeta && (
                       <Badge variant="secondary" className="ml-1 px-1.5 py-0 text-[9px] uppercase tracking-wide">
@@ -691,7 +749,7 @@ export function Navbar() {
                     Anmelden
                   </Link>
                   <Link 
-                    href="/promo" 
+                    href="/zugang" 
                     onClick={() => setIsOpen(false)}
                     className="block text-center text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors"
                   >
@@ -755,7 +813,7 @@ export function Navbar() {
                     Anmelden
                   </Link>
                   <Link 
-                    href="/promo" 
+                    href="/zugang" 
                     className="block text-center text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors"
                   >
                     Warum ein Konto?

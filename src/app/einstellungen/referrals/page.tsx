@@ -137,7 +137,6 @@ export default function ReferralsPage() {
         />
         <div>
           <h1 className="text-3xl font-extrabold tracking-tight">Freunde einladen</h1>
-          <p className="text-muted-foreground mt-1">Sammle Bonus-Booster für dich und deine Freunde.</p>
         </div>
       </div>
 

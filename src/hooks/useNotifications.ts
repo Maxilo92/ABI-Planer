@@ -7,10 +7,11 @@ import {
   query, 
   where, 
   onSnapshot, 
-  doc 
+  doc,
+  orderBy
 } from 'firebase/firestore'
 import { useAuth } from '@/context/AuthContext'
-import { Todo, Event, NewsEntry, Poll } from '@/types/database'
+import { Todo, Event, NewsEntry, Poll, GroupMessage } from '@/types/database'
 import { toDate } from '@/lib/utils'
 
 export function useNotifications() {
@@ -21,6 +22,7 @@ export function useNotifications() {
     umfragen: false,
     news: false,
     karten: false,
+    gruppen: false,
   })
 
   useEffect(() => {
@@ -31,6 +33,7 @@ export function useNotifications() {
         umfragen: false,
         news: false,
         karten: false,
+        gruppen: false,
       })
       return
     }
@@ -42,6 +45,7 @@ export function useNotifications() {
     const lastVisitedKalender = profile.last_visited?.kalender
     const lastVisitedUmfragen = profile.last_visited?.umfragen
     const lastVisitedNews = profile.last_visited?.news
+    const lastVisitedGruppen = profile.last_visited?.gruppen
 
     const handleSnapshotError = (source: string, error: unknown) => {
       console.error(`useNotifications: ${source} snapshot failed:`, error)
@@ -162,6 +166,36 @@ export function useNotifications() {
       handleSnapshotError('news', error)
     })
 
+    // 5. Sammelkarten: New trade messages.
+    const messagesQuery = query(collection(db, 'notifications', profileId, 'messages'), where('read', '==', false))
+    const unsubscribeMessages = onSnapshot(messagesQuery, (snapshot) => {
+      setNotifications(prev => ({ ...prev, karten: !snapshot.empty }))
+    }, (error) => {
+      handleSnapshotError('karten', error)
+    })
+
+    // 6. Gruppen: New messages in hub or own planning groups since last visit.
+    const groupsQuery = query(collection(db, 'group_messages'), orderBy('created_at', 'desc'))
+    const unsubscribeGroups = onSnapshot(groupsQuery, (snapshot) => {
+      const lastVisited = lastVisitedGruppen ? new Date(lastVisitedGruppen) : new Date(0)
+      const ownGroups = new Set(profileGroups)
+
+      const hasNewGroupMessage = snapshot.docs.some((docSnap) => {
+        const data = docSnap.data() as GroupMessage
+        if (data.created_by === profileId) return false
+
+        const createdAt = data.created_at ? toDate(data.created_at) : new Date(0)
+        if (createdAt <= lastVisited) return false
+
+        if (data.type === 'hub' && data.group_name === 'hub') return true
+        return data.type === 'internal' && ownGroups.has(data.group_name)
+      })
+
+      setNotifications(prev => ({ ...prev, gruppen: hasNewGroupMessage }))
+    }, (error) => {
+      handleSnapshotError('gruppen', error)
+    })
+
     return () => {
       unsubscribeTodos()
       unsubscribeEvents()
@@ -169,6 +203,8 @@ export function useNotifications() {
       voteUnsubscribes.forEach(unsub => unsub())
       voteUnsubscribes.clear()
       unsubscribeNews()
+      unsubscribeMessages()
+      unsubscribeGroups()
     }
   }, [
     authLoading, 
@@ -178,9 +214,9 @@ export function useNotifications() {
     profile?.last_visited?.todos,
     profile?.last_visited?.kalender,
     profile?.last_visited?.umfragen,
-    profile?.last_visited?.news
+    profile?.last_visited?.news,
+    profile?.last_visited?.gruppen,
   ])
 
   return notifications
-  }
-
+}

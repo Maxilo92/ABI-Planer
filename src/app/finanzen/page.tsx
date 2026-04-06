@@ -128,6 +128,7 @@ export default function FinancePage() {
   }
 
   const isPlanner = (profile?.role === 'planner' || profile?.role === 'admin_main' || profile?.role === 'admin_co' || profile?.role === 'admin') && profile?.is_approved
+  const canEditTicketSales = isPlanner
 
   const handleTicketSalesChange = async (value: number) => {
     if (!isPlanner) return
@@ -177,19 +178,22 @@ export default function FinancePage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Finanzen</h1>
-          <p className="text-muted-foreground">Budgetplanung mit Einnahmen und Ausgaben.</p>
-        </div>
-        <div className="flex w-full md:w-auto flex-wrap gap-2">
-          <Link href="/finanzen/spenden">
-            <Button variant="outline" className="gap-2 w-full sm:w-auto">
-              <Heart className="h-4 w-4 text-primary fill-primary/20" />
-              Spenden & Hilfe
-            </Button>
-          </Link>
-          {isPlanner && <AddFinanceDialog />}
+      <div className="relative overflow-hidden rounded-[2rem] border border-brand/15 bg-gradient-to-r from-brand/10 via-background to-brand/5 px-6 py-5 shadow-card">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(125,210,0,0.18),_transparent_34%),radial-gradient(circle_at_bottom_left,_rgba(125,210,0,0.12),_transparent_28%)]" />
+        <div className="relative flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[0.28em] text-brand">Finanzen</p>
+            <h1 className="text-3xl font-bold tracking-tight">Budgetplanung</h1>
+          </div>
+          <div className="flex w-full md:w-auto flex-wrap gap-2">
+            <Link href="/finanzen/spenden">
+              <Button variant="outline" className="gap-2 w-full sm:w-auto border-brand/30 hover:border-brand hover:text-brand">
+                <Heart className="h-4 w-4 text-brand fill-brand/20" />
+                Spenden & Hilfe
+              </Button>
+            </Link>
+            {isPlanner && <AddFinanceDialog />}
+          </div>
         </div>
       </div>
 
@@ -224,12 +228,12 @@ export default function FinancePage() {
             </div>
           </CardContent>
         </Card>
-        <Card className="bg-primary/5 border-primary/20">
+        <Card className="bg-brand/5 border-brand/20">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-primary uppercase">Aktueller Kontostand</CardTitle>
+            <CardTitle className="text-sm font-medium text-brand uppercase">Aktueller Kontostand</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className={`text-2xl font-bold ${currentBalance < 0 ? 'text-destructive' : 'text-primary'}`}>
+            <div className={`text-2xl font-bold ${currentBalance < 0 ? 'text-destructive' : 'text-foreground'}`}>
               {currentBalance.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
             </div>
           </CardContent>
@@ -240,7 +244,8 @@ export default function FinancePage() {
         current={currentBalance}
         goal={fundingGoal}
         initialTicketSales={settings?.expected_ticket_sales ?? 150}
-        onTicketSalesChange={handleTicketSalesChange}
+        onTicketSalesChange={canEditTicketSales ? handleTicketSalesChange : undefined}
+        canEditTicketSales={canEditTicketSales}
         isAuthenticated={!!user}
       />
 

@@ -498,13 +498,11 @@ export default function SettingsPage() {
     <div className="max-w-3xl mx-auto space-y-6">
       <div>
         <h1 className="text-3xl font-extrabold tracking-tight">Einstellungen</h1>
-        <p className="text-muted-foreground mt-1">Alle Optionen in einer klaren Reihenfolge statt versteckter Seitentoggles.</p>
       </div>
 
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base">Schnellzugriff</CardTitle>
-          <CardDescription>Springe direkt zum gesuchten Bereich.</CardDescription>
         </CardHeader>
         <CardContent className="pt-0 flex flex-wrap gap-2">
           <a href="#profil" className="inline-flex"><Button variant="outline" size="sm">Profil</Button></a>
@@ -670,10 +668,15 @@ export default function SettingsPage() {
                 <Users className="h-5 w-5" /> Planungsgruppen
               </CardTitle>
               <CardDescription>
-                Plane Teams wie Ballplanung oder Gelder sammeln. Jede Gruppe kann einen Gruppenleiter erhalten.
+                Verwaltung fuer die neue Chatlisten-Ansicht unter Gruppen. Jede Gruppe erscheint dort als eigener Chat und kann einen Gruppenleiter erhalten.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              <div className="flex flex-wrap items-center gap-2">
+                <a href="/gruppen" className="inline-flex"><Button variant="outline" size="sm">Zur Chatliste</Button></a>
+                <a href="/gruppen" className="inline-flex"><Button variant="ghost" size="sm">Gruppenansicht pruefen</Button></a>
+              </div>
+
               <div className="space-y-2">
                 {planningGroupRows.map((row) => {
                   const isMandatory = ['Ballplanung', 'FinanzTeam'].includes(row.before)

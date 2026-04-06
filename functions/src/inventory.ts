@@ -1,11 +1,12 @@
 import * as admin from 'firebase-admin'
 import { onCall, HttpsError } from 'firebase-functions/v2/https'
+import { getFirestore } from "firebase-admin/firestore"
 
 if (admin.apps.length === 0) {
   admin.initializeApp();
 }
 
-const db = admin.firestore()
+const db = getFirestore("abi-data")
 
 interface UserTeacher {
   [teacherId: string]: {

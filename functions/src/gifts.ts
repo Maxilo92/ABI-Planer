@@ -19,7 +19,22 @@ interface GiftBoosterPackData {
     senderName?: string;
     notificationType?: "popup" | "banner" | "quickmessage";
     notificationIcon?: "gift" | "info" | "star" | "message";
+    requestId?: string;
+    customPackPresetId?: string;
+    customPackName?: string;
+    customPackAllowRandomFill?: boolean;
+    customPackSlots?: Array<{
+        slotIndex: number;
+        teacherId: string;
+        variant?: "normal" | "holo" | "shiny" | "black_shiny_holo";
+    }>;
 }
+
+type CustomPackSlot = {
+    slotIndex: number;
+    teacherId: string;
+    variant?: "normal" | "holo" | "shiny" | "black_shiny_holo";
+};
 
 const isAdminRole = (role: unknown): boolean => {
     return role === "admin" || role === "admin_main" || role === "admin_co";
@@ -59,6 +74,11 @@ export const giftBoosterPack = onCall({
         senderName,
         notificationType,
         notificationIcon,
+        requestId,
+        customPackPresetId,
+        customPackName,
+        customPackAllowRandomFill,
+        customPackSlots,
     } = request.data as GiftBoosterPackData;
 
     const message = (customMessage || popupBody || "Du hast ein Geschenk erhalten!").trim();
@@ -70,6 +90,19 @@ export const giftBoosterPack = onCall({
     const normalizedSenderName = (senderName || callerProfileData.full_name || "System").trim();
     const normalizedNotificationType = notificationType || "popup";
     const normalizedNotificationIcon = notificationIcon || "gift";
+    const normalizedRequestId = (requestId || "").trim();
+    const normalizedCustomPackName = (customPackName || "").trim();
+    const customSlots = Array.isArray(customPackSlots)
+        ? customPackSlots
+            .map((slot) => ({
+                slotIndex: Math.floor(Number(slot?.slotIndex)),
+                teacherId: String(slot?.teacherId || "").trim(),
+                variant: slot?.variant,
+            }))
+            .filter((slot) => Number.isFinite(slot.slotIndex) && slot.slotIndex >= 0 && slot.teacherId.length > 0)
+        : [];
+    const hasCustomPack = customSlots.length > 0;
+    const allowRandomFill = customPackAllowRandomFill !== false;
 
     const recipients = Array.from(new Set([
         ...(Array.isArray(userIds) ? userIds : []),
@@ -93,6 +126,10 @@ export const giftBoosterPack = onCall({
         );
     }
 
+    if (normalizedRequestId.length > 80) {
+        throw new HttpsError("invalid-argument", "requestId is too long.");
+    }
+
     if (!normalizedCtaUrl.startsWith("/")) {
         throw new HttpsError("invalid-argument", "ctaUrl must start with '/'.");
     }
@@ -108,6 +145,49 @@ export const giftBoosterPack = onCall({
     const safePackCount = Math.floor(packCount);
     if (safePackCount < 0) {
         throw new HttpsError("invalid-argument", "packCount must be at least 0.");
+    }
+
+    if (hasCustomPack && safePackCount <= 0) {
+        throw new HttpsError("invalid-argument", "custom packs require packCount >= 1.");
+    }
+
+    if (customSlots.length > 12) {
+        throw new HttpsError("invalid-argument", "customPackSlots supports max 12 entries.");
+    }
+
+    if (hasCustomPack) {
+        const uniqueSlotIndexes = new Set(customSlots.map((slot) => slot.slotIndex));
+        if (uniqueSlotIndexes.size !== customSlots.length) {
+            throw new HttpsError("invalid-argument", "customPackSlots cannot contain duplicate slotIndex values.");
+        }
+    }
+
+    const allowedVariants = new Set(["normal", "holo", "shiny", "black_shiny_holo"]);
+    for (const slot of customSlots) {
+        if (slot.variant && !allowedVariants.has(slot.variant)) {
+            throw new HttpsError("invalid-argument", `Invalid custom card variant for slot ${slot.slotIndex}.`);
+        }
+    }
+
+    let validatedCustomSlots: CustomPackSlot[] = [];
+    if (hasCustomPack) {
+        const settingsRef = db.collection("settings").doc("sammelkarten");
+        const settingsSnap = await settingsRef.get();
+        const settingsData = settingsSnap.data() || {};
+        const lootTeachers = Array.isArray(settingsData.loot_teachers) ? settingsData.loot_teachers : [];
+        const teacherIds = new Set<string>(
+            lootTeachers
+                .map((teacher: { id?: unknown }) => String(teacher?.id || "").trim())
+                .filter((teacherId: string) => teacherId.length > 0),
+        );
+
+        for (const slot of customSlots) {
+            if (!teacherIds.has(slot.teacherId)) {
+                throw new HttpsError("invalid-argument", `Teacher '${slot.teacherId}' not found in loot_teachers.`);
+            }
+        }
+
+        validatedCustomSlots = customSlots.sort((a, b) => a.slotIndex - b.slotIndex);
     }
 
     const failedUserIds: string[] = [];
@@ -132,6 +212,18 @@ export const giftBoosterPack = onCall({
                         continue;
                     }
 
+                    const dedupeDocId = normalizedRequestId ? `gift_${normalizedRequestId}` : undefined;
+                    const giftRef = dedupeDocId
+                        ? profileRef.collection("unseen_gifts").doc(dedupeDocId)
+                        : profileRef.collection("unseen_gifts").doc();
+
+                    if (dedupeDocId) {
+                        const existingGift = await transaction.get(giftRef);
+                        if (existingGift.exists) {
+                            continue;
+                        }
+                    }
+
                     if (safePackCount > 0) {
                         transaction.set(profileRef, {
                             booster_stats: {
@@ -140,7 +232,22 @@ export const giftBoosterPack = onCall({
                         }, { merge: true });
                     }
 
-                    const giftRef = profileRef.collection("unseen_gifts").doc();
+                    if (hasCustomPack) {
+                        const queueRef = profileRef.collection("custom_pack_queue").doc();
+                        transaction.set(queueRef, {
+                            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+                            createdBy: request.auth?.uid,
+                            createdByName: normalizedSenderName,
+                            requestId: normalizedRequestId || null,
+                            presetId: customPackPresetId || null,
+                            name: normalizedCustomPackName || null,
+                            totalPacks: safePackCount,
+                            remainingPacks: safePackCount,
+                            allowRandomFill,
+                            slots: validatedCustomSlots,
+                        });
+                    }
+
                     transaction.set(giftRef, {
                         packCount: safePackCount,
                         customMessage: message,
@@ -154,6 +261,12 @@ export const giftBoosterPack = onCall({
                         createdByName: normalizedSenderName,
                         notificationType: normalizedNotificationType,
                         notificationIcon: normalizedNotificationIcon,
+                        customPackEnabled: hasCustomPack,
+                        customPackName: normalizedCustomPackName || null,
+                        customPackPresetId: customPackPresetId || null,
+                        customPackAllowRandomFill: hasCustomPack ? allowRandomFill : null,
+                        customPackSlots: hasCustomPack ? validatedCustomSlots : [],
+                        requestId: normalizedRequestId || null,
                     });
 
                     giftedCount += 1;

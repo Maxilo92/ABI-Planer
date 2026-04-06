@@ -17,6 +17,14 @@ In dieser Phase:
 4. **Finale QA** vor Public Release
 
 ---
+<!-- AGENT_NAV_METADATA -->
+<!-- path: testing/README_TESTING_PHASE.md -->
+<!-- role: secondary -->
+<!-- read_mode: read-on-demand -->
+<!-- token_hint: summary-first -->
+<!-- default_action: read sections that match current task -->
+<!-- index: docs/AGENT_CONTEXT_INDEX.md -->
+
 
 ## 📚 Dokumentation für Alle
 

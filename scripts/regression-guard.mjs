@@ -5,14 +5,14 @@ const projectRoot = process.cwd()
 
 const checks = [
   {
-    name: 'Login has dashboard back link',
+    name: 'Login has Startseite back link',
     file: 'src/app/login/page.tsx',
-    patterns: [/href=\"\/\"/, /Zur\u00fcck zum Dashboard/],
+    patterns: [/href=\"\/\"/, /Zur\u00fcck zur Startseite/],
   },
   {
-    name: 'Register has dashboard back link',
+    name: 'Register has Startseite back link',
     file: 'src/app/register/page.tsx',
-    patterns: [/href=\"\/\"/, /Zur\u00fcck zum Dashboard/],
+    patterns: [/href=\"\/\"/, /Zur\u00fcck zur Startseite/],
   },
   {
     name: 'Dashboard news cards link to detail page',
@@ -25,9 +25,9 @@ const checks = [
     patterns: [/bg-primary\/10/, /text-primary\/80/, /bg-card border-border/],
   },
   {
-    name: 'Register keeps 3-step flow and validation gate',
+    name: 'Register keeps 5-step flow and validation gate',
     file: 'src/app/register/page.tsx',
-    patterns: [/useState<1 \| 2 \| 3>\(1\)/, /validateCurrentStep\(/, /if \(!validateCurrentStep\(\)\) return/],
+    patterns: [/useState<1 \| 2 \| 3 \| 4 \| 5>\(1\)/, /validateCurrentStep\(/, /if \(!validateCurrentStep\(\)\)/],
   },
   {
     name: 'Dashboard keeps expense-driven funding goal logic',
@@ -35,13 +35,13 @@ const checks = [
     patterns: [
       /const \[expenseGoal, setExpenseGoal\]/,
       /(?:todo|t)\.status !== 'done'/,
-      /goal=\{expenseGoal > 0 \? expenseGoal : \(settings\?\.funding_goal (?:\|\||\?\?) 10000\)\}/,
+      /goal=\{settings\?\.funding_goal (?:\|\||\?\?|\?\?) 10000\}/,
     ],
   },
   {
     name: 'Dashboard persists expected ticket sales',
     file: 'src/app/page.tsx',
-    patterns: [/expected_ticket_sales/, /onTicketSalesChange=\{handleTicketSalesChange\}/],
+    patterns: [/expected_ticket_sales/, /onTicketSalesChange=\{canEditTicketSales \? handleTicketSalesChange : undefined\}/],
   },
   {
     name: 'Funding status keeps ticket price estimator controls',

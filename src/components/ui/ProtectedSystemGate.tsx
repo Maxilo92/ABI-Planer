@@ -51,7 +51,7 @@ export function ProtectedSystemGate({ title, description, icon }: ProtectedSyste
       </div>
 
       <Link 
-        href="/promo" 
+        href="/zugang" 
         className="mt-6 text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors relative z-10"
       >
         Warum ein Konto?

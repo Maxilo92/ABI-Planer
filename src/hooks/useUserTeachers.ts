@@ -27,6 +27,11 @@ type BoosterStats = {
   total_opened?: number
 }
 
+type OpenBoosterOptions = {
+  packSource?: 'random' | 'custom'
+  customPackQueueId?: string | null
+}
+
 const toBerlinParts = (date: Date) => {
   const formatter = new Intl.DateTimeFormat('en-GB', {
     timeZone: BERLIN_TIMEZONE,
@@ -52,21 +57,14 @@ const toBerlinParts = (date: Date) => {
 
 const formatDatePart = (value: number) => value.toString().padStart(2, '0')
 
-const fromDayStringToUtcMs = (value: string): number | null => {
-  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value)
-  if (!match) return null
-
-  const year = Number(match[1])
-  const month = Number(match[2])
-  const day = Number(match[3])
-  const timestamp = Date.UTC(year, month - 1, day)
-
-  return Number.isNaN(timestamp) ? null : timestamp
-}
-
 const addDaysToDayString = (value: string, delta: number): string => {
-  const base = fromDayStringToUtcMs(value)
-  if (base === null) return value
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value)
+  if (!match) return value
+
+  const baseYear = Number(match[1])
+  const baseMonth = Number(match[2])
+  const baseDay = Number(match[3])
+  const base = Date.UTC(baseYear, baseMonth - 1, baseDay)
 
   const next = new Date(base + delta * 24 * 60 * 60 * 1000)
   const year = next.getUTCFullYear()
@@ -101,13 +99,6 @@ const sanitizeBoosterStats = (stats: BoosterStats | null | undefined, today: str
   }
 }
 
-const calculateCarryoverExtras = (lastReset: string, today: string, dailyAllowance: number): number => {
-  const daysMissed = daysBetween(lastReset, today)
-  if (daysMissed <= 0) return 0
-  // Maximal 1 Tag nachholen (z.B. 2 Packs), egal wie viele Tage verpasst wurden
-  return Math.min(daysMissed, 1) * dailyAllowance
-}
-
 /**
  * Calculates the current "booster day" identifier.
  * A new day starts at 09:00:00 Europe/Berlin time.
@@ -126,20 +117,11 @@ export const getCurrentBoosterDay = (config?: any): string => {
   return baseDay
 }
 
-const daysBetween = (from: string, to: string): number => {
-  const fromMs = fromDayStringToUtcMs(from)
-  const toMs = fromDayStringToUtcMs(to)
-  if (fromMs === null || toMs === null) return 0
-
-  const msInDay = 24 * 60 * 60 * 1000
-  const diff = toMs - fromMs
-  return Math.max(0, Math.floor(diff / msInDay))
-}
-
 export const useUserTeachers = (userId?: string) => {
   const { user: currentUser, profile: currentProfile } = useAuth()
   const activeUserId = userId || currentUser?.uid
   const isOwnProfile = !userId || userId === currentUser?.uid
+  const canAccessSammelkartenConfig = currentProfile?.role === 'viewer' || !!currentProfile?.is_approved
   
   const [teachers, setTeachers] = useState<UserTeacher | null>(null)
   const [config, setConfig] = useState<any>(null)
@@ -147,7 +129,7 @@ export const useUserTeachers = (userId?: string) => {
   const [error, setError] = useState<Error | null>(null)
 
   useEffect(() => {
-    if (!currentProfile?.is_approved) return
+    if (!canAccessSammelkartenConfig) return
 
     const unsubscribe = onSnapshot(doc(db, 'settings', 'sammelkarten'), (snapshot) => {
       if (snapshot.exists()) {
@@ -157,7 +139,7 @@ export const useUserTeachers = (userId?: string) => {
       console.error('useUserTeachers: Error listening to sammelkarten settings:', error)
     })
     return () => unsubscribe()
-  }, [currentProfile?.is_approved])
+  }, [canAccessSammelkartenConfig])
 
   useEffect(() => {
     if (!activeUserId) {
@@ -190,17 +172,21 @@ export const useUserTeachers = (userId?: string) => {
   }, [activeUserId])
 
   const collectMassBoosters = useCallback(
-    async (count: number) => {
+    async (count: number, options?: OpenBoosterOptions) => {
       if (!isOwnProfile || !currentUser) throw new Error('Action not allowed')
       if (count <= 0) throw new Error('Keine Packs zum Öffnen angegeben.')
 
       try {
-        const openBoosterFn = httpsCallable<{ count: number }, { packs: Array<{ cards: Array<{ id: string, name: string, rarity: string, variant: CardVariant, level: number, count: number }> }> }>(
+        const openBoosterFn = httpsCallable<{ count: number, packSource?: 'random' | 'custom', customPackQueueId?: string | null }, { packs: Array<{ cards: Array<{ id: string, name: string, rarity: string, variant: CardVariant, level: number, count: number }> }> }>(
           functions,
           'openBooster'
         )
 
-        const result = await openBoosterFn({ count })
+        const result = await openBoosterFn({
+          count,
+          packSource: options?.packSource || undefined,
+          customPackQueueId: options?.customPackQueueId || undefined,
+        })
         
         // Transform server response to match expected frontend format
         // The frontend expects: Array<Array<{ teacherId, count, level, variant }>>
@@ -221,8 +207,8 @@ export const useUserTeachers = (userId?: string) => {
   )
 
   const collectBooster = useCallback(
-    async () => {
-      const result = await collectMassBoosters(1)
+    async (options?: OpenBoosterOptions) => {
+      const result = await collectMassBoosters(1, options)
       return result[0]
     },
     [collectMassBoosters]
@@ -292,10 +278,9 @@ export const useUserTeachers = (userId?: string) => {
     if (!stats) return dailyLimit
 
     const normalizedStats = sanitizeBoosterStats(stats, today)
-    let extra = normalizedStats.extra_available || 0
+    const extra = normalizedStats.extra_available || 0
 
     if (normalizedStats.last_reset !== today) {
-      extra += calculateCarryoverExtras(normalizedStats.last_reset, today, dailyLimit)
       return dailyLimit + extra
     }
 

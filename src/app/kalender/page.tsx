@@ -125,7 +125,7 @@ export default function CalendarPage() {
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          {isPlanner && <AddEventDialog />}
+          {isPlanner && <AddEventDialog defaultGroup={profile?.planning_groups?.[0]} />}
         </div>
       </div>
 

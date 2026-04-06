@@ -135,7 +135,6 @@ export default function PollsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Umfragen & Ideen</h1>
-          <p className="text-muted-foreground">Stimme ab oder gestalte das Lehrer-Album mit.</p>
         </div>
         {isPlanner && <AddPollDialog />}
       </div>
@@ -148,7 +147,7 @@ export default function PollsPage() {
           </TabsTrigger>
           <TabsTrigger value="proposals" className="gap-2">
             <Sparkles className="h-4 w-4" />
-            Kreativ-Labor
+            Ideen-Labor
           </TabsTrigger>
         </TabsList>
 

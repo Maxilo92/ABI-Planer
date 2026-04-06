@@ -51,6 +51,65 @@ export const toggleUserEmailVerification = onCall({
 });
 
 /**
+ * Recreates a missing profile document for the signed-in user.
+ */
+export const bootstrapMissingProfile = onCall({
+  region: "europe-west3",
+  cors: true,
+}, async (request) => {
+  if (!request.auth) {
+    throw new HttpsError("unauthenticated", "Auth required.");
+  }
+
+  const db = getFirestore("abi-data");
+  const profileRef = db.collection("profiles").doc(request.auth.uid);
+  const existingSnap = await profileRef.get();
+
+  if (existingSnap.exists) {
+    return {
+      success: true,
+      created: false,
+      profile: { id: existingSnap.id, ...existingSnap.data() },
+    };
+  }
+
+  const userRecord = await admin.auth().getUser(request.auth.uid);
+  const fallbackName = userRecord.displayName?.trim() || userRecord.email?.split("@")[0] || "Neuer Nutzer";
+  const email = userRecord.email || "";
+
+  const profile = {
+    id: request.auth.uid,
+    full_name: fallbackName,
+    email,
+    role: "viewer",
+    planning_groups: [],
+    led_groups: [],
+    class_name: null,
+    is_group_leader: false,
+    is_approved: Boolean(userRecord.emailVerified),
+    created_at: new Date().toISOString(),
+    isOnline: false,
+    lastOnline: new Date(),
+    referral_code: request.auth.uid.substring(0, 8).toUpperCase(),
+    referred_by: null,
+    is_referral_claimed: false,
+    total_referrals: 0,
+    total_referral_boosters: 0,
+  };
+
+  await profileRef.set({
+    ...profile,
+    lastOnline: FieldValue.serverTimestamp(),
+  });
+
+  return {
+    success: true,
+    created: true,
+    profile,
+  };
+});
+
+/**
  * Triggered when a user profile is deleted from Firestore.
  * This function cleans up the Firebase Auth account and other user-specific collections.
  */

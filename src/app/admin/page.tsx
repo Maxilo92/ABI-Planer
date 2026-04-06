@@ -1,7 +1,7 @@
 'use client'
 
 import { Profile } from '@/types/database'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { db, getFirebaseFunctions } from '@/lib/firebase'
 import { collection, query, orderBy, onSnapshot, doc, updateDoc, deleteDoc, arrayUnion, arrayRemove } from 'firebase/firestore'
 import { httpsCallable } from 'firebase/functions'
@@ -18,7 +18,7 @@ import {
   ContextMenuSeparator,
   ContextMenuTrigger,
 } from '@/components/ui/context-menu'
-import { MoreVertical, Shield, User, Trash2, Clock3, Undo2, Search, Gift, MessageSquare, AlertTriangle, ShieldOff, X, Plus } from 'lucide-react'
+import { MoreVertical, Shield, User, Users, Trash2, Clock3, Undo2, Search, Gift, MessageSquare, AlertTriangle, ShieldOff, X, Plus } from 'lucide-react'
 import { ResetPasswordDialog } from '@/components/modals/ResetPasswordDialog'
 import { SetTimeoutDialog } from '@/components/modals/SetTimeoutDialog'
 import { useAuth } from '@/context/AuthContext'
@@ -29,6 +29,7 @@ import { logAction } from '@/lib/logging'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import {
   Dialog,
   DialogContent,
@@ -37,6 +38,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import { cn } from '@/lib/utils'
 
 type BulkActionType =
   | 'approve'
@@ -50,6 +52,226 @@ type BulkActionType =
   | 'timeout_24h'
   | 'timeout_7d'
   | 'clear_timeout'
+
+type SearchableValuePickerProps = {
+  value: string
+  options: string[]
+  onSelect: (value: string | null) => void
+  emptyLabel: string
+  searchPlaceholder: string
+  className?: string
+  contentClassName?: string
+  allowClear?: boolean
+  clearLabel?: string
+  iconTrigger?: boolean
+}
+
+function SearchableValuePicker({
+  value,
+  options,
+  onSelect,
+  emptyLabel,
+  searchPlaceholder,
+  className,
+  contentClassName,
+  allowClear = true,
+  clearLabel = 'Zuruecksetzen',
+  iconTrigger = false,
+}: SearchableValuePickerProps) {
+  const [open, setOpen] = useState(false)
+  const [search, setSearch] = useState('')
+
+  const normalizedSearch = search.trim().toLowerCase()
+  const filteredOptions = useMemo(() => {
+    if (!normalizedSearch) return options
+    return options.filter((option) => option.toLowerCase().includes(normalizedSearch))
+  }, [options, normalizedSearch])
+
+  return (
+    <Popover
+      open={open}
+      onOpenChange={(nextOpen) => {
+        setOpen(nextOpen)
+        if (!nextOpen) setSearch('')
+      }}
+    >
+      <PopoverTrigger
+        render={
+          <Button
+            type="button"
+            variant="outline"
+            size={iconTrigger ? 'icon' : 'sm'}
+            className={cn(
+              iconTrigger ? 'h-5 w-5 rounded-md' : 'h-9 w-full justify-between gap-2 px-2 text-sm font-normal',
+              className,
+            )}
+            title={value || emptyLabel}
+          >
+            {iconTrigger ? (
+              <Plus className="h-3 w-3" />
+            ) : (
+              <span className="truncate text-left">{value || emptyLabel}</span>
+            )}
+          </Button>
+        }
+      />
+      <PopoverContent align="start" className={cn('w-[280px] p-2', contentClassName)}>
+        <Input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder={searchPlaceholder}
+          className="h-8"
+        />
+        <div className="mt-2 max-h-56 overflow-y-auto rounded-md border bg-background">
+          {allowClear && (
+            <button
+              type="button"
+              className="flex w-full items-center px-2 py-1.5 text-left text-sm hover:bg-muted"
+              onClick={() => {
+                onSelect(null)
+                setOpen(false)
+              }}
+            >
+              {clearLabel}
+            </button>
+          )}
+          {filteredOptions.map((option) => (
+            <button
+              key={option}
+              type="button"
+              className="flex w-full items-center px-2 py-1.5 text-left text-sm hover:bg-muted"
+              title={option}
+              onClick={() => {
+                onSelect(option)
+                setOpen(false)
+              }}
+            >
+              <span className="truncate">{option}</span>
+            </button>
+          ))}
+          {filteredOptions.length === 0 && (
+            <div className="px-2 py-2 text-xs text-muted-foreground">Keine Treffer</div>
+          )}
+        </div>
+      </PopoverContent>
+    </Popover>
+  )
+}
+
+type PlanningGroupsPopoverProps = {
+  profileId: string
+  groups: string[]
+  availableGroups: string[]
+  onAddGroup: (profileId: string, groupName: string) => void
+  onRemoveGroup: (profileId: string, groupName: string) => void
+}
+
+function PlanningGroupsPopover({
+  profileId,
+  groups,
+  availableGroups,
+  onAddGroup,
+  onRemoveGroup,
+}: PlanningGroupsPopoverProps) {
+  const normalizedGroups = useMemo(
+    () => Array.from(new Set(groups.filter((group): group is string => typeof group === 'string' && group.trim().length > 0))).sort((left, right) => left.localeCompare(right, 'de')),
+    [groups],
+  )
+
+  const availableOptions = useMemo(
+    () => availableGroups.filter((groupName) => !normalizedGroups.includes(groupName)),
+    [availableGroups, normalizedGroups],
+  )
+
+  const summaryLabel = normalizedGroups.length === 0
+    ? 'Keine Gruppe'
+    : normalizedGroups.length === 1
+      ? normalizedGroups[0]
+      : `${normalizedGroups[0]} +${normalizedGroups.length - 1}`
+
+  return (
+    <Popover>
+      <PopoverTrigger
+        render={
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-8 w-full max-w-[240px] justify-start gap-2 rounded-md px-2 text-left font-normal"
+            title={normalizedGroups.length > 0 ? normalizedGroups.join(', ') : 'Keine Gruppe zugewiesen'}
+          >
+            <Users className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+            <span className="min-w-0 flex-1 truncate">{summaryLabel}</span>
+            {normalizedGroups.length > 1 && (
+              <Badge variant="secondary" className="h-5 rounded-full px-1.5 text-[10px] font-semibold">
+                +{normalizedGroups.length - 1}
+              </Badge>
+            )}
+          </Button>
+        }
+      />
+
+      <PopoverContent align="start" className="w-[340px] max-w-none">
+        <div className="space-y-3">
+          <div className="flex items-start justify-between gap-3">
+            <div className="space-y-1">
+              <p className="text-sm font-semibold leading-none">Planungsgruppen</p>
+              <p className="text-xs text-muted-foreground">
+                {normalizedGroups.length === 0
+                  ? 'Noch keine Gruppe zugewiesen.'
+                  : `${normalizedGroups.length} Gruppe${normalizedGroups.length === 1 ? '' : 'n'} zugewiesen.`}
+              </p>
+            </div>
+            <Badge variant="outline" className="h-6 rounded-full px-2 text-[10px] uppercase tracking-[0.2em]">
+              {normalizedGroups.length}
+            </Badge>
+          </div>
+
+          {normalizedGroups.length > 0 ? (
+            <div className="flex max-h-40 flex-wrap gap-1.5 overflow-y-auto rounded-lg border bg-muted/20 p-2">
+              {normalizedGroups.map((groupName) => (
+                <Badge
+                  key={groupName}
+                  variant="secondary"
+                  className="h-6 max-w-full gap-1 rounded-full px-2 text-[10px] font-medium"
+                  title={groupName}
+                >
+                  <span className="truncate">{groupName}</span>
+                  <button
+                    type="button"
+                    onClick={() => onRemoveGroup(profileId, groupName)}
+                    className="rounded-full p-0.5 text-muted-foreground transition-colors hover:text-destructive"
+                    aria-label={`Gruppe ${groupName} entfernen`}
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </Badge>
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-lg border border-dashed bg-muted/20 px-3 py-4 text-sm text-muted-foreground">
+              Die Gruppenanzeige ist aktuell leer.
+            </div>
+          )}
+
+          <SearchableValuePicker
+            value=""
+            options={availableOptions}
+            emptyLabel="Gruppe hinzufügen"
+            searchPlaceholder="Gruppe suchen..."
+            allowClear={false}
+            iconTrigger
+            contentClassName="w-[300px]"
+            onSelect={(value) => {
+              if (!value) return
+              onAddGroup(profileId, value)
+            }}
+          />
+        </div>
+      </PopoverContent>
+    </Popover>
+  )
+}
 
 export default function AdminPage() {
   const { user, profile, loading: authLoading } = useAuth()
@@ -597,59 +819,23 @@ export default function AdminPage() {
                             )}
                           </TableCell>
                           <TableCell>
-                            <select
-                              className="h-9 w-full rounded-md border bg-background px-2 text-sm"
+                            <SearchableValuePicker
                               value={p.class_name || ''}
-                              onChange={(e) => handleUpdateProfile(p.id, { class_name: e.target.value || null })}
-                            >
-                              <option value="">Kein Kurs</option>
-                              {courses.map((course) => (
-                                <option key={course} value={course}>{course}</option>
-                              ))}
-                            </select>
+                              options={courses}
+                              emptyLabel="Kein Kurs"
+                              searchPlaceholder="Kurs suchen..."
+                              clearLabel="Kein Kurs"
+                              onSelect={(value) => handleUpdateProfile(p.id, { class_name: value || null })}
+                            />
                           </TableCell>
                           <TableCell>
-                            <div className="flex flex-wrap gap-1 max-w-[200px]">
-                              {(p.planning_groups || []).map((groupName) => (
-                                <Badge 
-                                  key={groupName} 
-                                  variant="secondary" 
-                                  className="text-[10px] h-5 px-1.5 flex items-center gap-1"
-                                >
-                                  {groupName}
-                                  <button 
-                                    onClick={() => handleUpdateProfile(p.id, { planning_groups: arrayRemove(groupName) })}
-                                    className="hover:text-destructive transition-colors"
-                                  >
-                                    <X className="h-3 w-3" />
-                                  </button>
-                                </Badge>
-                              ))}
-                              <DropdownMenu>
-                                <DropdownMenuTrigger
-                                  render={
-                                    <Button variant="outline" size="icon" className="h-5 w-5 rounded-md">
-                                      <Plus className="h-3 w-3" />
-                                    </Button>
-                                  }
-                                />
-                                <DropdownMenuContent align="start" className="w-56">
-                                  {planningGroups
-                                    .filter(gn => !(p.planning_groups || []).includes(gn))
-                                    .map((groupName) => (
-                                    <DropdownMenuItem 
-                                      key={groupName}
-                                      onClick={() => handleUpdateProfile(p.id, { planning_groups: arrayUnion(groupName) })}
-                                    >
-                                      {groupName}
-                                    </DropdownMenuItem>
-                                  ))}
-                                  {planningGroups.filter(gn => !(p.planning_groups || []).includes(gn)).length === 0 && (
-                                    <div className="p-2 text-xs text-muted-foreground italic">Alle Gruppen zugewiesen</div>
-                                  )}
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </div>
+                            <PlanningGroupsPopover
+                              profileId={p.id}
+                              groups={p.planning_groups || []}
+                              availableGroups={planningGroups}
+                              onAddGroup={(profileId, groupName) => handleUpdateProfile(profileId, { planning_groups: arrayUnion(groupName) })}
+                              onRemoveGroup={(profileId, groupName) => handleUpdateProfile(profileId, { planning_groups: arrayRemove(groupName) })}
+                            />
                           </TableCell>
                           <TableCell className="text-right">
                             <DropdownMenu>
@@ -793,55 +979,26 @@ export default function AdminPage() {
                   <div className="grid grid-cols-2 gap-3 pt-2 border-t">
                     <div className="space-y-1.5">
                       <label className="text-[10px] font-bold uppercase text-muted-foreground ml-1">Kurs</label>
-                      <select
-                        className="h-9 w-full rounded-md border bg-background px-2 text-xs"
+                      <SearchableValuePicker
                         value={p.class_name || ''}
-                        onChange={(e) => handleUpdateProfile(p.id, { class_name: e.target.value || null })}
-                      >
-                        <option value="">Kein Kurs</option>
-                        {courses.map((course) => (
-                          <option key={course} value={course}>{course}</option>
-                        ))}
-                      </select>
+                        options={courses}
+                        emptyLabel="Kein Kurs"
+                        searchPlaceholder="Kurs suchen..."
+                        clearLabel="Kein Kurs"
+                        className="h-9 text-xs"
+                        contentClassName="w-[260px]"
+                        onSelect={(value) => handleUpdateProfile(p.id, { class_name: value || null })}
+                      />
                     </div>
                     <div className="space-y-1.5">
                       <label className="text-[10px] font-bold uppercase text-muted-foreground ml-1">Gruppen</label>
-                      <div className="flex flex-wrap gap-1 min-h-[36px] p-2 rounded-md border bg-muted/20">
-                        {(p.planning_groups || []).map((groupName) => (
-                          <Badge 
-                            key={groupName} 
-                            variant="secondary" 
-                            className="text-[9px] h-4 px-1 flex items-center gap-1"
-                          >
-                            {groupName}
-                            <button onClick={() => handleUpdateProfile(p.id, { planning_groups: arrayRemove(groupName) })}>
-                              <X className="h-2 w-2" />
-                            </button>
-                          </Badge>
-                        ))}
-                        <DropdownMenu>
-                          <DropdownMenuTrigger
-                            render={
-                              <Button variant="outline" size="icon" className="h-4 w-4">
-                                <Plus className="h-2 w-2" />
-                              </Button>
-                            }
-                          />
-                          <DropdownMenuContent className="w-48">
-                            {planningGroups
-                              .filter(gn => !(p.planning_groups || []).includes(gn))
-                              .map((groupName) => (
-                              <DropdownMenuItem 
-                                key={groupName}
-                                onClick={() => handleUpdateProfile(p.id, { planning_groups: arrayUnion(groupName) })}
-                                className="text-xs"
-                              >
-                                {groupName}
-                              </DropdownMenuItem>
-                            ))}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
+                      <PlanningGroupsPopover
+                        profileId={p.id}
+                        groups={p.planning_groups || []}
+                        availableGroups={planningGroups}
+                        onAddGroup={(profileId, groupName) => handleUpdateProfile(profileId, { planning_groups: arrayUnion(groupName) })}
+                        onRemoveGroup={(profileId, groupName) => handleUpdateProfile(profileId, { planning_groups: arrayRemove(groupName) })}
+                      />
                     </div>
                   </div>
                 </div>
@@ -885,34 +1042,30 @@ export default function AdminPage() {
             {bulkAction === 'set_course' && (
               <div className="space-y-2">
                 <Label htmlFor="bulk-course">Kurs</Label>
-                <select
-                  id="bulk-course"
-                  className="h-10 w-full rounded-md border bg-background px-3 text-sm"
+                <SearchableValuePicker
                   value={bulkCourse}
-                  onChange={(e) => setBulkCourse(e.target.value)}
-                >
-                  <option value="">Kurs auswählen</option>
-                  {courses.map((course) => (
-                    <option key={course} value={course}>{course}</option>
-                  ))}
-                </select>
+                  options={courses}
+                  emptyLabel="Kurs auswaehlen"
+                  searchPlaceholder="Kurs suchen..."
+                  className="h-10"
+                  clearLabel="Kurs auswaehlen"
+                  onSelect={(value) => setBulkCourse(value || '')}
+                />
               </div>
             )}
 
             {bulkAction === 'set_group' && (
               <div className="space-y-2">
                 <Label htmlFor="bulk-group">Planungsgruppe</Label>
-                <select
-                  id="bulk-group"
-                  className="h-10 w-full rounded-md border bg-background px-3 text-sm"
+                <SearchableValuePicker
                   value={bulkGroup}
-                  onChange={(e) => setBulkGroup(e.target.value)}
-                >
-                  <option value="">Gruppe auswählen</option>
-                  {planningGroups.map((groupName) => (
-                    <option key={groupName} value={groupName}>{groupName}</option>
-                  ))}
-                </select>
+                  options={planningGroups}
+                  emptyLabel="Gruppe auswaehlen"
+                  searchPlaceholder="Gruppe suchen..."
+                  className="h-10"
+                  clearLabel="Gruppe auswaehlen"
+                  onSelect={(value) => setBulkGroup(value || '')}
+                />
               </div>
             )}
 

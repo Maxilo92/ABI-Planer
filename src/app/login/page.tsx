@@ -15,6 +15,7 @@ import Logo from '@/components/Logo'
 import { ForgotPasswordDialog } from '@/components/modals/ForgotPasswordDialog'
 import { useAuth } from '@/context/AuthContext'
 import { ShieldCheck, ArrowLeft } from 'lucide-react'
+import { getDashboardRedirectUrl } from '@/lib/dashboard-url'
 
 const auth = getFirebaseAuth()
 
@@ -32,6 +33,15 @@ export default function LoginPage() {
   const functions = getFirebaseFunctions()
   
   const router = useRouter()
+
+  const redirectToDashboard = () => {
+    if (typeof window === 'undefined') {
+      router.push('/')
+      return
+    }
+
+    window.location.href = getDashboardRedirectUrl(window.location)
+  }
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -71,7 +81,7 @@ export default function LoginPage() {
         console.error('[Login] Profile not found for UID:', uid)
         // If profile doesn't exist, we assume no 2FA
         set2FAVerified(true)
-        router.push('/')
+        redirectToDashboard()
         return
       }
 
@@ -84,7 +94,7 @@ export default function LoginPage() {
       } else {
         console.log('[Login] no 2FA, proceeding to dashboard')
         set2FAVerified(true)
-        router.push('/')
+        redirectToDashboard()
       }
     } catch (err: any) {
       console.error('[Login] Error during sign-in:', err)
@@ -111,7 +121,7 @@ export default function LoginPage() {
 
       if (result.data.success) {
         set2FAVerified(true)
-        router.push('/')
+        redirectToDashboard()
       } else {
         throw new Error('Ungültiger Code.')
       }
@@ -148,7 +158,7 @@ export default function LoginPage() {
                 variant="ghost"
                 size="sm"
                 className="-ml-2 text-muted-foreground hover:text-foreground"
-                render={<Link href="/">Zurück zum Dashboard</Link>}
+                render={<Link href="/">Zurück zur Startseite</Link>}
               />
             )}
           </div>

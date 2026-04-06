@@ -82,7 +82,7 @@ export function PollList({
   const handleVote = async (pollId: string, optionId: string) => {
     if (!userId) {
       toast.error('Du musst angemeldet sein, um abzustimmen.')
-      router.push('/promo')
+      router.push('/zugang')
       return
     }
 
@@ -316,7 +316,7 @@ export function PollList({
                         variant="ghost" 
                         size="sm" 
                         className="h-10 text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground hover:text-primary hover:bg-primary/5" 
-                        onClick={() => router.push('/promo')}
+                        onClick={() => router.push('/zugang')}
                       >
                         Vorteile entdecken
                       </Button>

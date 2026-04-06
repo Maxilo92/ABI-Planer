@@ -37,6 +37,14 @@ Several collections are configured with `allow read: if true;`, making them acce
 - **Recommendation:** Implement rate-limiting via Cloud Functions for logging if volume becomes an issue.
 
 ---
+<!-- AGENT_NAV_METADATA -->
+<!-- path: docs/maestro/audit-reports/phase2-security.md -->
+<!-- role: planning -->
+<!-- read_mode: conditional -->
+<!-- token_hint: summary-first -->
+<!-- default_action: read if task touches planning, audits, or rollout decisions -->
+<!-- index: docs/AGENT_CONTEXT_INDEX.md -->
+
 
 ## 3. Danger System Audit (`functions/src/danger.ts` & `functions/src/cron.ts`)
 

@@ -14,6 +14,7 @@ interface FundingStatusProps {
   goal: number
   initialTicketSales?: number
   onTicketSalesChange?: (value: number) => void
+  canEditTicketSales?: boolean
   isAuthenticated: boolean
   loading?: boolean
 }
@@ -23,11 +24,13 @@ export function FundingStatus({
   goal,
   initialTicketSales = 150,
   onTicketSalesChange,
+  canEditTicketSales,
   isAuthenticated,
   loading
 }: FundingStatusProps) {
   const [mounted, setHydrated] = useState(false)
   const [ticketSalesInput, setTicketSalesInput] = useState(String(initialTicketSales))
+  const ticketSalesEditable = canEditTicketSales ?? !!onTicketSalesChange
   
   useEffect(() => {
     setHydrated(true)
@@ -38,7 +41,7 @@ export function FundingStatus({
   }, [initialTicketSales])
 
   useEffect(() => {
-    if (!onTicketSalesChange) return
+    if (!ticketSalesEditable || !onTicketSalesChange) return
     if (ticketSalesInput === '') return
 
     // Don't call onTicketSalesChange if the value hasn't changed from the initial prop value
@@ -52,7 +55,7 @@ export function FundingStatus({
     return () => {
       window.clearTimeout(timeoutId)
     }
-  }, [ticketSalesInput, onTicketSalesChange, initialTicketSales])
+  }, [ticketSalesInput, onTicketSalesChange, initialTicketSales, ticketSalesEditable])
 
   const ticketSales = ticketSalesInput === '' ? 0 : Number(ticketSalesInput)
 
@@ -135,39 +138,56 @@ export function FundingStatus({
               </span>
             </div>
             {/* Explicitly set aria-valuetext to avoid hydration mismatch from auto-generated values */}
-            <Progress 
-              value={percentage} 
-              className="h-3" 
+            <Progress
+              value={percentage}
+              className="h-3"
               aria-valuetext={`${percentage}%`}
             />
           </div>
 
           {isAuthenticated ? (
             <div className="pt-4 border-t space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="space-y-1">
-                  <Label htmlFor="tickets" className="text-xs text-muted-foreground">Erwartete Ticketverkäufe</Label>
-                  <Input 
-                    id="tickets"
-                    type="number"
-                    value={ticketSalesInput}
-                    onChange={(e) => {
-                      const value = e.target.value
-                      if (/^\d*$/.test(value)) {
-                        setTicketSalesInput(value)
-                      }
-                    }}
-                    className="w-24 h-8 text-sm"
-                    min="0"
-                  />
+              {ticketSalesEditable ? (
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="space-y-1">
+                    <Label htmlFor="tickets" className="text-xs text-muted-foreground">Erwartete Ticketverkäufe</Label>
+                    <Input
+                      id="tickets"
+                      type="number"
+                      value={ticketSalesInput}
+                      onChange={(e) => {
+                        const value = e.target.value
+                        if (/^\d*$/.test(value)) {
+                          setTicketSalesInput(value)
+                        }
+                      }}
+                      className="w-28 h-8 text-sm border-brand/30 focus-visible:ring-brand/40"
+                      min="0"
+                    />
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs text-muted-foreground mb-1">Geschätzter Ticketpreis</p>
+                    <p className="text-xl font-bold text-foreground" suppressHydrationWarning>
+                      {formatCurrency(estimatedPrice, 2)}
+                    </p>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-xs text-muted-foreground mb-1">Geschätzter Ticketpreis</p>
-                  <p className="text-xl font-bold text-primary" suppressHydrationWarning>
-                    {formatCurrency(estimatedPrice, 2)}
-                  </p>
+              ) : (
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-2xl border border-brand/20 bg-brand/5 px-4 py-3">
+                  <div className="space-y-1">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Erwartete Ticketverkäufe</p>
+                    <p className="text-lg font-bold text-foreground" suppressHydrationWarning>
+                      {ticketSales.toLocaleString('de-DE')}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs text-muted-foreground mb-1">Geschätzter Ticketpreis</p>
+                    <p className="text-xl font-bold text-foreground" suppressHydrationWarning>
+                      {formatCurrency(estimatedPrice, 2)}
+                    </p>
+                  </div>
                 </div>
-              </div>
+              )}
               <p className="text-[10px] text-muted-foreground italic leading-tight">
                 Der Ticketpreis berechnet sich aus dem noch offenen Betrag ({formatCurrency(remaining)}), um das Ziel von {formatCurrency(goal)} zu erreichen, geteilt durch die Anzahl der erwarteten Verkäufe.
               </p>

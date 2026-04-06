@@ -595,7 +595,9 @@ export function TeacherAlbum({
   };
 
   useEffect(() => {
-    if (loading || !currentProfile?.is_approved) return;
+    const canAccessSammelkartenConfig = currentProfile?.role === "viewer" || !!currentProfile?.is_approved;
+
+    if (loading || !canAccessSammelkartenConfig) return;
 
     let unsubscribeGlobal: (() => void) | null = null;
 
@@ -665,7 +667,7 @@ export function TeacherAlbum({
       unsubscribeSammelkarten();
       if (unsubscribeGlobal) unsubscribeGlobal();
     };
-  }, [currentProfile?.is_approved, loading]);
+  }, [currentProfile?.is_approved, currentProfile?.role, loading]);
 
   const filteredTeachers = useMemo(() => {
     const searchLower = search.toLowerCase();
@@ -1190,7 +1192,7 @@ export function TeacherAlbum({
 
                   {isOwned && (
                     <div className="w-full mt-2 text-center">
-                      <h3 className="font-black text-[9px] sm:text-[10px] uppercase tracking-tighter line-clamp-1 opacity-80">
+                      <h3 className="font-black text-[9px] sm:text-[10px] uppercase tracking-tight line-clamp-1 opacity-80">
                         {teacher.name}
                       </h3>
                       <div className="flex items-center justify-center gap-1.5 mt-1">

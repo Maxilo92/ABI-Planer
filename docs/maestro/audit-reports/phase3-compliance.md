@@ -18,6 +18,14 @@ Audit of Stripe integration for German tax compliance and legal requirements for
 2.  **Email Consistency:** `customer_email` is not pre-filled in the Stripe session. Users might provide a different email address than their account email, complicating support and tax reconciliation.
 
 ---
+<!-- AGENT_NAV_METADATA -->
+<!-- path: docs/maestro/audit-reports/phase3-compliance.md -->
+<!-- role: planning -->
+<!-- read_mode: conditional -->
+<!-- token_hint: summary-first -->
+<!-- default_action: read if task touches planning, audits, or rollout decisions -->
+<!-- index: docs/AGENT_CONTEXT_INDEX.md -->
+
 
 ## 2. GDPR Data Flows & Deletion (Right to be Forgotten)
 Audit of user deletion completeness and data retention policies.

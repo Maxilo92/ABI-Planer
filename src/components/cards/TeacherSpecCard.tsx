@@ -65,7 +65,7 @@ export const TeacherSpecCard = React.memo(({
 
   return (
     <div
-      className={cn("relative aspect-[2.5/3.5] @container", className)}
+      className={cn("relative aspect-[2.5/3.5] @container rounded-[3.5cqw]", className)}
       style={{ containerType: 'inline-size' }}
     >
       <div 

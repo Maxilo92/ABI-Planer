@@ -56,13 +56,6 @@ export const SystemMessageProvider = ({ children }: { children: ReactNode }) => 
   const router = useRouter()
   const [maintenance, setMaintenance] = useState<Settings['maintenance'] | null>(null)
 
-  // Diagnostic: Log initialization
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      console.log('SystemMessageProvider: Mounting on client...');
-    }
-  }, [])
-
   const dismissMessage = useCallback((id: string) => {
     setActiveMessages((prev) => {
       const messageToDismiss = prev.find(m => m.id === id)

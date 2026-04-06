@@ -70,16 +70,13 @@ export default function MaintenancePage() {
         {/* Header/Logo */}
         <div className="flex flex-col items-center text-center space-y-4">
           <Logo width={180} height={60} />
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 text-amber-600 border border-amber-500/20 text-xs font-black uppercase tracking-widest mt-4">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 text-amber-700 border border-amber-500/20 text-xs font-black uppercase tracking-widest mt-4">
             <Construction className="h-3.5 w-3.5" />
             Wartungspause
           </div>
           <h1 className="text-4xl sm:text-5xl font-black tracking-tight mt-2">
             Wir sind gleich wieder da.
           </h1>
-          <p className="text-muted-foreground text-lg max-w-xl">
-            {maintenance?.message || 'Wir führen gerade wichtige Wartungsarbeiten durch, um den ABI Planer noch besser zu machen. Bitte hab ein wenig Geduld.'}
-          </p>
         </div>
 
         {/* Status Card */}
@@ -103,7 +100,7 @@ export default function MaintenancePage() {
             ) : (
               <div className="space-y-2">
                 <p className="text-xs font-black uppercase text-muted-foreground tracking-widest">Status</p>
-                <div className="text-2xl font-black text-amber-600">
+                <div className="text-2xl font-black text-amber-700">
                   Arbeiten werden abgeschlossen...
                 </div>
                 <p className="text-xs text-muted-foreground">Wir sind in wenigen Augenblicken wieder für dich da.</p>

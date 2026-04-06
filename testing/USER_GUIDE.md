@@ -21,6 +21,14 @@
 > **Wichtig:** Der allererste Nutzer wird automatisch zum **Admin** und kann anderen Nutzern Rollen zuweisen.
 
 ---
+<!-- AGENT_NAV_METADATA -->
+<!-- path: testing/USER_GUIDE.md -->
+<!-- role: secondary -->
+<!-- read_mode: read-on-demand -->
+<!-- token_hint: summary-first -->
+<!-- default_action: read sections that match current task -->
+<!-- index: docs/AGENT_CONTEXT_INDEX.md -->
+
 
 ## 📊 Dashboard (Startseite)
 

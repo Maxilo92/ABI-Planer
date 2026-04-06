@@ -5,6 +5,14 @@ author: Gemini CLI (Maestro Orchestrator)
 task_complexity: medium
 design_depth: standard
 ---
+<!-- AGENT_NAV_METADATA -->
+<!-- path: docs/maestro/plans/2026-03-31-rarity-iconic-cleanup-design.md -->
+<!-- role: planning -->
+<!-- read_mode: conditional -->
+<!-- token_hint: summary-first -->
+<!-- default_action: read if task touches planning, audits, or rollout decisions -->
+<!-- index: docs/AGENT_CONTEXT_INDEX.md -->
+
 
 # Design Document: Rarity Expansion & Voting Cleanup
 

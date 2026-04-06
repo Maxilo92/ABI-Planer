@@ -38,10 +38,11 @@ export function EditEventDialog({ event }: EditEventDialogProps) {
   const [title, setTitle] = useState(event.title)
   const [description, setDescription] = useState(event.description || '')
   const [location, setLocation] = useState(event.location || '')
-    const [startDate, setStartDate] = useState(format(toDate(event.start_date), "yyyy-MM-dd'T'HH:mm"))
+  const [startDate, setStartDate] = useState(format(toDate(event.start_date), "yyyy-MM-dd'T'HH:mm"))
   const [endDate, setEndDate] = useState(
     event.end_date ? format(toDate(event.end_date), "yyyy-MM-dd'T'HH:mm") : format(toDate(event.start_date), "yyyy-MM-dd'T'HH:mm")
   )
+  const [assignedGroup, setAssignedGroup] = useState(event.assigned_to_group || '')
   const [mentionedUserIds, setMentionedUserIds] = useState<string[]>(event.mentioned_user_ids || [])
   const [mentionedRoles, setMentionedRoles] = useState<string[]>(event.mentioned_roles || [])
   const [mentionedGroups, setMentionedGroups] = useState<string[]>(event.mentioned_groups || [])
@@ -93,15 +94,21 @@ export function EditEventDialog({ event }: EditEventDialogProps) {
 
     try {
       const docRef = doc(db, 'events', event.id)
+      const normalizedMentionedGroups = Array.from(new Set([
+        ...mentionedGroups,
+        ...(assignedGroup ? [assignedGroup] : []),
+      ]))
+
       await updateDoc(docRef, {
         title,
         description,
         location,
         start_date: new Date(startDate).toISOString(),
         end_date: endDate ? new Date(endDate).toISOString() : new Date(startDate).toISOString(),
+        assigned_to_group: assignedGroup || null,
         mentioned_user_ids: mentionedUserIds,
         mentioned_roles: mentionedRoles,
-        mentioned_groups: mentionedGroups,
+        mentioned_groups: normalizedMentionedGroups,
       })
 
       if (user) {
@@ -111,9 +118,10 @@ export function EditEventDialog({ event }: EditEventDialogProps) {
           location,
           start_date: new Date(startDate).toISOString(),
           end_date: endDate ? new Date(endDate).toISOString() : new Date(startDate).toISOString(),
+          assigned_to_group: assignedGroup || null,
           mentions_users_count: mentionedUserIds.length,
           mentions_roles_count: mentionedRoles.length,
-          mentions_groups_count: mentionedGroups.length,
+          mentions_groups_count: normalizedMentionedGroups.length,
         })
       }
 
@@ -185,6 +193,23 @@ export function EditEventDialog({ event }: EditEventDialogProps) {
                 <Label htmlFor="edit-end-date">Enddatum & Uhrzeit</Label>
                 <Input id="edit-end-date" type="datetime-local" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
               </div>
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="edit-assigned-group">Gruppenzuordnung</Label>
+              <select
+                id="edit-assigned-group"
+                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                value={assignedGroup}
+                onChange={(e) => setAssignedGroup(e.target.value)}
+              >
+                <option value="">Keine feste Gruppe</option>
+                {availableGroups.map((group) => (
+                  <option key={group} value={group}>
+                    {group}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div className="grid gap-2">

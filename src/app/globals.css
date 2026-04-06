@@ -7,6 +7,9 @@
   --color-background: hsl(var(--background));
   --color-foreground: hsl(var(--foreground));
 
+  --color-brand: var(--brand-accent);
+  --color-brand-foreground: var(--brand-accent-foreground);
+
   --color-primary: hsl(var(--primary));
   --color-primary-foreground: hsl(var(--primary-foreground));
 
@@ -69,9 +72,16 @@
   --animate-glow-pulse: glow-pulse 2s ease-in-out infinite;
   --animate-rip-top: rip-top 0.8s forwards cubic-bezier(0.19, 1, 0.22, 1);
   --animate-rip-bottom: rip-bottom 0.8s forwards cubic-bezier(0.19, 1, 0.22, 1);
+  --animate-rip-burst: rip-burst 0.5s forwards cubic-bezier(0.18, 0.82, 0.22, 1);
   --animate-shimmer: shimmer 2s infinite linear;
   --animate-spin-slow: spin-slow 8s linear infinite;
+  --animate-gradient: gradient 8s linear infinite;
 
+  @keyframes gradient {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
   @keyframes sammelkarten-shake-1 {
     10%, 90% { transform: translate3d(-0.5px, 0, 0); }
     20%, 80% { transform: translate3d(1px, 0, 0); }
@@ -116,12 +126,17 @@
     50% { box-shadow: 0 0 40px rgba(255, 255, 255, 0.4); }
   }
   @keyframes rip-top {
-    0% { transform: translate(0, 0) rotate(0); opacity: 1; }
-    100% { transform: translate(-100%, -200%) rotate(-45deg); opacity: 0; }
+    0% { transform: translate(0, 0) rotate(0) scale(1); opacity: 1; }
+    100% { transform: translate(-32px, -220px) rotate(-18deg) scale(0.94); opacity: 0; }
   }
   @keyframes rip-bottom {
-    0% { transform: translate(0, 0) rotate(0); opacity: 1; }
-    100% { transform: translate(100%, 200%) rotate(45deg); opacity: 0; }
+    0% { transform: translate(0, 0) rotate(0) scale(1); opacity: 1; }
+    100% { transform: translate(32px, 220px) rotate(18deg) scale(0.94); opacity: 0; }
+  }
+  @keyframes rip-burst {
+    0% { transform: translate(-50%, -50%) scale(0.2); opacity: 0.15; }
+    45% { transform: translate(-50%, -50%) scale(1.15); opacity: 0.95; }
+    100% { transform: translate(-50%, -50%) scale(1.6); opacity: 0; }
   }
   @keyframes shimmer {
     0% { background-position: -200% 0; }
@@ -147,7 +162,8 @@
   .animate-reveal-pop,
   .animate-float,
   .animate-rip-top,
-  .animate-rip-bottom {
+  .animate-rip-bottom,
+  .animate-rip-burst {
     animation: none !important;
   }
 }
@@ -178,6 +194,9 @@
 
 @layer base {
   :root {
+    --brand-accent: #7DD200;
+    --brand-accent-foreground: #132300;
+
     /* Slightly off-white background for better contrast with white cards */
     --background: 210 20% 98%;
     --foreground: 222.2 84% 4.9%;
@@ -218,6 +237,9 @@
   }
 
   .dark {
+    --brand-accent: #7DD200;
+    --brand-accent-foreground: #132300;
+
     --background: 222 26% 10%;
     --foreground: 210 22% 96%;
 
@@ -257,6 +279,11 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
+  }
+
+  ::selection {
+    background: var(--brand-accent);
+    color: var(--brand-accent-foreground);
   }
 
   button,

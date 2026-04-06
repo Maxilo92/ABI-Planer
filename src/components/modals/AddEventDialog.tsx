@@ -24,13 +24,19 @@ const AVAILABLE_ROLES: { id: UserRole; label: string }[] = [
   { id: 'viewer', label: 'Zuschauer' },
 ]
 
-export function AddEventDialog() {
+interface AddEventDialogProps {
+  defaultGroup?: string
+  triggerLabel?: string
+}
+
+export function AddEventDialog({ defaultGroup, triggerLabel = 'Termin hinzufügen' }: AddEventDialogProps) {
   const [open, setOpen] = useState(false)
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [location, setLocation] = useState('')
-    const [startDate, setStartDate] = useState('')
+  const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
+  const [assignedGroup, setAssignedGroup] = useState(defaultGroup || '')
   const [mentionedUserIds, setMentionedUserIds] = useState<string[]>([])
   const [mentionedRoles, setMentionedRoles] = useState<string[]>([])
   const [mentionedGroups, setMentionedGroups] = useState<string[]>([])
@@ -39,6 +45,11 @@ export function AddEventDialog() {
   const [profiles, setProfiles] = useState<Profile[]>([])
   const [availableGroups, setAvailableGroups] = useState<string[]>([])
   const { user, profile, loading: authLoading } = useAuth()
+
+  useEffect(() => {
+    if (!open) return
+    setAssignedGroup(defaultGroup || '')
+  }, [defaultGroup, open])
 
   useEffect(() => {
     if (!open || authLoading || !profile?.is_approved) return
@@ -82,6 +93,11 @@ export function AddEventDialog() {
     setLoading(true)
 
     try {
+      const normalizedMentionedGroups = Array.from(new Set([
+        ...mentionedGroups,
+        ...(assignedGroup ? [assignedGroup] : []),
+      ]))
+
       await addDoc(collection(db, 'events'), {
         title,
         description,
@@ -91,9 +107,10 @@ export function AddEventDialog() {
         created_at: new Date().toISOString(),
         created_by: user.uid,
         created_by_name: profile?.full_name || user.displayName || user.email || 'Unbekannt',
+        assigned_to_group: assignedGroup || null,
         mentioned_user_ids: mentionedUserIds,
         mentioned_roles: mentionedRoles,
-        mentioned_groups: mentionedGroups,
+        mentioned_groups: normalizedMentionedGroups,
       })
 
       await logAction('EVENT_CREATED', user.uid, null, {
@@ -101,9 +118,10 @@ export function AddEventDialog() {
         location,
         start_date: new Date(startDate).toISOString(),
         end_date: endDate ? new Date(endDate).toISOString() : new Date(startDate).toISOString(),
+        assigned_to_group: assignedGroup || null,
         mentions_users_count: mentionedUserIds.length,
         mentions_roles_count: mentionedRoles.length,
-        mentions_groups_count: mentionedGroups.length,
+        mentions_groups_count: normalizedMentionedGroups.length,
       })
 
       setOpen(false)
@@ -112,6 +130,7 @@ export function AddEventDialog() {
       setLocation('')
       setStartDate('')
       setEndDate('')
+      setAssignedGroup(defaultGroup || '')
       setMentionedUserIds([])
       setMentionedRoles([])
       setMentionedGroups([])
@@ -145,7 +164,7 @@ export function AddEventDialog() {
       <DialogTrigger
         render={
           <Button size="sm" className="gap-2">
-            <Plus className="h-4 w-4" /> Termin hinzufügen
+            <Plus className="h-4 w-4" /> {triggerLabel}
           </Button>
         }
       />
@@ -154,7 +173,7 @@ export function AddEventDialog() {
           <DialogHeader>
             <DialogTitle>Termin hinzufügen</DialogTitle>
             <DialogDescription>
-              Erstelle einen neuen Termin für den Kalender.
+              Erstelle einen neuen Termin und ordne ihn bei Bedarf direkt einer Gruppe zu.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
@@ -179,6 +198,23 @@ export function AddEventDialog() {
                 <Label htmlFor="end-date">Enddatum & Uhrzeit</Label>
                 <Input id="end-date" type="datetime-local" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
               </div>
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="assigned-group">Gruppenzuordnung</Label>
+              <select
+                id="assigned-group"
+                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                value={assignedGroup}
+                onChange={(e) => setAssignedGroup(e.target.value)}
+              >
+                <option value="">Keine feste Gruppe</option>
+                {availableGroups.map((group) => (
+                  <option key={group} value={group}>
+                    {group}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div className="grid gap-2">

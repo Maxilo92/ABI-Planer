@@ -264,7 +264,7 @@ export default function ShopEarningsPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-xs text-muted-foreground font-semibold">Direkt fuer eure Stufenkasse</p>
+            <p className="text-xs text-muted-foreground font-semibold">Direkt für eure Stufenkasse</p>
           </CardContent>
         </Card>
 

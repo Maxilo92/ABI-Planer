@@ -292,8 +292,8 @@ function FeedbackForm({ onSuccess }: { onSuccess: () => void }) {
               >
                 Privat senden
               </label>
-              <p className="text-xs text-muted-foreground">
-                Nur fuer Planer/Admins sichtbar.
+              <p className="mt-1 text-xs text-muted-foreground">
+                Nur für Planer/Admins sichtbar.
               </p>
             </div>
           </div>

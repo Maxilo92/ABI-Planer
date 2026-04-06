@@ -33,7 +33,6 @@ import { cn } from '@/lib/utils'
 import React, { useState, useEffect, useMemo, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { AnimatePresence, motion } from 'framer-motion'
-import { useUserTeachers } from '@/hooks/useUserTeachers'
 
 type ShopItem = {
   id: string
@@ -138,7 +137,6 @@ function ShopContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { user, profile, loading: authLoading } = useAuth()
-  const { getRemainingBoosters } = useUserTeachers()
   
   const availableCategories = useMemo(() => {
     return CATEGORIES.filter(cat => {
@@ -422,9 +420,14 @@ function ShopContent() {
                           })
                           return
                         }
-                        setSelectedDonationCourse('')
-                        setDonorDisplayName('')
-                        setConfirmItem(item)
+                        if (isDonationItem(item)) {
+                          setSelectedDonationCourse('')
+                          setDonorDisplayName('')
+                          setConfirmItem(item)
+                          return
+                        }
+
+                        handleStripeCheckout(item)
                       }}
                     >
                       {isPurchasing === item.id ? (
@@ -543,7 +546,7 @@ function ShopContent() {
               className="bg-card border border-border p-4 sm:p-8 rounded-2xl sm:rounded-[2.5rem] shadow-2xl max-w-md w-full space-y-5 sm:space-y-8 relative overflow-hidden max-h-[90vh] overflow-y-auto"
             >
               <div className="absolute inset-0 bg-gradient-to-tr from-primary/5 via-transparent to-transparent pointer-events-none" />
-              
+
               <div className="flex justify-between items-start relative z-10">
                 <div className="space-y-1">
                   <h3 className="text-2xl sm:text-3xl font-black tracking-tight">Bestellung bestätigen</h3>
@@ -609,24 +612,24 @@ function ShopContent() {
                 <div className="flex items-start gap-3 p-4 bg-primary/5 border border-primary/10 rounded-2xl text-muted-foreground text-[10px] font-bold uppercase tracking-wide leading-relaxed">
                   <ShieldCheck className="w-5 h-5 shrink-0 text-primary" />
                   <span>
-                    Mit dem Klick auf &quot;Zur Kasse&quot; wirst du zu Stripe weitergeleitet. 
+                    Mit dem Klick auf &quot;Zur Kasse&quot; wirst du zu Stripe weitergeleitet.
                     <span className="text-foreground block mt-1">
                       WICHTIG: Du stimmst der sofortigen Ausführung des Vertrages zu und verlierst dein Widerrufsrecht für diese digitalen Inhalte.
                     </span>
                   </span>
                 </div>
-                
-                <Button 
+
+                <Button
                   className="w-full h-14 sm:h-16 rounded-2xl font-black text-lg sm:text-xl shadow-lg hover:shadow-primary/20 transition-all flex items-center justify-center gap-3"
                   onClick={() => {
                     handleStripeCheckout(
                       confirmItem,
                       isDonationItem(confirmItem) && selectedDonationCourse ? selectedDonationCourse : undefined,
                       isDonationItem(confirmItem) && donorDisplayName.trim() ? donorDisplayName.trim() : undefined
-                    );
-                    setConfirmItem(null);
-                    setSelectedDonationCourse('');
-                    setDonorDisplayName('');
+                    )
+                    setConfirmItem(null)
+                    setSelectedDonationCourse('')
+                    setDonorDisplayName('')
                   }}
                   disabled={isPurchasing !== null || (isDonationItem(confirmItem) && loadingCourses)}
                 >

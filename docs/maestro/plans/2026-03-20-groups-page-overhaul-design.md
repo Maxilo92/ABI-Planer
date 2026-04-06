@@ -1,3 +1,11 @@
+<!-- AGENT_NAV_METADATA -->
+<!-- path: docs/maestro/plans/2026-03-20-groups-page-overhaul-design.md -->
+<!-- role: planning -->
+<!-- read_mode: conditional -->
+<!-- token_hint: summary-first -->
+<!-- default_action: read if task touches planning, audits, or rollout decisions -->
+<!-- index: docs/AGENT_CONTEXT_INDEX.md -->
+
 # Design Document: Groups Page Overhaul (v2)
 
 **Status**: Approved

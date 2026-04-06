@@ -40,12 +40,19 @@ export interface Profile {
   last_visited?: Record<string, string> | null;
   isOnline: boolean;
   lastOnline: Timestamp | Date;
+  onlineSince?: string | Timestamp | Date | null;
+  lastSessionDurationSeconds?: number | null;
   booster_stats?: {
     last_reset: string; // ISO date string (YYYY-MM-DD)
     count: number;      // Open count for that day
     extra_available?: number;
     extra_boosters_claimed?: boolean;
     total_opened?: number;
+    total_cards?: number;
+  } | null;
+  trade_stats?: {
+    daily_trades_count: number;
+    last_trade_date: string | null; // ISO Date YYYY-MM-DD
   } | null;
   referral_code: string;
   referred_by: string | null;
@@ -119,6 +126,15 @@ export interface GroupMessage {
   group_name: string | 'hub';
   type: 'internal' | 'hub';
   pinned?: boolean;
+  parent_id?: string | null;
+  media_url?: string | null;
+  media_type?: 'image' | 'doc' | null;
+}
+
+export interface ReadStatus {
+  userId: string;
+  groupId: string;
+  lastSeenAt: string | Timestamp | Date;
 }
 
 export interface TeacherAttack {
@@ -207,6 +223,7 @@ export interface Event {
   created_at: string;
   created_by: string;
   created_by_name?: string | null;
+  assigned_to_group?: string | null;
   mentioned_user_ids?: string[];
   mentioned_roles?: string[];
   mentioned_groups?: string[];
@@ -335,4 +352,24 @@ export interface CardRemovalNotification {
     reason: string;
   };
   read: boolean;
+}
+
+export interface CustomPackQueueSlot {
+  slotIndex: number;
+  teacherId: string;
+  variant?: CardVariant;
+}
+
+export interface CustomPackQueueEntry {
+  id: string;
+  createdAt?: string | Timestamp | Date;
+  createdBy?: string | null;
+  createdByName?: string | null;
+  requestId?: string | null;
+  presetId?: string | null;
+  name?: string | null;
+  totalPacks: number;
+  remainingPacks: number;
+  allowRandomFill?: boolean;
+  slots: CustomPackQueueSlot[];
 }

@@ -1,17 +1,591 @@
+<!-- AGENT_NAV_METADATA -->
+<!-- path: CHANGELOG.md -->
+<!-- role: reference -->
+<!-- read_mode: latest-first -->
+<!-- token_hint: tail-only -->
+<!-- default_action: read newest entries only unless a regression requires older history -->
+<!-- index: docs/AGENT_CONTEXT_INDEX.md -->
+
 # Changelog
 
-## [Unreleased]
+## [1.3.0] - 2026-04-06
 
+- **Major**: Version bump to 1.3.0 reflecting significant architectural and UI/UX updates.
+- **Fixes**:
+  - Corrected registration flow regression guard to support 5-step flow.
+  - Resolved TypeScript errors in system analytics (type narrowing and Chart.js properties).
+  - Fixed Next.js build error on Sammelkarten packs page (added Suspense boundary).
+  - Fixed profile name display in quick actions.
+  - Fixed build errors on profile and friends pages.
+- **Features**:
+  - New Friends page sections and improved access for viewers.
+  - Improved email verification and change flow guidance.
+  - Manual global inventory synchronization for Sammelkarten.
+- **UX**: Refined Sammelkarten booster flow (keyboard support, improved "Next Pack" flow, cleaner UI).
+
+## [1.2.64] - 2026-04-06
+
+- **UX (Sammelkarten / Tastatur-Flow):** Die `Leertaste` oeffnet nach komplett umgedrehtem Single-Pack direkt das naechste Pack.
+    - **Fix:** Kein Ruecksprung mehr zur Booster-Ansicht bei verfuegbaren Rest-Boostern.
+    - **Ergebnis:** Tastaturbedienung ist jetzt konsistent mit dem neuen Continue-Flow.
+
+## [1.2.63] - 2026-04-06
+
+- **UX (Sammelkarten / Reveal-Fortsetzung):** "Naechstes Pack oeffnen" startet jetzt direkt das naechste Single-Pack.
+    - **Fix:** Kein Zwischenschritt mehr zur Booster-Ansicht bei vorhandenem Restkontingent.
+    - **Ergebnis:** Fluessigerer Continue-Flow beim nacheinander Oeffnen mehrerer Packs.
+
+## [1.2.62] - 2026-04-06
+
+- **UX (Sammelkarten / Reveal-Ansicht):** Der Rueckweg zur Booster-Ansicht sitzt nicht mehr als Overlay ueber den Karten.
+    - **Neu:** "Zur Booster-Ansicht" erscheint jetzt als kleiner, textbasierter Footer-Button direkt unter "Naechstes Pack oeffnen".
+    - **Ergebnis:** Weniger visuelle Ablenkung im Karten-Reveal bei unveraenderter Navigation.
+
+## [1.2.61] - 2026-04-05
+
+- **UX (Sammelkarten / Booster-Ansicht):** Der sichtbare Pack-Wechsel wurde aus dem Karten-Overlay herausgezogen und die Booster-Ansicht insgesamt entschlackt.
+    - **Neu:** Der Pack-Wechsel sitzt jetzt unaufdringlich in der Kopfzeile statt direkt ueber der Karte.
+    - **Neu:** Die Footer-Aktionen wurden dichter gruppiert und visuell leicht zurueckgenommen.
+    - **Neu:** Die Pack-Auswahl startet jetzt mit einer Shop-Kachel als erstem Ziel, gefolgt von den verfuegbaren Packs.
+    - **Ergebnis:** Weniger visuelles Rauschen im Booster-Flow bei unveraenderter Funktionalitaet.
+
+## [1.2.60] - 2026-04-05
+
+- **UI (Sammelkarten / Custom Pack Label):** Custom Packs verwenden jetzt dieselbe Karten-Beschriftung wie der normale Booster.
+    - **Fix:** Auf der Auswahlseite und in der Öffnungsansicht steht jetzt ebenfalls "3 Lehrer Karten" statt einer eigenen Slot-Angabe.
+
+## [1.2.59] - 2026-04-05
+
+- **UI (Sammelkarten / Pack-Album):** Die Pack-Karten auf `/sammelkarten/packs` nutzen jetzt exakt denselben Booster-Look wie in der Öffnungsansicht.
+    - **Fix:** Huelle, Top/Bottom-Flaechen, Label-Chip, Badge und Footer-Details wurden 1:1 auf den Auswahl-Flow gespiegelt.
+    - **Neu:** Jedes Pack bleibt weiterhin eindeutig erkennbar ueber eine Beschriftung unter der Booster-Karte.
+
+## [1.2.58] - 2026-04-05
+
+- **UX (Sammelkarten / Pack-Auswahlseite):** Theming und Pack-Darstellung an den restlichen Sammelkarten-White-Look angepasst.
+    - **Fix:** Die Seite `/sammelkarten/packs` verwendet jetzt kein dark-spezifisches Layout mehr und erscheint konsistent im hellen Design.
+    - **Neu:** Jedes verfügbare Pack wird als visuelle Booster-Karte im Album-Stil angezeigt (statt rein textbasierter Listenzeile).
+    - **Fix:** Die Auswahl eines Packs wird wieder zuverlässig per URL-Parameter an `/sammelkarten` übergeben und dort aktiv gesetzt.
+
+## [1.2.57] - 2026-04-05
+
+- **UX (Sammelkarten / Pack-Auswahl):** Die Pack-Auswahl wurde aus der Booster-Detailansicht in eine eigene Seite verschoben.
+    - **Neu:** "Pack wechseln" bleibt sichtbar und fuehrt jetzt auf `/sammelkarten/packs` mit kompletter Liste aller verfuegbaren Packs.
+    - **Neu:** Die Auswahlseite zeigt Standard- und Custom-Packs inkl. verbleibender Anzahl in einer separaten Uebersicht.
+    - **Neu:** Nach Auswahl eines Packs wird zur Sammelkarten-Hauptseite zurueck navigiert und das gewaehlte Pack per URL-Parameter aktiviert.
+    - **Unveraendert:** Die Booster-Detailansicht bleibt im bestehenden Look, inklusive Gesten-Aufriss.
+
+## [1.2.56] - 2026-04-05
+
+- **UX (Sammelkarten / Booster-Aufriss):** Einzelpacks werden jetzt per Gesten-Interaktion geoefnet statt per Klick.
+    - **Neu:** Sichtbare gestrichelte Risslinie direkt auf dem Pack; oeffnen nur durch Ziehen von links nach rechts (Maus und Touch).
+    - **Neu:** Ausloesung bei ca. 80% Fortschritt, bei fruehem Loslassen federt der Fortschritt weich auf 0 zurueck.
+    - **Neu:** Explosionsimpuls an der Risskante beim Trigger, danach Reveal wie gewohnt.
+    - **Neu:** Space-Bypass und Idle-Einzelpack-Button entfernt, damit der Single-Pack-Flow konsistent nur ueber Ziehen erfolgt.
+    - **Unveraendert:** 10er-Pack-Oeffnung bleibt buttonbasiert.
+
+- **UX (Sammelkarten / Pack-Auswahl):** Mehrere Pack-Typen laufen jetzt in einem 2-Stufen-Flow: zuerst Auswahl, danach Detailansicht.
+    - **Neu:** Bei mehreren verfügbaren Packs startet die Seite mit einer Karussell-Auswahl.
+    - **Neu:** Ein Klick auf das aktive Pack oeffnet die Detailansicht dieses Packs (statt sofortigem Oeffnen).
+    - **Neu:** In der Detailansicht kann ueber "Pack wechseln" zur Karussell-Auswahl zurueckgekehrt werden.
+    - **Unveraendert:** Die Detailansicht nutzt weiterhin den bestehenden Booster-Look; Custom Packs bleiben ein Recolor davon.
+
+## [1.2.55] - 2026-04-05
+
+- **UI (Sammelkarten / Booster-Design):** Die Pack-Ansicht nutzt wieder das alte zentrale Booster-Layout; Custom Packs sind nur ein Recolor davon.
+    - **Neu:** Falls mehrere Pack-Arten vorhanden sind, gibt es nur noch eine kompakte Typ-Auswahl statt eines Karussells.
+    - **Neu:** Der sichtbare Booster bleibt im alten Look, inklusive Öffnen-Animation und Button-Fluss.
+    - **Neu:** Custom Packs übernehmen dieselbe Huelle, aber mit eigener Farbgebung und Bezeichnung.
+
+## [1.2.54] - 2026-04-05
+
+- **Fix (Admin / Benutzerverwaltung):** Der neue Gruppen-Popup-Trigger importiert jetzt das fehlende `Users`-Icon korrekt.
+    - **Ergebnis:** Der Runtime-Fehler `Users is not defined` in der Admin-Benutzerverwaltung ist behoben.
+
+## [1.2.53] - 2026-04-05
+
+- **UI (Admin / Benutzerverwaltung):** Die Gruppenanzeige in der Tabelle und Mobilansicht wurde auf ein kompaktes Popover umgestellt.
+    - **Neu:** Statt vieler Inline-Badges zeigt die Zelle jetzt eine kompakte Zusammenfassung mit Popover-Details.
+    - **Neu:** Im Popover lassen sich bestehende Gruppen direkt entfernen und neue Gruppen weiterhin per Suchauswahl hinzufuegen.
+    - **Ergebnis:** Weniger visuelles Rauschen in der Benutzerverwaltung bei gleicher Bearbeitbarkeit.
+
+## [1.2.52] - 2026-04-05
+
+- **Fix (Auth / Missing Profile Recovery):** Fehlende Profile werden jetzt ueber eine Callable Cloud Function wiederhergestellt statt per clientseitigem `setDoc`.
+    - **Neu:** Der Auth-Flow wartet auf die serverseitige Profil-Erstellung und setzt das geladene Profil direkt aus der Function-Rueckgabe.
+    - **Ergebnis:** Keine lokalen Firestore-Permission-Fehler mehr beim Bootstrap eines fehlenden Profils, und das Admin-Loading bleibt stabil.
+
+- **Fix (Auth / Presence + Self-Delete):** Presence-Heartbeat startet erst nach geladenem Profil, und die Profil-Loeschung ist jetzt fuer den eigenen Account erlaubt.
+    - **Neu:** Der Online-Status wird nicht mehr gegen ein noch fehlendes Profil geschrieben.
+    - **Neu:** Der Profil-Delete-Flow fuer eingeloggte Nutzer passt jetzt zu den Firestore-Regeln, ohne die Main-Admin-Sperre aufzuweichen.
+
+- **Fix (Admin UI / Picker Trigger):** Suchbare Kurs- und Gruppen-Picker nutzen jetzt Base UI `render` statt eines verschachtelten Buttons.
+    - **Ergebnis:** Der Hydration-Warnhinweis wegen ungueltiger Button-Nesting ist beseitigt.
+
+## [1.2.52] - 2026-04-05
+
+- **Feature (Kommunikations-Zentrale / Custom Packs):** Admins koennen jetzt deterministische Custom Packs mit festen Slots verschenken (Position, Lehrer, Folie/Variante).
+    - **Neu (Admin UI):** Neuer Modus "Custom Packs" in der Kommunikations-Zentrale mit Slot-Builder und optionalem Preset-Laden aus `settings/sammelkarten.custom_pack_presets`.
+    - **Neu (Backend):** `giftBoosterPack` akzeptiert `customPackSlots`, validiert Lehrer gegen `loot_teachers` und legt pro Empfaenger eine persistente Queue unter `profiles/{uid}/custom_pack_queue` an.
+    - **Neu (Open-Flow):** `openBooster` verarbeitet zuerst Eintraege aus der Custom-Pack-Queue deterministisch und fuellt optionale Luecken nur bei aktivem Random-Fill.
+    - **Sicherheit:** Neue Firestore-Regel fuer `profiles/{uid}/custom_pack_queue` mit kompletter Client-Sperre (Manipulationsschutz).
+    - **Audit:** Versand-Logs enthalten jetzt Custom-Pack-Metadaten.
+
+## [1.2.51] - 2026-04-05
+
+- **UI (Admin / Benutzerverwaltung):** Dropdowns fuer Kurs- und Gruppenzuweisungen auf suchbare Picker mit Scroll-Listen umgestellt.
+    - **Neu:** Suchfeld in den Pickern fuer schnelle Treffer bei vielen Kursen/Gruppen.
+    - **Neu:** Verbesserte Lesbarkeit durch Truncation + Tooltip bei langen Gruppennamen.
+    - **Neu:** Massenaktionen nutzen ebenfalls suchbare Auswahl fuer Kurs/Planungsgruppe.
+    - **Ergebnis:** Deutlich besseres Skalierungsverhalten und weniger unleserliche Menues bei grossen Datenmengen.
+
+## [1.2.50] - 2026-04-05
+
+- **Fix (ReferenceError):** Missing `cn` utility import in `DeckEditor.tsx` added.
+
+## [1.2.49] - 2026-04-05
+
+- **Mobile Optimization**: 
+    - **Persistent Controls**: Card controls (Remove/Set Cover) are now always visible on mobile/touch devices to ensure usability without hover.
+    - **Responsive Layouts**: Optimized the Deck Editor header and grids for small screens.
+    - **Touch Targets**: Enlarged interaction areas for better mobile handling.
+
+- **Fix (Admin System / Top-Aktionen Fallback):** Wenn die Analytics-API zwar erreichbar ist, aber leere Arrays liefert, werden die Log-Analysen jetzt clientseitig aus Firestore rekonstruiert.
+    - **Neu:** Fallback-Berechnung fuer `top_actions`, `activity_timeline`, `section_usage` und `recent_actions` aus den letzten Logs.
+    - **Ergebnis:** Karten wie "Top-Aktionen aus den Logs" und "Aktive Nutzung" bleiben befuellt statt "Noch keine Logs vorhanden".
+
+- **UI (Admin System / Analytics Charts):** Die Karte "Was zuletzt getan wurde" wurde entfernt; die Analytics-Darstellung ist jetzt konsequent chartbasiert.
+    - **Neu:** "Online-Session Dauer" als Balkendiagramm (Top 12 online Nutzer).
+    - **Neu:** "Bereichsnutzung" als Balkendiagramm statt Listenansicht.
+    - **Ergebnis:** Einheitlichere, kompaktere Visualisierung der System-Analytics.
+
+- **Perf (Admin System / Daten aktualisieren):** Analytics-Fallback wird nach dem initialen Rendern im Hintergrund angereichert statt den gesamten Refresh zu blockieren.
+    - **Neu:** Sofortige Anzeige der Basisdaten, danach asynchrone Rekonstruktion aus Firestore-Logs.
+    - **Neu:** Chart.js-basierte Liniendiagramme (react-chartjs-2) fuer die Analytics-Karten mit Tooltips, Achsen und Flaechen-Fuellung.
+    - **Ergebnis:** Spuerbar schnelleres "Daten aktualisieren" bei weiterhin detaillierten Analytics.
+
+- **UI (Admin System / Diagrammtypen + Kartenstatistik):** Diagrammtypen an die gewuenschte Lesbarkeit angepasst und Kartenverteilung pro Nutzer ergaenzt.
+    - **Neu:** "Top-Aktionen" und "Bereichsnutzung" als Balkendiagramme.
+    - **Neu:** Statistik "Karten pro Nutzer" (Top 12) aus `user_teachers` inkl. Profilnamen.
+    - **Ergebnis:** Bessere Vergleichbarkeit haeufiger Aktionen/Bereiche und transparente Kartenverteilung pro Account.
+
+- **UI (Admin System / Balken-Sichtbarkeit):** Balkendiagramme wurden fuer Ausreisser-Verteilungen besser lesbar gemacht.
+    - **Neu:** Horizontale Balken, dynamische Diagrammhoehe pro Anzahl Eintraege und `minBarLength` fuer kleine Werte.
+    - **Ergebnis:** Alle Balken bleiben visuell erkennbar, auch wenn einzelne Kategorien deutlich dominieren.
+
+## [1.2.48] - 2026-04-05
+
+- **Fix (Hydration/DOM Nesting):** Behebung eines kritischen Hydration-Fehlers in der `DeckSelection`-Komponente durch Umstellung von `asChild` auf das korrekte `render`-Prop-Pattern für den `DropdownMenuTrigger`. Dies verhindert die ungültige Verschachtelung von Buttons im HTML.
+
+## [1.2.47] - 2026-04-05
+
+
+- **Fix (Admin System / Log Count Accuracy):** Das KPI "Log-Eintraege" faellt im Dashboard nicht mehr auf `0`, wenn Analytics-Fallbacks keine verwertbaren Count-Daten liefern.
+    - **Neu:** Clientseitiger Firestore-Count-Fallback fuer `logs` mit Zeitfenster-Filter (`timestamp >= now - window_days`).
+    - **Sicherheit:** Zaehlt weiterhin nur mit dem angemeldeten Admin-Account gemaess Firestore-Regeln.
+    - **Ergebnis:** "Letzte X Tage" zeigt wieder reale Werte aus den vorhandenen Logs.
+
+## [1.2.47] - 2026-04-05
+
+- **Deck UI Overhaul**: 
+    - **Integrated Controls**: Redesigned the card controls (Remove/Set Cover) to be more stylish and less "out of place" with a hover-based action bar.
+    - **Full-Page Selection**: Moved card selection from a modal to a dedicated full-screen view for a better browsing experience.
+    - **Search & Filter**: Fixed and optimized the search functionality in the card selection view.
+    - **Cover Aesthetics**: Improved the "Cover" badge design with gradients and better positioning.
+
+## [1.2.46] - 2026-04-05
+
+
+- **Fix (Admin System / Analytics History-Fallback):** Bei fehlenden Analytics-Functions werden jetzt historische Daten direkt aus vergangenen Firestore-Logs aggregiert statt nur leerer Fallback-Werte.
+    - **Neu:** Serverseitiger Analytics-Aggregator mit Admin-Token-Pruefung (`src/lib/adminSystemAnalytics.ts`).
+    - **Betroffen:** `/api/admin/system/analytics` und `/admin/api/system/analytics`.
+    - **Ergebnis:** Auch bei Function-`404` bleiben Timeline, Top-Aktionen, Bereichsnutzung und letzte Aktionen aus vorhandenen Logs verfuegbar.
+
+## [1.2.46] - 2026-04-05
+
+- **Deck System Finalized**: Integrated the `DeckSelectionModal` into the `DeckEditor`.
+    - **Card Selection**: Users can now pick cards from their own inventory to fill their decks.
+    - **Validation**: Added limit checks (max 10 cards) and uniqueness enforcement.
+- **UI Refinement**: Relaxed the font tracking for deck and card titles to ensure better readability of spaces.
+- **Performance**: Optimized deck state updates to prevent unnecessary re-renders.
+
+## [1.2.45] - 2026-04-05
+
+
+- **Fix (Admin System / Analytics Degradation):** Wenn Analytics-Upstream lokal nicht deployed ist (`404`), liefern die Analytics-Proxys jetzt ein valides leeres Fallback-Payload statt `502`.
+    - **Betroffen:** `/api/admin/system/analytics` und `/admin/api/system/analytics`.
+    - **Ergebnis:** Das Admin-System bleibt nutzbar, auch wenn nur Analytics fehlt.
+
+- **Fix (Admin System / Partial Load):** Die Admin-System-Seite bricht nicht mehr komplett ab, wenn nur Analytics fehlschlaegt.
+    - **Neu:** Stats sind weiterhin Pflicht; Analytics wird bei Fehlern auf einen lokalen Fallback gesetzt und als degradiert angezeigt.
+    - **Ergebnis:** Keine komplette Fehlseite mehr bei isolierten Analytics-Ausfaellen.
+
+## [1.2.50] - 2026-04-05
+
+- **Fix (Admin System / Fallback-Haertung):** Admin-System-Proxys schalten bei fehlenden `...Http`-Functions jetzt serverseitig auf die callable-Endpunkte um.
+    - **Betroffen:** `/api/admin/system/global-stats`, `/api/admin/system/analytics` sowie die Spiegelpfade unter `/admin/api/system/*`.
+    - **Neu:** Bei Upstream-`404` auf `getGlobalStatsHttp`/`getSystemAnalyticsHttp` wird intern auf `getGlobalStats`/`getSystemAnalytics` mit callable-Payload (`{ data: {} }`) gewechselt.
+    - **Ergebnis:** Kein browserseitiger Direct-Call als Rettungsweg mehr noetig; weniger CORS-Fehler bei `dashboard.*.localhost`.
+
+- **Fix (Admin System / Client-Fallback):** Direkte Browser-Fallbacks auf Cloud Functions (HTTP + callable) aus der Admin-System-Seite entfernt.
+    - **Neu:** Daten kommen ausschliesslich ueber lokale Next-API-Routen (same-origin).
+    - **Ergebnis:** Keine zusaetzlichen CORS-Preflight-Fehler mehr durch clientseitige Cross-Origin-Fallbacks.
+
+## [1.2.49] - 2026-04-05
+
+- **Fix (Admin System / Local Dev CORS-Loop):** Proxy-Responses fuer Admin-System-Statistiken liefern bei Upstream-Fehlern jetzt konsistent `502` statt den Upstream-`404` durchzureichen.
+    - **Betroffen:** `/api/admin/system/global-stats`, `/api/admin/system/analytics` sowie die Spiegelpfade unter `/admin/api/system/*`.
+    - **Ursache:** Ein echter Upstream-`404` wurde vom Client als fehlende lokale Route interpretiert, wodurch der Browser auf direkte Cloud-Function-URLs (CORS-Block) gefallen ist.
+    - **Ergebnis:** Kein falscher Routing-Fallback mehr bei vorhandener lokaler Route; stattdessen sauberer Wechsel auf Callable-Fallback innerhalb der App.
+
+## [1.2.48] - 2026-04-05
+
+- **Fix (Admin System / Local Dev Routing):** Fallback fuer Admin-System-API-Pfade ergaenzt, um 404 bei Host-/Routing-Sonderfaellen in der lokalen Dashboard-Subdomain abzufangen.
+    - **Client:** `AdminSystemDashboard` versucht bei `404` auf `/api/admin/system/*` automatisch den zweiten internen Pfad `/admin/api/system/*`.
+    - **Zusatz:** Wenn beide lokalen Pfade `404` liefern, wird direkt auf die Functions-HTTP-Endpunkte (`getGlobalStatsHttp`, `getSystemAnalyticsHttp`) gewechselt.
+    - **Zusatz 2:** Falls diese HTTP-Endpunkte noch nicht deployed sind, faellt der Client final auf die bestehenden Callable-Funktionen (`getGlobalStats`, `getSystemAnalytics`) zurueck.
+    - **Server:** Neue spiegelnde Route-Handler unter `/admin/api/system/global-stats` und `/admin/api/system/analytics` als lokaler Backup-Pfad.
+    - **Ergebnis:** Stabileres Laden der Systemdaten auf `dashboard.*.localhost` auch bei inkonsistenter Dev-Routenauflosung.
+
+## [1.2.47] - 2026-04-05
+
+- **Fix (Admin System CORS):** Admin-Systemdaten werden jetzt über lokale API-Proxy-Routen geladen statt direkt per Browser-Callable-Request.
+    - **Neu:** Serverseitige Proxy-Endpoints unter `/api/admin/system/global-stats` und `/api/admin/system/analytics`.
+    - **Backend:** Neue HTTP-Funktionsvarianten `getGlobalStatsHttp` und `getSystemAnalyticsHttp` mit Bearer-Token-Validierung und Admin-Rollencheck.
+    - **Ergebnis:** Kein Browser-Preflight-CORS-Block mehr im Dashboard-Subdomain-Setup (`*.localhost`).
+
+- **Fix (Auth/Profile):** Fehlende Profildokumente werden beim Login automatisch mit sicheren Standardwerten angelegt.
+    - **Ergebnis:** Der Laufzeitfehler `No profile found for user ...` wird bei neuen/inkonsistenten Accounts abgefangen.
+
+- **Mobile UI (Admin System):** Das System Control Center wurde für kleine Viewports entschärft.
+    - Header und Refresh-Button responsiver, bessere Zeilenumbrüche in KPI-Karten, und Online-User-Details auf Mobil in einer Spalte statt gequetschter 2-Spalten-Ansicht.
+
+## [1.2.46] - 2026-04-05
+
+- **Fix (Decks / Firestore Rules):** Berechtigungen für `user_decks` ergänzt, damit angemeldete Nutzer ihre eigenen Decks wieder lesen, anlegen, ändern und löschen können.
+    - **Ursache:** Für die neue Deck-Collection fehlten dedizierte Firestore-Regeln, wodurch `Missing or insufficient permissions` im Client ausgelöst wurde.
+    - **Sicherheit:** Zugriff bleibt strikt auf `request.auth.uid == userId` begrenzt.
+
+- **Fix (Admin System / CORS):** Callable Functions für Trading + Admin-Analytics auf explizite CORS-Origin-Liste umgestellt.
+    - **Betroffen:** `getSystemAnalytics`, `getGlobalStats` (sowie weitere Trade-Callables).
+    - **Ergebnis:** Requests vom lokalen Dashboard-Subdomain-Setup (`*.localhost`) werden bei korrekter Deployment-Version nicht mehr durch Preflight-CORS blockiert.
+
+## [1.2.45] - 2026-04-05
+
+- **Navigation Update**: "Meine Decks" and "Kämpfe" are now part of the main navigation menu under Sammelkarten.
+    - **Sidebar Integration**: Access your decks and the future battle system directly from the sidebar.
+    - **Battles Placeholder**: Added a dedicated placeholder page for the upcoming "Karten-Kämpfe" feature.
+    - **Header/Footer Actions**: Integrated "Decks" button into the Sammelkarten header and mobile footer for quicker access.
+
+## [1.2.44] - 2026-04-05
+
+- **Card Deck System**: Users can now create, edit, and delete decks consisting of exactly 10 cards.
+    - **Deck Cover**: One card from each deck can be selected as the cover for visual representation.
+    - **Inventory Integration**: Integrated deck management with user inventory, ensuring only owned cards are added.
+    - **Resilience Logic**: Decks automatically reflect "Incomplete" status if cards are traded or missing (e.g., 9/10).
+    - **UI Integration**: New "Meine Decks" view in the Sammelkarten section with a compact mobile-friendly grid.
+
+## [1.2.45] - 2026-04-05
+
+- **Analytics (System Control Center):** Das Admin-System-Center zeigt jetzt deutlich mehr Nutzungsdaten statt nur Basis-Status.
+    - **Online-Verlauf:** Aktuell online aktive Nutzer werden mit Session-Dauer und zuletzt genutztem Bereich angezeigt.
+    - **Logs:** Die letzten 7 Tage werden aus den Aktions-Logs ausgewertet, inklusive Top-Aktionen, Bereichsnutzung und jüngsten User-Aktionen.
+    - **Charts:** Die Admin-Seite zeigt nun Balken fuer Tagesaktivitaet und haeufigste Aktionen.
+    - **Datenquelle:** Nutzungsdauer und Presence basieren auf Profil-Daten; Aktionen und Inhalte werden aus den bestehenden Logs aggregiert.
+
+## [1.2.42] - 2026-04-05
+
+- **Fix (Gruppenchat Header):** Die Anzeige `x Nachrichten` im Chat-Header wurde durch `x online` ersetzt.
+    - **Hub:** Zaehlt alle aktuell online aktiven, freigeschalteten Nutzer.
+    - **Teamchat:** Zaehlt nur online aktive Mitglieder der jeweiligen Planungsgruppe.
+
+## [1.2.41] - 2026-04-05
+
+- **UX (Gruppen):** Der Seiten-Untertitel auf der Gruppen-Seite wurde entfernt.
+- **UX (Chatliste):** In der Chatliste wird jetzt pro Chat die Anzahl online aktiver Mitglieder angezeigt statt Nachrichten-Vorschau.
+- **Benachrichtigung (Navigation):** Der Gruppen-Tab zeigt jetzt einen roten Punkt bei neuen Nachrichten in Hub- oder eigenen Gruppen-Chats.
+    - Grundlage ist `last_visited.gruppen` im Nutzerprofil; eigene Nachrichten loesen keinen Punkt aus.
+
+## [1.2.40] - 2026-04-05
+
+- **UX (Gruppenchat):** Chat-Ansicht weiter an Messenger-Verhalten angepasst.
+    - **Header:** Die "Gruppen-Chats"-Pille wurde entfernt.
+    - **Chatliste:** Untertitel in jeder Unterhaltung verfeinert (Vorschautext/Global-Hinweis), Sortierung bleibt neueste Nachricht oben inkl. Global-Chat.
+    - **Bilder im Chat:** Gesendete Bilder haben abgerundete Ecken, aber keine Chat-Bubble-Border mehr.
+
+## [1.2.39] - 2026-04-05
+
+- **Fix (Gruppenchat Bilder):** Laufzeitwarnungen von `next/image` bei Chat-Bildern beseitigt.
+    - **Wall-Anhänge:** Bildanzeige verwendet jetzt stabile intrinsische Maße (`width`/`height`) statt `fill` in instabilen Containern.
+    - **Chatlisten-Thumbnail:** Mini-Vorschau rendert als natives `img`-Element, um Größenkonflikte in 20x20-Previews zu vermeiden.
+
+## [1.2.38] - 2026-04-05
+
+- **Fix (Gruppenchat Bildvorschau):** `next/image` akzeptiert jetzt Firebase-Storage-URLs aus `firebasestorage.googleapis.com`.
+    - **Ursache:** Der Host war in der Next-Image-Konfiguration nicht freigeschaltet.
+    - **Ergebnis:** Bilder aus Chat-Anhängen laden wieder ohne `next-image-unconfigured-host` Laufzeitfehler.
+
+## [1.2.37] - 2026-04-05
+
+- **Fix (Gruppenchat Uploads):** Storage-Berechtigungen fuer `group-media` angepasst, damit authentifizierte Nutzer Bilder/PDFs wieder hochladen koennen.
+    - **Regeln:** Der fragil gewordene Firestore-Approval-Lookup in den Storage Rules wurde entfernt.
+    - **Sicherheit bleibt aktiv:** Uploads bleiben auf max. 5MB und Dateitypen Bild/PDF begrenzt.
+
+## [1.2.36] - 2026-04-05
+
+- **UX (Gruppen):** Die Gruppen-Seite wurde auf eine chat-zentrierte Listenansicht umgestellt (Messenger-Stil statt Kachel-Layout).
+    - **Chatliste:** Eigene Gruppen und der Global-Chat werden als einheitliche Liste angezeigt.
+    - **Sortierung:** Der Chat mit der neuesten Nachricht steht immer ganz oben.
+    - **Flow:** In Gruppenchats koennen direkt gruppenspezifische Todos und Termine erstellt werden.
+- **Navigation (Menue):** Unter Planung gibt es jetzt nur noch einen einzigen Eintrag **Gruppen** statt separater Team/Hub-Tabs.
+
+## [1.2.35] - 2026-04-05
+
+- **UX (Gruppen, Todos, Kalender):** Gruppenspezifische Erstellung und einfachere Gruppenzuordnung erweitert.
+    - **Gruppenseite:** In der Teamansicht kann jetzt neben Aufgaben auch direkt ein Termin fuer die aktive Gruppe erstellt werden.
+    - **Termine:** Termine haben jetzt eine explizite Gruppenzuordnung (`assigned_to_group`), damit sie klar einem Team zuordenbar sind.
+    - **Globale Dialoge:** Auf den globalen Seiten fuer Todos und Kalender wird beim Erstellen eine Gruppen-Vorauswahl gesetzt (erste eigene Gruppe), damit Zuordnungen schneller gehen.
+    - **Sichtbarkeit:** Gruppenzuordnung und Gruppenerwaehnungen werden in Kalenderlisten und der Termin-Detailansicht als Badges angezeigt.
+
+## [1.2.34] - 2026-04-03
+
+- **Bugfix (Navigation):** Behebung einer Endlosschleife bei der Weiterleitung von der Startseite zum Login auf `localhost`.
+    - Die automatische Dashboard-Erkennung wurde verfeinert, sodass auf Entwicklungsmaschinen (localhost/127.0.0.1) standardmäßig die Landingpage angezeigt wird, anstatt unaufgefordert zum Login weiterzuleiten.
+
+## [1.2.33] - 2026-04-03
+
+- **Registrierung (Erweiterung):** Die Kurswahl bei der Registrierung wurde um die Optionen "Lehrer" und "andere KlassenStufe" erweitert.
+    - **Bedingte Schritte:** Bei Auswahl einer dieser Optionen wird ein zusätzlicher 4. Schritt eingeblendet.
+    - **Lehrer-Disclaimer:** Information über die eingeschränkte Teilnahme an Abstimmungen bei vollem Inhaltszugriff.
+    - **Andere Klassenstufe:** Disclaimer und Textfeld zur manuellen Eingabe der Klassenstufe, welche im Nutzerprofil als `class_name` gespeichert wird.
+    - **UI-Anpassungen:** Dynamische Anpassung des Fortschrittsbalkens und der Schrittzähler (Schritt X/4 statt X/3) je nach Auswahl.
+
+## [1.2.32] - 2026-04-03
+
+- **UI Fix (Sammelkarten-Karusell):** Behebung von Darstellungsfehlern auf der Landingpage.
+    - **Geister-Ecken:** Die Karten im Karussell haben nun korrekt abgerundete Ecken, was das Durchscheinen von rechteckigen Schatten in den Ecken verhindert.
+    - **3D-Rendering:** Die `perspective`-Eigenschaft wurde auf die Container-Ebene verschoben, um Artefakte bei der 3D-Rotation der Karten zu beseitigen.
+    - **Dekorative Ringe:** Die rotierenden Ringe ("Sol Rings") wurden optisch verfeinert, mit `will-change-transform` für flüssigere Animationen ausgestattet und in einem `overflow-hidden` Container stabilisiert.
+
+## [1.2.31] - 2026-04-03
+
+- **Landing (Kennzahlen):** Die Startseiten-Stats lesen jetzt aus der öffentlichen Firestore-Collection `public/landing_stats` statt aus einer Admin-API; eine geplante Cloud Function aktualisiert die Collection regelmäßig und die Landing triggert bei leerer Collection automatisch den öffentlichen Backfill-Endpunkt.
+
+## [1.2.30] - 2026-04-03
+
+- **UX (Header):** Das offizielle Projekt-Logo wurde nun auch im Header der Startseite (LandingHeader) integriert und ersetzt den bisherigen Platzhalter.
+
+## [1.2.29] - 2026-04-03
+- **UX (Startseite Cleanup):** Die Startseite wurde entschlackt, um den Fokus stärker auf die Kernvorteile zu lenken.
+    - **Entfernung:** Die rein dekorative "Live Dashboard" Kachel im Hero-Bereich wurde entfernt.
+    - **KPI-Sektion:** Der Statistik-Block (Nutzerzahlen, Kartenmenge etc.) wurde entfernt, um die Seite kompakter und funktionaler zu gestalten.
+    - **Performance:** Nicht mehr benötigte Datenabfragen und Event-Listener für Landing-Statistiken wurden entfernt.
+
+## [1.2.28] - 2026-04-03
+
+### Fixed
+- **Routing (Dashboard-Domain):** Alle zentralen Dashboard-Weiterleitungen wurden auf das neue Ziel `https://dashboard.abi-planer-27` umgestellt.
+    - **Global:** Login-Redirect, Landing-CTA und News-Detail-CTA nutzen jetzt denselben Resolver statt verteilter Hardcodes.
+    - **Konfigurierbar:** Über `NEXT_PUBLIC_DASHBOARD_URL` kann das Ziel pro Umgebung überschrieben werden.
+
+## [1.2.27] - 2026-04-03
+
+### Changed
+- **News (Dashboard):** Kleine Updates und Beiträge ohne Titelbild werden in der globalen News-Liste jetzt deutlich kompakter dargestellt.
+    - **Layout:** Kürzere Karten, kleinere Typografie und keine leere Bildfläche mehr für textlastige Einträge.
+
+## [1.2.26] - 2026-04-03
+- **UX (Startseite Refactoring):** Die Navigation auf der Startseite wurde grundlegend überarbeitet, um Nutzern einen direkteren Einblick in die Funktionen zu geben.
+    - **Renaming:** Die `/promo` Seite wurde in `/zugang` umbenannt, um ihre Funktion als Account-Vergleich (Gäste vs. Mitglieder) klarer zu kommunizieren.
+    - **Vorteile-System:** Neuer Bereich `/vorteile/` mit dedizierten, themenspezifischen Erklärungsseiten für alle Kernfunktionen.
+    - **Spezialisierte Seiten:** Einführung von Einzelseiten für Finanzen, Gruppen, Abstimmungen, Kalender und Sammelkarten (TCG).
+    - **Landing-Integration:** Alle "Details ansehen" Links auf der Startseite führen nun direkt zur jeweiligen Funktionsbeschreibung statt zur allgemeinen Vergleichsseite.
+    - **Hero-Update:** Der Button "Funktionen prüfen" leitet nun auf die neue Vorteile-Übersicht.
+
+## [1.2.21] - 2026-04-02
+
+
+### Fixed
+- **Landing (Sammelkarten-Sektion):** Der große Kartenwerbe-Abschnitt auf der Landing verwendet jetzt Theme-abhängige Flächen, Glows und Typografie statt im Light Mode dunkel zu bleiben.
+
+## [1.2.25] - 2026-04-03
+
+### Changed
+- **UX (Sammelkarten-Werbung):** Die Kartenwerbung passt sich jetzt an das aktuelle Theme an statt einen festen Dark-Mode-Look zu erzwingen.
+    - **Light/Dark:** Hintergründe, Glows, Textfarben, Badges und CTA-Kontraste reagieren jetzt auf das aktive Theme.
+
+## [1.2.24] - 2026-04-03
+
+### Fixed
+- **Landing (Framer Motion Typing):** Die Hero-Variant-Definition wurde vereinfacht, damit die aktuelle TypeScript-Konfiguration sie ohne Fehler akzeptiert.
+
+## [1.2.23] - 2026-04-03
+
+### Fixed
+- **Landing (Motion Types):** Die Hero-Variants sind jetzt explizit typisiert, damit der TypeScript-Checker die Animationen korrekt akzeptiert.
+
+## [1.2.22] - 2026-04-03
+
+### Changed
+- **Routing (Local Dev):** Die vorherige `dashboard=1`-Fallback-Logik wurde aus Root-, News- und Shell-Erkennung entfernt; lokale Dashboard-Ziele laufen jetzt nur noch über Subdomains.
+
+### Fixed
+- **Landing (Framer Motion):** Die Hero-Animation nutzt jetzt einen kompatiblen `ease`-Wert, damit der TypeScript-Check sauber durchläuft.
+
+## [1.2.21] - 2026-04-03
+
+### Changed
+- **Copy (Landing & Public Pages):** Umfassende Überarbeitung der Texte auf der Startseite und den öffentlichen Seiten für einen professionelleren, funktionalen Ton.
+  - **Entfernung von Buzzwords:** "Next-Gen" und "Professional Edition" wurden durch klare, beschreibende Begriffe ersetzt.
+  - **Tonalität:** Verzicht auf "trashige" Wortspiele und übertriebenen Hype zugunsten einer verlässlichen und strukturierten Kommunikation.
+  - **Sammelkarten:** Umbenennung von "Booster Drops" zu "Karten-Pakete" und "Shiny-Varianten" zu "Seltene Editionen" für bessere Verständlichkeit.
+  - **Promo-Seite:** Klarere Kommunikation der Zugangs-Logik zwischen öffentlichem Bereich und geschütztem Dashboard.
+
+## [1.2.20] - 2026-04-03
+
+
+### Changed
+- **Local Dev (Dashboard-Ziel):** Lokale Weiterleitungen aus Landing/Login/News-CTA nutzen jetzt bevorzugt die Dashboard-Subdomain mit identischem Port (z. B. `http://dashboard.abi-planer-27.localhost:3000`).
+    - **Konsistenz:** Einheitliches Verhalten für `*.localhost`, `localhost` und `127.0.0.1` im lokalen Routing.
+
+## [1.2.20] - 2026-04-03
+
+### Fixed
+- **Local Dev (Landing -> Dashboard):** Der Dashboard-Button auf der Landing nutzt lokal jetzt einen stabilen Fallback über `/?dashboard=1` statt erzwungenem Subdomain-Wechsel.
+    - **Robustheit:** Funktioniert auch dann, wenn lokal nur ein einzelner Host läuft und `dashboard.*.localhost` nicht erreichbar ist.
+    - **Konsistenz:** AppShell, Root-Mode-Erkennung (`/`, News, News-Detail) und Login-Redirect berücksichtigen den lokalen Dashboard-Modus einheitlich.
+
+## [1.2.19] - 2026-04-03
+
+### Fixed
+- **Landing (Dashboard-CTA/Local Dev):** Der Dashboard-Button im Landing-Header behandelt jetzt auch `*.localhost` als lokale Entwicklungsumgebung.
+    - **Fix:** Statt auf unerreichbare Hosts wie `dashboard.abi-planer-27.localhost` zu springen, wird jetzt korrekt auf `localhost` mit gleichem Port weitergeleitet.
+
+## [1.2.18] - 2026-04-03
+
+### Fixed
+- **UI (Button/asChild):** Der zentrale Button fängt `asChild` jetzt korrekt intern ab und gibt das Prop nicht mehr an DOM-Elemente weiter.
+    - **Ergebnis:** Die React-Warnung `React does not recognize the asChild prop on a DOM element` tritt nicht mehr auf.
+- **Dev Console (System Messages):** Der Diagnose-Log beim Mounten des `SystemMessageProvider` wurde entfernt.
+- **Dev Console (AdSense):** Das AdSense-Script wird auf `localhost` und `127.0.0.1` nicht mehr injiziert, um unnötige lokale Netzwerk-Fehler zu vermeiden.
+
+## [1.2.17] - 2026-04-03
+
+### Changed
+- **Auth (Login Redirect):** Nach erfolgreicher Anmeldung (inkl. 2FA) leitet die Login-Seite jetzt explizit auf `https://dashboard.abi-planer-27` weiter.
+    - **Konsistenz:** Gilt für Login ohne 2FA, Login mit 2FA und den Fallback-Fall bei fehlendem Profil.
+    - **Dev-Flow:** Auf `localhost` und `127.0.0.1` bleibt die Weiterleitung lokal auf `/`, damit die Entwicklung unverändert funktioniert.
+
+## [1.2.16] - 2026-04-02
+
+### Changed
+- **UX (Startseite Refresh):** Vollständige Integration des ABI Planer Brandings und interaktiver Elemente.
+  - **Brand Colors:** Konsequente Nutzung des Markengrüns (`#7DD200`) für Headlines, interaktive Komponenten und visuelle Akzente.
+  - **Interaktive Features:** Einbau von `framer-motion` für Scroll-Reveals, Hover-Effekte in einem Bento-Grid-Layout und einen globalen Scroll-Fortschrittsbalken.
+  - **Visuals:** Hinzufügen von subtilen Glow-Effekten und Glasmorphismus-Karten für ein lebendiges, modernes Look-and-Feel.
+  - **Struktur:** Konsolidierung der Landing- und Dashboard-Logik in einer hochperformanten Struktur.
+
+## [1.2.15] - 2026-04-02
+
+### Changed
+- **UX (Promo Seite):** Kompletter Rewrite der Vorteils-Seite zur Klärung der Zugangs-Logik.
+  - **Strikte Trennung:** Klare visuelle Unterscheidung zwischen öffentlichem "Besucher-Modus" und geschütztem "Dashboard-Zugang".
+  - **Kein Gast-Dashboard:** Die irreführende Option "Ohne Konto zum Dashboard" wurde entfernt, da das Dashboard einen verifizierten Account erfordert.
+  - **Interaktive Elemente:** Integration von `framer-motion` für flüssige Einblend-Animationen und Hover-Effekte.
+  - **Branding:** Konsequente Nutzung des ABI Planer Grüns (`#7DD200`) und des professionellen Icon-Sets.
+  - **Security Focus:** Hinzufügen eines Hinweises zur manuellen Freischaltung durch Admins zur Wahrung der Privatsphäre.
+
+## [1.2.14] - 2026-04-02
+
+### Changed
+- **UX (Public News):** Eigene News-Ansicht für die öffentliche Startseite implementiert.
+  - **Landing mode:** Erkennt automatisch, ob die News auf der Hauptdomain aufgerufen werden und zeigt ein professionelles, luftiges Layout mit dem neuen `LandingHeader`.
+  - **Navigation:** Die News-Links auf der Startseite führen nun zu dieser neuen, optimierten Ansicht statt zur Dashboard-Version.
+  - **Detailansicht:** Auch die Einzelansicht von News-Beiträgen wurde für die Startseite professionalisiert (breiteres Layout, SaaS-Stil).
+- **Layout (Landing Header):** Der professionelle Sticky-Header wurde in eine eigene Komponente (`LandingHeader`) extrahiert, um ihn seitenübergreifend auf der öffentlichen Domain zu nutzen.
+- **AppShell:** Die globale App-Hülle wurde optimiert, um öffentliche Routen auf der Hauptdomain korrekt ohne Dashboard-Sidebar darzustellen.
+
+## [1.2.13] - 2026-04-02
+
+### Changed
+- **UX (Startseite/Branding):** Umfassender Relaunch der Startseite für einen professionellen "Enterprise-SaaS"-Look.
+  - **Sticky Header:** Neuer, mitscrollender Header mit Backdrop-Blur, Logo-Animation und kontextsensitiven CTAs.
+  - **Modernes Hero-Design:** Animierter Gradient-Text, subtile Hintergrund-Effekte (Grid, Blurs) und klare Value Proposition.
+  - **Optimierte Sektionen:** Abwechslungsreiche Layouts (alternierende Features, Full-Width Highlights) statt repetitiver Kachelwände.
+  - **Bessere Theme-Unterstützung:** Vollständige Integration von Light/Dark-Mode mit harmonischen Farbübergängen und verbesserter Lesbarkeit.
+  - **Animationen:** Hinzufügen von Scroll-basierten Parallax-Effekten und Einblend-Animationen für ein dynamisches Erlebnis.
+- **I18n (Umlaute):** Systemweite Korrektur von ASCII-Ersetzungen (ae, oe, ue) hin zu korrekten deutschen Umlauten (ä, ö, ü) in allen wichtigen User-Interfaces.
+
+## [1.2.12] - 2026-03-31
+    - **Wirkung:** Klare Trennung zwischen oeffentlichem Einstieg und produktiver Dashboard-Subdomain wird visuell und inhaltlich staerker kommuniziert.
+
+- **UX (Strikte Trennung Landing/Dashboard):** Hauptdomain und Dashboard verhalten sich jetzt wie zwei getrennte Oberflächen.
+    - **Landing ohne Popups:** Auf `abi-planer-27.de/` werden keine System-Popups/Banner mehr eingeblendet.
+    - **Wartung isoliert:** Wartungspausen beeinflussen die Landing nicht mehr.
+    - **Landing-Inhalte:** Lehrersammelkarten-Werbung und aktuelle News sind jetzt direkt auf der Landing sichtbar.
+    - **Login-Pflicht Dashboard:** Ohne Konto kommt man nicht mehr ins Dashboard; nicht angemeldete Nutzer werden auf Login geleitet.
+
+- **UX (Landing/Promo):** Die Seitenrollen sind jetzt klar getrennt und visuell aufgewertet.
+    - **/zugang:** Das frühere Account-Vergleichsdesign wurde zurückgebracht.
+    - **Hauptdomain-Root:** Die Startseite auf `abi-planer-27.de/` wurde ausgebaut und als eigenständiger Einstieg verbessert.
+    - **Navigation:** CTA-Buttons führen konsistent zur Dashboard-Subdomain oder zu Login/Registrierung.
+
+- **UX (Domain-Aufteilung):** Root-Routing ist jetzt klar nach Host getrennt.
+    - **Hauptdomain:** `abi-planer-27.de/` zeigt die Startseite.
+    - **Dashboard-Subdomain:** `dashboard.abi-planer-27` (und `app.`) zeigt direkt das Dashboard.
+    - **Promo bleibt Promo:** `/zugang` bleibt als Account-Vergleich bestehen und springt bei "Zum Dashboard" auf die Dashboard-Subdomain.
+
+- **UX (Navigation):** Mehrere Seiten haben ihre rein erklärenden Intro-Subtitles entfernt, damit die Kopfbereiche knapper bleiben.
+
+- **UX (Typografie):** Die Brandfarbe beeinflusst Zahlen jetzt nicht mehr direkt.
+    - **Zahlen:** Numerische Werte bleiben neutral und nutzen wieder die reguläre Textfarbe oder eine passende Statusfarbe.
+    - **Akzente:** Brandfarbe bleibt für Labels, Flächen, Icons und Hervorhebungen erhalten.
+
+- **UX (Subdomains):** Die Startseite-Logik unterscheidet jetzt zwischen Hauptdomain und Dashboard-Subdomains.
+    - **Root-Flow:** `dashboard.` und `app.`-Hosts überspringen die Erstbesucher-Umleitung zur Startseite.
+    - **Setup-Hinweis:** Das Subdomain-Routing ist dokumentiert; DNS und Custom Domain müssen zusätzlich beim Hosting-Anbieter eingerichtet werden.
+
+- **UX (Shop/Checkout):** Der Shop nutzt jetzt einen gemischten Flow: Spendenartikel öffnen wieder das Bestätigungs-Modal mit Kurszuordnung und optionalem Namen, Packbundles gehen direkt zu Stripe.
+
+- **UX (Startseite):** Erstbesucher landen jetzt auf einer dedizierten Einstiegseite, bevor sie ins Dashboard wechseln.
+    - **Root-Flow:** Die Startseite prüft beim ersten anonymen Besuch ein lokales Flag und leitet dann auf [src/app/zugang/page.tsx](src/app/zugang/page.tsx) um.
+    - **Landing-Erlebnis:** Die Promo-Seite ist jetzt eine echte Startseite mit Hero, Feature-Überblick und klaren Einstiegspunkten.
+    - **Navigation:** Login- und Registrieren-Seiten führen jetzt zurück zur Startseite statt direkt ins Dashboard.
+
+- **UX (Navigation):** Quick Actions in der Navbar koennen jetzt angepinnt und entfernt werden.
+    - **Persistenz:** Angepinnte Eintraege bleiben in der gespeicherten Reihenfolge erhalten; entfernte Eintraege werden nicht direkt wieder in die Liste gezogen.
+    - **UI:** Die Schnellzugriffe haben eine farbigere Darstellung und zeigen den Pin-Status direkt an.
+- **UX (Branding):** Die neue Akzentfarbe `#7DD200` ist jetzt zentral als Brand-Token in [src/app/globals.css](src/app/globals.css) hinterlegt.
+    - **Verwendung:** Dashboard, Finanzseite und Funding-Widget nutzen die Brandfarbe jetzt fuer Hervorhebungen, Karten und Statusanzeige.
+- **Fix (Finanzen/Viewer):** Erwartete Ticketverkaeufe lassen sich fuer Viewer und andere nicht-berechtigte Rollen nicht mehr bearbeiten.
+    - **UI-Schutz:** Das Eingabefeld wird nur noch fuer Rollen mit Schreibrechten angezeigt; ansonsten erscheint ein Read-only-Wert.
+    - **Logik:** Das Update-Handling bleibt auf berechtigte Rollen begrenzt, damit kein schreibender Fallback mehr greift.
+
+- **Refactor (Sammelkarten/SRP):** Die Seite [src/app/sammelkarten/page.tsx](src/app/sammelkarten/page.tsx) wurde nach Single-Responsibility in eigenständige Module aufgeteilt.
+    - **Datenabfragen:** Firestore-Listener und Countdown-Logik wurden nach [src/app/sammelkarten/_modules/hooks/useSammelkartenConfig.ts](src/app/sammelkarten/_modules/hooks/useSammelkartenConfig.ts) verschoben.
+    - **State-Management:** Pack-Flow, Tastatursteuerung und Reveal-State liegen jetzt in [src/app/sammelkarten/_modules/hooks/useSammelkartenGame.ts](src/app/sammelkarten/_modules/hooks/useSammelkartenGame.ts).
+    - **Berechnungen/Utils:** Wahrscheinlichkeiten, Card-Mapping und Ergebnisaufbereitung wurden in dedizierte Utility-Dateien ausgelagert.
+    - **UI-Bausteine:** Header, Pack-Stage und Reveal-Bereiche wurden in fokussierte Komponenten extrahiert, ohne Verhaltensänderung.
+
+- **UX (Freunde/Mobile):** Der Bereichs-Toggle auf der Freunde-Seite ist auf kleinen Displays jetzt besser lesbar.
+    - **Fix:** Tab-Buttons erlauben mobil Zeilenumbruch statt gequetschter Einzeilen-Texte, dadurch überlagern sich Labels nicht mehr.
 - **UX (Quick Actions):** Profil-Quick-Actions zeigen jetzt den Namen des geöffneten Profils statt der UID.
     - **Nachladung:** Bereits gespeicherte Quick-Actions werden beim Laden aufgelöst, damit alte UID-Einträge automatisch ersetzt werden.
+- **UX (Wartung/Admin):** Während aktiver Wartungspausen sehen Admins jetzt app-weit ein Hinweisbanner, dass der Wartungsmodus aktiv ist.
+- **Fix (Sammelkarten/Limit):** Das kostenlose Tageskontingent wird wieder strikt begrenzt; verpasste Tage erzeugen keine zusätzlichen Gratis-Packs mehr.
+    - **Root Cause:** Die bisherige Carryover-Logik addierte bei `openBooster` zusätzliche Tagespacks und erlaubte dadurch >2 kostenlose Packs pro Tag.
+    - **Konsistenz:** Frontend-Anzeige und Backend-Validierung verwenden jetzt dieselbe strikte Berechnung (Tageskontingent + explizite `extra_available`-Packs).
 
 ## [1.2.12] - 2026-04-02
+
 - **Fix (Trading/Permissions):** Das Starten eines Tauschs läuft jetzt ausschließlich über die Cloud Function `sendTradeOffer`.
+
     - **Client-Sicherheit:** Der frühere Firestore-Fallback im Browser wurde entfernt, damit der Trade-Start nicht mehr an gesperrten Direktwrites auf `card_trades` und `notifications` scheitert.
     - **Root Cause:** Die serverseitige Validierung bleibt erhalten, während der Client keinen ungeschützten Schreibpfad mehr nutzt.
 
 
 ## [1.2.11] - 2026-04-02
+
 - **Fix (Migration):** Die Firestore-Migrationsskripte verwenden jetzt explizit die projektweite `abi-data`-Datenbank.
     - **Hierarchische Gruppen:** `scripts/migrate_to_hierarchical_groups.ts` schreibt und liest nicht mehr gegen die Default-Datenbank.
     - **Card Settings:** `scripts/migrate_card_settings.ts` wurde auf dieselbe Datenbank-Instanz ausgerichtet, damit Admin-Migrationen konsistent laufen.
@@ -231,14 +805,14 @@
 - **Balancing/UX (Sammelkarten):** Globales Maximum fuer Angriffe auf 2 gesetzt.
     - **Rendering:** Speccards zeigen hoechstens 2 Angriffe.
     - **Admin/Edit & Vorschlaege:** Formulare erlauben und beschriften nur noch 1-2 Angriffe.
-- **Admin (Sammelkarten Manager):** Neuer Tab `Kreativ-Labor` fuer die Auslese eingereichter Kartenvorschlaege.
+- **Admin (Sammelkarten Manager):** Neuer Tab `Ideen-Labor` fuer die Auslese eingereichter Kartenvorschlaege.
     - **Data Source:** Live-Auslese aus Firestore-Collection `card_proposals`.
     - **Uebersicht:** Status-Badges, HP, Beschreibung, bis zu 2 Angriffe, Autor und Datum werden pro Vorschlag angezeigt.
 - **Fix (Firestore Permissions):** Regeln fuer `card_proposals` ergaenzt.
     - **Create:** Verifizierte Nutzer duerfen eigene Vorschlaege als `pending` erstellen.
     - **Read:** Planer/Admin lesen alle Vorschlaege; Nutzer nur die eigenen.
     - **Moderation:** Update/Delete nur durch Planer/Admin.
-- **Feature (Kreativ-Labor Moderation):** Vorschlaege koennen im Sammelkarten-Manager angenommen oder abgelehnt werden.
+- **Feature (Ideen-Labor Moderation):** Vorschlaege koennen im Sammelkarten-Manager angenommen oder abgelehnt werden.
     - **Accept Flow:** Beim Annehmen werden automatisch 2 Booster als Belohnung an den Ersteller gutgeschrieben.
     - **Automation:** Vorschlag-Status, Admin-Notiz, Belohnung und Nutzer-Benachrichtigung werden serverseitig ueber `moderateCardProposal` verarbeitet.
     - **Safety:** Nur `pending` Vorschlaege sind moderierbar, doppelte Belohnungen sind ausgeschlossen.
@@ -410,11 +984,11 @@
     - **Migration:** Bereitstellung eines Cleanup-Scripts (`scripts/cleanup-voting-data.ts`) zur Bereinigung der Bestandsdaten.
 
 ## [1.0.59] - 2026-03-31
-- **Neu (Kreativ-Labor):** Einführung eines Formulars für eigene Kartenvorschläge in der Umfragen-Sektion.
+- **Neu (Ideen-Labor):** Einführung eines Formulars für eigene Kartenvorschläge in der Umfragen-Sektion.
     - **Mitgestaltung:** Nutzer können nun für jeden Lehrer Vorschläge für Lebenspunkte (HP), Beschreibungen und bis zu 3 Angriffe (Name, Schaden, Effekt) einreichen.
     - **Belohnungssystem:** Einreichungen, die vom Admin für das offizielle Album übernommen werden, werden mit **2 Booster-Packs** pro Karte belohnt.
     - **Strukturierte Erfassung:** Vorschläge werden in einer neuen Datenbank-Collection (`card_proposals`) gespeichert und dem Admin zur Inspiration vorgelegt.
-    - **UI-Update:** Die Umfragen-Seite wurde auf ein Tab-Layout umgestellt, um zwischen regulären Abstimmungen und dem Kreativ-Labor wechseln zu können.
+    - **UI-Update:** Die Umfragen-Seite wurde auf ein Tab-Layout umgestellt, um zwischen regulären Abstimmungen und dem Ideen-Labor wechseln zu können.
 
 ## [1.0.58] - 2026-03-31
 
@@ -542,7 +1116,7 @@
 ## [1.0.40] - 2026-03-30
 - **Guest Experience Refinement:** Dezente Platzierung des Konto-Incentives.
     - **UI/UX:** Entfernung des plakativen Guest-Banners zugunsten einer subtileren Integration.
-    - **Konvertierung:** Ein neuer Link "Warum ein Konto?" wurde direkt unter den Login-Buttons in der Sidebar (Navbar) und der Sammelkarten-Promo auf dem Dashboard platziert. Er führt zur Info-Seite `/promo`.
+    - **Konvertierung:** Ein neuer Link "Warum ein Konto?" wurde direkt unter den Login-Buttons in der Sidebar (Navbar) und der Sammelkarten-Promo auf dem Dashboard platziert. Er führt zur Info-Seite `/zugang`.
 
 ## [1.0.39] - 2026-03-30
 - **Guest Experience & Conversion (Draft):** Experimentelle Implementierung des `GuestPromoBanner`. (Wurde in 1.0.40 durch ein subtileres Design ersetzt).
@@ -975,7 +1549,7 @@
 
 ## [0.36.12] - 2026-03-28
 - **UX Refinement (Navbar):** Die gesamte Menü-Kategorie 'Planung' (Kalender, Todos, Gruppen) wird für Gäste nun vollständig ausgeblendet, um die Navigation übersichtlicher zu gestalten.
-- **Promo Page Update:** Die `/promo` Seite wurde aktualisiert, um die aktuellen Berechtigungsunterschiede zwischen Gästen und registrierten Nutzern korrekt widerzuspiegeln. Sie dient nun als zentraler Info-Hub für die Vorteile eines Lernsax-Accounts.
+- **Promo Page Update:** Die `/zugang` Seite wurde aktualisiert, um die aktuellen Berechtigungsunterschiede zwischen Gästen und registrierten Nutzern korrekt widerzuspiegeln. Sie dient nun als zentraler Info-Hub für die Vorteile eines Lernsax-Accounts.
 
 ## [0.36.11] - 2026-03-28
 - **Shop Update:** Booster-Packs und andere kontoabhängige Artikel werden für Gäste nun vollständig ausgeblendet, statt nur gesperrt zu sein. Dies sorgt für eine übersichtlichere Shop-Ansicht, die nur aktuell kaufbare Artikel für den jeweiligen Nutzer anzeigt.
@@ -1215,51 +1789,54 @@
 - **Stabilität:**
     - Referrals: **Erweitertes Logging** für das Empfehlungssystem zur schnelleren Diagnose von Fehlern bei der Punktevergabe.
     - Cleanup: Optimierung des automatischen Bereinigungssystems ("Super Danger").
-
-## [0.26.64] - 2026-03-27
+    - **Root-Flow:** `dashboard.` und `app.`-Hosts überspringen die Erstbesucher-Umleitung zur Startseite.
+    - **Setup-Hinweis:** Das Subdomain-Routing ist dokumentiert; DNS und Custom Domain müssen zusätzlich beim Hosting-Anbieter eingerichtet werden.
 - Fix: **Z-Index Problem behoben**. Der sticky Header im Shop überdeckt nun nicht mehr das globale Navigationsmenü auf Mobilgeräten.
 
-## [0.26.63] - 2026-03-27
-- UI: **Layout-Korrekturen im Shop**. Die Booster-Bilder haben nun mehr Abstand zu den oberen Badges und sind besser zentriert. Die Animation des Rabatt-Badges wurde entfernt.
-
+    - **Root-Flow:** Die Startseite prüft beim ersten anonymen Besuch ein lokales Flag und leitet dann auf [src/app/zugang/page.tsx](src/app/zugang/page.tsx) um.
+    - **Landing-Erlebnis:** Die Promo-Seite ist jetzt eine echte Startseite mit Hero, Feature-Überblick und klaren Einstiegspunkten.
+    - **Navigation:** Login- und Registrieren-Seiten führen jetzt zurück zur Startseite statt direkt ins Dashboard.
 ## [0.26.62] - 2026-03-27
 - UI: **Rabatt-Badge neu platziert**. Die Prozent-Ersparnis wurde vom Kauf-Button entfernt und stattdessen als pulsierendes Badge in der oberen linken Ecke der Booster-Pakete platziert, um sie prominenter hervorzuheben.
-
-## [0.26.61] - 2026-03-27
+    - **Persistenz:** Angepinnte Eintraege bleiben in der gespeicherten Reihenfolge erhalten; entfernte Eintraege werden nicht direkt wieder in die Liste gezogen.
+    - **UI:** Die Schnellzugriffe haben eine farbigere Darstellung und zeigen den Pin-Status direkt an.
 - UI: **Rabatt-Eckbanner optimiert**. Die Sichtbarkeit und Positionierung des diagonalen Prozent-Banners auf dem Kauf-Button wurde verbessert und mit einem Backdrop-Blur versehen.
 
-## [0.26.60] - 2026-03-27
+    - **Verwendung:** Dashboard, Finanzseite und Funding-Widget nutzen die Brandfarbe jetzt fuer Hervorhebungen, Karten und Statusanzeige.
 - UI: **Eck-Banner für Rabatte**. Die Prozent-Ersparnis wird nun als diagonales Banner in der oberen rechten Ecke des Kauf-Buttons angezeigt.
 
-## [0.26.59] - 2026-03-27
-- UI: **Kauf-Button Design verfeinert**. Der Streichpreis steht nun als schlichter Text links vom Hauptpreis, während die Prozent-Ersparnis in einem kleinen Label rechts hervorgehoben wird.
+    - **UI-Schutz:** Das Eingabefeld wird nur noch fuer Rollen mit Schreibrechten angezeigt; ansonsten erscheint ein Read-only-Wert.
+    - **Logik:** Das Update-Handling bleibt auf berechtigte Rollen begrenzt, damit kein schreibender Fallback mehr greift.
 
 ## [0.26.58] - 2026-03-27
-- Fix: **Kauf-Button Layout korrigiert**. Die Rabatt-Informationen wurden nebeneinander statt übereinander platziert, um Clipping-Fehler zu vermeiden und die Lesbarkeit zu verbessern.
-
-## [0.26.57] - 2026-03-27
-- UI: **Streichpreise & Prozent-Badges**. Der Kauf-Button zeigt nun bei Bundles den durchgestrichenen Originalpreis sowie die prozentuale Ersparnis an, um den Mehrwert der Pakete besser zu verdeutlichen.
+    - **Datenabfragen:** Firestore-Listener und Countdown-Logik wurden nach [src/app/sammelkarten/_modules/hooks/useSammelkartenConfig.ts](src/app/sammelkarten/_modules/hooks/useSammelkartenConfig.ts) verschoben.
+    - **State-Management:** Pack-Flow, Tastatursteuerung und Reveal-State liegen jetzt in [src/app/sammelkarten/_modules/hooks/useSammelkartenGame.ts](src/app/sammelkarten/_modules/hooks/useSammelkartenGame.ts).
+    - **Berechnungen/Utils:** Wahrscheinlichkeiten, Card-Mapping und Ergebnisaufbereitung wurden in dedizierte Utility-Dateien ausgelagert.
+    - **UI-Bausteine:** Header, Pack-Stage und Reveal-Bereiche wurden in fokussierte Komponenten extrahiert, ohne Verhaltensaenderung.
 
 ## [0.26.56] - 2026-03-27
-- UI: **Rabatt-Anzeige für Bundles**. Im Shop wird nun explizit angezeigt, wie viel man bei den größeren Booster-Bundles im Vergleich zum Einzelpreis (0,99 €) spart.
+    - **Fix:** Tab-Buttons erlauben mobil Zeilenumbruch statt gequetschter Einzeilen-Texte, dadurch ueberlagern sich Labels nicht mehr.
 
 ## [0.26.55] - 2026-03-27
-- Marketing: **Abikasse-Unterstützung hervorgehoben**. Im Shop wird nun prominent beworben, dass 90% der Einnahmen direkt an die jeweilige Abikasse der Stufe fließen, um den Abiball zu finanzieren. Die restlichen 10% dienen dem App-Unterhalt.
+    - **Nachladung:** Bereits gespeicherte Quick-Actions werden beim Laden aufgeloest, damit alte UID-Eintraege automatisch ersetzt werden.
 
 ## [0.26.54] - 2026-03-27
-- UI: **Demo-Kauf-Modal implementiert**. Beim Klick auf ein Booster-Paket öffnet sich nun ein Bestätigungs-Modal, das den Demo-Charakter der Transaktion verdeutlicht.
-- UI: **Kauf-Button vereinfacht**. Das Kreditkarten-Icon wurde aus dem Kauf-Button entfernt, um ein minimalistischeres Design zu erzielen.
+    - **Root Cause:** Die bisherige Carryover-Logik addierte bei `openBooster` zusaetzliche Tagespacks und erlaubte dadurch >2 kostenlose Packs pro Tag.
+    - **Konsistenz:** Frontend-Anzeige und Backend-Validierung verwenden jetzt dieselbe strikte Berechnung (Tageskontingent + explizite `extra_available`-Packs).
 
 ## [0.26.53] - 2026-03-27
+
 - UI: **Booster Shop UI optimiert**. Der Preis der Booster-Packs wird nun direkt auf dem Kauf-Button angezeigt anstatt in einem separaten Info-Feld, um die Benutzeroberfläche übersichtlicher und moderner zu gestalten.
 
-## [0.26.52] - 2026-03-27
+    - **Client-Sicherheit:** Der fruehere Firestore-Fallback im Browser wurde entfernt, damit der Trade-Start nicht mehr an gesperrten Direktwrites auf `card_trades` und `notifications` scheitert.
+    - **Root Cause:** Die serverseitige Validierung bleibt erhalten, waehrend der Client keinen ungeschuetzten Schreibpfad mehr nutzt.
 - Fix: **Kritischer Firebase-Fehler im Booster Shop behoben**. Ein `internal`-Error beim Kauf von Boostern wurde durch Korrektur des Datenbank-Zugriffs in den Cloud Functions (`getFirestore` statt fehlerhaftem `admin.firestore`) behoben.
 - Fix: **Fehlende Seltenheits-Synchronisierung korrigiert**. Die automatische Seltenheitsberechnung (`calculateTeacherRarity`) wurde ebenfalls auf den korrekten Datenbank-Zugriff umgestellt, um Dateninkonsistenzen zu vermeiden.
-- Robustheit: **Zusätzliche Validierung im Backend**. Der Kauf-Prozess prüft nun explizit auf gültige `amount`-Werte und schützt vor `NaN`-Fehlern in der Datenbank.
 
-## [0.26.51] - 2026-03-27
-- Fix: **Build-Fehler im Booster Shop behoben**. Die Eigenschaft `shop_stats` wurde zum `Profile`-Interface hinzugefügt, um einen TypeScript-Fehler beim Build-Vorgang zu korrigieren.
+- Robustheit: **Zusätzliche Validierung im Backend**. Der Kauf-Prozess prüft nun explizit auf gültige `amount`-Werte und schützt vor `NaN`-Fehlern in der Datenbank.
+    - **Hierarchische Gruppen:** `scripts/migrate_to_hierarchical_groups.ts` schreibt und liest nicht mehr gegen die Default-Datenbank.
+    - **Card Settings:** `scripts/migrate_card_settings.ts` wurde auf dieselbe Datenbank-Instanz ausgerichtet, damit Admin-Migrationen konsistent laufen.
+    - **Projektkontext:** Beide Skripte setzen jetzt auch die Firebase-Projekt-ID explizit, damit `ts-node` nicht an fehlenden lokalen ADC-Metadaten scheitert.
 
 ## [0.26.50] - 2026-03-27
 - Hotfix: **Endgültige Behebung des mapToCardData ReferenceErrors**. Durch Umstellung auf Funktionsdeklarationen (Hoisting) und Eindeutige Funktionsnamen (`mapTeacherToCardData`) wurde ein Problem in Next.js/Turbopack-Chunks behoben, bei dem die Hilfsfunktion sporadisch nicht im Scope gefunden wurde.

@@ -14,13 +14,17 @@ import Link from 'next/link'
 import Logo from '@/components/Logo'
 import { logAction } from '@/lib/logging'
 
+const OPTION_TEACHER = 'Lehrer'
+const OPTION_OTHER_GRADE = 'andere KlassenStufe'
+
 function RegisterForm() {
-  const [step, setStep] = useState<1 | 2 | 3 | 4>(1)
+  const [step, setStep] = useState<1 | 2 | 3 | 4 | 5>(1)
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [courses, setCourses] = useState<string[]>(['Kurs 1', 'Kurs 2', 'Kurs 3', 'Kurs 4', 'Kurs 5', 'Kurs 6', 'Kurs 7'])
   const [selectedCourse, setSelectedCourse] = useState('Kurs 1')
+  const [manualGrade, setManualGrade] = useState('')
   const [isCoursesLoading, setIsCoursesLoading] = useState(true)
   const [isAtLeast16, setIsAtLeast16] = useState(false)
   const [acceptsTerms, setAcceptsTerms] = useState(false)
@@ -31,21 +35,27 @@ function RegisterForm() {
   const searchParams = useSearchParams()
   const ref = searchParams.get('ref')
 
+  const isSpecialOption = selectedCourse === OPTION_TEACHER || selectedCourse === OPTION_OTHER_GRADE
+
   useEffect(() => {
     const loadCourses = async () => {
       setIsCoursesLoading(true)
       try {
         const settingsSnap = await getDoc(doc(db, 'settings', 'config'))
+        let allCourses = ['Kurs 1', 'Kurs 2', 'Kurs 3', 'Kurs 4', 'Kurs 5', 'Kurs 6', 'Kurs 7']
         if (settingsSnap.exists()) {
           const configuredCourses = settingsSnap.data().courses
           if (Array.isArray(configuredCourses) && configuredCourses.length > 0) {
-            const normalizedCourses = configuredCourses.filter((entry: unknown): entry is string => typeof entry === 'string' && entry.trim().length > 0)
-            if (normalizedCourses.length > 0) {
-              setCourses(normalizedCourses)
-              setSelectedCourse(normalizedCourses[0])
-            }
+            allCourses = configuredCourses.filter((entry: unknown): entry is string => typeof entry === 'string' && entry.trim().length > 0)
           }
         }
+        
+        // Add special options if not present
+        if (!allCourses.includes(OPTION_TEACHER)) allCourses.push(OPTION_TEACHER)
+        if (!allCourses.includes(OPTION_OTHER_GRADE)) allCourses.push(OPTION_OTHER_GRADE)
+        
+        setCourses(allCourses)
+        setSelectedCourse(allCourses[0])
       } catch (loadError) {
         console.error('Error loading courses:', loadError)
       } finally {
@@ -113,6 +123,14 @@ function RegisterForm() {
       return true
     }
 
+    if (step === 4) {
+      if (selectedCourse === OPTION_OTHER_GRADE && !manualGrade.trim()) {
+        setError('Bitte gib deine Klassenstufe ein.')
+        return false
+      }
+      return true
+    }
+
     return true
   }
 
@@ -125,8 +143,14 @@ function RegisterForm() {
       return
     }
 
+    if (step === 3 && isSpecialOption) {
+      setStep(4)
+      setShowError(false)
+      return
+    }
+
     if (step < 3) {
-      setStep((prev) => (prev + 1) as 1 | 2 | 3)
+      setStep((prev) => (prev + 1) as 1 | 2 | 3 | 4 | 5)
       setShowError(false)
       return
     }
@@ -162,11 +186,13 @@ function RegisterForm() {
       const isFirstUser = querySnapshot.empty
 
       // 5. Create profile document in Firestore
+      const classNameToSave = selectedCourse === OPTION_OTHER_GRADE ? manualGrade : selectedCourse
+
       await setDoc(doc(db, 'profiles', user.uid), {
         full_name: fullName,
         email: normalizedEmail,
         role: isFirstUser ? 'admin' : 'viewer',
-        class_name: selectedCourse,
+        class_name: classNameToSave,
         planning_groups: [],
         led_groups: [],
         is_group_leader: false,
@@ -186,7 +212,7 @@ function RegisterForm() {
       await logAction('ACCOUNT_CREATED', user.uid, fullName, {
         email: normalizedEmail,
         role: isFirstUser ? 'admin' : 'viewer',
-        class_name: selectedCourse,
+        class_name: classNameToSave,
         created_at: new Date().toISOString(),
       })
 
@@ -194,11 +220,11 @@ function RegisterForm() {
       await logAction('PROFILE_UPDATED', user.uid, fullName, {
         action: 'profile_created',
         role: isFirstUser ? 'admin' : 'viewer',
-        class_name: selectedCourse,
+        class_name: classNameToSave,
         legal_consents_recorded: true,
       })
 
-      setStep(4) // Success/Verification step
+      setStep(5) // Success/Verification step
     } catch (err: any) {
       setError('Registrierung fehlgeschlagen: ' + err.message)
     } finally {
@@ -216,32 +242,38 @@ function RegisterForm() {
               variant="ghost"
               size="sm"
               className="-ml-2 text-muted-foreground hover:text-foreground"
-              render={<Link href="/">Zurück zum Dashboard</Link>}
+              render={<Link href="/">Zurück zur Startseite</Link>}
             />
           </div>
           <CardHeader className="space-y-3 px-5 pb-7 pt-3 sm:px-7 sm:pb-8 sm:pt-5">
             <CardTitle className="text-4xl font-black text-center tracking-tight">
-              {step === 4 ? 'Fast fertig!' : 'Registrieren'}
+              {step === 5 ? 'Fast fertig!' : 'Registrieren'}
             </CardTitle>
             <CardDescription className="text-center">
-              {step === 4 
+              {step === 5 
                 ? 'Wir haben dir eine Verifizierungs-E-Mail gesendet.' 
                 : 'Erstelle einen Account, um mitzugestalten oder abzustimmen.'}
             </CardDescription>
-            {step < 4 && (
+            {step < 5 && (
               <div className="pt-3 space-y-2.5">
                 <div className="flex gap-2">
                   <div className={`h-1.5 flex-1 rounded-full ${step >= 1 ? 'bg-primary' : 'bg-muted'}`} />
                   <div className={`h-1.5 flex-1 rounded-full ${step >= 2 ? 'bg-primary' : 'bg-muted'}`} />
                   <div className={`h-1.5 flex-1 rounded-full ${step >= 3 ? 'bg-primary' : 'bg-muted'}`} />
+                  {isSpecialOption && (
+                    <div className={`h-1.5 flex-1 rounded-full ${step >= 4 ? 'bg-primary' : 'bg-muted'}`} />
+                  )}
                 </div>
                 <p className="text-xs text-muted-foreground text-center">
-                  {step === 1 ? 'Schritt 1/3: Name' : step === 2 ? 'Schritt 2/3: E-Mail & Passwort' : 'Schritt 3/3: Kurs'}
+                  {step === 1 ? `Schritt 1/${isSpecialOption ? '4' : '3'}: Name` : 
+                   step === 2 ? `Schritt 2/${isSpecialOption ? '4' : '3'}: E-Mail & Passwort` : 
+                   step === 3 ? `Schritt 3/${isSpecialOption ? '4' : '3'}: Kurs` : 
+                   `Schritt 4/4: ${selectedCourse === OPTION_TEACHER ? 'Lehrer Info' : 'Klassenstufe'}`}
                 </p>
               </div>
             )}
           </CardHeader>
-          {step === 4 ? (
+          {step === 5 ? (
             <CardContent className="space-y-6 px-5 pb-7 sm:px-7 sm:pb-8 text-center">
               <div className="p-4 bg-primary/10 rounded-xl text-sm text-primary font-medium leading-relaxed">
                 Bitte klicke auf den Link in der E-Mail (Check auch deinen Spam-Ordner), um deinen Account zu aktivieren und deine Willkommens-Booster zu erhalten!
@@ -374,6 +406,42 @@ function RegisterForm() {
                     </div>
                   </div>
                 )}
+
+                {step === 4 && (
+                  <div className="space-y-6">
+                    {selectedCourse === OPTION_TEACHER ? (
+                      <div className="p-4 bg-muted/30 rounded-xl space-y-3 border border-border/50">
+                        <p className="text-sm font-bold text-foreground">Lehrer-Account</p>
+                        <p className="text-xs leading-relaxed text-muted-foreground">
+                          Als Lehrer hast du vollen Zugriff auf alle Inhalte der App, um den Abiturjahrgang zu unterstützen. 
+                          Bitte beachte, dass du an schüler-spezifischen Abstimmungen (z.B. Abimotto) nicht teilnehmen kannst.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="space-y-5">
+                        <div className="p-4 bg-muted/30 rounded-xl space-y-3 border border-border/50">
+                          <p className="text-sm font-bold text-foreground">Andere Klassenstufe</p>
+                          <p className="text-xs leading-relaxed text-muted-foreground">
+                            Diese App ist primär auf die Organisation der aktuellen Abitur-Stufe ausgelegt. 
+                            Du kannst sie dennoch nutzen, um über Veranstaltungen informiert zu bleiben.
+                          </p>
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <Label htmlFor="manualGrade" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Klassenstufe / Bezeichnung</Label>
+                          <Input 
+                            id="manualGrade" 
+                            placeholder="z.B. 10L2, 7b, ..." 
+                            value={manualGrade}
+                            onChange={(e) => setManualGrade(e.target.value)}
+                            className="h-12 text-base bg-background/70 border-border"
+                            required 
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </CardContent>
               <CardFooter className="flex flex-col space-y-5 border-0 bg-transparent rounded-none px-5 pb-7 pt-3 sm:px-7 sm:pb-8 sm:pt-4">
                 <div className="w-full flex gap-2">
@@ -382,7 +450,7 @@ function RegisterForm() {
                       type="button"
                       variant="outline"
                       className="flex-1 h-12"
-                      onClick={() => setStep((prev) => (prev - 1) as 1 | 2 | 3)}
+                      onClick={() => setStep((prev) => (prev - 1) as 1 | 2 | 3 | 4 | 5)}
                       disabled={loading}
                     >
                       Zurück
@@ -390,7 +458,7 @@ function RegisterForm() {
                   )}
 
                   <Button type="submit" className="flex-1 h-12" disabled={loading}>
-                    {step < 3 ? 'Weiter' : (loading ? 'Erstellung...' : 'Account erstellen')}
+                    {step < 3 || (step === 3 && isSpecialOption) ? 'Weiter' : (loading ? 'Erstellung...' : 'Account erstellen')}
                   </Button>
                 </div>
                 <p className="text-sm text-center text-muted-foreground">

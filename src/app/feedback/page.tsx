@@ -269,9 +269,6 @@ export default function FeedbackPage() {
           <h1 className="text-3xl font-extrabold tracking-tight flex items-center gap-2">
             <MessageSquarePlus className="h-7 w-7 text-primary" /> Feedback & Bugs
           </h1>
-          <p className="text-muted-foreground mt-1">
-            Hilf uns, den ABI Planer zu verbessern. Melde Fehler oder schlage neue Funktionen vor.
-          </p>
         </div>
 
         <Card>
@@ -453,9 +450,8 @@ export default function FeedbackPage() {
                       Privat senden
                     </label>
                     <p className="text-xs text-muted-foreground">
-                      Nur fuer Planer/Admins sichtbar.
-                    </p>
-                  </div>
+                      Nur für Planer/Admins sichtbar.
+                    </p>                  </div>
                 </div>
               </div>
 

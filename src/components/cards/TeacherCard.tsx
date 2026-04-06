@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence, useAnimation } from 'framer-motion';
-import { GraduationCap, Zap, Star, Lock } from 'lucide-react';
+import { GraduationCap, Zap, Star, Lock, Trash2, Image, Check } from 'lucide-react';
 import { CardData, CardStyle } from '@/types/cards';
 import { RaritySymbol } from './RaritySymbol';
 import { CardEffectOverlay } from './CardEffectOverlay';
@@ -16,6 +16,10 @@ interface TeacherCardProps {
   isLocked?: boolean;
   interactive?: boolean;
   upgradeInfo?: { oldLevel: number, newLevel: number };
+  isCover?: boolean;
+  onRemove?: (e: React.MouseEvent) => void;
+  onSetCover?: (e: React.MouseEvent) => void;
+  showDeckControls?: boolean;
 }
 
 const Particle = React.memo(({ delay }: { delay: number }) => {
@@ -73,7 +77,11 @@ export const TeacherCard = React.memo(({
   isFlippedExternally,
   isLocked = false,
   interactive = true,
-  upgradeInfo
+  upgradeInfo,
+  isCover = false,
+  onRemove,
+  onSetCover,
+  showDeckControls = false
 }: TeacherCardProps) => {
   const [isFlippedInternally, setIsFlippedInternally] = useState(isFlippedExternally ?? false);
   const [prevExternal, setPrevExternal] = useState(isFlippedExternally);
@@ -186,7 +194,7 @@ export const TeacherCard = React.memo(({
 
   return (
     <div
-      className={cn("relative aspect-[2.5/3.5] perspective-1000 @container", className, interactive && "cursor-pointer")}
+      className={cn("relative aspect-[2.5/3.5] perspective-1000 @container rounded-[3.5cqw]", className, interactive && "cursor-pointer")}
       style={{ containerType: 'inline-size' }}
       onClick={() => {
         if (interactive && !isLocked) {
@@ -259,6 +267,48 @@ export const TeacherCard = React.memo(({
 
               <div className={cn("absolute inset-0 pointer-events-none", styleClasses.bgOverlay)} />
               
+              {/* Deck Controls */}
+              {showDeckControls && (
+                <div className="absolute inset-x-0 top-0 z-50 flex justify-between p-[4%] lg:opacity-0 lg:group-hover:opacity-100 opacity-100 transition-opacity">
+                  <div className="flex gap-[1.5cqw]">
+                    {onRemove && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onRemove(e);
+                        }}
+                        className="bg-red-500/90 hover:bg-red-600 text-white p-[1.5cqw] rounded-xl backdrop-blur-md shadow-lg transition-all active:scale-90"
+                        title="Aus Deck entfernen"
+                      >
+                        <Trash2 className="w-[8cqw] h-[8cqw]" />
+                      </button>
+                    )}
+                    {onSetCover && !isCover && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onSetCover(e);
+                        }}
+                        className="bg-blue-500/90 hover:bg-blue-600 text-white p-[1.5cqw] rounded-xl backdrop-blur-md shadow-lg transition-all active:scale-90"
+                        title="Als Cover setzen"
+                      >
+                        <Image className="w-[8cqw] h-[8cqw]" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Cover Badge */}
+              {isCover && (
+                <div className="absolute top-[4%] left-[4%] z-50">
+                  <div className="bg-gradient-to-r from-amber-500 to-amber-600 text-white px-[3cqw] py-[1cqw] rounded-xl flex items-center gap-[1cqw] shadow-[0_4px_12px_rgba(245,158,11,0.4)] border border-amber-400/50 scale-90 origin-top-left">
+                    <Check className="w-[6cqw] h-[6cqw] stroke-[4px]" />
+                    <span className="text-[5cqw] font-black uppercase tracking-tight">COVER</span>
+                  </div>
+                </div>
+              )}
+
               <div className={cn("relative z-30 mb-[4%] mt-[4%]", styleClasses.iconWrapper)}>
                 <GraduationCap className={cn(styleClasses.header, styleClasses.headerIcon)} />
               </div>
@@ -327,7 +377,9 @@ export const TeacherCard = React.memo(({
     prevProps.data.id === nextProps.data.id &&
     prevProps.data.variant === nextProps.data.variant &&
     prevProps.data.rarity === nextProps.data.rarity &&
-    prevProps.data.name === nextProps.data.name
+    prevProps.data.name === nextProps.data.name &&
+    prevProps.isCover === nextProps.isCover &&
+    prevProps.showDeckControls === nextProps.showDeckControls
   );
 });
 

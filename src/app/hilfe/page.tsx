@@ -38,7 +38,7 @@ export default function HilfePage() {
         },
         {
           q: 'Bin ich automatisch ein "Planner"?',
-          a: 'Nein. Neue User sind standardmäßig "Viewer" (können nur lesen). Admin kann dir die "Planner"-Rolle geben wenn du bei der Abi-Planung aktiv mithelfen willst.'
+          a: 'Nein. Neue User sind standardmäßig "Zuschauer" (können nur lesen). Admin kann dir die "Planner"-Rolle geben wenn du bei der Abi-Planung aktiv mithelfen willst.'
         }
       ]
     },
@@ -144,7 +144,7 @@ export default function HilfePage() {
       items: [
         {
           q: 'Was ist der Unterschied zwischen Viewer, Planner und Admin?',
-          a: 'Viewer: Kann alles ansehen & lesen, aber nicht erstellen. Planner: Kann Events, Aufgaben, News erstellen & editieren. Admin: Kann alles + Nutzer-Rollen verwalten.'
+          a: 'Zuschauer: Kann alles ansehen & lesen, aber nicht erstellen. Planner: Kann Events, Aufgaben, News erstellen & editieren. Admin: Kann alles + Nutzer-Rollen verwalten.'
         },
         {
           q: 'Wie werden Gruppen erstellt?',

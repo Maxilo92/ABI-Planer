@@ -1,3 +1,11 @@
+<!-- AGENT_NAV_METADATA -->
+<!-- path: docs/maestro/audit-reports/phase1-logic.md -->
+<!-- role: planning -->
+<!-- read_mode: conditional -->
+<!-- token_hint: summary-first -->
+<!-- default_action: read if task touches planning, audits, or rollout decisions -->
+<!-- index: docs/AGENT_CONTEXT_INDEX.md -->
+
 # Audit Report: TCG Logic & Rarity Core (Phase 1)
 
 **Status**: FINALIZED

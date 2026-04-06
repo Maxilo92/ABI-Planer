@@ -16,7 +16,7 @@ import {
   RefreshCw, Loader2, Sparkles, Database,
   AlertTriangle, Zap, Settings2,
   TrendingUp, Activity, BarChart3, Users, Upload,
-  ArrowDownAZ, ArrowUpAZ, ArrowDownWideNarrow, ArrowUpWideNarrow
+  ArrowDownAZ, ArrowUpAZ, ArrowDownWideNarrow, ArrowUpWideNarrow, ArrowLeftRight
 } from 'lucide-react'
 import { 
   Dialog, DialogContent, DialogDescription, 
@@ -146,6 +146,14 @@ export default function CardManagerPage() {
   const [isSyncing, setIsSyncing] = useState(false)
   
   const [importing, setImporting] = useState(false)
+  const [systemFeatures, setSystemFeatures] = useState<any>(null)
+
+  useEffect(() => {
+    const unsub = onSnapshot(doc(db, 'settings', 'features'), (snap) => {
+      if (snap.exists()) setSystemFeatures(snap.data())
+    })
+    return () => unsub()
+  }, [])
   
   // Dry-Run Dialog State
   const [showDryRunDialog, setShowDryRunDialog] = useState(false)
@@ -218,7 +226,7 @@ export default function CardManagerPage() {
     teachersFound: Record<string, number>
   } | null>(null)
 
-  // Kreativ-Labor Proposals (read-only)
+  // Ideen-Labor Proposals (read-only)
   const [cardProposals, setCardProposals] = useState<CardProposal[]>([])
   const [proposalsLoading, setProposalsLoading] = useState(true)
   const [moderatingProposalId, setModeratingProposalId] = useState<string | null>(null)
@@ -1209,7 +1217,11 @@ export default function CardManagerPage() {
                   </TabsTrigger>
                   <TabsTrigger value="proposals" className="px-4 py-1.5 text-xs gap-2 transition-all">
                     <Sparkles className="h-3.5 w-3.5" />
-                    <span>Kreativ-Labor</span>
+                    <span>Ideen-Labor</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="trading" className="px-4 py-1.5 text-xs gap-2 transition-all">
+                    <ArrowLeftRight className="h-3.5 w-3.5" />
+                    <span>Trading</span>
                   </TabsTrigger>
                 </TabsList>
 
@@ -1585,10 +1597,10 @@ export default function CardManagerPage() {
                         <div>
                           <CardTitle className="text-lg flex items-center gap-2">
                             <Sparkles className="h-5 w-5 text-primary" />
-                            Kreativ-Labor Vorschlaege
+                            Ideen-Labor Vorschlaege
                           </CardTitle>
                           <CardDescription>
-                            Eingereichte Kartenvorschlaege aus dem Kreativ-Labor (Collection: card_proposals).
+                            Eingereichte Kartenvorschlaege aus dem Ideen-Labor (Collection: card_proposals).
                           </CardDescription>
                         </div>
                         <div className="flex items-center gap-2">
@@ -1678,6 +1690,45 @@ export default function CardManagerPage() {
                           ))}
                         </div>
                       )}
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+                <TabsContent value="trading" className="mt-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <ArrowLeftRight className="h-5 w-5 text-primary" />
+                        Card Trading System
+                      </CardTitle>
+                      <CardDescription>
+                        Konfiguriere das Tauschsystem für Sammelkarten.
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                      <div className="flex items-center justify-between p-4 bg-muted/30 rounded-xl border">
+                        <div className="space-y-0.5">
+                          <Label className="text-base font-bold uppercase tracking-tight">System Aktiviert</Label>
+                          <p className="text-sm text-muted-foreground">Wenn deaktiviert, ist das Tausch-Zentrum für Nutzer komplett unsichtbar.</p>
+                        </div>
+                        <Button 
+                          variant={systemFeatures?.is_trading_enabled ? "default" : "outline"}
+                          onClick={async () => {
+                            const newVal = !systemFeatures?.is_trading_enabled;
+                            await updateDoc(doc(db, 'settings', 'features'), { is_trading_enabled: newVal });
+                            toast.success(`Trading wurde ${newVal ? 'aktiviert' : 'deaktiviert'}`);
+                          }}
+                          className={cn("w-32 font-bold uppercase tracking-widest", systemFeatures?.is_trading_enabled ? "bg-emerald-600 hover:bg-emerald-700" : "")}
+                        >
+                          {systemFeatures?.is_trading_enabled ? "Aktiv" : "Inaktiv"}
+                        </Button>
+                      </div>
+                      
+                      <div className="p-4 bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 rounded-xl">
+                        <p className="text-xs text-blue-700 dark:text-blue-400 leading-relaxed">
+                          <strong>Hinweis:</strong> Das Deaktivieren des Systems löscht keine bestehenden Trades. 
+                          Alle Daten bleiben in der Datenbank erhalten, aber die Nutzer können nicht mehr darauf zugreifen oder neue Trades starten.
+                        </p>
+                      </div>
                     </CardContent>
                   </Card>
                 </TabsContent>

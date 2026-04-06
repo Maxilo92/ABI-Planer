@@ -1,3 +1,11 @@
+<!-- AGENT_NAV_METADATA -->
+<!-- path: docs/maestro/plans/2026-03-25-sammelkarten-admin-suite-impl-plan.md -->
+<!-- role: planning -->
+<!-- read_mode: conditional -->
+<!-- token_hint: summary-first -->
+<!-- default_action: read if task touches planning, audits, or rollout decisions -->
+<!-- index: docs/AGENT_CONTEXT_INDEX.md -->
+
 # Implementation Plan: Sammelkarten Admin Suite (v1.0.0)
 
 **Status**: Draft

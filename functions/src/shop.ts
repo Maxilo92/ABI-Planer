@@ -141,21 +141,14 @@ const DEFAULT_RESET_HOUR = 9;
 
 const formatDatePart = (value: number) => value.toString().padStart(2, "0");
 
-const fromDayStringToUtcMs = (value: string): number | null => {
-  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
-  if (!match) return null;
-
-  const year = Number(match[1]);
-  const month = Number(match[2]);
-  const day = Number(match[3]);
-  const timestamp = Date.UTC(year, month - 1, day);
-
-  return Number.isNaN(timestamp) ? null : timestamp;
-};
-
 const addDaysToDayString = (value: string, delta: number): string => {
-  const base = fromDayStringToUtcMs(value);
-  if (base === null) return value;
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if (!match) return value;
+
+  const baseYear = Number(match[1]);
+  const baseMonth = Number(match[2]);
+  const baseDay = Number(match[3]);
+  const base = Date.UTC(baseYear, baseMonth - 1, baseDay);
 
   const next = new Date(base + delta * 24 * 60 * 60 * 1000);
   const year = next.getUTCFullYear();
@@ -201,26 +194,23 @@ const getCurrentBoosterDay = (config: any): string => {
   return baseDay;
 };
 
-const daysBetween = (from: string, to: string): number => {
-  const fromMs = fromDayStringToUtcMs(from);
-  const toMs = fromDayStringToUtcMs(to);
-  if (fromMs === null || toMs === null) return 0;
-
-  const msInDay = 24 * 60 * 60 * 1000;
-  const diff = toMs - fromMs;
-  return Math.max(0, Math.floor(diff / msInDay));
-};
-
-const calculateCarryoverExtras = (lastReset: string, today: string, dailyAllowance: number): number => {
-  const daysMissed = daysBetween(lastReset, today);
-  if (daysMissed <= 0) return 0;
-  return Math.min(daysMissed, 1) * dailyAllowance;
-};
-
 const toSafeInt = (value: unknown): number => {
   const parsed = Number(value);
   if (!Number.isFinite(parsed)) return 0;
   return Math.max(0, Math.floor(parsed));
+};
+
+type CustomQueueEntry = {
+  ref: any;
+  remainingPacks: number;
+  allowRandomFill: boolean;
+  slots: Array<{
+    slotIndex: number;
+    teacherId: string;
+    variant?: "normal" | "holo" | "shiny" | "black_shiny_holo";
+  }>;
+  presetId: string | null;
+  name: string | null;
 };
 
 /**
@@ -796,6 +786,7 @@ export const purchaseBoosters = onCall({
 /**
  * Cloud Function zum Öffnen eines Boosters.
  * Zieht Karten basierend auf gewichteten Zufallswerten.
+ * Wenn eine Custom-Pack-Queue vorhanden ist, werden diese Packs zuerst deterministisch verarbeitet.
  */
 export const openBooster = onCall({
   cors: true,
@@ -809,7 +800,13 @@ export const openBooster = onCall({
 
   const userId = request.auth.uid;
   const db = getFirestore("abi-data");
-  const countToOpen = Math.min(Math.max(Number(request.data.count) || 1, 1), 10); // Limit to max 10 packs at once
+  const countToOpen = Math.min(Math.max(Number(request.data.count) || 1, 1), 10);
+  const requestedPackSource = request.data.packSource === "custom" || request.data.packSource === "random"
+    ? request.data.packSource
+    : null;
+  const requestedCustomPackQueueId = typeof request.data.customPackQueueId === "string"
+    ? request.data.customPackQueueId.trim()
+    : "";
 
   try {
     return await db.runTransaction(async (transaction) => {
@@ -820,8 +817,13 @@ export const openBooster = onCall({
       const [profileSnap, userTeachersSnap, settingsSnap] = await Promise.all([
         transaction.get(profileRef),
         transaction.get(userTeachersRef),
-        transaction.get(settingsRef)
+        transaction.get(settingsRef),
       ]);
+
+      const customQueueQuery = profileRef.collection("custom_pack_queue")
+        .orderBy("createdAt", "asc")
+        .limit(40);
+      const customQueueSnap: any = await transaction.get(customQueueQuery);
 
       if (!profileSnap.exists) {
         throw new HttpsError("not-found", "Profil nicht gefunden.");
@@ -847,18 +849,14 @@ export const openBooster = onCall({
       const isCurrentBoosterDay = lastReset === today;
       const openedToday = isCurrentBoosterDay ? rawCount : 0;
       const dailyRemaining = Math.max(0, dailyAllowance - openedToday);
-      const carryoverExtras = isCurrentBoosterDay ? 0 : calculateCarryoverExtras(lastReset, today, dailyAllowance);
-      const effectiveExtraAvailable = rawExtraAvailable + carryoverExtras;
-      const totalAvailable = dailyRemaining + effectiveExtraAvailable;
-
-      if (totalAvailable < countToOpen) {
-        throw new HttpsError(
-          "failed-precondition",
-          `Nicht genügend Booster verfügbar (${totalAvailable} vorhanden, ${countToOpen} benötigt).`
-        );
-      }
+      const effectiveExtraAvailable = rawExtraAvailable;
 
       const lootTeachers = (config.loot_teachers || []) as any[];
+      const lootTeachersById = new Map<string, any>(
+        lootTeachers
+          .map((teacher) => [String(teacher?.id || "").trim(), teacher] as const)
+          .filter(([teacherId]) => teacherId.length > 0),
+      );
       const rarityWeightsRaw = config.rarity_weights || [];
       const rarityWeights = Array.isArray(rarityWeightsRaw) ? rarityWeightsRaw : [rarityWeightsRaw];
       const variantProbs = config.variant_probabilities || {};
@@ -867,108 +865,235 @@ export const openBooster = onCall({
         throw new HttpsError("internal", "Keine Karten zum Ziehen verfügbar.");
       }
 
-      const allPacks: any[] = [];
+      const rollVariant = (): "normal" | "holo" | "shiny" | "black_shiny_holo" => {
+        const randVariantValue = Math.random();
+        if (randVariantValue < (Number(variantProbs.black_shiny_holo) || 0.005)) {
+          return "black_shiny_holo";
+        }
+        if (randVariantValue < (Number(variantProbs.shiny) || 0.05)) {
+          return "shiny";
+        }
+        if (randVariantValue < (Number(variantProbs.holo) || 0.15)) {
+          return "holo";
+        }
+        return "normal";
+      };
+
       const userTeachersData = (userTeachersSnap.data() || {}) as any;
 
-      for (let p = 0; p < countToOpen; p++) {
-        const cardsOpenedInPack: any[] = [];
-        // Jedes Pack enthält so viele Karten wie rarityWeights definiert sind (normalerweise 3)
-        for (const weights of rarityWeights) {
-          // 1. Seltenheit rollen
-          const rarities = ["common", "rare", "epic", "mythic", "legendary", "iconic"];
-          const totalWeight = rarities.reduce((sum, r) => sum + (Number(weights[r]) || 0), 0);
+      const registerCard = (teacher: any, variant: "normal" | "holo" | "shiny" | "black_shiny_holo") => {
+        const teacherId = String(teacher.id || "").trim();
+        if (!teacherId) {
+          throw new HttpsError("internal", "Ungültige Kartenkonfiguration: teacherId fehlt.");
+        }
+
+        if (!userTeachersData[teacherId]) {
+          userTeachersData[teacherId] = {
+            count: 1,
+            level: 1,
+            variants: { [variant]: 1 },
+          };
+        } else {
+          const current = userTeachersData[teacherId];
+          current.count = (Number(current.count) || 0) + 1;
+          current.level = Math.floor(Math.sqrt(current.count - 1)) + 1;
+          if (!current.variants) current.variants = {};
+          current.variants[variant] = (Number(current.variants[variant]) || 0) + 1;
+        }
+
+        return {
+          id: teacherId,
+          name: teacher.name,
+          rarity: teacher.rarity,
+          variant,
+          level: userTeachersData[teacherId].level,
+          count: userTeachersData[teacherId].count,
+        };
+      };
+
+      const drawRandomCard = (slotIndex: number) => {
+        const weights = rarityWeights[slotIndex] || rarityWeights[0] || {};
+        const rarities = ["common", "rare", "epic", "mythic", "legendary", "iconic"];
+        const totalWeight = rarities.reduce((sum, rarity) => sum + (Number(weights[rarity]) || 0), 0);
+
+        let selectedRarity = "common";
+        if (totalWeight > 0) {
           let randomRarityValue = Math.random() * totalWeight;
-          let selectedRarity = "common";
-          
-          for (const r of rarities) {
-            const w = Number(weights[r]) || 0;
-            if (randomRarityValue < w) {
-              selectedRarity = r;
+          for (const rarity of rarities) {
+            const rarityWeight = Number(weights[rarity]) || 0;
+            if (randomRarityValue < rarityWeight) {
+              selectedRarity = rarity;
               break;
             }
-            randomRarityValue -= w;
+            randomRarityValue -= rarityWeight;
           }
-
-          // 2. Variante rollen
-          const randVariantValue = Math.random();
-          let variant: "normal" | "holo" | "shiny" | "black_shiny_holo" = "normal";
-          if (randVariantValue < (Number(variantProbs.black_shiny_holo) || 0.005)) {
-            variant = "black_shiny_holo";
-          } else if (randVariantValue < (Number(variantProbs.shiny) || 0.05)) {
-            variant = "shiny";
-          } else if (randVariantValue < (Number(variantProbs.holo) || 0.15)) {
-            variant = "holo";
-          }
-
-          // 3. Lehrer auswählen
-          const candidates = lootTeachers.filter((t) => t.rarity === selectedRarity);
-          const selectedTeacher = candidates.length > 0
-            ? candidates[Math.floor(Math.random() * candidates.length)]
-            : (lootTeachers.filter(t => t.rarity === "common")[0] || lootTeachers[0]);
-
-          if (!selectedTeacher) continue;
-
-          const teacherId = selectedTeacher.id;
-
-          // 4. User-Fortschritt aktualisieren
-          if (!userTeachersData[teacherId]) {
-            userTeachersData[teacherId] = {
-              count: 1,
-              level: 1,
-              variants: { [variant]: 1 }
-            };
-          } else {
-            const current = userTeachersData[teacherId];
-            current.count = (Number(current.count) || 0) + 1;
-            // Level-Formel: Math.floor(Math.sqrt(count - 1)) + 1
-            current.level = Math.floor(Math.sqrt(current.count - 1)) + 1;
-            if (!current.variants) current.variants = {};
-            current.variants[variant] = (Number(current.variants[variant]) || 0) + 1;
-          }
-
-          cardsOpenedInPack.push({
-            id: teacherId,
-            name: selectedTeacher.name,
-            rarity: selectedTeacher.rarity,
-            variant,
-            level: userTeachersData[teacherId].level,
-            count: userTeachersData[teacherId].count
-          });
         }
-        allPacks.push({ cards: cardsOpenedInPack });
+
+        const candidates = lootTeachers.filter((teacher) => teacher.rarity === selectedRarity);
+        const selectedTeacher = candidates.length > 0
+          ? candidates[Math.floor(Math.random() * candidates.length)]
+          : (lootTeachers.find((teacher) => teacher.rarity === "common") || lootTeachers[0]);
+
+        if (!selectedTeacher) {
+          throw new HttpsError("internal", "Es konnte keine Karte gezogen werden.");
+        }
+
+        return registerCard(selectedTeacher, rollVariant());
+      };
+
+      const queueEntries: CustomQueueEntry[] = customQueueSnap?.docs.map((queueDoc: any) => {
+        const queueData = queueDoc.data() || {};
+        const slots = Array.isArray(queueData.slots)
+          ? queueData.slots
+            .map((slot: any) => ({
+              slotIndex: Math.max(0, Math.floor(Number(slot?.slotIndex))),
+              teacherId: String(slot?.teacherId || "").trim(),
+              variant: slot?.variant,
+            }))
+            .filter((slot: any) => slot.teacherId.length > 0)
+          : [];
+
+        return {
+          ref: queueDoc.ref,
+          remainingPacks: toSafeInt(queueData.remainingPacks),
+          allowRandomFill: queueData.allowRandomFill !== false,
+          slots,
+          presetId: queueData.presetId || null,
+          name: queueData.name || null,
+        };
+      }) || [];
+
+      const reservedCustomPacks = queueEntries.reduce<number>((sum: number, entry: CustomQueueEntry) => sum + Math.max(0, toSafeInt(entry.remainingPacks)), 0);
+      const totalAvailable = requestedPackSource === "random"
+        ? dailyRemaining + Math.max(0, effectiveExtraAvailable - reservedCustomPacks)
+        : dailyRemaining + effectiveExtraAvailable;
+
+      if (totalAvailable < countToOpen) {
+        throw new HttpsError(
+          "failed-precondition",
+          `Nicht genügend Booster verfügbar (${totalAvailable} vorhanden, ${countToOpen} benötigt).`
+        );
       }
 
-      // Profile aktualisieren: Tageslimit zuerst nutzen, dann extra_available
+      const firstAvailableCustomQueueEntry = queueEntries.find((entry: CustomQueueEntry) => entry.remainingPacks > 0 && entry.slots.length > 0) || null;
+      const requestedCustomQueueEntry = requestedCustomPackQueueId
+        ? queueEntries.find((entry: CustomQueueEntry) => entry.ref.id === requestedCustomPackQueueId && entry.remainingPacks > 0 && entry.slots.length > 0) || null
+        : null;
+
+      if (requestedPackSource === "custom" && !requestedCustomQueueEntry && !firstAvailableCustomQueueEntry) {
+        throw new HttpsError("failed-precondition", "Es ist kein Custom Pack zur Auswahl verfügbar.");
+      }
+
+      if (requestedPackSource === "custom" && requestedCustomPackQueueId && !requestedCustomQueueEntry) {
+        throw new HttpsError("failed-precondition", "Das ausgewählte Custom Pack ist nicht mehr verfügbar.");
+      }
+
+      let explicitCustomQueueEntry = requestedPackSource === "custom"
+        ? (requestedCustomQueueEntry || firstAvailableCustomQueueEntry)
+        : null;
+
+      if (requestedPackSource === "custom" && explicitCustomQueueEntry && explicitCustomQueueEntry.remainingPacks < countToOpen) {
+        throw new HttpsError(
+          "failed-precondition",
+          `Das gewählte Custom Pack ist nur noch ${explicitCustomQueueEntry.remainingPacks}x verfuegbar.`
+        );
+      }
+
+      const allPacks: any[] = [];
+      let customPacksOpened = 0;
+
+      for (let packIndex = 0; packIndex < countToOpen; packIndex += 1) {
+        const queueEntry = requestedPackSource === "random"
+          ? null
+          : (requestedPackSource === "custom"
+            ? (explicitCustomQueueEntry && explicitCustomQueueEntry.remainingPacks > 0 ? explicitCustomQueueEntry : null)
+            : queueEntries.find((entry: CustomQueueEntry) => entry.remainingPacks > 0 && entry.slots.length > 0) || null);
+        const cardsOpenedInPack: any[] = [];
+
+        if (queueEntry) {
+          customPacksOpened += 1;
+          for (let slotIndex = 0; slotIndex < rarityWeights.length; slotIndex += 1) {
+            const forcedSlot = queueEntry.slots.find((slot: any) => slot.slotIndex === slotIndex);
+            if (forcedSlot) {
+              const forcedTeacher = lootTeachersById.get(forcedSlot.teacherId);
+              if (!forcedTeacher) {
+                throw new HttpsError("failed-precondition", `Custom-Pack enthält unbekannte teacherId '${forcedSlot.teacherId}'.`);
+              }
+              const forcedVariant = forcedSlot.variant === "normal" || forcedSlot.variant === "holo" || forcedSlot.variant === "shiny" || forcedSlot.variant === "black_shiny_holo"
+                ? forcedSlot.variant
+                : rollVariant();
+              cardsOpenedInPack.push(registerCard(forcedTeacher, forcedVariant));
+              continue;
+            }
+
+            if (queueEntry.allowRandomFill) {
+              cardsOpenedInPack.push(drawRandomCard(slotIndex));
+            }
+          }
+
+          queueEntry.remainingPacks = Math.max(0, queueEntry.remainingPacks - 1);
+          if (requestedPackSource === "custom") {
+            explicitCustomQueueEntry = queueEntry;
+          }
+          allPacks.push({
+            cards: cardsOpenedInPack,
+            source: "custom",
+            customPackPresetId: queueEntry.presetId,
+            customPackName: queueEntry.name,
+          });
+        } else {
+          for (let slotIndex = 0; slotIndex < rarityWeights.length; slotIndex += 1) {
+            cardsOpenedInPack.push(drawRandomCard(slotIndex));
+          }
+          allPacks.push({ cards: cardsOpenedInPack, source: "random" });
+        }
+      }
+
       const usedFromDaily = Math.min(dailyRemaining, countToOpen);
       const usedFromExtra = countToOpen - usedFromDaily;
       const newOpenedToday = openedToday + usedFromDaily;
       const newExtraAvailable = Math.max(0, effectiveExtraAvailable - usedFromExtra);
+      const totalCardsOpenedInBatch = allPacks.reduce((sum, pack) => sum + pack.cards.length, 0);
 
       transaction.update(profileRef, {
         "booster_stats.last_reset": today,
         "booster_stats.count": newOpenedToday,
         "booster_stats.extra_available": newExtraAvailable,
         "booster_stats.total_opened": FieldValue.increment(countToOpen),
-        updated_at: FieldValue.serverTimestamp()
+        "booster_stats.total_cards": FieldValue.increment(totalCardsOpenedInBatch),
+        updated_at: FieldValue.serverTimestamp(),
       });
 
-      // User Teachers speichern
       transaction.set(userTeachersRef, userTeachersData);
 
-      // Audit Log
+      for (const queueEntry of queueEntries) {
+        const nextRemaining = Math.max(0, toSafeInt(queueEntry.remainingPacks));
+        transaction.update(queueEntry.ref, {
+          remainingPacks: nextRemaining,
+          updatedAt: FieldValue.serverTimestamp(),
+          consumedAt: nextRemaining === 0 ? FieldValue.serverTimestamp() : null,
+        });
+      }
+
       const logRef = db.collection("logs").doc();
       transaction.set(logRef, {
         user_id: userId,
         action: "OPEN_BOOSTER",
         details: {
           packCount: countToOpen,
-          packs: allPacks.flatMap(p => p.cards.map((c: any) => ({ id: c.id, variant: c.variant, rarity: c.rarity })))
+          customPacksOpened,
+          packs: allPacks.flatMap((pack) => pack.cards.map((card: any) => ({ id: card.id, variant: card.variant, rarity: card.rarity }))),
         },
-        timestamp: FieldValue.serverTimestamp()
+        timestamp: FieldValue.serverTimestamp(),
       });
 
-      logger.info("Boosters successfully opened", { userId, packCount: countToOpen });
-      return { packs: allPacks };
+      logger.info("Boosters successfully opened", {
+        userId,
+        packCount: countToOpen,
+        customPacksOpened,
+      });
+
+      return { packs: allPacks, customPacksOpened };
     });
   } catch (error: any) {
     logger.error("Error in openBooster:", error);

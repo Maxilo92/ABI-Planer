@@ -126,7 +126,7 @@ export default function TodosPage() {
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          {canManage && <AddTodoDialog />}
+          {canManage && <AddTodoDialog defaultGroup={profile?.planning_groups?.[0]} />}
         </div>
       </div>
 

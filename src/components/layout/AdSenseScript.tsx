@@ -10,6 +10,13 @@ export function AdSenseScript() {
 
   useEffect(() => {
     const checkAndInject = () => {
+      if (typeof window !== 'undefined') {
+        const host = window.location.hostname
+        if (host === 'localhost' || host === '127.0.0.1' || host.endsWith('.localhost')) {
+          return
+        }
+      }
+
       const consent = localStorage.getItem('cookie-consent-accepted')
       if (consent === 'true' && !scriptInjected) {
         const script = document.createElement('script')

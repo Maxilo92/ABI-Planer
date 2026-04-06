@@ -21,6 +21,10 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { ShareResourceButton } from '@/components/ui/share-resource-button'
 import { motion, AnimatePresence } from 'framer-motion'
+import { getDashboardRedirectUrl } from '@/lib/dashboard-url'
+
+import { LandingHeader } from '@/components/layout/LandingHeader'
+import { Footer as DashboardFooter } from '@/components/layout/Footer'
 
 export default function NewsDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
@@ -32,6 +36,14 @@ export default function NewsDetailPage({ params }: { params: Promise<{ id: strin
   const [commentText, setCommentText] = useState('')
   const [submittingComment, setSubmittingComment] = useState(false)
   const [showEmojiPicker, setShowEmojiPicker] = useState(false)
+  const [rootMode, setRootMode] = useState<'unknown' | 'landing' | 'dashboard'>('unknown')
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const host = window.location.hostname
+    const isDashboardHost = host.startsWith('dashboard.') || host.startsWith('app.') || host === 'localhost' || host === '127.0.0.1'
+    setRootMode(isDashboardHost ? 'dashboard' : 'landing')
+  }, [])
 
   const isMaintenanceActive = maintenance?.active || (maintenance?.start && new Date(maintenance.start) <= new Date())
 
@@ -173,7 +185,7 @@ export default function NewsDetailPage({ params }: { params: Promise<{ id: strin
     }
   }
 
-  if (loading) {
+  if (rootMode === 'unknown' || loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -207,8 +219,102 @@ export default function NewsDetailPage({ params }: { params: Promise<{ id: strin
   
   const quickEmojis = ['👍', '❤️', '🔥', '😂', '😮', '😢', '🎓', '🥂', '🚀', '💸', '📝', '🎉', '🍦', '🍕', '🍺', '✅']
 
+  if (rootMode === 'landing') {
+    return (
+      <div className="relative min-h-screen bg-background text-foreground selection:bg-primary/20">
+        <LandingHeader isAuthenticated={!!user} />
+        
+        <main className="relative z-10 pt-32 pb-20 px-6">
+          <div className="max-w-4xl mx-auto space-y-10">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="gap-2 -ml-2 text-muted-foreground hover:text-foreground transition-colors group"
+              asChild
+            >
+              <Link href="/news">
+                <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" /> Zur Übersicht
+              </Link>
+            </Button>
+
+            <article className="space-y-10">
+              {news.image_url && (
+                <div className="relative aspect-[21/9] w-full overflow-hidden rounded-[2.5rem] bg-muted shadow-2xl">
+                  <img
+                    src={news.image_url}
+                    alt=""
+                    className="h-full w-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+                </div>
+              )}
+
+              <div className="space-y-6">
+                <div className="space-y-4">
+                  <div className="flex flex-wrap items-center gap-3 text-[10px] font-black uppercase tracking-widest text-primary">
+                    <span className="bg-primary/10 px-3 py-1 rounded-full">{news.created_at ? format(toDate(news.created_at), 'dd. MMMM yyyy', { locale: de }) : 'Neu'}</span>
+                    <span className="flex items-center gap-1.5"><UserIcon className="h-3.5 w-3.5" /> {news.author_name || 'System'}</span>
+                  </div>
+                  <h1 className="text-4xl md:text-6xl font-black tracking-tight leading-[1.1]">{news.title}</h1>
+                </div>
+
+                <div className="flex items-center gap-6 pt-4 border-t border-border/50">
+                   <div className="flex items-center gap-2 text-muted-foreground text-sm font-bold">
+                      <Eye className="h-4 w-4 text-primary/60" />
+                      {news.view_count || 0} Aufrufe
+                   </div>
+                   <ShareResourceButton
+                      resourcePath={`/news/${news.id}`}
+                      title={news.title}
+                      text="Schau dir diese News im ABI Planer an."
+                    />
+                </div>
+
+                <div className="h-px bg-border/50" />
+
+                <div className="prose dark:prose-invert max-w-none prose-lg prose-headings:font-black prose-headings:tracking-tight prose-p:leading-relaxed prose-p:text-foreground/80">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {news.content}
+                  </ReactMarkdown>
+                </div>
+              </div>
+            </article>
+
+            {/* Reactions & Comments logic omitted or integrated if desired, 
+                but for a "clean" landing detail we might just show the content 
+                and lead to dashboard for interaction.
+                Let's keep the dashboard logic below but wrap it in a cleaner container.
+            */}
+            
+            <div className="pt-10 border-t border-border/50 space-y-12">
+               <div className="bg-card/30 border border-border/50 rounded-[2rem] p-8 md:p-12 text-center space-y-6">
+                  <h3 className="text-2xl font-black tracking-tight">Möchtest du mitreden?</h3>
+                  <p className="text-muted-foreground max-w-lg mx-auto">
+                    Um Kommentare zu schreiben oder auf Beiträge zu reagieren, melde dich bitte in deinem Dashboard-Konto an.
+                  </p>
+                  <div className="flex flex-wrap justify-center gap-4">
+                    <Button onClick={() => {
+                      window.location.href = getDashboardRedirectUrl(window.location)
+                    }} className="rounded-xl font-bold px-8">
+                       Zum Dashboard
+                    </Button>
+                    <Button variant="outline" asChild className="rounded-xl font-bold px-8">
+                       <Link href="/register">Konto erstellen</Link>
+                    </Button>
+                  </div>
+               </div>
+            </div>
+          </div>
+        </main>
+
+        <DashboardFooter />
+      </div>
+    )
+  }
+
   return (
     <div className="max-w-4xl mx-auto py-4 md:py-8 space-y-6">
+...
       <div className="px-2">
         <Button
           variant="ghost"

@@ -1,3 +1,11 @@
+<!-- AGENT_NAV_METADATA -->
+<!-- path: INSTALL.md -->
+<!-- role: primary -->
+<!-- read_mode: read-first -->
+<!-- token_hint: full -->
+<!-- default_action: read before deeper file exploration -->
+<!-- index: docs/AGENT_CONTEXT_INDEX.md -->
+
 # Installation & Setup (v1.0.0 Release)
 
 Folge diesen Schritten, um den ABI Planer produktiv zu setzen.
@@ -43,3 +51,13 @@ In der Firebase Console unter **Authentication > Settings > User actions**:
 - Deaktiviere "Allow account creation" falls die Registrierungsphase vorbei ist.
 - Aktiviere "Email enumeration protection".
 - **Lernsax-Check:** Da wir die Domain `@hgr-web.lernsax.de` erzwingen, ist die App bereits gut gegen fremde Zugriffe geschützt.
+
+## 7. Subdomains & Domain-Setup
+Wenn du eigene Subdomains wie `dashboard.abi-planer-27` nutzen willst, brauchst du zusätzlich zur App selbst die Domain-Konfiguration beim Hosting-Anbieter.
+
+- Lege für die Hauptdomain `abi-planer-27.de` die Landingpage fest.
+- Richte `dashboard.abi-planer-27` als zusätzliche Custom Domain auf dieselbe App/Hosting-Instanz ein.
+- Hinterlege die DNS-Einträge beim Domain-Provider genau so, wie es der Hosting-Anbieter vorgibt.
+- Für einen reinen Dashboard-Zugang bleibt die bestehende App-Logik erhalten: Root zeigt Landingpage, Dashboard-Subdomain springt direkt ins Produkt.
+
+Wichtig: Das ist nicht nur eine Code-Änderung. Die Domain muss im Hosting-System selbst verbunden werden, sonst kann der Browser die Subdomain nicht auflösen.

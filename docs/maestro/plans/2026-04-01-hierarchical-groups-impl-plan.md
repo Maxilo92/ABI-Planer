@@ -1,3 +1,11 @@
+<!-- AGENT_NAV_METADATA -->
+<!-- path: docs/maestro/plans/2026-04-01-hierarchical-groups-impl-plan.md -->
+<!-- role: planning -->
+<!-- read_mode: conditional -->
+<!-- token_hint: summary-first -->
+<!-- default_action: read if task touches planning, audits, or rollout decisions -->
+<!-- index: docs/AGENT_CONTEXT_INDEX.md -->
+
 # Implementation Plan: Hierarchical Groups & Multiple Memberships
 
 **Task Complexity**: Medium

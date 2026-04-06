@@ -10,14 +10,39 @@ import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 
 // Initialize Firebase Admin
 try {
+  const projectId = process.env.GOOGLE_CLOUD_PROJECT || process.env.GCLOUD_PROJECT || process.env.FIREBASE_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'abi-planer-75319';
   initializeApp({
     credential: applicationDefault(),
+    projectId,
   });
 } catch (error) {
   console.log('Firebase Admin already initialized or failed to initialize.');
 }
 
-const db = getFirestore();
+const db = getFirestore('abi-data');
+
+function logMigrationError(step: string, error: unknown) {
+  const err = error as {
+    code?: string;
+    name?: string;
+    message?: string;
+    stack?: string;
+    details?: unknown;
+  };
+
+  console.error(`[Migration][${step}] failed`);
+  console.error(`[Migration][${step}] name:`, err?.name || 'unknown');
+  console.error(`[Migration][${step}] code:`, err?.code || 'unknown');
+  console.error(`[Migration][${step}] message:`, err?.message || String(error));
+
+  if (err?.details !== undefined) {
+    console.error(`[Migration][${step}] details:`, err.details);
+  }
+
+  if (err?.stack) {
+    console.error(`[Migration][${step}] stack:`, err.stack);
+  }
+}
 
 async function migrateCardSettings() {
   console.log('Starting migration of card settings...');
@@ -26,6 +51,7 @@ async function migrateCardSettings() {
   const sammelkartenRef = db.collection('settings').doc('sammelkarten');
 
   try {
+    console.log('[Migration][Step 1] Reading settings/global');
     const globalDoc = await globalRef.get();
     
     let lootTeachers = [];
@@ -64,7 +90,7 @@ async function migrateCardSettings() {
       godpack_chance: 0.005 // 1/200
     };
 
-    console.log('Writing to settings/sammelkarten...');
+    console.log('[Migration][Step 2] Writing to settings/sammelkarten...');
     
     await sammelkartenRef.set({
       loot_teachers: lootTeachers,
@@ -76,7 +102,7 @@ async function migrateCardSettings() {
       updated_at: FieldValue.serverTimestamp()
     }, { merge: true });
 
-    console.log('Migration successful!');
+    console.log('[Migration] Migration successful!');
     console.log('Summary:');
     console.log(`- Teachers migrated: ${lootTeachers.length}`);
     console.log('- Regular weights set (3 slots)');
@@ -84,6 +110,7 @@ async function migrateCardSettings() {
     console.log('- Global limits set:', JSON.stringify(globalLimits));
 
   } catch (error) {
+    logMigrationError('general', error);
     console.error('Migration failed:', error);
     process.exit(1);
   }

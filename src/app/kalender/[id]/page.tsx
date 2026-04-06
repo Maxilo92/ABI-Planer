@@ -10,6 +10,7 @@ import { db } from '@/lib/firebase'
 import { toDate } from '@/lib/utils'
 import { Event } from '@/types/database'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { ShareResourceButton } from '@/components/ui/share-resource-button'
 import { downloadICS } from '@/lib/icsGenerator'
 
@@ -136,6 +137,22 @@ export default function CalendarEventPage({ params }: { params: Promise<{ id: st
             <User className="h-4 w-4 text-primary/70" />
             <span>Erstellt von: {event.created_by_name || 'Unbekannt'}</span>
           </div>
+          {(event.assigned_to_group || (event.mentioned_groups && event.mentioned_groups.length > 0)) && (
+            <div className="flex flex-wrap gap-2 pt-1">
+              {event.assigned_to_group && (
+                <Badge variant="outline" className="border-primary/40 text-primary bg-primary/5">
+                  Gruppe: {event.assigned_to_group}
+                </Badge>
+              )}
+              {event.mentioned_groups
+                ?.filter((group) => group !== event.assigned_to_group)
+                .map((group) => (
+                  <Badge key={group} variant="secondary">
+                    Erwähnt: {group}
+                  </Badge>
+                ))}
+            </div>
+          )}
         </header>
 
         <div className="h-px bg-border/50" />

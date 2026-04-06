@@ -18,6 +18,14 @@ Testet die App, findet Bugs und gebt Feedback!
 5. Fertig!
 
 ---
+<!-- AGENT_NAV_METADATA -->
+<!-- path: docs/marketing/WHATSAPP_PITCH.md -->
+<!-- role: secondary -->
+<!-- read_mode: read-on-demand -->
+<!-- token_hint: summary-first -->
+<!-- default_action: read sections that match current task -->
+<!-- index: docs/AGENT_CONTEXT_INDEX.md -->
+
 
 *Worauf solltet ihr achten?*
 * *Bugs:* Funktioniert etwas nicht oder stürzt die App ab?

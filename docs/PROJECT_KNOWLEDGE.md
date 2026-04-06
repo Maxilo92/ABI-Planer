@@ -1,3 +1,11 @@
+<!-- AGENT_NAV_METADATA -->
+<!-- path: docs/PROJECT_KNOWLEDGE.md -->
+<!-- role: primary -->
+<!-- read_mode: read-first -->
+<!-- token_hint: full -->
+<!-- default_action: read before deeper file exploration -->
+<!-- index: docs/AGENT_CONTEXT_INDEX.md -->
+
 # Projekt-Wissen & Architektur (ABI Planer v1.0.0)
 
 Dieses Dokument sichert das Wissen über die technische Struktur und die getroffenen Entscheidungen für die Production-Release. (Stand: 29. März 2026)

@@ -1,4 +1,12 @@
-# ABI Planer v1.2.12
+<!-- AGENT_NAV_METADATA -->
+<!-- path: README.md -->
+<!-- role: primary -->
+<!-- read_mode: read-first -->
+<!-- token_hint: full -->
+<!-- default_action: read before deeper file exploration -->
+<!-- index: docs/AGENT_CONTEXT_INDEX.md -->
+
+# ABI Planer v1.3.0
 
 📚 Zentrale Plattform für die Planung und Organisation des Abiturs 2027.
 
@@ -18,7 +26,12 @@
 ## 🚀 Quick Start
 1. [Installation & Setup](./INSTALL.md) — Firebase-Projekt vorbereiten
 
-## 📚 Dokumentation
+## 📚 Complete Documentation
+- [Agent Context Index](./docs/AGENT_CONTEXT_INDEX.md) — Startpunkt für Agenten mit Kontext-Sparstrategie (relevante Dateien zuerst)
+- [README Testing Phase](./README_TESTING_PHASE.md) — Überblick Testing Phase
+- [Test Environment Setup](./TEST_ENVIRONMENT_SETUP.md) — Lokal zum Testen starten
+- [Testing Checklist](./TESTING_CHECKLIST.md) — 41 konkrete Test-Cases
+- [Deployment Guide](./DEPLOYMENT.md) — Production auf Firebase deployen
 - [Projekt-Wissen & Architektur](./docs/PROJECT_KNOWLEDGE.md) — Technische Details & Stack
 - [Changelog](./CHANGELOG.md) — Alle Änderungen seit v1.0.0
 
@@ -36,4 +49,4 @@
 - `npm run build` — Production Build für Deployment
 
 ---
-**Version:** 1.2.12 | **Status:** Active Development
+**Version:** 1.3.0 | **Status:** Active Development

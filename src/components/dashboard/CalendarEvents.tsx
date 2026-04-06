@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { Event } from '@/types/database'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
 import { Calendar as CalendarIcon, Clock, Trash2, MapPin, User } from 'lucide-react'
 import { format } from 'date-fns'
 import { de } from 'date-fns/locale'
@@ -139,6 +140,23 @@ export function CalendarEvents({
                         <User className="h-3 w-3" />
                         {event.created_by_name || 'Unbekannt'}
                       </div>
+                      {(event.assigned_to_group || (event.mentioned_groups && event.mentioned_groups.length > 0)) && (
+                        <div className="flex flex-wrap gap-1 pt-0.5">
+                          {event.assigned_to_group && (
+                            <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 border-primary/40 text-primary">
+                              Gruppe: {event.assigned_to_group}
+                            </Badge>
+                          )}
+                          {event.mentioned_groups
+                            ?.filter((group) => group !== event.assigned_to_group)
+                            .slice(0, 2)
+                            .map((group) => (
+                              <Badge key={group} variant="secondary" className="text-[10px] px-1.5 py-0 h-5">
+                                Erwähnt: {group}
+                              </Badge>
+                            ))}
+                        </div>
+                      )}
                     </div>
                   </Link>
 

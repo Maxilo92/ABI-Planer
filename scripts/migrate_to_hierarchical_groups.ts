@@ -10,14 +10,39 @@ import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 
 // Initialize Firebase Admin
 try {
+  const projectId = process.env.GOOGLE_CLOUD_PROJECT || process.env.GCLOUD_PROJECT || process.env.FIREBASE_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'abi-planer-75319';
   initializeApp({
     credential: applicationDefault(),
+    projectId,
   });
 } catch (error) {
   console.log('Firebase Admin already initialized or failed to initialize.');
 }
 
-const db = getFirestore();
+const db = getFirestore('abi-data');
+
+function logMigrationError(step: string, error: unknown) {
+  const err = error as {
+    code?: string;
+    name?: string;
+    message?: string;
+    stack?: string;
+    details?: unknown;
+  };
+
+  console.error(`[Migration][${step}] failed`);
+  console.error(`[Migration][${step}] name:`, err?.name || 'unknown');
+  console.error(`[Migration][${step}] code:`, err?.code || 'unknown');
+  console.error(`[Migration][${step}] message:`, err?.message || String(error));
+
+  if (err?.details !== undefined) {
+    console.error(`[Migration][${step}] details:`, err.details);
+  }
+
+  if (err?.stack) {
+    console.error(`[Migration][${step}] stack:`, err.stack);
+  }
+}
 
 async function migrateToHierarchicalGroups() {
   console.log('Starting migration to hierarchical groups...');
@@ -28,10 +53,11 @@ async function migrateToHierarchicalGroups() {
   try {
     // 1. Initialize Settings
     console.log('Step 1: Initializing Settings in settings/config...');
+    console.log('[Migration][Step 1] Reading settings/config');
     const configDoc = await configRef.get();
     
     if (!configDoc.exists) {
-      console.error('Error: settings/config document not found.');
+      console.error('[Migration][Step 1] Error: settings/config document not found.');
       process.exit(1);
     }
 
@@ -67,10 +93,11 @@ async function migrateToHierarchicalGroups() {
     });
 
     await configRef.update({ planning_groups: planningGroups });
-    console.log('Settings updated successfully.');
+    console.log('[Migration][Step 1] settings/config updated successfully.');
 
     // 2. Migrate Profiles
     console.log('Step 2: Migrating Profiles...');
+    console.log('[Migration][Step 2] Reading profiles collection');
     const profilesSnapshot = await profilesRef.get();
     console.log(`Found ${profilesSnapshot.size} profiles to process.`);
 
@@ -127,6 +154,7 @@ async function migrateToHierarchicalGroups() {
         updatedCount++;
 
         if (batchCount === 500) {
+          console.log(`[Migration][Step 2] Committing batch of 500 profiles (updated so far: ${updatedCount})`);
           await batch.commit();
           console.log(`Committed batch of 500 profiles. Total updated: ${updatedCount}`);
           batch = db.batch();
@@ -136,6 +164,7 @@ async function migrateToHierarchicalGroups() {
     }
 
     if (batchCount > 0) {
+      console.log(`[Migration][Step 2] Committing final batch of ${batchCount} profiles`);
       await batch.commit();
       console.log(`Committed final batch. Total updated: ${updatedCount}`);
     }
@@ -161,6 +190,7 @@ async function migrateToHierarchicalGroups() {
     }
 
   } catch (error) {
+    logMigrationError('general', error);
     console.error('Migration failed:', error);
     process.exit(1);
   }

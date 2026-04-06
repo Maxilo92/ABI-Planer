@@ -21,6 +21,14 @@ Du kannst direkt dort testen. Diese Anleitung ist für lokales Development/Testi
 - [ ] Firebase Konfiguration (vom Admin)
 
 ---
+<!-- AGENT_NAV_METADATA -->
+<!-- path: testing/TEST_ENVIRONMENT_SETUP.md -->
+<!-- role: secondary -->
+<!-- read_mode: read-on-demand -->
+<!-- token_hint: summary-first -->
+<!-- default_action: read sections that match current task -->
+<!-- index: docs/AGENT_CONTEXT_INDEX.md -->
+
 
 ## 1. Repository klonen (für lokales Entwickeln)
 

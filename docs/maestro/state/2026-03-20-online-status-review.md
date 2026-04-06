@@ -1,3 +1,11 @@
+<!-- AGENT_NAV_METADATA -->
+<!-- path: docs/maestro/state/2026-03-20-online-status-review.md -->
+<!-- role: state-log -->
+<!-- read_mode: conditional -->
+<!-- token_hint: summary-first -->
+<!-- default_action: read only if prior execution state is relevant -->
+<!-- index: docs/AGENT_CONTEXT_INDEX.md -->
+
 ## Code Review Results
 
 **Scope**: Implementation of "online" and "last online" status across AuthContext, database types, profile page, and utilities.

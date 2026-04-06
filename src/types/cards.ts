@@ -45,11 +45,26 @@ export interface GlobalCardLimits {
   rarity_limits?: Record<string, number>;
 }
 
+export interface CustomPackSlotDefinition {
+  slotIndex: number;
+  teacherId: string;
+  variant?: CardVariant;
+}
+
+export interface CustomPackPreset {
+  id: string;
+  name: string;
+  allowRandomFill?: boolean;
+  slots: CustomPackSlotDefinition[];
+}
+
 export interface SammelkartenConfig {
   loot_teachers: LootTeacher[];
   rarity_weights: RarityWeights[]; // Array for 3 slots
   godpack_weights: RarityWeights[]; // Array for 3 slots
   variant_probabilities: VariantProbabilities;
   global_limits: GlobalCardLimits;
+  custom_pack_presets?: CustomPackPreset[];
+  is_trading_enabled?: boolean;
   updated_at?: any;
 }

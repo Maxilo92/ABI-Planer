@@ -15,6 +15,7 @@ import { toast } from 'sonner'
 import { Loader2, Plus, Trash2, RotateCcw, Cookie, GraduationCap, Sparkles, Construction } from 'lucide-react'
 import { logAction } from '@/lib/logging'
 import { Badge } from '@/components/ui/badge'
+import { cn } from '@/lib/utils'
 
 interface CustomPopupMessage {
   id: string
@@ -721,13 +722,13 @@ export default function GlobalSettingsPage() {
           </CardContent>
         </Card>
 
-        <Card className={settings.maintenance?.active ? "border-destructive bg-destructive/5" : ""}>
+        <Card className={settings.maintenance?.active ? "border-destructive/30 bg-red-50" : ""}>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Construction className="h-5 w-5 text-amber-500" />
+              <Construction className={cn("h-5 w-5", settings.maintenance?.active ? "text-red-600" : "text-amber-600")} />
               Wartungsmodus
             </CardTitle>
-            <CardDescription>
+            <CardDescription className={settings.maintenance?.active ? "text-red-900/70" : ""}>
               Plane eine Wartungspause oder aktiviere sie sofort. Alle Nutzer außer Admins werden währenddessen blockiert.
             </CardDescription>
           </CardHeader>
@@ -739,6 +740,7 @@ export default function GlobalSettingsPage() {
                   id="m-start"
                   type="datetime-local"
                   value={formatDateForInput(settings.maintenance?.start)}
+                  className={settings.maintenance?.active ? "border-red-200 focus-visible:ring-red-500" : ""}
                   onChange={(e) => {
                     const val = e.target.value ? new Date(e.target.value).toISOString() : null
                     setSettings(prev => ({ 
@@ -747,7 +749,7 @@ export default function GlobalSettingsPage() {
                     }))
                   }}
                 />
-                <p className="text-[10px] text-muted-foreground">Ab diesem Zeitpunkt wird die App für alle Nutzer gesperrt.</p>
+                <p className={cn("text-[10px]", settings.maintenance?.active ? "text-red-800/60" : "text-muted-foreground")}>Ab diesem Zeitpunkt wird die App für alle Nutzer gesperrt.</p>
               </div>
 
               <div className="space-y-2">
@@ -756,6 +758,7 @@ export default function GlobalSettingsPage() {
                   id="m-end"
                   type="datetime-local"
                   value={formatDateForInput(settings.maintenance?.end)}
+                  className={settings.maintenance?.active ? "border-red-200 focus-visible:ring-red-500" : ""}
                   onChange={(e) => {
                     const val = e.target.value ? new Date(e.target.value).toISOString() : null
                     setSettings(prev => ({ 
@@ -764,7 +767,7 @@ export default function GlobalSettingsPage() {
                     }))
                   }}
                 />
-                <p className="text-[10px] text-muted-foreground">Wird den Nutzern als Countdown auf der Wartungsseite angezeigt.</p>
+                <p className={cn("text-[10px]", settings.maintenance?.active ? "text-red-800/60" : "text-muted-foreground")}>Wird den Nutzern als Countdown auf der Wartungsseite angezeigt.</p>
               </div>
             </div>
 
@@ -774,6 +777,7 @@ export default function GlobalSettingsPage() {
                 id="m-message"
                 placeholder="Wir führen Wartungsarbeiten durch..."
                 value={settings.maintenance?.message || ''}
+                className={settings.maintenance?.active ? "border-red-200 focus-visible:ring-red-500" : ""}
                 onChange={(e) => setSettings(prev => ({ 
                   ...prev, 
                   maintenance: { ...(prev.maintenance || DEFAULT_SETTINGS.maintenance!), message: e.target.value } 
@@ -781,10 +785,10 @@ export default function GlobalSettingsPage() {
               />
             </div>
 
-            <div className="flex items-center justify-between p-4 rounded-xl border bg-muted/30">
+            <div className={cn("flex items-center justify-between p-4 rounded-xl border", settings.maintenance?.active ? "bg-red-100/50 border-red-200" : "bg-muted/30")}>
               <div className="space-y-0.5">
-                <Label className="text-base font-bold">Sofortige Sperre</Label>
-                <p className="text-xs text-muted-foreground">Aktiviert den Wartungsmodus unabhängig vom geplanten Zeitpunkt.</p>
+                <Label className={cn("text-base font-bold", settings.maintenance?.active ? "text-red-900" : "")}>Sofortige Sperre</Label>
+                <p className={cn("text-xs", settings.maintenance?.active ? "text-red-800/70" : "text-muted-foreground")}>Aktiviert den Wartungsmodus unabhängig vom geplanten Zeitpunkt.</p>
               </div>
               <Button 
                 variant={settings.maintenance?.active ? "destructive" : "outline"}

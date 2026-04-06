@@ -2,7 +2,7 @@
 
 import { useEffect, useState, Suspense } from 'react'
 import { db, functions } from '@/lib/firebase'
-import { collection, query, onSnapshot, getDocs, where } from 'firebase/firestore'
+import { collection, query, onSnapshot, getDocs, where, doc, getDoc } from 'firebase/firestore'
 import { httpsCallable } from 'firebase/functions'
 import { useAuth } from '@/context/AuthContext'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
@@ -29,9 +29,28 @@ import { toast } from 'sonner'
 import { logAction } from '@/lib/logging'
 import { Profile } from '@/types/database'
 
-type PopupActionType = 'gift' | 'multicast'
+type PopupActionType = 'gift' | 'custom_gift' | 'multicast'
 type NotificationKind = 'popup' | 'banner' | 'quickmessage'
 type NotificationIconKind = 'gift' | 'info' | 'star' | 'message'
+type CardVariant = 'normal' | 'holo' | 'shiny' | 'black_shiny_holo'
+
+type CustomPackSlot = {
+  slotIndex: number
+  teacherId: string
+  variant: CardVariant
+}
+
+type CustomPackPreset = {
+  id: string
+  name: string
+  allowRandomFill?: boolean
+  slots: CustomPackSlot[]
+}
+
+type LootTeacherOption = {
+  id: string
+  name: string
+}
 
 type MessageTemplate = {
   id: string
@@ -83,6 +102,19 @@ const NOTIFICATION_ICON_OPTIONS: Array<{ key: NotificationIconKind; label: strin
   { key: 'message', label: 'Nachricht' },
 ]
 
+const DEFAULT_CUSTOM_SLOTS: CustomPackSlot[] = [
+  { slotIndex: 0, teacherId: '', variant: 'normal' },
+  { slotIndex: 1, teacherId: '', variant: 'normal' },
+  { slotIndex: 2, teacherId: '', variant: 'normal' },
+]
+
+const CARD_VARIANT_OPTIONS: Array<{ value: CardVariant; label: string }> = [
+  { value: 'normal', label: 'Normal' },
+  { value: 'holo', label: 'Holo' },
+  { value: 'shiny', label: 'Shiny' },
+  { value: 'black_shiny_holo', label: 'Black Shiny Holo' },
+]
+
 function AdminSendContent() {
   const { user, profile, loading: authLoading } = useAuth()
   const router = useRouter()
@@ -106,6 +138,12 @@ function AdminSendContent() {
   const [sendAsSystem, setSendAsSystem] = useState(false)
   const [notificationType, setNotificationType] = useState<NotificationKind>('popup')
   const [notificationIcon, setNotificationIcon] = useState<NotificationIconKind>('gift')
+  const [customPackName, setCustomPackName] = useState('Custom Pack')
+  const [customPackPresetId, setCustomPackPresetId] = useState('')
+  const [customPackAllowRandomFill, setCustomPackAllowRandomFill] = useState(true)
+  const [customPackSlots, setCustomPackSlots] = useState<CustomPackSlot[]>(DEFAULT_CUSTOM_SLOTS)
+  const [customPackPresets, setCustomPackPresets] = useState<CustomPackPreset[]>([])
+  const [lootTeachers, setLootTeachers] = useState<LootTeacherOption[]>([])
 
   const canManage = profile?.role === 'admin' || profile?.role === 'admin_main' || profile?.role === 'admin_co'
 
@@ -133,7 +171,7 @@ function AdminSendContent() {
     setGiftCtaLabel(template.ctaLabel)
     setGiftCtaUrl(template.ctaUrl)
     setGiftDismissLabel(template.dismissLabel)
-    if (popupActionType === 'gift' && typeof template.packCount === 'number') {
+    if ((popupActionType === 'gift' || popupActionType === 'custom_gift') && typeof template.packCount === 'number') {
       setGiftPackCount(template.packCount)
     }
   }
@@ -153,6 +191,35 @@ function AdminSendContent() {
     setGiftSenderName('Admin Team')
   }
 
+  const updateCustomSlot = (slotIndex: number, field: 'teacherId' | 'variant', value: string) => {
+    setCustomPackSlots((prev) => prev.map((slot) => {
+      if (slot.slotIndex !== slotIndex) return slot
+      if (field === 'teacherId') return { ...slot, teacherId: value }
+      return { ...slot, variant: value as CardVariant }
+    }))
+  }
+
+  const applyCustomPreset = (presetId: string) => {
+    setCustomPackPresetId(presetId)
+    const preset = customPackPresets.find((entry) => entry.id === presetId)
+    if (!preset) return
+
+    setCustomPackName(preset.name)
+    setCustomPackAllowRandomFill(preset.allowRandomFill !== false)
+
+    const normalizedSlots = DEFAULT_CUSTOM_SLOTS.map((defaultSlot) => {
+      const existing = preset.slots.find((slot) => slot.slotIndex === defaultSlot.slotIndex)
+      if (!existing) return defaultSlot
+      return {
+        slotIndex: defaultSlot.slotIndex,
+        teacherId: existing.teacherId,
+        variant: existing.variant || 'normal',
+      }
+    })
+
+    setCustomPackSlots(normalizedSlots)
+  }
+
   useEffect(() => {
     if (!authLoading && (!profile || !canManage)) {
       router.replace(`/unauthorized?reason=admin&from=${encodeURIComponent(pathname)}`)
@@ -169,7 +236,7 @@ function AdminSendContent() {
       if (storedIds) {
         try {
           targetIds = JSON.parse(storedIds)
-        } catch (e) {
+        } catch {
           console.error("Failed to parse stored IDs")
         }
       } else if (queryId) {
@@ -204,6 +271,70 @@ function AdminSendContent() {
     loadRecipients()
   }, [authLoading, profile, canManage, router, searchParams, pathname])
 
+  useEffect(() => {
+    if (authLoading || !canManage) return
+
+    const loadCustomPackSettings = async () => {
+      try {
+        const settingsRef = doc(db, 'settings', 'sammelkarten')
+        const settingsSnap = await getDoc(settingsRef)
+        if (!settingsSnap.exists()) return
+
+        const settingsData = settingsSnap.data() as {
+          loot_teachers?: Array<{ id?: string; name?: string }>
+          custom_pack_presets?: Array<{
+            id?: string
+            name?: string
+            allowRandomFill?: boolean
+            slots?: Array<{ slotIndex?: number; teacherId?: string; variant?: CardVariant }>
+          }>
+        }
+
+        const teacherEntries = Array.isArray(settingsData.loot_teachers)
+          ? settingsData.loot_teachers
+            .map((teacher) => ({
+              id: (teacher?.id || '').trim(),
+              name: (teacher?.name || teacher?.id || '').trim(),
+            }))
+            .filter((teacher) => teacher.id.length > 0)
+          : []
+
+        setLootTeachers(teacherEntries)
+
+        const presets = Array.isArray(settingsData.custom_pack_presets)
+          ? settingsData.custom_pack_presets
+            .map((preset, index) => {
+              const id = (preset?.id || `preset-${index + 1}`).trim()
+              const name = (preset?.name || id || `Preset ${index + 1}`).trim()
+              const slots = Array.isArray(preset?.slots)
+                ? preset.slots
+                  .map((slot) => ({
+                    slotIndex: Math.max(0, Math.floor(Number(slot?.slotIndex))),
+                    teacherId: (slot?.teacherId || '').trim(),
+                    variant: (slot?.variant || 'normal') as CardVariant,
+                  }))
+                  .filter((slot) => slot.teacherId.length > 0)
+                : []
+
+              return {
+                id,
+                name,
+                allowRandomFill: preset?.allowRandomFill !== false,
+                slots,
+              } as CustomPackPreset
+            })
+            .filter((preset) => preset.slots.length > 0)
+          : []
+
+        setCustomPackPresets(presets)
+      } catch (error) {
+        console.error('Failed to load custom pack settings:', error)
+      }
+    }
+
+    loadCustomPackSettings()
+  }, [authLoading, canManage])
+
   const handleSend = async () => {
     if (!user || recipients.length === 0) return
 
@@ -224,7 +355,26 @@ function AdminSendContent() {
       return
     }
 
-    const normalizedPackCount = popupActionType === 'gift' ? Math.floor(giftPackCount) : 0
+    const isGiftFlow = popupActionType === 'gift' || popupActionType === 'custom_gift'
+    const normalizedPackCount = isGiftFlow ? Math.floor(giftPackCount) : 0
+    const normalizedCustomSlots = customPackSlots
+      .map((slot) => ({
+        slotIndex: Math.floor(slot.slotIndex),
+        teacherId: slot.teacherId.trim(),
+        variant: slot.variant,
+      }))
+      .filter((slot) => slot.teacherId.length > 0)
+
+    if (popupActionType === 'custom_gift') {
+      if (normalizedPackCount <= 0) {
+        toast.error('Custom Packs brauchen mindestens 1 Pack pro Empfänger.')
+        return
+      }
+      if (normalizedCustomSlots.length === 0) {
+        toast.error('Bitte mindestens einen Custom-Slot mit Lehrer definieren.')
+        return
+      }
+    }
     
     setSending(true)
     try {
@@ -241,6 +391,11 @@ function AdminSendContent() {
         senderName: effectiveSenderName,
         notificationType,
         notificationIcon,
+        requestId: crypto.randomUUID(),
+        customPackPresetId: popupActionType === 'custom_gift' ? (customPackPresetId || null) : null,
+        customPackName: popupActionType === 'custom_gift' ? customPackName.trim() : null,
+        customPackAllowRandomFill: popupActionType === 'custom_gift' ? customPackAllowRandomFill : null,
+        customPackSlots: popupActionType === 'custom_gift' ? normalizedCustomSlots : [],
       })
 
       const payload = (response.data || {}) as { giftedCount?: number; failedUserIds?: string[] }
@@ -253,6 +408,9 @@ function AdminSendContent() {
         message: trimmedMessage,
         popup_type: popupActionType,
         sender_name: effectiveSenderName,
+        custom_pack_enabled: popupActionType === 'custom_gift',
+        custom_pack_name: popupActionType === 'custom_gift' ? customPackName.trim() : null,
+        custom_pack_preset: popupActionType === 'custom_gift' ? (customPackPresetId || null) : null,
       })
 
       if (failedCount > 0) {
@@ -426,10 +584,14 @@ function AdminSendContent() {
               </div>
 
               <Tabs value={popupActionType} onValueChange={(v) => setPopupActionType(v as PopupActionType)} className="w-full">
-                <TabsList className="grid w-fit grid-cols-2 mb-8 bg-muted/50 p-1">
+                <TabsList className="grid w-fit grid-cols-3 mb-8 bg-muted/50 p-1">
                   <TabsTrigger value="gift" className="gap-2 px-6">
                     <Gift className="h-4 w-4" />
                     Packs verschenken
+                  </TabsTrigger>
+                  <TabsTrigger value="custom_gift" className="gap-2 px-6">
+                    <Star className="h-4 w-4" />
+                    Custom Packs
                   </TabsTrigger>
                   <TabsTrigger value="multicast" className="gap-2 px-6">
                     <MessageSquare className="h-4 w-4" />
@@ -439,7 +601,7 @@ function AdminSendContent() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
                   <div className="space-y-6">
-                    {popupActionType === 'gift' && (
+                    {(popupActionType === 'gift' || popupActionType === 'custom_gift') && (
                       <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
                         <Label htmlFor="gift-pack-count" className="font-bold">Packs pro Person</Label>
                         <Input
@@ -452,6 +614,87 @@ function AdminSendContent() {
                           onChange={(e) => setGiftPackCount(Number(e.target.value) || 0)}
                         />
                         <p className="text-[10px] text-muted-foreground">Maximale Schenkung: 50 Packs</p>
+                      </div>
+                    )}
+
+                    {popupActionType === 'custom_gift' && (
+                      <div className="space-y-4 rounded-xl border border-primary/20 bg-primary/5 p-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="custom-pack-preset" className="font-bold">Preset laden (optional)</Label>
+                          <select
+                            id="custom-pack-preset"
+                            className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                            value={customPackPresetId}
+                            onChange={(e) => applyCustomPreset(e.target.value)}
+                          >
+                            <option value="">Kein Preset</option>
+                            {customPackPresets.map((preset) => (
+                              <option key={preset.id} value={preset.id}>{preset.name}</option>
+                            ))}
+                          </select>
+                          {customPackPresets.length === 0 && (
+                            <p className="text-[10px] text-muted-foreground">Keine Presets in settings/sammelkarten.custom_pack_presets gefunden.</p>
+                          )}
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="custom-pack-name" className="font-bold">Custom Pack Name</Label>
+                          <Input
+                            id="custom-pack-name"
+                            value={customPackName}
+                            onChange={(e) => setCustomPackName(e.target.value)}
+                            maxLength={60}
+                            placeholder="z.B. Mathe-Legenden"
+                          />
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <input
+                            id="custom-pack-random-fill"
+                            type="checkbox"
+                            checked={customPackAllowRandomFill}
+                            onChange={(e) => setCustomPackAllowRandomFill(e.target.checked)}
+                            className="h-4 w-4 rounded border-input"
+                          />
+                          <Label htmlFor="custom-pack-random-fill" className="font-bold">Freie Slots mit Zufall auffüllen</Label>
+                        </div>
+
+                        <div className="space-y-3">
+                          <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Slots (Position, Lehrer, Folie)</p>
+                          {customPackSlots.map((slot) => (
+                            <div key={slot.slotIndex} className="grid grid-cols-1 gap-2 rounded-lg border bg-background/80 p-3 md:grid-cols-3">
+                              <div className="space-y-1">
+                                <Label className="text-xs">Position</Label>
+                                <Input value={slot.slotIndex + 1} readOnly className="h-9" />
+                              </div>
+                              <div className="space-y-1">
+                                <Label className="text-xs">Lehrer</Label>
+                                <select
+                                  className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm"
+                                  value={slot.teacherId}
+                                  onChange={(e) => updateCustomSlot(slot.slotIndex, 'teacherId', e.target.value)}
+                                >
+                                  <option value="">Bitte wählen</option>
+                                  {lootTeachers.map((teacher) => (
+                                    <option key={teacher.id} value={teacher.id}>{teacher.name}</option>
+                                  ))}
+                                </select>
+                              </div>
+                              <div className="space-y-1">
+                                <Label className="text-xs">Folie / Variante</Label>
+                                <select
+                                  className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm"
+                                  value={slot.variant}
+                                  onChange={(e) => updateCustomSlot(slot.slotIndex, 'variant', e.target.value)}
+                                >
+                                  {CARD_VARIANT_OPTIONS.map((variant) => (
+                                    <option key={variant.value} value={variant.value}>{variant.label}</option>
+                                  ))}
+                                </select>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     )}
                     
@@ -658,7 +901,7 @@ function AdminSendContent() {
               {notificationType === 'popup' && (
                 <div className="w-full rounded-xl border bg-background/95 p-4 shadow-2xl backdrop-blur">
                   <UniversalBanner
-                    tone={popupActionType === 'gift' ? 'primary' : 'info'}
+                    tone={popupActionType === 'multicast' ? 'info' : 'primary'}
                     layout="floating"
                     title={giftPopupTitle || 'Titel'}
                     message={giftPopupBody || 'Hauptnachricht...'}
@@ -687,7 +930,7 @@ function AdminSendContent() {
                 <div className="w-full space-y-2">
                   <div className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Top-Banner Vorschau</div>
                   <UniversalBanner
-                    tone={popupActionType === 'gift' ? 'primary' : 'info'}
+                    tone={popupActionType === 'multicast' ? 'info' : 'primary'}
                     layout="inline"
                     title={giftPopupTitle || 'Titel'}
                     message={giftPopupBody || 'Hauptnachricht...'}
@@ -737,17 +980,29 @@ function AdminSendContent() {
                     </div>
                     <div className="flex justify-between text-xs">
                       <span>Typ:</span>
-                      <span className="font-bold">{popupActionType === 'gift' ? 'Belohnung' : 'Information'}</span>
+                      <span className="font-bold">{popupActionType === 'multicast' ? 'Information' : 'Belohnung'}</span>
                     </div>
                     <div className="flex justify-between text-xs">
                       <span>Notification:</span>
                       <span className="font-bold">{notificationType}</span>
                     </div>
+                    {popupActionType === 'custom_gift' && (
+                      <>
+                        <div className="flex justify-between text-xs">
+                          <span>Custom Pack:</span>
+                          <span className="font-bold">{customPackName || 'Custom Pack'}</span>
+                        </div>
+                        <div className="flex justify-between text-xs">
+                          <span>Fixe Slots:</span>
+                          <span className="font-bold">{customPackSlots.filter((slot) => slot.teacherId.trim().length > 0).length}</span>
+                        </div>
+                      </>
+                    )}
                     <div className="flex justify-between text-xs">
                       <span>Absender:</span>
                       <span className="font-bold">{effectiveSenderName}</span>
                     </div>
-                    {popupActionType === 'gift' && (
+                    {(popupActionType === 'gift' || popupActionType === 'custom_gift') && (
                       <div className="flex justify-between text-xs">
                         <span>Packs gesamt:</span>
                         <span className="font-bold text-primary">{recipients.length * giftPackCount}</span>

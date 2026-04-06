@@ -136,7 +136,7 @@ export function CardProposalForm() {
       <CardHeader className="bg-primary/5 border-b border-primary/10">
         <div className="flex items-center gap-2 mb-2">
           <Sparkles className="h-5 w-5 text-primary animate-pulse" />
-          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/70">Kreativ-Labor</span>
+          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/70">Ideen-Labor</span>
         </div>
         <CardTitle className="text-2xl font-black uppercase tracking-tighter">Eigene Karte gestalten</CardTitle>
         <CardDescription>

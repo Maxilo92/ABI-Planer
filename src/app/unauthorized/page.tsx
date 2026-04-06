@@ -7,15 +7,15 @@ import { ShieldX, Home, LogIn } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 const REASON_MESSAGES: Record<string, string> = {
-  admin: 'Dieser Bereich ist nur fuer Admins freigegeben.',
+  admin: 'Dieser Bereich ist nur für Admins freigegeben.',
 }
 
 function getReasonMessage(reason: string | null) {
   if (!reason) {
-    return 'Du hast keine Berechtigung fuer diese Seite.'
+    return 'Du hast keine Berechtigung für diese Seite.'
   }
 
-  return REASON_MESSAGES[reason] ?? 'Du hast keine Berechtigung fuer diese Seite.'
+  return REASON_MESSAGES[reason] ?? 'Du hast keine Berechtigung für diese Seite.'
 }
 
 function formatRequestedPath(path: string | null) {

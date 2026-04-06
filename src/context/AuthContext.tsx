@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
+import { createContext, useContext, useEffect, useRef, useState } from 'react'
 import { getFirebaseAuth, getFirebaseDb, getFirebaseFunctions } from '@/lib/firebase'
 import { onAuthStateChanged, signOut, User, sendEmailVerification, verifyBeforeUpdateEmail } from 'firebase/auth'
 import { doc, onSnapshot, updateDoc, serverTimestamp } from 'firebase/firestore'
@@ -11,6 +11,30 @@ import { Profile } from '@/types/database'
 const auth = getFirebaseAuth();
 const db = getFirebaseDb();
 const functions = getFirebaseFunctions();
+
+const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000
+
+async function bootstrapMissingProfileViaProxy(user: User) {
+  const idToken = await user.getIdToken()
+  const response = await fetch('/api/auth/bootstrap-missing-profile', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${idToken}`,
+    },
+  })
+
+  const payload = await response.text()
+  if (!response.ok) {
+    throw new Error(`Bootstrap proxy failed with status ${response.status}: ${payload}`)
+  }
+
+  try {
+    const parsed = JSON.parse(payload)
+    return parsed?.data ?? parsed?.result ?? null
+  } catch {
+    return null
+  }
+}
 
 interface AuthContextType {
   user: User | null
@@ -44,13 +68,26 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true)
   const [is2FAVerified, setIs2FAVerifiedState] = useState(false)
   const [is2FAInitialCheckDone, setIs2FAInitialCheckDone] = useState(false)
+  const sessionStartedAtRef = useRef<Date | null>(null)
+  const profileBootstrapAttemptedRef = useRef(false)
 
-  // Load 2FA status from sessionStorage on mount/init
+  // Load 2FA status from localStorage on mount/init (30-day persistence)
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const stored = sessionStorage.getItem('is_2fa_verified')
-      if (stored === 'true') {
-        setIs2FAVerifiedState(true)
+      const stored = localStorage.getItem('is_2fa_verified')
+      const lastVerification = localStorage.getItem('last_2fa_verification')
+      
+      if (stored === 'true' && lastVerification) {
+        const timestamp = parseInt(lastVerification, 10)
+        const now = Date.now()
+        
+        if (now - timestamp < THIRTY_DAYS_MS) {
+          setIs2FAVerifiedState(true)
+        } else {
+          // Expired - clear it
+          localStorage.removeItem('is_2fa_verified')
+          localStorage.removeItem('last_2fa_verification')
+        }
       }
       setIs2FAInitialCheckDone(true)
     }
@@ -60,9 +97,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setIs2FAVerifiedState(val)
     if (typeof window !== 'undefined') {
       if (val) {
-        sessionStorage.setItem('is_2fa_verified', 'true')
+        localStorage.setItem('is_2fa_verified', 'true')
+        localStorage.setItem('last_2fa_verification', Date.now().toString())
       } else {
-        sessionStorage.removeItem('is_2fa_verified')
+        localStorage.removeItem('is_2fa_verified')
+        localStorage.removeItem('last_2fa_verification')
       }
     }
   }
@@ -101,7 +140,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     if (loading || !user || !profile) return
     
     if (user.emailVerified && !profile.is_approved) {
-      console.log('[AuthContext] Syncing emailVerified to profile.is_approved')
       updateDoc(doc(db, 'profiles', user.uid), { 
         is_approved: true,
         updated_at: serverTimestamp()
@@ -119,7 +157,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     // MANDATORY: Skip reward trigger if email is not verified
     if (!user.emailVerified) {
-      console.log('[AuthContext] Skipping referral claim: Email not verified.')
       return
     }
 
@@ -128,10 +165,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         const refCode = String(profile.referred_by).trim()
         if (!refCode) return
 
-        console.log('[AuthContext] Triggering referral claim check for code:', refCode)
         const claimReferralFn = httpsCallable(functions, 'claimReferral')
         const result = await claimReferralFn()
-        console.log('[AuthContext] Referral claim check processed. Result:', result.data)
       } catch (error) {
         // We log but don't block the UI for referral failures
         console.error('[AuthContext] Failed to claim referral:', error)
@@ -181,6 +216,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                       await signOut(auth)
                       setProfile(null)
                       setLoading(false)
+                      set2FAVerified(false)
                       window.location.href = '/login?reason=timeout'
                     }
                     return
@@ -191,6 +227,35 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                   }
                 } else {
                   console.warn('No profile found for user:', user.uid)
+                  if (!profileBootstrapAttemptedRef.current) {
+                    profileBootstrapAttemptedRef.current = true
+                    try {
+                      let bootstrapProfile: Profile | null = null
+
+                      try {
+                        const bootstrapResponse = await bootstrapMissingProfileViaProxy(user)
+                        bootstrapProfile = (bootstrapResponse as { profile?: Profile | null } | undefined)?.profile || null
+                      } catch (proxyError) {
+                        console.error('Bootstrap proxy failed, falling back to callable:', proxyError)
+
+                        const bootstrapMissingProfile = httpsCallable(functions, 'bootstrapMissingProfile')
+                        const bootstrapResult = await bootstrapMissingProfile({})
+                        bootstrapProfile = (bootstrapResult.data as { profile?: Profile | null } | undefined)?.profile || null
+                      }
+
+                      if (bootstrapProfile) {
+                        const normalizedRole = (bootstrapProfile.role as string) === 'admin' ? 'admin_main' : bootstrapProfile.role
+                        const normalizedProfile = { ...bootstrapProfile, id: user.uid, role: normalizedRole } as Profile
+
+                        if (isSubscribed) {
+                          setProfile(normalizedProfile)
+                        }
+                        return
+                      }
+                    } catch (bootstrapError) {
+                      console.error('Failed to bootstrap missing profile:', bootstrapError)
+                    }
+                  }
                   if (isSubscribed) setProfile(null)
                 }
               } catch (error) {
@@ -209,8 +274,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             }
           })
         } else {
+          profileBootstrapAttemptedRef.current = false
           setProfile(null)
           setLoading(false)
+          set2FAVerified(false)
         }
       } catch (error) {
         console.error('Error fetching profile:', error)
@@ -230,17 +297,38 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   // Heartbeat logic to track online status
   useEffect(() => {
-    if (!user?.uid) return
+    if (!user?.uid || loading || !profile) return
 
     const userId = user.uid
+    sessionStartedAtRef.current = new Date()
+
+    const buildPresencePayload = (isOnline: boolean) => {
+      const sessionStart = sessionStartedAtRef.current
+      const sessionDurationSeconds = sessionStart
+        ? Math.max(1, Math.round((Date.now() - sessionStart.getTime()) / 1000))
+        : null
+
+      if (isOnline) {
+        return {
+          isOnline,
+          lastOnline: serverTimestamp(),
+          onlineSince: sessionStart ? sessionStart.toISOString() : new Date().toISOString(),
+          lastSessionDurationSeconds: null,
+        }
+      }
+
+      return {
+        isOnline,
+        lastOnline: serverTimestamp(),
+        onlineSince: null,
+        lastSessionDurationSeconds: sessionDurationSeconds,
+      }
+    }
 
     const updateStatus = async (isOnline: boolean) => {
       try {
         const docRef = doc(db, 'profiles', userId)
-        await updateDoc(docRef, {
-          isOnline,
-          lastOnline: serverTimestamp(),
-        })
+        await updateDoc(docRef, buildPresencePayload(isOnline))
       } catch (error) {
         console.error('Error updating online status:', error)
       }
@@ -259,10 +347,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const docRef = doc(db, 'profiles', userId)
       // Note: updateDoc is async and might not complete in beforeunload,
       // but it's the requested method.
-      updateDoc(docRef, {
-        isOnline: false,
-        lastOnline: serverTimestamp(),
-      }).catch(console.error)
+      updateDoc(docRef, buildPresencePayload(false)).catch(console.error)
     }
 
     window.addEventListener('beforeunload', handleBeforeUnload)
@@ -272,8 +357,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       window.removeEventListener('beforeunload', handleBeforeUnload)
       // Set to offline on logout or unmount
       updateStatus(false)
+      sessionStartedAtRef.current = null
     }
-  }, [user?.uid])
+  }, [user?.uid, profile?.id, loading])
 
   return (
     <AuthContext.Provider value={{ 

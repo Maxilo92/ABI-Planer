@@ -1,4 +1,5 @@
 import { onSchedule } from "firebase-functions/v2/scheduler";
+import { onRequest } from "firebase-functions/v2/https";
 import * as admin from "firebase-admin";
 import { getFirestore } from "firebase-admin/firestore";
 import { emptyAllAlbums } from "./actions/emptyAllAlbums";
@@ -180,6 +181,79 @@ export const syncTeacherRarities = onSchedule("every 15 minutes", async (event) 
 
   } catch (error) {
     console.error("Error during Global Balance Sanity Check:", error);
+  }
+});
+
+async function collectLandingStats(db: FirebaseFirestore.Firestore) {
+  const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+
+  const [profilesSnap, dailyActiveSnap, newsSnap, inventoriesSnap] = await Promise.all([
+    db.collection("profiles").count().get(),
+    db.collection("profiles").where("last_visited.dashboard", ">=", twentyFourHoursAgo).count().get(),
+    db.collection("news").count().get(),
+    db.collection("user_teachers").get(),
+  ]);
+
+  let totalCards = 0;
+  inventoriesSnap.forEach((doc) => {
+    const inventory = doc.data();
+    Object.values(inventory).forEach((card: any) => {
+      totalCards += Number(card?.count) || 0;
+    });
+  });
+
+  return {
+    total_users: profilesSnap.data().count,
+    daily_active_users: dailyActiveSnap.data().count,
+    total_cards_count: totalCards,
+    news_count: newsSnap.data().count,
+  };
+}
+
+async function writePublicLandingStats(db: FirebaseFirestore.Firestore) {
+  const stats = await collectLandingStats(db);
+
+  await db.collection("public").doc("landing_stats").set({
+    ...stats,
+    last_updated: admin.firestore.FieldValue.serverTimestamp(),
+  }, { merge: true });
+
+  return stats;
+}
+
+/**
+ * Public landing page stats cache for all visitors.
+ */
+export const syncPublicLandingStats = onSchedule("every 15 minutes", async () => {
+  const db = getFirestore("abi-data");
+
+  try {
+    await writePublicLandingStats(db);
+
+    console.log("Successfully synchronized public landing stats.");
+  } catch (error) {
+    console.error("Error syncing public landing stats:", error);
+  }
+});
+
+/**
+ * Manual backfill endpoint for the public landing stats cache.
+ */
+export const rebuildPublicLandingStats = onRequest({ cors: true }, async (_request, response) => {
+  const db = getFirestore("abi-data");
+
+  try {
+    const stats = await writePublicLandingStats(db);
+    response.status(200).json({
+      ok: true,
+      ...stats,
+    });
+  } catch (error) {
+    console.error("Error rebuilding public landing stats:", error);
+    response.status(500).json({
+      ok: false,
+      error: "Failed to rebuild public landing stats.",
+    });
   }
 });
 
