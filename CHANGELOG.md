@@ -8,6 +8,12 @@
 
 # Changelog
 
+## [1.3.1] - 2026-04-06
+
+- **Fix (Domain-Routing):** Korrektur der Dashboard-Fallback-URL von `https://dashboard.abi-planer-27` auf `https://dashboard.abi-planer-27.de`.
+    - **Global:** Alle Verweise in `src/lib/dashboard-url.ts`, `functions/src/trades.ts`, `INSTALL.md` und `CHANGELOG.md` korrigiert.
+    - **Ergebnis:** Der Dashboard-Button auf der Landingpage leitet jetzt zuverlässig auf die korrekte Subdomain weiter.
+
 ## [1.3.0] - 2026-04-06
 
 - **Major**: Version bump to 1.3.0 reflecting significant architectural and UI/UX updates.
@@ -384,7 +390,7 @@
 ## [1.2.28] - 2026-04-03
 
 ### Fixed
-- **Routing (Dashboard-Domain):** Alle zentralen Dashboard-Weiterleitungen wurden auf das neue Ziel `https://dashboard.abi-planer-27` umgestellt.
+- **Routing (Dashboard-Domain):** Alle zentralen Dashboard-Weiterleitungen wurden auf das neue Ziel `https://dashboard.abi-planer-27.de` umgestellt.
     - **Global:** Login-Redirect, Landing-CTA und News-Detail-CTA nutzen jetzt denselben Resolver statt verteilter Hardcodes.
     - **Konfigurierbar:** Über `NEXT_PUBLIC_DASHBOARD_URL` kann das Ziel pro Umgebung überschrieben werden.
 
@@ -445,7 +451,7 @@
 
 
 ### Changed
-- **Local Dev (Dashboard-Ziel):** Lokale Weiterleitungen aus Landing/Login/News-CTA nutzen jetzt bevorzugt die Dashboard-Subdomain mit identischem Port (z. B. `http://dashboard.abi-planer-27.localhost:3000`).
+- **Local Dev (Dashboard-Ziel):** Lokale Weiterleitungen aus Landing/Login/News-CTA nutzen jetzt bevorzugt die Dashboard-Subdomain mit identischem Port (z. B. `http://dashboard.abi-planer-27.de.localhost:3000`).
     - **Konsistenz:** Einheitliches Verhalten für `*.localhost`, `localhost` und `127.0.0.1` im lokalen Routing.
 
 ## [1.2.20] - 2026-04-03
@@ -459,7 +465,7 @@
 
 ### Fixed
 - **Landing (Dashboard-CTA/Local Dev):** Der Dashboard-Button im Landing-Header behandelt jetzt auch `*.localhost` als lokale Entwicklungsumgebung.
-    - **Fix:** Statt auf unerreichbare Hosts wie `dashboard.abi-planer-27.localhost` zu springen, wird jetzt korrekt auf `localhost` mit gleichem Port weitergeleitet.
+    - **Fix:** Statt auf unerreichbare Hosts wie `dashboard.abi-planer-27.de.localhost` zu springen, wird jetzt korrekt auf `localhost` mit gleichem Port weitergeleitet.
 
 ## [1.2.18] - 2026-04-03
 
@@ -472,7 +478,7 @@
 ## [1.2.17] - 2026-04-03
 
 ### Changed
-- **Auth (Login Redirect):** Nach erfolgreicher Anmeldung (inkl. 2FA) leitet die Login-Seite jetzt explizit auf `https://dashboard.abi-planer-27` weiter.
+- **Auth (Login Redirect):** Nach erfolgreicher Anmeldung (inkl. 2FA) leitet die Login-Seite jetzt explizit auf `https://dashboard.abi-planer-27.de` weiter.
     - **Konsistenz:** Gilt für Login ohne 2FA, Login mit 2FA und den Fallback-Fall bei fehlendem Profil.
     - **Dev-Flow:** Auf `localhost` und `127.0.0.1` bleibt die Weiterleitung lokal auf `/`, damit die Entwicklung unverändert funktioniert.
 
@@ -532,7 +538,7 @@
 
 - **UX (Domain-Aufteilung):** Root-Routing ist jetzt klar nach Host getrennt.
     - **Hauptdomain:** `abi-planer-27.de/` zeigt die Startseite.
-    - **Dashboard-Subdomain:** `dashboard.abi-planer-27` (und `app.`) zeigt direkt das Dashboard.
+    - **Dashboard-Subdomain:** `dashboard.abi-planer-27.de` (und `app.`) zeigt direkt das Dashboard.
     - **Promo bleibt Promo:** `/zugang` bleibt als Account-Vergleich bestehen und springt bei "Zum Dashboard" auf die Dashboard-Subdomain.
 
 - **UX (Navigation):** Mehrere Seiten haben ihre rein erklärenden Intro-Subtitles entfernt, damit die Kopfbereiche knapper bleiben.

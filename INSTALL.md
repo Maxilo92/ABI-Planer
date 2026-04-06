@@ -53,10 +53,10 @@ In der Firebase Console unter **Authentication > Settings > User actions**:
 - **Lernsax-Check:** Da wir die Domain `@hgr-web.lernsax.de` erzwingen, ist die App bereits gut gegen fremde Zugriffe geschützt.
 
 ## 7. Subdomains & Domain-Setup
-Wenn du eigene Subdomains wie `dashboard.abi-planer-27` nutzen willst, brauchst du zusätzlich zur App selbst die Domain-Konfiguration beim Hosting-Anbieter.
+Wenn du eigene Subdomains wie `dashboard.abi-planer-27.de` nutzen willst, brauchst du zusätzlich zur App selbst die Domain-Konfiguration beim Hosting-Anbieter.
 
 - Lege für die Hauptdomain `abi-planer-27.de` die Landingpage fest.
-- Richte `dashboard.abi-planer-27` als zusätzliche Custom Domain auf dieselbe App/Hosting-Instanz ein.
+- Richte `dashboard.abi-planer-27.de` als zusätzliche Custom Domain auf dieselbe App/Hosting-Instanz ein.
 - Hinterlege die DNS-Einträge beim Domain-Provider genau so, wie es der Hosting-Anbieter vorgibt.
 - Für einen reinen Dashboard-Zugang bleibt die bestehende App-Logik erhalten: Root zeigt Landingpage, Dashboard-Subdomain springt direkt ins Produkt.
 

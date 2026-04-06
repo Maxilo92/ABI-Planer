@@ -1,4 +1,4 @@
-const DASHBOARD_FALLBACK_URL = 'https://dashboard.abi-planer-27'
+const DASHBOARD_FALLBACK_URL = 'https://dashboard.abi-planer-27.de'
 
 const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1'])
 
@@ -23,6 +23,12 @@ export function getDashboardRedirectUrl(location: Location): string {
     const localHost = baseHost.startsWith('dashboard.') ? baseHost : `dashboard.${baseHost}`
     const port = location.port ? `:${location.port}` : ''
     return `${location.protocol}//${localHost}${port}`
+  }
+
+  // Fallback for production: If we are on the main domain (e.g. abi-planer-27.de), 
+  // we want to go to the dashboard subdomain on the SAME domain.
+  if (host === 'abi-planer-27.de' || host === 'www.abi-planer-27.de') {
+    return `https://dashboard.abi-planer-27.de`
   }
 
   return getDashboardBaseUrl()
