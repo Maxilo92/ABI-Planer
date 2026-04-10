@@ -8,6 +8,82 @@
 
 # Changelog
 
+## [1.5.10] - 2026-04-11 - Pack Opening Wobble Softer
+
+### Fixed - Pack Opening Feedback
+
+- Das Drag-Zittern beim Pack wurde nochmals deutlich subtiler eingestellt.
+- Die progressive Bewegung bleibt erhalten, wirkt jetzt aber ruhiger und weniger dominant.
+- Betroffen: [src/app/sammelkarten/_modules/components/PackOpeningStage.tsx](src/app/sammelkarten/_modules/components/PackOpeningStage.tsx)
+
+## [1.5.9] - 2026-04-11 - Pack Opening Wobble Tuning
+
+### Fixed - Pack Opening Feedback
+
+- Das Wackeln beim Ziehen des Pack-Handles wurde etwas heruntergeregelt, bleibt aber weiter progressiv und bis kurz vor dem Pop sichtbar.
+- Die kritische Endphase vor dem Aufpoppen ist jetzt subtiler, damit die Bewegung weniger zu stark wirkt.
+- Betroffen: [src/app/sammelkarten/_modules/components/PackOpeningStage.tsx](src/app/sammelkarten/_modules/components/PackOpeningStage.tsx)
+
+## [1.5.8] - 2026-04-11 - Pack Opening Wobble Intensified
+
+### Fixed - Pack Opening Feedback
+
+- Das Pack beim Aufreißen wackelt jetzt deutlich stärker und wird progressiv instabiler, je weiter der Drag fortschreitet.
+- Kurz vor der bestehenden Trigger-Schwelle geht das Pack in eine kritische Endphase mit stärkerem Zittern, Rotation und Schatten-Intensität über, bevor es aufpopt.
+- Betroffen: [src/app/sammelkarten/_modules/components/PackOpeningStage.tsx](src/app/sammelkarten/_modules/components/PackOpeningStage.tsx)
+
+## [1.5.7] - 2026-04-10 - Deck Auswahl & Set-Filter
+
+### Fixed - Deck Karten-Auswahl
+
+- Fehler behoben, bei dem im Deck-Editor keine Karten mehr ausgewaehlt werden konnten, wenn Kartendaten aus `settings/sammelkarten.sets` statt nur aus `loot_teachers` geladen wurden.
+- Deck-Auswahl und Deck-Cover-Aufloesung unterstuetzen jetzt set-basierte Karten-IDs (`setId:cardId`) inklusive Rueckwaertskompatibilitaet fuer bestehende Legacy-Decks.
+
+### Added - Set Filter in Kartenfiltern
+
+- In der Deck-Kartenauswahl wurde ein zusaetzlicher Filter nach Sets ergaenzt (neben Seltenheit).
+- Im Lehrer-Album wurde der globale Filter um Set-Auswahl erweitert, inklusive korrekter Verarbeitung von Multi-Set-Daten.
+
+## [1.5.6] - 2026-04-11 - Pack-Auswahl Redesign & Drag Hint Animation
+
+### Fixed - Packauswahl: Kompletter UI Cleanup + Drag Handle Animation
+
+- **Drag Handle Animation**: Der weiße Ball zum Aufreißen bewegt sich jetzt subtil nach links und zurück (nur im idle Zustand), um anzuzeigen, dass er beweglich/interaktiv ist. Mit 500ms Delay und 2s Cycle.
+  - Betroffen: [src/app/sammelkarten/_modules/components/PackOpeningStage.tsx](src/app/sammelkarten/_modules/components/PackOpeningStage.tsx)
+- **Pack Shake & Lift Animation**: Wenn man den Handle zieht, passiert interaktive Feedback:
+    - Pack steigt visuell an (Y-Offset: bis zu -8px nach oben)
+    - Pack wächst je weiter man zieht (Scale: 1.0 bis 1.12)
+    - Pack wackelt/zittert während des Ziehens (subtile Rotation)
+    - Schatten wird intensiver und weicher mit ripProgress
+    - Subtales Pulsing ab 10% Drag-Progress
+    - Betroffen: [src/app/sammelkarten/_modules/components/PackOpeningStage.tsx](src/app/sammelkarten/_modules/components/PackOpeningStage.tsx)
+
+- **SelectionRing/Rahmen um Packs entfernt**: Der `ring-4 ring-sky-300/80` Blue-Ring ist weg. Selection ist nur subtiles `scale-[1.02]`.
+
+- **Komplettes UI Cleanup**: 
+    - Alle Border-Kacheln um Pack-Karten entfernt
+    - Header-Sektion: Kein Border-Rahmen mehr
+    - Grid-Layout bereinigt
+    - Schwarze Border-Linien um Pack-Bilder entfernt
+
+- **Dark Mode Theme Support** & **Button-Kontrast Dark Mode**: `dark:bg-blue-600` für Buttons.
+
+- **CardBack Blitz-Icon**: Pillenförmige Container entfernt.
+
+## [1.5.5] - 2026-04-10 - Mobile UX Verbesserungen
+
+### Fixed - Mobile Menu & Sammelkarten Manager
+
+- **Navigation Mobile Menu**: Touch-Event-Konflikt behoben, bei dem Finger hinter dem Menü scrollten oder das Menü nicht scrollbar war. `touchAction: 'none'` auf dem Overlay blockiert jetzt korrekt durchdringende Touch-Events, und der scrollbare Bereich hat `touchAction: 'pan-y'` für vertikales Scrollen.
+  - Betroffen: [src/components/layout/Navbar.tsx](src/components/layout/Navbar.tsx)
+  
+- **Admin Sammelkarten Manager**: Mobile Layout drastig vereinfacht.
+  - Tab-Beschriftungen gekürzt auf Mobile (z.B. "Pool" statt "Lehrerpool", "Rates" statt "Drop-Rates").
+  - Tabs sind nun horizontal scrollbar statt zu wrappen.
+  - Admin-Maintenance-Buttons (Cleanup, Migrate, Sync) auf Mobile in ein collapsibles "Admin-Tools" Dropdown versteckt—nur "Cleanup Pool" und "Bulk Import" sind sichtbar.
+  - Desktop hat weiterhin alle Buttons sichtbar.
+  - Betroffen: [src/app/admin/sammelkarten/page.tsx](src/app/admin/sammelkarten/page.tsx)
+
 ## [1.5.4] - 2026-04-10 - News Smartphone Optimierung
 
 ### Fixed - News Smartphone UX
