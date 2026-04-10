@@ -8,6 +8,13 @@
 
 # Changelog
 
+## [1.5.1] - 2026-04-10 - App Hosting Build Hotfix
+
+### Fixed
+
+- Firebase App Hosting Build-Fix: Der statische Import `@/bones/registry` in [src/app/layout.tsx](src/app/layout.tsx) wurde entfernt, da die Datei unter [src/bones/registry.js](src/bones/registry.js) durch [.gitignore](.gitignore) im Cloud-Build-Kontext nicht enthalten ist.
+- Ergebnis: Kein `Module not found: Can't resolve '@/bones/registry'` mehr im Next.js Build auf App Hosting.
+
 ## [1.5.0] - 2026-04-10 - Platform Update (Cards, Admin, Presence, SEO)
 
 ### Added
