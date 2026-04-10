@@ -8,6 +8,410 @@
 
 # Changelog
 
+## [1.4.10] - 2026-04-10 - Teacher Management Stats & Effects
+
+### Added - Teacher Management Balancing Support
+
+- `TeacherEditDialog` zeigt nun empfohlene HP- und DMG-Bereiche basierend auf der Seltenheit an (ca. 50% Skalierung von Common zu Iconic)
+- `TeacherAttack` wurde um ein verstecktes `effect` Feld erweitert, das über ein Dropdown im Manager konfiguriert werden kann (none, sleep, poison, stun, heal, pierce)
+- Angriffe im Manager unterstützen nun die manuelle Beschreibung des vordefinierten Effekts für maximale Flexibilität
+
+## [Unreleased] - Battle Pass & NP Currency System
+
+### Fixed - System Control Center Live Stats
+
+- Die Kennzahlen fuer „Aktuell online“ und „Ø Session“ verwenden jetzt eine einheitliche Presence-Definition mit 5-Minuten-Stale-Fallback, damit Dashboard, Cloud Function und lokaler Analytics-Fallback dieselben Werte liefern
+- Die lokale Analytics-Aggregation wurde auf das gleiche 7-Tage-Fenster wie die Cloud Function synchronisiert, um inkonsistente Log-Zaehlungen zu vermeiden
+
+### Fixed - Sammelkarten Ziehung Flip-Clipping
+
+- Der Haupt-Container der Sammelkarten-Ziehung nutzt jetzt `overflow-visible` statt `overflow-hidden`, damit Karten waehrend der Umdreh-Animation oben/unten nicht mehr abgeschnitten werden.
+- In der Ziehungs-Reveal-Ansicht rendert `CardRenderer` jetzt mit erzwungen sichtbarem Overflow (`!overflow-visible`), damit der 3D-Flip nicht mehr am Kartenrahmen vertikal geclippt wird.
+
+### Fixed - Sammelkarten Album JSX Parse Error
+
+- `TeacherAlbum` no longer contains a stray closing `BoneyardSkeleton` tag, which had broken the Sammelkarten page build in development
+
+### Fixed - Sammelkarten Kartenfolie Corner-Clip
+
+- `CardEffectOverlay` rendert jetzt mit leichtem Overscan (`-inset-px`) und geerbtem Radius auch auf `::before`/`::after`, damit die Folienebene sauber bis in die Karten-Ecken reicht und keine sichtbare Luecke mehr entsteht
+
+### Fixed - Sammelkarten Booster CORS
+
+- `openBooster` akzeptiert jetzt auch `https://abi-planer-27.de` und `https://dashboard.abi-planer-27.de`, damit Callable-Aufrufe aus dem aktuellen Dashboard nicht mehr an der Preflight-Pruefung scheitern
+
+### Fixed - AdSense & SEO compliance
+
+- Thin or technical routes such as login, register, help, legal pages, the placeholder battle page and referral redirects are now marked `noindex` and blocked in robots guidance where appropriate
+- AdSense loading and rendering are now route-aware so ads only appear on content-rich public pages instead of low-value surfaces
+- Public landing and feature pages were expanded with more unique explanatory content to reduce thin-content signals
+- A sitemap was added for the indexable public routes only, keeping thin pages out of crawl focus
+
+### Added - Sammelkarten Manager Statistiken
+
+- Der Sammelkarten-Manager zeigt jetzt Live-Diagramme fuer Set-Verteilung, Ideen-Labor-Status und die Pack-Simulation via Chart.js
+- Die bisherigen textbasierten Statistikwerte wurden um visuelle Diagramme erweitert, damit Verteilungen schneller erfassbar sind
+
+### Added - Ideen-Labor Moderation Upgrade
+
+- Der Admin-Flow im Ideen-Labor nutzt jetzt einen Bearbeitungsdialog vor der Annahme: Lehrername, HP, Beschreibung und Angriffe koennen vor dem finalen Entscheid manuell angepasst werden.
+- Beim Annehmen wird jetzt explizit markiert, ob ein Vorschlag tatsaechlich genutzt wurde (`used`/`not_used`).
+- Neue Proposal-Felder fuer Audit und Transparenz: `usage_status`, `reward_packs_awarded`, `edited_snapshot` sowie erweiterte Moderationsmetadaten.
+
+### Fixed - Ideen-Labor Reward-Sicherheit
+
+- Die Belohnungsvergabe bei Proposal-Moderation wurde auf Firestore-Transaktionen umgestellt, um Race-Conditions und doppelte Gutschriften zu verhindern.
+- 2 Booster werden nur noch vergeben, wenn ein angenommener Vorschlag explizit als genutzt markiert wurde.
+- Legacy-Backfill-Callable (`backfillCardProposalUsageStatus`) ergaenzt fehlende `usage_status`/Reward-Felder bei bereits moderierten Altfaellen.
+
+### Added - Battle Pass UI (Optik)
+
+- Neue Seite `/battle-pass` mit rein visueller Battle-Pass-Ansicht
+- 30 Stufen als horizontaler, responsiver Track fuer Desktop und Mobile
+- Free Pass und Premium Pass parallel sichtbar; Premium aktuell bewusst gelockt
+- Hero- und Fortschrittsbereich mit klarer Trennung von Free/Premium und Platzhalter fuer spaetere Loot-/Claim-Logik
+- Direkter Navbar-Eintrag **Battle Pass** fuer schnelleren Zugriff (zusätzlich zum Shop-Link)
+
+### Added - Phase 1: Core NP Currency Infrastructure
+
+- **NP Currency Core**
+  - New `currencies.notepunkte` field in user profiles to track NP balance
+  - NP Shop section with 4 tiered packs (100/550/1500/5000 NP) with 10-25% bonuses
+  - Stripe integration for NP purchases (checkout → webhook → balance update)
+  - NP balance widget in shop page showing current user balance
+  - **Enhanced NP Visualizations**: Improved NP pack cards with Zap icons, color-coded gradients, glowing effects, and animated lightning strikes
+  
+- **Premium Abo (Subscription System)**
+  - New dedicated subscription page at `/shop/abo` with detailed feature overview
+  - Monthly auto-renewing subscription (€4,99/month, anytime cancellation)
+  - Premium Abo benefits: Premium Battle Pass + 500 NP monthly + exclusive cosmetics + early access + ad-free experience
+  - Subscription card in shop with Trophy icon and gradient visualization
+  - Comparison table (Free vs. Premium) on subscription page
+  - Comprehensive FAQ section with common subscription questions
+  - Seamless Stripe integration for subscription checkout
+
+- **Bank-Level Security for NP Currency**
+  - **Transactional Integrity**: All NP changes logged to `np_transactions` collection (immutable audit trail)
+  - **Rate Limiting**: Max transactions/purchases per hour to prevent abuse
+  - **Fraud Detection**: Real-time pattern analysis (daily limits, suspicious volumes, rapid transactions, chargebacks)
+  - **Webhook Idempotency**: Prevention of duplicate payment processing via event ID tracking
+  - **Balance Validation**: Atomic transactions prevent negative balances and overflow exploits
+  - **Admin Audit Trail**: All manual adjustments logged to `np_audit_log` with admin identity & reason
+  
+- **Backend Utility Functions**
+  - `atomicNPUpdate(userId, amount, type, options)` - Atomic transaction with fraud checking
+  - `addNotepunkte(userId, amount)` - Safe NP credit
+  - `subtractNotepunkte(userId, amount)` - Balance-validated NP deduction
+  - `checkFraudPatterns(userId)` - Fraud score (0-100) + flags for suspicious activity
+  - `validateWebhookIdempotency(paymentIntentId, eventId)` - Replay attack prevention
+  - `checkRateLimit(userId, operationType, window)` - Rate limiting enforcement
+  
+- **Admin Monitoring Functions**
+  - `adminReviewNPTransactions(userId)` - Full transaction history + fraud analysis
+  - `adminAdjustNP(userId, amount, reason)` - Manual balance correction with audit logging
+  - `adminGetNPMetrics(hours)` - System-wide NP metrics & fraud alerts
+  - `adminExportNPTransactions(dateFrom, dateTo, type)` - Compliance export
+  
+- **Data Model Extensions**
+  - New Collections: `np_transactions`, `stripe_webhook_log`, `rate_limits`, `np_audit_log`, `fraud_alerts`
+  - Added `subscription` fields to Profile: `active`, `expiry_date`, `stripe_subscription_id`, `renewal_count`
+  - Added `currencies` object with nested `notepunkte` balance field
+
+- **Firestore Security Rules**
+  - Cloud Functions have write access to `currencies` and `subscription` fields only
+  - `np_transactions` readable by Admins and transaction owners only
+  - `stripe_webhook_log` restricted to Admins and Cloud Functions
+  - **Strict**: Users cannot directly modify NP balance (only via Cloud Functions)
+
+- **Enhanced Webhook Processing**
+  - Signature verification (Stripe security)
+  - Replay attack prevention (idempotency keys)
+  - Rate limiting checks per user
+  - Input validation (amount bounds, user existence)
+  - Comprehensive logging of all transactions
+  - Automatic fraud flagging for review
+
+### Security Measures
+
+- ✅ **Immutable Audit Trail**: Every NP transaction logged with timestamp, source, admin verification
+- ✅ **Atomic Transactions**: Firestore transactions prevent race conditions and inconsistent state
+- ✅ **Fraud Scoring**: Algorithmic detection of suspicious patterns (daily limits, frequency, chargebacks, overlap)
+- ✅ **Rate Limiting**: Per-user operation limits (max 20 purchases/hour, 5 refunds/hour, etc.)
+- ✅ **Balance Constraints**: Max 10M NP per account, negative balance prevention
+- ✅ **Replay Protection**: Webhook event deduplication via event ID tracking
+- ✅ **Admin Access Control**: Only Main Admins can adjust NP; all changes logged with reason
+- ✅ **Encryption**: Stripe webhook signatures verified; no unencrypted PII in logs
+
+### Contributing Changes
+
+- Modified Firestore Rules to add NP-specific security collections
+- Added `functions/src/npSecurity.ts` - Core security module (fraud detection, atomic updates, logging)
+- Added `functions/src/npAdmin.ts` - Admin monitoring & compliance functions
+- Updated `functions/src/shop.ts` - Webhook now uses atomic update with fraud checks
+- Updated `functions/src/users.ts` - New user profiles initialize with `currencies: {notepunkte: 0}`
+
+### Breaking Changes
+
+- None yet (Phase 1 is non-breaking, new features only)
+
+### TODO
+
+- [ ] Stripe Products setup: Create 4 NP packs in Stripe Dashboard, update Price IDs
+- [ ] Stripe Webhook Secret configuration
+- [ ] Test end-to-end NP purchase flow in staging
+- [ ] Deploy to production with monitoring
+- [ ] Phase 2: Battle Pass season infrastructure
+- [ ] Phase 3: Battle Pass rewards and premium purchase flow
+- [ ] Phase 4: Event NP integration
+- [ ] Phase 5: Subscription system with auto-renewal
+- [ ] Phase 6: Legal AGB/Datenschutz updates and UI polish
+
+## [1.4.15] - 2026-04-08
+
+### Changed
+
+- **Teacher Set Canonical ID**: Das Lehrer-Set nutzt jetzt server- und clientseitig `teacher_vol1` als kanonische Set-ID. `teachers_v1` bleibt als Legacy-Alias kompatibel.
+
+### Added
+
+- **Inventory Migration Function**: Neue Admin-Function `migrateTeacherVol1Inventory` migriert Karten-Keys in `user_teachers` von Legacy-Formaten (`teacherId`, `teachers_v1:teacherId`) auf `teacher_vol1:teacherId` und konsolidiert `profiles.booster_stats.inventory.teachers_v1` nach `teacher_vol1`.
+- **Admin Migration Trigger**: Im Sammelkarten-Admin wurde ein zusätzlicher Button **"Migrate teacher_vol1"** ergänzt, der die neue Migration serverseitig ausführt und die aktualisierten Zähler (`user_teachers`, `profiles`, `rewritten keys`) direkt als Ergebnis meldet.
+
+### Fixed
+
+- **Secret-Rare Sticker-Kompatibilitaet**: Der Album-Nummern-Sticker hat fuer `black_shiny_holo` jetzt ein eigenes violett-dunkles Styling mit verbessertem Kontrast, damit die Nummer auch auf Secret-Rare Karten sauber lesbar bleibt.
+- **Nummern-Sticker Redesign**: Die Album-Nummer erscheint jetzt als leichter Sticker-Patch in einer abgedunkelten Variante der jeweiligen Karten-Hintergrundfarbe (weniger dominant als ein schwarzer Block).
+- **Kartenlabel Position/Format**: Das technische ID-Label oben wurde entfernt. Stattdessen wird jetzt die Album-Nummer (`001`, `002`, ...) unten links auf der Kartenfront angezeigt.
+- **Pack-Kartenfarbe korrigiert**: Lehrer-Karten im Pack-Reveal verwenden wieder die Rarity-Farben statt der blauen Set-Default-Farbe. Damit erscheinen gezogene Karten wieder bunt wie im Album; Folien-Overlays bleiben unveraendert.
+- **Pack-Reveal ID-Normalisierung**: Karten aus `teacher_vol1:<id>`/`teachers_v1:<id>` werden beim Oeffnen jetzt korrekt auf die bestehenden alten Lehrer-Karten aufgeloest. Dadurch erscheinen keine generischen blauen Platzhalterkarten mehr und NEW/Level-Logik bleibt konsistent.
+- **Lehrer-Pack Quelle korrigiert**: Normale Lehrer-Booster ziehen jetzt wieder aus `settings/sammelkarten.loot_teachers` (alter Pool wie im Album), damit nicht die unerwuenschten neuen blauen Karten droppen.
+- **Album nach teacher_vol1 Migration**: Das Lehrer-Album erkennt jetzt auch migrierte Karten-Keys (`teacher_vol1:<id>` und `teachers_v1:<id>`) zuverlässig als Besitzstatus. Dadurch erscheinen vorhandene Karten nach der Migration wieder korrekt im Album statt als leer.
+- **Sammelkarten Kartenform**: Die Karten-Roots verwenden jetzt eine feste, kleinere Rundung im Stil einer Standard-Spielkarte statt der vorherigen pillenartigen Ecken.
+
+## [1.4.14] - 2026-04-08
+
+### Fixed
+
+- **Lehrer Booster v1 Loot-Fix**: `teachers_v1` zieht serverseitig jetzt wieder strikt aus dem kanonischen V1-Set aus dem Code. Dynamische Set-Änderungen im Admin-Bereich überschreiben den V1-Drop-Pool nicht mehr, wodurch keine unerwarteten "neuen blauen" Karten mehr aus dem V1-Lehrerpack kommen.
+
+## [1.4.13] - 2026-04-08
+
+### Fixed
+
+- **Sammelkarten Album Cards**: Gemeinsame Karten-Wrapper clippen jetzt wieder korrekt, damit die Ecken im Album und in allen Karten-Views rund bleiben statt verzerrt auszusehen.
+- **Boneyard Build Capture**: Die Boneyard-Integration rendert im Build-Modus jetzt eine feste Preview der Landing- und Dashboard-Skeletons, damit der Crawl nicht mehr an Auth-/Firestore-Zuständen hängen bleibt und echte `.bones.json`-Snapshots erzeugen kann.
+  - **AppShell.tsx**: Skip `isDashboardSubdomain` Logik während Build-Mode (`window.__BONEYARD_BUILD`), damit `localhost` nicht zur Dashboard-Auth-Umleitung führt
+  - **src/app/page.tsx**: Dashboard-Auth-Redirect und Blank-Render-Guard deaktiviert im Build-Mode; alle 8 Named Skeletons erhalten deterministische Fixtures (landing-news, dashboard-funding, dashboard-news, dashboard-todos, dashboard-events, dashboard-leaderboard, dashboard-cards, dashboard-poll)
+  - **src/components/ui/skeleton.tsx**: Fixture-Fallback entfernt, um nur explizite Fixtures zu akzeptieren
+  - **package.json**: `boneyard:build`-Script auf zuverlässigen Single-Pass updatert: `boneyard-js build http://localhost:3000 http://dashboard.abi-planer-27.localhost:3000 --no-scan`
+  - **Result**: 4 Skeletons erfolgreich captured (landing-news, dashboard-funding, dashboard-news, dashboard-cards) mit responsive Layouts an 6 Breakpoints, `.bones.json` + `registry.js` generiert
+
+## [1.4.11] - 2026-04-08
+
+### Fixed
+- **Set-separierte Lootpools**: `support_vol_1` zieht jetzt strikt nur noch aus `support_v1` (100%). Damit können aus Support-Boostern keine Lehrer-Karten mehr droppen.
+
+## [1.4.10] - 2026-04-08
+
+### Changed
+- **Sammelkarten Pack-Opening UI**: Die kleine Explosions-Animation beim Aufreißen eines Packs wurde entfernt, um den Öffnungsablauf ruhiger und cleaner zu machen.
+
+## [1.4.9] - 2026-04-08
+
+### Fixed
+- **Cloud Functions CORS Fix**: Explizite Erlaubnis für lokale Subdomains (`*.localhost:3000`) in allen `onCall` Cloud Functions hinzugefügt, um CORS-Fehler bei der Migration und beim Öffnen von Packs in der lokalen Entwicklungsumgebung zu beheben.
+
+## [1.4.8] - 2026-04-08
+
+### Added
+- **Manueller Migrations-Trigger**: Ein neuer Button "Migrate Inventory" im Sammelkarten-Admin-Dashboard erlaubt es Admins, ihr Booster-Inventar sofort manuell in das neue skalierbare System zu überführen, ohne einen Booster verbrauchen zu müssen.
+- **Cloud Function `migrateBoosterStats`**: Neue serverseitige Logik für eine sichere, transaktionale Überführung der Booster-Bestände.
+
+## [1.4.7] - 2026-04-08
+
+### Added
+- **Automatische Inventar-Migration**: Ein Hintergrundprozess wurde implementiert, der bestehende Booster-Guthaben aus den alten Datenfeldern (`extra_available`, `support_extra_available`) automatisch in das neue, skalierbare `inventory` Map-System überführt.
+- **On-the-fly Konsolidierung**: Das Frontend zeigt nun die kombinierte Anzahl aus alten und neuen Beständen an, um einen nahtlosen Übergang ohne Datenverlust zu gewährleisten.
+
+## [1.4.6] - 2026-04-08
+
+### Added
+- **Skalierbares Booster-Inventar**: Umstellung der Booster-Verwaltung auf ein Map-basiertes System (`booster_stats.inventory`). Dies erlaubt das einfache Hinzufügen beliebig vieler Booster-Sets in der Zukunft.
+- **Robust Gifting**: Die Schenkungs-Logik wurde stabilisiert und nutzt nun primär das neue Inventar-System, was die Zuverlässigkeit bei Belohnungen erhöht.
+
+### Fixed
+- **Support Booster Sync**: Ein Problem wurde behoben, bei dem geschenkte Booster nicht sofort in der Packwahl auftauchten.
+
+## [1.4.5] - 2026-04-08
+
+### Fixed
+- **Support Booster Sichtbarkeit**: Ein Fehler in der `availablePacks` Logik wurde behoben, der dazu führen konnte, dass Support-Booster nicht korrekt angezeigt wurden, wenn gleichzeitig Custom Packs vorhanden waren.
+- **Custom Support Pack Visuals**: Custom Packs, die im Admin-Bereich mit dem Support-Set erstellt wurden, nutzen nun korrekt das grüne Emerald-Design anstelle des Standard-Lila.
+- **Packwahl-Synchronisierung**: Die `packId` wird nun konsistent über die gesamte Queue-Kette gereicht, um sicherzustellen, dass die Auswahl-Ansicht (`/sammelkarten/packs`) immer das richtige Design anzeigt.
+
+## [1.4.4] - 2026-04-08
+
+### Fixed
+- **Invisible/Stuck Loading Cards**: Fixed a critical issue where cards were showing as skeletons (stuck loading) when the static registry was empty.
+- **Improved Card Renderer**: The `CardRenderer` now supports dynamic cards from Firestore by reconstructing metadata from `CardData` if the registry lookup fails.
+- **Type Safety**: Extended `CardData` with an explicit `type` field to ensure correct layout selection (Teacher/Support) without registry dependency.
+
+## [1.4.3] - 2026-04-08
+
+### Added
+- **Erweiterter Lehrer-Export**: Der CSV-Export beinhaltet nun auch Beschreibungen und Attacken.
+- **JSON Backup**: Neue Funktion zum Exportieren der gesamten Lehrer-Registry als JSON-Datei für maximale Datentreue.
+
+### Fixed
+- **CSV Import Fix**: Der Import-Parser wurde stabilisiert und unterstützt nun auch das Einlesen von komplexen Feldern (Beschreibungen, Attacken) sowie korrekte CSV-Maskierung.
+
+## [1.4.2] - 2026-04-08
+
+### Added
+- **Lehrer-Export**: Ein neuer Button im Sammelkarten-Admin-Dashboard erlaubt den Export aller Lehrer aus der Datenbank als CSV-Datei.
+
+## [1.4.1] - 2026-04-08
+
+### Fixed
+- **Support-Booster in Packwahl**: Support-Booster werden nun korrekt in der dedizierten Packwahl-Ansicht (`/sammelkarten/packs`) angezeigt, inklusive des passenden Emerald-Designs und der korrekten Kartenanzahl-Beschriftung.
+
+## [1.4.0] - 2026-04-08
+
+### Changed
+- **Landing Page Redesign**: Komplettes Redesign der Startseite mit Fokus auf Schüler. 
+  - Neuer Hero-Bereich ("Macht euer Abi Legendär").
+  - "Dual-Focus" Sektion zur klaren Trennung zwischen **Planern** (Orga-Tools) und **Sammlern** (Sammelkarten-Action).
+  - Modernisiertes Bento-Grid mit schülerzentrierten Texten ("Cash im Griff", "Eure Stimme").
+  - Immersive Sammelkarten-Sektion mit Gaming-Vibe und Raritäten-Highlights.
+- **Header-Update**: Navigation wurde auf Aktions-Begriffe umgestellt ("Planen", "Sammeln", "Vorteile").
+- **Visuals**: Erweiterte Nutzung von `framer-motion` für dynamische Stagger-Effekte und Hover-Glows.
+
+### Fixed
+- **Sammelkarten Build Error**: Fehlende `DEFAULT_TEACHERS` Konstante in `src/app/sammelkarten/_modules/constants.ts` wiederhergestellt.
+- **Hook Type Error**: Destructuring von `getRemainingSupportBoosters` in `useSammelkartenGame` korrigiert.
+- **Skeleton Type Error**: TypeScript-Fehler in `src/components/ui/skeleton.tsx` durch Default-Wert für `loading` behoben.
+
+## [1.3.14] - 2026-04-08
+
+### Changed
+- **Boneyard Subdomain Support**: Das `boneyard:build` Skript wurde erweitert, um zusätzlich zur Haupt-Domain auch die Dashboard-Subdomain (`http://dashboard.abi-planer-27.localhost:3000`) zu scannen. Dies stellt sicher, dass alle Skeletons auch im Dashboard-Kontext korrekt generiert werden.
+
+## [1.3.13] - 2026-04-08
+
+### Added
+- **Set-Aware Gifting**: In der Kommunikations-Zentrale (`/admin/send`) kann nun explizit ausgewählt werden, aus welchem Set (z.B. Lehrer v1 oder Support v1) die verschenkten Random-Packs stammen sollen.
+- **Backend Set-Support**: Die `giftBoosterPack` Cloud Function unterstützt nun `packId` und schreibt Belohnungen korrekt dem jeweiligen Pool (z.B. `support_extra_available`) gut.
+
+### Changed
+- **Registry Cleanup**: Veraltete `DEFAULT_TEACHERS` Konstanten wurden vollständig entfernt. Das System nutzt nun ausschließlich die zentrale `CardRegistry`.
+- **Default Teachers Removed**: Die Platzhalter-Lehrer (Max Mustermann, Erika Musterfrau) wurden aus der Registry gelöscht.
+- **Migration Ready**: Die `mapToTeacherCardData` Utility wurde vereinfacht, um die Migration bestehender Lehrer-Daten zu erleichtern.
+
+## [1.3.12] - 2026-04-08
+
+### Added
+- **Boneyard Skeleton Framework**: Integration des Boneyard-Frameworks zur automatischen Generierung von pixelgenauen Lade-Skeletten aus dem echten DOM.
+- **Automated Registry**: Setup einer globalen Skeleton-Registry in `src/bones/` und Anbindung an den Root-Layout.
+- **New build script**: `npm run boneyard:build` zum Snapshotten des UI-Layouts hinzugefügt.
+
+### Changed
+- **Skeleton Architecture**: Migration von `TeacherAlbum` und `CardRenderer` auf das Boneyard-Modell. Manuelle Skeleton-Platzhalter wurden durch den generativen Ansatz ersetzt, was Layout-Shifts eliminiert.
+- **Unified Skeleton Component**: Die UI-Komponente `Skeleton` unterstützt nun sowohl den klassischen manuellen Modus als auch den neuen Boneyard-Wrapper via `name`-Prop.
+
+## [1.3.11] - 2026-04-08
+
+### Changed
+- **Standardized Card Rounding**: Alle Karten-Komponenten (Lehrer, Support, Deck-Editor) sowie deren Lade-Skelette nutzen nun eine einheitliche Ecken-Abrundung von `10%`. Dies behebt das Problem, dass Skeletons in einigen Ansichten wie "Pillen" aussahen und sorgt für ein konsistentes Format, das echten Sammelkarten entspricht.
+- **Improved Card Skeletons**: Die Lade-Skelette wurden weiter verfeinert, um exakt die Form der finalen Karten widerzuspiegeln.
+
+## [1.3.10] - 2026-04-08
+
+### Added
+- **Support Booster Bonus-System**: Support Booster Packs werden nun automatisch als GRATIS Bonus beim Kauf von Booster-Bundles ab 10€ (Bundle 20+) gewährt.
+- **Bundle-Boni**: 
+    - 20er Bundle -> 1 Support Booster gratis.
+    - 50er Bundle -> 4 Support Booster gratis.
+    - 100er Bundle -> 8 Support Booster gratis.
+- **Dynamic Pack Sizing**: Das System unterstützt nun unterschiedliche Kartenanzahlen pro Pack (Support Booster enthalten genau 1 Karte).
+
+### Changed
+- **Shop UI Update**: Booster-Bundles heben nun den enthaltenen Support-Karten-Bonus hervor.
+- **Sammelkarten UI**: Support-Booster werden nun in einem zentrierten Layout mit angepasster Beschriftung präsentiert.
+- **Backend Fulfillment**: Die Stripe-Webhook-Logik wurde erweitert, um den automatischen Versand von Bonus-Packs sicherzustellen.
+
+## [1.3.10] - 2026-04-08
+
+### Changed
+- **Improved Album Skeletons**: Das Design der Lade-Skelette im Lehrer-Album wurde vollständig überarbeitet. Die alten, textbasierten "Loading..."-Platzhalter wurden durch modernere, an das Kartendesign angepasste Skelette mit Shimmer-Effekt ersetzt.
+- **CardRenderer Skeleton**: Der `CardRenderer` nutzt nun ein detaillierteres Skelett, das die Struktur der Karte (Avatar, Name, Rarity) nachahmt, um einen weicheren Übergang beim Laden zu ermöglichen.
+- **Consolidated Loading States**: Die Ladezustände im Album wurden vereinheitlicht, um ein ruhigeres UI-Erlebnis während des Datenabrufs zu gewährleisten.
+
+## [1.3.9] - 2026-04-08
+
+### Added
+- **Global Card Integration**: Die bestehenden Lehrer-Karten wurden vollständig in das neue Registry-System integriert (jetzt 8 Lehrer-Karten in `teachers_v1`).
+- **Registry-Aware Custom Packs**: Support-Karten können nun in der Kommunikations-Zentrale für Custom Packs ausgewählt werden.
+
+### Changed
+- **Update Kommunikations-Zentrale**: Das Admin-Interface für den Versand von Nachrichten und Belohnungen nutzt nun die zentrale `CardRegistry`.
+- **Card Preview in Admin UI**: Beim Konfigurieren von Custom Pack Slots wird nun eine Live-Vorschau der gewählten Karte (Lehrer oder Support) angezeigt.
+- **Unified ID Resolution**: Backend und Frontend nutzen nun die `CardRegistry` zur Validierung und Auflösung von Karten-IDs.
+- **Trade Wizard Update**: Der `NewTradeWizard` unterstützt nun den Tausch aller Karten aus der Registry (inkl. Support-Karten).
+
+## [1.3.8] - 2026-04-08
+
+### Added
+- **Modular Global Card System**: Eine neue datengesteuerte Architektur für Sammelkarten, die beliebige Sets und Kartentypen unterstützt.
+- **Support-Karten**: Neuer Kartentyp mit aktiven/passiven Effekten (z.B. "Noten würfeln").
+- **3D Dice Combat Log**: Animierter Würfelwurf (CSS 3D) für Support-Effekte mit Schadensberechnung.
+- **Support Booster Pack Vol. 1**: Ein spezielles Pack, das Support-Karten und Lehrer kombiniert.
+- **Zentrales Card-Registry**: Alle Karten werden nun über `setId:cardId` (z.B. `teachers_v1:max-mustermann`) identifiziert.
+- **CardRenderer**: Eine intelligente UI-Komponente, die automatisch das richtige Layout (Lehrer vs. Support) wählt.
+- **Entwickler-Dokumentation**: `docs/MODULAR_CARD_SYSTEM.md` für die Erweiterung des Systems.
+
+### Changed
+- Refactoring von `TeacherCard.tsx` zu einem modulareren `TeacherLayout`.
+- Update der Shop- und Sammelkarten-Logik für gemischte Loot-Pools und gewichtete Sets.
+- Migration der bestehenden Lehrer in das `teachers_v1` Set.
+- `useUserTeachers` Hook unterstützt nun spezifische `packId`s beim Öffnen von Boostern.
+
+## [1.3.7] - 2026-04-08
+
+- **Feature (Combat System):** Implementierung einer 3D CSS Würfel-Animation und eines Kampf-Overlays.
+    - **DiceRoller:** Eine 6-seitige Würfel-Komponente mit reinen CSS 3D-Transformationen und flüssigen Animationen via Framer Motion.
+    - **CombatOverlay:** Ein animiertes Overlay für Kampf-Ereignisse, das den Würfelwurf visualisiert und den berechneten Schaden (Ergebnis × Multiplikator) anzeigt.
+    - **Game-Feel:** Professionelle Animationen mit zufälligen Drehungen und weichem Einrasten auf der Zielseite.
+
+## [1.3.6] - 2026-04-06
+
+- **Fix (Cloud Functions):** Behebung von CORS- und Timeout-Fehlern in `fixLogNames`.
+    *   **Performance:** Umstellung auf Batch-Abfragen (30 Profile pro Request) statt Einzelauslesung zur Vermeidung von Datenbank-Timeouts.
+    *   **Robustheit:** Globaler Try-Catch-Block liefert nun aussagekräftige `HttpsError` an das Frontend zurück.
+    *   **CORS:** Optimierung der Header-Verarbeitung für lokale Subdomänen-Aufrufe.
+
+## [1.3.4] - 2026-04-06
+
+- **Improvement (Admin Logs):** Vereinfachung der Log-Reparatur.
+    *   **Funktion:** Die Reparatur alter Log-Einträge (`fixLogNames`) ist keine "Danger Action" mehr und kann sofort ausgeführt werden.
+    *   **UI:** Ein neuer Button **"Namen reparieren"** wurde direkt im Header der Admin-Logs hinzugefügt, um "Unbekannt"-Einträge on-the-fly zu korrigieren.
+    *   **Security:** Die Aktion bleibt weiterhin auf Administratoren beschränkt, erfordert aber keine 24h-Warteschlange mehr.
+
+## [1.3.3] - 2026-04-06
+
+- **Feature (Admin Logs):** Einführung einer Reparatur-Funktion für alte Log-Einträge.
+    - **Backend:** Neue Cloud Function `fixLogNames` durchläuft rückwirkend die `logs`-Kollektion und pflegt fehlende Nutzernamen ein.
+    - **Security:** Die Aktion wurde als "Danger Action" registriert und erfordert 2FA sowie eine 24h-Warteschlange zur Sicherheit.
+    - **UI:** Neuer Button "Admin-Logs reparieren" in der `/admin/danger` Zone hinzugefügt.
+    - **Ergebnis:** Bestehende "Unbekannt"-Einträge können nun automatisiert mit Klarnamen oder E-Mail-Adressen verknüpft werden.
+
+## [1.3.2] - 2026-04-06
+
+- **Fix (Admin Logs):** Korrektur der Nutzeranzeige in den Admin-Logs.
+    - **Logging:** `logAction` fällt nun auf die E-Mail zurück, falls der `full_name` im Profil fehlt.
+    - **Komponenten:** Diverse Modals (`AddEvent`, `EditNews`, `AddPoll`) und Hooks (`useGroupJoin`) übergeben nun konsistent den Klarnamen an das Logging-System.
+    - **Polls:** Die Umfrage-Komponente (`PollList`) wurde um ein `userName`-Prop erweitert, um Abstimmungen präzise zuzuordnen.
+    - **Ergebnis:** In `/admin/logs` wird nun der Name (oder die E-Mail) statt "Unbekannt" angezeigt.
+
 ## [1.3.1] - 2026-04-06
 
 - **Fix (Domain-Routing):** Korrektur der Dashboard-Fallback-URL von `https://dashboard.abi-planer-27` auf `https://dashboard.abi-planer-27.de`.

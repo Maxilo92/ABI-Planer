@@ -30,28 +30,48 @@ function SammelkartenContent() {
   const { user, loading } = useAuth()
   const { pushMessage } = useSystemMessage()
   const { createDeck } = useDecks()
-  const { collectBooster, collectMassBoosters, teachers: userTeachers, getRemainingBoosters } = useUserTeachers()
+  const { collectBooster, collectMassBoosters, teachers: userTeachers, getRemainingBoosters, getRemainingSupportBoosters } = useUserTeachers()
   const { queueEntries: customPackQueue } = useCustomPackQueue()
   const { config, isTradingEnabled, timeLeft } = useSammelkartenConfig()
   const [activeDeckId, setActiveDeckId] = useState<string | null>(null)
 
   const availablePacks = useMemo<AvailablePack[]>(() => {
-    const customTotal = customPackQueue.reduce((sum, entry) => sum + Math.max(0, Math.floor(entry.remainingPacks || 0)), 0)
     const totalRemaining = getRemainingBoosters()
-    const normalCount = Math.max(0, totalRemaining - customTotal)
+    const supportCount = getRemainingSupportBoosters()
+
+    // DEBUG: Was sieht das Frontend?
+    console.log('[Sammelkarten] Stats:', {
+      totalRemaining,
+      supportCount,
+      customQueue: customPackQueue.length
+    })
 
     const packs: AvailablePack[] = []
 
-    if (normalCount > 0) {
+    // 1. Standard Booster (immer zuerst, falls vorhanden)
+    if (totalRemaining > 0) {
       packs.push({
         id: 'random-pack',
         name: 'Standard Booster',
-        count: normalCount,
+        count: totalRemaining,
         source: 'random',
         description: 'Normale Packs aus deinem täglichen Kontingent und Extras',
       })
     }
 
+    // 2. Support Booster (falls vorhanden)
+    if (supportCount > 0) {
+      packs.push({
+        id: 'support-vol-1',
+        name: 'Support Pack Vol. 1',
+        count: supportCount,
+        source: 'random',
+        packId: 'support_vol_1',
+        description: 'Gratis Bonus aus Bundle-Käufen. Enthält 1 Karte.',
+      })
+    }
+
+    // 3. Custom Packs (Schenkungen)
     customPackQueue.forEach((entry, index) => {
       const remaining = Math.max(0, Math.floor(entry.remainingPacks || 0))
       if (remaining <= 0) return
@@ -62,12 +82,13 @@ function SammelkartenContent() {
         count: remaining,
         source: 'custom',
         queueId: entry.id,
+        packId: entry.packId, // PackId aus der Queue übernehmen (wichtig für Visuals!)
         description: entry.presetId ? `Preset: ${entry.presetId}` : 'Deterministisches Geschenk mit festen Slots',
       })
     })
 
     return packs
-  }, [customPackQueue, getRemainingBoosters])
+  }, [customPackQueue, getRemainingBoosters, getRemainingSupportBoosters])
 
   const randomOpenableBoosters = useMemo(() => {
     return availablePacks
@@ -96,7 +117,10 @@ function SammelkartenContent() {
       }
     }
 
-    return { packSource: 'random' }
+    return { 
+      packSource: 'random',
+      packId: selectedPack.packId 
+    }
   }, [selectedPack])
 
   const {
@@ -121,6 +145,7 @@ function SammelkartenContent() {
     config,
     userTeachers: (userTeachers || {}) as UserTeacherMap,
     getRemainingBoosters,
+    getRemainingSupportBoosters,
     getRandomOpenableBoosters,
     getActivePackSelection,
     collectBooster,
@@ -165,13 +190,14 @@ function SammelkartenContent() {
           />
         </div>
       ) : view === 'sammelkarten' ? (
-        <div className="flex flex-col items-center justify-center min-h-[calc(100vh-16rem)] overflow-hidden pb-[calc(env(safe-area-inset-bottom)+1rem)]">
+        <div className="flex flex-col items-center justify-center min-h-[calc(100vh-16rem)] overflow-visible pb-[calc(env(safe-area-inset-bottom)+1rem)]">
           <div className="relative flex flex-col items-center space-y-8 sm:space-y-12 w-full max-w-4xl px-6">
             <SammelkartenHeader
               gameState={gameState}
               showDebug={showDebug}
               setShowDebug={setShowDebug}
               getRemainingBoosters={getRemainingBoosters}
+              getRemainingSupportBoosters={getRemainingSupportBoosters}
               timeLeft={timeLeft}
               packSelectionHref={availablePacks.length > 1 && selectedPack ? `/sammelkarten/packs?selected=${encodeURIComponent(selectedPack.id)}` : null}
             />
@@ -200,9 +226,9 @@ function SammelkartenContent() {
               />
 
               <PackOpeningStage
-                key={`pack-opening-${gameState}`}
                 gameState={gameState}
                 getRemainingBoosters={getRemainingBoosters}
+                getRemainingSupportBoosters={getRemainingSupportBoosters}
                 isGodpack={isGodpack}
                 timeLeft={timeLeft}
                 availablePacks={availablePacks}
@@ -219,6 +245,8 @@ function SammelkartenContent() {
               isMassOpening={isMassOpening}
               packProbs={packProbs}
               getRemainingBoosters={getRemainingBoosters}
+              getRemainingSupportBoosters={getRemainingSupportBoosters}
+              selectedPack={selectedPack}
               handleOpenPack={handleOpenPack}
               handleOpenTenPacks={handleOpenTenPacks}
               setGameState={setGameState}
@@ -226,8 +254,7 @@ function SammelkartenContent() {
               allFlipped={allFlipped}
               isTradingEnabled={isTradingEnabled}
               getRandomOpenableBoosters={getRandomOpenableBoosters}
-            />
-          </div>
+            />          </div>
         </div>
       ) : view === 'decks' && activeDeckId ? (
         <div className="max-w-6xl mx-auto px-4">
@@ -242,7 +269,9 @@ function SammelkartenContent() {
         </div>
       ) : (
         <div className="max-w-6xl mx-auto px-4">
-          <TeacherAlbum />
+          <Skeleton name="teacher-album-container" loading={false}>
+            <TeacherAlbum />
+          </Skeleton>
         </div>
       )}
     </div>

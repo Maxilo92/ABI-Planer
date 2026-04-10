@@ -1,10 +1,9 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { Badge } from '@/components/ui/badge'
-import { TeacherCard } from '@/components/cards/TeacherCard'
+import { CardRenderer } from '@/components/cards/CardRenderer'
 import { cn } from '@/lib/utils'
 import { CardVariant, LootTeacher } from '@/types/database'
 import { SammelkartenConfig } from '@/types/cards'
-import { DEFAULT_TEACHERS } from '../constants'
 import { mapToTeacherCardData } from '../utils/cardData'
 import { MaybeCollectionResult } from '../types'
 
@@ -45,12 +44,15 @@ export function SinglePackReveal(props: SinglePackRevealProps) {
           initial="hidden"
           animate="visible"
           exit="hidden"
-          className="grid grid-cols-2 sm:grid-cols-3 place-items-center gap-x-6 gap-y-6 sm:gap-x-6 sm:gap-y-7 md:gap-x-8 w-full max-w-5xl px-2 sm:px-4"
+          className={cn(
+            "grid place-items-center gap-x-6 gap-y-6 sm:gap-x-6 sm:gap-y-7 md:gap-x-8 w-full max-w-5xl px-2 sm:px-4",
+            revealedTeachers.length === 1 ? "grid-cols-1" : "grid-cols-2 sm:grid-cols-3"
+          )}
         >
           {revealedTeachers.map((teacher, idx) => {
             const isFlipped = flippedCards[idx]
             const result = collectionResults?.[idx]
-            const cardData = mapToTeacherCardData(teacher, (result?.variant || 'normal') as CardVariant, config?.loot_teachers || DEFAULT_TEACHERS)
+            const cardData = mapToTeacherCardData(teacher, (result?.variant || 'normal') as CardVariant)
 
             return (
               <motion.div
@@ -60,8 +62,8 @@ export function SinglePackReveal(props: SinglePackRevealProps) {
                     y: 100,
                     opacity: 0,
                     scale: 0.5,
-                    rotate: idx === 0 ? -15 : idx === 2 ? 15 : 0,
-                    x: idx === 0 ? -60 : idx === 2 ? 60 : 0
+                    rotate: revealedTeachers.length === 1 ? 0 : (idx === 0 ? -15 : idx === 2 ? 15 : 0),
+                    x: revealedTeachers.length === 1 ? 0 : (idx === 0 ? -60 : idx === 2 ? 60 : 0)
                   },
                   visible: {
                     y: 0,
@@ -79,7 +81,7 @@ export function SinglePackReveal(props: SinglePackRevealProps) {
                 }}
                 className={cn(
                   'relative flex flex-col items-center w-[40vw] min-w-[140px] max-w-[200px] sm:w-full sm:min-w-0 sm:max-w-[190px] md:max-w-[210px] lg:max-w-[220px] p-0.5',
-                  idx === 2 && 'col-span-2 sm:col-span-1',
+                  revealedTeachers.length > 1 && idx === 2 && 'col-span-2 sm:col-span-1',
                   isFlipped && result?.isNew && 'animate-new-card-float z-10',
                   isFlipped && result?.variant === 'black_shiny_holo' && 'z-30 scale-[1.03] sm:scale-[1.05]'
                 )}
@@ -113,13 +115,12 @@ export function SinglePackReveal(props: SinglePackRevealProps) {
                       </div>
                     )}
 
-                    <TeacherCard
+                    <CardRenderer
                       data={cardData}
-                      styleVariant="modern-flat"
                       isFlippedExternally={isFlipped}
                       interactive={false}
                       upgradeInfo={isFlipped && result?.isLevelUp ? { oldLevel: result.oldLevel!, newLevel: result.newLevel } : undefined}
-                      className="w-full h-auto"
+                      className="w-full h-auto !overflow-visible"
                     />
                   </div>
 
