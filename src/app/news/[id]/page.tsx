@@ -308,12 +308,12 @@ export default function NewsDetailPage({ params }: { params: Promise<{ id: strin
       <div className="relative min-h-screen bg-background text-foreground selection:bg-primary/20">
         <LandingHeader isAuthenticated={!!user} />
         
-        <main className="relative z-10 pt-32 pb-20 px-6">
+        <main className="relative z-10 pt-28 pb-16 px-4 sm:px-6 md:pt-32 md:pb-20">
           <div className="max-w-4xl mx-auto space-y-10">
             <Button
               variant="ghost"
               size="sm"
-              className="gap-2 -ml-2 text-muted-foreground hover:text-foreground transition-colors group"
+              className="gap-2 -ml-1 sm:-ml-2 text-muted-foreground hover:text-foreground transition-colors group"
               asChild
             >
               <Link href="/news">
@@ -321,9 +321,9 @@ export default function NewsDetailPage({ params }: { params: Promise<{ id: strin
               </Link>
             </Button>
 
-            <article className="space-y-10">
+            <article className="space-y-7 md:space-y-10">
               {news.image_url && (
-                <div className="relative aspect-[21/9] w-full overflow-hidden rounded-[2.5rem] bg-muted shadow-2xl">
+                <div className="relative aspect-[21/9] w-full overflow-hidden rounded-3xl md:rounded-[2.5rem] bg-muted shadow-2xl">
                   <img
                     src={news.image_url}
                     alt=""
@@ -333,17 +333,17 @@ export default function NewsDetailPage({ params }: { params: Promise<{ id: strin
                 </div>
               )}
 
-              <div className="space-y-6">
+              <div className="space-y-5 md:space-y-6">
                 <div className="space-y-4">
-                  <div className="flex flex-wrap items-center gap-3 text-[10px] font-black uppercase tracking-widest text-primary">
+                  <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-primary">
                     <span className="bg-primary/10 px-3 py-1 rounded-full">{news.created_at ? format(toDate(news.created_at), 'dd. MMMM yyyy', { locale: de }) : 'Neu'}</span>
                     {news.is_ai_generated && <span className="bg-amber-500/10 border border-amber-500/20 px-3 py-1 rounded-full text-amber-600 flex items-center gap-1"><Sparkles className="h-3 w-3" /> KI-unterstützt</span>}
                     <span className="flex items-center gap-1.5"><UserIcon className="h-3.5 w-3.5" /> {news.author_name || 'System'}</span>
                   </div>
-                  <h1 className="text-4xl md:text-6xl font-black tracking-tight leading-[1.1]">{news.title}</h1>
+                  <h1 className="text-3xl sm:text-4xl md:text-6xl font-black tracking-tight leading-[1.1] break-words">{news.title}</h1>
                 </div>
 
-                <div className="flex items-center flex-wrap gap-6 pt-4 border-t border-border/50">
+                <div className="flex items-center flex-wrap gap-3 sm:gap-6 pt-4 border-t border-border/50">
                    <div className="flex items-center gap-2 text-muted-foreground text-sm font-bold">
                       <Eye className="h-4 w-4 text-primary/60" />
                       {news.view_count || 0} Aufrufe
@@ -362,7 +362,7 @@ export default function NewsDetailPage({ params }: { params: Promise<{ id: strin
 
                 <div className="h-px bg-border/50" />
 
-                <div className="prose dark:prose-invert max-w-none prose-lg prose-headings:font-black prose-headings:tracking-tight prose-p:leading-relaxed prose-p:text-foreground/80">
+                <div className="prose dark:prose-invert max-w-none prose-base sm:prose-lg prose-headings:font-black prose-headings:tracking-tight prose-p:leading-relaxed prose-p:text-foreground/80">
                   <ReactMarkdown remarkPlugins={[remarkGfm]}>
                     {news.content}
                   </ReactMarkdown>
@@ -376,19 +376,19 @@ export default function NewsDetailPage({ params }: { params: Promise<{ id: strin
                 Let's keep the dashboard logic below but wrap it in a cleaner container.
             */}
             
-            <div className="pt-10 border-t border-border/50 space-y-12">
-               <div className="bg-card/30 border border-border/50 rounded-[2rem] p-8 md:p-12 text-center space-y-6">
-                  <h3 className="text-2xl font-black tracking-tight">Möchtest du mitreden?</h3>
+            <div className="pt-8 md:pt-10 border-t border-border/50 space-y-8 md:space-y-12">
+              <div className="bg-card/30 border border-border/50 rounded-[2rem] p-5 sm:p-8 md:p-12 text-center space-y-5 md:space-y-6">
+                <h3 className="text-xl sm:text-2xl font-black tracking-tight">Möchtest du mitreden?</h3>
                   <p className="text-muted-foreground max-w-lg mx-auto">
                     Um Kommentare zu schreiben oder auf Beiträge zu reagieren, melde dich bitte in deinem Dashboard-Konto an.
                   </p>
-                  <div className="flex flex-wrap justify-center gap-4">
+                <div className="flex flex-col sm:flex-row sm:flex-wrap justify-center gap-3 sm:gap-4">
                     <Button onClick={() => {
                       window.location.href = getDashboardRedirectUrl(window.location)
-                    }} className="rounded-xl font-bold px-8">
+                  }} className="rounded-xl font-bold px-6 sm:px-8 w-full sm:w-auto">
                        Zum Dashboard
                     </Button>
-                    <Button variant="outline" asChild className="rounded-xl font-bold px-8">
+                  <Button variant="outline" asChild className="rounded-xl font-bold px-6 sm:px-8 w-full sm:w-auto">
                        <Link href="/register">Konto erstellen</Link>
                     </Button>
                   </div>
@@ -403,7 +403,7 @@ export default function NewsDetailPage({ params }: { params: Promise<{ id: strin
   }
 
   return (
-    <div className="max-w-4xl mx-auto py-4 md:py-8 space-y-6">
+    <div className="max-w-4xl mx-auto px-3 sm:px-0 py-4 md:py-8 space-y-6">
 ...
       <div className="px-2">
         <Button
@@ -439,12 +439,12 @@ export default function NewsDetailPage({ params }: { params: Promise<{ id: strin
             <CardTitle className="w-full text-3xl md:text-5xl font-black tracking-tight leading-[1.12] text-foreground break-words">
               {news.title}
             </CardTitle>
-            <div className="mt-1 flex w-full items-center gap-2 md:w-auto md:shrink-0 md:gap-1">
+            <div className="mt-1 flex w-full flex-wrap items-center gap-2 md:w-auto md:shrink-0 md:gap-1 md:flex-nowrap md:justify-end">
               {canSummarize && (
                 <Button
                   variant="outline"
                   size="sm"
-                  className="gap-2 flex-1 md:flex-none"
+                  className="gap-2 flex-1 sm:flex-none"
                   onClick={handleSummarize}
                   disabled={summarizing}
                 >
@@ -456,7 +456,7 @@ export default function NewsDetailPage({ params }: { params: Promise<{ id: strin
                   Zusammenfassen
                 </Button>
               )}
-              <div className="flex items-center gap-1 shrink-0">
+              <div className="flex items-center gap-1 shrink-0 ml-auto">
                 <ShareResourceButton
                   resourcePath={`/news/${news.id}`}
                   title={news.title}
@@ -467,7 +467,7 @@ export default function NewsDetailPage({ params }: { params: Promise<{ id: strin
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-y-3 gap-x-6 text-sm md:text-base text-muted-foreground font-medium">
+          <div className="flex flex-wrap items-center gap-y-2.5 gap-x-4 sm:gap-x-6 text-xs sm:text-sm md:text-base text-muted-foreground font-medium">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4 text-primary/70" />
               {news.created_at ? format(toDate(news.created_at), 'dd. MMMM yyyy', { locale: de }) : 'Neu'}
@@ -489,7 +489,7 @@ export default function NewsDetailPage({ params }: { params: Promise<{ id: strin
             </div>
 
             {news.is_ai_generated && (
-              <div className="flex items-center gap-2 bg-amber-500/10 border border-amber-500/20 px-3 py-1 rounded-full text-amber-600 text-xs font-black">
+              <div className="flex items-center gap-2 bg-amber-500/10 border border-amber-500/20 px-2.5 sm:px-3 py-1 rounded-full text-amber-600 text-[11px] sm:text-xs font-black">
                 <Sparkles className="h-3.5 w-3.5" />
                 KI-unterstützt
               </div>
@@ -558,7 +558,7 @@ export default function NewsDetailPage({ params }: { params: Promise<{ id: strin
           </AnimatePresence>
 
           <ReactMarkdown
-            className="text-base md:text-xl text-foreground/90 leading-relaxed max-w-none prose dark:prose-invert"
+            className="text-[0.98rem] sm:text-base md:text-xl text-foreground/90 leading-relaxed max-w-none prose dark:prose-invert"
             remarkPlugins={[remarkGfm]}
             components={{
               p: ({ children }) => <p className="mb-4 last:mb-0">{children}</p>,
@@ -627,7 +627,7 @@ export default function NewsDetailPage({ params }: { params: Promise<{ id: strin
           </ReactMarkdown>
 
           {/* Reactions Section */}
-          <div className="pt-8 space-y-4">
+          <div className="pt-6 md:pt-8 space-y-4">
             <div className="flex flex-wrap items-center gap-2">
               {activeEmojis.map((emoji) => {
                 const uids = reactions[emoji] || []
@@ -737,8 +737,8 @@ export default function NewsDetailPage({ params }: { params: Promise<{ id: strin
       <div className="h-px bg-border/50 my-8" />
 
       {/* Comments Section */}
-      <section className="space-y-8 pb-12">
-        <h3 className="text-2xl font-bold flex items-center gap-2">
+      <section className="space-y-6 md:space-y-8 pb-12">
+        <h3 className="text-xl sm:text-2xl font-bold flex items-center gap-2">
           <MessageSquare className="h-6 w-6 text-primary" />
           Kommentare
         </h3>
@@ -782,7 +782,7 @@ export default function NewsDetailPage({ params }: { params: Promise<{ id: strin
         <div className="space-y-6">
           {comments.length > 0 ? (
             comments.map((comment) => (
-              <div key={comment.id} className="flex gap-4 group">
+              <div key={comment.id} className="flex gap-3 sm:gap-4 group">
                 <div className="mt-1">
                   <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
                     {comment.author_name?.charAt(0) || '?'}
@@ -790,7 +790,7 @@ export default function NewsDetailPage({ params }: { params: Promise<{ id: strin
                 </div>
                 <div className="flex-1 space-y-1">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
                       <span className="font-bold text-sm">{comment.author_name}</span>
                       <span className="text-xs text-muted-foreground">
                         {comment.created_at ? format(toDate(comment.created_at), 'dd.MM.yyyy HH:mm', { locale: de }) : 'Gerade eben'}

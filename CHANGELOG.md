@@ -8,6 +8,15 @@
 
 # Changelog
 
+## [1.5.4] - 2026-04-10 - News Smartphone Optimierung
+
+### Fixed - News Smartphone UX
+
+- Die News-Uebersicht ([src/app/news/page.tsx](src/app/news/page.tsx)) wurde fuer kleine Displays optimiert: reduzierte Abstaende, bessere Title-Wraps, flexiblere Meta-Chips und mobil gestapelte CTA-/Action-Bereiche.
+- Mindestbreiten in Karten-Headern entfernt, damit Titel und Aktion-Buttons auf Smartphones nicht mehr gegeneinander druecken oder horizontal unruhig umbrechen.
+- Die News-Detailansicht ([src/app/news/[id]/page.tsx](src/app/news/[id]/page.tsx)) wurde mobil entschlackt: angepasste Hero-/Typografie-Skalierung, kompaktere Metadatenzeile, bessere Button-Anordnung und flüssiger lesbarer Content-Block.
+- Kommentarbereich in der Detailansicht auf kleinen Screens verbessert (engere Abstaende, robustere Wraps bei Namen/Zeitstempeln).
+
 ## [1.5.3] - 2026-04-10 - News Mobile Layout Fix
 
 ### Fixed - News Detail Mobile Header

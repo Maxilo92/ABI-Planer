@@ -171,26 +171,26 @@ function NewsPageContent() {
       <div className="relative min-h-screen bg-background text-foreground selection:bg-primary/20">
         <LandingHeader isAuthenticated={!!user} />
         
-        <main className="relative z-10 pt-32 pb-20 px-6">
+        <main className="relative z-10 pt-28 pb-16 px-4 sm:px-6 md:pt-32 md:pb-20">
           <div className="max-w-5xl mx-auto space-y-12">
             <div className="space-y-4 text-center">
-              <h1 className="text-4xl md:text-6xl font-black tracking-tight">Neuigkeiten</h1>
-              <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+              <h1 className="text-3xl sm:text-4xl md:text-6xl font-black tracking-tight">Neuigkeiten</h1>
+              <p className="text-muted-foreground text-base sm:text-lg max-w-2xl mx-auto">
                 Bleibe auf dem Laufenden über alles, was in eurem Jahrgang passiert.
               </p>
             </div>
 
             <div className="grid gap-8">
               {news.length === 0 ? (
-                <div className="p-20 text-center border-2 border-dashed border-border rounded-3xl">
-                  <p className="text-muted-foreground italic text-lg">Aktuell sind keine News veröffentlicht.</p>
+                <div className="p-10 md:p-20 text-center border-2 border-dashed border-border rounded-3xl">
+                  <p className="text-muted-foreground italic text-base md:text-lg">Aktuell sind keine News veröffentlicht.</p>
                 </div>
               ) : (
                 news.map((item) => {
                   const isCompactEntry = item.is_small_update || !item.image_url
 
                   return (
-                    <article key={item.id} className="group grid md:grid-cols-[1.2fr_1.8fr] gap-8 items-start bg-card/30 border border-border/50 rounded-[2rem] p-6 md:p-8 hover:bg-card/50 transition-all hover:shadow-2xl hover:shadow-primary/5">
+                    <article key={item.id} className="group grid md:grid-cols-[1.2fr_1.8fr] gap-5 md:gap-8 items-start bg-card/30 border border-border/50 rounded-[2rem] p-4 sm:p-6 md:p-8 hover:bg-card/50 transition-all hover:shadow-2xl hover:shadow-primary/5">
                       <div className={isCompactEntry ? 'space-y-4 md:col-span-2' : 'space-y-6'}>
                         {!isCompactEntry && item.image_url && (
                           <Link href={`/news/${item.id}`} className="block overflow-hidden rounded-2xl aspect-[16/10] bg-muted shadow-lg">
@@ -202,8 +202,8 @@ function NewsPageContent() {
                           </Link>
                         )}
 
-                        <div className={isCompactEntry ? 'space-y-4 rounded-2xl border border-border/40 bg-background/60 p-5 md:p-6' : 'space-y-6'}>
-                          <div className="flex flex-wrap items-center gap-3 text-[10px] font-black uppercase tracking-widest text-primary">
+                        <div className={isCompactEntry ? 'space-y-4 rounded-2xl border border-border/40 bg-background/60 p-4 sm:p-5 md:p-6' : 'space-y-5 md:space-y-6'}>
+                          <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-primary">
                             <span className="bg-primary/10 px-3 py-1 rounded-full">{item.created_at ? format(toDate(item.created_at), 'dd. MMMM yyyy', { locale: de }) : 'Neu'}</span>
                             {isCompactEntry && <span className="bg-muted px-3 py-1 rounded-full text-muted-foreground">Kurzupdate</span>}
                             {item.is_ai_generated && <span className="bg-amber-500/10 border border-amber-500/20 px-3 py-1 rounded-full text-amber-600 flex items-center gap-1"><Sparkles className="h-3 w-3" /> KI-unterstützt</span>}
@@ -212,7 +212,7 @@ function NewsPageContent() {
 
                           <div className="space-y-3">
                             <Link href={`/news/${item.id}`} className="block group-hover:text-primary transition-colors">
-                              <h2 className={isCompactEntry ? 'text-xl md:text-2xl font-black leading-tight tracking-tight' : 'text-2xl md:text-3xl font-black leading-tight tracking-tight'}>{item.title}</h2>
+                              <h2 className={isCompactEntry ? 'text-xl sm:text-2xl font-black leading-tight tracking-tight break-words' : 'text-xl sm:text-2xl md:text-3xl font-black leading-tight tracking-tight break-words'}>{item.title}</h2>
                             </Link>
                             <div className={isCompactEntry ? 'text-muted-foreground leading-relaxed line-clamp-2 text-sm md:text-[0.95rem]' : 'text-muted-foreground leading-relaxed line-clamp-3'}>
                               <ReactMarkdown remarkPlugins={[remarkGfm]}>
@@ -221,14 +221,14 @@ function NewsPageContent() {
                             </div>
                           </div>
 
-                          <div className="flex items-center justify-between pt-4 border-t border-border/50">
+                          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pt-4 border-t border-border/50">
                             <div className="flex items-center gap-4 text-muted-foreground">
                               <span className="flex items-center gap-1 text-[11px] font-bold"><Eye className="h-3.5 w-3.5" /> {item.view_count || 0}</span>
                               {item.comment_count !== undefined && item.comment_count > 0 && (
                                 <span className="flex items-center gap-1 text-[11px] font-bold"><MessageSquare className="h-3.5 w-3.5" /> {item.comment_count}</span>
                               )}
                             </div>
-                            <Button render={<Link href={`/news/${item.id}`} />} variant="ghost" className="font-black uppercase tracking-widest text-[10px] gap-2 rounded-xl group/btn">
+                            <Button render={<Link href={`/news/${item.id}`} />} variant="ghost" className="w-full sm:w-auto justify-center font-black uppercase tracking-widest text-[10px] gap-2 rounded-xl group/btn">
                               Weiterlesen
                               <ArrowRight className="h-4 w-4 transition-transform group-hover/btn:translate-x-1" />
                             </Button>
@@ -249,7 +249,7 @@ function NewsPageContent() {
   }
 
   return (
-    <div className="space-y-7">
+    <div className="space-y-6 md:space-y-7">
       <div className="relative overflow-hidden rounded-2xl border bg-gradient-to-br from-background via-muted/40 to-background p-6 md:p-8">
         <div className="absolute -right-8 -top-8 h-28 w-28 rounded-full bg-primary/10 blur-2xl" />
         <div className="absolute -left-8 bottom-0 h-20 w-20 rounded-full bg-primary/5 blur-xl" />
@@ -285,10 +285,10 @@ function NewsPageContent() {
                   className="rounded-2xl bg-card/55 p-4 md:p-5 border border-border/40 shadow-sm"
                 >
                   <div className="flex flex-wrap items-start justify-between gap-3">
-                    <Link href={`/news/${item.id}`} className="flex-1 hover:text-primary transition-colors min-w-[220px]">
-                      <CardTitle className="text-xl md:text-[1.35rem] font-black leading-tight tracking-tight">{item.title}</CardTitle>
+                    <Link href={`/news/${item.id}`} className="w-full sm:flex-1 hover:text-primary transition-colors">
+                      <CardTitle className="text-lg sm:text-xl md:text-[1.35rem] font-black leading-tight tracking-tight break-words">{item.title}</CardTitle>
                     </Link>
-                    <div className="flex items-center gap-2 shrink-0">
+                    <div className="flex w-full sm:w-auto items-center justify-end sm:justify-start gap-2 shrink-0">
                       <ShareResourceButton
                         resourcePath={`/news/${item.id}`}
                         title={item.title}
@@ -311,7 +311,7 @@ function NewsPageContent() {
                     </div>
                   </div>
 
-                  <div className="mb-3 mt-3 flex flex-wrap items-center gap-3 text-[11px] uppercase tracking-wide text-muted-foreground/90">
+                  <div className="mb-3 mt-3 flex flex-wrap items-center gap-2 sm:gap-3 text-[10px] sm:text-[11px] uppercase tracking-wide text-muted-foreground/90">
                     <span className="rounded-full bg-primary/10 px-2.5 py-1 text-primary">{item.created_at ? format(toDate(item.created_at), 'dd. MMMM yyyy', { locale: de }) : 'Neu'}</span>
                     {item.is_ai_generated && <span className="bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded-full text-amber-600 flex items-center gap-1 font-black"><Sparkles className="h-3 w-3" /> KI-unterstützt</span>}
                     <span className="inline-flex items-center gap-1.5 normal-case tracking-normal">
@@ -390,10 +390,10 @@ function NewsPageContent() {
 
                 <div>
                   <div className="flex flex-wrap items-start justify-between gap-3">
-                    <Link href={`/news/${item.id}`} className="flex-1 hover:text-primary transition-colors min-w-[220px]">
-                      <CardTitle className="text-2xl font-black leading-tight tracking-tight">{item.title}</CardTitle>
+                    <Link href={`/news/${item.id}`} className="w-full sm:flex-1 hover:text-primary transition-colors">
+                      <CardTitle className="text-xl sm:text-2xl font-black leading-tight tracking-tight break-words">{item.title}</CardTitle>
                     </Link>
-                    <div className="flex items-center gap-2 shrink-0">
+                    <div className="flex w-full sm:w-auto items-center justify-end sm:justify-start gap-2 shrink-0">
                       <ShareResourceButton
                         resourcePath={`/news/${item.id}`}
                         title={item.title}
@@ -416,7 +416,7 @@ function NewsPageContent() {
                     </div>
                   </div>
 
-                  <div className="mb-3 mt-3 flex flex-wrap items-center gap-4 text-xs uppercase tracking-wide text-muted-foreground/90">
+                  <div className="mb-3 mt-3 flex flex-wrap items-center gap-2 sm:gap-4 text-[11px] sm:text-xs uppercase tracking-wide text-muted-foreground/90">
                     <span>{item.created_at ? format(toDate(item.created_at), 'dd. MMMM yyyy', { locale: de }) : 'Neu'}</span>
                     {item.is_ai_generated && <span className="bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded-full text-amber-600 flex items-center gap-1 font-black"><Sparkles className="h-3 w-3" /> KI-unterstützt</span>}
                     <span className="inline-flex items-center gap-1.5 normal-case tracking-normal">
@@ -437,7 +437,7 @@ function NewsPageContent() {
                     )}
                   </div>
 
-                  <div className={`text-foreground/80 leading-relaxed text-sm md:text-base ${!item.is_small_update ? 'line-clamp-4' : ''}`}>
+                  <div className={`text-foreground/80 leading-relaxed text-sm md:text-base ${!item.is_small_update ? 'line-clamp-3 sm:line-clamp-4' : ''}`}>
                     <ReactMarkdown
                       remarkPlugins={[remarkGfm]}
                       components={{
