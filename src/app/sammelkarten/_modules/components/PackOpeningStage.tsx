@@ -47,7 +47,9 @@ export function PackOpeningStage(props: PackOpeningStageProps) {
         }
       `
       document.head.appendChild(style)
-      return () => document.head.removeChild(style)
+      return () => {
+        document.head.removeChild(style)
+      }
     }
   }, [])
 

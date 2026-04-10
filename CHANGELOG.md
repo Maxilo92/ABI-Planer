@@ -8,6 +8,13 @@
 
 # Changelog
 
+## [1.5.11] - 2026-04-11 - Pack Opening Build Fix
+
+### Fixed - Pack Opening TypeScript Build
+
+- Der `useEffect`-Cleanup in [src/app/sammelkarten/_modules/components/PackOpeningStage.tsx](src/app/sammelkarten/_modules/components/PackOpeningStage.tsx) gibt jetzt sauber `void` zurueck und bricht den Next.js-Typecheck nicht mehr.
+- Dadurch laeuft der Firebase App Hosting Build fuer das Pack-Opening-UI wieder durch.
+
 ## [1.5.10] - 2026-04-11 - Pack Opening Wobble Softer
 
 ### Fixed - Pack Opening Feedback
