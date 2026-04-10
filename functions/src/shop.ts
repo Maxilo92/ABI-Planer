@@ -384,6 +384,7 @@ export const openBooster = onCall({
     const [profileSnap, userTeachersSnap, settingsSnap] = await Promise.all([transaction.get(profileRef), transaction.get(userTeachersRef), transaction.get(settingsRef)]);
 
     if (!profileSnap.exists) throw new HttpsError("not-found", "Profil fehlt.");
+    if (!settingsSnap.exists) throw new HttpsError("not-found", "Sammelkarten-Einstellungen fehlen.");
     const profileData = profileSnap.data() || {};
     const boosterStats = profileData.booster_stats || {};
     const config = settingsSnap.data() as any;
@@ -413,7 +414,7 @@ export const openBooster = onCall({
 
     if (totalAvail < countToOpen) throw new HttpsError("failed-precondition", "Nicht genug Booster.");
 
-    const variantProbs = config.variant_probabilities || {};
+    const variantProbs = config?.variant_probabilities || {};
     const rollVariant = () => {
       const r = Math.random();
       if (r < (Number(variantProbs.black_shiny_holo) || 0.005)) return "black_shiny_holo";
@@ -453,16 +454,16 @@ export const openBooster = onCall({
             color: CARD_SETS[TEACHER_PACK_ID]?.color || "#3b82f6",
             cards: (Array.isArray(config?.loot_teachers) && config.loot_teachers.length > 0)
               ? config.loot_teachers
-              : ((config.sets?.[sid]?.cards?.length ? config.sets[sid].cards : CARD_SETS[sid]?.cards) || []),
+              : ((config?.sets?.[sid]?.cards?.length ? config.sets[sid].cards : CARD_SETS[sid]?.cards) || []),
           }
-        : (config.sets?.[sid] || CARD_SETS[sid]);
+        : (config?.sets?.[sid] || CARD_SETS[sid]);
       
       if (!set) {
         logger.error(`Set ${sid} not found in config or static registry`);
         throw new HttpsError("not-found", `Set ${sid} nicht gefunden.`);
       }
 
-      const weights = (Array.isArray(config.rarity_weights) ? config.rarity_weights[slot] : config.rarity_weights) || {};
+      const weights = (Array.isArray(config?.rarity_weights) ? config?.rarity_weights[slot] : config?.rarity_weights) || {};
       const rarities = ["common", "rare", "epic", "mythic", "legendary", "iconic"];
       const tw = rarities.reduce((s, rar) => s + (Number((weights as any)[rar]) || 0), 0);
       let selectedRar = "common";
