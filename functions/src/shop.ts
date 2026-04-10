@@ -463,7 +463,7 @@ export const openBooster = onCall({
         throw new HttpsError("not-found", `Set ${sid} nicht gefunden.`);
       }
 
-      const weights = (Array.isArray(config?.rarity_weights) ? config.rarity_weights[slot] : config?.rarity_weights) || {};
+      const weights = (Array.isArray(config?.rarity_weights) ? config?.rarity_weights[slot] : config?.rarity_weights) || {};
       const rarities = ["common", "rare", "epic", "mythic", "legendary", "iconic"];
       const tw = rarities.reduce((s, rar) => s + (Number((weights as any)[rar]) || 0), 0);
       let selectedRar = "common";
