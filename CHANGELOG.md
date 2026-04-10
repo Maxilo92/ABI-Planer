@@ -8,6 +8,20 @@
 
 # Changelog
 
+## [1.5.3] - 2026-04-10 - News Mobile Layout Fix
+
+### Fixed - News Detail Mobile Header
+
+- Mobile-Layout der News-Detailseite verbessert: Der Titel nutzt wieder die volle Breite und wrappt sauber, statt durch die Action-Leiste unguenstig umzubrechen.
+- Der Button `Zusammenfassen` steht auf kleinen Screens jetzt unter dem Titel (mit responsiver Breite), waehrend das bisherige Desktop-Layout erhalten bleibt.
+
+## [1.5.2] - 2026-04-10 - Logo Size Hotfix
+
+### Fixed - Logo Rendering
+
+- Regression im globalen Logo-Rendering behoben: In [src/components/Logo.tsx](src/components/Logo.tsx) wurde die erzwungene Style-Ueberschreibung (`width: auto`, `height: auto`) entfernt.
+- Ergebnis: Das Logo respektiert wieder die gesetzten `width`/`height` Props (z. B. `40x40` in der Navbar) statt in nativer Bildgroesse zu rendern.
+
 ## [1.5.1] - 2026-04-10 - App Hosting Build Hotfix
 
 ### Fixed

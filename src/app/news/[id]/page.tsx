@@ -435,16 +435,16 @@ export default function NewsDetailPage({ params }: { params: Promise<{ id: strin
           </div>
         )}
         <div className="space-y-5">
-          <div className="flex justify-between items-start gap-4">
-            <CardTitle className="text-3xl md:text-5xl font-black tracking-tight leading-[1.12] text-foreground">
+          <div className="flex flex-col gap-3 md:flex-row md:justify-between md:items-start md:gap-4">
+            <CardTitle className="w-full text-3xl md:text-5xl font-black tracking-tight leading-[1.12] text-foreground break-words">
               {news.title}
             </CardTitle>
-            <div className="shrink-0 mt-1 flex items-center gap-1">
+            <div className="mt-1 flex w-full items-center gap-2 md:w-auto md:shrink-0 md:gap-1">
               {canSummarize && (
                 <Button
                   variant="outline"
                   size="sm"
-                  className="gap-2"
+                  className="gap-2 flex-1 md:flex-none"
                   onClick={handleSummarize}
                   disabled={summarizing}
                 >
@@ -456,12 +456,14 @@ export default function NewsDetailPage({ params }: { params: Promise<{ id: strin
                   Zusammenfassen
                 </Button>
               )}
-              <ShareResourceButton
-                resourcePath={`/news/${news.id}`}
-                title={news.title}
-                text="Schau dir diese News im ABI Planer an."
-              />
-              {isPlanner && <EditNewsDialog news={news} />}
+              <div className="flex items-center gap-1 shrink-0">
+                <ShareResourceButton
+                  resourcePath={`/news/${news.id}`}
+                  title={news.title}
+                  text="Schau dir diese News im ABI Planer an."
+                />
+                {isPlanner && <EditNewsDialog news={news} />}
+              </div>
             </div>
           </div>
 
