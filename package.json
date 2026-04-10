@@ -1,6 +1,6 @@
 {
   "name": "abi-planer",
-  "version": "1.3.0",
+  "version": "1.5.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -11,10 +11,15 @@
     "start": "node .next/standalone/server.js",
     "lint": "eslint .",
     "test:regressions": "node scripts/regression-guard.mjs",
+    "cleanup:session-metrics": "node scripts/cleanup_session_metrics.js",
+    "cleanup:session-metrics:apply": "node scripts/cleanup_session_metrics.js --apply --reset-online",
     "migrate:cards": "npx ts-node scripts/migrate_card_settings.ts",
+    "boneyard:build": "boneyard-js build http://localhost:3000 http://dashboard.abi-planer-27.localhost:3000 --no-scan",
     "check": "npm run test:regressions && npx tsc --noEmit && npm run build"
   },
   "devDependencies": {
+    "@lhci/cli": "^0.15.1",
+    "@playwright/test": "^1.59.1",
     "@types/react": "19.2.14",
     "autoprefixer": "^10.4.27",
     "eslint": "^9.39.0",
@@ -27,6 +32,7 @@
     "@base-ui/react": "^1.3.0",
     "@radix-ui/react-switch": "^1.2.6",
     "@tailwindcss/postcss": "^4.2.1",
+    "boneyard-js": "^1.6.7",
     "chart.js": "^4.5.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

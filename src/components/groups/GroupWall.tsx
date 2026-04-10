@@ -18,7 +18,7 @@ import {
 } from 'firebase/firestore'
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { useAuth } from '@/context/AuthContext'
-import { GroupMessage, Settings, PlanningGroup, Profile } from '@/types/database'
+import { GroupMessage, Settings, PlanningGroup, Profile, AbiBotMessage } from '@/types/database'
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -58,22 +58,45 @@ import { MediaAttachment } from './MediaAttachment'
 interface GroupWallProps {
   groupName: string
   canManage?: boolean
-  type?: 'internal' | 'hub'
+  type?: 'internal' | 'hub' | 'role' | 'system'
+  roleAccess?: string
+  abiBotMode?: boolean
+  onlineCount?: number
 }
 
-export function GroupWall({ groupName, canManage = false, type = 'internal' }: GroupWallProps) {
+export function GroupWall({ 
+  groupName, 
+  canManage = false, 
+  type = 'internal', 
+  roleAccess, 
+  abiBotMode = false,
+  onlineCount: propOnlineCount 
+}: GroupWallProps) {
   const { user, profile } = useAuth()
   const [messages, setMessages] = useState<GroupMessage[]>([])
+  const messagesRef = useRef<GroupMessage[]>([])
+  
+  useEffect(() => {
+    messagesRef.current = messages
+  }, [messages])
+
   const [newMessage, setNewMessage] = useState('')
   const [loading, setLoading] = useState(false)
   const [planningGroups, setPlanningGroups] = useState<PlanningGroup[]>([])
   const [targetGroup, setTargetGroup] = useState<string | null>(null)
-  const [presenceProfiles, setPresenceProfiles] = useState<Profile[]>([])
   
   // Threading & Media State
   const [replyTo, setReplyTo] = useState<GroupMessage | null>(null)
   const [attachment, setAttachment] = useState<File | null>(null)
   const [isUploading, setIsUploading] = useState(false)
+
+  // ABI Bot State
+  const [botMessages, setBotMessages] = useState<AbiBotMessage[]>([])
+  const [botLoadingHistory, setBotLoadingHistory] = useState(false)
+  const [botSending, setBotSending] = useState(false)
+  const [botRateLimitHint, setBotRateLimitHint] = useState<string | null>(null)
+
+  const chatMode: 'team' | 'abi-bot' = abiBotMode ? 'abi-bot' : 'team'
   
   const scrollRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -132,41 +155,61 @@ export function GroupWall({ groupName, canManage = false, type = 'internal' }: G
   }, [groupName, type, profile?.is_approved])
 
   useEffect(() => {
-    if (!profile?.is_approved) {
-      setPresenceProfiles([])
-      return
-    }
-
-    const unsubscribeProfiles = onSnapshot(collection(db, 'profiles'), (snapshot) => {
-      const rows = snapshot.docs
-        .map((profileDoc) => ({ id: profileDoc.id, ...profileDoc.data() } as Profile))
-        .filter((profileRow) => profileRow.is_approved)
-      setPresenceProfiles(rows)
-    }, (error) => {
-      console.error('GroupWall: Error listening to profile presence:', error)
-      setPresenceProfiles([])
-    })
-
-    return () => unsubscribeProfiles()
-  }, [profile?.is_approved])
-
-  const onlineCount = useMemo(() => {
-    return presenceProfiles.reduce((acc, presenceProfile) => {
-      const onlineState = getOnlineStatus(!!presenceProfile.isOnline, presenceProfile.lastOnline)
-      if (!onlineState.isOnline) return acc
-
-      if (type === 'hub') return acc + 1
-      return presenceProfile.planning_groups?.includes(groupName) ? acc + 1 : acc
-    }, 0)
-  }, [presenceProfiles, type, groupName])
-
-  useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight
     }
-  }, [messages])
+  }, [messages, botMessages, chatMode])
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  useEffect(() => {
+    if (!abiBotMode) return
+    setReplyTo(null)
+    setAttachment(null)
+    setTargetGroup(null)
+  }, [abiBotMode])
+
+  useEffect(() => {
+    if (!user || !profile?.is_approved || !abiBotMode) {
+      return
+    }
+
+    const loadBotHistory = async () => {
+      setBotLoadingHistory(true)
+      setBotRateLimitHint(null)
+      try {
+        const idToken = await user.getIdToken()
+        const query = new URLSearchParams({
+          chatType: type,
+          groupName,
+          roleAccess: roleAccess || '',
+        })
+
+        const response = await fetch(`/api/chats/abi-bot?${query.toString()}`, {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${idToken}`,
+          },
+        })
+
+        const payload = await response.json().catch(() => null)
+        if (!response.ok || !payload?.ok) {
+          const errorMsg = payload?.error || 'Konversation konnte nicht geladen werden.'
+          const details = payload?.details ? ` (${payload.details})` : ''
+          throw new Error(`${errorMsg}${details}`)
+        }
+
+        setBotMessages(Array.isArray(payload.messages) ? payload.messages : [])
+      } catch (error: any) {
+        console.error('Error loading ABI bot conversation:', error)
+        toast.error(`ABI Bot Verlauf: ${error.message}`)
+      } finally {
+        setBotLoadingHistory(false)
+      }
+    }
+
+    loadBotHistory()
+  }, [abiBotMode, user, profile?.is_approved, type, groupName, roleAccess])
+
+  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
       const isAllowedType = file.type.startsWith('image/') || file.type === 'application/pdf'
@@ -181,7 +224,7 @@ export function GroupWall({ groupName, canManage = false, type = 'internal' }: G
       }
       setAttachment(file)
     }
-  }
+  }, [])
 
   const uploadMedia = async (file: File, groupId: string) => {
     const fileName = `${Date.now()}_${file.name}`
@@ -192,6 +235,11 @@ export function GroupWall({ groupName, canManage = false, type = 'internal' }: G
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (chatMode === 'abi-bot') {
+      await handleSendBotMessage()
+      return
+    }
+
     if ((!newMessage.trim() && !attachment) || !user || !profile) return
 
     setLoading(true)
@@ -242,13 +290,87 @@ export function GroupWall({ groupName, canManage = false, type = 'internal' }: G
     }
   }
 
+  const handleSendBotMessage = async () => {
+    if (!newMessage.trim() || !user || !profile) return
+
+    setBotSending(true)
+    setBotRateLimitHint(null)
+
+    const prompt = newMessage.trim()
+    setNewMessage('')
+
+    const optimisticUserMessage: AbiBotMessage = {
+      id: `local_user_${Date.now()}`,
+      role: 'user',
+      content: prompt,
+      created_at: new Date().toISOString(),
+    }
+    setBotMessages((prev) => [...prev, optimisticUserMessage])
+
+    try {
+      const idToken = await user.getIdToken()
+      const response = await fetch('/api/chats/abi-bot', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${idToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          chatType: type,
+          groupName,
+          roleAccess: roleAccess || null,
+          prompt,
+        }),
+      })
+
+      const payload = await response.json().catch(() => null)
+
+      if (response.status === 429) {
+        const resetAt = payload?.rateLimit?.resetAt
+        const remaining = payload?.rateLimit?.remaining
+        setBotMessages((prev) => prev.filter((msg) => msg.id !== optimisticUserMessage.id))
+        setBotRateLimitHint(
+          typeof resetAt === 'string'
+            ? `Rate-Limit erreicht. Wieder verfuegbar um ${format(new Date(resetAt), 'HH:mm:ss', { locale: de })}.`
+            : 'Rate-Limit erreicht. Maximal 10 ABI-Bot Nachrichten pro Minute.'
+        )
+        toast.error(
+          typeof remaining === 'number'
+            ? `Rate-Limit erreicht (${remaining} verbleibend in diesem Fenster).`
+            : 'Rate-Limit erreicht. Maximal 10 ABI-Bot Nachrichten pro Minute.'
+        )
+        return
+      }
+
+      if (!response.ok || !payload?.ok || typeof payload?.answer !== 'string') {
+        throw new Error(payload?.error || 'ABI Bot konnte nicht antworten.')
+      }
+
+      const assistantMessage: AbiBotMessage = {
+        id: `local_assistant_${Date.now()}`,
+        role: 'assistant',
+        content: payload.answer,
+        created_at: new Date().toISOString(),
+      }
+
+      setBotMessages((prev) => [...prev, assistantMessage])
+    } catch (error) {
+      setBotMessages((prev) => prev.filter((msg) => msg.id !== optimisticUserMessage.id))
+      console.error('Error sending ABI bot message:', error)
+      toast.error('ABI Bot Antwort fehlgeschlagen.')
+    } finally {
+      setBotSending(false)
+    }
+  }
+
   const handleDeleteMessage = useCallback(async (messageId: string) => {
-    const message = messages.find((m) => m.id === messageId)
+    const currentMessages = messagesRef.current
+    const message = currentMessages.find((m) => m.id === messageId)
     if (!canManage && message?.created_by !== user?.uid) return
     
     try {
       // Also delete replies if it's a top-level message
-      const replies = messages.filter(m => m.parent_id === messageId)
+      const replies = currentMessages.filter(m => m.parent_id === messageId)
       for (const reply of replies) {
         await deleteDoc(doc(db, 'group_messages', reply.id))
       }
@@ -270,7 +392,7 @@ export function GroupWall({ groupName, canManage = false, type = 'internal' }: G
       console.error('Error deleting message:', error)
       toast.error('Fehler beim Löschen.')
     }
-  }, [messages, canManage, user, profile, groupName, type])
+  }, [canManage, user?.uid, profile?.full_name, groupName, type])
 
   const handlePinMessage = useCallback(async (messageId: string, isPinned: boolean) => {
     if (!canManage) return
@@ -296,10 +418,21 @@ export function GroupWall({ groupName, canManage = false, type = 'internal' }: G
     }
   }, [canManage, user, profile, groupName, type])
 
-  const pinnedMessages = messages.filter(m => m.pinned && !m.parent_id)
-  const topLevelMessages = messages.filter(m => !m.pinned && !m.parent_id)
+  const repliesByParent = useMemo(() => {
+    const map = new Map<string, GroupMessage[]>()
+    messages.forEach(m => {
+      if (m.parent_id) {
+        if (!map.has(m.parent_id)) map.set(m.parent_id, [])
+        map.get(m.parent_id)!.push(m)
+      }
+    })
+    return map
+  }, [messages])
+
+  const pinnedMessages = useMemo(() => messages.filter(m => m.pinned && !m.parent_id), [messages])
+  const topLevelMessages = useMemo(() => messages.filter(m => !m.pinned && !m.parent_id), [messages])
   
-  const getReplies = (parentId: string) => messages.filter(m => m.parent_id === parentId)
+  const handleReply = useCallback((msg: GroupMessage) => setReplyTo(msg), [])
 
   return (
     <Card className="flex flex-col h-[600px] md:h-[700px] lg:h-[800px] shadow-2xl shadow-primary/5 border-primary/10 overflow-hidden rounded-[2rem] bg-card/50 backdrop-blur-xl transition-all duration-500 hover:shadow-primary/10">
@@ -312,12 +445,15 @@ export function GroupWall({ groupName, canManage = false, type = 'internal' }: G
             </div>
             <div>
               <CardTitle className="text-xl font-black tracking-tight">
-                {type === 'hub' ? 'Shared Hub' : 'Team-Pinnwand'}
+                {type === 'hub' ? 'Shared Hub' : type === 'role' ? (
+                  roleAccess === 'admin' ? 'Admin-Intern' : 
+                  roleAccess === 'planner' ? 'Planer-Chat' : 'Öffentlicher Chat'
+                ) : 'Team-Pinnwand'}
               </CardTitle>
               <div className="flex items-center gap-2 mt-0.5">
                 <div className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" />
                 <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest opacity-70">
-                  {onlineCount} online
+                  {propOnlineCount ?? 0} online
                 </p>
               </div>
             </div>
@@ -326,27 +462,94 @@ export function GroupWall({ groupName, canManage = false, type = 'internal' }: G
             <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 font-black px-4 py-1.5 rounded-xl shadow-lg shadow-primary/5 animate-pulse">
               GLOBAL HUB
             </Badge>
+          ) : type === 'role' ? (
+            <Badge variant="outline" className={cn(
+              "font-black px-4 py-1.5 rounded-xl shadow-lg shadow-primary/5",
+              roleAccess === 'admin' ? "bg-red-100 text-red-600 border-red-200" :
+              roleAccess === 'planner' ? "bg-amber-100 text-amber-600 border-amber-200" :
+              "bg-blue-100 text-blue-600 border-blue-200"
+            )}>
+              {roleAccess?.toUpperCase()} CHAT
+            </Badge>
           ) : (
             <div className="flex -space-x-3 overflow-hidden">
                {/* Avatars would go here if we had them in props, for now just a placeholder */}
             </div>
           )}
         </div>
+        {abiBotMode && (
+          <div className="mt-4">
+            <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 font-black px-4 py-1.5 rounded-xl shadow-lg shadow-primary/5">
+              ABI BOT CHAT
+            </Badge>
+          </div>
+        )}
       </CardHeader>
       
       <CardContent 
         ref={scrollRef}
         className="flex-1 overflow-y-auto p-8 space-y-8 scroll-smooth bg-gradient-to-b from-transparent via-muted/5 to-muted/10 custom-scrollbar"
       >
-        {messages.length === 0 ? (
+        {chatMode === 'abi-bot' ? (
+          <div className="space-y-4">
+            <div className="rounded-2xl border border-primary/20 bg-primary/5 px-4 py-3">
+              <p className="text-xs font-bold text-primary/80">
+                ABI Bot ist chatbezogen aktiv. Jede Konversation wird vollstaendig protokolliert. Limit: 10 Nachrichten pro Minute.
+              </p>
+              {botRateLimitHint && (
+                <p className="text-xs font-bold text-destructive mt-2">{botRateLimitHint}</p>
+              )}
+            </div>
+
+            {botLoadingHistory ? (
+              <div className="text-sm text-muted-foreground font-semibold">ABI Bot Verlauf wird geladen...</div>
+            ) : botMessages.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full text-center space-y-4 py-16">
+                <MessageSquare className="h-12 w-12 text-primary/30" />
+                <p className="text-base font-bold text-muted-foreground">Starte den ABI Bot Chat fuer diesen Kanal.</p>
+              </div>
+            ) : (
+              botMessages.map((msg) => {
+                const isAssistant = msg.role === 'assistant'
+                return (
+                  <div
+                    key={msg.id}
+                    className={cn('flex w-full', isAssistant ? 'justify-start' : 'justify-end')}
+                  >
+                    <div
+                      className={cn(
+                        'max-w-[85%] rounded-2xl px-4 py-3 shadow',
+                        isAssistant
+                          ? 'bg-muted border border-border text-foreground'
+                          : 'bg-primary text-primary-foreground'
+                      )}
+                    >
+                      <p className="text-[10px] uppercase tracking-wider font-black opacity-70 mb-1">
+                        {isAssistant ? 'ABI Bot' : 'Du'}
+                      </p>
+                      <p className="text-sm whitespace-pre-wrap break-words">{msg.content}</p>
+                    </div>
+                  </div>
+                )
+              })
+            )}
+          </div>
+        ) : messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center space-y-6">
             <div className="bg-primary/5 p-10 rounded-[2.5rem] shadow-inner relative group/empty">
               <div className="absolute inset-0 bg-primary/10 rounded-[2.5rem] blur-2xl opacity-0 group-hover/empty:opacity-100 transition-opacity" />
               <MessageSquare className="h-16 w-16 text-primary/30 relative z-10 group-hover/empty:scale-110 transition-transform duration-500" />
             </div>
             <div className="space-y-2">
-              <p className="text-xl font-black text-muted-foreground">Stille im Äther...</p>
-              <p className="text-sm text-muted-foreground/60 max-w-[250px] font-bold mx-auto leading-relaxed">Sei der Erste, der den Grundstein für die heutige Planung legt!</p>
+              <p className="text-xl font-black text-muted-foreground">
+                {type === 'system' ? 'Posteingang leer' : 'Stille im Äther...'}
+              </p>
+              <p className="text-sm text-muted-foreground/60 max-w-[250px] font-bold mx-auto leading-relaxed">
+                {type === 'system' 
+                  ? 'Hier werden dir wichtige Systemnachrichten, Feedback-Updates und Geschenke angezeigt.'
+                  : 'Sei der Erste, der den Grundstein für die heutige Planung legt!'
+                }
+              </p>
             </div>
           </div>
         ) : (
@@ -360,13 +563,13 @@ export function GroupWall({ groupName, canManage = false, type = 'internal' }: G
                   <MessageItem
                     key={msg.id}
                     msg={msg}
-                    replies={getReplies(msg.id)}
-                    isOwn={msg.created_by === user?.uid}
-                    canManage={canManage}
+                    replies={repliesByParent.get(msg.id) || []}
+                    currentUserId={user?.uid}
+                    canManage={type === 'system' ? false : canManage}
                     onDelete={handleDeleteMessage}
                     onPin={handlePinMessage}
-                    onReply={setReplyTo}
-                    type={type}
+                    onReply={handleReply}
+                    type={type === 'system' ? 'hub' : type}
                   />
                 ))}
                 <div className="py-4 flex items-center gap-6">
@@ -380,149 +583,155 @@ export function GroupWall({ groupName, canManage = false, type = 'internal' }: G
               <MessageItem
                 key={msg.id}
                 msg={msg}
-                replies={getReplies(msg.id)}
-                isOwn={msg.created_by === user?.uid}
-                canManage={canManage}
+                replies={repliesByParent.get(msg.id) || []}
+                currentUserId={user?.uid}
+                canManage={type === 'system' ? false : canManage}
                 onDelete={handleDeleteMessage}
                 onPin={handlePinMessage}
-                onReply={setReplyTo}
-                type={type}
+                onReply={handleReply}
+                type={type === 'system' ? 'hub' : type}
               />
             ))}
           </div>
         )}
       </CardContent>
 
-      <CardFooter className="p-6 border-t border-primary/10 bg-muted/40 backdrop-blur-2xl flex flex-col gap-4">
-        <form onSubmit={handleSendMessage} className="flex flex-col gap-4 w-full">
-          {/* Active Reply Indicator */}
-          {replyTo && (
-            <div className="flex items-center justify-between bg-primary/10 border border-primary/20 rounded-2xl px-4 py-3 animate-in slide-in-from-bottom-4 shadow-inner">
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="p-1.5 bg-primary/20 rounded-lg">
-                  <Reply className="h-4 w-4 text-primary" />
+      {(type !== 'system' || chatMode === 'abi-bot') && (
+        <CardFooter className="p-6 border-t border-primary/10 bg-muted/40 backdrop-blur-2xl flex flex-col gap-4">
+          <form onSubmit={handleSendMessage} className="flex flex-col gap-4 w-full">
+            {/* Active Reply Indicator */}
+            {chatMode === 'team' && replyTo && (
+              <div className="flex items-center justify-between bg-primary/10 border border-primary/20 rounded-2xl px-4 py-3 animate-in slide-in-from-bottom-4 shadow-inner">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="p-1.5 bg-primary/20 rounded-lg">
+                    <Reply className="h-4 w-4 text-primary" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-black text-primary uppercase tracking-widest">Antwort an {replyTo.author_name}</p>
+                    <p className="text-xs text-muted-foreground truncate font-medium opacity-80">{replyTo.content}</p>
+                  </div>
                 </div>
-                <div className="min-w-0">
-                  <p className="text-[10px] font-black text-primary uppercase tracking-widest">Antwort an {replyTo.author_name}</p>
-                  <p className="text-xs text-muted-foreground truncate font-medium opacity-80">{replyTo.content}</p>
-                </div>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-8 w-8 rounded-xl text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                  onClick={() => setReplyTo(null)}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
               </div>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="h-8 w-8 rounded-xl text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                onClick={() => setReplyTo(null)}
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-          )}
+            )}
 
-          {/* Attachment Preview */}
-          {attachment && (
-            <div className="animate-in fade-in zoom-in-95 p-1">
-              <MediaAttachment 
-                file={attachment} 
-                onRemove={() => setAttachment(null)}
-                isUploading={isUploading}
-              />
-            </div>
-          )}
+            {/* Attachment Preview */}
+            {chatMode === 'team' && attachment && (
+              <div className="animate-in fade-in zoom-in-95 p-1">
+                <MediaAttachment 
+                  file={attachment} 
+                  onRemove={() => setAttachment(null)}
+                  isUploading={isUploading}
+                />
+              </div>
+            )}
 
-          <div className="flex items-center gap-3">
-            {type === 'hub' && (
-              <DropdownMenu>
-                <DropdownMenuTrigger
-                  render={
+            <div className="flex items-center gap-3">
+              {chatMode === 'team' && type === 'hub' && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger
+                    render={
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className={cn(
+                          "h-14 text-[10px] font-black uppercase tracking-[0.15em] gap-3 px-5 transition-all rounded-2xl shadow-xl",
+                          targetGroup 
+                            ? "bg-primary text-primary-foreground border-primary shadow-primary/20" 
+                            : "bg-background/50 backdrop-blur-md border-primary/10 hover:border-primary/30"
+                        )}
+                      >
+                        <Target className={cn("h-5 w-5", targetGroup ? "text-primary-foreground" : "text-primary")} />
+                        <span className="hidden sm:inline">{targetGroup || "Empfänger"}</span>
+                      </Button>
+                    }
+                  />
+                  <DropdownMenuContent align="start" className="w-64 rounded-2xl p-2 shadow-2xl border-primary/10 backdrop-blur-xl">
+                    <DropdownMenuLabel className="text-[10px] font-black text-muted-foreground uppercase tracking-widest px-3 py-2">Zielgruppe wählen</DropdownMenuLabel>
+                    <DropdownMenuSeparator className="bg-primary/10" />
+                    <DropdownMenuItem 
+                      onClick={() => setTargetGroup(null)}
+                      className="rounded-xl p-3 font-bold transition-all hover:bg-primary/10"
+                    >
+                      <Users className="h-4 w-4 mr-3 text-primary" /> Alle Gruppen
+                    </DropdownMenuItem>
+                    {planningGroups.map((group) => (
+                      <DropdownMenuItem 
+                        key={group.name} 
+                        onClick={() => setTargetGroup(group.name)}
+                        className="rounded-xl p-3 font-bold transition-all hover:bg-primary/10"
+                      >
+                        <Target className="h-4 w-4 mr-3 text-primary/60" /> {group.name}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+              
+              <div className="relative flex-1 flex items-center gap-3">
+                <input 
+                  type="file"
+                  ref={fileInputRef}
+                  className="hidden"
+                  accept="image/*,application/pdf"
+                  onChange={handleFileSelect}
+                />
+                {chatMode === 'team' && (
+                  <div className="flex gap-1 shrink-0">
                     <Button
                       type="button"
                       variant="outline"
-                      size="sm"
-                      className={cn(
-                        "h-14 text-[10px] font-black uppercase tracking-[0.15em] gap-3 px-5 transition-all rounded-2xl shadow-xl",
-                        targetGroup 
-                          ? "bg-primary text-primary-foreground border-primary shadow-primary/20" 
-                          : "bg-background/50 backdrop-blur-md border-primary/10 hover:border-primary/30"
-                      )}
+                      size="icon"
+                      className="h-14 w-14 rounded-2xl bg-background/50 backdrop-blur-md border-primary/10 hover:border-primary/30 hover:bg-background transition-all shadow-xl"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={loading}
                     >
-                      <Target className={cn("h-5 w-5", targetGroup ? "text-primary-foreground" : "text-primary")} />
-                      <span className="hidden sm:inline">{targetGroup || "Empfänger"}</span>
+                      <Paperclip className="h-5 w-5 text-muted-foreground" />
                     </Button>
-                  }
-                />
-                <DropdownMenuContent align="start" className="w-64 rounded-2xl p-2 shadow-2xl border-primary/10 backdrop-blur-xl">
-                  <DropdownMenuLabel className="text-[10px] font-black text-muted-foreground uppercase tracking-widest px-3 py-2">Zielgruppe wählen</DropdownMenuLabel>
-                  <DropdownMenuSeparator className="bg-primary/10" />
-                  <DropdownMenuItem 
-                    onClick={() => setTargetGroup(null)}
-                    className="rounded-xl p-3 font-bold transition-all hover:bg-primary/10"
-                  >
-                    <Users className="h-4 w-4 mr-3 text-primary" /> Alle Gruppen
-                  </DropdownMenuItem>
-                  {planningGroups.map((group) => (
-                    <DropdownMenuItem 
-                      key={group.name} 
-                      onClick={() => setTargetGroup(group.name)}
-                      className="rounded-xl p-3 font-bold transition-all hover:bg-primary/10"
-                    >
-                      <Target className="h-4 w-4 mr-3 text-primary/60" /> {group.name}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
-            
-            <div className="relative flex-1 flex items-center gap-3">
-              <input 
-                type="file"
-                ref={fileInputRef}
-                className="hidden"
-                accept="image/*,application/pdf"
-                onChange={handleFileSelect}
-              />
-              <div className="flex gap-1 shrink-0">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  className="h-14 w-14 rounded-2xl bg-background/50 backdrop-blur-md border-primary/10 hover:border-primary/30 hover:bg-background transition-all shadow-xl"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={loading}
-                >
-                  <Paperclip className="h-5 w-5 text-muted-foreground" />
-                </Button>
-              </div>
+                  </div>
+                )}
 
-              <div className="relative flex-1 group/input">
-                <Input 
-                  placeholder={
-                    replyTo 
-                      ? "Antwort schreiben..." 
-                      : type === 'hub' 
-                        ? "Teile deine Gedanken mit dem Hub..." 
-                        : "Nachricht an das Team..."
-                  }
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  disabled={loading}
-                  className="pr-14 bg-background/50 backdrop-blur-md border-primary/10 focus:bg-background focus:ring-4 focus:ring-primary/5 transition-all rounded-2xl h-14 font-medium text-base shadow-inner"
-                />
-                <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center text-muted-foreground/30 group-focus-within/input:text-primary/50 transition-colors">
-                  <span className="text-[10px] font-black mr-2 hidden sm:inline tracking-tighter uppercase">Cmd + Enter</span>
+                <div className="relative flex-1 group/input">
+                  <Input 
+                    placeholder={
+                      chatMode === 'abi-bot'
+                        ? 'Frage den ABI Bot in diesem Chat...'
+                        : replyTo 
+                        ? "Antwort schreiben..." 
+                        : type === 'hub' 
+                          ? "Teile deine Gedanken mit dem Hub..." 
+                          : "Nachricht an das Team..."
+                    }
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    disabled={loading || botSending}
+                    className="pr-14 bg-background/50 backdrop-blur-md border-primary/10 focus:bg-background focus:ring-4 focus:ring-primary/5 transition-all rounded-2xl h-14 font-medium text-base shadow-inner"
+                  />
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center text-muted-foreground/30 group-focus-within/input:text-primary/50 transition-colors">
+                    <span className="text-[10px] font-black mr-2 hidden sm:inline tracking-tighter uppercase">Cmd + Enter</span>
+                  </div>
                 </div>
               </div>
+              <Button 
+                type="submit" 
+                size="icon" 
+                disabled={loading || botSending || (chatMode === 'team' ? (!newMessage.trim() && !attachment) : !newMessage.trim())}
+                className="h-14 w-14 rounded-2xl shadow-2xl shadow-primary/20 shrink-0 transition-all hover:scale-105 active:scale-95 bg-primary hover:bg-primary/90"
+              >
+                {botSending ? <MessageSquare className="h-5 w-5 text-primary-foreground animate-pulse" /> : <Send className="h-5 w-5 text-primary-foreground" />}
+              </Button>
             </div>
-            <Button 
-              type="submit" 
-              size="icon" 
-              disabled={loading || (!newMessage.trim() && !attachment)}
-              className="h-14 w-14 rounded-2xl shadow-2xl shadow-primary/20 shrink-0 transition-all hover:scale-105 active:scale-95 bg-primary hover:bg-primary/90"
-            >
-              <Send className="h-5 w-5 text-primary-foreground" />
-            </Button>
-          </div>
-        </form>
-      </CardFooter>
+          </form>
+        </CardFooter>
+      )}
     </Card>
   )
 }

@@ -46,6 +46,8 @@ export interface Profile {
     last_reset: string; // ISO date string (YYYY-MM-DD)
     count: number;      // Open count for that day
     extra_available?: number;
+    support_extra_available?: number;
+    inventory?: Record<string, number>;
     extra_boosters_claimed?: boolean;
     total_opened?: number;
     total_cards?: number;
@@ -63,6 +65,15 @@ export interface Profile {
     month: string;
     counts: Record<string, number>;
   } | null;
+  currencies?: {
+    notepunkte: number; // NP balance, default 0
+  };
+  subscription?: {
+    active: boolean;
+    expiry_date?: string; // ISO string
+    stripe_subscription_id?: string;
+    renewal_count?: number;
+  };
 }
 
 export type FriendRequestStatus = 'pending' | 'accepted' | 'declined' | 'cancelled';
@@ -124,11 +135,43 @@ export interface GroupMessage {
   author_group?: string | null;
   target_group?: string | null;
   group_name: string | 'hub';
-  type: 'internal' | 'hub';
+  type: 'internal' | 'hub' | 'role';
+  role_access?: UserRole | 'admin' | null;
   pinned?: boolean;
   parent_id?: string | null;
   media_url?: string | null;
   media_type?: 'image' | 'doc' | null;
+}
+
+export type AbiBotChatType = 'internal' | 'hub' | 'role' | 'system';
+
+export interface AbiBotMessage {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  created_at: string | Timestamp | Date | null;
+}
+
+export interface AbiBotAuditLog {
+  id: string;
+  request_id: string;
+  user_id: string;
+  chat_key: string;
+  chat_type: AbiBotChatType;
+  group_name: string;
+  role_access?: string | null;
+  status: 'success' | 'error' | 'rate_limited';
+  prompt: string;
+  response?: string | null;
+  error?: string | null;
+  latency_ms?: number;
+  model?: string;
+  rate_limit?: {
+    max: number;
+    remaining: number;
+    reset_at: string;
+  };
+  created_at: string | Timestamp | Date;
 }
 
 export interface ReadStatus {
@@ -137,10 +180,13 @@ export interface ReadStatus {
   lastSeenAt: string | Timestamp | Date;
 }
 
+export type AttackEffect = 'none' | 'sleep' | 'poison' | 'stun' | 'heal' | 'pierce';
+
 export interface TeacherAttack {
   name: string;
   damage?: number;
   description?: string;
+  effect?: AttackEffect;
 }
 
 export type TeacherRarity = 'common' | 'rare' | 'epic' | 'mythic' | 'legendary' | 'iconic';
@@ -171,6 +217,7 @@ export interface Settings {
   ball_date: string;
   funding_goal: number;
   courses?: ClassName[];
+  leaderboard_adjustments?: Record<string, number>;
   expected_ticket_sales?: number;
   planning_groups?: PlanningGroup[];
   loot_teachers?: LootTeacher[];
@@ -213,6 +260,14 @@ export interface FinanceEntry {
   created_by: string;
 }
 
+export interface ShopEarning {
+  id: string;
+  abi_share_eur: number;
+  selected_course: string | null;
+  month_key?: string;
+  processed_at?: Timestamp | Date | string | null;
+}
+
 export interface Event {
   id: string;
   title: string;
@@ -245,6 +300,7 @@ export interface NewsEntry {
   reactions?: { [emoji: string]: string[] };
   comment_count?: number;
   is_small_update?: boolean;
+  is_ai_generated?: boolean;
 }
 
 export interface Comment {
@@ -270,6 +326,8 @@ export interface Feedback {
   image_url?: string;
   is_anonymous: boolean;
   is_private: boolean;
+  category?: string;
+  importance?: number; // 1-10
 }
 
 export type CardVariant = 'normal' | 'holo' | 'shiny' | 'black_shiny_holo';
@@ -321,6 +379,17 @@ export interface CardProposal {
   status: 'pending' | 'accepted' | 'rejected';
   admin_note?: string;
   reward_claimed?: boolean;
+  reward_packs_awarded?: number;
+  usage_status?: 'unknown' | 'used' | 'not_used';
+  edited_snapshot?: {
+    teacher_name: string;
+    hp: number;
+    description: string;
+    attacks: TeacherAttack[];
+  };
+  moderated_at?: string;
+  moderated_by?: string;
+  moderated_by_name?: string;
 }
 
 export interface NewsImage {
@@ -362,6 +431,7 @@ export interface CustomPackQueueSlot {
 
 export interface CustomPackQueueEntry {
   id: string;
+  packId?: string; // Optional: set specific packId for visuals
   createdAt?: string | Timestamp | Date;
   createdBy?: string | null;
   createdByName?: string | null;

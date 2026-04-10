@@ -1,12 +1,5 @@
 import { LootTeacher } from '@/types/database'
 
-export const DEFAULT_TEACHERS: LootTeacher[] = [
-  { id: 'max-mustermann', name: 'Max Mustermann', rarity: 'common' },
-  { id: 'erika-musterfrau', name: 'Erika Musterfrau', rarity: 'rare' },
-  { id: 'marie-curie', name: 'Marie Curie', rarity: 'mythic' },
-  { id: 'albert-einstein', name: 'Albert Einstein', rarity: 'legendary' }
-]
-
 export const DEFAULT_RARITY_WEIGHTS = [
   { common: 0.8, rare: 0.15, epic: 0.04, mythic: 0.008, legendary: 0.002, iconic: 0 },
   { common: 0.6, rare: 0.25, epic: 0.11, mythic: 0.03, legendary: 0.01, iconic: 0 },

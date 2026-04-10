@@ -6,6 +6,7 @@ import { collection, query, where, orderBy, onSnapshot, getDocs, doc, updateDoc 
 import { useAuth } from '@/context/AuthContext'
 import { Card, CardContent } from '@/components/ui/card'
 import { BarChart2, Loader2, Sparkles } from 'lucide-react'
+import { Skeleton } from '@/components/ui/skeleton'
 import { PollList } from '@/components/dashboard/PollList'
 import { CardProposalForm } from '@/components/dashboard/CardProposalForm'
 import { AddPollDialog } from '@/components/modals/AddPollDialog'
@@ -105,8 +106,36 @@ export default function PollsPage() {
 
   if (authLoading || loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="space-y-8">
+        <div className="flex items-center justify-between">
+          <Skeleton className="h-10 w-64" />
+        </div>
+        <div className="flex gap-4">
+          <Skeleton className="h-10 w-32 rounded-lg" />
+          <Skeleton className="h-10 w-32 rounded-lg" />
+        </div>
+        <div className="grid grid-cols-1 gap-8">
+          {[1, 2].map((i) => (
+            <div key={i} className="space-y-6 rounded-2xl border border-border/40 bg-card p-4 shadow-subtle">
+              <div className="space-y-2">
+                <Skeleton className="h-6 w-3/4" />
+                <Skeleton className="h-4 w-1/2" />
+              </div>
+              <div className="space-y-4">
+                {[1, 2, 3].map((j) => (
+                  <div key={j} className="space-y-2">
+                    <div className="flex justify-between">
+                      <Skeleton className="h-4 w-1/3" />
+                      <Skeleton className="h-4 w-8" />
+                    </div>
+                    <Skeleton className="h-2 w-full" />
+                    <Skeleton className="h-8 w-full rounded mt-1" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     )
   }
@@ -165,7 +194,13 @@ export default function PollsPage() {
                 </CardContent>
               </Card>
             ) : (
-              <PollList polls={sortedPolls} userId={user?.uid || ''} canVote={canVote} canManage={isPlanner} />
+              <PollList 
+                polls={sortedPolls} 
+                userId={user?.uid || ''} 
+                userName={profile?.full_name} 
+                canVote={canVote} 
+                canManage={isPlanner} 
+              />
             )}
           </div>
         </TabsContent>

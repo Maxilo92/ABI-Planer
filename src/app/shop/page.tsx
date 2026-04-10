@@ -33,10 +33,11 @@ import { cn } from '@/lib/utils'
 import React, { useState, useEffect, useMemo, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { AnimatePresence, motion } from 'framer-motion'
+import { Skeleton } from '@/components/ui/skeleton'
 
 type ShopItem = {
   id: string
-  category: 'sammelkarten' | 'extras' | 'merch'
+  category: 'sammelkarten' | 'extras' | 'merch' | 'notenpunkte'
   name: string
   description: string
   price: string
@@ -49,6 +50,13 @@ type ShopItem = {
   fanCardCount?: number
   isPlaceholder?: boolean
   requireAuth?: boolean
+  supportBonus?: number
+}
+
+const SUPPORT_BONUS: Record<number, number> = {
+  20: 1,
+  50: 4,
+  100: 8,
 }
 
 const BASE_PACK_PRICE = 0.60
@@ -56,6 +64,7 @@ const BASE_PACK_PRICE = 0.60
 const CATEGORIES = [
   { id: 'all', name: 'Alle Artikel', icon: LayoutGrid },
   { id: 'sammelkarten', name: 'Sammelkarten', icon: Sparkles },
+  // { id: 'notenpunkte', name: 'Notenpunkte', icon: Zap },
   { id: 'merch', name: 'Stufen-Merch', icon: ShoppingBag },
   { id: 'extras', name: 'Sonstiges', icon: Tags },
 ]
@@ -78,6 +87,8 @@ const ALL_ITEMS: ShopItem[] = [
     const colors = ['slate', 'blue', 'emerald', 'purple', 'amber', 'rose', 'rose'];
     const color = colors[idx % colors.length] as ShopItem['color'];
     const badge = def.amount === 1 ? 'Einsteiger' : def.amount === 100 ? 'Maximaler Support' : def.amount >= 20 ? 'Top Deal' : def.amount >= 10 ? 'Beliebt' : undefined;
+    const supportBonus = SUPPORT_BONUS[def.amount];
+    
     return {
       id,
       category: 'sammelkarten' as const,
@@ -87,11 +98,12 @@ const ALL_ITEMS: ShopItem[] = [
       limit: def.amount === 1 ? 20 : def.amount === 3 ? 10 : def.amount === 5 ? 5 : def.amount === 10 ? 3 : def.amount === 20 ? 2 : def.amount === 50 ? 1 : 1,
       price: def.price.toLocaleString('de-DE', { minimumFractionDigits: 2 }) + ' €',
       priceNum: def.price,
-      description: `${def.amount} Booster Packs (${def.amount * 3} Lehrerkarten).`,
+      description: `${def.amount} Booster Packs (${def.amount * 3} Lehrerkarten).${supportBonus ? ` + ${supportBonus} GRATIS Support Booster!` : ''}`,
       color,
       badge,
       isBooster: true,
-      requireAuth: true
+      requireAuth: true,
+      supportBonus
     }
   }),
   // Spendenartikel wie gehabt:
@@ -130,7 +142,16 @@ const ALL_ITEMS: ShopItem[] = [
     description: 'Unterstütze deine Stufe direkt mit einem großen Beitrag.',
     color: 'emerald',
     requireAuth: false
-  }
+  },
+  /* // NP Packs (Notenpunkte)
+  {
+    id: 'np-pack-100',
+    category: 'notenpunkte' as const,
+...
+    badge: 'Monatlich',
+    requireAuth: true,
+    isPlaceholder: false,
+  } */
 ]
 
 function ShopContent() {
@@ -247,8 +268,20 @@ function ShopContent() {
 
   if (authLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="container mx-auto max-w-6xl px-4 py-8 space-y-12">
+        <div className="space-y-4 text-center">
+          <Skeleton className="h-6 w-32 mx-auto rounded-full" />
+          <Skeleton className="h-16 w-3/4 mx-auto rounded-2xl" />
+          <Skeleton className="h-4 w-1/2 mx-auto" />
+        </div>
+        <div className="flex justify-center gap-2">
+          {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-10 w-24 rounded-full" />)}
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {[1, 2, 3].map(i => (
+            <Skeleton key={i} className="h-[450px] w-full rounded-[2.5rem]" />
+          ))}
+        </div>
       </div>
     )
   }
@@ -280,14 +313,34 @@ function ShopContent() {
         <section className="text-center space-y-3 sm:space-y-4">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-[10px] sm:text-xs font-black uppercase tracking-widest">
             <Heart className="w-3 h-3 fill-current" />
-            Einnahmen für eure Abikasse
+            Gewinne für eure Abikasse
           </div>
           <h2 className="text-4xl sm:text-5xl md:text-6xl font-black tracking-tighter italic">Alles für die Stufe</h2>
           <p className="text-muted-foreground max-w-2xl mx-auto leading-relaxed text-base sm:text-lg md:text-xl font-medium px-2">
             Entdecke Booster-Packs, exklusiven Merch und mehr. 
-            <span className="text-foreground block mt-1 sm:mt-2">90% aller Einnahmen fließen direkt in eure Abikasse!</span>
+            <span className="text-foreground block mt-1 sm:mt-2">90% der Gewinne fließen direkt in eure Abikasse!</span>
           </p>
         </section>
+
+        {/* NP Balance Widget
+        {user && (
+          <div className="bg-gradient-to-r from-blue-500/10 to-purple-500/10 border border-blue-500/30 rounded-lg p-4 sm:p-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 sm:p-3 bg-blue-500/20 rounded-lg">
+                  <Zap className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500" />
+                </div>
+                <div>
+                  <p className="text-[10px] sm:text-xs uppercase font-black tracking-widest text-muted-foreground">Deine Notenpunkte</p>
+                  <p className="text-xl sm:text-2xl font-black">{profile?.currencies?.notepunkte || 0} NP</p>
+                </div>
+              </div>
+              <Link href="/battle-pass" className="text-blue-500 hover:text-blue-400 font-bold text-xs sm:text-sm">
+                Zum Battle Pass →
+              </Link>
+            </div>
+          </div>
+        )} */}
 
         {/* Categories */}
         <div className="flex flex-wrap justify-center gap-1.5 sm:gap-2">
@@ -363,6 +416,39 @@ function ShopContent() {
                            fanCardCount={item.fanCardCount}
                            density={item.amount >= 50 ? 'dense' : 'normal'}
                          />
+                       ) : item.category === 'notenpunkte' ? (
+                         <div className="relative flex flex-col items-center justify-center gap-4">
+                           <div className="relative w-28 h-28 flex items-center justify-center">
+                             <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/30 to-orange-500/30 rounded-full blur-2xl animate-pulse" />
+                             <div className={cn(
+                               "w-24 h-24 rounded-3xl flex items-center justify-center border-4 shadow-2xl relative bg-gradient-to-br",
+                               item.color === 'blue' ? "border-blue-500 from-blue-500/20 to-blue-600/20" :
+                               item.color === 'purple' ? "border-purple-500 from-purple-500/20 to-purple-600/20" :
+                               item.color === 'amber' ? "border-amber-500 from-amber-500/20 to-amber-600/20" :
+                               "border-rose-500 from-rose-500/20 to-rose-600/20"
+                             )}>
+                               <Zap className={cn(
+                                 "w-12 h-12 fill-current",
+                                 item.color === 'blue' ? "text-blue-500" :
+                                 item.color === 'purple' ? "text-purple-500" :
+                                 item.color === 'amber' ? "text-amber-500" :
+                                 "text-rose-500"
+                               )} />
+                             </div>
+                             <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 text-[10px] font-black text-muted-foreground uppercase tracking-widest px-2 py-0.5 bg-muted/60 rounded-full border border-border">
+                               {item.amount} NP
+                             </div>
+                           </div>
+                         </div>
+                       ) : item.id === 'subscription-monthly' ? (
+                         <div className="relative flex flex-col items-center justify-center gap-2">
+                           <div className="relative w-28 h-28 flex items-center justify-center">
+                             <div className="absolute inset-0 bg-gradient-to-br from-purple-400/30 to-blue-500/30 rounded-full blur-2xl animate-pulse" />
+                             <div className="w-24 h-24 rounded-3xl flex items-center justify-center border-4 shadow-2xl rotate-2 bg-gradient-to-br border-slate-500 from-slate-500/20 to-slate-600/20">
+                               <Trophy className="w-12 h-12 text-slate-500" />
+                             </div>
+                           </div>
+                         </div>
                        ) : (
                          <div className={cn(
                            "w-32 h-32 rounded-3xl flex items-center justify-center border-4 rotate-3 shadow-2xl relative",
@@ -378,6 +464,12 @@ function ShopContent() {
                       <h3 className="text-2xl sm:text-3xl font-black tracking-tight">{item.name}</h3>
                       <div className="flex flex-col items-center">
                         <p className="text-xs sm:text-sm text-muted-foreground font-bold uppercase tracking-widest">{item.description}</p>
+                        {item.supportBonus && (
+                          <div className="mt-3 inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500 text-white text-[10px] font-black uppercase tracking-[0.1em] shadow-lg shadow-emerald-500/20 border-2 border-emerald-400 animate-pulse">
+                            <Zap className="w-3.5 h-3.5 fill-current" />
+                            + {item.supportBonus} Support Booster Gratis
+                          </div>
+                        )}
                         {hasDiscount && (
                           <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-success/10 border border-success/20 text-success text-[10px] font-black uppercase tracking-wider">
                             <Sparkles className="w-3 h-3 fill-current" />
@@ -418,6 +510,10 @@ function ShopContent() {
                           toast.error('Anmeldung erforderlich', {
                             description: 'Booster-Packs können nur mit einem registrierten Lernsax-Konto gesammelt werden.'
                           })
+                          return
+                        }
+                        if (item.id === 'subscription-monthly') {
+                          router.push('/shop/abo')
                           return
                         }
                         if (isDonationItem(item)) {
@@ -498,8 +594,8 @@ function ShopContent() {
                    Euer Abiball
                 </h5>
                 <p className="text-foreground/80">
-                  <span className="font-black text-foreground text-sm block mb-1 text-primary">90% Spendequote</span>
-                  Jeder Kauf unterstützt direkt eure Stufenkasse (90%). Die restlichen 10% decken Serverkosten und App-Entwicklung.
+                  <span className="font-black text-foreground text-sm block mb-1 text-primary">90% Gewinnanteil</span>
+                  Jeder Kauf unterstützt direkt eure Stufenkasse mit 90% des Gewinns. Die restlichen 10% decken Serverkosten und App-Entwicklung.
                 </p>
              </div>
              <div className="space-y-3 p-6 bg-card border border-border rounded-2xl">
@@ -694,7 +790,19 @@ function ShopContent() {
 
 export default function GlobalShopPage() {
   return (
-    <Suspense fallback={<div className="container mx-auto py-20 text-center"><Zap className="h-8 w-8 animate-pulse mx-auto text-primary" /></div>}>
+    <Suspense fallback={
+      <div className="container mx-auto max-w-6xl px-4 py-8 space-y-12">
+        <div className="space-y-4 text-center">
+          <Skeleton className="h-6 w-32 mx-auto rounded-full" />
+          <Skeleton className="h-16 w-3/4 mx-auto rounded-2xl" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {[1, 2, 3].map(i => (
+            <Skeleton key={i} className="h-[450px] w-full rounded-[2.5rem]" />
+          ))}
+        </div>
+      </div>
+    }>
       <ShopContent />
     </Suspense>
   )

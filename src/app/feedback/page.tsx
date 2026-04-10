@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { collection, addDoc, query, orderBy, onSnapshot, where, or } from 'firebase/firestore'
+import { collection, addDoc, query, orderBy, onSnapshot, where, or, doc, updateDoc } from 'firebase/firestore'
 import { MessageSquarePlus, Bug, Lightbulb, HelpCircle, Image as ImageIcon, X, Loader2 } from 'lucide-react'
 
 import { db } from '@/lib/firebase'
@@ -14,10 +14,11 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Checkbox } from '@/components/ui/checkbox'
 import { toast } from 'sonner'
+import { Skeleton } from '@/components/ui/skeleton'
 import { NewsImageCropper } from '@/components/modals/NewsImageCropper'
 import { uploadNewsImage, validateNewsImageFile } from '@/lib/newsImageUpload'
 import { Badge } from '@/components/ui/badge'
-import { toDate } from '@/lib/utils'
+import { toDate, cn } from '@/lib/utils'
 import { logAction } from '@/lib/logging'
 import { Feedback, FeedbackType, FeedbackStatus } from '@/types/database'
 
@@ -177,7 +178,7 @@ export default function FeedbackPage() {
         imageUrl = uploadResult.url
       }
 
-      await addDoc(collection(db, 'feedback'), {
+      const docRef = await addDoc(collection(db, 'feedback'), {
         title,
         description,
         type,
@@ -189,6 +190,24 @@ export default function FeedbackPage() {
         is_anonymous: isAnonymous,
         is_private: isPrivate
       })
+
+      // Background analysis with Groq
+      try {
+        const analysisResponse = await fetch('/api/feedback/analyze', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title, description }),
+        })
+        const analysis = await analysisResponse.json()
+        if (analysis.ok) {
+          await updateDoc(doc(db, 'feedback', docRef.id), {
+            category: analysis.category,
+            importance: analysis.importance
+          })
+        }
+      } catch (analysisError) {
+        console.error('Error analyzing feedback:', analysisError)
+      }
 
       await logAction('FEEDBACK_CREATED', user.uid, profile?.full_name, { 
         title,
@@ -231,7 +250,33 @@ export default function FeedbackPage() {
   }
 
   if (authLoading) {
-    return <div className="py-8 text-center text-muted-foreground">Lade Feedback-Seite...</div>
+    return (
+      <div className="max-w-4xl mx-auto space-y-10 px-4">
+        <Skeleton className="h-10 w-64 rounded-xl" />
+        <Card className="rounded-2xl">
+          <CardHeader className="space-y-3">
+            <Skeleton className="h-6 w-48" />
+            <Skeleton className="h-4 w-full" />
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="grid grid-cols-3 gap-2">
+              <Skeleton className="h-10 w-full rounded-md" />
+              <Skeleton className="h-10 w-full rounded-md" />
+              <Skeleton className="h-10 w-full rounded-md" />
+            </div>
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-12" />
+              <Skeleton className="h-12 w-full rounded-md" />
+            </div>
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-32 w-full rounded-md" />
+            </div>
+            <Skeleton className="h-12 w-48 rounded-md" />
+          </CardContent>
+        </Card>
+      </div>
+    )
   }
 
   if (!user) {
@@ -469,10 +514,23 @@ export default function FeedbackPage() {
       </div>
 
       <div className="space-y-6">
-        <h2 className="text-2xl font-bold tracking-tight">Aktuelle Meldungen</h2>
+        <h2 className="text-2xl font-bold tracking-tight px-1">Aktuelle Meldungen</h2>
         {listLoading ? (
-          <div className="flex justify-center py-10">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <div className="grid grid-cols-1 gap-4">
+            {[1, 2, 3].map(i => (
+              <Card key={i} className="rounded-2xl overflow-hidden">
+                <CardHeader className="pb-3 space-y-2">
+                  <div className="flex justify-between items-start">
+                    <Skeleton className="h-6 w-1/2 rounded-lg" />
+                    <Skeleton className="h-6 w-20 rounded-full" />
+                  </div>
+                  <Skeleton className="h-4 w-1/3" />
+                </CardHeader>
+                <CardContent>
+                  <Skeleton className="h-16 w-full rounded-xl" />
+                </CardContent>
+              </Card>
+            ))}
           </div>
         ) : filteredItems.length === 0 ? (
           <p className="text-muted-foreground italic">Noch keine öffentlichen Meldungen vorhanden.</p>
@@ -486,7 +544,27 @@ export default function FeedbackPage() {
                       {getIcon(item.type)}
                       <CardTitle className="text-lg">{item.title}</CardTitle>
                     </div>
-                    {getStatusBadge(item.status)}
+                    <div className="flex items-center gap-2">
+                      {canViewAllFeedback && item.category && (
+                        <Badge variant="outline" className="border-primary/30 bg-primary/5 text-primary text-[10px]">
+                          {item.category}
+                        </Badge>
+                      )}
+                      {canViewAllFeedback && item.importance && (
+                        <Badge 
+                          variant="outline" 
+                          className={cn(
+                            "text-[10px]",
+                            item.importance >= 8 ? "border-destructive/40 bg-destructive/10 text-destructive" :
+                            item.importance >= 5 ? "border-amber-500/40 bg-amber-500/10 text-amber-600" :
+                            "border-success/40 bg-success/10 text-success"
+                          )}
+                        >
+                          Prio {item.importance}
+                        </Badge>
+                      )}
+                      {getStatusBadge(item.status)}
+                    </div>
                   </div>
                   <CardDescription>
                     {(item.is_anonymous && !canViewAllFeedback) ? 'Anonym' : (item.created_by_name || 'Unbekannt')} • {toDate(item.created_at).toLocaleDateString('de-DE')}

@@ -145,7 +145,7 @@ export const syncTeacherRarities = onSchedule("every 15 minutes", async (event) 
     }
 
     const settingsData = settingsSnap.data() || {};
-    const lootTeachers = (settingsData.loot_teachers || []) as any[];
+    const sets = settingsData.sets || {};
     
     // 2. Apply limits (Default: Iconic: 3, Legendary: 5, Mythic: 15)
     const globalLimits = settingsData.global_limits || {};
@@ -156,23 +156,50 @@ export const syncTeacherRarities = onSchedule("every 15 minutes", async (event) 
       ...(globalLimits.rarity_limits || {})
     };
 
-    const raritiesMap = applyRarityLimits(lootTeachers, rarityLimits);
-
-    // 3. Update loot_teachers in settings/sammelkarten if changed
     let settingsChanged = false;
-    const updatedLootTeachers = lootTeachers.map(lt => {
-      const newRarity = raritiesMap.get(lt.id);
-      if (newRarity && lt.rarity !== newRarity) {
-        settingsChanged = true;
-        console.log(`Demoting ${lt.name} from ${lt.rarity} to ${newRarity} due to global limits.`);
-        return { ...lt, rarity: newRarity };
+    const updatedSets = { ...sets };
+
+    for (const setId of Object.keys(sets)) {
+      const set = sets[setId];
+      const lootTeachers = set.cards || [];
+      const raritiesMap = applyRarityLimits(lootTeachers, rarityLimits);
+
+      const updatedCards = lootTeachers.map((lt: any) => {
+        const newRarity = raritiesMap.get(lt.id);
+        if (newRarity && lt.rarity !== newRarity) {
+          settingsChanged = true;
+          console.log(`[Set: ${setId}] Demoting ${lt.name} from ${lt.rarity} to ${newRarity} due to global limits.`);
+          return { ...lt, rarity: newRarity };
+        }
+        return lt;
+      });
+
+      if (settingsChanged) {
+        updatedSets[setId] = { ...set, cards: updatedCards };
       }
-      return lt;
-    });
+    }
+
+    // Handle legacy loot_teachers if still exists
+    if (settingsData.loot_teachers && settingsData.loot_teachers.length > 0) {
+      const lootTeachers = settingsData.loot_teachers;
+      const raritiesMap = applyRarityLimits(lootTeachers, rarityLimits);
+      const updatedLootTeachers = lootTeachers.map((lt: any) => {
+        const newRarity = raritiesMap.get(lt.id);
+        if (newRarity && lt.rarity !== newRarity) {
+          settingsChanged = true;
+          return { ...lt, rarity: newRarity };
+        }
+        return lt;
+      });
+      if (settingsChanged) {
+        settingsData.loot_teachers = updatedLootTeachers;
+      }
+    }
 
     if (settingsChanged) {
       await db.collection("settings").doc("sammelkarten").update({
-        loot_teachers: updatedLootTeachers
+        sets: updatedSets,
+        loot_teachers: settingsData.loot_teachers || []
       });
       console.log(`Successfully synchronized global balance. Settings updated.`);
     } else {

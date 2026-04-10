@@ -1,15 +1,17 @@
 'use client'
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { ClassName, FinanceEntry } from '@/types/database'
+import { ClassName, FinanceEntry, ShopEarning } from '@/types/database'
 import { useEffect, useState } from 'react'
 import { db } from '@/lib/firebase'
-import { doc, onSnapshot } from 'firebase/firestore'
+import { doc, onSnapshot, setDoc } from 'firebase/firestore'
 import { useAuth } from '@/context/AuthContext'
 import { Badge } from '@/components/ui/badge'
 import { BarChart3, ChevronRight, Info, Lightbulb, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Button } from '@/components/ui/button'
+import { toast } from 'sonner'
 
 interface ClassStats {
   className: ClassName
@@ -19,32 +21,65 @@ interface ClassStats {
 
 interface ClassRankingProps {
   finances: FinanceEntry[]
+  shopEarnings?: ShopEarning[]
   goal: number
   maxRows?: number
   useScrollContainer?: boolean
   infoLink?: string
   loading?: boolean
+  showManualCorrection?: boolean
 }
 
 export function ClassRanking({
   finances,
+  shopEarnings = [],
   goal,
   maxRows,
   useScrollContainer = true,
   infoLink = '/finanzen',
   loading: propLoading,
+  showManualCorrection = true,
 }: ClassRankingProps) {
-  const { profile, loading } = useAuth()
+  const { user, profile, loading } = useAuth()
   const [courses, setCourses] = useState<string[]>(['Kurs 1', 'Kurs 2', 'Kurs 3', 'Kurs 4', 'Kurs 5', 'Kurs 6', 'Kurs 7'])
+  const [manualAdjustments, setManualAdjustments] = useState<Record<string, number>>({})
+  const [adjustmentDrafts, setAdjustmentDrafts] = useState<Record<string, string>>({})
+  const [savingAdjustments, setSavingAdjustments] = useState(false)
   const [internalLoading, setInternalLoading] = useState(true)
+
+  const canEditLeaderboard = !!profile?.is_approved && (
+    profile?.role === 'planner' ||
+    profile?.role === 'admin' ||
+    profile?.role === 'admin_main' ||
+    profile?.role === 'admin_co'
+  )
 
   useEffect(() => {
     if (loading || !profile?.is_approved) return
 
     const settingsRef = doc(db, 'settings', 'config')
     const unsubscribe = onSnapshot(settingsRef, (doc) => {
-      if (doc.exists() && doc.data().courses) {
-        setCourses(doc.data().courses)
+      if (doc.exists()) {
+        const data = doc.data()
+        if (data.courses) {
+          setCourses(data.courses)
+        }
+
+        const rawAdjustments = data.leaderboard_adjustments
+        if (rawAdjustments && typeof rawAdjustments === 'object') {
+          const parsedAdjustments: Record<string, number> = {}
+          Object.entries(rawAdjustments).forEach(([course, amount]) => {
+            const numericAmount = Number(amount)
+            if (Number.isFinite(numericAmount)) {
+              parsedAdjustments[course] = numericAmount
+            }
+          })
+          setManualAdjustments(parsedAdjustments)
+          setAdjustmentDrafts(Object.fromEntries(Object.entries(parsedAdjustments).map(([course, amount]) => [course, String(amount)])))
+        } else {
+          setManualAdjustments({})
+          setAdjustmentDrafts({})
+        }
       }
       setInternalLoading(false)
     }, (error) => {
@@ -53,11 +88,29 @@ export function ClassRanking({
     })
     return () => unsubscribe()
   }, [profile?.is_approved, loading])
+
+  const contributions = [
+    ...finances
+      .filter((entry) => entry.responsible_class && Number(entry.amount) > 0)
+      .map((entry) => ({
+        className: String(entry.responsible_class),
+        amount: Number(entry.amount) || 0,
+      })),
+    ...shopEarnings
+      .filter((entry) => entry.selected_course && Number(entry.abi_share_eur) > 0)
+      .map((entry) => ({
+        className: String(entry.selected_course),
+        amount: Number(entry.abi_share_eur) || 0,
+      })),
+  ]
+
+  const getManualAdjustmentForCourse = (course: string) => Number(manualAdjustments[course]) || 0
   
   const stats: ClassStats[] = courses.map((c) => {
-    const amount = finances
-      .filter((f) => f.responsible_class === c && Number(f.amount) > 0)
-      .reduce((acc, f) => acc + Number(f.amount), 0)
+    const contributionAmount = contributions
+      .filter((entry) => entry.className === c)
+      .reduce((acc, entry) => acc + entry.amount, 0)
+    const amount = contributionAmount + getManualAdjustmentForCourse(c)
 
     const safeGoal = Number.isFinite(goal) && goal > 0 ? goal : 1
     const classGoal = safeGoal / Math.max(courses.length, 1)
@@ -103,6 +156,38 @@ export function ClassRanking({
 
   const winner = stats[0]
   const lastPlace = [...stats].reverse().find(s => s.amount >= 0) || stats[stats.length - 1]
+
+  const handleAdjustmentInput = (course: string, value: string) => {
+    if (/^-?\d*([.,]\d{0,2})?$/.test(value)) {
+      setAdjustmentDrafts((prev) => ({ ...prev, [course]: value }))
+    }
+  }
+
+  const handleSaveAdjustments = async () => {
+    if (!canEditLeaderboard || !user) return
+
+    const normalizedAdjustments: Record<string, number> = {}
+    for (const course of courses) {
+      const draft = (adjustmentDrafts[course] ?? '').replace(',', '.').trim()
+      if (!draft) continue
+
+      const parsed = Number(draft)
+      if (Number.isFinite(parsed) && parsed !== 0) {
+        normalizedAdjustments[course] = Number(parsed.toFixed(2))
+      }
+    }
+
+    try {
+      setSavingAdjustments(true)
+      await setDoc(doc(db, 'settings', 'config'), { leaderboard_adjustments: normalizedAdjustments }, { merge: true })
+      toast.success('Leaderboard-Korrekturen gespeichert.')
+    } catch (error) {
+      console.error('ClassRanking: Error saving leaderboard adjustments:', error)
+      toast.error('Korrekturen konnten nicht gespeichert werden.')
+    } finally {
+      setSavingAdjustments(false)
+    }
+  }
 
   return (
     <Card className="h-full border-border/40 shadow-subtle overflow-hidden flex flex-col elevated-card">
@@ -179,6 +264,34 @@ export function ClassRanking({
               </p>
             </div>
           </div>
+          {showManualCorrection && canEditLeaderboard && (
+            <div className="space-y-2.5 bg-background/50 rounded-xl p-2.5 border border-border/40">
+              <p className="text-[10px] font-extrabold text-primary uppercase tracking-[0.1em] leading-tight">Manuelle Korrektur (Leaderboard)</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {displayedStats.map((entry) => (
+                  <label key={`adjustment-${entry.className}`} className="flex items-center justify-between gap-2 rounded-lg border border-border/50 bg-card px-2 py-1.5">
+                    <span className="text-[11px] font-semibold text-foreground">Kurs {entry.className}</span>
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      className="w-24 h-7 rounded-md border border-border bg-background px-2 text-right text-[11px] font-semibold outline-none focus:ring-2 focus:ring-primary/30"
+                      value={adjustmentDrafts[entry.className] ?? ''}
+                      onChange={(event) => handleAdjustmentInput(entry.className, event.target.value)}
+                      placeholder="0"
+                    />
+                  </label>
+                ))}
+              </div>
+              <Button
+                type="button"
+                className="w-full h-8 text-[10px] font-black uppercase tracking-[0.14em]"
+                disabled={savingAdjustments}
+                onClick={handleSaveAdjustments}
+              >
+                {savingAdjustments ? 'Speichert...' : 'Korrekturen speichern'}
+              </Button>
+            </div>
+          )}
           <Link 
             href={infoLink} 
             className="flex items-center justify-center gap-1 w-full py-1.5 text-[10px] font-bold text-primary uppercase tracking-widest hover:bg-primary/5 rounded-lg transition-colors border border-primary/10"

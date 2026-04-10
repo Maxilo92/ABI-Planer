@@ -1,9 +1,8 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { Badge } from '@/components/ui/badge'
-import { TeacherCard } from '@/components/cards/TeacherCard'
+import { CardRenderer } from '@/components/cards/CardRenderer'
 import { cn } from '@/lib/utils'
 import { SammelkartenConfig } from '@/types/cards'
-import { DEFAULT_TEACHERS } from '../constants'
 import { mapToTeacherCardData } from '../utils/cardData'
 import { getMassPackCardChances } from '../utils/probability'
 import { MassPackReveal as MassPackRevealData, MaybeCollectionResult } from '../types'
@@ -75,14 +74,14 @@ export function MassPackReveal(props: MassPackRevealProps) {
                 <div className="flex-1 grid grid-cols-3 gap-3 sm:gap-4">
                   {packData.teachers.map((teacher, cardIdx) => {
                     const result = massCollectionResults?.[packIdx]?.[cardIdx]
-                    const cardData = mapToTeacherCardData(teacher, result?.variant || 'normal', config?.loot_teachers || DEFAULT_TEACHERS)
+                    const cardData = mapToTeacherCardData(teacher, result?.variant || 'normal')
 
                     return (
                       <div key={cardIdx} className="relative group p-0.5">
-                        <TeacherCard
+                        <CardRenderer
                           data={cardData}
-                          styleVariant="modern-flat"
                           isFlippedExternally={true}
+                          interactive={false}
                           className="w-full h-auto scale-100 group-hover:scale-[1.05] transition-transform duration-300"
                         />
                         {result && (

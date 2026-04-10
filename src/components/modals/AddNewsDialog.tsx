@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { db } from '@/lib/firebase'
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore'
 import { useAuth } from '@/context/AuthContext'
@@ -19,7 +19,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Plus, ImagePlus, Eye, PenLine, HelpCircle } from 'lucide-react'
+import { Plus, ImagePlus, Eye, PenLine, HelpCircle, Sparkles } from 'lucide-react'
 import { toast } from 'sonner'
 import { getNewsUploadErrorMessage, uploadNewsImage, validateNewsImageFile } from '@/lib/newsImageUpload'
 import { NewsImageCropper } from '@/components/modals/NewsImageCropper'
@@ -27,23 +27,47 @@ import { logAction } from '@/lib/logging'
 import { NewsMarkdownPreview } from '@/components/news/NewsMarkdownPreview'
 import { MarkdownGuide } from '@/components/news/MarkdownGuide'
 
-export function AddNewsDialog() {
-  const [title, setTitle] = useState('')
-  const [content, setContent] = useState('')
+interface AddNewsDialogProps {
+  initialTitle?: string
+  initialContent?: string
+  initialIsAiGenerated?: boolean
+  forceOpen?: boolean
+  onOpenChange?: (open: boolean) => void
+}
+
+export function AddNewsDialog({ 
+  initialTitle = '', 
+  initialContent = '', 
+  initialIsAiGenerated = false,
+  forceOpen,
+  onOpenChange 
+}: AddNewsDialogProps = {}) {
+  const [title, setTitle] = useState(initialTitle)
+  const [content, setContent] = useState(initialContent)
   const [isSmallUpdate, setIsSmallUpdate] = useState(false)
+  const [isAiGenerated, setIsAiGenerated] = useState(initialIsAiGenerated)
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [pendingCropFile, setPendingCropFile] = useState<File | null>(null)
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null)
   const [imageInputKey, setImageInputKey] = useState(0)
   const [isImagePickerOpen, setIsImagePickerOpen] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [open, setOpen] = useState(false)
+  const [internalOpen, setInternalOpen] = useState(false)
+  
+  const open = forceOpen !== undefined ? forceOpen : internalOpen
   const { user, profile } = useAuth()
 
+  useEffect(() => {
+    if (initialTitle) setTitle(initialTitle)
+    if (initialContent) setContent(initialContent)
+    if (initialIsAiGenerated !== undefined) setIsAiGenerated(initialIsAiGenerated)
+  }, [initialTitle, initialContent, initialIsAiGenerated])
+
   const resetForm = () => {
-    setTitle('')
-    setContent('')
+    setTitle(initialTitle)
+    setContent(initialContent)
     setIsSmallUpdate(false)
+    setIsAiGenerated(initialIsAiGenerated)
     setImageFile(null)
     setPendingCropFile(null)
     setImageInputKey((prev) => prev + 1)
@@ -58,7 +82,12 @@ export function AddNewsDialog() {
       return
     }
 
-    setOpen(nextOpen)
+    if (onOpenChange) {
+      onOpenChange(nextOpen)
+    } else {
+      setInternalOpen(nextOpen)
+    }
+
     if (!nextOpen) {
       resetForm()
     }
@@ -142,6 +171,7 @@ export function AddNewsDialog() {
           title: trimmedTitle,
           content: trimmedContent,
           is_small_update: isSmallUpdate,
+          is_ai_generated: isAiGenerated,
           created_by: user.uid,
           author_name: profile?.full_name || user.displayName || 'Unbekannt',
           view_count: 0,
@@ -152,10 +182,11 @@ export function AddNewsDialog() {
         await logAction('NEWS_CREATED', user.uid, profile?.full_name, {
           title: trimmedTitle,
           has_image: !!imagePayload.image_url,
+          is_ai_generated: isAiGenerated,
         })
 
         resetForm()
-        setOpen(false)
+        handleOpenChange(false)
         toast.success('News-Beitrag veröffentlicht.')
       } catch (error) {
         console.error('Error adding news:', error)
@@ -218,6 +249,15 @@ export function AddNewsDialog() {
                     </p>
                   </div>
                 </div>
+
+                {isAiGenerated && (
+                  <div className="bg-amber-500/10 border border-amber-500/20 p-3 rounded-lg flex items-center gap-3">
+                    <Sparkles className="h-4 w-4 text-amber-600 shrink-0" />
+                    <p className="text-[10px] sm:text-[11px] text-amber-700 font-medium">
+                      Dieser Beitrag wurde KI-unterstützt erstellt und wird entsprechend markiert.
+                    </p>
+                  </div>
+                )}
                 <div className="space-y-2">
                   <Label htmlFor="title" className="text-[10px] sm:text-xs font-bold uppercase text-muted-foreground">Überschrift</Label>
                   <Input 

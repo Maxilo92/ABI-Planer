@@ -13,6 +13,8 @@ import { CardSelection } from '@/types/trades'
 import { useCardTrade } from '@/hooks/useCardTrade'
 import { useUserTeachers } from '@/hooks/useUserTeachers'
 import { cn } from '@/lib/utils'
+import { getAllCards, getCard } from '@/constants/cardRegistry'
+import { ResolvedCard } from '@/types/registry'
 
 interface NewTradeWizardProps {
   onClose: () => void
@@ -30,8 +32,8 @@ export function NewTradeWizard({ onClose, onTradeStarted }: NewTradeWizardProps)
   const [error, setError] = useState<string | null>(null)
   
   // State für die Auswahl
-  const [globalTeachers, setGlobalTeachers] = useState<LootTeacher[]>([])
-  const [selectedTargetTeacherId, setSelectedTargetTeacherId] = useState<string>('')
+  const [availableCards, setAvailableCards] = useState<ResolvedCard[]>([])
+  const [selectedTargetCardId, setSelectedTargetCardId] = useState<string>('')
   const [selectedTargetVariant, setSelectedTargetVariant] = useState<CardVariant>('normal')
   
   const [friendsWithCard, setFriendsWithCard] = useState<Array<{ id: string; name: string }>>([])
@@ -42,30 +44,25 @@ export function NewTradeWizard({ onClose, onTradeStarted }: NewTradeWizardProps)
   const { getFriendsWithCard, sendOffer } = useCardTrade()
   const { teachers: myInventory } = useUserTeachers()
 
-  const teacherById = useMemo(() => new Map(globalTeachers.map((teacher) => [teacher.id, teacher])), [globalTeachers])
+  const selectedTargetCard = useMemo(() => {
+    if (!selectedTargetCardId) return null
+    return getCard(selectedTargetCardId) ?? null
+  }, [selectedTargetCardId])
 
-  const selectedTargetTeacher = useMemo(() => {
-    if (!selectedTargetTeacherId) return null
-    return teacherById.get(selectedTargetTeacherId) ?? null
-  }, [selectedTargetTeacherId, teacherById])
-
-  // 1. Alle Lehrer laden
+  // 1. Alle Karten aus Registry laden
   useEffect(() => {
-    const loadConfig = async () => {
-      const snap = await getDoc(doc(db, 'settings', 'sammelkarten'))
-      if (snap.exists()) {
-        const data = snap.data()
-        setGlobalTeachers(data.loot_teachers || [])
-      }
+    const loadRegistry = () => {
+      const cards = getAllCards()
+      setAvailableCards(cards)
     }
-    loadConfig()
+    loadRegistry()
   }, [])
 
-  const availableTeachers = useMemo(() => {
-    return globalTeachers
-      .filter((teacher) => !EXCLUDED_RARITIES.includes(teacher.rarity))
+  const tradeableCards = useMemo(() => {
+    return availableCards
+      .filter((card) => !EXCLUDED_RARITIES.includes(card.rarity))
       .sort((left, right) => left.name.localeCompare(right.name, 'de'))
-  }, [globalTeachers])
+  }, [availableCards])
 
   const resetDownstreamSelections = () => {
     setFriendsWithCard([])
@@ -75,40 +72,40 @@ export function NewTradeWizard({ onClose, onTradeStarted }: NewTradeWizardProps)
 
   // Eigene Karten, die zum Tausch passen
   const eligibleOfferCards = useMemo(() => {
-    if (!selectedTargetTeacher || !myInventory) return []
+    if (!selectedTargetCard || !myInventory) return []
     
     const results: CardSelection[] = []
-    Object.entries(myInventory).forEach(([teacherId, data]) => {
-      const teacher = teacherById.get(teacherId)
-      if (!teacher) return
+    Object.entries(myInventory).forEach(([fullId, data]) => {
+      const card = getCard(fullId)
+      if (!card) return
       
       // Muss gleiche Seltenheit haben und darf nicht Iconic/Mythic sein
-      if (teacher.rarity === selectedTargetTeacher.rarity && !EXCLUDED_RARITIES.includes(teacher.rarity)) {
+      if (card.rarity === selectedTargetCard.rarity && !EXCLUDED_RARITIES.includes(card.rarity)) {
         // Muss die gleiche Folie haben
         const variantCount = data.variants?.[selectedTargetVariant] || 0
         if (variantCount > 0) {
           results.push({
-            teacherId,
+            teacherId: fullId,
             variant: selectedTargetVariant,
-            rarity: teacher.rarity,
-            name: teacher.name
+            rarity: card.rarity,
+            name: card.name
           })
         }
       }
     })
     return results
-  }, [myInventory, selectedTargetTeacher, selectedTargetVariant, teacherById])
+  }, [myInventory, selectedTargetCard, selectedTargetVariant])
 
-  const handleSelectTarget = async (teacher: LootTeacher, variant: CardVariant) => {
+  const handleSelectTarget = async (card: ResolvedCard, variant: CardVariant) => {
     setLoading(true)
     setError(null)
     
     try {
-      const result = await getFriendsWithCard(teacher.id, variant)
+      const result = await getFriendsWithCard(card.fullId, variant)
       setFriendsWithCard(result.friends)
       if (result.friends.length === 0) {
         setStep('select_target')
-        setError(`Keiner deiner Freunde besitzt ${teacher.name} in '${variant}'.`)
+        setError(`Keiner deiner Freunde besitzt ${card.name} in '${variant}'.`)
       } else {
         setStep('select_friend')
       }
@@ -120,7 +117,7 @@ export function NewTradeWizard({ onClose, onTradeStarted }: NewTradeWizardProps)
   }
 
   const handleStartTrade = async () => {
-    if (!selectedFriend || !selectedTargetTeacher || !selectedOfferCard) return
+    if (!selectedFriend || !selectedTargetCard || !selectedOfferCard) return
     
     setLoading(true)
     setError(null)
@@ -129,10 +126,10 @@ export function NewTradeWizard({ onClose, onTradeStarted }: NewTradeWizardProps)
         selectedFriend.id,
         selectedOfferCard,
         {
-          teacherId: selectedTargetTeacher.id,
+          teacherId: selectedTargetCard.fullId,
           variant: selectedTargetVariant,
-          rarity: selectedTargetTeacher.rarity,
-          name: selectedTargetTeacher.name
+          rarity: selectedTargetCard.rarity,
+          name: selectedTargetCard.name
         }
       )
       if (result.success) {
@@ -152,28 +149,28 @@ export function NewTradeWizard({ onClose, onTradeStarted }: NewTradeWizardProps)
           <div className="space-y-6">
             <div className="space-y-2">
               <h2 className="text-xl font-black uppercase tracking-tight">Welche Karte suchst du?</h2>
-              <p className="text-sm text-muted-foreground">Lehrer und Folie jetzt direkt über zwei Dropdowns auswählen.</p>
+              <p className="text-sm text-muted-foreground">Wähle eine Karte und die gewünschte Folie aus.</p>
             </div>
 
             <div className="space-y-4 p-4 bg-muted/20 rounded-2xl border">
               <div className="space-y-2">
-                <p className="text-[10px] uppercase font-black opacity-40">Lehrer auswählen</p>
+                <p className="text-[10px] uppercase font-black opacity-40">Karte auswählen</p>
                 <Select
-                  value={selectedTargetTeacherId}
+                  value={selectedTargetCardId}
                   onValueChange={(value) => {
                     if (value) {
-                      setSelectedTargetTeacherId(value)
+                      setSelectedTargetCardId(value)
                       resetDownstreamSelections()
                     }
                   }}
                 >
                   <SelectTrigger className="w-full h-12 rounded-2xl">
-                    <SelectValue placeholder="Lehrer auswählen" />
+                    <SelectValue placeholder="Karte auswählen" />
                   </SelectTrigger>
                   <SelectContent>
-                    {availableTeachers.map((teacher) => (
-                      <SelectItem key={teacher.id} value={teacher.id}>
-                        {teacher.name} • {teacher.rarity}
+                    {tradeableCards.map((card) => (
+                      <SelectItem key={card.fullId} value={card.fullId}>
+                        {card.type === 'support' ? '[SUP] ' : ''}{card.name} • {card.rarity}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -204,8 +201,8 @@ export function NewTradeWizard({ onClose, onTradeStarted }: NewTradeWizardProps)
 
               <Button
                 className="w-full font-black uppercase tracking-tight"
-                onClick={() => selectedTargetTeacher && handleSelectTarget(selectedTargetTeacher, selectedTargetVariant)}
-                disabled={loading || !selectedTargetTeacher}
+                onClick={() => selectedTargetCard && handleSelectTarget(selectedTargetCard, selectedTargetVariant)}
+                disabled={loading || !selectedTargetCard}
               >
                 {loading ? 'Prüfe Freunde...' : 'Weiter: Freunde finden'}
                 <ChevronRight className="ml-2 w-4 h-4" />
@@ -222,7 +219,7 @@ export function NewTradeWizard({ onClose, onTradeStarted }: NewTradeWizardProps)
             </Button>
             <div className="space-y-2">
               <h2 className="text-xl font-black uppercase tracking-tight">Wer hat diese Karte?</h2>
-              <p className="text-sm text-muted-foreground">Folgende Freunde besitzen {selectedTargetTeacher?.name} ({selectedTargetVariant}):</p>
+              <p className="text-sm text-muted-foreground">Folgende Freunde besitzen {selectedTargetCard?.name} ({selectedTargetVariant}):</p>
             </div>
 
             <div className="grid gap-2">
@@ -267,7 +264,7 @@ export function NewTradeWizard({ onClose, onTradeStarted }: NewTradeWizardProps)
             <div className="space-y-2">
               <h2 className="text-xl font-black uppercase tracking-tight">Was bietest du an?</h2>
               <p className="text-sm text-muted-foreground">
-                Nur Karten der Seltenheit <strong>{selectedTargetTeacher?.rarity}</strong> und Folie <strong>{selectedTargetVariant}</strong> sind zulässig.
+                Nur Karten der Seltenheit <strong>{selectedTargetCard?.rarity}</strong> und Folie <strong>{selectedTargetVariant}</strong> sind zulässig.
               </p>
             </div>
 
@@ -333,8 +330,8 @@ export function NewTradeWizard({ onClose, onTradeStarted }: NewTradeWizardProps)
                 <div className="w-16 h-16 bg-white rounded-2xl shadow-sm flex items-center justify-center border">
                   <Sparkles className="w-8 h-8 text-purple-400 opacity-30" />
                 </div>
-                <p className="font-black uppercase text-xs mt-1">{selectedTargetTeacher?.name}</p>
-                <Badge variant="secondary" className="text-[8px]">{selectedTargetTeacher?.rarity} • {selectedTargetVariant}</Badge>
+                <p className="font-black uppercase text-xs mt-1">{selectedTargetCard?.name}</p>
+                <Badge variant="secondary" className="text-[8px]">{selectedTargetCard?.rarity} • {selectedTargetVariant}</Badge>
               </div>
             </div>
 

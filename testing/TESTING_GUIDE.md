@@ -6,4 +6,72 @@
 <!-- default_action: read sections that match current task -->
 <!-- index: docs/AGENT_CONTEXT_INDEX.md -->
 
-# Testing Guide – ABI Planer v1.0.0\n\n**Willkommen zur Test-Phase!** Dieses Guide hilft dir, alle Features gründlich zu testen.\n\n---\n\n## 🎯 Überblick\n\n**Ziel:** Sicherstellen, dass alle Features funktionieren und benutzerfreundlich sind.\n\n**Test-Dauer:** ~2-3 Stunden pro Person  \n**Test-Umgebung:** [Link wird von Admin bereitgestellt]  \n**Browser:** Chrome, Firefox, Safari (mind. 2 testen)\n\n---\n\n## 📋 Test-Setup\n\n### 1. **Dein Test-Konto erstellen**\n- Gehe auf die **Startseite**\n- Klick **\"Registrieren\"**\n- Nutze dein **@hgr-web.lernsax.de Konto** (Admin stellt Test-Adressen bereit)\n- Wähle ein Passwort und registriere dich\n\n### 2. **Browser-Konsole öffnen** (für Bug-Reports)\n```\nMac: Cmd + Option + J\nWindows: F12 → Console Tab\n```\n\n→ Wenn du Fehler siehst (rot), schreib diese ins Feedback!\n\n### 3. **Screenshots/Videos** (Optional aber hilfreich)\n- Nutze Screesnshot-Tool bei Problemen\n- Bei kritischen Bugs: kurzes Video machen\n\n---\n\n## ✅ Test-Szenarien\n\nFolge die **TESTING_CHECKLIST.md** für konkrete Test-Cases.\n\n### **Kategorie 1: Authentifizierung & Zugang**\n- [ ] Registrierung mit gültig E-Mail funktioniert\n- [ ] Registrierung mit ungültigen E-Mails wird abgelehnt\n- [ ] Login mit richtigen Credentials funktioniert\n- [ ] Login mit falschen Credentials schlägt fehl\n- [ ] \"Passwort vergessen\" funktioniert\n- [ ] Logout funktioniert und man ist echtweggeloggt\n\n### **Kategorie 2: Dashboard**\n- [ ] Countdown wird korrekt angezeigt\n- [ ] Finanzstatus visualisiert richtig\n- [ ] Aufgaben-Übersicht zeigt deine Aufgaben\n- [ ] News-Karten laden mit Bildern\n- [ ] Aktive Umfragen werden angezeigt\n- [ ] Scoring berechnet korrekt\n\n### **Kategorie 3: Navigation & UI**\n- [ ] Sidebar funktioniert und ist responsive\n- [ ] Mobile View sieht gut aus\n- [ ] Dark/Light Mode wechsel funktioniert\n- [ ] Alle Seiten laden unter 3 Sekunden\n- [ ] Keine Fehler in Console\n\n### **Kategorie 4: Features (Einzeln)**\n- **Kalender:** Event erstellen, bearbeiten, löschen ✅\n- **Aufgaben:** Status ändern, filtern ✅\n- **Finanzen:** Transaction hinzufügen, Übersicht ✅\n- **News:** Artikel lesen, Bilder laden ✅\n- **Umfragen:** Abstimmen, Ergebnisse sehen ✅\n- **Gruppen:** Mitglieder sehen, Wall ansehen ✅\n\n### **Kategorie 5: Berechtigungen**\n- [ ] Viewer kann nicht erstellen\n- [ ] Planner kann Events erstellen\n- [ ] Admin kann alles machen\n- [ ] Unautorisierte Zugriffe werden blockiert\n\n### **Kategorie 6: Performance**\n- [ ] App startet schnell (< 2 Sekunden)\n- [ ] Seiten wechsel fluide (< 1 Sekunde)\n- [ ] Keine Lag bei Dateneingabe\n- [ ] Bilder laden schnell\n\n### **Kategorie 7: Mobile & Responsive Design**\n- [ ] Auf Smartphone sieht alles gut aus\n- [ ] Touch-Bedienung ist einfach\n- [ ] Kein Horizontal-Scroll nötig\n- [ ] Buttons sind groß genug zum Tippen\n\n### **Kategorie 8: Fehlerbehandlung**\n- [ ] Wenn Netzwerk fehlt → Aussagekräftige Meldung\n- [ ] Wenn Server down → Fehler, nicht Hang\n- [ ] Validierung bei ungültigen Inputs\n- [ ] Bestätigung vor kritischen Aktionen\n\n---\n\n## 🐛 Bug-Reports\n\nWenn du einen Bug findest, nutze das **Feedback-Feature** in der App:\n\n1. Klick **\"Feedback\"** im Menü\n2. Beschreib das Problem:\n   - **Was hast du gemacht?** (Step-by-Step)\n   - **Was sollte passieren?** (Expected)\n   - **Was ist stattdessen passiert?** (Actual)\n   - **Wann passiert es?** (Immer? Manchmal?)\n   - **Browser/Gerät:** (Chrome auf Mac? Safari auf iPhone?)\n\n### **Beispiel:**\n```\nTitle: \"Finanz-Button ist deaktiviert\"\n\nSteps:\n1. Gehe zu Finanzen\n2. Klick \"Neue Transaktion hinzufügen\"\n3. Gib einen Betrag ein\n\nExpected: Button sollte aktiviert sein\nActual: Button ist grau und lässt sich nicht klicken\n\nBrowser: Chrome 125 auf Mac Sonoma\n```\n\n---\n\n## 💡 Tipps für gutes Testen\n\n✅ **Teste wie ein normaler User** — nicht wie ein Entwickler\n\n✅ **Probiere auch \"falsche\" Inputs** — z.B. negative Zahlen, sehr lange Texte\n\n✅ **Teste auf verschiedenen Geräten** — Laptop, Tablet, Handy\n\n✅ **Teste mit schwachem Netzwerk** (DevTools → Throttling)\n\n✅ **Teste in beiden Themes** (Hell & Dunkel)\n\n❌ **Nicht:** \"Hat a Fehler, aber ich weiß nicht wo\"\n\n❌ **Nicht:** Mehrere Bugs in einem Report vermischen\n\n---\n\n## 📊 Test-Report\n\nNach dem Testen bekommst du einen kurzen Fragebogen:\n\n1. **Wie viele Bugs hast du gefunden?** (Kritisch, Mittel, Klein)\n2. **Verständlichkeit:** 1-5 (5 = sehr einfach zu verstehen)\n3. **Performance:** 1-5 (5 = sehr schnell)\n4. **Design:** 1-5 (5 = sehr attraktiv)\n5. **Allgemein:** Würdest du die App nutzen?\n\n---\n\n## 🎯 Ziel dieser Tests\n\n- ✅ Finden von Bugs (damit wir sie fixen)\n- ✅ Überprüfen der Benutzerfreundlichkeit\n- ✅ Tests auf verschiedenen Geräten/Browsern\n- ✅ Sammeln von Feedback für v1.1.0\n\n---\n\n**Danke für deine Zeit! 🙏**\n\nHast du Fragen beim Testen? Schreib ins Feedback oder kontakt einen Admin.\n\nGutes Testen! 🚀\n"
+# Testing Guide – ABI Planer v1.0.0
+
+**Willkommen zur Test-Phase!** Dieses Guide hilft dir, alle Features gründlich zu testen.
+
+---
+
+## 🎯 Überblick
+
+**Ziel:** Sicherstellen, dass alle Features funktionieren und benutzerfreundlich sind.
+
+**Test-Dauer:** ~2-3 Stunden pro Person  
+**Test-Umgebung:** [Link wird von Admin bereitgestellt]  
+**Browser:** Chrome, Firefox, Safari (mind. 2 testen)
+
+---
+
+## 📋 Test-Setup
+
+### 1. **Dein Test-Konto erstellen**
+- Gehe auf die **Startseite**
+- Klick **"Registrieren"**
+- Nutze dein **@hgr-web.lernsax.de Konto** (Admin stellt Test-Adressen bereit)
+- Wähle ein Passwort und registriere dich
+
+### 2. **Browser-Konsole öffnen** (für Bug-Reports)
+```
+Mac: Cmd + Option + J
+Windows: F12 → Console Tab
+```
+
+→ Wenn du Fehler siehst (rot), schreib diese ins Feedback!
+
+### 3. **Screenshots/Videos** (Optional aber hilfreich)
+- Nutze Screesnshot-Tool bei Problemen
+- Bei kritischen Bugs: kurzes Video machen
+
+---
+
+## ✅ Test-Szenarien
+
+Folge die **TESTING_CHECKLIST.md** für konkrete Test-Cases.
+
+---
+
+## 🛑 Severity Triage & Release Decision (Mobile Release Gate)
+
+Um eine hohe Qualität auf mobilen Geräten zu gewährleisten, nutzen wir folgendes Modell für die Bewertung von Fehlern. **Jeder Test-Befund muss einer dieser Kategorien zugeordnet werden.**
+
+### 1. CRITICAL (Blocker / NO-GO)
+- **Definition:** Applikations-Crash, Datenverlust oder Kern-Funktionen sind vollständig blockiert.
+- **Beispiele:** Login schlägt auf Mobile fehl, Finanz-Transaktionen können nicht gespeichert werden, Admin-Dashboard lädt nicht.
+- **Folge:** Release wird sofort gestoppt.
+
+### 2. HIGH (Blocker / NO-GO)
+- **Definition:** Massive Layout-Fehler oder Bedienungs-Einschränkungen.
+- **Beispiele:** Horizontaler Scroll auf Hauptseiten (Overflow), Primäre Buttons sind nicht tippbar (Target < 44px), Modals lassen sich auf kleinen Screens (iPhone SE) nicht schließen.
+- **Folge:** Release wird gestoppt, bis der Fix verifiziert ist.
+
+### 3. MEDIUM (Kein Blocker)
+- **Definition:** Kleinere UI-Glitches oder Inkonsistenzen, die die Nutzung nicht verhindern.
+- **Beispiele:** Text leicht verschoben, Icons nicht perfekt zentriert, falscher Farbton in einem Untermenü.
+- **Folge:** Fehler wird dokumentiert und im nächsten regulären Update gefixt.
+
+### 4. LOW (Kein Blocker)
+- **Definition:** Kosmetische Details oder Typos.
+- **Beispiele:** Rechtschreibfehler in einer Beschreibung, minimaler Padding-Fehler in einer Fußzeile.
+- **Folge:** Wird gesammelt und bei Gelegenheit korrigiert.
+
+**Wichtig:** Ein Release erfolgt nur, wenn **keine** offenen "CRITICAL" oder "HIGH" Befunde vorliegen.

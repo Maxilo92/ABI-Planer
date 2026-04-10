@@ -51,3 +51,11 @@ CardDesign/
 **/*.agent.md
 **/*.instructions.md
 **/*.prompt.md
+
+# generated workflow artifacts
+/.firebase/
+/src/bones/
+/docs/maestro/plans/
+/docs/maestro/state/archive/
+/PHASE1_NP_SETUP.md
+/lehrer_export_*.csv

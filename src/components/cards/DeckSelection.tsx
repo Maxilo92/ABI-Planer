@@ -236,7 +236,7 @@ export const DeckSelection: React.FC<DeckSelectionProps> = ({
                     isFlippedExternally={true}
                     interactive={false}
                   />
-                  <div className="absolute inset-0 bg-blue-500/0 group-hover:bg-blue-500/10 transition-colors rounded-[3.5cqw]" />
+                  <div className="absolute inset-0 bg-blue-500/0 group-hover:bg-blue-500/10 transition-colors rounded-xl" />
                 </div>
                 <div className="w-full mt-3 text-center">
                   <h3 className="font-black text-[10px] sm:text-xs uppercase tracking-tight line-clamp-1 opacity-80 group-hover:text-blue-500 transition-colors">

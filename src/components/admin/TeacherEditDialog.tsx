@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { LootTeacher, TeacherRarity } from '@/types/database'
+import { LootTeacher, TeacherRarity, AttackEffect } from '@/types/database'
 import {
   Dialog,
   DialogContent,
@@ -28,6 +28,24 @@ const RARITY_COLORS: Record<TeacherRarity, string> = {
   legendary: '#f59e0b',
   iconic: '#000000',
 }
+
+const RECOMMENDED_STATS: Record<TeacherRarity, { hp: string; dmg: string }> = {
+  common: { hp: '90-100', dmg: '10-15' },
+  rare: { hp: '100-110', dmg: '15-20' },
+  epic: { hp: '110-120', dmg: '20-25' },
+  mythic: { hp: '120-130', dmg: '25-30' },
+  legendary: { hp: '130-140', dmg: '30-35' },
+  iconic: { hp: '140-150', dmg: '35-40' },
+}
+
+const ATTACK_EFFECTS: { value: AttackEffect; label: string }[] = [
+  { value: 'none', label: 'Normal (nur Schaden)' },
+  { value: 'sleep', label: 'Einschlafen (Du bist nochmal dran)' },
+  { value: 'poison', label: 'Vergiften (Dauer-Schaden)' },
+  { value: 'stun', label: 'Betäuben (Gegner setzt aus)' },
+  { value: 'heal', label: 'Heilung (Lebensraub)' },
+  { value: 'pierce', label: 'Durchschlag (Ignoriert Schild)' },
+]
 
 interface TeacherEditDialogProps {
   isOpen: boolean
@@ -171,6 +189,11 @@ export function TeacherEditDialog({
                     )
                   }
                 />
+                {localTeacher?.rarity && (
+                  <p className="text-[9px] text-muted-foreground italic">
+                    Empf.: {RECOMMENDED_STATS[localTeacher.rarity].hp}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -229,35 +252,60 @@ export function TeacherEditDialog({
                       value={localTeacher?.attacks?.[idx]?.name || ''}
                       onChange={(e) => {
                         const newAttacks = [...(localTeacher?.attacks || [])]
-                        if (!newAttacks[idx]) newAttacks[idx] = { name: '' }
+                        if (!newAttacks[idx]) newAttacks[idx] = { name: '', effect: 'none' }
                         newAttacks[idx].name = e.target.value
                         setLocalTeacher((prev) => (prev ? { ...prev, attacks: newAttacks } : null))
                       }}
                     />
-                    <Input
-                      placeholder="DMG"
-                      type="number"
-                      className="h-8 text-xs"
-                      value={localTeacher?.attacks?.[idx]?.damage ?? ''}
+                    <div className="flex flex-col gap-1">
+                      <Input
+                        placeholder="DMG"
+                        type="number"
+                        className="h-8 text-xs"
+                        value={localTeacher?.attacks?.[idx]?.damage ?? ''}
+                        onChange={(e) => {
+                          const newAttacks = [...(localTeacher?.attacks || [])]
+                          if (!newAttacks[idx]) newAttacks[idx] = { name: '', effect: 'none' }
+                          newAttacks[idx].damage = e.target.value === '' ? undefined : parseInt(e.target.value)
+                          setLocalTeacher((prev) => (prev ? { ...prev, attacks: newAttacks } : null))
+                        }}
+                      />
+                      {localTeacher?.rarity && (
+                        <p className="text-[8px] text-muted-foreground text-center italic">
+                          {RECOMMENDED_STATS[localTeacher.rarity].dmg}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    <select
+                      className="h-8 w-full rounded-md border border-input bg-transparent px-2 py-1 text-[10px] shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                      value={localTeacher?.attacks?.[idx]?.effect || 'none'}
                       onChange={(e) => {
                         const newAttacks = [...(localTeacher?.attacks || [])]
-                        if (!newAttacks[idx]) newAttacks[idx] = { name: '' }
-                        newAttacks[idx].damage = e.target.value === '' ? undefined : parseInt(e.target.value)
+                        if (!newAttacks[idx]) newAttacks[idx] = { name: '', effect: 'none' }
+                        newAttacks[idx].effect = e.target.value as AttackEffect
+                        setLocalTeacher((prev) => (prev ? { ...prev, attacks: newAttacks } : null))
+                      }}
+                    >
+                      {ATTACK_EFFECTS.map((eff) => (
+                        <option key={eff.value} value={eff.value}>
+                          {eff.label}
+                        </option>
+                      ))}
+                    </select>
+                    <Input
+                      placeholder="Beschreibung (Manuell)"
+                      className="h-8 text-[10px]"
+                      value={localTeacher?.attacks?.[idx]?.description || ''}
+                      onChange={(e) => {
+                        const newAttacks = [...(localTeacher?.attacks || [])]
+                        if (!newAttacks[idx]) newAttacks[idx] = { name: '', effect: 'none' }
+                        newAttacks[idx].description = e.target.value
                         setLocalTeacher((prev) => (prev ? { ...prev, attacks: newAttacks } : null))
                       }}
                     />
                   </div>
-                  <Input
-                    placeholder="Beschreibung (optional)"
-                    className="h-8 text-[10px]"
-                    value={localTeacher?.attacks?.[idx]?.description || ''}
-                    onChange={(e) => {
-                      const newAttacks = [...(localTeacher?.attacks || [])]
-                      if (!newAttacks[idx]) newAttacks[idx] = { name: '' }
-                      newAttacks[idx].description = e.target.value
-                      setLocalTeacher((prev) => (prev ? { ...prev, attacks: newAttacks } : null))
-                    }}
-                  />
                 </div>
               ))}
             </div>

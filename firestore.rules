@@ -59,8 +59,8 @@ service cloud.firestore {
       allow create: if isLernsax() && request.auth.uid == userId;
       
       allow update: if (
-        // Cloud Functions can update specific fields like booster_stats
-        (isServiceAccount() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['booster_stats'])) ||
+        // Cloud Functions can update booster_stats, currencies (NP), and subscription fields
+        (isServiceAccount() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['booster_stats', 'currencies', 'subscription'])) ||
 
         // Case 1: Self-update for non-admin users (cannot change role, approval, course, group, or referral flags)
         (request.auth.uid == userId && !isAdmin() &&
@@ -220,7 +220,7 @@ service cloud.firestore {
     }
     match /finances/{id} { allow read: if isAuthenticated() && isLernsax(); allow write: if isPlanner(); }
     match /shop_earnings/{id} {
-      allow read: if isAdmin();
+      allow read: if isApproved();
       allow write: if false;
     }
     match /news/{id} { 
@@ -364,10 +364,19 @@ service cloud.firestore {
     }
 
     match /group_messages/{id} {
-        allow read: if isApproved();
+        allow read: if isApproved() && (
+          (resource.data.type == 'internal' && resource.data.group_name in getProfile().get('planning_groups', [])) || 
+          (resource.data.type == 'hub') ||
+          (resource.data.type == 'role' && resource.data.role_access == 'viewer') ||
+          (resource.data.type == 'role' && resource.data.role_access == 'planner' && isPlanner()) ||
+          (resource.data.type == 'role' && resource.data.role_access == 'admin' && isAdmin())
+        );
         allow create: if isApproved() && (
           (request.resource.data.type == 'internal' && request.resource.data.group_name in getProfile().get('planning_groups', [])) || 
-          (request.resource.data.type == 'hub')
+          (request.resource.data.type == 'hub') ||
+          (request.resource.data.type == 'role' && request.resource.data.role_access == 'viewer') ||
+          (request.resource.data.type == 'role' && request.resource.data.role_access == 'planner' && isPlanner()) ||
+          (request.resource.data.type == 'role' && request.resource.data.role_access == 'admin' && isAdmin())
         );
         allow update, delete: if isAdmin() || isGroupLeader(resource.data.group_name) || (isAuthenticated() && resource.data.created_by == request.auth.uid);
     }
@@ -385,6 +394,34 @@ service cloud.firestore {
 
     match /last_seen/{groupId}/{userId} {
       allow read, write: if isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // ====== NP Currency Security Collections ======
+    match /np_transactions/{transactionId} {
+      allow read: if isServiceAccount() || isAdmin() || (isAuthenticated() && resource.data.user_id == request.auth.uid);
+      allow write: if isServiceAccount(); // Only Cloud Functions can write
+    }
+
+    match /stripe_webhook_log/{eventId} {
+      allow read: if isServiceAccount() || isAdmin();
+      allow write: if isServiceAccount(); // Only Cloud Functions can write
+    }
+
+    match /rate_limits/{docId} {
+      allow read: if isServiceAccount() || isAdmin();
+      allow write: if isServiceAccount(); // Only Cloud Functions can write
+    }
+
+    // ====== NP Audit Trail & Admin Dashboard ======
+    match /np_audit_log/{logId} {
+      allow read: if isAdmin();
+      allow write: if isServiceAccount(); // Only Cloud Functions
+    }
+
+    // ====== Fraud Alerts ======
+    match /fraud_alerts/{alertId} {
+      allow read: if isAdmin();
+      allow write: if isServiceAccount(); // Only Cloud Functions
     }
   }
 }

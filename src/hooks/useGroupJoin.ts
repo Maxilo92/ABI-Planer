@@ -8,7 +8,7 @@ import { logAction } from '@/lib/logging'
 import { toast } from 'sonner'
 
 export function useGroupJoin() {
-  const { user } = useAuth()
+  const { user, profile } = useAuth()
   const [isJoining, setIsJoining] = useState(false)
 
   const joinGroup = async (groupName: string) => {
@@ -49,7 +49,7 @@ export function useGroupJoin() {
       })
 
       // Log the action
-      await logAction('GROUP_MEMBER_ADDED', user.uid, null, {
+      await logAction('GROUP_MEMBER_ADDED', user.uid, profile?.full_name, {
         group_name: groupName,
         method: 'self_join'
       })

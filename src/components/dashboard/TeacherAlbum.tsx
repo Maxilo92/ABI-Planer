@@ -39,9 +39,10 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Skeleton as BoneyardSkeleton } from "boneyard-js/react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { TeacherCard } from "@/components/cards/TeacherCard";
+import { CardRenderer } from "@/components/cards/CardRenderer";
 import { TeacherSpecCard } from "@/components/cards/TeacherSpecCard";
 import { CardData, CardVariant as NewCardVariant } from "@/types/cards";
 import {
@@ -62,15 +63,17 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 
-const DEFAULT_TEACHERS: LootTeacher[] = [
-  { id: "max-mustermann", name: "Max Mustermann", rarity: "common" },
-  { id: "erika-musterfrau", name: "Erika Musterfrau", rarity: "rare" },
-  { id: "marie-curie", name: "Marie Curie", rarity: "mythic" },
-  { id: "albert-einstein", name: "Albert Einstein", rarity: "legendary" },
-];
+import { CARD_SETS, getCard } from "@/constants/cardRegistry";
+
+const DEFAULT_TEACHERS: LootTeacher[] = (CARD_SETS["teacher_vol1"]?.cards || []) as LootTeacher[];
 
 const getNextLevelCount = (level: number): number => {
   return Math.pow(level, 2) + 1;
+};
+
+const calculateLevel = (count: number): number => {
+  if (count <= 1) return 1;
+  return Math.floor(Math.sqrt(count - 1)) + 1;
 };
 
 const getPrevLevelCount = (level: number): number => {
@@ -219,6 +222,22 @@ const VARIANT_MAP: Record<string, number> = {
   normal: 3,
 };
 
+const INFINITE_SCROLL_BATCH_SIZE = 24;
+
+const CANONICAL_TEACHER_SET_ID = "teacher_vol1";
+const LEGACY_TEACHER_SET_ID = "teachers_v1";
+
+function getUserTeacherEntry(userTeachers: any, teacher: LootTeacher) {
+  if (!userTeachers) return undefined;
+  const baseId = teacher.id || teacher.name;
+  return (
+    userTeachers[baseId] ||
+    userTeachers[`${CANONICAL_TEACHER_SET_ID}:${baseId}`] ||
+    userTeachers[`${LEGACY_TEACHER_SET_ID}:${baseId}`] ||
+    userTeachers[teacher.name]
+  );
+}
+
 function getBestVariant(
   variants: Record<string, number> | undefined,
 ): NewCardVariant {
@@ -248,16 +267,20 @@ function mapTeacherToCardData(
     );
   }
 
+  const level = calculateLevel(userData?.count || 0);
+
   return {
     id: teacher.id || teacher.name,
     name: teacher.name,
     rarity: teacher.rarity,
+    type: "teacher",
     variant,
     color: getTeacherRarityHex(teacher.rarity),
     cardNumber: (globalIndex + 1).toString().padStart(3, "0"),
     description: teacher.description,
     hp: teacher.hp,
     attacks: teacher.attacks,
+    level,
   };
 }
 
@@ -361,10 +384,9 @@ function TeacherCardDetail({
                 transition={{ duration: 0.45, ease: "easeInOut" }}
               >
                 <div className="absolute inset-0 backface-hidden">
-                  <TeacherCard
+                  <CardRenderer
                     data={cardData}
                     className="w-full h-auto"
-                    styleVariant="modern-flat"
                     isFlippedExternally={isOwned}
                     isLocked={!isOwned}
                     interactive={false}
@@ -537,7 +559,11 @@ export function TeacherAlbum({
     useUserTeachers(userId);
   const [globalTeachers, setGlobalTeachers] = useState<LootTeacher[]>([]);
   const [loadingGlobal, setLoadingGlobal] = useState(true);
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(
+    initialLimit && initialLimit > 0 ? initialLimit : INFINITE_SCROLL_BATCH_SIZE,
+  );
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const loadMoreSentinelRef = useRef<HTMLDivElement | null>(null);
 
   // Filters state
   const [search, setSearch] = useState("");
@@ -556,7 +582,7 @@ export function TeacherAlbum({
     number | null
   >(null);
 
-  const isPreview = !!initialLimit && !isExpanded;
+  const isPreview = !!initialLimit;
 
   const globalIndexMap = useMemo(() => {
     const map = new Map<string, number>();
@@ -568,7 +594,7 @@ export function TeacherAlbum({
 
   const teacherMetadata = useMemo(() => {
     return globalTeachers.map((t, index) => {
-      const userData = userTeachers?.[t.id] || userTeachers?.[t.name];
+      const userData = getUserTeacherEntry(userTeachers, t);
       const isOwned = !!userData;
       const bestVariant = getBestVariant(userData?.variants);
       return {
@@ -703,7 +729,6 @@ export function TeacherAlbum({
       // If we have an initialLimit and are not expanded, we PRIORITIZE rarity (rarity > version) for the preview
       if (
         initialLimit &&
-        !isExpanded &&
         !search &&
         rarityFilters.length === 0 &&
         variantFilters.length === 0 &&
@@ -770,40 +795,85 @@ export function TeacherAlbum({
     sortKey,
     sortOrder,
     initialLimit,
-    isExpanded,
   ]);
 
-  if (loadingUserTeachers || loadingGlobal) {
-    return (
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-        {[1, 2, 3, 4, 5].map((i) => (
-          <div
-            key={i}
-            className="aspect-[3/4] rounded-xl bg-muted animate-pulse"
-          />
-        ))}
-      </div>
-    );
-  }
 
   const totalTeachers = globalTeachers.length;
-  const ownedCount = Object.keys(userTeachers || {}).length;
+  const ownedCount = globalTeachers.reduce(
+    (acc, teacher) => (getUserTeacherEntry(userTeachers, teacher) ? acc + 1 : acc),
+    0,
+  );
   const totalCardsCollected = Object.values(userTeachers || {}).reduce(
     (acc: number, curr: any) => acc + (curr.count || 0),
     0,
   );
   const packsOpened = activeProfile?.booster_stats?.total_opened || 0;
 
-  // Determine which teachers to show based on expansion state
-  const displayedTeachers =
-    initialLimit && !isExpanded
-      ? filteredTeachers.slice(0, initialLimit)
-      : filteredTeachers;
+  // Infinite scroll window on top of the filtered result list.
+  const displayedTeachers = filteredTeachers.slice(0, visibleCount);
+  const hasMoreTeachers = displayedTeachers.length < filteredTeachers.length;
 
   const selectedTeacher =
     selectedTeacherIndex !== null
       ? displayedTeachers[selectedTeacherIndex]
       : null;
+
+  useEffect(() => {
+    const baseVisible =
+      initialLimit && initialLimit > 0
+        ? initialLimit
+        : INFINITE_SCROLL_BATCH_SIZE;
+    setVisibleCount(baseVisible);
+    setIsLoadingMore(false);
+  }, [
+    initialLimit,
+    search,
+    ownershipFilter,
+    rarityFilters,
+    variantFilters,
+    sortKey,
+    sortOrder,
+  ]);
+
+  useEffect(() => {
+    if (selectedTeacherIndex === null) return;
+    if (selectedTeacherIndex >= displayedTeachers.length) {
+      setSelectedTeacherIndex(null);
+    }
+  }, [displayedTeachers.length, selectedTeacherIndex]);
+
+  useEffect(() => {
+    if (!hasMoreTeachers) return;
+
+    const sentinel = loadMoreSentinelRef.current;
+    if (!sentinel) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting || isLoadingMore) return;
+
+        setIsLoadingMore(true);
+        setVisibleCount((prev) =>
+          Math.min(prev + INFINITE_SCROLL_BATCH_SIZE, filteredTeachers.length),
+        );
+      },
+      {
+        root: null,
+        rootMargin: "240px 0px",
+        threshold: 0,
+      },
+    );
+
+    observer.observe(sentinel);
+
+    return () => observer.disconnect();
+  }, [filteredTeachers.length, hasMoreTeachers, isLoadingMore]);
+
+  useEffect(() => {
+    if (!isLoadingMore) return;
+
+    setIsLoadingMore(false);
+  }, [visibleCount, isLoadingMore]);
 
   const toggleRarity = (rarity: TeacherRarity) => {
     setRarityFilters((prev) =>
@@ -837,37 +907,12 @@ export function TeacherAlbum({
     (ownershipFilter !== "all" ? 1 : 0) +
     (sortKey !== "rarity" || sortOrder !== "desc" ? 1 : 0);
 
-  if (loading || loadingUserTeachers || loadingGlobal) {
-    return (
-      <div className="space-y-6">
-        {!isPreview && (
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="space-y-2">
-              <Skeleton className="h-8 w-48" />
-              <Skeleton className="h-4 w-64" />
-            </div>
-            <div className="flex gap-2">
-              <Skeleton className="h-10 w-32 rounded-full" />
-              <Skeleton className="h-10 w-32 rounded-full" />
-            </div>
-          </div>
-        )}
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4 md:gap-6">
-          {Array.from({ length: initialLimit || 12 }).map((_, i) => (
-            <div key={i} className="flex flex-col items-center w-full mx-auto space-y-2">
-              <Skeleton className="w-full aspect-[2.5/3.5] rounded-2xl" />
-              <Skeleton className="h-4 w-2/3" />
-              <Skeleton className="h-4 w-1/3" />
-            </div>
-          ))}
-        </div>
-      </div>
-    )
-  }
+  const isLoading = loading || loadingUserTeachers || loadingGlobal;
 
   return (
-    <div className="space-y-6">
-      {isPreview ? (
+    <BoneyardSkeleton name="teacher-album" loading={isLoading}>
+      <div className="space-y-6">
+        {isPreview ? (
         <div className="flex items-center justify-between border-b pb-4">
           <div>
             <h2 className="text-xl font-black uppercase tracking-tight flex items-center gap-2">
@@ -953,22 +998,21 @@ export function TeacherAlbum({
               <DropdownMenu>
                 <DropdownMenuTrigger
                   render={
-                    <Button variant="outline" className="gap-2 shrink-0" />
+                    <Button variant="outline" className="gap-2 shrink-0">
+                      <Filter className="h-4 w-4" />
+                      Filter & Sortierung
+                      {activeFilterCount > 0 && (
+                        <Badge
+                          variant="secondary"
+                          className="ml-1 h-5 w-5 rounded-full p-0 flex items-center justify-center bg-primary text-primary-foreground"
+                        >
+                          {activeFilterCount}
+                        </Badge>
+                      )}
+                    </Button>
                   }
-                >
-                  <Filter className="h-4 w-4" />
-                  Filter & Sortierung
-                  {activeFilterCount > 0 && (
-                    <Badge
-                      variant="secondary"
-                      className="ml-1 h-5 w-5 rounded-full p-0 flex items-center justify-center bg-primary text-primary-foreground"
-                    >
-                      {activeFilterCount}
-                    </Badge>
-                  )}
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-64 p-2 space-y-2">
-                  <div className="space-y-1">
+                />
+                <DropdownMenuContent align="end" className="w-64 p-2 space-y-2">                  <div className="space-y-1">
                     <DropdownMenuLabel className="text-[10px] font-black uppercase tracking-widest opacity-50 px-2 py-1">
                       Besitz
                     </DropdownMenuLabel>
@@ -1174,16 +1218,15 @@ export function TeacherAlbum({
                   <div
                     onClick={() => isOwned && setSelectedTeacherIndex(idx)}
                     className={cn(
-                      "relative transition-all duration-300 transform group w-full aspect-[2.5/3.5]",
+                      "relative transition-all duration-300 transform group w-full aspect-[2.5/3.5] overflow-hidden rounded-xl",
                       !isOwned && "cursor-not-allowed opacity-80",
                       isOwned &&
                         "cursor-pointer hover:scale-[1.05] hover:-rotate-1 active:scale-95 hover:z-10 active:z-10",
                     )}
                   >
-                    <TeacherCard
+                    <CardRenderer
                       data={m.cardData}
                       className="w-full h-auto"
-                      styleVariant="modern-flat"
                       isFlippedExternally={isOwned}
                       isLocked={!isOwned}
                       interactive={false}
@@ -1207,23 +1250,14 @@ export function TeacherAlbum({
             })}
           </div>
 
-          {initialLimit && filteredTeachers.length > initialLimit && (
+          <div ref={loadMoreSentinelRef} className="h-1" aria-hidden />
+
+          {hasMoreTeachers && (
             <div className="flex justify-center pt-4">
-              <Button
-                variant="outline"
-                onClick={() => setIsExpanded(!isExpanded)}
-                className="gap-2"
-              >
-                {isExpanded
-                  ? "Weniger anzeigen"
-                  : `Alle ${filteredTeachers.length} Lehrer anzeigen`}
-                <ChevronRight
-                  className={cn(
-                    "h-4 w-4 transition-transform",
-                    isExpanded && "rotate-90",
-                  )}
-                />
-              </Button>
+              <p className="text-xs text-muted-foreground">
+                Lade weitere Karten... ({displayedTeachers.length}/
+                {filteredTeachers.length})
+              </p>
             </div>
           )}
         </>
@@ -1250,5 +1284,6 @@ export function TeacherAlbum({
         </DialogContent>
       </Dialog>
     </div>
+    </BoneyardSkeleton>
   );
 }

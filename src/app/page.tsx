@@ -17,7 +17,7 @@ import { useDashboardSorting } from '@/hooks/useDashboardSorting'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn, toDate } from '@/lib/utils'
 import { Footer } from '@/components/layout/Footer'
-import { DashboardComponentKey, Poll, PollOption, PollVote, FinanceEntry } from '@/types/database'
+import { DashboardComponentKey, Poll, PollOption, PollVote, FinanceEntry, ShopEarning } from '@/types/database'
 import Link from 'next/link'
 import { 
   ArrowRight, 
@@ -26,8 +26,6 @@ import {
   Clock3, 
   DollarSign, 
   Layers3, 
-  MessageSquare, 
-  ShieldCheck, 
   Sparkles, 
   Users, 
   Workflow, 
@@ -35,7 +33,9 @@ import {
   ChevronRight,
   Target,
   Zap,
-  Trophy
+  Trophy,
+  Gamepad2,
+  Sword
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useTheme } from 'next-themes'
@@ -44,7 +44,6 @@ import { motion, useScroll, useSpring } from 'framer-motion'
 import { logAction } from '@/lib/logging'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-
 function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
   const [landingNews, setLandingNews] = useState<any[]>([])
   const [landingNewsLoading, setLandingNewsLoading] = useState(true)
@@ -168,128 +167,225 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
       <LandingHeader isAuthenticated={isAuthenticated} />
 
       <main className="relative z-10">
-        {/* Hero Section */}
-        <section className="relative pt-32 pb-20 md:pt-52 md:pb-40 px-6">
+        {/* Hero Section - Redesigned for Students */}
+        <section className="relative pt-32 pb-20 md:pt-48 md:pb-32 px-6 overflow-hidden">
           <motion.div 
             initial="hidden"
             animate="visible"
             variants={containerVariants}
             className="max-w-7xl mx-auto text-center space-y-12"
           >
-            <motion.div variants={itemVariants} className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-brand/10 border border-brand/20 text-brand shadow-sm">
-              <Sparkles className="h-4 w-4 animate-pulse" />
-              <span className="text-[10px] font-black uppercase tracking-[0.3em]">Zentrale Plattform für euren Jahrgang</span>
+            <motion.div variants={itemVariants} className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-brand/10 border border-brand/20 text-brand shadow-sm">
+              <Zap className="h-4 w-4 animate-pulse" />
+              <span className="text-[10px] font-black uppercase tracking-[0.3em]">Alles für euren Jahrgang</span>
             </motion.div>
             
-            <div className="max-w-5xl mx-auto space-y-8">
+            <div className="max-w-5xl mx-auto space-y-8 relative">
               <motion.h1 variants={itemVariants} className="text-6xl md:text-8xl lg:text-9xl font-black tracking-tighter leading-[0.85] uppercase italic">
-                Euer Abschluss. <br />
+                Macht euer Abi <br />
                 <span className="text-brand drop-shadow-[0_0_30px_rgba(125,210,0,0.3)]">
-                  Organisiert.
+                  Legendär.
                 </span>
               </motion.h1>
               <motion.p variants={itemVariants} className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto leading-relaxed font-medium">
-                Vom Budget-Tracker bis zum digitalen Sammelalbum: Der ABI Planer ist das strukturierte Zuhause für eure gesamte Stufe – sicher, funktional und übersichtlich.
+                Die ultimative Plattform für euren Jahrgang. Planen, Sammeln, Kämpfen – alles an einem Ort, sicher und nur für euch.
               </motion.p>
+              
+              {/* Floating Icons Decor */}
+              <motion.div 
+                animate={{ y: [0, -15, 0], rotate: [0, 5, 0] }}
+                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                className="absolute -top-10 -right-10 hidden lg:block opacity-20"
+              >
+                <Trophy className="h-24 w-24 text-brand" />
+              </motion.div>
+              <motion.div 
+                animate={{ y: [0, 15, 0], rotate: [0, -5, 0] }}
+                transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+                className="absolute -bottom-10 -left-10 hidden lg:block opacity-20"
+              >
+                <DollarSign className="h-24 w-24 text-brand" />
+              </motion.div>
             </div>
 
-            <motion.div variants={itemVariants} className="flex flex-col sm:flex-row items-center justify-center gap-6 pt-6 pb-20">
+            <motion.div variants={itemVariants} className="flex flex-col sm:flex-row items-center justify-center gap-6 pt-6">
               <Button size="lg" asChild className="h-16 px-10 text-xs font-black uppercase tracking-[0.25em] rounded-2xl bg-brand text-brand-foreground hover:bg-brand/90 shadow-2xl shadow-brand/30 group">
                 <Link href="/register">
-                  Jetzt starten
-                  <ChevronRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
+                  Jahrgang joinen
+                  <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
                 </Link>
               </Button>
-              <Button variant="outline" size="lg" asChild className="h-16 px-10 text-xs font-black uppercase tracking-[0.25em] rounded-2xl border-2 border-brand/20 hover:bg-brand/5">
-                <Link href="/vorteile">Funktionen prüfen</Link>
+              <Button variant="outline" size="lg" asChild className="h-16 px-10 text-xs font-black uppercase tracking-[0.25em] rounded-2xl border-2 border-brand/20 hover:bg-brand/5 backdrop-blur-sm">
+                <Link href="/vorteile">Features checken</Link>
               </Button>
             </motion.div>
           </motion.div>
         </section>
 
-        {/* Public Stats */}
+        {/* Dual Focus Section - Choose your side */}
+        <section className="px-6 py-20 relative">
+          <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-8">
+             {/* Planner Side */}
+             <motion.div 
+               whileHover={{ scale: 1.02 }}
+               className="relative group overflow-hidden rounded-[3rem] border border-border/50 bg-card/50 backdrop-blur-sm p-10 h-full flex flex-col justify-between"
+             >
+                <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
+                   <Target className="h-40 w-40 text-brand" />
+                </div>
+                <div className="space-y-6 relative z-10">
+                   <div className="h-14 w-14 rounded-2xl bg-brand/10 flex items-center justify-center text-brand">
+                      <Target className="h-7 w-7" />
+                   </div>
+                   <h2 className="text-4xl font-black italic uppercase tracking-tighter">Der Planer.</h2>
+                   <p className="text-muted-foreground text-lg leading-relaxed">
+                      Behalte das Budget im Griff, erstelle Abstimmungen und koordiniere Teams. Alles, was ihr für einen perfekten Abiball braucht.
+                   </p>
+                   <ul className="space-y-3">
+                      {['Finanzen & Prognosen', 'Aufgaben & Deadlines', 'Echtzeit-Abstimmungen'].map((item, i) => (
+                        <li key={i} className="flex items-center gap-3 text-sm font-bold">
+                           <div className="h-1.5 w-1.5 rounded-full bg-brand" />
+                           {item}
+                        </li>
+                      ))}
+                   </ul>
+                </div>
+                <div className="pt-10">
+                   <Button asChild variant="secondary" className="rounded-xl font-black uppercase tracking-widest text-[10px] h-12 px-8">
+                      <Link href="/vorteile/finanzen">Planung entdecken</Link>
+                   </Button>
+                </div>
+             </motion.div>
+
+             {/* Collector Side */}
+             <motion.div 
+               whileHover={{ scale: 1.02 }}
+               className="relative group overflow-hidden rounded-[3rem] border border-brand/20 bg-brand text-brand-foreground p-10 h-full flex flex-col justify-between shadow-2xl shadow-brand/20"
+             >
+                <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
+                   <Gamepad2 className="h-40 w-40 text-white" />
+                </div>
+                <div className="space-y-6 relative z-10">
+                   <div className="h-14 w-14 rounded-2xl bg-white/20 flex items-center justify-center text-white">
+                      <Sword className="h-7 w-7" />
+                   </div>
+                   <h2 className="text-4xl font-black italic uppercase tracking-tighter">Der Sammler.</h2>
+                   <p className="text-brand-foreground/90 text-lg leading-relaxed">
+                      Sammle Lehrer und Mitschüler, tausche Karten mit deinem Jahrgang und miss dich in epischen Stats-Battles.
+                   </p>
+                   <ul className="space-y-3">
+                      {['Tägliche Booster-Packs', 'Echtzeit-Tauschbörse', 'Raritäten & Rankings'].map((item, i) => (
+                        <li key={i} className="flex items-center gap-3 text-sm font-bold">
+                           <div className="h-1.5 w-1.5 rounded-full bg-white" />
+                           {item}
+                        </li>
+                      ))}
+                   </ul>
+                </div>
+                <div className="pt-10">
+                   <Button asChild className="rounded-xl font-black uppercase tracking-widest text-[10px] h-12 px-8 bg-white text-brand hover:bg-white/90">
+                      <Link href="/vorteile/sammelkarten">Karten-Action</Link>
+                   </Button>
+                </div>
+             </motion.div>
+          </div>
+        </section>
+
+        {/* Public Stats - Compact & Stylish */}
         <section className="px-6 pb-24 md:pb-32">
           <div className="max-w-7xl mx-auto">
-            <div className="mb-8 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-              <div className="space-y-3">
-                <p className="text-brand font-black uppercase tracking-[0.4em] text-[10px]">Kennzahlen</p>
-                <h2 className="text-3xl md:text-5xl font-black tracking-tight italic uppercase leading-none">
-                  Was im Jahrgang passiert.
-                </h2>
-              </div>
-              <p className="max-w-2xl text-sm md:text-base text-muted-foreground font-medium">
-                Die wichtigsten öffentlichen Werte auf einen Blick: Nutzeraktivität, Kartenbestand und aktuelle Updates.
-              </p>
-            </div>
-
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <div className="grid gap-4 grid-cols-2 xl:grid-cols-4">
               {[
                 {
-                  label: 'Nutzer gesamt',
+                  label: 'Am Start',
                   value: landingStatsLoading ? '...' : formatMetric(landingStats.totalUsers),
-                  hint: 'Registrierte Accounts im System',
                   icon: Users,
                 },
                 {
-                  label: 'Täglich aktiv',
+                  label: 'Aktiv (24h)',
                   value: landingStatsLoading ? '...' : formatMetric(landingStats.dailyActiveUsers),
-                  hint: 'Besuche innerhalb der letzten 24 Stunden',
                   icon: Clock3,
                 },
                 {
-                  label: 'Karten im Inventar',
+                  label: 'Karten-Drops',
                   value: landingStatsLoading ? '...' : formatMetric(landingStats.totalCards),
-                  hint: 'Gesamte Karten im Umlauf',
                   icon: Layers3,
                 },
                 {
-                  label: 'News-Beiträge',
+                  label: 'Updates',
                   value: landingStatsLoading ? '...' : formatMetric(landingStats.newsCount),
-                  hint: 'Aktuelle Beiträge und Updates',
                   icon: Sparkles,
                 },
               ].map((item) => (
-                <motion.div
+                <div
                   key={item.label}
-                  whileHover={{ y: -6 }}
-                  className="group rounded-[2rem] border border-border/60 bg-card/80 p-6 shadow-sm backdrop-blur-sm"
+                  className="rounded-3xl border border-border/60 bg-card/40 p-6 backdrop-blur-sm"
                 >
-                  <div className="mb-10 flex items-start justify-between gap-4">
-                    <div className="h-12 w-12 rounded-2xl bg-brand/10 text-brand flex items-center justify-center group-hover:bg-brand group-hover:text-brand-foreground transition-colors">
-                      <item.icon className="h-6 w-6" />
-                    </div>
+                  <div className="flex items-center gap-3 mb-4">
+                    <item.icon className="h-4 w-4 text-brand" />
+                    <p className="text-[9px] font-black uppercase tracking-[0.3em] text-muted-foreground">{item.label}</p>
                   </div>
-                  <div className="space-y-2">
-                    <p className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground">{item.label}</p>
-                    <p className="text-4xl md:text-5xl font-black tracking-tight italic uppercase leading-none text-foreground">
-                      {item.value}
-                    </p>
-                    <p className="text-sm font-medium text-muted-foreground">{item.hint}</p>
-                  </div>
-                </motion.div>
+                  <p className="text-3xl md:text-4xl font-black tracking-tight italic uppercase leading-none text-foreground">
+                    {item.value}
+                  </p>
+                </div>
               ))}
             </div>
           </div>
         </section>
 
-        {/* Features Bento Grid */}
-        <section id="features" className="py-32 bg-secondary/20 relative">
+        {/* Editorial Section - Why the platform exists */}
+        <section className="px-6 pb-20 md:pb-28">
+          <div className="max-w-7xl mx-auto grid gap-6 lg:grid-cols-[1.15fr_0.85fr] items-start">
+            <div className="rounded-[3rem] border border-border/60 bg-card/70 p-8 md:p-12 shadow-sm backdrop-blur-sm space-y-6">
+              <p className="text-brand font-black uppercase tracking-[0.4em] text-[10px]">Worum es wirklich geht</p>
+              <h2 className="text-4xl md:text-5xl font-black tracking-tight italic uppercase leading-[0.9] max-w-3xl">
+                Ein Jahrgang braucht mehr als Chat-Chaos und lose Notizen.
+              </h2>
+              <div className="space-y-4 text-lg leading-relaxed text-muted-foreground max-w-3xl">
+                <p>
+                  ABI Planer bündelt die Dinge, die sonst in einzelnen Gruppen, Tabellen und Nachrichten
+                  verschwinden: Budget, Aufgaben, Termine, Abstimmungen, Rollen und die kleinen
+                  Entscheidungen, die am Ende den Unterschied machen.
+                </p>
+                <p>
+                  Dadurch entsteht nicht nur ein Werkzeug für die Organisation, sondern ein nachvollziehbarer
+                  Ort für euren Jahrgang. Wer später nachschauen will, was beschlossen wurde oder wer was
+                  übernimmt, findet die Antwort an einer zentralen Stelle statt in verstreuten Chats.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid gap-4">
+              {[
+                {
+                  title: 'Planung mit Überblick',
+                  text: 'Ihr seht Finanzen, Aufgaben und Deadlines zusammen und müsst nicht mehr zwischen mehreren Tools springen.',
+                },
+                {
+                  title: 'Mitbestimmung statt Durcheinander',
+                  text: 'Abstimmungen und News geben jedem Jahrgang eine klare, dokumentierte Grundlage für Entscheidungen.',
+                },
+                {
+                  title: 'Motivation für den Alltag',
+                  text: 'Sammelkarten, Rankings und kleine Fortschrittsanzeigen sorgen dafür, dass die Plattform nicht nur praktisch, sondern auch nutzbar bleibt.',
+                },
+              ].map((item) => (
+                <div key={item.title} className="rounded-[2rem] border border-border/60 bg-background/80 p-6 shadow-sm">
+                  <p className="text-sm font-black uppercase tracking-[0.25em] text-foreground">{item.title}</p>
+                  <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{item.text}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Features Bento Grid - Student Copy */}
+        <section id="features" className="py-32 bg-secondary/10 relative">
           <div className="max-w-7xl mx-auto px-6">
             <div className="text-center mb-20 space-y-4">
-              <motion.p 
-                initial={{ opacity: 0 }}
-                whileInView={{ opacity: 1 }}
-                className="text-brand font-black uppercase tracking-[0.4em] text-[10px]"
-              >
-                Die Plattform
-              </motion.p>
-              <motion.h2 
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                className="text-4xl md:text-6xl font-black tracking-tight italic uppercase"
-              >
-                Alles unter Kontrolle.
-              </motion.h2>
+              <p className="text-brand font-black uppercase tracking-[0.4em] text-[10px]">Alles was ihr braucht</p>
+              <h2 className="text-4xl md:text-6xl font-black tracking-tight italic uppercase">Volle Kontrolle.</h2>
             </div>
 
             <div className="grid md:grid-cols-3 gap-6">
@@ -305,7 +401,7 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
                   <div className="h-12 w-12 rounded-2xl bg-brand/10 flex items-center justify-center text-brand">
                     <Target className="h-6 w-6" />
                   </div>
-                  <h3 className="text-3xl font-black uppercase tracking-tight italic">Finanzplanung & Prognosen</h3>
+                  <h3 className="text-3xl font-black uppercase tracking-tight italic">Cash im Griff</h3>
                   <p className="text-muted-foreground text-lg max-w-md">Behaltet Einnahmen und Ausgaben transparent im Blick. Automatische Kalkulationen helfen euch, das Sparziel für den Abiball sicher zu erreichen.</p>
                 </div>
                 <div className="pt-8 relative z-10">
@@ -324,7 +420,7 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
                   <Users className="h-6 w-6" />
                 </div>
                 <div className="space-y-4">
-                  <h3 className="text-2xl font-black uppercase tracking-tight italic">Projekt-Teams</h3>
+                  <h3 className="text-2xl font-black uppercase tracking-tight italic">Euer Team</h3>
                   <p className="text-brand-foreground/80 font-medium">Koordiniert Aufgaben in Teams wie Abizeitung oder Merch. Behaltet Deadlines im Griff und arbeitet effizient zusammen.</p>
                 </div>
                 <div className="pt-2">
@@ -343,7 +439,7 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
                   <CheckSquare className="h-6 w-6" />
                 </div>
                 <div className="space-y-4">
-                  <h3 className="text-2xl font-black uppercase tracking-tight italic">Demokratische Votings</h3>
+                  <h3 className="text-2xl font-black uppercase tracking-tight italic">Eure Stimme</h3>
                   <p className="text-muted-foreground font-medium">Trefft wichtige Entscheidungen schnell und für alle nachvollziehbar. Schluss mit dem Chaos in Messenger-Gruppen.</p>
                 </div>
                 <div className="pt-2">
@@ -362,7 +458,7 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
                   <div className="h-12 w-12 rounded-2xl bg-brand/10 flex items-center justify-center text-brand">
                     <Calendar className="h-6 w-6" />
                   </div>
-                  <h3 className="text-3xl font-black uppercase tracking-tight italic">Zentraler Terminkalender</h3>
+                  <h3 className="text-3xl font-black uppercase tracking-tight italic">Alle Termine</h3>
                   <p className="text-muted-foreground text-lg">Alle Termine an einem Ort – von der ersten Party bis zur Zeugnisvergabe. Synchronisiert für den gesamten Jahrgang.</p>
                   <div className="pt-2">
                     <Link href="/vorteile/kalender" className="inline-flex items-center text-brand font-black uppercase tracking-widest text-[10px] gap-2 hover:gap-3 transition-all">
@@ -424,23 +520,23 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
                    <div className="space-y-6">
                       <div className={isDarkTheme ? 'inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand/20 border border-brand/30 text-brand-foreground text-[10px] font-black uppercase tracking-[0.3em]' : 'inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand/10 border border-brand/20 text-brand text-[10px] font-black uppercase tracking-[0.3em]'}>
                         <Sparkles className="h-3.5 w-3.5" />
-                        <span>Das Jahrgangs-Highlight</span>
+                        <span>Karten-Action für euch</span>
                       </div>
                       <h2 className={isDarkTheme ? 'text-5xl md:text-7xl font-black tracking-tighter italic uppercase leading-[0.9]' : 'text-5xl md:text-7xl font-black tracking-tighter italic uppercase leading-[0.9] text-foreground'}>
-                        Das digitale <br />
-                        <span className="text-brand">Sammelalbum.</span>
+                        Sammeln. <br />
+                        <span className="text-brand">Tauschen. Kämpfen.</span>
                       </h2>
                       <p className={isDarkTheme ? 'text-zinc-400 text-xl leading-relaxed max-w-xl' : 'text-muted-foreground text-xl leading-relaxed max-w-xl'}>
-                        Erinnerungen für die Ewigkeit. Sammelt Lehrer und Mitschüler als digitale Karten mit individuellen Werten, Seltenheitsstufen und integrierter Tauschfunktion.
+                        Holt euch eure Lehrer und Mitschüler als digitale Karten. Mit individuellen Werten, Seltenheitsstufen und epischen Battles direkt in der App.
                       </p>
                    </div>
 
                    <div className="grid sm:grid-cols-2 gap-4">
                       {[
-                        { title: 'Karten-Pakete', desc: 'Täglich neue Karten für alle aktiven Planer.', icon: Zap },
-                        { title: 'Seltene Editionen', desc: 'Holos, Gold-Editions und extrem seltene Iconic-Drops.', icon: Sparkles },
-                        { title: 'Tauschbörse', desc: 'Tausche Karten in Echtzeit mit deinem Jahrgang.', icon: Workflow },
-                        { title: 'Album-System', desc: 'Inklusive Album-System und Stufen-Ranking.', icon: Trophy },
+                        { title: 'Tägliche Booster', desc: 'Jeden Tag neue Karten-Pakete for free abstauben.', icon: Zap },
+                        { title: 'Legendäre Drops', desc: 'Holos, Gold-Editions und extrem seltene Iconic-Karten.', icon: Sparkles },
+                        { title: 'Tauschbörse', desc: 'Tausche Karten live mit deinen Freunden.', icon: Workflow },
+                        { title: 'Stats Battle', desc: 'Miss deine Karten mit anderen im Stufen-Ranking.', icon: Trophy },
                       ].map((item, i) => (
                         <div key={i} className={isDarkTheme ? 'p-6 bg-white/5 border border-white/10 rounded-3xl group hover:bg-brand/5 hover:border-brand/20 transition-all' : 'p-6 bg-card border border-border/60 rounded-3xl group hover:bg-brand/5 hover:border-brand/20 transition-all shadow-sm'}>
                           <div className={isDarkTheme ? 'h-10 w-10 rounded-xl bg-brand/10 flex items-center justify-center text-brand mb-4 group-hover:scale-110 transition-transform' : 'h-10 w-10 rounded-xl bg-brand/10 flex items-center justify-center text-brand mb-4 group-hover:scale-110 transition-transform'}>
@@ -496,7 +592,7 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
                         transition={{ duration: 5, repeat: Infinity, delay: 0.5 }}
                         className={isDarkTheme ? 'absolute -bottom-6 -left-12 bg-zinc-800 text-white border border-white/10 px-4 py-2 rounded-2xl shadow-2xl -rotate-6 font-black text-[10px] uppercase tracking-widest hidden md:block' : 'absolute -bottom-6 -left-12 bg-card text-foreground border border-border/60 px-4 py-2 rounded-2xl shadow-xl -rotate-6 font-black text-[10px] uppercase tracking-widest hidden md:block'}
                       >
-                        Selten
+                        Iconic
                       </motion.div>
                    </div>
                 </motion.div>
@@ -505,11 +601,11 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
         </section>
 
         {/* Social / News Stream (Interactive Hover) */}
-        <section className="py-32 bg-secondary/20 px-6">
+        <section className="py-32 bg-secondary/10 px-6">
           <div className="max-w-7xl mx-auto space-y-16">
              <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
                 <div className="space-y-4">
-                   <p className="text-brand font-black uppercase tracking-[0.4em] text-[10px]">Bleibt dran</p>
+                   <p className="text-brand font-black uppercase tracking-[0.4em] text-[10px]">News & Infos</p>
                    <h2 className="text-4xl md:text-6xl font-black tracking-tight italic uppercase leading-none">
                       Jahrgangs <br />
                       Updates.
@@ -521,6 +617,31 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
              </div>
 
              <div className="grid md:grid-cols-3 gap-8">
+                <Skeleton
+                  name="landing-news"
+                  loading={landingNewsLoading}
+                  className="md:col-span-3 grid md:grid-cols-3 gap-8"
+                  fixture={
+                    <div className="md:col-span-3 grid md:grid-cols-3 gap-8">
+                      {[1, 2, 3].map((i) => (
+                        <article key={i} className="bg-card border border-border/50 h-full p-8 rounded-[2.5rem] space-y-6 flex flex-col">
+                          <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-brand">
+                            <Skeleton className="bg-brand/10 px-3 py-1 rounded-full w-20 h-4" />
+                            <span className="flex items-center gap-1"><Zap className="h-3 w-3" /> Update</span>
+                          </div>
+                          <div className="space-y-3 flex-1">
+                            <Skeleton className="h-8 w-5/6 rounded-xl bg-muted/60" />
+                            <Skeleton className="h-4 w-full rounded bg-muted/50" />
+                            <Skeleton className="h-4 w-4/5 rounded bg-muted/50" />
+                          </div>
+                          <div className="pt-4 border-t border-border/50 flex items-center justify-between">
+                            <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Mehr erfahren</span>
+                            <Skeleton className="h-4 w-4 rounded-full bg-brand/70" />
+                          </div>
+                        </article>
+                      ))}
+                    </div>
+                  }                >
                 {landingNewsLoading ? (
                   Array.from({ length: 3 }).map((_, i) => (
                     <Skeleton key={i} className="h-80 w-full rounded-[2.5rem]" />
@@ -557,6 +678,7 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
                      <p className="text-muted-foreground italic text-lg">Keine aktuellen Updates verfügbar.</p>
                   </div>
                 )}
+                </Skeleton>
              </div>
           </div>
         </section>
@@ -575,7 +697,7 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
                 <span className="text-brand drop-shadow-[0_0_20px_rgba(125,210,0,0.4)]">das Finale?</span>
               </h2>
               <p className="text-xl md:text-2xl text-muted-foreground max-w-xl mx-auto leading-relaxed font-medium">
-                Schließt euch eurem Jahrgang an und bringt Struktur in das Chaos. Kostenlos für alle Schüler.
+                Schließt euch eurem Jahrgang an und macht euer Abi legendär. Kostenlos für alle Schüler.
               </p>
             </motion.div>
             
@@ -587,7 +709,7 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
             >
                <Button size="lg" asChild className="h-20 px-12 text-sm font-black uppercase tracking-[0.3em] rounded-3xl bg-brand text-brand-foreground hover:bg-brand/90 shadow-2xl shadow-brand/40 group">
                   <Link href="/register">
-                    Account erstellen
+                    Jetzt joinen
                     <Rocket className="ml-3 h-6 w-6 transition-transform group-hover:-translate-y-1 group-hover:translate-x-1" />
                   </Link>
                </Button>
@@ -610,6 +732,7 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
 export default function Dashboard() {
   const router = useRouter()
   const [rootMode, setRootMode] = useState<'unknown' | 'landing' | 'dashboard'>('unknown')
+  const isBoneyardBuild = typeof window !== 'undefined' && Boolean((window as any).__BONEYARD_BUILD)
   const { user, profile, loading: authLoading } = useAuth()
   const [settings, setSettings] = useState<any>(null)
   const [todos, setTodos] = useState<any[]>([])
@@ -617,6 +740,7 @@ export default function Dashboard() {
   const [news, setNews] = useState<any[]>([])
   const [polls, setPolls] = useState<Poll[]>([])
   const [allFinances, setAllFinances] = useState<FinanceEntry[]>([])
+  const [allShopEarnings, setAllShopEarnings] = useState<ShopEarning[]>([])
   const [currentFunding, setCurrentFunding] = useState(0)
   const [expenseGoal, setExpenseGoal] = useState(0)
   const [timeoutReached, setTimeoutReached] = useState(false)
@@ -625,6 +749,7 @@ export default function Dashboard() {
     todos: false,
     events: false,
     finances: false,
+    shopEarnings: false,
     news: false,
     polls: false,
   })
@@ -641,12 +766,13 @@ export default function Dashboard() {
   }, [])
 
   useEffect(() => {
+    if (isBoneyardBuild) return
     if (rootMode !== 'dashboard') return
     if (authLoading) return
     if (!user) {
       router.replace('/login')
     }
-  }, [authLoading, rootMode, router, user])
+  }, [authLoading, isBoneyardBuild, rootMode, router, user])
 
   useEffect(() => {
     if (rootMode !== 'dashboard') return
@@ -713,6 +839,7 @@ export default function Dashboard() {
     let unsubscribeTodos = () => { markLoaded('todos') }
     let unsubscribeEvents = () => { markLoaded('events') }
     let unsubscribeFinances = () => { markLoaded('finances') }
+    let unsubscribeShopEarnings = () => { markLoaded('shopEarnings') }
     let unsubscribePolls = () => { markLoaded('polls') }
 
     if (!authLoading && user && profile?.id) {
@@ -781,6 +908,19 @@ export default function Dashboard() {
         markLoaded('finances')
       })
 
+      if (profile?.is_approved) {
+        // 4b. Listen to Shop Earnings for leaderboard support
+        unsubscribeShopEarnings = onSnapshot(collection(db, 'shop_earnings'), (snapshot) => {
+          setAllShopEarnings(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ShopEarning)))
+          markLoaded('shopEarnings')
+        }, (error) => {
+          console.error('Error listening to shop earnings:', error)
+          markLoaded('shopEarnings')
+        })
+      } else {
+        markLoaded('shopEarnings')
+      }
+
       // 6. Listen to Polls
       const qPolls = query(collection(db, 'polls'), where('is_active', '==', true), orderBy('created_at', 'desc'), limit(5))
       unsubscribePolls = onSnapshot(qPolls, async (snapshot) => {
@@ -809,6 +949,7 @@ export default function Dashboard() {
       markLoaded('todos')
       markLoaded('events')
       markLoaded('finances')
+      markLoaded('shopEarnings')
       markLoaded('polls')
     }
 
@@ -817,10 +958,11 @@ export default function Dashboard() {
       unsubscribeTodos()
       unsubscribeEvents()
       unsubscribeFinances()
+      unsubscribeShopEarnings()
       unsubscribeNews()
       unsubscribePolls()
     }
-  }, [user?.uid, profile?.id, profile?.class_name, profile?.planning_groups, authLoading, rootMode])
+  }, [user?.uid, profile?.id, profile?.class_name, profile?.planning_groups, profile?.is_approved, authLoading, rootMode])
 
   const canManage = (
     profile?.role === 'planner' ||
@@ -865,15 +1007,20 @@ export default function Dashboard() {
     cards: '/sammelkarten'
   }
 
-  if (rootMode === 'unknown') {
+  const resolvedRootMode =
+    rootMode === 'unknown' && isBoneyardBuild && typeof window !== 'undefined'
+      ? (window.location.hostname.startsWith('dashboard.') || window.location.hostname.startsWith('app.') ? 'dashboard' : 'landing')
+      : rootMode
+
+  if (resolvedRootMode === 'unknown') {
     return <div className="min-h-screen bg-background" />
   }
 
-  if (rootMode === 'landing') {
+  if (resolvedRootMode === 'landing') {
     return <MainDomainLanding isAuthenticated={!!user} />
   }
 
-  if (authLoading || !user) {
+  if (!isBoneyardBuild && (authLoading || !user)) {
     return <div className="min-h-screen bg-background" />
   }
 
@@ -961,6 +1108,41 @@ export default function Dashboard() {
         case 'funding':
           return (
             <div className="flex flex-col">
+              <Skeleton
+                name="dashboard-funding"
+                loading={!initialLoadState.settings || !initialLoadState.finances}
+                fixture={
+                  <div className="w-full h-full border-none shadow-card rounded-2xl bg-card p-6 space-y-6">
+                    <div className="flex items-center justify-between border-b pb-2">
+                      <Skeleton className="h-4 w-32 bg-muted/60" />
+                      <Skeleton className="h-4 w-8 bg-muted/60" />
+                    </div>
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-end">
+                        <Skeleton className="h-8 w-32 bg-muted/60" />
+                        <Skeleton className="h-4 w-20 bg-muted/40" />
+                      </div>
+                      <Skeleton className="h-3 w-full rounded-full bg-muted/40" />
+                    </div>
+                    <div className="pt-4 border-t space-y-4">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div className="space-y-2">
+                          <Skeleton className="h-3 w-24 bg-muted/60" />
+                          <Skeleton className="h-8 w-24 bg-muted/60" />
+                        </div>
+                        <div className="text-right space-y-2">
+                          <Skeleton className="h-3 w-24 bg-muted/60 ml-auto" />
+                          <Skeleton className="h-7 w-20 bg-muted/60 ml-auto" />
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        <Skeleton className="h-2 w-full bg-muted/40" />
+                        <Skeleton className="h-2 w-4/5 bg-muted/40" />
+                      </div>
+                    </div>
+                  </div>
+                }
+              >
               <FundingStatus
                 key="funding"
                 current={currentFunding}
@@ -971,33 +1153,112 @@ export default function Dashboard() {
                 isAuthenticated={!!user}
                 loading={!initialLoadState.settings || !initialLoadState.finances}
               />
+              </Skeleton>
             </div>
           )
         case 'news':
-          return <div className="flex flex-col"><NewsPreview key="news" items={news.slice(0, 2)} loading={!initialLoadState.news} /></div>
+          return (
+            <div className="flex flex-col">
+              <Skeleton
+                name="dashboard-news"
+                loading={!initialLoadState.news}
+                fixture={
+                  <div className="flex flex-col border-border/40 shadow-card overflow-hidden bg-card rounded-2xl">
+                    <div className="pb-3 border-b border-border bg-muted/10 shrink-0 p-4">
+                      <Skeleton className="h-5 w-32 bg-muted/60" />
+                    </div>
+                    <div className="p-4 space-y-4">
+                      {[1, 2].map((i) => (
+                        <div key={i} className="flex gap-4 items-start bg-background rounded-xl p-4 border border-border/40">
+                          <Skeleton className="h-16 w-16 shrink-0 rounded-lg bg-muted/60" />
+                          <div className="flex-1 space-y-2">
+                            <Skeleton className="h-4 w-3/4 bg-muted/60" />
+                            <Skeleton className="h-3 w-full bg-muted/40" />
+                            <Skeleton className="h-3 w-5/6 bg-muted/40" />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                }
+              >
+                <NewsPreview key="news" items={news.slice(0, 2)} loading={!initialLoadState.news} />
+              </Skeleton>
+            </div>
+          )
         case 'todos':
           return (
             <div className="flex flex-col">
-              <TodoList
-                key="todos"
-                todos={todos || []}
-                canManage={canManage}
-                maxItems={5}
-                useScrollContainer={false}
+              <Skeleton
+                name="dashboard-todos"
                 loading={!initialLoadState.todos}
-              />
+                fixture={
+                  <div className="h-full border-border/40 shadow-subtle flex flex-col overflow-hidden rounded-2xl bg-card">
+                    <div className="pb-3 border-b border-border bg-muted/10 shrink-0 p-4">
+                      <Skeleton className="h-5 w-28 bg-muted/60" />
+                    </div>
+                    <div className="p-4 space-y-3">
+                      {[1, 2, 3, 4].map((i) => (
+                        <div key={i} className="flex items-start gap-3 rounded-lg border border-border/70 bg-background/80 px-3 py-2">
+                          <Skeleton className="h-4 w-4 mt-0.5 bg-muted/60" />
+                          <div className="flex-1 space-y-2">
+                            <Skeleton className="h-4 w-3/4 bg-muted/60" />
+                            <div className="flex gap-2">
+                              <Skeleton className="h-3 w-16 bg-muted/40" />
+                              <Skeleton className="h-3 w-24 bg-muted/40" />
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                }
+              >
+                <TodoList
+                  key="todos"
+                  todos={todos || []}
+                  canManage={canManage}
+                  maxItems={5}
+                  useScrollContainer={false}
+                  loading={!initialLoadState.todos}
+                />
+              </Skeleton>
             </div>
           )
         case 'events':
           return (
             <div className="flex flex-col">
-              <CalendarEvents
-                key="events"
-                events={events || []}
-                maxItems={3}
-                useScrollContainer={false}
+              <Skeleton
+                name="dashboard-events"
                 loading={!initialLoadState.events}
-              />
+                fixture={
+                  <div className="h-full border-border/40 shadow-subtle flex flex-col overflow-hidden rounded-2xl bg-card">
+                    <div className="pb-3 border-b border-border bg-muted/10 shrink-0 p-4">
+                      <Skeleton className="h-5 w-32 bg-muted/60" />
+                    </div>
+                    <div className="p-4 space-y-4">
+                      {[1, 2, 3].map((i) => (
+                        <div key={i} className="flex items-center gap-4 pb-3 border-b last:border-0">
+                          <Skeleton className="h-[50px] min-w-[50px] rounded-lg bg-primary/15" />
+                          <div className="flex-1 space-y-2">
+                            <Skeleton className="h-4 w-1/2 bg-muted/60" />
+                            <Skeleton className="h-3 w-24 bg-muted/40" />
+                            <Skeleton className="h-3 w-32 bg-muted/40" />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                }
+              >
+                <CalendarEvents
+                  key="events"
+                  events={events || []}
+                  maxItems={3}
+                  useScrollContainer={false}
+                  loading={!initialLoadState.events}
+                />
+              </Skeleton>
             </div>
           )
         case 'polls':
@@ -1005,20 +1266,79 @@ export default function Dashboard() {
         case 'leaderboard':
           return (
             <div className="flex flex-col">
-              <ClassRanking
-                key="leaderboard"
-                finances={allFinances}
-                goal={settings?.funding_goal ?? 10000}
-                maxRows={4}
-                useScrollContainer={false}
+              <Skeleton
+                name="dashboard-leaderboard"
                 loading={!initialLoadState.finances}
-              />
+                fixture={
+                  <div className="h-full border-border/40 shadow-subtle overflow-hidden flex flex-col rounded-2xl bg-card">
+                    <div className="pb-3 border-b border-border bg-muted/10 shrink-0 p-4">
+                      <div className="flex items-center justify-between">
+                        <Skeleton className="h-5 w-28 bg-muted/60" />
+                        <Skeleton className="h-5 w-20 rounded-full bg-muted/60" />
+                      </div>
+                    </div>
+                    <div className="p-0 flex-1 space-y-0">
+                      {[1, 2, 3, 4].map((i) => (
+                        <div key={i} className="flex items-center justify-between p-3 min-h-[58px] border-b last:border-0">
+                          <div className="flex items-center gap-3">
+                            <Skeleton className="h-7 w-7 rounded-full bg-muted/60" />
+                            <div className="space-y-2">
+                              <Skeleton className="h-3 w-16 bg-muted/60" />
+                              <Skeleton className="h-1 w-24 bg-muted/40" />
+                            </div>
+                          </div>
+                          <div className="space-y-2 text-right">
+                            <Skeleton className="h-3 w-12 bg-muted/60 ml-auto" />
+                            <Skeleton className="h-2 w-8 bg-muted/40 ml-auto" />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                }
+              >
+                <ClassRanking
+                  key="leaderboard"
+                  finances={allFinances}
+                  shopEarnings={allShopEarnings}
+                  goal={settings?.funding_goal ?? 10000}
+                  maxRows={4}
+                  useScrollContainer={false}
+                  showManualCorrection={false}
+                  loading={!initialLoadState.finances || !initialLoadState.shopEarnings}
+                />
+              </Skeleton>
             </div>
           )
         case 'cards':
           return (
             <div className="flex flex-col">
-              <SammelkartenPromo isAuthenticated={!!user} loading={authLoading} />
+              <Skeleton
+                name="dashboard-cards"
+                loading={authLoading}
+                fixture={
+                  <div className="overflow-hidden border border-border/40 rounded-2xl bg-card shadow-subtle h-[340px] flex flex-col">
+                    <div className="pb-2 p-4">
+                      <div className="mb-1 flex items-center gap-2">
+                        <Skeleton className="h-6 w-24 bg-muted/60" />
+                      </div>
+                      <Skeleton className="h-8 w-48 bg-muted/60" />
+                    </div>
+                    <div className="p-4 space-y-4">
+                      <Skeleton className="h-4 w-56 bg-muted/60" />
+                      <Skeleton className="h-4 w-40 bg-muted/40" />
+                      <div className="flex flex-wrap gap-2 py-1">
+                        {[1, 2, 3].map((i) => (
+                          <Skeleton key={i} className="h-6 w-16 rounded-full bg-muted/60" />
+                        ))}
+                      </div>
+                      <Skeleton className="h-10 w-full rounded-xl bg-muted/60" />
+                    </div>
+                  </div>
+                }
+              >
+                <SammelkartenPromo isAuthenticated={!!user} loading={authLoading} />
+              </Skeleton>
             </div>
           )
         default:
@@ -1061,14 +1381,40 @@ export default function Dashboard() {
           }}
         >
           <div className="flex flex-col">
-            <PollList
-              polls={[poll]}
-              userId={currentUserId}
-              canVote={!!currentUserId}
-              canManage={canManage}
-              useScrollContainer={false}
+            <Skeleton
+              name="dashboard-poll"
               loading={!initialLoadState.polls}
-            />
+              fixture={
+                <div className="space-y-6 rounded-2xl border border-border/40 bg-card p-4 shadow-subtle">
+                  <div className="space-y-2">
+                    <Skeleton className="h-6 w-3/4 bg-muted/60" />
+                    <Skeleton className="h-4 w-1/2 bg-muted/40" />
+                  </div>
+                  <div className="space-y-4">
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="space-y-2">
+                        <div className="flex justify-between">
+                          <Skeleton className="h-4 w-1/3 bg-muted/60" />
+                          <Skeleton className="h-4 w-8 bg-muted/40" />
+                        </div>
+                        <Skeleton className="h-2 w-full bg-muted/40" />
+                        <Skeleton className="h-8 w-full rounded bg-muted/60 mt-1" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              }
+            >
+              <PollList
+                polls={[poll]}
+                userId={currentUserId}
+                userName={profile?.full_name}
+                canVote={!!currentUserId}
+                canManage={canManage}
+                useScrollContainer={false}
+                loading={!initialLoadState.polls}
+              />
+            </Skeleton>
           </div>
         </div>
       </div>

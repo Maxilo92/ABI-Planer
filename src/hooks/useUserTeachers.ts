@@ -6,6 +6,7 @@ import { doc, onSnapshot, runTransaction } from 'firebase/firestore'
 import { httpsCallable } from 'firebase/functions'
 import { useAuth } from '@/context/AuthContext'
 import { UserTeacher, Profile, CardVariant } from '@/types/database'
+import { rebuildRegistryIndex } from '@/constants/cardRegistry'
 
 export const calculateLevel = (count: number): number => {
   if (count <= 1) return 1
@@ -23,6 +24,7 @@ type BoosterStats = {
   last_reset?: string
   count?: number
   extra_available?: number
+  support_extra_available?: number
   extra_boosters_claimed?: boolean
   total_opened?: number
 }
@@ -30,6 +32,7 @@ type BoosterStats = {
 type OpenBoosterOptions = {
   packSource?: 'random' | 'custom'
   customPackQueueId?: string | null
+  packId?: string
 }
 
 const toBerlinParts = (date: Date) => {
@@ -133,7 +136,10 @@ export const useUserTeachers = (userId?: string) => {
 
     const unsubscribe = onSnapshot(doc(db, 'settings', 'sammelkarten'), (snapshot) => {
       if (snapshot.exists()) {
-        setConfig(snapshot.data())
+        const data = snapshot.data()
+        setConfig(data)
+        // Dynamisches Registry-Update bei Set-Änderungen (merges with static CARD_SETS)
+        rebuildRegistryIndex(data.sets)
       }
     }, (error) => {
       console.error('useUserTeachers: Error listening to sammelkarten settings:', error)
@@ -177,7 +183,12 @@ export const useUserTeachers = (userId?: string) => {
       if (count <= 0) throw new Error('Keine Packs zum Öffnen angegeben.')
 
       try {
-        const openBoosterFn = httpsCallable<{ count: number, packSource?: 'random' | 'custom', customPackQueueId?: string | null }, { packs: Array<{ cards: Array<{ id: string, name: string, rarity: string, variant: CardVariant, level: number, count: number }> }> }>(
+        const openBoosterFn = httpsCallable<{ 
+          count: number, 
+          packSource?: 'random' | 'custom', 
+          customPackQueueId?: string | null,
+          packId?: string
+        }, { packs: Array<{ cards: Array<{ id: string, name: string, rarity: string, variant: CardVariant, level: number, count: number }> }> }>(
           functions,
           'openBooster'
         )
@@ -186,6 +197,7 @@ export const useUserTeachers = (userId?: string) => {
           count,
           packSource: options?.packSource || undefined,
           customPackQueueId: options?.customPackQueueId || undefined,
+          packId: options?.packId || undefined,
         })
         
         // Transform server response to match expected frontend format
@@ -268,7 +280,6 @@ export const useUserTeachers = (userId?: string) => {
     }
   }, [currentUser, isOwnProfile])
 
-  // Zeigt verbleibende Packs aus Tageslimit plus extra_available
   const getRemainingBoosters = useCallback(() => {
     if (!isOwnProfile || !currentProfile) return 0
     const today = getCurrentBoosterDay(config)
@@ -278,7 +289,8 @@ export const useUserTeachers = (userId?: string) => {
     if (!stats) return dailyLimit
 
     const normalizedStats = sanitizeBoosterStats(stats, today)
-    const extra = normalizedStats.extra_available || 0
+    // Combine legacy and new inventory for Standard Boosters
+    const extra = (normalizedStats.extra_available || 0) + (stats?.inventory?.teacher_vol1 || 0) + (stats?.inventory?.teachers_v1 || 0)
 
     if (normalizedStats.last_reset !== today) {
       return dailyLimit + extra
@@ -287,6 +299,16 @@ export const useUserTeachers = (userId?: string) => {
     return Math.max(0, dailyLimit - normalizedStats.count) + extra
   }, [currentProfile, isOwnProfile, config])
 
+  const getRemainingSupportBoosters = useCallback(() => {
+    if (!isOwnProfile || !currentProfile) return 0
+    const stats = currentProfile.booster_stats
+    // Combine legacy and new inventory for Support Boosters
+    const legacyVal = stats?.support_extra_available || 0
+    const inventoryVal = stats?.inventory?.support_vol_1 || 0
+    
+    return Math.max(0, Math.floor(legacyVal)) + Math.max(0, Math.floor(inventoryVal))
+  }, [currentProfile, isOwnProfile])
+
   return {
     teachers,
     loading,
@@ -294,6 +316,7 @@ export const useUserTeachers = (userId?: string) => {
     collectBooster,
     collectMassBoosters,
     getRemainingBoosters,
+    getRemainingSupportBoosters,
     claimExtraBoosters,
     purchaseBoosters,
   }

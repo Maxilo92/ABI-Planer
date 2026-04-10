@@ -48,11 +48,11 @@ const DANGER_ACTIONS = [
   {
     id: 'DELETE_ALL_FEEDBACK',
     title: 'Sämtliches Feedback unwiderruflich löschen',
-    description: 'Löscht alle Dokumente aus der "feedback" Collection. Eingereichte Fehlerberichte, Wünsche und Nachrichten von Nutzern gehen vollständig verloren.',
+    description: 'Sämtliches Feedback wird gelöscht. Eingereichte Fehlerberichte, Wünsche und Nachrichten von Nutzern gehen vollständig verloren.',
     confirmationString: 'DELETE ALL FEEDBACK',
     severity: 'low'
-  }
-]
+    }
+    ]
 
 export default function DangerZonePage() {
   const { profile, loading: authLoading } = useAuth()

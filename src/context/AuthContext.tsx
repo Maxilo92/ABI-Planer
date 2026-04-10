@@ -13,6 +13,32 @@ const db = getFirebaseDb();
 const functions = getFirebaseFunctions();
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000
+const SESSION_STARTED_AT_KEY_PREFIX = 'abi_session_started_at_'
+
+function getSessionStartedAtKey(userId: string) {
+  return `${SESSION_STARTED_AT_KEY_PREFIX}${userId}`
+}
+
+function readSessionStartedAt(userId: string): Date {
+  if (typeof window === 'undefined') return new Date()
+
+  const stored = window.sessionStorage.getItem(getSessionStartedAtKey(userId))
+  if (stored) {
+    const parsed = new Date(stored)
+    if (!Number.isNaN(parsed.getTime())) {
+      return parsed
+    }
+  }
+
+  const startedAt = new Date()
+  window.sessionStorage.setItem(getSessionStartedAtKey(userId), startedAt.toISOString())
+  return startedAt
+}
+
+function clearSessionStartedAt(userId: string) {
+  if (typeof window === 'undefined') return
+  window.sessionStorage.removeItem(getSessionStartedAtKey(userId))
+}
 
 async function bootstrapMissingProfileViaProxy(user: User) {
   const idToken = await user.getIdToken()
@@ -69,6 +95,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [is2FAVerified, setIs2FAVerifiedState] = useState(false)
   const [is2FAInitialCheckDone, setIs2FAInitialCheckDone] = useState(false)
   const sessionStartedAtRef = useRef<Date | null>(null)
+  const sessionEndFlushedRef = useRef(false)
   const profileBootstrapAttemptedRef = useRef(false)
 
   // Load 2FA status from localStorage on mount/init (30-day persistence)
@@ -300,7 +327,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     if (!user?.uid || loading || !profile) return
 
     const userId = user.uid
-    sessionStartedAtRef.current = new Date()
+    sessionEndFlushedRef.current = false
+    sessionStartedAtRef.current = readSessionStartedAt(userId)
 
     const buildPresencePayload = (isOnline: boolean) => {
       const sessionStart = sessionStartedAtRef.current
@@ -325,6 +353,32 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
     }
 
+    const flushSessionEnd = async () => {
+      const sessionStart = sessionStartedAtRef.current
+      if (!sessionStart || sessionEndFlushedRef.current) return
+
+      sessionEndFlushedRef.current = true
+
+      try {
+        const idToken = await auth.currentUser?.getIdToken()
+        if (!idToken) return
+
+        await fetch('/api/presence/close-session', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            idToken,
+            sessionStartedAt: sessionStart.toISOString(),
+          }),
+          keepalive: true,
+        })
+      } catch (error) {
+        console.error('Error flushing session end:', error)
+      }
+    }
+
     const updateStatus = async (isOnline: boolean) => {
       try {
         const docRef = doc(db, 'profiles', userId)
@@ -342,21 +396,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       updateStatus(true)
     }, 120000)
 
-    // Handle tab close or navigation away
-    const handleBeforeUnload = () => {
-      const docRef = doc(db, 'profiles', userId)
-      // Note: updateDoc is async and might not complete in beforeunload,
-      // but it's the requested method.
-      updateDoc(docRef, buildPresencePayload(false)).catch(console.error)
+    // Handle tab close / hidden state more reliably than beforeunload alone.
+    const handlePageHide = () => {
+      void flushSessionEnd()
     }
 
-    window.addEventListener('beforeunload', handleBeforeUnload)
+    window.addEventListener('beforeunload', handlePageHide)
+    window.addEventListener('pagehide', handlePageHide)
 
     return () => {
       clearInterval(interval)
-      window.removeEventListener('beforeunload', handleBeforeUnload)
+      window.removeEventListener('beforeunload', handlePageHide)
+      window.removeEventListener('pagehide', handlePageHide)
       // Set to offline on logout or unmount
       updateStatus(false)
+      void flushSessionEnd()
+      clearSessionStartedAt(userId)
       sessionStartedAtRef.current = null
     }
   }, [user?.uid, profile?.id, loading])

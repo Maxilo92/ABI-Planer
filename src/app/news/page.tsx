@@ -11,10 +11,12 @@ import { CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { format } from 'date-fns'
 import { de } from 'date-fns/locale'
-import { Loader2, Trash2, ArrowRight, Eye, User as UserIcon, Smile, MessageSquare } from 'lucide-react'
+import { Loader2, Trash2, ArrowRight, Eye, User as UserIcon, Smile, MessageSquare, Sparkles } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { toDate } from '@/lib/utils'
 import { useSystemMessage } from '@/context/SystemMessageContext'
+import { useSearchParams } from 'next/navigation'
+import { Suspense } from 'react'
 import Link from 'next/link'
 import { deleteNewsImageByPath } from '@/lib/newsImageUpload'
 import { logAction } from '@/lib/logging'
@@ -25,12 +27,32 @@ import { ShareResourceButton } from '@/components/ui/share-resource-button'
 import { LandingHeader } from '@/components/layout/LandingHeader'
 import { Footer as DashboardFooter } from '@/components/layout/Footer'
 
-export default function NewsPage() {
+function NewsPageContent() {
+  const searchParams = useSearchParams()
   const { profile, user, loading: authLoading } = useAuth()
   const { pushMessage } = useSystemMessage()
   const [news, setNews] = useState<NewsEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [rootMode, setRootMode] = useState<'unknown' | 'landing' | 'dashboard'>('unknown')
+  
+  // KI-News-Erstellung via Query-Params
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
+  const [aiTitle, setAiTitle] = useState('')
+  const [aiContent, setAiContent] = useState('')
+  const [isAiGenerated, setIsAiGenerated] = useState(false)
+
+  useEffect(() => {
+    const create = searchParams.get('create')
+    if (create === 'true') {
+      setAiTitle(searchParams.get('title') || '')
+      setAiContent(searchParams.get('content') || '')
+      setIsAiGenerated(searchParams.get('ai') === 'true')
+      setIsCreateDialogOpen(true)
+      
+      // Clean up URL to avoid re-opening on refresh
+      window.history.replaceState({}, '', '/news')
+    }
+  }, [searchParams])
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -119,8 +141,27 @@ export default function NewsPage() {
 
   if (loading || rootMode === 'unknown') {
     return (
-      <div className="flex h-64 items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="space-y-8">
+        <Skeleton className="h-40 w-full rounded-2xl" />
+        <div className="grid grid-cols-1 gap-5">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="rounded-2xl bg-card p-4 md:p-5 border border-border/40 space-y-4">
+              <div className="flex justify-between items-start gap-4">
+                <Skeleton className="h-8 w-3/4" />
+                <Skeleton className="h-8 w-8 rounded-md" />
+              </div>
+              <Skeleton className="h-4 w-1/4" />
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-5/6" />
+                <Skeleton className="h-4 w-2/3" />
+              </div>
+              <div className="flex justify-end">
+                <Skeleton className="h-4 w-24" />
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     )
   }
@@ -165,6 +206,7 @@ export default function NewsPage() {
                           <div className="flex flex-wrap items-center gap-3 text-[10px] font-black uppercase tracking-widest text-primary">
                             <span className="bg-primary/10 px-3 py-1 rounded-full">{item.created_at ? format(toDate(item.created_at), 'dd. MMMM yyyy', { locale: de }) : 'Neu'}</span>
                             {isCompactEntry && <span className="bg-muted px-3 py-1 rounded-full text-muted-foreground">Kurzupdate</span>}
+                            {item.is_ai_generated && <span className="bg-amber-500/10 border border-amber-500/20 px-3 py-1 rounded-full text-amber-600 flex items-center gap-1"><Sparkles className="h-3 w-3" /> KI-unterstützt</span>}
                             <span className="flex items-center gap-1.5"><UserIcon className="h-3.5 w-3.5" /> {item.author_name || 'System'}</span>
                           </div>
 
@@ -215,7 +257,15 @@ export default function NewsPage() {
           <h1 className="text-3xl font-bold tracking-tight">Neuigkeiten</h1>
         </div>
         <div className="mt-4">
-          {isPlanner && <AddNewsDialog />}
+          {isPlanner && (
+            <AddNewsDialog 
+              forceOpen={isCreateDialogOpen}
+              onOpenChange={setIsCreateDialogOpen}
+              initialTitle={aiTitle}
+              initialContent={aiContent}
+              initialIsAiGenerated={isAiGenerated}
+            />
+          )}
         </div>
       </div>
 
@@ -263,6 +313,7 @@ export default function NewsPage() {
 
                   <div className="mb-3 mt-3 flex flex-wrap items-center gap-3 text-[11px] uppercase tracking-wide text-muted-foreground/90">
                     <span className="rounded-full bg-primary/10 px-2.5 py-1 text-primary">{item.created_at ? format(toDate(item.created_at), 'dd. MMMM yyyy', { locale: de }) : 'Neu'}</span>
+                    {item.is_ai_generated && <span className="bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded-full text-amber-600 flex items-center gap-1 font-black"><Sparkles className="h-3 w-3" /> KI-unterstützt</span>}
                     <span className="inline-flex items-center gap-1.5 normal-case tracking-normal">
                       <UserIcon className="h-3.5 w-3.5" /> {item.author_name || 'Unbekannt'}
                     </span>
@@ -367,6 +418,7 @@ export default function NewsPage() {
 
                   <div className="mb-3 mt-3 flex flex-wrap items-center gap-4 text-xs uppercase tracking-wide text-muted-foreground/90">
                     <span>{item.created_at ? format(toDate(item.created_at), 'dd. MMMM yyyy', { locale: de }) : 'Neu'}</span>
+                    {item.is_ai_generated && <span className="bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded-full text-amber-600 flex items-center gap-1 font-black"><Sparkles className="h-3 w-3" /> KI-unterstützt</span>}
                     <span className="inline-flex items-center gap-1.5 normal-case tracking-normal">
                       <UserIcon className="h-3.5 w-3.5" /> {item.author_name || 'Unbekannt'}
                     </span>
@@ -431,5 +483,27 @@ export default function NewsPage() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function NewsPage() {
+  return (
+    <Suspense fallback={
+      <div className="space-y-8">
+        <Skeleton className="h-40 w-full rounded-2xl" />
+        <div className="grid grid-cols-1 gap-5">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="rounded-2xl bg-card p-4 md:p-5 border border-border/40 space-y-4">
+              <Skeleton className="h-8 w-3/4" />
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-full" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    }>
+      <NewsPageContent />
+    </Suspense>
   )
 }

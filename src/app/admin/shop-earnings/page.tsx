@@ -176,7 +176,7 @@ export default function ShopEarningsPage() {
         <div className="space-y-2">
           <h1 className="text-3xl md:text-4xl font-black tracking-tight">Shop Einnahmen</h1>
           <p className="text-muted-foreground font-medium">
-            Eigene Shop-Einnahmen-Tabelle mit Stripe-Gebuehren (1,5% + 0,25 EUR) und 90/10-Aufteilung auf den Netto-Betrag.
+            Eigene Shop-Einnahmen-Tabelle mit Stripe-Gebuehren (1,5% + 0,25 EUR) und 90/10-Aufteilung auf den Gewinn.
           </p>
         </div>
 
@@ -257,7 +257,7 @@ export default function ShopEarningsPage() {
         <Card className="border-emerald-500/20 bg-emerald-500/5 shadow-sm">
           <CardHeader className="pb-2">
             <CardDescription className="font-bold flex items-center gap-2 text-emerald-600 dark:text-emerald-400">
-              <PiggyBank className="w-4 h-4" /> Anteil Abikasse (90% Netto)
+              <PiggyBank className="w-4 h-4" /> Anteil Abikasse (90% des Gewinns)
             </CardDescription>
             <CardTitle className="text-3xl text-emerald-700 dark:text-emerald-400">
               {formatCurrency(totals.abi)}

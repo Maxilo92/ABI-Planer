@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { 
   Plus, Search, Pencil, Trash2, GraduationCap, 
@@ -25,12 +26,25 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { toast } from 'sonner'
 import { logAction } from '@/lib/logging'
-import { TeacherRarity, LootTeacher, CardProposal } from '@/types/database'
-import { SammelkartenConfig } from '@/types/cards'
+import { TeacherRarity, LootTeacher, CardProposal, TeacherAttack } from '@/types/database'
+import { SammelkartenConfig, CardSet } from '@/types/cards'
+import { CARD_SETS } from '@/constants/cardRegistry'
 import { cn, getRarityColor, getRarityLabel } from '@/lib/utils'
 import { TeacherEditDialog } from '@/components/admin/TeacherEditDialog'
 import { NotificationPreviewDialog } from '@/components/admin/NotificationPreviewDialog'
 import { TeacherList } from '@/components/admin/TeacherList'
+import {
+  Chart as ChartJS,
+  ArcElement,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Tooltip,
+  Legend,
+  type ChartData,
+  type ChartOptions,
+} from 'chart.js'
+import { Bar, Doughnut } from 'react-chartjs-2'
 
 interface SmartNumericInputProps {
   value: number;
@@ -40,6 +54,15 @@ interface SmartNumericInputProps {
   max?: string;
   className?: string;
   isInteger?: boolean;
+}
+
+type ProposalUsageStatus = 'unknown' | 'used' | 'not_used'
+
+interface ProposalEditDraft {
+  teacher_name: string
+  hp: number
+  description: string
+  attacks: TeacherAttack[]
 }
 
 function SmartNumericInput({ 
@@ -122,6 +145,23 @@ const DEFAULT_LIMITS = {
 }
 
 const RARITY_ORDER: TeacherRarity[] = ['common', 'rare', 'epic', 'mythic', 'legendary', 'iconic']
+const RARITY_CHART_COLORS: Record<TeacherRarity, string> = {
+  common: '#94a3b8',
+  rare: '#10b981',
+  epic: '#a855f7',
+  mythic: '#ef4444',
+  legendary: '#f59e0b',
+  iconic: '#4338ca',
+}
+
+const VARIANT_CHART_COLORS: Record<string, string> = {
+  normal: '#64748b',
+  holo: '#8b5cf6',
+  shiny: '#f59e0b',
+  black_shiny_holo: '#111827',
+}
+
+ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Tooltip, Legend)
 
 export default function CardManagerPage() {
   const { user, profile } = useAuth()
@@ -134,6 +174,13 @@ export default function CardManagerPage() {
   const [saving, setSaving] = useState(false)
   
   // Teacher Pool States
+  const [selectedSetId, setSelectedSetId] = useState<string>('teacher_vol1')
+  const [isAddingSet, setIsAddingSet] = useState(false)
+  const [newSetName, setNewSetName] = useState('')
+  const [newSetId, setNewSetId] = useState('')
+  const [newSetPrefix, setNewSetPrefix] = useState('')
+  const [newSetColor, setNewSetColor] = useState('#3b82f6')
+
   const [newTeacherName, setNewTeacherName] = useState('')
   const [newTeacherRarity, setNewTeacherRarity] = useState<TeacherRarity>('common')
   const [teacherSearch, setTeacherSearch] = useState('')
@@ -143,6 +190,66 @@ export default function CardManagerPage() {
   const [isCleaningInventory, setIsCleaningInventory] = useState(false)
   const [isSyncingOpenedPacks, setIsSyncingOpenedPacks] = useState(false)
   const [isCleaningLegacyVotes, setIsCleaningLegacyVotes] = useState(false)
+  const [isMigratingInventory, setIsMigratingInventory] = useState(false)
+  const [isMigratingTeacherVol1, setIsMigratingTeacherVol1] = useState(false)
+
+  // ... (nach den anderen handle-Funktionen)
+  const handleMigrateInventory = async () => {
+    if (!user) return
+    setIsMigratingInventory(true)
+    const toastId = toast.loading("Migriere Booster-Inventar...")
+    try {
+      const migrateFn = httpsCallable(functions, 'migrateBoosterStats')
+      const result = await migrateFn()
+      const data = result.data as { success: boolean, message: string, migrated: boolean }
+      
+      if (data.success) {
+        toast.success(data.message, { id: toastId })
+      } else {
+        toast.error("Migration fehlgeschlagen.", { id: toastId })
+      }
+    } catch (error) {
+      console.error("Migration error:", error)
+      toast.error("Fehler beim Aufruf der Migration.", { id: toastId })
+    } finally {
+      setIsMigratingInventory(false)
+    }
+  }
+
+  const handleMigrateTeacherVol1 = async () => {
+    if (!user) return
+    setIsMigratingTeacherVol1(true)
+    const toastId = toast.loading("Migriere teacher_vol1 Inventar...")
+    try {
+      const migrateFn = httpsCallable(functions, 'migrateTeacherVol1Inventory')
+      const result = await migrateFn()
+      const data = result.data as {
+        success: boolean
+        stats?: {
+          inventoryDocsUpdated?: number
+          profileDocsUpdated?: number
+          cardKeysRewritten?: number
+        }
+      }
+
+      if (data.success) {
+        const inventoryUpdated = data.stats?.inventoryDocsUpdated ?? 0
+        const profilesUpdated = data.stats?.profileDocsUpdated ?? 0
+        const keysRewritten = data.stats?.cardKeysRewritten ?? 0
+        toast.success(
+          `teacher_vol1 Migration abgeschlossen. user_teachers: ${inventoryUpdated}, profiles: ${profilesUpdated}, keys: ${keysRewritten}`,
+          { id: toastId }
+        )
+      } else {
+        toast.error("teacher_vol1 Migration fehlgeschlagen.", { id: toastId })
+      }
+    } catch (error) {
+      console.error("teacher_vol1 migration error:", error)
+      toast.error("Fehler beim Aufruf der teacher_vol1 Migration.", { id: toastId })
+    } finally {
+      setIsMigratingTeacherVol1(false)
+    }
+  }
   const [isSyncing, setIsSyncing] = useState(false)
   
   const [importing, setImporting] = useState(false)
@@ -230,6 +337,24 @@ export default function CardManagerPage() {
   const [cardProposals, setCardProposals] = useState<CardProposal[]>([])
   const [proposalsLoading, setProposalsLoading] = useState(true)
   const [moderatingProposalId, setModeratingProposalId] = useState<string | null>(null)
+  const [backfillingProposalUsage, setBackfillingProposalUsage] = useState(false)
+  const [proposalModerationDialogOpen, setProposalModerationDialogOpen] = useState(false)
+  const [proposalInDialog, setProposalInDialog] = useState<CardProposal | null>(null)
+  const [proposalEditDraft, setProposalEditDraft] = useState<ProposalEditDraft | null>(null)
+  const [proposalUsageStatusDraft, setProposalUsageStatusDraft] = useState<'used' | 'not_used'>('used')
+  const [proposalAdminNoteDraft, setProposalAdminNoteDraft] = useState('')
+
+  const availableSets = useMemo(() => {
+    const dynamicSets = localConfig?.sets || {}
+    // Merge static and dynamic sets. Dynamic overrides static with same ID.
+    const merged = { ...CARD_SETS, ...dynamicSets }
+    return Object.values(merged)
+  }, [localConfig?.sets])
+
+  const currentSet = useMemo(() => {
+    if (!localConfig) return null
+    return localConfig.sets?.[selectedSetId] || CARD_SETS[selectedSetId]
+  }, [localConfig, selectedSetId])
 
   useEffect(() => {
     const unsubscribe = onSnapshot(doc(db, 'settings', 'sammelkarten'), (snapshot) => {
@@ -336,7 +461,7 @@ export default function CardManagerPage() {
       if (!prev) return null
       
       let newLootTeachers = updatedFields.loot_teachers || prev.loot_teachers;
-      if (updatedFields.loot_teachers) {
+      if (newLootTeachers) {
         const seen = new Set();
         newLootTeachers = newLootTeachers.filter(t => {
           if (!t.id || seen.has(t.id)) return false;
@@ -353,6 +478,66 @@ export default function CardManagerPage() {
   const handleManualSave = async () => {
     if (!localConfig || !isDirty) return
     await performActualSave(localConfig)
+  }
+
+  const handleMigrateToSets = async () => {
+    if (!localConfig || !localConfig.loot_teachers || localConfig.loot_teachers.length === 0) return
+    if (!confirm('Möchtest du den aktuellen Lehrer-Pool in das neue Set-System (teacher_vol1) migrieren?')) return
+
+    const teachersV1Set: CardSet = {
+      id: 'teacher_vol1',
+      name: 'Lehrer Set v1',
+      prefix: 'T1',
+      color: '#3b82f6',
+      cards: localConfig.loot_teachers
+    }
+
+    const updatedConfig: Partial<SammelkartenConfig> = {
+      sets: {
+        ...(localConfig.sets || {}),
+        'teacher_vol1': teachersV1Set
+      },
+      loot_teachers: [] // Legacy Pool leeren
+    }
+
+    handleSaveConfig(updatedConfig)
+    toast.success('Migration in Set-System erfolgreich!')
+  }
+
+  const handleAddSet = () => {
+    if (!newSetName || !newSetId || !newSetPrefix || !localConfig) return
+    
+    const newSet: CardSet = {
+      id: newSetId.trim(),
+      name: newSetName.trim(),
+      prefix: newSetPrefix.trim().toUpperCase(),
+      color: newSetColor,
+      cards: []
+    }
+
+    const updatedSets = { ...(localConfig.sets || {}), [newSet.id]: newSet }
+    handleSaveConfig({ sets: updatedSets })
+    setIsAddingSet(false)
+    setNewSetName('')
+    setNewSetId('')
+    setNewSetPrefix('')
+    setSelectedSetId(newSet.id)
+    toast.success(`Set "${newSet.name}" erstellt.`)
+  }
+
+  const handleRemoveSet = (setId: string) => {
+    if (!localConfig || !localConfig.sets?.[setId]) return
+    if (!confirm(`Möchtest du das Set "${localConfig.sets[setId].name}" wirklich löschen? Alle Karten in diesem Set gehen verloren!`)) return
+
+    const updatedSets = { ...localConfig.sets }
+    delete updatedSets[setId]
+    
+    handleSaveConfig({ sets: updatedSets })
+    if (selectedSetId === setId) {
+      const firstId = Object.keys(updatedSets)[0] || ''
+      setSelectedSetId(firstId)
+    }
+    toast.success('Set gelöscht.')
   }
 
   const handleMigrate = async () => {
@@ -391,17 +576,26 @@ export default function CardManagerPage() {
   }
 
   const handleAddTeacher = async () => {
-    if (!newTeacherName.trim() || !localConfig) return
+    if (!newTeacherName.trim() || !localConfig || !selectedSetId) return
     
-    const id = generateTeacherId(newTeacherName.trim(), localConfig.loot_teachers.map(t => t.id))
+    if (!currentSet) {
+      toast.error('Kein Set ausgewählt.')
+      return
+    }
+
+    const id = generateTeacherId(newTeacherName.trim(), currentSet.cards.map(t => t.id))
     const newTeacher: LootTeacher = {
       id,
       name: newTeacherName.trim(),
       rarity: newTeacherRarity
     }
     
-    const updatedTeachers = [...(localConfig.loot_teachers || []), newTeacher]
-    handleSaveConfig({ loot_teachers: updatedTeachers })
+    const updatedCards = [...(currentSet.cards || []), newTeacher]
+    const updatedSets = {
+      ...(localConfig.sets || {}),
+      [selectedSetId]: { ...currentSet, cards: updatedCards }
+    }
+    handleSaveConfig({ sets: updatedSets })
     setNewTeacherName('')
   }
 
@@ -409,12 +603,16 @@ export default function CardManagerPage() {
     if (!confirm(`Möchtest du ${teacher.name} wirklich entfernen?`)) return
     
     setLocalConfig(prev => {
-      if (!prev) return prev
-      const updatedTeachers = prev.loot_teachers.filter(t => t.id !== teacher.id)
-      return { ...prev, loot_teachers: updatedTeachers }
+      if (!prev || !selectedSetId || !currentSet) return prev
+
+      const updatedCards = currentSet.cards.filter(t => t.id !== teacher.id)
+      return { 
+        ...prev, 
+        sets: { ...(prev.sets || {}), [selectedSetId]: { ...currentSet, cards: updatedCards } } 
+      }
     })
     setIsDirty(true)
-  }, [])
+  }, [selectedSetId, currentSet])
 
   const handleEditTeacher = useCallback((teacher: LootTeacher) => {
     setEditingTeacher({ ...teacher })
@@ -425,7 +623,9 @@ export default function CardManagerPage() {
     updatedTeacher: LootTeacher,
     options?: { skipRaritySync?: boolean }
   ) => {
-    const oldTeacher = localConfig?.loot_teachers.find(t => t.id === updatedTeacher.id)
+    if (!selectedSetId || !currentSet) return
+
+    const oldTeacher = currentSet.cards.find(t => t.id === updatedTeacher.id)
     const rarityChanged = oldTeacher && oldTeacher.rarity !== updatedTeacher.rarity
     const shouldRunRaritySync = Boolean(rarityChanged && !options?.skipRaritySync)
 
@@ -436,20 +636,24 @@ export default function CardManagerPage() {
     }
 
     setLocalConfig(prev => {
-      if (!prev) return prev
-      const updatedTeachers = [...prev.loot_teachers]
-      const index = updatedTeachers.findIndex(t => t.id === updatedTeacher.id)
+      if (!prev || !selectedSetId || !currentSet) return prev
+
+      const updatedCards = [...currentSet.cards]
+      const index = updatedCards.findIndex(t => t.id === updatedTeacher.id)
       if (index !== -1) {
-        updatedTeachers[index] = updatedTeacher
+        updatedCards[index] = updatedTeacher
       }
-      return { ...prev, loot_teachers: updatedTeachers }
+      return { 
+        ...prev, 
+        sets: { ...(prev.sets || {}), [selectedSetId]: { ...currentSet, cards: updatedCards } } 
+      }
     })
     setIsDirty(true)
     setIsEditDialogOpen(false)
 
     if (shouldRunRaritySync) {
       const rarityChangeFn = httpsCallable<
-        { teacherId: string, teacherName: string },
+        { teacherId: string, teacherName: string, setId?: string },
         { success: boolean, usersUpdated: number, totalCompensatedBoosters: number, notificationsCreated?: number }
       >(functions, 'handleTeacherRarityChange')
       
@@ -458,7 +662,8 @@ export default function CardManagerPage() {
       try {
         const result = await rarityChangeFn({ 
           teacherId: updatedTeacher.id, 
-          teacherName: updatedTeacher.name 
+          teacherName: updatedTeacher.name,
+          setId: selectedSetId
         })
         
         const { usersUpdated, totalCompensatedBoosters, notificationsCreated } = result.data
@@ -471,6 +676,7 @@ export default function CardManagerPage() {
           await logAction('TEACHERS_RARITY_SYNC', user.uid, profile?.full_name, {
             teacherId: updatedTeacher.id,
             teacherName: updatedTeacher.name,
+            setId: selectedSetId,
             usersUpdated,
             totalCompensatedBoosters
           })
@@ -480,7 +686,7 @@ export default function CardManagerPage() {
         toast.error('Fehler bei der Inventar-Bereinigung nach Seltenheitsänderung.', { id: toastId })
       }
     }
-  }, [localConfig, user, profile])
+  }, [localConfig, user, profile, selectedSetId])
 
   const runRemoveTeacherFromAlbums = useCallback(async (teacher: LootTeacher, compensate: boolean) => {
     const removeFn = httpsCallable<
@@ -534,8 +740,9 @@ export default function CardManagerPage() {
   }, [runRemoveTeacherFromAlbums])
 
   const handleCleanupDuplicates = () => {
-    if (!localConfig) return
-    const teachers = localConfig.loot_teachers
+    if (!localConfig || !selectedSetId || !currentSet) return
+
+    const teachers = currentSet.cards
     const seenNames = new Map<string, string>() // name -> canonicalId
     const canonicalTeachers: LootTeacher[] = []
     let cleanedCount = 0
@@ -551,12 +758,14 @@ export default function CardManagerPage() {
     })
 
     if (cleanedCount > 0) {
-      handleSaveConfig({ loot_teachers: canonicalTeachers })
+      const updatedSets = { ...(localConfig.sets || {}), [selectedSetId]: { ...currentSet, cards: canonicalTeachers } }
+      handleSaveConfig({ sets: updatedSets })
       toast.success(`${cleanedCount} Duplikate (nach Name) entfernt.`)
       
       if (user) {
         logAction('CLEANUP_POOL', user.uid, profile?.full_name, {
-          cleanedCount
+          cleanedCount,
+          setId: selectedSetId
         })
       }
     } else {
@@ -687,7 +896,15 @@ export default function CardManagerPage() {
   const buildDryRunNotifications = useCallback((details: RarityFixDetail[]): PreviewNotification[] => {
     if (!localConfig) return []
 
-    const teacherNameById = new Map(localConfig.loot_teachers.map((teacher) => [teacher.id, teacher.name]))
+    const teacherNameById = new Map<string, string>()
+    if (localConfig.loot_teachers) {
+      localConfig.loot_teachers.forEach(t => teacherNameById.set(t.id, t.name))
+    }
+    if (localConfig.sets) {
+      Object.values(localConfig.sets).forEach(set => {
+        set.cards.forEach(t => teacherNameById.set(t.id, t.name))
+      })
+    }
     const groupedByUser = new Map<string, PreviewNotification>()
 
     details.forEach((detail) => {
@@ -866,36 +1083,78 @@ export default function CardManagerPage() {
           return
         }
 
-        const headers = rows[0].split(/[;,]/).map(h => h.trim().toLowerCase())
+        // Robust CSV row parser that handles quotes and escaped characters
+        const parseCSVRow = (row: string) => {
+          const result = [];
+          let current = '';
+          let inQuotes = false;
+          for (let i = 0; i < row.length; i++) {
+            const char = row[i];
+            if (char === '"' && inQuotes && row[i+1] === '"') {
+              current += '"';
+              i++;
+            } else if (char === '"') {
+              inQuotes = !inQuotes;
+            } else if (char === ',' && !inQuotes) {
+              result.push(current);
+              current = '';
+            } else {
+              current += char;
+            }
+          }
+          result.push(current);
+          return result;
+        };
+
+        const headers = parseCSVRow(rows[0]).map(h => h.trim().toLowerCase())
         const nameIdx = headers.indexOf('name')
         const rarityIdx = headers.indexOf('rarity') === -1 ? headers.indexOf('seltenheit') : headers.indexOf('rarity')
         const hpIdx = headers.indexOf('hp')
+        const descIdx = headers.indexOf('description') === -1 ? headers.indexOf('beschreibung') : headers.indexOf('description')
+        const attacksIdx = headers.indexOf('attacks') === -1 ? headers.indexOf('attacken') : headers.indexOf('attacks')
+        const idIdx = headers.indexOf('id')
         
         if (nameIdx === -1) {
-          toast.error("Kopfzeile 'name' nicht gefunden. Bitte nutze 'name,rarity,hp' (optional).")
+          toast.error("Kopfzeile 'name' nicht gefunden. Bitte nutze 'name,rarity,hp,description,attacks' (optional).")
           return
         }
 
         const newTeachers: LootTeacher[] = []
-        const existingIds = localConfig?.loot_teachers.map(t => t.id) || []
+        const currentSet = localConfig?.sets?.[selectedSetId]
+        const existingIds = currentSet?.cards.map(t => t.id) || []
         const currentBatchIds: string[] = []
 
         for (let i = 1; i < rows.length; i++) {
-          const cols = rows[i].split(/[;,]/).map(c => c.trim().replace(/^["']|["']$/g, ''))
+          const cols = parseCSVRow(rows[i]).map(c => c.trim())
           const name = cols[nameIdx]
           if (!name) continue
 
           const rarity = (cols[rarityIdx] as TeacherRarity) || 'common'
           const hp = hpIdx !== -1 ? parseInt(cols[hpIdx]) : undefined
+          const description = descIdx !== -1 ? cols[descIdx] : undefined
+          let attacks: any[] | undefined = undefined;
           
-          const existing = localConfig?.loot_teachers.find(t => t.name.toLowerCase() === name.toLowerCase())
-          const id = existing?.id || generateTeacherId(name, [...existingIds, ...currentBatchIds])
+          if (attacksIdx !== -1 && cols[attacksIdx]) {
+            try {
+              // Handle both JSON string and potential double-escaped strings
+              const rawAttacks = cols[attacksIdx].startsWith('[') ? cols[attacksIdx] : cols[attacksIdx].replace(/^"|"$/g, '').replace(/""/g, '"');
+              attacks = JSON.parse(rawAttacks);
+            } catch (e) {
+              console.warn("Failed to parse attacks for", name, e);
+            }
+          }
+          
+          const id = (idIdx !== -1 && cols[idIdx]) 
+            ? cols[idIdx] 
+            : generateTeacherId(name, [...existingIds, ...currentBatchIds])
           
           newTeachers.push({
             id,
             name,
-            rarity: ['common', 'rare', 'epic', 'mythic', 'legendary'].includes(rarity) ? rarity : 'common',
-            hp: isNaN(hp as any) ? undefined : hp
+            rarity: ['common', 'rare', 'epic', 'mythic', 'legendary', 'iconic'].includes(rarity) ? rarity : 'common',
+            hp: isNaN(hp as any) ? undefined : hp,
+            description,
+            attacks
           })
           currentBatchIds.push(id)
         }
@@ -911,42 +1170,115 @@ export default function CardManagerPage() {
     if (e.target) e.target.value = ''
   }
 
+  const handleExportCSV = () => {
+    const currentSet = localConfig?.sets?.[selectedSetId]
+    if (!currentSet?.cards || currentSet.cards.length === 0) {
+      toast.error("Keine Lehrer in diesem Set zum Exportieren vorhanden.")
+      return
+    }
+
+    const csvEscape = (val: any) => {
+      if (val === null || val === undefined) return '""';
+      const str = typeof val === 'object' ? JSON.stringify(val) : String(val);
+      return `"${str.replace(/"/g, '""')}"`;
+    };
+
+    try {
+      const headers = ['id', 'name', 'rarity', 'hp', 'description', 'attacks']
+      const rows = currentSet.cards.map(t => [
+        csvEscape(t.id),
+        csvEscape(t.name),
+        csvEscape(t.rarity),
+        csvEscape(t.hp),
+        csvEscape(t.description),
+        csvEscape(t.attacks)
+      ].join(','))
+
+      const csvContent = [headers.join(','), ...rows].join('\n')
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.setAttribute('href', url)
+      link.setAttribute('download', `${currentSet.id}_export_${new Date().toISOString().split('T')[0]}.csv`)
+      link.style.visibility = 'hidden'
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      toast.success(`${currentSet.cards.length} Lehrer aus Set "${currentSet.name}" als CSV exportiert!`)
+    } catch (err) {
+      console.error("Error exporting CSV:", err)
+      toast.error("Fehler beim Exportieren der CSV-Datei.")
+    }
+  }
+
+  const handleExportJSON = () => {
+    const currentSet = localConfig?.sets?.[selectedSetId]
+    if (!currentSet?.cards || currentSet.cards.length === 0) {
+      toast.error("Keine Lehrer in diesem Set zum Exportieren vorhanden.")
+      return
+    }
+
+    try {
+      const data = JSON.stringify(currentSet.cards, null, 2)
+      const blob = new Blob([data], { type: 'application/json' })
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.setAttribute('href', url)
+      link.setAttribute('download', `${currentSet.id}_backup_${new Date().toISOString().split('T')[0]}.json`)
+      link.style.visibility = 'hidden'
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      toast.success(`JSON Backup für Set "${currentSet.name}" erstellt!`)
+    } catch (err) {
+      console.error("Error exporting JSON:", err)
+      toast.error("Fehler beim Exportieren der JSON-Datei.")
+    }
+  }
+
   const handleBulkImport = async (mode: 'merge' | 'overwrite') => {
-    if (!localConfig || importing) return
+    if (!localConfig || !selectedSetId || importing) return
+    const currentSet = localConfig.sets?.[selectedSetId]
+    if (!currentSet) return
     
     setImporting(true)
     try {
-      let finalTeachers = mode === 'overwrite' ? [] : [...localConfig.loot_teachers]
+      let finalCards = mode === 'overwrite' ? [] : [...currentSet.cards]
       
       let addedCount = 0
       let updatedCount = 0
 
       for (const t of parsedTeachers) {
-        const existingIdx = finalTeachers.findIndex(lt => lt.id === t.id)
+        const existingIdx = finalCards.findIndex(lt => lt.id === t.id)
         if (existingIdx !== -1) {
-          finalTeachers[existingIdx] = { ...finalTeachers[existingIdx], ...t }
+          finalCards[existingIdx] = { ...finalCards[existingIdx], ...t }
           updatedCount++
         } else {
-          finalTeachers.push(t)
+          finalCards.push(t)
           addedCount++
         }
       }
       
       const seen = new Set()
-      finalTeachers = finalTeachers.filter(t => {
+      finalCards = finalCards.filter(t => {
         if (seen.has(t.id)) return false
         seen.add(t.id)
         return true
       })
 
-      handleSaveConfig({ loot_teachers: finalTeachers })
+      const updatedSets = {
+        ...localConfig.sets,
+        [selectedSetId]: { ...currentSet, cards: finalCards }
+      }
+      handleSaveConfig({ sets: updatedSets })
       setIsImportDialogOpen(false)
       
-      toast.success(`${addedCount} neue Lehrer importiert, ${updatedCount} aktualisiert!`)
+      toast.success(`${addedCount} neue Lehrer in Set "${currentSet.name}" importiert, ${updatedCount} aktualisiert!`)
       
       if (user) {
         await logAction('CARDS_BULK_IMPORT', user.uid, profile?.full_name, {
           mode,
+          setId: selectedSetId,
           added: addedCount,
           updated: updatedCount
         })
@@ -1021,32 +1353,32 @@ export default function CardManagerPage() {
   }
 
   const filteredTeachers = useMemo(() => {
-    const teachers = [...(localConfig?.loot_teachers || [])].filter(t => 
+    const teachers = [...(currentSet?.cards || [])].filter(t => 
       t.name.toLowerCase().includes(teacherSearch.toLowerCase())
     )
 
     return teachers.sort((a, b) => {
       if (teacherSort === 'name-asc') return a.name.localeCompare(b.name)
       if (teacherSort === 'name-desc') return b.name.localeCompare(a.name)
-      
+
       const rA = RARITY_ORDER.indexOf(a.rarity)
       const rB = RARITY_ORDER.indexOf(b.rarity)
-      
+
       if (teacherSort === 'rarity-asc') return rA - rB
       if (teacherSort === 'rarity-desc') return rB - rA
-      
+
       return 0
     })
-  }, [localConfig?.loot_teachers, teacherSearch, teacherSort])
-
+  }, [currentSet, teacherSearch, teacherSort])
   const rarityDistribution = useMemo(() => {
-    if (!localConfig) return {}
+    if (!currentSet) return {}
+
     const dist: Record<string, number> = {}
-    localConfig.loot_teachers.forEach(t => {
+    currentSet.cards.forEach(t => {
       dist[t.rarity] = (dist[t.rarity] || 0) + 1
     })
     return dist
-  }, [localConfig])
+  }, [currentSet])
 
   const proposalStatusCounts = useMemo(() => {
     return cardProposals.reduce((acc, proposal) => {
@@ -1055,27 +1387,271 @@ export default function CardManagerPage() {
     }, { pending: 0, accepted: 0, rejected: 0 } as Record<'pending' | 'accepted' | 'rejected', number>)
   }, [cardProposals])
 
+  const rarityChartData = useMemo<ChartData<'doughnut', number[], string> | null>(() => {
+    if (!currentSet || currentSet.cards.length === 0) return null
+
+    const labels = RARITY_ORDER.map((rarity) => getRarityLabel(rarity))
+    const values = RARITY_ORDER.map((rarity) => rarityDistribution[rarity] || 0)
+
+    return {
+      labels,
+      datasets: [
+        {
+          label: 'Karten',
+          data: values,
+          backgroundColor: RARITY_ORDER.map((rarity) => RARITY_CHART_COLORS[rarity]),
+          borderColor: '#ffffff',
+          borderWidth: 2,
+          hoverOffset: 6,
+        },
+      ],
+    }
+  }, [currentSet, rarityDistribution])
+
+  const proposalStatusChartData = useMemo<ChartData<'bar', number[], string>>(() => ({
+    labels: ['Offen', 'Angenommen', 'Abgelehnt'],
+    datasets: [
+      {
+        label: 'Vorschläge',
+        data: [proposalStatusCounts.pending, proposalStatusCounts.accepted, proposalStatusCounts.rejected],
+        backgroundColor: ['#f59e0b', '#10b981', '#ef4444'],
+        borderRadius: 8,
+        borderSkipped: false,
+      },
+    ],
+  }), [proposalStatusCounts])
+
+  const simRarityChartData = useMemo<ChartData<'bar', number[], string> | null>(() => {
+    if (!simResults) return null
+
+    return {
+      labels: RARITY_ORDER.map((rarity) => getRarityLabel(rarity)),
+      datasets: [
+        {
+          label: 'Getroffene Karten',
+          data: RARITY_ORDER.map((rarity) => simResults.rarityCounts[rarity] || 0),
+          backgroundColor: RARITY_ORDER.map((rarity) => RARITY_CHART_COLORS[rarity]),
+          borderRadius: 8,
+          borderSkipped: false,
+        },
+      ],
+    }
+  }, [simResults])
+
+  const simVariantChartData = useMemo<ChartData<'bar', number[], string> | null>(() => {
+    if (!simResults) return null
+
+    const variantOrder = ['normal', 'holo', 'shiny', 'black_shiny_holo']
+    const labels = variantOrder.map((variant) => variant.replace(/_/g, ' '))
+    const values = variantOrder.map((variant) => simResults.variantCounts[variant] || 0)
+
+    return {
+      labels,
+      datasets: [
+        {
+          label: 'Varianten',
+          data: values,
+          backgroundColor: variantOrder.map((variant) => VARIANT_CHART_COLORS[variant]),
+          borderRadius: 8,
+          borderSkipped: false,
+        },
+      ],
+    }
+  }, [simResults])
+
+  const baseBarOptions: ChartOptions<'bar'> = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        display: false,
+      },
+      tooltip: {
+        backgroundColor: '#0f172a',
+        titleColor: '#ffffff',
+        bodyColor: '#ffffff',
+        displayColors: false,
+      },
+    },
+    scales: {
+      x: {
+        beginAtZero: true,
+        grid: {
+          color: 'rgba(100, 116, 139, 0.15)',
+        },
+        ticks: {
+          color: '#64748b',
+          font: {
+            size: 10,
+            weight: 600,
+          },
+        },
+      },
+      y: {
+        grid: {
+          display: false,
+        },
+        ticks: {
+          color: '#64748b',
+          font: {
+            size: 10,
+            weight: 600,
+          },
+        },
+      },
+    },
+  }
+
+  const proposalStatusChartOptions = useMemo<ChartOptions<'bar'>>(() => ({
+    ...baseBarOptions,
+    indexAxis: 'y',
+    scales: {
+      x: {
+        beginAtZero: true,
+        grid: {
+          color: 'rgba(100, 116, 139, 0.15)',
+        },
+        ticks: {
+          color: '#64748b',
+          font: {
+            size: 10,
+            weight: 600,
+          },
+        },
+      },
+      y: {
+        grid: {
+          display: false,
+        },
+        ticks: {
+          color: '#64748b',
+          font: {
+            size: 10,
+            weight: 600,
+          },
+        },
+      },
+    },
+  }), [])
+
+  const simulationBarOptions = useMemo<ChartOptions<'bar'>>(() => ({
+    ...baseBarOptions,
+    indexAxis: 'y',
+  }), [])
+
+  const rarityChartOptions = useMemo<ChartOptions<'doughnut'>>(() => ({
+    responsive: true,
+    maintainAspectRatio: false,
+    cutout: '68%',
+    plugins: {
+      legend: {
+        position: 'bottom',
+        labels: {
+          color: '#64748b',
+          boxWidth: 10,
+          boxHeight: 10,
+          usePointStyle: true,
+          pointStyle: 'circle',
+          padding: 16,
+          font: {
+            size: 10,
+            weight: 600,
+          },
+        },
+      },
+      tooltip: {
+        backgroundColor: '#0f172a',
+        titleColor: '#ffffff',
+        bodyColor: '#ffffff',
+      },
+    },
+  }), [])
+
   const getProposalStatusBadge = (status: CardProposal['status']) => {
     if (status === 'accepted') return <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20">Angenommen</Badge>
     if (status === 'rejected') return <Badge variant="destructive">Abgelehnt</Badge>
     return <Badge variant="secondary">Offen</Badge>
   }
 
+  const getProposalUsageBadge = (usageStatus?: ProposalUsageStatus) => {
+    if (usageStatus === 'used') {
+      return <Badge className="bg-blue-500/10 text-blue-600 border-blue-500/20">Genutzt</Badge>
+    }
+    if (usageStatus === 'not_used') {
+      return <Badge variant="outline">Nicht genutzt</Badge>
+    }
+    if (usageStatus === 'unknown') {
+      return <Badge variant="outline">Unbekannt (Altfall)</Badge>
+    }
+    return null
+  }
+
+  const buildProposalDraft = (proposal: CardProposal): ProposalEditDraft => {
+    const normalizedAttacks = (proposal.attacks || [])
+      .slice(0, 2)
+      .map((attack) => ({
+        name: attack.name || '',
+        damage: Number.isFinite(Number(attack.damage)) ? Number(attack.damage) : 0,
+        description: attack.description || '',
+      }))
+
+    if (normalizedAttacks.length === 0) {
+      normalizedAttacks.push({ name: '', damage: 0, description: '' })
+    }
+
+    return {
+      teacher_name: proposal.teacher_name || '',
+      hp: Number.isFinite(Number(proposal.hp)) ? Number(proposal.hp) : 60,
+      description: proposal.description || '',
+      attacks: normalizedAttacks,
+    }
+  }
+
+  const updateProposalAttackDraft = (index: number, field: keyof TeacherAttack, value: string | number) => {
+    setProposalEditDraft((prev) => {
+      if (!prev) return prev
+      const nextAttacks = [...prev.attacks]
+      const existing = nextAttacks[index] || { name: '', damage: 0, description: '' }
+      nextAttacks[index] = {
+        ...existing,
+        [field]: value,
+      }
+
+      return {
+        ...prev,
+        attacks: nextAttacks,
+      }
+    })
+  }
+
+  const openAcceptProposalDialog = (proposal: CardProposal) => {
+    setProposalInDialog(proposal)
+    setProposalEditDraft(buildProposalDraft(proposal))
+    setProposalUsageStatusDraft('used')
+    setProposalAdminNoteDraft(proposal.admin_note || '')
+    setProposalModerationDialogOpen(true)
+  }
+
+  const resetProposalModerationDialog = () => {
+    setProposalModerationDialogOpen(false)
+    setProposalInDialog(null)
+    setProposalEditDraft(null)
+    setProposalUsageStatusDraft('used')
+    setProposalAdminNoteDraft('')
+  }
+
   const handleModerateProposal = async (proposal: CardProposal, action: 'accept' | 'reject') => {
     if (!user) return
 
-    const rewardPacks = 2
-    const shouldContinue = action === 'accept'
-      ? confirm(`Vorschlag von ${proposal.created_by_name} annehmen und ${rewardPacks} Booster als Belohnung gutschreiben?`)
-      : confirm(`Vorschlag von ${proposal.created_by_name} ablehnen?`)
+    if (action === 'accept') {
+      openAcceptProposalDialog(proposal)
+      return
+    }
 
+    const shouldContinue = confirm(`Vorschlag von ${proposal.created_by_name} ablehnen?`)
     if (!shouldContinue) return
 
-    const adminNote = window.prompt(
-      action === 'accept' ? 'Optionale Admin-Notiz (wird beim Vorschlag gespeichert):' : 'Ablehnungsgrund / Notiz (optional):',
-      proposal.admin_note || ''
-    )
-
+    const adminNote = window.prompt('Ablehnungsgrund / Notiz (optional):', proposal.admin_note || '')
     if (adminNote === null) return
 
     setModeratingProposalId(proposal.id)
@@ -1085,9 +1661,12 @@ export default function CardManagerPage() {
         action: 'accept' | 'reject'
         adminNote?: string
         rewardPacks?: number
+        usageStatus?: 'used' | 'not_used'
+        editedProposal?: ProposalEditDraft
       }, {
         success: boolean
         status: 'accepted' | 'rejected'
+        usageStatus: ProposalUsageStatus
         rewardGranted: number
       }>(functions, 'moderateCardProposal')
 
@@ -1095,14 +1674,11 @@ export default function CardManagerPage() {
         proposalId: proposal.id,
         action,
         adminNote,
-        rewardPacks,
+        rewardPacks: 0,
+        usageStatus: 'not_used',
       })
 
-      if (action === 'accept') {
-        toast.success(`Vorschlag angenommen. Belohnung: ${result.data.rewardGranted} Booster.`)
-      } else {
-        toast.success('Vorschlag abgelehnt.')
-      }
+      toast.success('Vorschlag abgelehnt.')
 
       await logAction('CARDS_SETTINGS_UPDATED', user.uid, profile?.full_name, {
         section: 'card_proposals',
@@ -1115,6 +1691,101 @@ export default function CardManagerPage() {
       toast.error(error?.message || 'Fehler bei der Moderation des Vorschlags.')
     } finally {
       setModeratingProposalId(null)
+    }
+  }
+
+  const handleAcceptProposalFromDialog = async () => {
+    if (!user || !proposalInDialog || !proposalEditDraft) return
+
+    const cleanedAttacks = proposalEditDraft.attacks
+      .slice(0, 2)
+      .map((attack) => ({
+        name: (attack.name || '').trim(),
+        damage: Number.isFinite(Number(attack.damage)) ? Number(attack.damage) : 0,
+        description: (attack.description || '').trim(),
+      }))
+      .filter((attack) => attack.name.length > 0)
+
+    if (proposalEditDraft.teacher_name.trim().length < 2) {
+      toast.error('Lehrername ist zu kurz.')
+      return
+    }
+
+    if (cleanedAttacks.length < 1) {
+      toast.error('Mindestens ein Angriff mit Name ist erforderlich.')
+      return
+    }
+
+    const rewardPacks = proposalUsageStatusDraft === 'used' ? 2 : 0
+    setModeratingProposalId(proposalInDialog.id)
+
+    try {
+      const moderateFn = httpsCallable<{
+        proposalId: string
+        action: 'accept' | 'reject'
+        adminNote?: string
+        rewardPacks?: number
+        usageStatus?: 'used' | 'not_used'
+        editedProposal?: ProposalEditDraft
+      }, {
+        success: boolean
+        status: 'accepted' | 'rejected'
+        usageStatus: ProposalUsageStatus
+        rewardGranted: number
+      }>(functions, 'moderateCardProposal')
+
+      const result = await moderateFn({
+        proposalId: proposalInDialog.id,
+        action: 'accept',
+        adminNote: proposalAdminNoteDraft,
+        rewardPacks,
+        usageStatus: proposalUsageStatusDraft,
+        editedProposal: {
+          teacher_name: proposalEditDraft.teacher_name.trim(),
+          hp: Math.max(10, Math.min(300, Math.round(Number(proposalEditDraft.hp) || 60))),
+          description: proposalEditDraft.description,
+          attacks: cleanedAttacks,
+        },
+      })
+
+      toast.success(
+        result.data.rewardGranted > 0
+          ? `Vorschlag angenommen und genutzt. Belohnung: ${result.data.rewardGranted} Booster.`
+          : 'Vorschlag angenommen (nicht genutzt, keine Booster).'
+      )
+
+      await logAction('CARDS_SETTINGS_UPDATED', user.uid, profile?.full_name, {
+        section: 'card_proposals',
+        proposal_id: proposalInDialog.id,
+        moderation_action: 'accept',
+        usage_status: proposalUsageStatusDraft,
+        reward_granted: result.data.rewardGranted,
+      })
+
+      resetProposalModerationDialog()
+    } catch (error: any) {
+      console.error('Error moderating proposal:', error)
+      toast.error(error?.message || 'Fehler bei der Moderation des Vorschlags.')
+    } finally {
+      setModeratingProposalId(null)
+    }
+  }
+
+  const handleBackfillProposalUsage = async () => {
+    if (!user) return
+    setBackfillingProposalUsage(true)
+    try {
+      const backfillFn = httpsCallable<void, { success: boolean; updated: number }>(
+        functions,
+        'backfillCardProposalUsageStatus'
+      )
+      const result = await backfillFn()
+      toast.success(`Altfaelle aktualisiert: ${result.data.updated} Vorschlaege.`)
+    } catch (error: any) {
+      console.error('Error backfilling card proposals:', error)
+      toast.error(error?.message || 'Backfill konnte nicht ausgefuehrt werden.')
+    } finally {
+      setBackfillingProposalUsage(false)
     }
   }
 
@@ -1226,13 +1897,46 @@ export default function CardManagerPage() {
                 </TabsList>
 
                 <TabsContent value="teachers" className="mt-6">
+                  {/* Set Selector & Management */}
+                  <div className="flex flex-wrap items-center gap-3 mb-6 bg-muted/30 p-4 rounded-xl border border-border/60">
+                    <div className="flex-1 min-w-[200px] space-y-1.5">
+                      <Label className="text-[10px] font-bold uppercase text-muted-foreground flex items-center gap-2">
+                        <Database className="h-3 w-3" /> Aktuelles Set
+                      </Label>
+                      <select
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                        value={selectedSetId}
+                        onChange={(e) => setSelectedSetId(e.target.value)}
+                      >
+                        {availableSets.map(set => (
+                          <option key={set.id} value={set.id}>{set.name} ({set.prefix})</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="flex items-end gap-2">
+                      <Button variant="outline" size="sm" onClick={() => setIsAddingSet(true)} className="h-10 gap-2">
+                        <Plus className="h-4 w-4" /> Neues Set
+                      </Button>
+                      {localConfig.loot_teachers && localConfig.loot_teachers.length > 0 && (
+                        <Button variant="outline" size="sm" onClick={handleMigrateToSets} className="h-10 gap-2 bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 border-amber-500/30">
+                          <ArrowLeftRight className="h-4 w-4" /> Migration (Legacy)
+                        </Button>
+                      )}
+                      {selectedSetId && !CARD_SETS[selectedSetId] && (
+                        <Button variant="outline" size="sm" onClick={() => handleRemoveSet(selectedSetId)} className="h-10 text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/30">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+
                   <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
                     <Card className="lg:col-span-2">
                       <CardHeader>
                         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                           <CardTitle className="flex items-center gap-2">
                             <GraduationCap className="h-5 w-5 text-primary" />
-                            Lehrer-Lootpool
+                            Karten-Pool: {currentSet?.name || 'Set wählen'}
                           </CardTitle>
                           <div className="flex flex-wrap items-center gap-2">
                             <input
@@ -1270,10 +1974,38 @@ export default function CardManagerPage() {
                               {isCleaningLegacyVotes ? <Loader2 className="h-3 w-3 animate-spin mr-2" /> : <Trash2 className="h-3 w-3 mr-2" />}
                               Cleanup Legacy
                             </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={handleMigrateInventory}
+                              disabled={isMigratingInventory}
+                              title="Migriert booster_stats Felder in das neue inventory Map-System"
+                            >
+                              {isMigratingInventory ? <Loader2 className="h-3 w-3 animate-spin mr-2" /> : <Database className="h-3 w-3 mr-2" />}
+                              Migrate Inventory
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={handleMigrateTeacherVol1}
+                              disabled={isMigratingTeacherVol1}
+                              title="Migriert alte teachers_v1/Legacy-Karten auf teacher_vol1"
+                            >
+                              {isMigratingTeacherVol1 ? <Loader2 className="h-3 w-3 animate-spin mr-2" /> : <Database className="h-3 w-3 mr-2" />}
+                              Migrate teacher_vol1
+                            </Button>
                             <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} disabled={importing}>
 
                               {importing ? <Loader2 className="h-3 w-3 animate-spin mr-2" /> : <Upload className="h-3 w-3 mr-2" />}
                               Bulk Import
+                            </Button>
+                            <Button variant="outline" size="sm" onClick={handleExportCSV}>
+                              <TrendingUp className="h-3.5 w-3.5 rotate-90 mr-2" />
+                              Full CSV Export
+                            </Button>
+                            <Button variant="outline" size="sm" onClick={handleExportJSON}>
+                              <RefreshCw className="h-3.5 w-3.5 mr-2" />
+                              JSON Backup
                             </Button>
                             <Button
                               variant="outline"
@@ -1286,7 +2018,7 @@ export default function CardManagerPage() {
                               Mismatches prüfen
                             </Button>
                             <Badge variant="secondary">
-                              {localConfig!.loot_teachers.length} Lehrer
+                              {currentSet?.cards.length || 0} Karten
                             </Badge>
                           </div>
                         </div>
@@ -1415,7 +2147,7 @@ export default function CardManagerPage() {
                                   rarity === 'mythic' ? 'bg-red-500' : 
                                   rarity === 'legendary' ? 'bg-amber-500' : 'bg-indigo-950 dark:bg-indigo-400'
                                 )} 
-                                style={{ width: `${((rarityDistribution[rarity] || 0) / (localConfig!.loot_teachers.length || 1)) * 100}%` }}
+                                style={{ width: `${((rarityDistribution[rarity] || 0) / (localConfig.sets?.[selectedSetId]?.cards.length || 1)) * 100}%` }}
                               />
                             </div>
                           </div>
@@ -1607,6 +2339,15 @@ export default function CardManagerPage() {
                           <Badge variant="secondary">Offen: {proposalStatusCounts.pending}</Badge>
                           <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20">Angenommen: {proposalStatusCounts.accepted}</Badge>
                           <Badge variant="destructive">Abgelehnt: {proposalStatusCounts.rejected}</Badge>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={handleBackfillProposalUsage}
+                            disabled={backfillingProposalUsage}
+                            className="h-7 text-[11px]"
+                          >
+                            {backfillingProposalUsage ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Altfaelle backfill'}
+                          </Button>
                         </div>
                       </div>
                     </CardHeader>
@@ -1631,9 +2372,15 @@ export default function CardManagerPage() {
                                     <p className="text-xs text-muted-foreground">
                                       von {proposal.created_by_name || 'Unbekannt'} • {new Date(proposal.created_at).toLocaleDateString('de-DE')}
                                     </p>
+                                    {proposal.status !== 'pending' && (
+                                      <p className="text-[11px] text-muted-foreground mt-1">
+                                        Belohnung: {proposal.reward_packs_awarded ?? (proposal.reward_claimed ? 2 : 0)} Booster
+                                      </p>
+                                    )}
                                   </div>
                                   <div className="flex items-center gap-2">
                                     {getProposalStatusBadge(proposal.status)}
+                                    {getProposalUsageBadge(proposal.usage_status)}
                                     <Badge variant="outline">HP {proposal.hp}</Badge>
                                     {proposal.status === 'pending' && (
                                       <>
@@ -1652,7 +2399,7 @@ export default function CardManagerPage() {
                                           onClick={() => handleModerateProposal(proposal, 'accept')}
                                           disabled={moderatingProposalId === proposal.id}
                                         >
-                                          {moderatingProposalId === proposal.id ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Annehmen + 2 Booster'}
+                                          {moderatingProposalId === proposal.id ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Pruefen & annehmen'}
                                         </Button>
                                       </>
                                     )}
@@ -1737,6 +2484,48 @@ export default function CardManagerPage() {
 
             {/* Right Column: Pack Simulator */}
             <div className="space-y-6">
+              <Card className="border-primary/15 shadow-md">
+                <CardHeader className="bg-primary/5">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <BarChart3 className="h-5 w-5 text-primary" />
+                    Statistiken
+                  </CardTitle>
+                  <CardDescription>Diagramme für das aktive Set, Vorschläge und die Simulation.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6 pt-6">
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <h3 className="text-sm font-semibold">Set-Verteilung</h3>
+                        <p className="text-[11px] text-muted-foreground">Aktuelle Zusammensetzung im ausgewählten Set.</p>
+                      </div>
+                      <Badge variant="secondary">{currentSet?.cards.length || 0} Karten</Badge>
+                    </div>
+                    {rarityChartData ? (
+                      <div className="h-60 rounded-xl border bg-muted/20 p-3">
+                        <Doughnut data={rarityChartData} options={rarityChartOptions} />
+                      </div>
+                    ) : (
+                      <div className="rounded-xl border border-dashed py-10 text-center text-xs text-muted-foreground">
+                        Keine Karten im aktiven Set vorhanden.
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="space-y-3">
+                    <div>
+                      <h3 className="text-sm font-semibold">Ideen-Labor Status</h3>
+                      <p className="text-[11px] text-muted-foreground">Verteilung der eingereichten Kartenvorschläge.</p>
+                    </div>
+                    <div className="rounded-xl border bg-muted/20 p-3">
+                      <div className="h-44">
+                        <Bar data={proposalStatusChartData} options={proposalStatusChartOptions} />
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
               <Card className="border-primary/20 shadow-lg">
                 <CardHeader className="bg-primary/5">
                   <CardTitle className="text-lg flex items-center gap-2">
@@ -1797,6 +2586,32 @@ export default function CardManagerPage() {
                           </div>
                         ))}
                       </div>
+
+                      <div className="grid gap-4 lg:grid-cols-2">
+                        <div className="space-y-3 rounded-xl border bg-muted/20 p-3">
+                          <div>
+                            <h5 className="text-[10px] font-black uppercase tracking-widest">Simulation: Seltenheiten</h5>
+                            <p className="text-[11px] text-muted-foreground">Welche Seltenheiten im Testlauf gezogen wurden.</p>
+                          </div>
+                          {simRarityChartData ? (
+                            <div className="h-44">
+                              <Bar data={simRarityChartData} options={simulationBarOptions} />
+                            </div>
+                          ) : null}
+                        </div>
+
+                        <div className="space-y-3 rounded-xl border bg-muted/20 p-3">
+                          <div>
+                            <h5 className="text-[10px] font-black uppercase tracking-widest">Simulation: Varianten</h5>
+                            <p className="text-[11px] text-muted-foreground">Verteilung der Varianten im Simulationsergebnis.</p>
+                          </div>
+                          {simVariantChartData ? (
+                            <div className="h-44">
+                              <Bar data={simVariantChartData} options={simulationBarOptions} />
+                            </div>
+                          ) : null}
+                        </div>
+                      </div>
                     </div>
                   )}
                 </CardContent>
@@ -1826,6 +2641,169 @@ export default function CardManagerPage() {
           onSaveAndRemove={handleSaveAndRemoveTeacher}
           onRemoveOnly={handleRemoveTeacherOnly}
         />
+
+        <Dialog
+          open={proposalModerationDialogOpen}
+          onOpenChange={(open) => {
+            if (!open && moderatingProposalId) return
+            if (!open) {
+              resetProposalModerationDialog()
+              return
+            }
+            setProposalModerationDialogOpen(true)
+          }}
+        >
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Vorschlag bearbeiten und annehmen</DialogTitle>
+              <DialogDescription>
+                Finalisiere die Karte manuell. Die Belohnung wird nur vergeben, wenn du "Genutzt" auswaehlst.
+              </DialogDescription>
+            </DialogHeader>
+
+            {proposalInDialog && proposalEditDraft && (
+              <div className="space-y-5 py-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label className="text-xs font-bold uppercase">Lehrername</Label>
+                    <Input
+                      value={proposalEditDraft.teacher_name}
+                      onChange={(e) => setProposalEditDraft((prev) => prev ? { ...prev, teacher_name: e.target.value } : prev)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs font-bold uppercase">HP</Label>
+                    <Input
+                      type="number"
+                      min={10}
+                      max={300}
+                      step={10}
+                      value={proposalEditDraft.hp}
+                      onChange={(e) => setProposalEditDraft((prev) => prev ? { ...prev, hp: Number(e.target.value) } : prev)}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold uppercase">Beschreibung</Label>
+                  <Textarea
+                    value={proposalEditDraft.description}
+                    onChange={(e) => setProposalEditDraft((prev) => prev ? { ...prev, description: e.target.value } : prev)}
+                    className="min-h-[90px]"
+                  />
+                </div>
+
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs font-bold uppercase">Angriffe (1-2)</Label>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setProposalEditDraft((prev) => {
+                        if (!prev || prev.attacks.length >= 2) return prev
+                        return {
+                          ...prev,
+                          attacks: [...prev.attacks, { name: '', damage: 0, description: '' }],
+                        }
+                      })}
+                      disabled={proposalEditDraft.attacks.length >= 2}
+                    >
+                      Angriff hinzufuegen
+                    </Button>
+                  </div>
+
+                  {proposalEditDraft.attacks.map((attack, index) => (
+                    <div key={`moderation-attack-${index}`} className="rounded-md border p-3 space-y-2">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                        <div className="md:col-span-2">
+                          <Label className="text-[10px] uppercase">Angriffsname</Label>
+                          <Input
+                            value={attack.name || ''}
+                            onChange={(e) => updateProposalAttackDraft(index, 'name', e.target.value)}
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-[10px] uppercase">Schaden</Label>
+                          <Input
+                            type="number"
+                            step={5}
+                            min={0}
+                            value={Number(attack.damage) || 0}
+                            onChange={(e) => updateProposalAttackDraft(index, 'damage', Number(e.target.value))}
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <Label className="text-[10px] uppercase">Effekt (optional)</Label>
+                        <Input
+                          value={attack.description || ''}
+                          onChange={(e) => updateProposalAttackDraft(index, 'description', e.target.value)}
+                        />
+                      </div>
+                      {proposalEditDraft.attacks.length > 1 && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setProposalEditDraft((prev) => {
+                            if (!prev) return prev
+                            return {
+                              ...prev,
+                              attacks: prev.attacks.filter((_, attackIndex) => attackIndex !== index),
+                            }
+                          })}
+                        >
+                          Angriff entfernen
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                <div className="rounded-md border p-3 space-y-3 bg-muted/20">
+                  <Label className="text-xs font-bold uppercase">Wurde der Vorschlag genutzt?</Label>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant={proposalUsageStatusDraft === 'used' ? 'default' : 'outline'}
+                      onClick={() => setProposalUsageStatusDraft('used')}
+                    >
+                      Ja, genutzt (2 Booster)
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={proposalUsageStatusDraft === 'not_used' ? 'default' : 'outline'}
+                      onClick={() => setProposalUsageStatusDraft('not_used')}
+                    >
+                      Nein, nicht genutzt (0 Booster)
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold uppercase">Admin-Notiz</Label>
+                  <Textarea
+                    value={proposalAdminNoteDraft}
+                    onChange={(e) => setProposalAdminNoteDraft(e.target.value)}
+                    className="min-h-[80px]"
+                  />
+                </div>
+              </div>
+            )}
+
+            <DialogFooter>
+              <Button variant="outline" onClick={resetProposalModerationDialog} disabled={Boolean(moderatingProposalId)}>
+                Abbrechen
+              </Button>
+              <Button onClick={handleAcceptProposalFromDialog} disabled={Boolean(moderatingProposalId)}>
+                {moderatingProposalId ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                Speichern und annehmen
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
         {/* Import Dialog */}
         <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
           <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
@@ -1906,6 +2884,43 @@ export default function CardManagerPage() {
           onConfirm={handleConfirmDryRun}
           actionType="validate_rarities"
         />
+
+        {/* Add Set Dialog */}
+        <Dialog open={isAddingSet} onOpenChange={setIsAddingSet}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Neues Set erstellen</DialogTitle>
+              <DialogDescription>
+                Erstelle ein neues Sammelkarten-Set. Die ID muss weltweit eindeutig sein.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="set-id">ID (Internal, z.B. support_v1)</Label>
+                <Input id="set-id" value={newSetId} onChange={(e) => setNewSetId(e.target.value.toLowerCase().replace(/\s+/g, '_'))} placeholder="support_v1" />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="set-name">Name</Label>
+                <Input id="set-name" value={newSetName} onChange={(e) => setNewSetName(e.target.value)} placeholder="Support Set Vol. 1" />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="set-prefix">Prefix (z.B. S1)</Label>
+                <Input id="set-prefix" value={newSetPrefix} onChange={(e) => setNewSetPrefix(e.target.value.toUpperCase())} placeholder="S1" maxLength={3} />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="set-color">Themen-Farbe</Label>
+                <div className="flex gap-2">
+                  <Input id="set-color" type="color" value={newSetColor} onChange={(e) => setNewSetColor(e.target.value)} className="w-12 h-10 p-1" />
+                  <Input value={newSetColor} onChange={(e) => setNewSetColor(e.target.value)} className="flex-1" />
+                </div>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsAddingSet(false)}>Abbrechen</Button>
+              <Button onClick={handleAddSet} disabled={!newSetName || !newSetId || !newSetPrefix}>Set erstellen</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </AdminGuard>
   )

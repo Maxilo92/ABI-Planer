@@ -8,11 +8,14 @@ export const CardEffectOverlay: React.FC<{
   variant: CardVariant; 
   tintColor?: string;
   isIconic?: boolean;
+  effectsEnabled?: boolean;
 }> = ({ 
   variant, 
   tintColor,
-  isIconic
+  isIconic,
+  effectsEnabled = true,
 }) => {
+  if (!effectsEnabled) return null;
   if (variant === 'normal' && !isIconic) return null;
 
   const getOverlayStyles = () => {
@@ -51,7 +54,7 @@ export const CardEffectOverlay: React.FC<{
   return (
     <div 
       className={cn(
-        "absolute inset-0 pointer-events-none z-20 transition-all duration-500 will-change-transform rounded-[inherit] overflow-hidden",
+        "absolute -inset-px pointer-events-none z-20 transition-all duration-500 will-change-transform rounded-[inherit] overflow-hidden [&::before]:rounded-[inherit] [&::after]:rounded-[inherit]",
         getOverlayStyles()
       )}
       style={isBlackShiny && tintColor ? { backgroundColor: `${tintColor}${getTintOpacity()}` } : undefined}

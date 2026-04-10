@@ -120,7 +120,7 @@ export function CardProposalForm() {
             <h3 className="text-2xl font-black uppercase tracking-tighter">Vorschlag eingereicht!</h3>
             <p className="text-muted-foreground max-w-sm mx-auto">
               Vielen Dank für deine Kreativität! Der Admin wird sich deinen Vorschlag ansehen. 
-              Wenn deine Idee (oder Teile davon) übernommen wird, erhältst du <strong>2 Booster-Packs</strong> als Belohnung!
+              Wenn deine Idee in der finalen Karte tatsaechlich genutzt wird, erhaeltst du <strong>2 Booster-Packs</strong> als Belohnung!
             </p>
           </div>
           <Button variant="outline" onClick={() => setSubmitted(false)}>

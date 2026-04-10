@@ -38,6 +38,108 @@ interface RemovalDetail {
   variants?: Record<string, number>;
 }
 
+type ProposalUsageStatus = "unknown" | "used" | "not_used";
+
+interface EditedProposalPayload {
+  teacher_name?: string;
+  hp?: number;
+  description?: string;
+  attacks?: Array<{
+    name?: string;
+    damage?: number;
+    description?: string;
+  }>;
+}
+
+const CANONICAL_TEACHER_SET_ID = "teacher_vol1";
+const LEGACY_TEACHER_SET_ID = "teachers_v1";
+
+const toSafeInt = (value: any) => {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return 0;
+  return Math.max(0, Math.floor(parsed));
+};
+
+const normalizeTeacherCardKey = (rawKey: string) => {
+  if (!rawKey) return rawKey;
+  if (rawKey.startsWith(`${CANONICAL_TEACHER_SET_ID}:`)) return rawKey;
+  if (rawKey.startsWith(`${LEGACY_TEACHER_SET_ID}:`)) {
+    return `${CANONICAL_TEACHER_SET_ID}:${rawKey.slice(`${LEGACY_TEACHER_SET_ID}:`.length)}`;
+  }
+  if (!rawKey.includes(":")) {
+    return `${CANONICAL_TEACHER_SET_ID}:${rawKey}`;
+  }
+  return rawKey;
+};
+
+const mergeCardEntries = (left: any, right: any) => {
+  const leftCount = toSafeInt(left?.count);
+  const rightCount = toSafeInt(right?.count);
+  const mergedCount = leftCount + rightCount;
+
+  const variants: Record<string, number> = {
+    ...(left?.variants || {}),
+  };
+
+  Object.entries(right?.variants || {}).forEach(([variant, count]) => {
+    variants[variant] = toSafeInt(variants[variant]) + toSafeInt(count);
+  });
+
+  return {
+    ...(left || {}),
+    ...(right || {}),
+    count: mergedCount,
+    level: Math.floor(Math.sqrt(Math.max(0, mergedCount - 1))) + 1,
+    variants,
+  };
+};
+
+const sanitizeProposalText = (value: unknown, maxLength: number) => {
+  if (typeof value !== "string") return "";
+  return value.trim().slice(0, maxLength);
+};
+
+const sanitizeEditedProposal = (proposal: EditedProposalPayload | undefined) => {
+  if (!proposal || typeof proposal !== "object") {
+    return null;
+  }
+
+  const teacherName = sanitizeProposalText(proposal.teacher_name, 120);
+  const description = sanitizeProposalText(proposal.description, 800);
+  const hpParsed = Number(proposal.hp);
+  const hp = Number.isFinite(hpParsed) ? Math.max(10, Math.min(300, Math.round(hpParsed))) : 60;
+
+  const rawAttacks = Array.isArray(proposal.attacks) ? proposal.attacks.slice(0, 2) : [];
+  const attacks = rawAttacks
+    .map((attack) => {
+      const name = sanitizeProposalText(attack?.name, 80);
+      const descriptionText = sanitizeProposalText(attack?.description, 300);
+      const damageParsed = Number(attack?.damage);
+      const damage = Number.isFinite(damageParsed) ? Math.max(0, Math.min(500, Math.round(damageParsed))) : 0;
+      return {
+        name,
+        damage,
+        description: descriptionText,
+      };
+    })
+    .filter((attack) => attack.name.length > 0);
+
+  if (!teacherName) {
+    throw new HttpsError("invalid-argument", "editedProposal.teacher_name must not be empty.");
+  }
+
+  if (attacks.length < 1) {
+    throw new HttpsError("invalid-argument", "editedProposal.attacks must contain at least one named attack.");
+  }
+
+  return {
+    teacher_name: teacherName,
+    hp,
+    description,
+    attacks,
+  };
+};
+
 /**
  * Removes all cards of a specific teacher from a user's album and calculates compensation.
  * Compensation = Math.ceil(total_removed_cards_for_user / 3)
@@ -83,8 +185,17 @@ export const removeTeacherCards = onCall({
     }
 
     const settings = settingsSnap.data() as any;
+    const sets = settings.sets || {};
     const lootTeachers = settings.loot_teachers || [];
-    const teacher = lootTeachers.find((t: any) => t.id === teacherId);
+    
+    // Search in all sets + legacy pool
+    let teacher = lootTeachers.find((t: any) => t.id === teacherId);
+    if (!teacher) {
+      for (const setId of Object.keys(sets)) {
+        teacher = sets[setId].cards.find((t: any) => t.id === teacherId);
+        if (teacher) break;
+      }
+    }
 
     if (!teacher) {
       throw new HttpsError(
@@ -296,12 +407,15 @@ export const validateAndFixRarities = onCall({
     }
 
     const settings = settingsSnap.data() as any;
+    const sets = settings.sets || {};
     const lootTeachers: any[] = settings.loot_teachers || [];
 
-    // Create a map of teacher ID to current rarity
-    const teacherRarityMap = new Map(
-      lootTeachers.map((t) => [t.id, t.rarity])
-    );
+    // Create a map of teacher ID to current rarity from all sources
+    const teacherRarityMap = new Map<string, string>();
+    lootTeachers.forEach(t => teacherRarityMap.set(t.id, t.rarity));
+    Object.values(sets).forEach((set: any) => {
+      set.cards.forEach((t: any) => teacherRarityMap.set(t.id, t.rarity));
+    });
 
     // Get all user inventories
     const inventoriesSnap = await db.collection("user_teachers").get();
@@ -624,6 +738,154 @@ export const syncOpenedPacksToInventory = onCall({
 });
 
 /**
+ * Migrates legacy teacher inventory keys to canonical `teacher_vol1:<id>`.
+ * - `legacyTeacherId` -> `teacher_vol1:legacyTeacherId`
+ * - `teachers_v1:teacherId` -> `teacher_vol1:teacherId`
+ *
+ * Also migrates `profiles.booster_stats.inventory.teachers_v1` to `teacher_vol1`.
+ */
+export const migrateTeacherVol1Inventory = onCall({
+  cors: true,
+  region: "europe-west3",
+}, async (request) => {
+  if (!request.auth?.uid) {
+    throw new HttpsError("unauthenticated", "Authentication is required.");
+  }
+
+  const db = getFirestore("abi-data");
+  const callerProfileRef = db.collection("profiles").doc(request.auth.uid);
+  const callerProfileDoc = await callerProfileRef.get();
+
+  if (!isAdminRole(callerProfileDoc.data()?.role)) {
+    throw new HttpsError("permission-denied", "Must be an administrative user to call this function.");
+  }
+
+  const { dryRun = false, targetUserId } = request.data || {};
+  const migrateSingleUser = typeof targetUserId === "string" && targetUserId.trim().length > 0;
+  const resolvedUserId = migrateSingleUser ? targetUserId.trim() : null;
+
+  const userDocs = migrateSingleUser
+    ? [await db.collection("user_teachers").doc(resolvedUserId!).get()]
+    : (await db.collection("user_teachers").get()).docs;
+
+  const profileDocs = migrateSingleUser
+    ? [await db.collection("profiles").doc(resolvedUserId!).get()]
+    : (await db.collection("profiles").get()).docs;
+
+  let inventoryDocsChecked = 0;
+  let inventoryDocsUpdated = 0;
+  let cardKeysRewritten = 0;
+  let profileDocsChecked = 0;
+  let profileDocsUpdated = 0;
+
+  let batch = db.batch();
+  let ops = 0;
+
+  const flush = async (force = false) => {
+    if (ops === 0) return;
+    if (!force && ops < 450) return;
+    await batch.commit();
+    batch = db.batch();
+    ops = 0;
+  };
+
+  for (const docSnap of userDocs) {
+    if (!docSnap.exists) continue;
+    inventoryDocsChecked++;
+
+    const current = docSnap.data() as Record<string, any>;
+    const migrated: Record<string, any> = {};
+    let changed = false;
+
+    for (const [rawKey, rawValue] of Object.entries(current)) {
+      const normalizedKey = normalizeTeacherCardKey(rawKey);
+      if (normalizedKey !== rawKey) {
+        changed = true;
+        cardKeysRewritten++;
+      }
+
+      if (migrated[normalizedKey]) {
+        changed = true;
+        migrated[normalizedKey] = mergeCardEntries(migrated[normalizedKey], rawValue);
+      } else {
+        migrated[normalizedKey] = {
+          ...(rawValue || {}),
+          count: toSafeInt((rawValue as any)?.count),
+          level: Math.floor(Math.sqrt(Math.max(0, toSafeInt((rawValue as any)?.count) - 1))) + 1,
+          variants: { ...((rawValue as any)?.variants || {}) },
+        };
+      }
+    }
+
+    if (!changed) continue;
+    inventoryDocsUpdated++;
+
+    if (!dryRun) {
+      batch.set(docSnap.ref, migrated);
+      ops++;
+      await flush();
+    }
+  }
+
+  for (const profileSnap of profileDocs) {
+    if (!profileSnap.exists) continue;
+    profileDocsChecked++;
+
+    const profileData = profileSnap.data() as any;
+    const inventory = { ...(profileData?.booster_stats?.inventory || {}) };
+    const legacy = toSafeInt(inventory[LEGACY_TEACHER_SET_ID]);
+    if (legacy <= 0) continue;
+
+    inventory[CANONICAL_TEACHER_SET_ID] = toSafeInt(inventory[CANONICAL_TEACHER_SET_ID]) + legacy;
+    delete inventory[LEGACY_TEACHER_SET_ID];
+    profileDocsUpdated++;
+
+    if (!dryRun) {
+      batch.update(profileSnap.ref, {
+        "booster_stats.inventory": inventory,
+        updated_at: admin.firestore.FieldValue.serverTimestamp(),
+      });
+      ops++;
+      await flush();
+    }
+  }
+
+  if (!dryRun) {
+    await flush(true);
+    await db.collection("logs").add({
+      type: "ADMIN_ACTION",
+      action: "MIGRATE_TEACHER_VOL1_INVENTORY",
+      user_id: request.auth.uid,
+      user_name: callerProfileDoc.data()?.full_name || "Unknown Admin",
+      timestamp: new Date(),
+      details: `Migrated teacher cards to ${CANONICAL_TEACHER_SET_ID}. user_teachers updated: ${inventoryDocsUpdated}/${inventoryDocsChecked}, profiles updated: ${profileDocsUpdated}/${profileDocsChecked}.`,
+      stats: {
+        inventory_docs_checked: inventoryDocsChecked,
+        inventory_docs_updated: inventoryDocsUpdated,
+        card_keys_rewritten: cardKeysRewritten,
+        profile_docs_checked: profileDocsChecked,
+        profile_docs_updated: profileDocsUpdated,
+      },
+      dryRun: Boolean(dryRun),
+      targetUserId: resolvedUserId,
+    });
+  }
+
+  return {
+    success: true,
+    dryRun: Boolean(dryRun),
+    targetUserId: resolvedUserId,
+    stats: {
+      inventoryDocsChecked,
+      inventoryDocsUpdated,
+      cardKeysRewritten,
+      profileDocsChecked,
+      profileDocsUpdated,
+    },
+  };
+});
+
+/**
  * Removes legacy voting fields from all profiles.
  * Legacy keys seen in production: `teachers_voted`, `rated_teachers`.
  */
@@ -733,9 +995,10 @@ export const moderateCardProposal = onCall({
   if (!request.auth?.uid) {
     throw new HttpsError("unauthenticated", "Authentication is required.");
   }
+  const callerUid = request.auth.uid;
 
   const db = getFirestore("abi-data");
-  const callerProfileRef = db.collection("profiles").doc(request.auth.uid);
+  const callerProfileRef = db.collection("profiles").doc(callerUid);
   const callerProfileDoc = await callerProfileRef.get();
 
   if (!isAdminRole(callerProfileDoc.data()?.role)) {
@@ -747,6 +1010,8 @@ export const moderateCardProposal = onCall({
     action,
     adminNote,
     rewardPacks,
+    usageStatus,
+    editedProposal,
   } = request.data || {};
 
   if (!proposalId || typeof proposalId !== "string") {
@@ -757,58 +1022,90 @@ export const moderateCardProposal = onCall({
     throw new HttpsError("invalid-argument", "action must be either 'accept' or 'reject'.");
   }
 
+  const normalizedUsageStatus: ProposalUsageStatus = (() => {
+    if (action === "reject") return "not_used";
+    if (usageStatus === "used" || usageStatus === "not_used") return usageStatus;
+    throw new HttpsError("invalid-argument", "usageStatus must be either 'used' or 'not_used' for accept action.");
+  })();
+
+  const safeEditedProposal = action === "accept"
+    ? sanitizeEditedProposal(editedProposal as EditedProposalPayload)
+    : null;
+
   const safeRewardPacks = Number.isFinite(Number(rewardPacks))
     ? Math.max(0, Math.floor(Number(rewardPacks)))
     : 2;
 
-  const proposalRef = db.collection("card_proposals").doc(proposalId);
-  const proposalSnap = await proposalRef.get();
-
-  if (!proposalSnap.exists) {
-    throw new HttpsError("not-found", "Proposal not found.");
-  }
-
-  const proposalData = proposalSnap.data() as any;
-  const currentStatus = proposalData?.status;
-  const rewardAlreadyClaimed = proposalData?.reward_claimed === true;
-  const userId = proposalData?.created_by;
-
-  if (!userId || typeof userId !== "string") {
-    throw new HttpsError("failed-precondition", "Proposal is missing created_by.");
-  }
-
-  if (currentStatus !== "pending") {
-    throw new HttpsError("failed-precondition", "Only pending proposals can be moderated.");
-  }
-
-  const batch = db.batch();
   const now = new Date();
   const adminName = callerProfileDoc.data()?.full_name || "Unknown Admin";
 
-  const updatePayload: Record<string, any> = {
-    status: action === "accept" ? "accepted" : "rejected",
-    admin_note: typeof adminNote === "string" ? adminNote : "",
-    moderated_at: now.toISOString(),
-    moderated_by: request.auth.uid,
-    moderated_by_name: adminName,
-  };
-
+  const proposalRef = db.collection("card_proposals").doc(proposalId);
   let grantedPacks = 0;
+  let proposalAuthorId = "";
+  let notificationTeacherName = "einen Lehrer";
 
-  if (action === "accept" && !rewardAlreadyClaimed && safeRewardPacks > 0) {
-    grantedPacks = safeRewardPacks;
-    updatePayload.reward_claimed = true;
+  await db.runTransaction(async (tx) => {
+    const proposalSnap = await tx.get(proposalRef);
+    if (!proposalSnap.exists) {
+      throw new HttpsError("not-found", "Proposal not found.");
+    }
 
-    const profileRef = db.collection("profiles").doc(userId);
-    batch.set(
-      profileRef,
-      {
-        booster_stats: {
-          extra_available: admin.firestore.FieldValue.increment(grantedPacks),
+    const proposalData = proposalSnap.data() as any;
+    const currentStatus = proposalData?.status;
+    const rewardAlreadyClaimed = proposalData?.reward_claimed === true;
+    const userId = proposalData?.created_by;
+
+    if (!userId || typeof userId !== "string") {
+      throw new HttpsError("failed-precondition", "Proposal is missing created_by.");
+    }
+
+    if (currentStatus !== "pending") {
+      throw new HttpsError("failed-precondition", "Only pending proposals can be moderated.");
+    }
+
+    proposalAuthorId = userId;
+    notificationTeacherName = safeEditedProposal?.teacher_name || proposalData?.teacher_name || "einen Lehrer";
+
+    const updatePayload: Record<string, any> = {
+      status: action === "accept" ? "accepted" : "rejected",
+      admin_note: typeof adminNote === "string" ? adminNote.trim().slice(0, 1200) : "",
+      moderated_at: now.toISOString(),
+      moderated_by: callerUid,
+      moderated_by_name: adminName,
+      usage_status: action === "accept" ? normalizedUsageStatus : "not_used",
+    };
+
+    if (safeEditedProposal && action === "accept") {
+      updatePayload.teacher_name = safeEditedProposal.teacher_name;
+      updatePayload.hp = safeEditedProposal.hp;
+      updatePayload.description = safeEditedProposal.description;
+      updatePayload.attacks = safeEditedProposal.attacks;
+      updatePayload.edited_snapshot = safeEditedProposal;
+    }
+
+    if (action === "accept" && normalizedUsageStatus === "used" && !rewardAlreadyClaimed && safeRewardPacks > 0) {
+      grantedPacks = safeRewardPacks;
+      updatePayload.reward_claimed = true;
+      updatePayload.reward_packs_awarded = grantedPacks;
+
+      const profileRef = db.collection("profiles").doc(userId);
+      tx.set(
+        profileRef,
+        {
+          booster_stats: {
+            extra_available: admin.firestore.FieldValue.increment(grantedPacks),
+          },
         },
-      },
-      { merge: true }
-    );
+        { merge: true }
+      );
+    } else {
+      updatePayload.reward_claimed = rewardAlreadyClaimed;
+      updatePayload.reward_packs_awarded = rewardAlreadyClaimed
+        ? Math.max(0, Number(proposalData?.reward_packs_awarded || safeRewardPacks))
+        : 0;
+    }
+
+    tx.update(proposalRef, updatePayload);
 
     const notificationRef = db
       .collection("notifications")
@@ -816,33 +1113,37 @@ export const moderateCardProposal = onCall({
       .collection("messages")
       .doc();
 
-    batch.set(notificationRef, {
+    const acceptedUsedMessage = grantedPacks > 0
+      ? `Dein Vorschlag fuer ${notificationTeacherName} wurde genutzt. Du hast ${grantedPacks} Booster als Belohnung erhalten.`
+      : `Dein Vorschlag fuer ${notificationTeacherName} wurde angenommen, aber in der finalen Karte nicht direkt genutzt.`;
+
+    tx.set(notificationRef, {
       id: notificationRef.id,
       userId,
-      type: "card_proposal_accepted",
-      title: "Ideen-Labor: Vorschlag angenommen",
-      message: `Dein Vorschlag fuer ${proposalData?.teacher_name || "einen Lehrer"} wurde angenommen. Du hast ${grantedPacks} Booster als Belohnung erhalten.`,
+      type: action === "accept" ? "card_proposal_accepted" : "card_proposal_rejected",
+      title: action === "accept" ? "Ideen-Labor: Vorschlag entschieden" : "Ideen-Labor: Vorschlag abgelehnt",
+      message: action === "accept"
+        ? acceptedUsedMessage
+        : `Dein Vorschlag fuer ${notificationTeacherName} wurde diesmal nicht angenommen.`,
       read: false,
       timestamp: admin.firestore.FieldValue.serverTimestamp(),
       reward_packs: grantedPacks,
       proposal_id: proposalId,
+      usage_status: action === "accept" ? normalizedUsageStatus : "not_used",
     });
-  }
-
-  batch.update(proposalRef, updatePayload);
-
-  await batch.commit();
+  });
 
   await db.collection("logs").add({
     type: "ADMIN_ACTION",
     action: "CARD_PROPOSAL_MODERATED",
-    user_id: request.auth.uid,
+    user_id: callerUid,
     user_name: adminName,
     timestamp: now,
-    details: `Proposal ${proposalId} ${action}${grantedPacks > 0 ? `, granted ${grantedPacks} boosters` : ""}.`,
+    details: `Proposal ${proposalId} ${action}${action === "accept" ? ` (usage: ${normalizedUsageStatus})` : ""}${grantedPacks > 0 ? `, granted ${grantedPacks} boosters` : ""}.`,
     proposal_id: proposalId,
-    proposal_author_id: userId,
+    proposal_author_id: proposalAuthorId,
     moderation_action: action,
+    usage_status: action === "accept" ? normalizedUsageStatus : "not_used",
     reward_packs_granted: grantedPacks,
   });
 
@@ -850,6 +1151,80 @@ export const moderateCardProposal = onCall({
     success: true,
     proposalId,
     status: action === "accept" ? "accepted" : "rejected",
+    usageStatus: action === "accept" ? normalizedUsageStatus : "not_used",
     rewardGranted: grantedPacks,
+  };
+});
+
+/**
+ * Backfills usage_status for previously moderated proposals.
+ * - accepted/rejected without usage_status => usage_status: unknown
+ * - reward_packs_awarded derives from reward_claimed when not present
+ */
+export const backfillCardProposalUsageStatus = onCall({
+  cors: true,
+  region: "europe-west3",
+}, async (request) => {
+  if (!request.auth?.uid) {
+    throw new HttpsError("unauthenticated", "Authentication is required.");
+  }
+  const callerUid = request.auth.uid;
+
+  const db = getFirestore("abi-data");
+  const callerProfileRef = db.collection("profiles").doc(callerUid);
+  const callerProfileDoc = await callerProfileRef.get();
+
+  if (!isAdminRole(callerProfileDoc.data()?.role)) {
+    throw new HttpsError("permission-denied", "Must be an administrative user to call this function.");
+  }
+
+  const proposalsSnap = await db.collection("card_proposals").get();
+  const batch = db.batch();
+  let updated = 0;
+
+  proposalsSnap.docs.forEach((proposalDoc) => {
+    const data = proposalDoc.data() as any;
+    const hasUsage = typeof data?.usage_status === "string";
+    const isModerated = data?.status === "accepted" || data?.status === "rejected";
+    const hasRewardPacks = Number.isFinite(Number(data?.reward_packs_awarded));
+
+    if (!isModerated || (hasUsage && hasRewardPacks)) {
+      return;
+    }
+
+    const rewardClaimed = data?.reward_claimed === true;
+    const patch: Record<string, any> = {};
+
+    if (!hasUsage) {
+      patch.usage_status = "unknown";
+    }
+
+    if (!hasRewardPacks) {
+      patch.reward_packs_awarded = rewardClaimed ? 2 : 0;
+    }
+
+    if (Object.keys(patch).length > 0) {
+      batch.update(proposalDoc.ref, patch);
+      updated += 1;
+    }
+  });
+
+  if (updated > 0) {
+    await batch.commit();
+  }
+
+  await db.collection("logs").add({
+    type: "ADMIN_ACTION",
+    action: "CARD_PROPOSAL_USAGE_BACKFILL",
+    user_id: callerUid,
+    user_name: callerProfileDoc.data()?.full_name || "Unknown Admin",
+    timestamp: new Date(),
+    details: `Backfilled usage_status/reward_packs_awarded on ${updated} proposal docs.`,
+    proposals_updated: updated,
+  });
+
+  return {
+    success: true,
+    updated,
   };
 });

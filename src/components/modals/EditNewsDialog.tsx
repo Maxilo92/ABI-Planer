@@ -33,7 +33,7 @@ interface EditNewsDialogProps {
 }
 
 export function EditNewsDialog({ news }: EditNewsDialogProps) {
-  const { user } = useAuth()
+  const { user, profile } = useAuth()
   const [title, setTitle] = useState(news.title)
   const [content, setContent] = useState(news.content)
   const [isSmallUpdate, setIsSmallUpdate] = useState(news.is_small_update || false)
@@ -156,7 +156,7 @@ export function EditNewsDialog({ news }: EditNewsDialogProps) {
       await updateDoc(docRef, updates)
 
       if (user) {
-        await logAction('NEWS_EDITED', user.uid, null, {
+        await logAction('NEWS_EDITED', user.uid, profile?.full_name, {
           news_id: news.id,
           title: trimmedTitle,
           removed_image: removeCurrentImage,

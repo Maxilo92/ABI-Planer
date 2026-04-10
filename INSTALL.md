@@ -26,7 +26,12 @@ NEXT_PUBLIC_FIREBASE_PROJECT_ID=xxx
 NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=xxx.appspot.com
 NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=xxx
 NEXT_PUBLIC_FIREBASE_APP_ID=xxx
+
+# Serverseitige Secrets (nicht im Client exposed)
+GROQ_API_KEY=gsk_xxx
 ```
+
+`GROQ_API_KEY` darf **nicht** mit `NEXT_PUBLIC_` praefixed sein, da der Key ausschliesslich serverseitig genutzt wird.
 
 ## 3. Firestore Datenbank Initialisierung
 Damit das Dashboard (Countdown & Finanzziel) korrekt funktioniert, musst du **einmalig** dieses Dokument manuell in Firestore anlegen:

@@ -2,6 +2,7 @@
 
 import { useEffect, useState, Suspense } from 'react'
 import { auth, db } from '@/lib/firebase'
+import { Skeleton } from '@/components/ui/skeleton'
 import { createUserWithEmailAndPassword, updateProfile, sendEmailVerification } from 'firebase/auth'
 import { doc, setDoc, collection, getDocs, limit, query, getDoc } from 'firebase/firestore'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -485,8 +486,19 @@ function RegisterForm() {
 export default function RegisterPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      <div className="min-h-screen bg-background px-4 py-10 sm:px-6 sm:py-14 lg:px-8 md:flex md:items-center md:justify-center">
+        <div className="mx-auto w-full max-w-md flex flex-col items-center gap-8">
+          <Skeleton className="h-[120px] w-[120px] rounded-full" />
+          <div className="w-full rounded-2xl border border-border/70 bg-card p-8 space-y-6">
+            <Skeleton className="h-10 w-48 mx-auto" />
+            <div className="space-y-4">
+              <Skeleton className="h-12 w-full rounded-md" />
+              <Skeleton className="h-12 w-full rounded-md" />
+              <Skeleton className="h-12 w-full rounded-md" />
+            </div>
+            <Skeleton className="h-12 w-full rounded-md" />
+          </div>
+        </div>
       </div>
     }>
       <RegisterForm />

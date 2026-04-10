@@ -27,7 +27,7 @@ export function AddPollDialog() {
   const [allowVoteChange, setAllowVoteChange] = useState(true)
   const [loading, setLoading] = useState(false)
   const [open, setOpen] = useState(false)
-  const { user } = useAuth()
+  const { user, profile } = useAuth()
   const router = useRouter()
 
   const handleAddOption = () => setOptions([...options, ''])
@@ -74,7 +74,7 @@ export function AddPollDialog() {
         })
         await batch.commit()
 
-        await logAction('POLL_CREATED', user.uid, null, {
+        await logAction('POLL_CREATED', user.uid, profile?.full_name, {
           poll_id: pollRef.id,
           question,
           options_count: validOptions.length,

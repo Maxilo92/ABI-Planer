@@ -11,6 +11,7 @@ import { MaintenanceBanner } from '@/components/layout/MaintenanceBanner'
 import { useSystemMessage } from '@/context/SystemMessageContext'
 import { TwoFactorGate } from '@/components/auth/TwoFactorGate'
 import { useAuth } from '@/context/AuthContext'
+import { Skeleton } from '@/components/ui/skeleton'
 
 interface AppShellProps {
   children: React.ReactNode
@@ -25,6 +26,7 @@ export function AppShell({ children }: AppShellProps) {
   const { profile, user, loading: authLoading } = useAuth()
   const [dismissedBanner, setDismissedBanner] = useState<string | null>(null)
   const [hostname, setHostname] = useState('')
+  const isBoneyardBuild = typeof window !== 'undefined' && Boolean((window as any).__BONEYARD_BUILD)
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -33,9 +35,10 @@ export function AppShell({ children }: AppShellProps) {
   }, [])
 
   const isDashboardSubdomain = useMemo(() => {
+    if (isBoneyardBuild) return false
     const isLocalDashboardHost = hostname === 'localhost' || hostname === '127.0.0.1'
     return isLocalDashboardHost || hostname.startsWith('dashboard.') || hostname.startsWith('app.')
-  }, [hostname])
+  }, [hostname, isBoneyardBuild])
 
   const isPublicLandingRoute = !isDashboardSubdomain && !authRoutes.has(pathname) && pathname !== '/maintenance'
   
@@ -58,13 +61,14 @@ export function AppShell({ children }: AppShellProps) {
   const showAdminMaintenanceActiveBanner = isAdmin && isMaintenanceActive && !isMaintenancePage
 
   useEffect(() => {
+    if (isBoneyardBuild) return
     if (!isDashboardSubdomain) return
     if (authLoading) return
     if (authRoutes.has(pathname)) return
     if (!user) {
       router.replace('/login')
     }
-  }, [authLoading, isDashboardSubdomain, pathname, router, user])
+  }, [authLoading, isBoneyardBuild, isDashboardSubdomain, pathname, router, user])
 
   if (isPublicLandingRoute) {
     return (
@@ -74,8 +78,33 @@ export function AppShell({ children }: AppShellProps) {
     )
   }
 
-  if (isDashboardSubdomain && !isAuthRoute && (authLoading || !user)) {
-    return <div className="min-h-screen bg-background" />
+  if (!isBoneyardBuild && isDashboardSubdomain && !isAuthRoute && (authLoading || !user)) {
+    return (
+      <div className="min-h-screen bg-background lg:flex">
+        {/* Sidebar Skeleton */}
+        <div className="hidden lg:flex w-64 flex-col border-r border-border p-4 space-y-4">
+          <Skeleton className="h-10 w-32 mb-8" />
+          {[1, 2, 3, 4, 5, 6].map(i => (
+            <Skeleton key={i} className="h-10 w-full rounded-xl" />
+          ))}
+        </div>
+        {/* Main Content Skeleton */}
+        <div className="flex-1 p-4 sm:p-6 lg:p-8 space-y-6">
+          <div className="flex justify-between items-center">
+            <div className="space-y-2">
+              <Skeleton className="h-10 w-48" />
+              <Skeleton className="h-4 w-64" />
+            </div>
+            <Skeleton className="h-10 w-10 rounded-full" />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3].map(i => (
+              <Skeleton key={i} className="h-48 w-full rounded-2xl" />
+            ))}
+          </div>
+        </div>
+      </div>
+    )
   }
 
   if (isMaintenancePage || (maintenance?.active && isNewsDetail)) {

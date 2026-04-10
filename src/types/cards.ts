@@ -11,16 +11,20 @@ export type CardVariant =
 export type CardStyle = 'soft-glass' | 'modern-flat' | 'playful-pattern' | 'modern-premium' | 'holographic-edge';
 
 export interface CardData {
-  id: string;
-  cardNumber: string; // e.g., "001"
+  id: string; // The cardId within the set (e.g., "001")
+  setId?: string; // The set ID (e.g., "teachers_v1")
+  fullId?: string; // The combined ID (e.g., "teachers_v1:001")
+  cardNumber: string; // e.g., "T1-001"
   name: string;
   rarity: Rarity;
   variant: CardVariant;
   color: string;
+  type?: 'teacher' | 'support' | 'event' | 'item';
   style?: CardStyle;
   description?: string;
   hp?: number;
   attacks?: TeacherAttack[];
+  level?: number;
 }
 
 export interface RarityWeights {
@@ -47,7 +51,7 @@ export interface GlobalCardLimits {
 
 export interface CustomPackSlotDefinition {
   slotIndex: number;
-  teacherId: string;
+  cardId: string; // setId:cardId or legacy teacherId
   variant?: CardVariant;
 }
 
@@ -58,10 +62,19 @@ export interface CustomPackPreset {
   slots: CustomPackSlotDefinition[];
 }
 
+export interface CardSet {
+  id: string;
+  name: string;
+  prefix: string;
+  color: string;
+  cards: LootTeacher[];
+}
+
 export interface SammelkartenConfig {
-  loot_teachers: LootTeacher[];
-  rarity_weights: RarityWeights[]; // Array for 3 slots
-  godpack_weights: RarityWeights[]; // Array for 3 slots
+  sets?: Record<string, CardSet>;
+  loot_teachers?: LootTeacher[]; // Legacy, wird migriert
+  rarity_weights: RarityWeights[]; // Array für 3 Slots
+  godpack_weights: RarityWeights[]; // Array für 3 Slots
   variant_probabilities: VariantProbabilities;
   global_limits: GlobalCardLimits;
   custom_pack_presets?: CustomPackPreset[];

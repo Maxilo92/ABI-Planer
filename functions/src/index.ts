@@ -14,6 +14,7 @@ if (admin.apps.length === 0) {
 export * from "./mfa";
 export * from "./danger";
 export * from "./cron";
+export * from "./logs";
 export * from "./gifts";
 export * from "./shop";
 export * from "./rarity";
@@ -24,3 +25,4 @@ export * from "./inventory";
 export * from "./cardsManager";
 export * from "./trades";
 export * from "./groupMessages";
+export * from "./npAdmin";

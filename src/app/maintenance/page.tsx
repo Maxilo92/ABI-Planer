@@ -13,6 +13,7 @@ import { toDate } from '@/lib/utils'
 import Link from 'next/link'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import { Skeleton } from '@/components/ui/skeleton'
 import Logo from '@/components/Logo'
 import { useAuth } from '@/context/AuthContext'
 
@@ -129,9 +130,8 @@ export default function MaintenancePage() {
 
           <div className="grid grid-cols-1 gap-4">
             {newsLoading ? (
-              [1, 2].map(i => <Card key={i} className="h-24 animate-pulse bg-muted/30" />)
-            ) : news.length === 0 ? (
-              <p className="text-center text-sm text-muted-foreground italic">Keine News vorhanden.</p>
+              [1, 2].map(i => <Skeleton key={i} className="h-24 bg-muted/30" />)
+            ) : news.length === 0 ? (              <p className="text-center text-sm text-muted-foreground italic">Keine News vorhanden.</p>
             ) : (
               news.map(item => (
                 <Link key={item.id} href={`/news/${item.id}`} className="block group">

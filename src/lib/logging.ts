@@ -88,7 +88,8 @@ export const logAction = async (
       // Versuche, den Namen aus Firestore zu laden
       const profileSnap = await getDoc(doc(db, 'profiles', userId))
       if (profileSnap.exists()) {
-        resolvedName = profileSnap.data().full_name || null
+        const data = profileSnap.data()
+        resolvedName = data.full_name || data.email || null
       }
     }
     await addDoc(collection(db, 'logs'), {

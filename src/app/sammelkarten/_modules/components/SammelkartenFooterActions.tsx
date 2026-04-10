@@ -3,6 +3,8 @@ import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { ArrowLeft, ArrowLeftRight, Clock, LayoutGrid, Trophy, Zap } from 'lucide-react'
 
+import { AvailablePack } from '../types'
+
 export type PackProbabilities = {
   wholePackChance: number
 }
@@ -15,6 +17,8 @@ type SammelkartenFooterActionsProps = {
   isMassOpening: boolean
   packProbs: PackProbabilities | null
   getRemainingBoosters: () => number
+  getRemainingSupportBoosters: () => number
+  selectedPack: AvailablePack | null
   handleOpenPack: () => void
   handleOpenTenPacks: () => void
   setGameState: (state: 'idle' | 'ripping' | 'revealed') => void
@@ -33,6 +37,8 @@ export function SammelkartenFooterActions(props: SammelkartenFooterActionsProps)
     isMassOpening,
     packProbs,
     getRemainingBoosters,
+    getRemainingSupportBoosters,
+    selectedPack,
     handleOpenPack,
     handleOpenTenPacks,
     setGameState,
@@ -41,6 +47,9 @@ export function SammelkartenFooterActions(props: SammelkartenFooterActionsProps)
     isTradingEnabled,
     getRandomOpenableBoosters
   } = props
+
+  const isSupportPack = selectedPack?.packId === 'support_vol_1'
+  const currentRemaining = isSupportPack ? getRemainingSupportBoosters() : getRemainingBoosters()
 
   return (
     <div className="flex flex-col gap-3 mt-6 w-full items-center">
@@ -61,7 +70,7 @@ export function SammelkartenFooterActions(props: SammelkartenFooterActionsProps)
         </div>
       )}
 
-      {gameState === 'idle' && getRemainingBoosters() > 0 && (
+      {gameState === 'idle' && currentRemaining > 0 && (
         <div className="flex flex-col sm:flex-row gap-3 items-center justify-center">
           <Button
             variant="outline"
@@ -89,7 +98,7 @@ export function SammelkartenFooterActions(props: SammelkartenFooterActionsProps)
         <div className="flex flex-col gap-2 w-full max-sm:max-w-[280px] sm:max-w-sm animate-in fade-in slide-in-from-bottom-4 duration-1000">
           {(() => {
             const canOpenAnotherTen = isMassOpening && getRandomOpenableBoosters() >= 10
-            const singlePacksRemaining = !isMassOpening && getRemainingBoosters() > 0
+            const singlePacksRemaining = !isMassOpening && currentRemaining > 0
 
             return (
           <Button
@@ -119,12 +128,12 @@ export function SammelkartenFooterActions(props: SammelkartenFooterActionsProps)
             ) : singlePacksRemaining ? (
               <>
                 <Zap className="h-4 w-4 mr-2" />
-                Nächstes Pack öffnen ({getRemainingBoosters()})
+                Nächstes Pack öffnen ({currentRemaining})
               </>
             ) : (
               <>
                 <Clock className="h-4 w-4 mr-2" />
-                Pack-Reset in {timeLeft}
+                {isSupportPack ? 'Keine Support-Packs mehr' : `Pack-Reset in ${timeLeft}`}
               </>
             )}
           </Button>
@@ -132,7 +141,7 @@ export function SammelkartenFooterActions(props: SammelkartenFooterActionsProps)
           })()}
 
           {(() => {
-            const singlePacksRemaining = !isMassOpening && getRemainingBoosters() > 0
+            const singlePacksRemaining = !isMassOpening && currentRemaining > 0
 
             if (!singlePacksRemaining) return null
 

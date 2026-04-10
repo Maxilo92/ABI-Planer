@@ -8,7 +8,236 @@
 
 # Changelog
 
-## [1.4.10] - 2026-04-10 - Teacher Management Stats & Effects
+## [1.5.0] - 2026-04-10 - Platform Update (Cards, Admin, Presence, SEO)
+
+### Added
+
+- Neues modulares Kartensystem mit Set-Registry (`teacher_vol1`, `support_v1`) inklusive neuer Typen/Interfaces und Registry-Resolvern in Frontend und Functions.
+- Neue Admin-Funktionen und Endpunkte fuer Changelog-Management, KI-gestuetzte Zusammenfassungen sowie Session-Stat-Reset-Fallbacks.
+- ABI-Bot Chat-Flow pro Kanal (intern/hub/role/system) mit serverseitiger Zugriffspruefung, Persistenz und Audit-Logging.
+- Neue Seiten und Routing-Bausteine fuer Battle-Pass/Premium-Vorbereitung, Admin-Changelog, SEO-Metadaten (`robots`, `sitemap`, `noindex` Heads).
+
+### Changed
+
+- Presence- und Session-Lifecycle deutlich erweitert: robustere Session-End-Verarbeitung, API-gestuetztes Close-Session-Handling und stabilere Analytics-Auswertung.
+- Dashboard-, Gruppen-, Karten- und Navbar-Komponenten umfassend weiterentwickelt (Performance, UX, neue Controls, verbesserte States/Skeletons).
+- Logging-Pipeline erweitert: mehr Aktionen mit `user_name`, verbesserte Namensaufloesung sowie zusaetzliche Admin- und Audit-Datenpfade.
+- Test-, Doku- und Audit-Artefakte aktualisiert (u. a. Mobile Release Gate, Modular Card System Doku, Testing Guide).
+
+### Fixed
+
+- Stabilitaets- und Dev-Resilience-Verbesserungen bei Firebase-Admin initialisierung und lokalen Fallback-Flows.
+- Diverse UI-Konsistenz- und Layout-Korrekturen in Karten-Overlays, Dialogen, Listen und responsiven Ansichten.
+- Mehrere API-/Auth-/Fehlerbehandlungs-Pfade gehaertet, um 5xx-Fehler und intransparente Fehlermeldungen zu reduzieren.
+
+## [1.4.34] - 2026-04-10 - ABI Bot Full Bypass Resilience
+
+### Fixed - ABI Bot Full Bypass Resilience
+
+- **Firestore Independence:** Der ABI Bot im `MAESTRO_DEV_BYPASS` Modus funktioniert nun auch dann, wenn absolut keine Firebase-Admin-Credentials vorhanden sind. Lese- und Schreibzugriffe auf Firestore (Verlauf & Logs) werden in diesem Fall übersprungen, statt den Request mit einem 500er Fehler abzubrechen.
+- **AI-Antwort-Priorität:** Die Generierung der Bot-Antwort via Groq hat nun Vorrang vor der Persistierung. Nutzer erhalten auch dann eine Antwort, wenn die Datenbank temporär nicht erreichbar ist.
+- **Frontend-Klarheit:** Fehlermeldungen im Chat-UI zeigen nun den exakten Grund (`details`) an, warum eine Aktion fehlgeschlagen ist.
+
+## [1.4.33] - 2026-04-10 - ABI Bot Resilience & Debugging
+
+### Fixed - ABI Bot Resilience & Debugging
+
+- **Verbessertes Error-Reporting:** Die API-Route `/api/chats/abi-bot` gibt nun im Fehlerfall (500) detaillierte Informationen (`details`) zurück, um die Diagnose in der Browser-Konsole zu erleichtern.
+- **Robustere Initialisierung:** Der `getAdminApp`-Helper wurde optimiert, um auch bei fehlenden Firebase-Admin-Credentials im `MAESTRO_DEV_BYPASS` Modus nicht abzustürzen.
+- **Bypass-Erweiterung:** Der Developer-Bypass deckt nun auch die Datenbank-Initialisierung ab, um lokale Entwicklung ohne vollen Admin-Zugriff zu stabilisieren.
+
+## [1.4.32] - 2026-04-10 - Feedback Dashboard Optimierung
+
+### Added - Feedback Dashboard Optimierung
+
+- **Admin-UI Update:** Das Admin-Feedback-Dashboard (`/admin/feedback`) zeigt nun prominent die KI-generierten Kategorien und Prioritäten an.
+- **Priority-Indikatoren:** Feedback-Karten verfügen nun über farbliche Indikatoren (Rot/Gelb/Grün) basierend auf der Wichtigkeit (Importance).
+- **Neue Sortierung & Filter:** Admins können nun nach Priorität sortieren und gezielt nach Kategorien (z.B. Bug, Feature) filtern.
+- **Erweiterter Export:** Der CSV-Export enthält nun ebenfalls die Felder "Kategorie" und "Prio".
+
+## [1.4.31] - 2026-04-10 - Optimierter KI-Newsflow & ABI Bot Auth Fix
+
+### Added - Optimierter KI-Newsflow
+
+- **Verbesserter Generator-Workflow:** Der KI-News-Generator leitet nun direkt zur News-Seite weiter und öffnet dort den Editor mit dem generierten Text, statt ein lokales Modal zu nutzen.
+- **"Feel-Good" Delay:** Künstliche Verzögerung von 4 Sekunden bei der News-Generierung mit dynamischen Fortschrittsmeldungen (z.B. "KI formuliert Beitrag..."), um die Wertigkeit der generierten Inhalte zu unterstreichen.
+- **Controlled AddNewsDialog:** Die `AddNewsDialog`-Komponente wurde refactored, um externe Initialisierung (Titel, Inhalt, AI-Flag) und gesteuertes Öffnen via Props zu unterstützen.
+- **Suspense-Integration:** Die News-Seite wurde in einen `Suspense`-Boundary gehüllt, um Build-Fehler im Zusammenhang mit `useSearchParams` zu beheben.
+
+### Fixed - ABI Bot Auth Fix & Dev-Bypass
+
+- **Detailliertes Auth-Logging:** In der API-Route `/api/chats/abi-bot` werden nun detaillierte Fehlermeldungen zur Fehlerdiagnose bei Authentication-Failures ausgegeben.
+- **Developer Bypass:** Integration des `MAESTRO_DEV_BYPASS` in den ABI-Bot Endpoint. Ermöglicht lokale Entwicklung ohne Firebase Admin SDK Credentials, sofern die Umgebungsvariable gesetzt ist.
+- **Konsistente Profil-Bypass:** Der Bypass simuliert nun ein vollständiges Admin-Profil für den Zugriff auf alle ABI-Bot-Kanäle (Hub, Intern, Role).
+
+## [1.4.28] - 2026-04-10 - KI-Features (Groq Integration)
+
+### Added - KI-Features (Groq Integration)
+
+- **KI-gestützte Feedback-Analyse:** Automatische Kategorisierung und Wichtigkeits-Ranking (1-10) via Groq (`llama-3.1-8b-instant`).
+- **KI-gestützte News-Generierung:** Im Admin-Changelog können nun mehrere Release-Einträge ausgewählt werden, um daraus automatisch einen News-Beitrag zu generieren.
+- **"KI-unterstützt"-Badge:** Transparente Kennzeichnung von KI-generierten oder unterstützten News-Inhalten im gesamten Frontend.
+- **Admin-UI-Erweiterung:** Anzeige von Kategorie und Priorität im Feedback-Dashboard für Admins zur besseren Moderation.
+- **Typescript-Fixes:** Fehlerbehebung bei framer-motion Variants in `AdminSystemDashboard` und Select-Handler-Typen in `AdminChangelogPage`.
+
+## [1.4.27] - 2026-04-10 - Performance Optimierung (/gruppen)
+
+### Fixed - Performance Optimierung (/gruppen)
+
+- **O(N) Reply-Lookup:** Die Suche nach Antworten in Chats wurde von O(N²) auf O(N) optimiert, indem eine Map-basierte Gruppierung (`useMemo`) verwendet wird. Dies verhindert UI-Freezes bei vielen Nachrichten.
+- **Memoization:** Die `MessageItem`-Komponente wurde mit `memo` geschuetzt, um unnoetige Re-Renders der gesamten Pinnwand bei Online-Status-Aenderungen oder neuen Nachrichten zu verhindern.
+- **Listener-Konsolidierung:** Der redundante Firestore-Listener fuer Profile in `GroupWall` wurde entfernt. Die `onlineCount` wird nun effizient von der Parent-Page durchgereicht.
+- **Stabile Callbacks:** Alle Event-Handler (`onDelete`, `onPin`, `onReply`) nutzen nun `useCallback` mit stabilen Referenzen (`messagesRef`), um die Memoization der Kind-Komponenten nicht zu durchbrechen.
+
+## [1.4.26] - 2026-04-10 - ABI Bot Chat mit Voll-Logging
+
+### Added - ABI Bot pro Chat
+
+- In der Gruppenchat-Ansicht gibt es jetzt pro bestehendem Chat einen eigenen `ABI Bot` Modus (intern, hub, role, system).
+- Der ABI Bot Verlauf wird chatbezogen geladen und angezeigt.
+
+### Added - Serverseitige ABI Bot API
+
+- Neue Route `/api/chats/abi-bot` (GET/POST) mit Bearer-Token-Pruefung und Approved-Check.
+- Chat-Zugriffspruefung serverseitig anhand Profilrollen und Gruppenmitgliedschaft.
+- Bot-Antworten werden ueber Groq (`llama-3.1-8b-instant`) erzeugt.
+
+### Added - Pflicht-Logging und Rate-Limit
+
+- Jede ABI-Bot Anfrage wird mit vollem Prompt und voller Antwort in `abi_bot_logs` auditierbar gespeichert.
+- Konversationen werden in `abi_bot_conversations` persistiert.
+- Neues serverseitiges Rate-Limit nur fuer ABI Bot: maximal 10 Nachrichten pro Minute pro Nutzer (`429` bei Ueberschreitung).
+
+## [1.4.25] - 2026-04-10 - System Control Center KI Lagebericht
+
+### Fixed - News Zusammenfassungen (Groq KI)
+
+- API Route `api/news/summarize` stabilisiert: verbesserte Fehlerbehandlung und aussagekraeftigere Error-Responses (500 Details).
+- Groq API-Integration (Llama 3.1 8B) mit korrektem Auth-Handling und Prompts wiederhergestellt.
+- Firebase Admin Initialisierung robuster gestaltet (Fallback fuer lokale Entwicklung ohne Cert-Keys).
+- UI: Die News-Detailseite zeigt nun detaillierte Fehlermeldungen bei fehlgeschlagenen Zusammenfassungen an.
+
+### Added - Admin Control Center
+
+- Das System Control Center hat jetzt den Button `KI-Zusammenfassung`, der on-demand einen kurzen Lagebericht aus den aktuellen Dashboard-Daten erstellt.
+- Die Ausgabe wird direkt im Control Center als `KI Lagebericht` angezeigt, inklusive Modell- und Zeitstempel-Info.
+- Kein Auto-Refresh fuer den KI-Call: die API wird nur bei explizitem Button-Klick genutzt.
+
+### Added - Serverseitige Admin API
+
+- Neue Admin-Routen `/api/admin/system/ai-summary` und `/admin/api/system/ai-summary` erzeugen den Lagebericht serverseitig ueber Groq.
+- Zugriff ist auf Admin-Rollen beschraenkt (`admin`, `admin_main`, `admin_co`) und erfordert gueltigen Bearer-Token.
+- Daten werden teilweise anonymisiert verarbeitet (keine Namen/E-Mails in der Zusammenfassungspayload) und nicht in Firestore gespeichert.
+
+## [1.4.24] - 2026-04-10 - KI News Zusammenfassung
+
+### Added - News Detailansicht
+
+- In der News-Detailansicht gibt es jetzt oben den Button `Zusammenfassen` fuer angemeldete und freigeschaltete Nutzer.
+- Die Zusammenfassung wird on-demand erzeugt und direkt unter dem Titel als `KI-Zusammenfassung` angezeigt.
+- Die Zusammenfassung wird nicht in Firestore gespeichert.
+
+### Added - Serverseitige KI API
+
+- Neue Route `/api/news/summarize` erzeugt die Zusammenfassung serverseitig ueber Groq.
+- Zugriff auf die API ist nur mit gueltigem Bearer-Token und freigeschaltetem Profil erlaubt.
+- Der Groq API Key wird als serverseitige Umgebungsvariable `GROQ_API_KEY` genutzt (kein `NEXT_PUBLIC_`).
+
+## [1.4.20] - 2026-04-10 - Admin Changelog Auth-Fix
+
+### Fixed - Admin Changelog Laden
+
+- Die Route `/admin/api/changelog` validiert jetzt nur noch den Firebase Bearer-Token, damit es in lokalen Dev-Setups mit Production Firebase nicht mehr zu fehlerhaften `403`-Antworten kommt.
+- Die Seite `/admin/changelog` bleibt bei fehlendem Nutzer-Token nicht mehr endlos auf `Lade Changelog...`, sondern zeigt einen klaren Fehlerhinweis.
+- Für `403`-Antworten wird jetzt eine verständliche Meldung angezeigt (Neu-Anmeldung/Rollenprüfung).
+
+### Fixed - Admin Changelog UI
+
+- Die Versionsauswahl wurde auf ein Dropdown umgestellt.
+- Doppelte React-Keys in der Changelog-Liste wurden behoben, damit keine `Encountered two children with the same key` Warnungen mehr auftreten.
+- Die Changelog-Seite lädt Einträge jetzt per Infinite Scroll in Batches nach.
+
+## [1.4.19] - 2026-04-10 - Admin Changelog Ansicht
+
+### Added - Admin Bereich
+
+- Neuer Admin-Menüpunkt `Changelog` in Navigation und Control Center.
+- Neue Admin-Seite `/admin/changelog` zeigt die Inhalte aus `CHANGELOG.md` direkt im Dashboard an.
+- Changelog-Einträge sind für Admins nach Version filterbar (Freitext + Schnellfilter-Buttons).
+
+### Added - Admin API
+
+- Neue Route `/admin/api/changelog` lädt die Changelog-Datei serverseitig und prüft den Bearer-Token auf Admin-Rolle (`admin`, `admin_main`, `admin_co`).
+
+## [1.4.18] - 2026-04-10 - Manuelle Leaderboard-Korrekturen
+
+### Added - Kurs-Ranking
+
+- Planner/Admins können im Kurs-Ranking jetzt pro Kurs manuelle Korrekturbeträge eintragen und speichern.
+- Die Werte werden in `settings/config.leaderboard_adjustments` persistiert und direkt im Leaderboard verrechnet.
+- Das Ranking summiert damit nun reguläre Finanzeinträge, Shop-Gewinne und manuelle Korrekturen.
+- Die manuelle Korrektur wird im Dashboard nicht mehr angezeigt und bleibt nur auf der Finanzseite sichtbar.
+
+## [1.4.17] - 2026-04-10 - Shop Gewinnsplit & Leaderboard
+
+### Changed - Shop & Finanzen
+
+- Die 90%-Formulierungen im Shop, in der Hilfe und in den AGB wurden auf Gewinne statt Einnahmen umgestellt.
+- Das Kurs-Ranking berücksichtigt Shop-Gewinne jetzt direkt aus `shop_earnings` zusätzlich zu den normalen Finanzeinträgen.
+- Die Finanz- und Dashboard-Seite laden `shop_earnings` separat, damit das Leaderboard auch ohne automatische Finanztab-Einträge weiterläuft.
+
+### Changed - Firestore Rules
+
+- `shop_earnings` ist jetzt für genehmigte Nutzer lesbar, damit das Kurs-Ranking die Shop-Gewinne aggregieren kann.
+
+## [1.4.16] - 2026-04-10 - Album Scroll & Foil Performance
+
+### Changed - Sammelkarten Album Performance
+
+- `TeacherAlbum` nutzt jetzt Infinite Scroll mit 24er-Batches statt sofort alle Karten auf einmal zu rendern.
+- Das Nachladen erfolgt automatisch über einen `IntersectionObserver` mit Vorladeabstand für flüssigeres Scrollen.
+- Bei Filter-/Sortierwechsel wird die sichtbare Menge sauber zurückgesetzt, damit die Liste konsistent bleibt.
+
+### Changed - Karten Rendering & Effekte
+
+- Foil-Overlays werden nur noch gerendert, wenn die Karte im Viewport ist (`TeacherCard` + `CardEffectOverlay`).
+- Karten außerhalb des Viewports haben keine aktiven Foil-Effekte mehr (komplett deaktiviert).
+- `CardRenderer` ist jetzt per `React.memo` mit Prop-Vergleich abgesichert, um unnötige Grid-Re-Renders zu reduzieren.
+
+## [1.4.14] - 2026-04-10 - Card Leveling & Balancing Overhaul
+
+### Added - Card Mechanics
+- **Card Leveling System**: HP und Schaden skalieren nun mit jedem Level der Karte (bis Max-Level 10).
+- **Stat Scaling**: Jedes Level erhöht die Basiswerte um 10% (Level 10 entspricht 190% der Basiswerte).
+- **Support Card Scaling**: Support-Karten skalieren nun ihren Multiplikator basierend auf dem Level.
+
+### Changed - Balancing
+- **Teacher Stat Rebalance**: Umfassendes Rebalancing aller Lehrer-Karten. Basis-HP und Schaden wurden an die Seltenheit angepasst (Common: ~95 HP / 15 DMG bis Iconic: ~160 HP / 80 DMG).
+- **UI Enhancements**: Anzeige des Levels und der skalierten Werte in der Karten-Detailansicht (Spec Card).
+
+## [1.4.13] - 2026-04-10 - Ignore Generated Artifacts
+
+### Changed - Git Hygiene
+
+- Generated workspace artefacts wie `.firebase/`, `src/bones/`, `docs/maestro/plans/`, `docs/maestro/state/archive/`, `PHASE1_NP_SETUP.md` und `lehrer_export_*.csv` werden nun standardmäßig ignoriert.
+
+## [1.4.12] - 2026-04-10 - Deactivate Battle Pass & NP Currency
+
+### Changed - Feature Deactivation
+- **Battle Pass**: Deaktiviert und aus der Navigation entfernt. Eine "Pausiert"-Meldung wird angezeigt, falls die Seite direkt aufgerufen wird.
+- **NP-Währung (Notenpunkte)**: Alle NP-Pakete und die NP-Kategorie wurden aus dem Shop entfernt. Das NP-Guthaben-Widget wurde ausgeblendet.
+- **Premium Abo**: Das Abonnement wurde deaktiviert und aus dem Shop entfernt.
+
+### Fixed - Project Integrity
+- `TeacherAlbum.tsx`: Mehrere TypeScript-Fehler behoben (fehlende `calculateLevel` Funktion und `level` Variable) sowie ein falsch geschlossenes `BoneyardSkeleton`-Tag korrigiert.
+
+## [1.4.11] - 2026-04-10
+
+### Changed - Branch Push Policy
+
+- Die Projektanweisungen wurden so angepasst, dass nach Code-Änderungen standardmäßig auf `main` gepusht wird und `release` nur auf ausdrücklichen Befehl.
+
+## [1.4.14] - 2026-04-10 - Teacher Management Stats & Effects
 
 ### Added - Teacher Management Balancing Support
 
@@ -17,6 +246,30 @@
 - Angriffe im Manager unterstützen nun die manuelle Beschreibung des vordefinierten Effekts für maximale Flexibilität
 
 ## [Unreleased] - Battle Pass & NP Currency System
+
+### Changed - Desktop Sidebar Collapse
+
+- Die Desktop-Menueleiste ist jetzt ein- und ausklappbar. Der Zustand wird lokal gespeichert, und die mobile Navigation bleibt unveraendert.
+- Der Toggle-Pfeil sitzt jetzt mittig neben der Leiste statt im Header-Bereich ueber dem Logo.
+- Klick auf ein Symbol im eingeklappten Desktop-Modus klappt die Leiste automatisch wieder aus.
+- Das kompakte Flyout wurde entfernt, um Schatten-/Overflow-Artefakte zu vermeiden.
+- Der Toggle ist jetzt als kleine seitliche Lasche (Ausschnitt) direkt an der Menueleiste verankert.
+- Die Breiten-Animation beim Ein-/Ausklappen wurde entfernt, um visuelle Bugs zu vermeiden.
+- Toggle-Feintuning: ausgefahren oben in der Leiste neben „ABI Planer“, eingefahren als kleine Lasche oben neben dem Logo.
+- Eingefahrene Lasche weiter verfeinert: Pfeil jetzt explizit mittig zentriert in der Lasche.
+- Desktop-Menueleiste ist jetzt viewport-fixiert und scrollt beim Body-Scroll nicht mehr mit.
+- Die eingeklappte Toggle-Lasche ist jetzt ebenfalls viewport-fixiert und scrollt nicht mit dem Body.
+
+### Fixed - System Control Center Session Durations
+
+- Die Sessiondauer wird jetzt pro Browser-Session gestartet und beim Tab-Schliessen bzw. Verlassen serverseitig sauber abgeschlossen, damit extrem hohe Laufzeiten nicht mehr durch fehlende Close-Signale entstehen
+- Der Presence-Heartbeat nutzt einen stabilen Session-Start aus `sessionStorage`, damit Reloads dieselbe Sitzung fortsetzen statt sie ungewollt neu zu mischen
+- Fuer Altbestandsdaten steht jetzt ein Cleanup-Tool bereit (`cleanup:session-metrics` / `cleanup:session-metrics:apply`), das alte Sessionfelder entfernt und optional veraltete Online-Flags zuruecksetzt
+- Session-Ausreisser ueber 12 Stunden werden in Analytics (Cloud Function und lokaler Fallback) nicht mehr fuer Online-Dauer und Durchschnitt beruecksichtigt, damit alte Altwerte die KPI nicht mehr aufblasen
+- Im System Control Center gibt es jetzt eine Admin-Quick-Action `Session-Statistiken zuruecksetzen`, die global fuer alle Profile `isOnline` auf `false` setzt und Session-Felder (`onlineSince`, `lastOnline`, `lastSessionDurationSeconds`) entfernt
+- Der Session-Reset-API-Proxy nutzt jetzt einen lokalen Admin-SDK-Fallback, falls der Cloud-Function-Endpunkt noch nicht deployed oder temporaer nicht erreichbar ist (verhindert 502 im lokalen Dashboard-Setup)
+- Der lokale Session-Reset waehlt jetzt robust zwischen `abi-data` und der Default-Firestore-DB und zeigt im UI den konkreten Server-Fehlertext an statt nur einer generischen Fehlermeldung
+- Falls lokal keine Admin-Credentials verfuegbar sind (ADC fehlt), faellt der Session-Reset-Button im Control Center automatisch auf einen direkten Firestore-Client-Reset zurueck
 
 ### Fixed - System Control Center Live Stats
 
@@ -27,6 +280,11 @@
 
 - Der Haupt-Container der Sammelkarten-Ziehung nutzt jetzt `overflow-visible` statt `overflow-hidden`, damit Karten waehrend der Umdreh-Animation oben/unten nicht mehr abgeschnitten werden.
 - In der Ziehungs-Reveal-Ansicht rendert `CardRenderer` jetzt mit erzwungen sichtbarem Overflow (`!overflow-visible`), damit der 3D-Flip nicht mehr am Kartenrahmen vertikal geclippt wird.
+
+### Fixed - Sammelkarten Karten-Spec Layout
+
+- Die Karten-Spec bricht langen Karten- und Angriffs-Text jetzt erst an der echten Zeilenkante um, statt die Titel zu truncaten.
+- Level-Badge, HP-Anzeige und Footer bleiben im festen Kartenlayout stabil positioniert, damit alle Elemente innerhalb der Kartenfläche sauber Platz finden.
 
 ### Fixed - Sammelkarten Album JSX Parse Error
 
@@ -165,6 +423,34 @@
 - [ ] Phase 4: Event NP integration
 - [ ] Phase 5: Subscription system with auto-renewal
 - [ ] Phase 6: Legal AGB/Datenschutz updates and UI polish
+
+## [1.4.20] - 2026-04-10
+
+### Changed
+
+- **Global Skeleton Rollout**: Alle primären App-Seiten wurden auf ein konsistentes Skeleton-Ladesystem umgestellt. Die veralteten `Loader2`-Spinner wurden durch seiten-spezifische Skeletons ersetzt, die das finale Layout bereits während des Ladens widerspiegeln.
+- **AppShell Root Skeleton**: Beim ersten Laden des Dashboards (Auth-Check) wird nun ein Skeleton der Sidebar und des Inhaltsbereichs angezeigt, anstatt eines leeren Bildschirms.
+- **Seiten-Updates**: Skeletons wurden für folgende Bereiche implementiert/optimiert:
+  - **News & News-Details**: Vollständige Artikel-Skeletons inkl. Bildplatzhalter.
+  - **Kalender-Details**: Strukturierte Platzhalter für Event-Informationen.
+  - **Profil & Profil-Details**: Platzhalter für Avatare und Info-Karten.
+  - **Shop**: Granulare Skeletons für Produkt-Karten und Kategorien.
+  - **Abstimmungen**: Poll-Karten-Skeletons anstelle von Spinnern.
+  - **Gruppen**: Layout-Skeletons für die Sidebar-Chat-Liste und die Wall.
+  - **Feedback**: Skeletons für die Liste der eingereichten Meldungen.
+  - **Auth-Flow**: Register- und Login-Pages nutzen nun Skeletons in den Suspense-Fallbacks.
+
+## [1.4.16] - 2026-04-10
+
+### Changed
+
+- **Skeleton Pulse Style**: Alle Skeletons wurden auf den neuen "Pulse style" umgestellt. Die `Skeleton.tsx` nutzt nun standardmäßig Tailwind 4 `animate-pulse` für eine ruhigere Lade-Animation anstelle des vorherigen Shimmers.
+- **Granulare Dashboard-Fixtures**: Die manuellen `div`-Skeletons in den `fixture`-Props auf dem Dashboard (`src/app/page.tsx`) wurden durch die `<Skeleton />` Komponente ersetzt, um ein einheitliches Styling und konsistentes Pulsieren über alle Module hinweg sicherzustellen.
+- **Boneyard Registry Sync**: Die Boneyard-Registry wurde um fehlende Einträge (`dashboard-todos`, `dashboard-events`, `dashboard-leaderboard`, `dashboard-poll`) erweitert, um die Framework-Integration zu stabilisieren.
+
+### Fixed
+
+- **Maintenance Skeleton**: Die manuelle Lade-Anzeige auf der Wartungsseite nutzt nun ebenfalls die globale `Skeleton`-Komponente.
 
 ## [1.4.15] - 2026-04-08
 

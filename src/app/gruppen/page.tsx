@@ -6,6 +6,7 @@ import { collection, doc, onSnapshot, orderBy, query, updateDoc } from 'firebase
 import { useAuth } from '@/context/AuthContext'
 import { GroupMessage, PlanningGroup, Profile, Settings } from '@/types/database'
 import { Loader2, Plus, Users } from 'lucide-react'
+import { Skeleton } from '@/components/ui/skeleton'
 import { ProtectedSystemGate } from '@/components/ui/ProtectedSystemGate'
 import { cn, getOnlineStatus, toDate } from '@/lib/utils'
 import { GroupWall } from '@/components/groups/GroupWall'
@@ -20,9 +21,11 @@ import { useGroupJoin } from '@/hooks/useGroupJoin'
 type ChatItem = {
   id: string
   label: string
-  type: 'internal' | 'hub'
+  type: 'internal' | 'hub' | 'role'
   groupName: string
+  roleAccess?: string
   latestMessage: GroupMessage | null
+  isAbiBot?: boolean
 }
 
 function getLastMessageTime(message: GroupMessage | null): number {
@@ -47,7 +50,7 @@ function getOnlineSubtitle(onlineCount: number): string {
 }
 
 function GroupsPageContent() {
-  const { profile, loading: authLoading } = useAuth()
+  const { profile, user, loading: authLoading } = useAuth()
   const [loading, setLoading] = useState(true)
   const [messages, setMessages] = useState<GroupMessage[]>([])
   const [presenceProfiles, setPresenceProfiles] = useState<Profile[]>([])
@@ -143,6 +146,7 @@ function GroupsPageContent() {
     })
 
     let latestHubMessage: GroupMessage | null = null
+    const latestByRole = new Map<string, GroupMessage | null>()
 
     for (const msg of messages) {
       if (msg.type === 'hub' && msg.group_name === 'hub' && !latestHubMessage) {
@@ -151,6 +155,10 @@ function GroupsPageContent() {
 
       if (msg.type === 'internal' && latestByGroup.has(msg.group_name) && !latestByGroup.get(msg.group_name)) {
         latestByGroup.set(msg.group_name, msg)
+      }
+
+      if (msg.type === 'role' && msg.role_access && !latestByRole.get(msg.role_access)) {
+        latestByRole.set(msg.role_access, msg)
       }
     }
 
@@ -170,8 +178,71 @@ function GroupsPageContent() {
       latestMessage: latestHubMessage,
     }
 
-    return [hubChat, ...internalChats].sort((a, b) => getLastMessageTime(b.latestMessage) - getLastMessageTime(a.latestMessage))
-  }, [messages, profile?.planning_groups])
+    const isPlanner = ['planner', 'admin', 'admin_main', 'admin_co'].includes(profile?.role || '')
+    const isAdmin = ['admin', 'admin_main', 'admin_co'].includes(profile?.role || '')
+
+    const systemChat: ChatItem = {
+      id: 'system',
+      label: 'Posteingang',
+      type: 'role',
+      groupName: 'system',
+      roleAccess: 'system',
+      latestMessage: null,
+    }
+
+    const roleChats: ChatItem[] = [
+      {
+        id: 'role:viewer',
+        label: 'Öffentlicher Chat',
+        type: 'role',
+        groupName: 'viewer',
+        roleAccess: 'viewer',
+        latestMessage: latestByRole.get('viewer') ?? null,
+      }
+    ]
+
+    if (isPlanner) {
+      roleChats.push({
+        id: 'role:planner',
+        label: 'Planer-Chat',
+        type: 'role',
+        groupName: 'planner',
+        roleAccess: 'planner',
+        latestMessage: latestByRole.get('planner') ?? null,
+      })
+    }
+
+    if (isAdmin) {
+      roleChats.push({
+        id: 'role:admin',
+        label: 'Admin-Intern',
+        type: 'role',
+        groupName: 'admin',
+        roleAccess: 'admin',
+        latestMessage: latestByRole.get('admin') ?? null,
+      })
+    }
+
+    const baseChats = [hubChat, systemChat, ...roleChats, ...internalChats].sort((a, b) => {
+      const timeA = getLastMessageTime(a.latestMessage)
+      const timeB = getLastMessageTime(b.latestMessage)
+      
+      if (timeA === 0 && timeB === 0) return 0
+      
+      return timeB - timeA
+    })
+
+    const abiBotChat: ChatItem = {
+      id: 'bot:abi',
+      label: 'ABI Bot',
+      type: 'hub',
+      groupName: 'hub',
+      latestMessage: null,
+      isAbiBot: true,
+    }
+
+    return [...baseChats, abiBotChat]
+  }, [messages, profile?.planning_groups, profile?.role])
 
   useEffect(() => {
     if (chats.length === 0) return
@@ -212,6 +283,17 @@ function GroupsPageContent() {
         if (!onlineState.isOnline) return acc
 
         if (chat.type === 'hub') return acc + 1
+        if (chat.type === 'role') {
+          if (chat.roleAccess === 'viewer') return acc + 1
+          if (chat.roleAccess === 'planner') {
+            const isP = ['planner', 'admin', 'admin_main', 'admin_co'].includes(presenceProfile.role || '')
+            return isP ? acc + 1 : acc
+          }
+          if (chat.roleAccess === 'admin') {
+            const isA = ['admin', 'admin_main', 'admin_co'].includes(presenceProfile.role || '')
+            return isA ? acc + 1 : acc
+          }
+        }
 
         return presenceProfile.planning_groups?.includes(chat.groupName) ? acc + 1 : acc
       }, 0)
@@ -224,8 +306,21 @@ function GroupsPageContent() {
 
   if (authLoading || loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="flex flex-col gap-6">
+        <Skeleton className="h-12 w-64" />
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div className="lg:col-span-4 space-y-4">
+            <Skeleton className="h-10 w-full" />
+            <div className="space-y-2">
+              {[1, 2, 3, 4, 5].map(i => (
+                <Skeleton key={i} className="h-16 w-full rounded-xl" />
+              ))}
+            </div>
+          </div>
+          <div className="lg:col-span-8">
+            <Skeleton className="h-[600px] w-full rounded-2xl" />
+          </div>
+        </div>
       </div>
     )
   }
@@ -336,7 +431,7 @@ function GroupsPageContent() {
         </aside>
 
         <div className="lg:col-span-8 space-y-4">
-          {activeChat && activeChat.type === 'internal' && (
+          {activeChat && activeChat.type === 'internal' && !activeChat.isAbiBot && (
             <div className="flex flex-wrap items-center gap-2">
               <AddTodoDialog defaultGroup={activeChat.groupName} />
               <AddEventDialog defaultGroup={activeChat.groupName} triggerLabel="Termin für diese Gruppe" />
@@ -346,8 +441,11 @@ function GroupsPageContent() {
           {activeChat && (
             <GroupWall
               groupName={activeChat.groupName}
-              type={activeChat.type}
-              canManage={canManageActiveChat}
+              type={activeChat.id === 'system' ? 'system' : activeChat.type}
+              roleAccess={activeChat.roleAccess}
+              abiBotMode={!!activeChat.isAbiBot}
+              onlineCount={onlineCountByChatId.get(activeChat.id) ?? 0}
+              canManage={activeChat.id === 'system' ? false : canManageActiveChat}
             />
           )}
         </div>
@@ -359,8 +457,21 @@ function GroupsPageContent() {
 export default function GroupsPage() {
   return (
     <Suspense fallback={
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="flex flex-col gap-6">
+        <Skeleton className="h-12 w-64" />
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div className="lg:col-span-4 space-y-4">
+            <Skeleton className="h-10 w-full" />
+            <div className="space-y-2">
+              {[1, 2, 3, 4, 5].map(i => (
+                <Skeleton key={i} className="h-16 w-full rounded-xl" />
+              ))}
+            </div>
+          </div>
+          <div className="lg:col-span-8">
+            <Skeleton className="h-[600px] w-full rounded-2xl" />
+          </div>
+        </div>
       </div>
     }>
       <GroupsPageContent />

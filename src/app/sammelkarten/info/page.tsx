@@ -61,12 +61,12 @@ export default function SammelkartenInfoPage() {
         <section className="space-y-4">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-bold uppercase tracking-widest">
             <Heart className="w-3 h-3 fill-current" />
-            90% für eure Abikasse
+            90% der Gewinne für eure Abikasse
           </div>
           <h2 className="text-3xl font-black tracking-tight">Sammelkarten System & Support</h2>
           <p className="text-muted-foreground leading-relaxed">
             Das Sammeln von Lehrerkarten im ABI Planer ist als unterhaltsames Begleitelement für deine Abiturphase gedacht. 
-            Besonders wichtig: <span className="text-foreground font-black underline underline-offset-4 decoration-primary/30">90% aller Einnahmen</span> aus dem Booster-Shop fließen direkt in eure Stufenkasse (Abikasse), um euren Abiball und eure Aktionen zu finanzieren!
+            Besonders wichtig: <span className="text-foreground font-black underline underline-offset-4 decoration-primary/30">90% der Gewinne</span> aus dem Booster-Shop fließen direkt in eure Stufenkasse (Abikasse), um euren Abiball und eure Aktionen zu finanzieren!
           </p>
         </section>
 

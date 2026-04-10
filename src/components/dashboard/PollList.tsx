@@ -16,6 +16,7 @@ import { logAction } from '@/lib/logging'
 interface PollListProps {
   polls: Poll[]
   userId?: string
+  userName?: string | null
   canVote?: boolean
   canManage?: boolean
   limit?: number
@@ -26,6 +27,7 @@ interface PollListProps {
 export function PollList({
   polls,
   userId,
+  userName,
   canVote = false,
   canManage = false,
   limit,
@@ -131,7 +133,7 @@ export function PollList({
       if (!existingVote) toast.success('Deine Stimme wurde gespeichert.' + ' Du hast 1 Booster-Pack als Belohnung erhalten.'); else toast.success('Deine Stimme wurde geändert.')
       
       const optionText = poll?.options?.find(o => o.id === optionId)?.option_text || optionId
-      await logAction('VOTE_CAST', userId, null, { 
+      await logAction('VOTE_CAST', userId, userName, { 
         poll_id: pollId, 
         poll_question: poll?.question,
         option_id: optionId,
@@ -163,7 +165,7 @@ export function PollList({
       await deleteDoc(voteRef)
       await refreshVotesForPoll(pollId)
       toast.success('Deine Teilnahme wurde zurückgezogen.')
-      await logAction('VOTE_CAST', userId, null, { 
+      await logAction('VOTE_CAST', userId, userName, { 
         poll_id: pollId, 
         poll_question: poll?.question,
         action: 'withdraw' 
@@ -211,7 +213,7 @@ export function PollList({
 
       const deletedPoll = polls.find((poll) => poll.id === pollId)
       if (userId) {
-        await logAction('POLL_DELETED', userId, null, {
+        await logAction('POLL_DELETED', userId, userName, {
           poll_id: pollId,
           question: deletedPoll?.question,
         })

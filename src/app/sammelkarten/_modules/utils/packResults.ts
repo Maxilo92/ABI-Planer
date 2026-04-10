@@ -1,6 +1,6 @@
 import { LootTeacher } from '@/types/database'
-import { DEFAULT_TEACHERS } from '../constants'
 import { CollectionResult, MassPackReveal, MaybeCollectionResult, UserTeacherMap } from '../types'
+import { getCard } from '@/constants/cardRegistry'
 
 type BoosterResult = {
   teacherId: string
@@ -9,9 +9,59 @@ type BoosterResult = {
   level: number
 }
 
+const CANONICAL_TEACHER_SET_ID = 'teacher_vol1'
+const LEGACY_TEACHER_SET_ID = 'teachers_v1'
+
+function stripTeacherPrefix(teacherId: string): string {
+  if (!teacherId) return teacherId
+  if (teacherId.startsWith(`${CANONICAL_TEACHER_SET_ID}:`)) return teacherId.slice(`${CANONICAL_TEACHER_SET_ID}:`.length)
+  if (teacherId.startsWith(`${LEGACY_TEACHER_SET_ID}:`)) return teacherId.slice(`${LEGACY_TEACHER_SET_ID}:`.length)
+  return teacherId
+}
+
+function getExistingUserEntry(userTeachers: UserTeacherMap, teacherId: string) {
+  const baseId = stripTeacherPrefix(teacherId)
+  return (
+    userTeachers[teacherId] ||
+    userTeachers[`${CANONICAL_TEACHER_SET_ID}:${baseId}`] ||
+    userTeachers[`${LEGACY_TEACHER_SET_ID}:${baseId}`] ||
+    userTeachers[baseId]
+  )
+}
+
+function resolveTeacherMeta(resultTeacherId: string, teachers: LootTeacher[]): LootTeacher {
+  const baseId = stripTeacherPrefix(resultTeacherId)
+
+  const resolved = getCard(resultTeacherId) || getCard(baseId)
+  if (resolved) {
+    const teacherMeta = resolved.type === 'teacher'
+      ? {
+          hp: resolved.hp,
+          attacks: resolved.attacks,
+        }
+      : {}
+
+    return {
+      id: resolved.id,
+      name: resolved.name,
+      rarity: resolved.rarity as any,
+      ...teacherMeta,
+      description: resolved.description,
+    } as LootTeacher
+  }
+
+  return (
+    teachers.find((t) => {
+      const id = t.id || t.name
+      return id === resultTeacherId || id === baseId
+    }) ||
+    ({ id: baseId, name: 'Unbekannte Karte', rarity: 'common' } as LootTeacher)
+  )
+}
+
 export function mapResultsToTeachers(results: BoosterResult[], teachers: LootTeacher[]): LootTeacher[] {
   return results.map((result) => {
-    return teachers.find((t) => (t.id || t.name) === result.teacherId) || DEFAULT_TEACHERS[0]
+    return resolveTeacherMeta(result.teacherId, teachers)
   })
 }
 
@@ -26,16 +76,17 @@ export function processCollectionResults(
   const initialTeachers = { ...userTeachers }
 
   return results.map((result) => {
-    const isNew = !initialTeachers[result.teacherId]
-    const oldLevel = initialTeachers[result.teacherId]?.level || 1
+    const existingEntry = getExistingUserEntry(initialTeachers, result.teacherId)
+    const isNew = !existingEntry
+    const oldLevel = existingEntry?.level || 1
     const isLevelUp = !isNew && result.level > oldLevel
 
     initialTeachers[result.teacherId] = {
       count: result.count,
       level: result.level,
       variants: {
-        ...initialTeachers[result.teacherId]?.variants,
-        [result.variant]: (initialTeachers[result.teacherId]?.variants?.[result.variant] || 0) + 1
+        ...existingEntry?.variants,
+        [result.variant]: (existingEntry?.variants?.[result.variant] || 0) + 1
       }
     }
 
@@ -58,16 +109,17 @@ export function processMassCollectionResults(
 
   return allResults.map((packResults) => {
     return packResults.map((result) => {
-      const isNew = !initialTeachers[result.teacherId]
-      const oldLevel = initialTeachers[result.teacherId]?.level || 1
+      const existingEntry = getExistingUserEntry(initialTeachers, result.teacherId)
+      const isNew = !existingEntry
+      const oldLevel = existingEntry?.level || 1
       const isLevelUp = !isNew && result.level > oldLevel
 
       initialTeachers[result.teacherId] = {
         count: result.count,
         level: result.level,
         variants: {
-          ...initialTeachers[result.teacherId]?.variants,
-          [result.variant]: (initialTeachers[result.teacherId]?.variants?.[result.variant] || 0) + 1
+          ...existingEntry?.variants,
+          [result.variant]: (existingEntry?.variants?.[result.variant] || 0) + 1
         }
       }
 

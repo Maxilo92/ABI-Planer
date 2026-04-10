@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, memo } from 'react'
 import { GroupMessage } from '@/types/database'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { format } from 'date-fns'
@@ -13,18 +13,18 @@ import { MediaAttachment } from './MediaAttachment'
 interface MessageItemProps {
   msg: GroupMessage
   replies?: GroupMessage[]
-  isOwn: boolean
+  currentUserId: string | null | undefined
   canManage: boolean
-  type?: 'internal' | 'hub'
+  type?: 'internal' | 'hub' | 'role'
   onDelete: (id: string) => void
   onPin: (id: string, pinned: boolean) => void
   onReply: (msg: GroupMessage) => void
 }
 
-export function MessageItem({
+export const MessageItem = memo(function MessageItem({
   msg,
   replies = [],
-  isOwn,
+  currentUserId,
   canManage,
   type,
   onDelete,
@@ -32,6 +32,7 @@ export function MessageItem({
   onReply
 }: MessageItemProps) {
   const [showReplies, setShowReplies] = useState(true)
+  const isOwn = msg.created_by === currentUserId
   const date = toDate(msg.created_at)
   const isPinned = msg.pinned
   const hasTextContent = Boolean(msg.content?.trim())
@@ -178,7 +179,7 @@ export function MessageItem({
                   <MessageItem
                     key={reply.id}
                     msg={reply}
-                    isOwn={reply.created_by === (isOwn ? msg.created_by : reply.created_by)} // Note: isOwn logic might need profile here, but we pass it from parent
+                    currentUserId={currentUserId}
                     canManage={canManage}
                     onDelete={onDelete}
                     onPin={onPin}
@@ -193,4 +194,4 @@ export function MessageItem({
       )}
     </div>
   )
-}
+})

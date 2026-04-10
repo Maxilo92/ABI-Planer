@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { format } from 'date-fns'
 import { de } from 'date-fns/locale'
-import { Loader2, ArrowLeft, Eye, Calendar, User as UserIcon, MessageSquare, Send, Plus, Smile } from 'lucide-react'
+import { Loader2, ArrowLeft, Eye, Calendar, User as UserIcon, MessageSquare, Send, Plus, Smile, Sparkles } from 'lucide-react'
 import { toDate } from '@/lib/utils'
 import Link from 'next/link'
 import { useAuth } from '@/context/AuthContext'
@@ -22,6 +22,7 @@ import remarkGfm from 'remark-gfm'
 import { ShareResourceButton } from '@/components/ui/share-resource-button'
 import { motion, AnimatePresence } from 'framer-motion'
 import { getDashboardRedirectUrl } from '@/lib/dashboard-url'
+import { Skeleton } from '@/components/ui/skeleton'
 
 import { LandingHeader } from '@/components/layout/LandingHeader'
 import { Footer as DashboardFooter } from '@/components/layout/Footer'
@@ -37,6 +38,9 @@ export default function NewsDetailPage({ params }: { params: Promise<{ id: strin
   const [submittingComment, setSubmittingComment] = useState(false)
   const [showEmojiPicker, setShowEmojiPicker] = useState(false)
   const [rootMode, setRootMode] = useState<'unknown' | 'landing' | 'dashboard'>('unknown')
+  const [summary, setSummary] = useState<string | null>(null)
+  const [summaryError, setSummaryError] = useState<string | null>(null)
+  const [summarizing, setSummarizing] = useState(false)
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -185,10 +189,89 @@ export default function NewsDetailPage({ params }: { params: Promise<{ id: strin
     }
   }
 
+  const handleSummarize = async () => {
+    if (!news || summarizing) return
+
+    if (!user || !profile?.is_approved) {
+      toast.error('Anmeldung erforderlich', {
+        description: 'Du brauchst einen angemeldeten und freigeschalteten Account.'
+      })
+      return
+    }
+
+    if (!news.content?.trim()) {
+      toast.error('Keine Inhalte zum Zusammenfassen gefunden.')
+      return
+    }
+
+    setSummarizing(true)
+    setSummaryError(null)
+
+    try {
+      const idToken = await user.getIdToken()
+      const response = await fetch('/api/news/summarize', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({
+          title: news.title,
+          content: news.content,
+        }),
+      })
+
+      const payload = await response.json().catch(() => null)
+      if (!response.ok) {
+        const message = typeof payload?.error === 'string' ? payload.error : 'Zusammenfassung konnte nicht erstellt werden.'
+        const details = typeof payload?.details === 'string' ? payload.details : null
+        
+        const error = new Error(message)
+        if (details) (error as any).details = details
+        throw error
+      }
+
+      const nextSummary = typeof payload?.summary === 'string' ? payload.summary.trim() : ''
+      if (!nextSummary) {
+        throw new Error('Leere Antwort von der KI erhalten.')
+      }
+
+      setSummary(nextSummary)
+      toast.success('Zusammenfassung erstellt')
+    } catch (error: any) {
+      const message = error?.message || 'Zusammenfassung konnte nicht erstellt werden.'
+      const description = error?.details || undefined
+      
+      setSummary(null)
+      setSummaryError(message)
+      toast.error('Fehler bei der Zusammenfassung', {
+        description: description || message,
+      })
+    } finally {
+      setSummarizing(false)
+    }
+  }
+
   if (rootMode === 'unknown' || loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="max-w-4xl mx-auto py-8 space-y-10">
+        <Skeleton className="h-10 w-32 rounded-md" />
+        <article className="space-y-10">
+          <Skeleton className="aspect-[21/9] w-full rounded-[2.5rem]" />
+          <div className="space-y-6">
+            <div className="space-y-4">
+              <Skeleton className="h-6 w-48 rounded-full" />
+              <Skeleton className="h-16 w-3/4" />
+            </div>
+            <div className="space-y-4">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-5/6" />
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-2/3" />
+            </div>
+          </div>
+        </article>
       </div>
     )
   }
@@ -216,6 +299,7 @@ export default function NewsDetailPage({ params }: { params: Promise<{ id: strin
     .sort((a, b) => (reactions[b]?.length || 0) - (reactions[a]?.length || 0))
   
   const activeEmojis = [...defaultEmojis, ...otherActiveEmojis]
+  const canSummarize = !!user && !!profile?.is_approved
   
   const quickEmojis = ['👍', '❤️', '🔥', '😂', '😮', '😢', '🎓', '🥂', '🚀', '💸', '📝', '🎉', '🍦', '🍕', '🍺', '✅']
 
@@ -253,16 +337,22 @@ export default function NewsDetailPage({ params }: { params: Promise<{ id: strin
                 <div className="space-y-4">
                   <div className="flex flex-wrap items-center gap-3 text-[10px] font-black uppercase tracking-widest text-primary">
                     <span className="bg-primary/10 px-3 py-1 rounded-full">{news.created_at ? format(toDate(news.created_at), 'dd. MMMM yyyy', { locale: de }) : 'Neu'}</span>
+                    {news.is_ai_generated && <span className="bg-amber-500/10 border border-amber-500/20 px-3 py-1 rounded-full text-amber-600 flex items-center gap-1"><Sparkles className="h-3 w-3" /> KI-unterstützt</span>}
                     <span className="flex items-center gap-1.5"><UserIcon className="h-3.5 w-3.5" /> {news.author_name || 'System'}</span>
                   </div>
                   <h1 className="text-4xl md:text-6xl font-black tracking-tight leading-[1.1]">{news.title}</h1>
                 </div>
 
-                <div className="flex items-center gap-6 pt-4 border-t border-border/50">
+                <div className="flex items-center flex-wrap gap-6 pt-4 border-t border-border/50">
                    <div className="flex items-center gap-2 text-muted-foreground text-sm font-bold">
                       <Eye className="h-4 w-4 text-primary/60" />
                       {news.view_count || 0} Aufrufe
                    </div>
+                   {news.is_ai_generated && (
+                     <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest bg-amber-500/10 border border-amber-500/20 px-3 py-1 rounded-full text-amber-600">
+                       <Sparkles className="h-3 w-3" /> KI-unterstützt
+                     </div>
+                   )}
                    <ShareResourceButton
                       resourcePath={`/news/${news.id}`}
                       title={news.title}
@@ -350,6 +440,22 @@ export default function NewsDetailPage({ params }: { params: Promise<{ id: strin
               {news.title}
             </CardTitle>
             <div className="shrink-0 mt-1 flex items-center gap-1">
+              {canSummarize && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-2"
+                  onClick={handleSummarize}
+                  disabled={summarizing}
+                >
+                  {summarizing ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Sparkles className="h-4 w-4" />
+                  )}
+                  Zusammenfassen
+                </Button>
+              )}
               <ShareResourceButton
                 resourcePath={`/news/${news.id}`}
                 title={news.title}
@@ -379,8 +485,76 @@ export default function NewsDetailPage({ params }: { params: Promise<{ id: strin
               <Eye className="h-4 w-4 text-primary/70" />
               {news.view_count || 0} {news.view_count === 1 ? 'Aufruf' : 'Aufrufe'}
             </div>
+
+            {news.is_ai_generated && (
+              <div className="flex items-center gap-2 bg-amber-500/10 border border-amber-500/20 px-3 py-1 rounded-full text-amber-600 text-xs font-black">
+                <Sparkles className="h-3.5 w-3.5" />
+                KI-unterstützt
+              </div>
+            )}
           </div>
           <div className="h-px bg-border/50" />
+          
+          <AnimatePresence mode="wait">
+            {(summary || summaryError) && (
+              <motion.div 
+                initial={{ opacity: 0, y: 20, scale: 0.95, filter: 'blur(4px)' }}
+                animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
+                exit={{ opacity: 0, y: -10, scale: 0.95, filter: 'blur(4px)' }}
+                transition={{ 
+                  type: 'spring',
+                  damping: 15,
+                  stiffness: 100,
+                  mass: 0.8,
+                  opacity: { duration: 0.4 }
+                }}
+                className="overflow-hidden mb-8"
+              >
+                <div className={`rounded-2xl border-2 p-5 md:p-6 shadow-xl shadow-primary/5 ${summary ? 'bg-primary/5 border-primary/20' : 'bg-red-50 border-red-200'}`}>
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="bg-primary/10 p-2 rounded-lg">
+                      <Sparkles className="h-5 w-5 text-primary animate-pulse" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold uppercase tracking-widest text-primary/60">KI-Zusammenfassung</p>
+                      <p className="text-[10px] text-muted-foreground font-medium">Llama 3.1 8B Instant</p>
+                    </div>
+                  </div>
+                  {summary ? (
+                    <motion.div 
+                      className="text-base md:text-lg leading-relaxed text-foreground/90 font-medium italic flex flex-wrap gap-x-[0.35em] gap-y-1"
+                      initial="hidden"
+                      animate="visible"
+                      variants={{
+                        visible: {
+                          transition: {
+                            staggerChildren: 0.05,
+                            delayChildren: 0.2
+                          }
+                        }
+                      }}
+                    >
+                      {summary.split(' ').map((word, i) => (
+                        <motion.span
+                          key={i}
+                          variants={{
+                            hidden: { opacity: 0, y: 5, filter: 'blur(2px)' },
+                            visible: { opacity: 1, y: 0, filter: 'blur(0px)' }
+                          }}
+                          transition={{ duration: 0.4, ease: 'easeOut' }}
+                        >
+                          {word}
+                        </motion.span>
+                      ))}
+                    </motion.div>
+                  ) : (
+                    <p className="text-sm md:text-base leading-relaxed text-red-700">{summaryError}</p>
+                  )}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           <ReactMarkdown
             className="text-base md:text-xl text-foreground/90 leading-relaxed max-w-none prose dark:prose-invert"
             remarkPlugins={[remarkGfm]}

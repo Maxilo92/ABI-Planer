@@ -259,7 +259,7 @@ export const DeckEditor: React.FC<DeckEditorProps> = ({ deckId, onBack }) => {
               ) : (
                 <button
                   onClick={handleAddCard}
-                  className="w-full aspect-[2.5/3.5] bg-background/50 border-2 border-dashed border-white/10 rounded-[3.5cqw] flex flex-col items-center justify-center gap-2 hover:bg-background/80 hover:border-blue-500/50 transition-all group"
+                  className="w-full aspect-[2.5/3.5] bg-background/50 border-2 border-dashed border-white/10 rounded-xl flex flex-col items-center justify-center gap-2 hover:bg-background/80 hover:border-blue-500/50 transition-all group"
                   style={{ containerType: 'inline-size' }}
                 >
                   <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center group-hover:bg-blue-500/20 group-hover:text-blue-500 transition-colors">

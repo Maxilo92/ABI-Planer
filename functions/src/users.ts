@@ -95,6 +95,12 @@ export const bootstrapMissingProfile = onCall({
     is_referral_claimed: false,
     total_referrals: 0,
     total_referral_boosters: 0,
+    currencies: {
+      notepunkte: 0,
+    },
+    subscription: {
+      active: false,
+    },
   };
 
   await profileRef.set({
@@ -441,3 +447,51 @@ export const handleTeacherRarityChange = onCall({
     throw new HttpsError("internal", error.message || "Failed to cleanup inventories on rarity change.");
   }
 });
+
+/**
+ * Utility: Add NP (Notenpunkte) to user balance with atomic transaction
+ * @returns { success: boolean, newBalance: number }
+ */
+export async function addNotepunkte(userId: string, amount: number): Promise<{ success: boolean; newBalance: number }> {
+  if (amount < 0) throw new Error("Amount must be >= 0");
+  const db = getFirestore("abi-data");
+  const result = await db.runTransaction(async (transaction) => {
+    const profileRef = db.collection("profiles").doc(userId);
+    const profileSnap = await transaction.get(profileRef);
+    if (!profileSnap.exists) throw new Error(`User profile ${userId} not found`);
+    
+    const currentBalance = profileSnap.data()?.currencies?.notepunkte || 0;
+    const newBalance = currentBalance + amount;
+    transaction.update(profileRef, { "currencies.notepunkte": newBalance });
+    return newBalance;
+  });
+  return { success: true, newBalance: result };
+}
+
+/**
+ * Utility: Subtract NP with balance validation
+ * @returns { success: boolean, newBalance: number, error?: string }
+ */
+export async function subtractNotepunkte(userId: string, amount: number): Promise<{ success: boolean; newBalance?: number; error?: string }> {
+  if (amount < 0) throw new Error("Amount must be >= 0");
+  const db = getFirestore("abi-data");
+  try {
+    const result = await db.runTransaction(async (transaction) => {
+      const profileRef = db.collection("profiles").doc(userId);
+      const profileSnap = await transaction.get(profileRef);
+      if (!profileSnap.exists) throw new Error(`User profile ${userId} not found`);
+      
+      const currentBalance = profileSnap.data()?.currencies?.notepunkte || 0;
+      if (currentBalance < amount) {
+        return { success: false, error: `Insufficient NP balance. Required: ${amount}, Available: ${currentBalance}` };
+      }
+      
+      const newBalance = currentBalance - amount;
+      transaction.update(profileRef, { "currencies.notepunkte": newBalance });
+      return { success: true, newBalance };
+    });
+    return result;
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}

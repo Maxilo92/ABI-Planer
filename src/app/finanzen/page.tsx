@@ -8,7 +8,7 @@ import { FundingStatus } from '@/components/dashboard/FundingStatus'
 import { ClassRanking } from '@/components/dashboard/ClassRanking'
 import { AddFinanceDialog } from '@/components/modals/AddFinanceDialog'
 import { EditFinanceDialog } from '@/components/modals/EditFinanceDialog'
-import { FinanceEntry, Settings } from '@/types/database'
+import { FinanceEntry, Settings, ShopEarning } from '@/types/database'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
@@ -26,6 +26,8 @@ export default function FinancePage() {
   const { user, profile, loading: authLoading } = useAuth()
   const [settings, setSettings] = useState<Settings | null>(null)
   const [finances, setFinances] = useState<FinanceEntry[]>([])
+  const [shopEarnings, setShopEarnings] = useState<ShopEarning[]>([])
+  const [shopEarningsLoaded, setShopEarningsLoaded] = useState(false)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -33,6 +35,7 @@ export default function FinancePage() {
 
     if (!profile) {
       setLoading(false)
+      setShopEarningsLoaded(true)
       return
     }
 
@@ -60,13 +63,29 @@ export default function FinancePage() {
       setLoading(false)
     })
 
+    // 3. Listen to Shop Earnings for leaderboard support
+    let unsubscribeShopEarnings = () => setShopEarningsLoaded(true)
+    if (profile?.is_approved) {
+      const shopEarningsRef = collection(db, 'shop_earnings')
+      unsubscribeShopEarnings = onSnapshot(shopEarningsRef, (snapshot) => {
+        setShopEarnings(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ShopEarning)))
+        setShopEarningsLoaded(true)
+      }, (error) => {
+        console.error('Error listening to shop earnings:', error)
+        setShopEarningsLoaded(true)
+      })
+    } else {
+      setShopEarningsLoaded(true)
+    }
+
     return () => {
       unsubscribeSettings()
       unsubscribeFinances()
+      unsubscribeShopEarnings()
     }
   }, [authLoading, profile])
 
-  if (authLoading || loading) {
+  if (authLoading || loading || !shopEarningsLoaded) {
     return (
       <div className="space-y-6">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -252,9 +271,11 @@ export default function FinancePage() {
       <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
         <ClassRanking 
           finances={finances} 
+          shopEarnings={shopEarnings}
           goal={fundingGoal} 
           useScrollContainer={false}
           infoLink="/finanzen/spenden"
+          loading={!shopEarningsLoaded}
         />
       </div>
 

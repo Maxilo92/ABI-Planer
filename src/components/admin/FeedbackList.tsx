@@ -9,12 +9,13 @@ import { Input } from '@/components/ui/input'
 import { doc, updateDoc, deleteDoc } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import { toast } from 'sonner'
-import { Trash2, Bug, Lightbulb, HelpCircle, ChevronsRight, CheckCircle, XCircle, Download } from 'lucide-react'
+import { Trash2, Bug, Lightbulb, HelpCircle, ChevronsRight, CheckCircle, XCircle, Download, Sparkles, TrendingUp } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { logAction } from '@/lib/logging'
 import { Feedback, FeedbackType, FeedbackStatus } from '@/types/database'
+import { cn } from '@/lib/utils'
 
-type SortField = 'created_at' | 'title' | 'status' | 'type'
+type SortField = 'created_at' | 'title' | 'status' | 'type' | 'importance'
 
 interface FeedbackListProps {
   feedbackItems: Feedback[]
@@ -26,8 +27,17 @@ export function FeedbackList({ feedbackItems }: FeedbackListProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<'all' | FeedbackStatus>('all')
   const [typeFilter, setTypeFilter] = useState<'all' | FeedbackType>('all')
-  const [sortField, setSortField] = useState<SortField>('created_at')
+  const [categoryFilter, setCategoryFilter] = useState<'all' | string>('all')
+  const [sortField, setSortField] = useState<SortField>('importance')
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc')
+
+  const categories = useMemo(() => {
+    const cats = new Set<string>()
+    feedbackItems.forEach(item => {
+      if (item.category) cats.add(item.category)
+    })
+    return Array.from(cats).sort()
+  }, [feedbackItems])
 
   const getIcon = (type: string) => {
     if (type === 'bug') return <Bug className="h-4 w-4 text-destructive" />
@@ -102,13 +112,15 @@ export function FeedbackList({ feedbackItems }: FeedbackListProps) {
     const filtered = feedbackItems.filter((item) => {
       const matchesStatus = statusFilter === 'all' || item.status === statusFilter
       const matchesType = typeFilter === 'all' || item.type === typeFilter
+      const matchesCategory = categoryFilter === 'all' || item.category === categoryFilter
       const matchesQuery =
         normalizedQuery.length === 0 ||
         item.title.toLowerCase().includes(normalizedQuery) ||
         item.description.toLowerCase().includes(normalizedQuery) ||
-        (item.created_by_name ?? '').toLowerCase().includes(normalizedQuery)
+        (item.created_by_name ?? '').toLowerCase().includes(normalizedQuery) ||
+        (item.category ?? '').toLowerCase().includes(normalizedQuery)
 
-      return matchesStatus && matchesType && matchesQuery
+      return matchesStatus && matchesType && matchesCategory && matchesQuery
     })
 
     return [...filtered].sort((a, b) => {
@@ -120,13 +132,15 @@ export function FeedbackList({ feedbackItems }: FeedbackListProps) {
         result = a.title.localeCompare(b.title, 'de')
       } else if (sortField === 'status') {
         result = a.status.localeCompare(b.status, 'de')
+      } else if (sortField === 'importance') {
+        result = (a.importance || 0) - (b.importance || 0)
       } else {
         result = a.type.localeCompare(b.type, 'de')
       }
 
       return sortDirection === 'asc' ? result : -result
     })
-  }, [feedbackItems, searchQuery, statusFilter, typeFilter, sortField, sortDirection])
+  }, [feedbackItems, searchQuery, statusFilter, typeFilter, categoryFilter, sortField, sortDirection])
 
   const csvEscape = (value: string) => `"${value.replace(/"/g, '""')}"`
 
@@ -136,13 +150,15 @@ export function FeedbackList({ feedbackItems }: FeedbackListProps) {
       return
     }
 
-    const header = ['id', 'titel', 'beschreibung', 'typ', 'status', 'erstellt_am', 'erstellt_von', 'anonym', 'privat']
+    const header = ['id', 'titel', 'beschreibung', 'typ', 'status', 'kategorie', 'prio', 'erstellt_am', 'erstellt_von', 'anonym', 'privat']
     const rows = visibleFeedback.map((item) => [
       item.id,
       item.title,
       item.description,
       item.type,
       item.status,
+      item.category || '',
+      item.importance || '',
       toDate(item.created_at).toISOString(),
       item.created_by_name || item.created_by || 'Unbekannt',
       item.is_anonymous ? 'Ja' : 'Nein',
@@ -173,9 +189,9 @@ export function FeedbackList({ feedbackItems }: FeedbackListProps) {
           <CardDescription>Die Export-Datei enthält genau die aktuell sichtbaren Einträge.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-3">
             <Input
-              placeholder="Suche in Titel, Beschreibung, Name"
+              placeholder="Suche in Titel, Beschreibung, Name..."
               value={searchQuery}
               onChange={(event) => setSearchQuery(event.target.value)}
               className="lg:col-span-2"
@@ -204,6 +220,17 @@ export function FeedbackList({ feedbackItems }: FeedbackListProps) {
               <option value="other">Sonstiges</option>
             </select>
 
+            <select
+              value={categoryFilter}
+              onChange={(event) => setCategoryFilter(event.target.value)}
+              className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+            >
+              <option value="all">Alle Kategorien</option>
+              {categories.map(cat => (
+                <option key={cat} value={cat}>{cat}</option>
+              ))}
+            </select>
+
             <Button variant="outline" onClick={handleExportCsv} className="justify-center">
               <Download className="h-4 w-4 mr-2" /> Export CSV
             </Button>
@@ -215,6 +242,7 @@ export function FeedbackList({ feedbackItems }: FeedbackListProps) {
               onChange={(event) => setSortField(event.target.value as SortField)}
               className="h-9 rounded-md border border-input bg-background px-3 text-sm"
             >
+              <option value="importance">Sortieren nach Prio (KI)</option>
               <option value="created_at">Sortieren nach Datum</option>
               <option value="title">Sortieren nach Titel</option>
               <option value="status">Sortieren nach Status</option>
@@ -241,14 +269,36 @@ export function FeedbackList({ feedbackItems }: FeedbackListProps) {
         <p className="text-muted-foreground text-center py-8">Kein Feedback vorhanden.</p>
       ) : (
         visibleFeedback.map((item) => (
-          <Card key={item.id} className="shadow-sm">
+          <Card key={item.id} className="shadow-sm border-l-4 overflow-hidden" style={{ borderLeftColor: item.importance ? (item.importance >= 8 ? '#ef4444' : item.importance >= 5 ? '#f59e0b' : '#22c55e') : 'transparent' }}>
             <CardHeader>
               <div className="flex justify-between items-start">
-                <div className="flex items-center gap-3">
-                  {getIcon(item.type)}
-                  <CardTitle className="text-lg">{item.title}</CardTitle>
+                <div className="flex flex-col gap-1">
+                  <div className="flex items-center gap-3">
+                    {getIcon(item.type)}
+                    <CardTitle className="text-lg">{item.title}</CardTitle>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2 mt-1">
+                    {item.category && (
+                      <Badge variant="outline" className="border-primary/30 bg-primary/5 text-primary text-[10px] py-0 h-5 flex items-center gap-1">
+                        <Sparkles className="h-2.5 w-2.5" /> {item.category}
+                      </Badge>
+                    )}
+                    {item.importance && (
+                      <Badge 
+                        variant="outline" 
+                        className={cn(
+                          "text-[10px] py-0 h-5 flex items-center gap-1",
+                          item.importance >= 8 ? "border-destructive/40 bg-destructive/10 text-destructive" :
+                          item.importance >= 5 ? "border-amber-500/40 bg-amber-500/10 text-amber-600" :
+                          "border-success/40 bg-success/10 text-success"
+                        )}
+                      >
+                        <TrendingUp className="h-2.5 w-2.5" /> Prio {item.importance}
+                      </Badge>
+                    )}
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 shrink-0">
                   {item.is_private && <Badge variant="outline" className="border-warning/50 text-warning bg-warning/5">Privat</Badge>}
                   {item.is_anonymous && <Badge variant="outline" className="border-muted-foreground/30 text-muted-foreground">Anonym</Badge>}
                   {getStatusBadge(item.status)}

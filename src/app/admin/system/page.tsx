@@ -1,13 +1,15 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { Children, cloneElement, isValidElement, type ReactNode, useEffect, useMemo, useState } from 'react'
 import { db } from '@/lib/firebase'
-import { doc, onSnapshot, updateDoc, setDoc, collection, getCountFromServer, query, where, Timestamp, getDocs, orderBy, limit, getDoc } from 'firebase/firestore'
+import { doc, onSnapshot, updateDoc, setDoc, collection, getCountFromServer, query, where, Timestamp, getDocs, orderBy, limit, getDoc, writeBatch, documentId, startAfter, deleteField } from 'firebase/firestore'
 import { useAuth } from '@/context/AuthContext'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Switch } from '@/components/ui/switch'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import { 
   ShieldAlert, Activity, Users, Sparkles, 
   ArrowLeftRight, ShoppingBag, Megaphone, 
@@ -16,7 +18,7 @@ import {
   Clock, CheckCircle2, LineChart as LineChartIcon, MessageSquare, FolderOpen, BarChart3,
   DollarSign, Settings, BarChart2, MessageSquareHeart
 } from 'lucide-react'
-import { motion } from 'framer-motion'
+import { AnimatePresence, motion, type Variants } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 import type { GlobalStats, SystemAnalytics, SystemAnalyticsActionStat, SystemAnalyticsTimelinePoint, SystemFeatures } from '@/types/system'
@@ -40,6 +42,7 @@ ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarEleme
 
 const adminLinks = [
   { href: '/admin', label: 'Benutzer', description: 'Nutzerkonten verwalten & Aktionen', icon: Users },
+  { href: '/admin/changelog', label: 'Changelog', description: 'Release-Historie nach Version filtern', icon: FolderOpen },
   { href: '/admin/sammelkarten', label: 'Sammelkarten Manager', description: 'Lehrer-Karten & Konfiguration', icon: Sparkles },
   { href: '/admin/trades', label: 'Trade Moderation', description: 'Tauschanfragen moderieren', icon: ArrowLeftRight },
   { href: '/admin/global-settings', label: 'Globale Einstellungen', description: 'Popups, Banner, Wartungsmodus', icon: Settings },
@@ -49,12 +52,58 @@ const adminLinks = [
   { href: '/admin/danger', label: 'Danger Zone', description: 'Kritische System-Operationen', icon: AlertTriangle, dangerOnly: true },
 ]
 
+function renderAnimatedWordNodes(
+  node: ReactNode,
+  wordVariants: Variants,
+  keyPrefix: string = 'word'
+): ReactNode {
+  if (typeof node === 'string') {
+    return node.split(/(\s+)/).map((token, index) => {
+      if (!token) return null
+      if (/^\s+$/.test(token)) return token
+
+      return (
+        <motion.span key={`${keyPrefix}-${index}`} variants={wordVariants} className="inline-block">
+          {token}
+        </motion.span>
+      )
+    })
+  }
+
+  if (Array.isArray(node)) {
+    return node.map((child, index) => renderAnimatedWordNodes(child, wordVariants, `${keyPrefix}-${index}`))
+  }
+
+  if (isValidElement(node)) {
+    const element = node as React.ReactElement<any>
+    const animatedChildren = renderAnimatedWordNodes(element.props?.children, wordVariants, `${keyPrefix}-child`)
+    return cloneElement(element, { ...element.props }, animatedChildren)
+  }
+
+  return node
+}
+
+function AnimatedWordFlow({
+  children,
+  wordVariants,
+}: {
+  children: ReactNode
+  wordVariants: Variants
+}) {
+  return <>{renderAnimatedWordNodes(children, wordVariants)}</>
+}
+
 export default function AdminSystemDashboard() {
   const { profile, user, loading: authLoading } = useAuth()
   const [features, setFeatures] = useState<SystemFeatures | null>(null)
   const [stats, setStats] = useState<GlobalStats | null>(null)
   const [analytics, setAnalytics] = useState<SystemAnalytics | null>(null)
+  const [aiSummary, setAiSummary] = useState<string | null>(null)
+  const [aiSummaryLoading, setAiSummaryLoading] = useState(false)
+  const [aiSummaryError, setAiSummaryError] = useState<string | null>(null)
+  const [aiSummaryMeta, setAiSummaryMeta] = useState<{ generatedAt?: string; model?: string } | null>(null)
   const [loadingData, setLoadingData] = useState(true)
+  const [resettingSessionStats, setResettingSessionStats] = useState(false)
   const [cardsByUser, setCardsByUser] = useState<Array<{ label: string; value: number }>>([])
   const [loadingCardsByUser, setLoadingCardsByUser] = useState(false)
   const router = useRouter()
@@ -76,11 +125,19 @@ export default function AdminSystemDashboard() {
     }
   }
 
-  const postWithLocalFallback = async (paths: string[], headers: Record<string, string>) => {
+  const postWithLocalFallback = async (
+    paths: string[],
+    headers: Record<string, string>,
+    body?: Record<string, unknown>
+  ) => {
     let lastResponse: Response | null = null
 
     for (const path of paths) {
-      const response = await fetch(path, { method: 'POST', headers })
+      const response = await fetch(path, {
+        method: 'POST',
+        headers,
+        body: body ? JSON.stringify(body) : undefined,
+      })
       lastResponse = response
 
       // Retry only for routing misses; keep all other statuses for caller handling.
@@ -92,9 +149,118 @@ export default function AdminSystemDashboard() {
     return lastResponse
   }
 
-  const postWithResilientFallback = async (localPaths: string[], headers: Record<string, string>) => {
-    const localResponse = await postWithLocalFallback(localPaths, headers)
+  const postWithResilientFallback = async (
+    localPaths: string[],
+    headers: Record<string, string>,
+    body?: Record<string, unknown>
+  ) => {
+    const localResponse = await postWithLocalFallback(localPaths, headers, body)
     return localResponse
+  }
+
+  const buildSummaryPayload = () => {
+    const safeStats = {
+      online_users_count: Number(stats?.online_users_count || 0),
+      total_users: Number(stats?.total_users || 0),
+      total_cards_count: Number(stats?.total_cards_count || 0),
+      active_trades_count: Number(stats?.active_trades_count || 0),
+      completed_trades_count: Number(stats?.completed_trades_count || 0),
+    }
+
+    const safeAnalytics = {
+      window_days: Number(analytics?.window_days || 7),
+      generated_at: analytics?.generated_at || new Date().toISOString(),
+      total_log_entries: Number(analytics?.total_log_entries || 0),
+      current_online_users_count: Number(analytics?.current_online_users_count || 0),
+      average_session_minutes: Number(analytics?.average_session_minutes || 0),
+      top_actions: (analytics?.top_actions || []).slice(0, 12).map((item) => ({
+        action: String(item.action || ''),
+        count: Number(item.count || 0),
+      })),
+      section_usage: (analytics?.section_usage || []).slice(0, 12).map((item) => ({
+        section: String(item.section || ''),
+        count: Number(item.count || 0),
+      })),
+      activity_timeline: (analytics?.activity_timeline || []).slice(0, 14).map((item) => ({
+        date: String(item.date || ''),
+        label: String(item.label || ''),
+        actions: Number(item.actions || 0),
+        active_users: Number(item.active_users || 0),
+      })),
+      recent_actions: (analytics?.recent_actions || []).slice(0, 20).map((item) => ({
+        timestamp: String(item.timestamp || ''),
+        action: String(item.action || ''),
+        user_id: String(item.user_id || ''),
+        section: String(item.section || ''),
+        details: String(item.details || '').slice(0, 300),
+      })),
+    }
+
+    return {
+      stats: safeStats,
+      analytics: safeAnalytics,
+      cardsByUser: cardsByUser.slice(0, 12).map((entry) => ({
+        value: Number(entry.value || 0),
+      })),
+    }
+  }
+
+  const generateAISummary = async () => {
+    if (!user) {
+      toast.error('Nicht angemeldet.')
+      return
+    }
+
+    if (!stats || !analytics) {
+      toast.error('Bitte zuerst Systemdaten laden.')
+      return
+    }
+
+    setAiSummaryLoading(true)
+    setAiSummaryError(null)
+
+    try {
+      const idToken = await user.getIdToken()
+      const response = await postWithResilientFallback(
+        ['/api/admin/system/ai-summary', '/admin/api/system/ai-summary'],
+        {
+          Authorization: `Bearer ${idToken}`,
+          'Content-Type': 'application/json',
+        },
+        buildSummaryPayload()
+      )
+
+      if (!response) {
+        throw new Error('KI-Zusammenfassung API nicht erreichbar.')
+      }
+
+      const payload = await response.json().catch(() => null)
+      if (!response.ok || !payload?.ok) {
+        throw new Error(
+          typeof payload?.error === 'string' && payload.error
+            ? payload.error
+            : 'KI-Zusammenfassung konnte nicht erstellt werden.'
+        )
+      }
+
+      const summaryText = typeof payload.summary === 'string' ? payload.summary.trim() : ''
+      if (!summaryText) {
+        throw new Error('Leere KI-Antwort erhalten.')
+      }
+
+      setAiSummary(summaryText)
+      setAiSummaryMeta({
+        generatedAt: typeof payload?.meta?.generatedAt === 'string' ? payload.meta.generatedAt : undefined,
+        model: typeof payload?.meta?.model === 'string' ? payload.meta.model : undefined,
+      })
+      toast.success('KI-Zusammenfassung erstellt.')
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'KI-Zusammenfassung konnte nicht erstellt werden.'
+      setAiSummaryError(message)
+      toast.error(message)
+    } finally {
+      setAiSummaryLoading(false)
+    }
   }
 
   const buildFallbackAnalytics = (): SystemAnalytics => ({
@@ -458,10 +624,135 @@ export default function AdminSystemDashboard() {
     }
   }
 
+  const resetSessionStatisticsClientSide = async () => {
+    const batchSize = 250
+    let processedProfiles = 0
+    let resetProfiles = 0
+    let lastDocSnapshot: any = null
+
+    while (true) {
+      const profilesRef = collection(db, 'profiles')
+      const profilesQuery = lastDocSnapshot
+        ? query(profilesRef, orderBy(documentId()), startAfter(lastDocSnapshot), limit(batchSize))
+        : query(profilesRef, orderBy(documentId()), limit(batchSize))
+
+      const snap = await getDocs(profilesQuery)
+      if (snap.empty) break
+
+      const batch = writeBatch(db)
+      snap.docs.forEach((profileDoc) => {
+        processedProfiles += 1
+        batch.update(profileDoc.ref, {
+          isOnline: false,
+          onlineSince: null,
+          lastOnline: null,
+          lastSessionDurationSeconds: deleteField(),
+        })
+        resetProfiles += 1
+      })
+
+      await batch.commit()
+      lastDocSnapshot = snap.docs[snap.docs.length - 1]
+
+      if (snap.size < batchSize) break
+    }
+
+    return {
+      processed_profiles: processedProfiles,
+      reset_profiles: resetProfiles,
+    }
+  }
+
+  const resetSessionStatistics = async () => {
+    if (!user) {
+      toast.error('Nicht angemeldet.')
+      return
+    }
+
+    const confirmed = window.confirm(
+      'Session-Statistiken fuer ALLE Nutzer zuruecksetzen?\n\nDas entfernt gespeicherte Session-Dauern und setzt den Online-Status global zurueck.'
+    )
+
+    if (!confirmed) {
+      return
+    }
+
+    setResettingSessionStats(true)
+
+    try {
+      const idToken = await user.getIdToken()
+      const response = await postWithResilientFallback(
+        ['/api/admin/system/reset-session-stats', '/admin/api/system/reset-session-stats'],
+        { Authorization: `Bearer ${idToken}` }
+      )
+
+      if (!response) {
+        throw new Error('Session-Reset API nicht erreichbar.')
+      }
+
+      const rawPayload = await response.json()
+      const parsedPayload = parseProxyOrDirectPayload(rawPayload)
+
+      if (!response.ok || !parsedPayload?.ok) {
+        const detailedError =
+          (typeof rawPayload?.localError === 'string' && rawPayload.localError) ||
+          (typeof rawPayload?.error === 'string' && rawPayload.error) ||
+          (typeof rawPayload?.upstreamBody === 'string' && rawPayload.upstreamBody) ||
+          (typeof rawPayload?.body === 'string' && rawPayload.body) ||
+          'Session-Reset konnte nicht durchgefuehrt werden.'
+
+        const shouldUseClientFallback = /default credentials|unable to resolve firestore database|proxy request failed and local fallback failed/i.test(detailedError)
+
+        if (shouldUseClientFallback) {
+          const fallbackResult = await resetSessionStatisticsClientSide()
+          toast.success(`Session-Statistiken lokal zurueckgesetzt (${fallbackResult.reset_profiles} Profile).`)
+          await loadData()
+          return
+        }
+
+        throw new Error(detailedError)
+      }
+
+      const resetCount = Number(parsedPayload.data?.reset_profiles || 0)
+      toast.success(`Session-Statistiken zurueckgesetzt (${resetCount} Profile).`)
+      await loadData()
+    } catch (error) {
+      console.error('Error resetting session statistics:', error)
+      toast.error(error instanceof Error ? error.message : 'Session-Statistiken konnten nicht zurueckgesetzt werden.')
+    } finally {
+      setResettingSessionStats(false)
+    }
+  }
+
   const averageSessionLabel = useMemo(() => {
     if (!analytics || analytics.average_session_minutes <= 0) return 'Keine Daten'
     return formatDurationMinutes(analytics.average_session_minutes)
   }, [analytics])
+
+  const summaryBlockVariants = {
+    hidden: { opacity: 0, y: 5, filter: 'blur(2px)' },
+    visible: {
+      opacity: 1,
+      y: 0,
+      filter: 'blur(0px)',
+      transition: {
+        duration: 0.35,
+        ease: 'easeOut' as const,
+        staggerChildren: 0.04,
+        delayChildren: 0.03,
+      },
+    },
+  }
+
+  const summaryWordVariants = {
+    hidden: { opacity: 0, y: 4, filter: 'blur(2px)' },
+    visible: {
+      opacity: 1,
+      y: 0,
+      filter: 'blur(0px)',
+      transition: { duration: 0.28, ease: 'easeOut' as const },
+    },
+  }
 
   const onlineUsersChartData = useMemo(() => {
     return (analytics?.current_online_users || [])
@@ -494,18 +785,24 @@ export default function AdminSystemDashboard() {
 
   return (
     <div className="container mx-auto px-3 py-6 sm:px-6 sm:py-8 space-y-8 pb-24">
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div>
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div className="min-w-0">
           <h1 className="text-2xl sm:text-3xl font-black uppercase tracking-tighter flex items-center gap-3">
             <Server className="w-7 h-7 sm:w-8 sm:h-8 text-primary" />
             System Control Center
           </h1>
-          <p className="text-sm sm:text-base text-muted-foreground">Zentrale Steuerung, Live-Status und Nutzungsanalyse der gesamten ABI Planer Infrastruktur.</p>
+          <p className="text-sm sm:text-base text-muted-foreground break-words">Zentrale Steuerung, Live-Status und Nutzungsanalyse der gesamten ABI Planer Infrastruktur.</p>
         </div>
-        <Button variant="outline" onClick={loadData} disabled={loadingData} className="w-full md:w-auto font-bold uppercase tracking-tight h-12">
-          <RefreshCw className={cn("w-4 h-4 mr-2", loadingData && "animate-spin")} />
-          Daten aktualisieren
-        </Button>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full lg:w-auto lg:min-w-[26rem]">
+          <Button variant="outline" onClick={loadData} disabled={loadingData} className="w-full font-bold uppercase tracking-tight h-12 text-xs sm:text-sm whitespace-nowrap">
+            <RefreshCw className={cn("w-4 h-4 mr-2", loadingData && "animate-spin")} />
+            Daten aktualisieren
+          </Button>
+          <Button onClick={generateAISummary} disabled={aiSummaryLoading || loadingData || !stats || !analytics} className="w-full font-bold uppercase tracking-tight h-12 text-xs sm:text-sm whitespace-nowrap">
+            <Sparkles className={cn('w-4 h-4 mr-2', aiSummaryLoading && 'animate-pulse')} />
+            KI-Bericht
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -553,6 +850,128 @@ export default function AdminSystemDashboard() {
           statusMode
         />
       </div>
+
+      <Card className="border-2">
+        <CardHeader>
+          <CardTitle className="uppercase tracking-tighter font-black flex items-center gap-2">
+            <Sparkles className="w-5 h-5 text-primary" />
+            KI Lagebericht
+          </CardTitle>
+          <CardDescription>On-demand Analyse der aktuellen Dashboard-Daten. Die Antwort wird nicht gespeichert.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <AnimatePresence mode="wait">
+            {aiSummaryLoading ? (
+              <motion.div
+                key="ai-summary-loading"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                className="rounded-lg border border-dashed py-8 text-center text-sm text-muted-foreground"
+              >
+                KI analysiert aktuelle Kennzahlen...
+              </motion.div>
+            ) : aiSummary ? (
+              <motion.div
+                key={aiSummaryMeta?.generatedAt || aiSummary}
+                initial={{ opacity: 0, y: 20, scale: 0.95, filter: 'blur(4px)' }}
+                animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
+                exit={{ opacity: 0, y: -10, scale: 0.95, filter: 'blur(4px)' }}
+                transition={{
+                  type: 'spring',
+                  damping: 15,
+                  stiffness: 100,
+                  mass: 0.8,
+                  opacity: { duration: 0.4 },
+                }}
+                className="rounded-2xl border-2 p-4 md:p-5 shadow-xl shadow-primary/5 bg-primary/5 border-primary/20 space-y-2"
+              >
+                <motion.div
+                  initial="hidden"
+                  animate="visible"
+                  variants={{
+                    visible: {
+                      transition: {
+                        staggerChildren: 0.05,
+                        delayChildren: 0.15,
+                      },
+                    },
+                  }}
+                  className="prose prose-sm max-w-none dark:prose-invert prose-headings:mb-2 prose-headings:mt-3 prose-p:my-2 prose-strong:font-extrabold prose-li:my-0.5"
+                >
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    components={{
+                      h1: ({ children }) => (
+                        <motion.h1 variants={summaryBlockVariants}>
+                          <AnimatedWordFlow wordVariants={summaryWordVariants}>{children}</AnimatedWordFlow>
+                        </motion.h1>
+                      ),
+                      h2: ({ children }) => (
+                        <motion.h2 variants={summaryBlockVariants}>
+                          <AnimatedWordFlow wordVariants={summaryWordVariants}>{children}</AnimatedWordFlow>
+                        </motion.h2>
+                      ),
+                      h3: ({ children }) => (
+                        <motion.h3 variants={summaryBlockVariants}>
+                          <AnimatedWordFlow wordVariants={summaryWordVariants}>{children}</AnimatedWordFlow>
+                        </motion.h3>
+                      ),
+                      p: ({ children }) => (
+                        <motion.p variants={summaryBlockVariants}>
+                          <AnimatedWordFlow wordVariants={summaryWordVariants}>{children}</AnimatedWordFlow>
+                        </motion.p>
+                      ),
+                      ul: ({ children }) => <motion.ul variants={summaryBlockVariants}>{children}</motion.ul>,
+                      ol: ({ children }) => <motion.ol variants={summaryBlockVariants}>{children}</motion.ol>,
+                      li: ({ children }) => (
+                        <motion.li variants={summaryBlockVariants}>
+                          <AnimatedWordFlow wordVariants={summaryWordVariants}>{children}</AnimatedWordFlow>
+                        </motion.li>
+                      ),
+                      blockquote: ({ children }) => (
+                        <motion.blockquote variants={summaryBlockVariants}>
+                          <AnimatedWordFlow wordVariants={summaryWordVariants}>{children}</AnimatedWordFlow>
+                        </motion.blockquote>
+                      ),
+                      pre: ({ children }) => <motion.pre variants={summaryBlockVariants}>{children}</motion.pre>,
+                    }}
+                  >
+                    {aiSummary}
+                  </ReactMarkdown>
+                </motion.div>
+                {(aiSummaryMeta?.generatedAt || aiSummaryMeta?.model) && (
+                  <p className="text-[11px] text-muted-foreground">
+                    {aiSummaryMeta?.generatedAt ? `Erstellt: ${new Date(aiSummaryMeta.generatedAt).toLocaleString('de-DE')}` : ''}
+                    {aiSummaryMeta?.generatedAt && aiSummaryMeta?.model ? ' · ' : ''}
+                    {aiSummaryMeta?.model ? `Modell: ${aiSummaryMeta.model}` : ''}
+                  </p>
+                )}
+              </motion.div>
+            ) : aiSummaryError ? (
+              <motion.div
+                key="ai-summary-error"
+                initial={{ opacity: 0, y: 12, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -8, scale: 0.98 }}
+                className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800"
+              >
+                {aiSummaryError}
+              </motion.div>
+            ) : (
+              <motion.div
+                key="ai-summary-empty"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                className="rounded-lg border border-dashed py-8 text-center text-sm text-muted-foreground"
+              >
+                Noch keine KI-Zusammenfassung vorhanden. Nutze den Button oben.
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
@@ -659,6 +1078,15 @@ export default function AdminSystemDashboard() {
             </Button>
             <Button variant="outline" className="w-full justify-start text-xs font-bold uppercase border-white/10 hover:bg-white/5" onClick={() => router.push('/admin/feedback')}>
               <AlertTriangle className="w-3 h-3 mr-2" /> Bug Reports prüfen
+            </Button>
+            <Button
+              variant="outline"
+              className="w-full justify-start text-xs font-bold uppercase border-red-500/40 text-red-200 hover:bg-red-500/10 hover:text-red-100"
+              onClick={resetSessionStatistics}
+              disabled={resettingSessionStats}
+            >
+              <RefreshCw className={cn('w-3 h-3 mr-2', resettingSessionStats && 'animate-spin')} />
+              Session-Statistiken zuruecksetzen
             </Button>
           </CardContent>
         </Card>

@@ -104,7 +104,7 @@ export default function HilfePage() {
         },
         {
           q: 'Was passiert mit dem Geld?',
-          a: 'Das ist das Beste: 90% aller Einnahmen fließen direkt in eure Stufenkasse (Abikasse), um euren Abiball und eure Aktionen zu finanzieren. Die restlichen 10% decken Transaktionsgebühren und Serverkosten.'
+          a: 'Das ist das Beste: 90% der Gewinne fließen direkt in eure Stufenkasse (Abikasse), um euren Abiball und eure Aktionen zu finanzieren. Die restlichen 10% decken Transaktionsgebühren und Serverkosten.'
         },
         {
           q: 'Erhalte ich eine Rechnung?',

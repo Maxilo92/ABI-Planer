@@ -11,6 +11,7 @@ import { AdSenseScript } from '@/components/layout/AdSenseScript'
 
 import { faviconLinks } from '@/components/FaviconLinks'
 import Logo from '@/components/Logo'
+import '@/bones/registry'
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' })
 

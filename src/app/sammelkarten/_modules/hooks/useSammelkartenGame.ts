@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { SammelkartenConfig } from '@/types/cards'
 import { LootTeacher } from '@/types/database'
-import { DEFAULT_TEACHERS } from '../constants'
 import { CollectionResult, MassPackReveal, MaybeCollectionResult, PackSelection, UserTeacherMap } from '../types'
 import {
   buildMassPackReveal,
@@ -10,6 +9,7 @@ import {
   processCollectionResults,
   processMassCollectionResults
 } from '../utils/packResults'
+import { CARD_SETS } from '@/constants/cardRegistry'
 
 type PushMessageFn = (payload: {
   type: 'toast'
@@ -23,15 +23,16 @@ type UseSammelkartenGameInput = {
   config: SammelkartenConfig | null
   userTeachers: UserTeacherMap
   getRemainingBoosters: () => number
+  getRemainingSupportBoosters: () => number
   getRandomOpenableBoosters: () => number
   getActivePackSelection: () => PackSelection | null
-  collectBooster: (options?: { packSource?: 'random' | 'custom', customPackQueueId?: string | null }) => Promise<Array<{ teacherId: string, variant: 'normal' | 'holo' | 'shiny' | 'black_shiny_holo', count: number, level: number }>>
-  collectMassBoosters: (amount: number, options?: { packSource?: 'random' | 'custom', customPackQueueId?: string | null }) => Promise<Array<Array<{ teacherId: string, variant: 'normal' | 'holo' | 'shiny' | 'black_shiny_holo', count: number, level: number }>>>
+  collectBooster: (options?: { packSource?: 'random' | 'custom', customPackQueueId?: string | null, packId?: string }) => Promise<Array<{ teacherId: string, variant: 'normal' | 'holo' | 'shiny' | 'black_shiny_holo', count: number, level: number }>>
+  collectMassBoosters: (amount: number, options?: { packSource?: 'random' | 'custom', customPackQueueId?: string | null, packId?: string }) => Promise<Array<Array<{ teacherId: string, variant: 'normal' | 'holo' | 'shiny' | 'black_shiny_holo', count: number, level: number }>>>
   pushMessage: PushMessageFn
 }
 
 export function useSammelkartenGame(input: UseSammelkartenGameInput) {
-  const { config, userTeachers, getRemainingBoosters, getRandomOpenableBoosters, getActivePackSelection, collectBooster, collectMassBoosters, pushMessage } = input
+  const { config, userTeachers, getRemainingBoosters, getRemainingSupportBoosters, getRandomOpenableBoosters, getActivePackSelection, collectBooster, collectMassBoosters, pushMessage } = input
 
   const [gameState, setGameState] = useState<'idle' | 'ripping' | 'revealed'>('idle')
   const [isMassOpening, setIsMassOpening] = useState(false)
@@ -89,8 +90,12 @@ export function useSammelkartenGame(input: UseSammelkartenGameInput) {
     setConsecutiveOpenCount((prev) => prev + 1)
 
     try {
-      const allResults = await collectMassBoosters(10, { packSource: 'random' })
-      const teachers = config?.loot_teachers || DEFAULT_TEACHERS
+      const selection = getActivePackSelection()
+      const allResults = await collectMassBoosters(10, { 
+        packSource: selection?.packSource || 'random',
+        packId: selection?.packId
+      })
+      const teachers = config?.loot_teachers || (CARD_SETS['teacher_vol1']?.cards || []) as LootTeacher[]
 
       const packsData = buildMassPackReveal(allResults, teachers)
       const processedResults = processMassCollectionResults(allResults, userTeachers)
@@ -117,12 +122,16 @@ export function useSammelkartenGame(input: UseSammelkartenGameInput) {
   }, [getRandomOpenableBoosters, pushMessage, gameState, collectMassBoosters, config, userTeachers])
 
   const handleOpenPack = useCallback(async () => {
-    if (getRemainingBoosters() <= 0) {
+    const selection = getActivePackSelection()
+    const isSupportPack = selection?.packId === 'support_vol_1'
+    const remaining = isSupportPack ? getRemainingSupportBoosters() : getRemainingBoosters()
+
+    if (remaining <= 0) {
       pushMessage({
         type: 'toast',
         priority: 'critical',
         title: 'Fehler',
-        content: 'Limit erreicht! Komm morgen wieder.'
+        content: isSupportPack ? 'Keine Support-Booster mehr übrig!' : 'Limit erreicht! Komm morgen wieder.'
       })
       return
     }
@@ -134,13 +143,15 @@ export function useSammelkartenGame(input: UseSammelkartenGameInput) {
     setIsMassOpening(false)
     setRevealedTeachers(null)
     setCollectionResults(null)
-    setFlippedCards([false, false, false])
     setConsecutiveOpenCount((prev) => prev + 1)
 
     try {
-      const selection = getActivePackSelection()
-      const results = await collectBooster(selection || undefined)
-      const teachers = config?.loot_teachers || DEFAULT_TEACHERS
+      const results = await collectBooster({
+        packSource: selection?.packSource,
+        customPackQueueId: selection?.customPackQueueId,
+        packId: selection?.packId
+      })
+      const teachers = config?.loot_teachers || (CARD_SETS['teacher_vol1']?.cards || []) as LootTeacher[]
 
       const packTeachers = mapResultsToTeachers(results, teachers)
       const godpack = isGodpackResult(results)
@@ -161,7 +172,7 @@ export function useSammelkartenGame(input: UseSammelkartenGameInput) {
       setTimeout(() => {
         setRevealedTeachers(packTeachers)
         setCollectionResults(processedResults)
-        setFlippedCards([false, false, false])
+        setFlippedCards(new Array(results.length).fill(false))
       }, isReopen ? 100 : 300)
 
       setTimeout(() => {

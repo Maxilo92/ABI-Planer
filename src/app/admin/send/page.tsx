@@ -28,6 +28,10 @@ import {
 import { toast } from 'sonner'
 import { logAction } from '@/lib/logging'
 import { Profile } from '@/types/database'
+import { getAllCards, getCard } from '@/constants/cardRegistry'
+import { CardRenderer } from '@/components/cards/CardRenderer'
+import { CardData } from '@/types/cards'
+import { ResolvedCard } from '@/types/registry'
 
 type PopupActionType = 'gift' | 'custom_gift' | 'multicast'
 type NotificationKind = 'popup' | 'banner' | 'quickmessage'
@@ -127,6 +131,7 @@ function AdminSendContent() {
   
   // Form State
   const [popupActionType, setPopupActionType] = useState<PopupActionType>('gift')
+  const [giftPackId, setGiftPackId] = useState('teacher_vol1')
   const [giftPackCount, setGiftPackCount] = useState(1)
   const [giftMessage, setGiftMessage] = useState('Ihr habt neue Packs geschenkt bekommen. Viel Spaß beim Öffnen!')
   const [giftPopupTitle, setGiftPopupTitle] = useState('Neue Pack-Schenkung')
@@ -143,7 +148,7 @@ function AdminSendContent() {
   const [customPackAllowRandomFill, setCustomPackAllowRandomFill] = useState(true)
   const [customPackSlots, setCustomPackSlots] = useState<CustomPackSlot[]>(DEFAULT_CUSTOM_SLOTS)
   const [customPackPresets, setCustomPackPresets] = useState<CustomPackPreset[]>([])
-  const [lootTeachers, setLootTeachers] = useState<LootTeacherOption[]>([])
+  const [availableCards, setAvailableCards] = useState<ResolvedCard[]>([])
 
   const canManage = profile?.role === 'admin' || profile?.role === 'admin_main' || profile?.role === 'admin_co'
 
@@ -276,57 +281,75 @@ function AdminSendContent() {
 
     const loadCustomPackSettings = async () => {
       try {
+        // Load from Registry first (primary)
+        const registryCards = getAllCards()
+        
         const settingsRef = doc(db, 'settings', 'sammelkarten')
         const settingsSnap = await getDoc(settingsRef)
-        if (!settingsSnap.exists()) return
+        
+        let allCards: ResolvedCard[] = [...registryCards]
 
-        const settingsData = settingsSnap.data() as {
-          loot_teachers?: Array<{ id?: string; name?: string }>
-          custom_pack_presets?: Array<{
-            id?: string
-            name?: string
-            allowRandomFill?: boolean
-            slots?: Array<{ slotIndex?: number; teacherId?: string; variant?: CardVariant }>
-          }>
+        if (settingsSnap.exists()) {
+          const settingsData = settingsSnap.data() as {
+            loot_teachers?: Array<{ id?: string; name?: string }>
+            custom_pack_presets?: Array<{
+              id?: string
+              name?: string
+              allowRandomFill?: boolean
+              slots?: Array<{ slotIndex?: number; teacherId?: string; variant?: CardVariant }>
+            }>
+          }
+
+          // Add any cards from Firestore that are not in registry (Legacy fallback)
+          if (Array.isArray(settingsData.loot_teachers)) {
+            settingsData.loot_teachers.forEach(t => {
+              const id = (t.id || t.name || '').trim()
+              if (id && !allCards.find(rc => rc.id === id || rc.fullId === id)) {
+                // Wrap in a minimal ResolvedCard structure
+                allCards.push({
+                  id,
+                  name: t.name || id,
+                  rarity: 'common',
+                  type: 'teacher',
+                  setId: 'legacy',
+                  fullId: id,
+                  cardNumber: 'LEG',
+                  color: '#64748b',
+                  cards: []
+                } as any)
+              }
+            })
+          }
+
+          const presets = Array.isArray(settingsData.custom_pack_presets)
+            ? settingsData.custom_pack_presets
+              .map((preset, index) => {
+                const id = (preset?.id || `preset-${index + 1}`).trim()
+                const name = (preset?.name || id || `Preset ${index + 1}`).trim()
+                const slots = Array.isArray(preset?.slots)
+                  ? preset.slots
+                    .map((slot) => ({
+                      slotIndex: Math.max(0, Math.floor(Number(slot?.slotIndex))),
+                      teacherId: (slot?.teacherId || '').trim(),
+                      variant: (slot?.variant || 'normal') as CardVariant,
+                    }))
+                    .filter((slot) => slot.teacherId.length > 0)
+                  : []
+
+                return {
+                  id,
+                  name,
+                  allowRandomFill: preset?.allowRandomFill !== false,
+                  slots,
+                } as CustomPackPreset
+              })
+              .filter((preset) => preset.slots.length > 0)
+            : []
+
+          setCustomPackPresets(presets)
         }
 
-        const teacherEntries = Array.isArray(settingsData.loot_teachers)
-          ? settingsData.loot_teachers
-            .map((teacher) => ({
-              id: (teacher?.id || '').trim(),
-              name: (teacher?.name || teacher?.id || '').trim(),
-            }))
-            .filter((teacher) => teacher.id.length > 0)
-          : []
-
-        setLootTeachers(teacherEntries)
-
-        const presets = Array.isArray(settingsData.custom_pack_presets)
-          ? settingsData.custom_pack_presets
-            .map((preset, index) => {
-              const id = (preset?.id || `preset-${index + 1}`).trim()
-              const name = (preset?.name || id || `Preset ${index + 1}`).trim()
-              const slots = Array.isArray(preset?.slots)
-                ? preset.slots
-                  .map((slot) => ({
-                    slotIndex: Math.max(0, Math.floor(Number(slot?.slotIndex))),
-                    teacherId: (slot?.teacherId || '').trim(),
-                    variant: (slot?.variant || 'normal') as CardVariant,
-                  }))
-                  .filter((slot) => slot.teacherId.length > 0)
-                : []
-
-              return {
-                id,
-                name,
-                allowRandomFill: preset?.allowRandomFill !== false,
-                slots,
-              } as CustomPackPreset
-            })
-            .filter((preset) => preset.slots.length > 0)
-          : []
-
-        setCustomPackPresets(presets)
+        setAvailableCards(allCards)
       } catch (error) {
         console.error('Failed to load custom pack settings:', error)
       }
@@ -382,6 +405,7 @@ function AdminSendContent() {
       const response = await giftBoosterPack({
         userIds: recipients.map(r => r.id),
         packCount: normalizedPackCount,
+        packId: isGiftFlow ? giftPackId : null,
         customMessage: trimmedMessage,
         popupTitle: normalizedPopupTitle,
         popupBody: normalizedPopupBody,
@@ -405,6 +429,7 @@ function AdminSendContent() {
       await logAction('BOOSTER_GIFT_SENT', user.uid, profile?.full_name, {
         recipients: recipients.map(r => r.id),
         pack_count: normalizedPackCount,
+        pack_id: isGiftFlow ? giftPackId : null,
         message: trimmedMessage,
         popup_type: popupActionType,
         sender_name: effectiveSenderName,
@@ -602,18 +627,34 @@ function AdminSendContent() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
                   <div className="space-y-6">
                     {(popupActionType === 'gift' || popupActionType === 'custom_gift') && (
-                      <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
-                        <Label htmlFor="gift-pack-count" className="font-bold">Packs pro Person</Label>
-                        <Input
-                          id="gift-pack-count"
-                          type="number"
-                          min={0}
-                          max={50}
-                          className="h-11 text-lg font-mono"
-                          value={giftPackCount}
-                          onChange={(e) => setGiftPackCount(Number(e.target.value) || 0)}
-                        />
-                        <p className="text-[10px] text-muted-foreground">Maximale Schenkung: 50 Packs</p>
+                      <div className="space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
+                        <div className="space-y-2">
+                          <Label htmlFor="gift-pack-id" className="font-bold">Booster-Set auswählen</Label>
+                          <select
+                            id="gift-pack-id"
+                            className="h-11 w-full rounded-md border border-input bg-background px-3 text-sm focus:ring-2 focus:ring-primary/20 outline-none"
+                            value={giftPackId}
+                            onChange={(e) => setGiftPackId(e.target.value)}
+                          >
+                            <option value="teacher_vol1">Lehrer Set v1 (Standard)</option>
+                            <option value="support_vol_1">Support Set Vol. 1</option>
+                          </select>
+                          <p className="text-[10px] text-muted-foreground">Bestimmt, aus welchem Pool die Karten gezogen werden.</p>
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="gift-pack-count" className="font-bold">Anzahl Packs pro Person</Label>
+                          <Input
+                            id="gift-pack-count"
+                            type="number"
+                            min={0}
+                            max={50}
+                            className="h-11 text-lg font-mono"
+                            value={giftPackCount}
+                            onChange={(e) => setGiftPackCount(Number(e.target.value) || 0)}
+                          />
+                          <p className="text-[10px] text-muted-foreground">Maximale Schenkung: 50 Packs</p>
+                        </div>
                       </div>
                     )}
 
@@ -660,40 +701,71 @@ function AdminSendContent() {
                         </div>
 
                         <div className="space-y-3">
-                          <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Slots (Position, Lehrer, Folie)</p>
-                          {customPackSlots.map((slot) => (
-                            <div key={slot.slotIndex} className="grid grid-cols-1 gap-2 rounded-lg border bg-background/80 p-3 md:grid-cols-3">
-                              <div className="space-y-1">
-                                <Label className="text-xs">Position</Label>
-                                <Input value={slot.slotIndex + 1} readOnly className="h-9" />
+                          <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Slots (Position, Karte, Folie)</p>
+                          {customPackSlots.map((slot) => {
+                            const selectedCard = availableCards.find(c => c.fullId === slot.teacherId || c.id === slot.teacherId)
+                            const cardData: CardData | null = selectedCard ? {
+                              id: selectedCard.id,
+                              setId: selectedCard.setId,
+                              fullId: selectedCard.fullId,
+                              name: selectedCard.name,
+                              rarity: selectedCard.rarity,
+                              variant: slot.variant,
+                              color: selectedCard.color,
+                              cardNumber: selectedCard.cardNumber,
+                              style: selectedCard.style,
+                              description: selectedCard.description,
+                              hp: (selectedCard as any).hp,
+                              attacks: (selectedCard as any).attacks
+                            } : null
+
+                            return (
+                              <div key={slot.slotIndex} className="grid grid-cols-1 gap-4 rounded-xl border bg-background/80 p-4 md:grid-cols-4 items-start">
+                                <div className="space-y-1">
+                                  <Label className="text-[10px] font-black uppercase opacity-50">Slot {slot.slotIndex + 1}</Label>
+                                  <div className="h-24 w-full flex items-center justify-center bg-muted/30 rounded-lg border border-dashed relative overflow-hidden">
+                                    {cardData ? (
+                                      <CardRenderer 
+                                        data={cardData} 
+                                        className="w-16 h-auto scale-75"
+                                        isFlippedExternally={true}
+                                        interactive={false}
+                                      />
+                                    ) : (
+                                      <Layout className="h-6 w-6 text-muted-foreground/20" />
+                                    )}
+                                  </div>
+                                </div>
+                                <div className="space-y-1 md:col-span-2">
+                                  <Label className="text-[10px] font-black uppercase opacity-50">Karte auswählen</Label>
+                                  <select
+                                    className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm focus:ring-2 focus:ring-primary/20 outline-none"
+                                    value={slot.teacherId}
+                                    onChange={(e) => updateCustomSlot(slot.slotIndex, 'teacherId', e.target.value)}
+                                  >
+                                    <option value="">Bitte wählen</option>
+                                    {availableCards.map((card) => (
+                                      <option key={card.fullId} value={card.fullId}>
+                                        {card.setId === 'legacy' ? '' : `[${card.setId.split('_')[0].toUpperCase()}] `}{card.name} ({card.rarity})
+                                      </option>
+                                    ))}
+                                  </select>
+                                </div>
+                                <div className="space-y-1">
+                                  <Label className="text-[10px] font-black uppercase opacity-50">Variante</Label>
+                                  <select
+                                    className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm focus:ring-2 focus:ring-primary/20 outline-none"
+                                    value={slot.variant}
+                                    onChange={(e) => updateCustomSlot(slot.slotIndex, 'variant', e.target.value)}
+                                  >
+                                    {CARD_VARIANT_OPTIONS.map((variant) => (
+                                      <option key={variant.value} value={variant.value}>{variant.label}</option>
+                                    ))}
+                                  </select>
+                                </div>
                               </div>
-                              <div className="space-y-1">
-                                <Label className="text-xs">Lehrer</Label>
-                                <select
-                                  className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm"
-                                  value={slot.teacherId}
-                                  onChange={(e) => updateCustomSlot(slot.slotIndex, 'teacherId', e.target.value)}
-                                >
-                                  <option value="">Bitte wählen</option>
-                                  {lootTeachers.map((teacher) => (
-                                    <option key={teacher.id} value={teacher.id}>{teacher.name}</option>
-                                  ))}
-                                </select>
-                              </div>
-                              <div className="space-y-1">
-                                <Label className="text-xs">Folie / Variante</Label>
-                                <select
-                                  className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm"
-                                  value={slot.variant}
-                                  onChange={(e) => updateCustomSlot(slot.slotIndex, 'variant', e.target.value)}
-                                >
-                                  {CARD_VARIANT_OPTIONS.map((variant) => (
-                                    <option key={variant.value} value={variant.value}>{variant.label}</option>
-                                  ))}
-                                </select>
-                              </div>
-                            </div>
-                          ))}
+                            )
+                          })}
                         </div>
                       </div>
                     )}
@@ -1002,6 +1074,14 @@ function AdminSendContent() {
                       <span>Absender:</span>
                       <span className="font-bold">{effectiveSenderName}</span>
                     </div>
+                    {(popupActionType === 'gift' || popupActionType === 'custom_gift') && (
+                      <div className="flex justify-between text-xs">
+                        <span>Booster-Set:</span>
+                        <span className="font-bold text-primary">
+                          {giftPackId === 'support_vol_1' ? 'Support Set Vol. 1' : 'Lehrer Set v1'}
+                        </span>
+                      </div>
+                    )}
                     {(popupActionType === 'gift' || popupActionType === 'custom_gift') && (
                       <div className="flex justify-between text-xs">
                         <span>Packs gesamt:</span>

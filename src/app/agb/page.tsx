@@ -75,7 +75,7 @@ export default function AGBPage() {
             <p className="text-muted-foreground leading-relaxed">
               Nutzer haben die Möglichkeit, digitale Zusatzinhalte (Booster-Packs für das Sammelkarten-Spiel) gegen Entgelt zu erwerben. Die Abwicklung erfolgt über den externen Zahlungsdienstleister Stripe. 
               <br /><br />
-              <strong>Spendenzweck:</strong> Mit dem Kauf unterstützen Sie direkt den Abiturjahrgang 2027. Von jedem Brutto-Verkaufspreis fließen 90% in die Stufenkasse (Abikasse) zur Finanzierung des Abiballs und anderer Jahrgangsaktivitäten. Die restlichen 10% dienen der Deckung von Transaktionsgebühren, Steuern und Serverkosten.
+              <strong>Spendenzweck:</strong> Mit dem Kauf unterstützen Sie direkt den Abiturjahrgang 2027. Von jedem Gewinn fließen 90% in die Stufenkasse (Abikasse) zur Finanzierung des Abiballs und anderer Jahrgangsaktivitäten. Die restlichen 10% dienen der Deckung von Transaktionsgebühren, Steuern und Serverkosten.
             </p>
           </section>
 

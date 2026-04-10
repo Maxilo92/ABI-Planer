@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { ShareResourceButton } from '@/components/ui/share-resource-button'
 import { downloadICS } from '@/lib/icsGenerator'
+import { Skeleton } from '@/components/ui/skeleton'
 
 function toGoogleDate(date: Date) {
   return date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z')
@@ -73,8 +74,29 @@ export default function CalendarEventPage({ params }: { params: Promise<{ id: st
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="max-w-3xl mx-auto py-8 space-y-6">
+        <Skeleton className="h-10 w-32 rounded-md" />
+        <div className="rounded-2xl border bg-card/65 p-8 space-y-6">
+          <div className="space-y-3">
+            <Skeleton className="h-6 w-20 rounded-full" />
+            <Skeleton className="h-12 w-3/4" />
+            <div className="flex gap-4">
+              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-4 w-32" />
+            </div>
+          </div>
+          <div className="h-px bg-border/50" />
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-16" />
+              <Skeleton className="h-24 w-full rounded-lg" />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <Skeleton className="h-16 w-full rounded-lg" />
+              <Skeleton className="h-16 w-full rounded-lg" />
+            </div>
+          </div>
+        </div>
       </div>
     )
   }

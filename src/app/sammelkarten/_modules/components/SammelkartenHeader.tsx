@@ -9,12 +9,14 @@ type SammelkartenHeaderProps = {
   showDebug: boolean
   setShowDebug: (value: boolean) => void
   getRemainingBoosters: () => number
+  getRemainingSupportBoosters: () => number
   timeLeft: string
   packSelectionHref: string | null
 }
 
 export function SammelkartenHeader(props: SammelkartenHeaderProps) {
-  const { gameState, showDebug, setShowDebug, getRemainingBoosters, timeLeft, packSelectionHref } = props
+  const { gameState, showDebug, setShowDebug, getRemainingBoosters, getRemainingSupportBoosters, timeLeft, packSelectionHref } = props
+  const totalPacks = getRemainingBoosters() + getRemainingSupportBoosters()
 
   return (
     <div className={cn(
@@ -41,9 +43,9 @@ export function SammelkartenHeader(props: SammelkartenHeaderProps) {
       {(gameState === 'idle' || gameState === 'revealed') && (
         <div className="flex flex-col items-center gap-2 mt-2">
           <div className="flex items-center justify-center gap-2">
-            <Badge variant={getRemainingBoosters() > 0 ? 'secondary' : 'destructive'} className="px-3 py-1 text-[10px] font-black uppercase tracking-widest border-2 border-white/10">
+            <Badge variant={totalPacks > 0 ? 'secondary' : 'destructive'} className="px-3 py-1 text-[10px] font-black uppercase tracking-widest border-2 border-white/10">
               <Zap className="h-3 w-3 mr-1.5 fill-current" />
-              {getRemainingBoosters() > 0 ? `${getRemainingBoosters()} Packs verfügbar` : `Nächste Packs in ${timeLeft}`}
+              {totalPacks > 0 ? `${totalPacks} Packs verfügbar` : `Nächste Packs in ${timeLeft}`}
             </Badge>
 
             {packSelectionHref && (

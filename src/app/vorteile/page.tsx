@@ -68,6 +68,44 @@ export default function VorteileOverviewPage() {
         </p>
       </div>
 
+      <section className="rounded-[3rem] border border-border/60 bg-card/70 p-8 md:p-10 shadow-sm backdrop-blur-sm">
+        <div className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr] items-start">
+          <div className="space-y-4">
+            <p className="text-brand font-black uppercase tracking-[0.4em] text-[10px]">Warum die Funktionen zusammengehören</p>
+            <h2 className="text-3xl md:text-5xl font-black tracking-tight italic uppercase leading-[0.92]">
+              Ein gutes Abi-Projekt braucht Struktur, Beteiligung und einen Grund, wiederzukommen.
+            </h2>
+            <p className="text-muted-foreground text-lg leading-relaxed max-w-2xl">
+              Die einzelnen Bereiche sind bewusst miteinander verzahnt: Planung schafft Verbindlichkeit,
+              Abstimmungen sorgen für Legitimation und Sammelkarten bringen eine spielerische Ebene hinein.
+              So bleibt die Plattform nicht nur ein Verwaltungswerkzeug, sondern wird im Alltag tatsächlich genutzt.
+            </p>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-1">
+            {[
+              {
+                title: 'Für Orga-Teams',
+                text: 'Aufgaben, Finanzen und Kalender laufen in einer nachvollziehbaren Struktur zusammen.',
+              },
+              {
+                title: 'Für Abstimmungen',
+                text: 'Klare Ergebnisse, weniger Nebendiskussionen und ein sichtbarer Verlauf der Entscheidungen.',
+              },
+              {
+                title: 'Für Motivation',
+                text: 'Die Sammelkarten-Funktionen geben dem Jahrgang einen spielerischen Anreiz, dranzubleiben.',
+              },
+            ].map((item) => (
+              <div key={item.title} className="rounded-[2rem] border border-border/60 bg-background/80 p-5 shadow-sm">
+                <p className="text-sm font-black uppercase tracking-[0.25em] text-foreground">{item.title}</p>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{item.text}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
         {FEATURES.map((feature, i) => (
           <motion.div

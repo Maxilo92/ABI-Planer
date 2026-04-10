@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { LayoutDashboard, CheckSquare, Calendar, Euro, DollarSign, Megaphone, BarChart2, LogOut, Menu, X, ShieldCheck, User, MessageSquareHeart, Settings, Users, ChevronRight, Sparkles, HelpCircle, Gift, Trophy, AlertTriangle, ShoppingBag, UserPlus, Server, ArrowLeftRight, Pin, PinOff, Swords } from 'lucide-react'
+import { LayoutDashboard, CheckSquare, Calendar, Euro, DollarSign, Megaphone, BarChart2, LogOut, Menu, X, ShieldCheck, User, MessageSquareHeart, Settings, Users, ChevronRight, ChevronLeft, Sparkles, HelpCircle, Gift, Trophy, AlertTriangle, ShoppingBag, UserPlus, Server, ArrowLeftRight, Pin, PinOff, Swords, FileText } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button, buttonVariants } from '@/components/ui/button'
@@ -38,6 +38,7 @@ const MAX_QUICK_ACTIONS = 3
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
+  const [isDesktopCollapsed, setIsDesktopCollapsed] = useState(false)
   const [openSubmenus, setOpenSubmenus] = useState<Record<string, boolean>>({})
   const [currentSearch, setCurrentSearch] = useState('')
   const [quickActions, setQuickActions] = useState<QuickAction[]>([])
@@ -50,6 +51,19 @@ export function Navbar() {
   const hasPlanningGroups = profile?.planning_groups && profile.planning_groups.length > 0
 
   const isVerified = user?.emailVerified || false
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const stored = window.localStorage.getItem('navbar.desktopCollapsed')
+    setIsDesktopCollapsed(stored === 'true')
+  }, [])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    window.localStorage.setItem('navbar.desktopCollapsed', String(isDesktopCollapsed))
+  }, [isDesktopCollapsed])
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -67,6 +81,10 @@ export function Navbar() {
     await signOut(auth)
     setIsOpen(false)
     router.push('/login')
+  }
+
+  const toggleDesktopCollapsed = () => {
+    setIsDesktopCollapsed((value) => !value)
   }
 
   const toggleSubmenu = (submenuKey: string, e: React.MouseEvent) => {
@@ -125,6 +143,11 @@ export function Navbar() {
         { href: '/shop', label: 'Shop', icon: ShoppingBag },
       ],
     },
+    /* {
+      href: '/battle-pass',
+      label: 'Battle Pass',
+      icon: Trophy,
+    }, */
   ]
 
   if (profile) {
@@ -175,6 +198,7 @@ export function Navbar() {
     const adminSubItems = [
       { href: '/admin/system', label: 'Control Center', icon: Server },
       { href: '/admin', label: 'Benutzer', icon: Users },
+      { href: '/admin/changelog', label: 'Changelog', icon: FileText },
       { href: '/admin/sammelkarten', label: 'Sammelkarten Manager', icon: Sparkles },
       { href: '/admin/trades', label: 'Trade Moderation', icon: ArrowLeftRight },
       { href: '/admin/global-settings', label: 'Globale Einstellungen', icon: Settings },
@@ -436,7 +460,7 @@ export function Navbar() {
   }
 
   const renderQuickActions = (isMobile: boolean = false) => {
-    if (quickActions.length === 0) {
+    if (quickActions.length === 0 || isDesktopCollapsed) {
       return null
     }
 
@@ -516,7 +540,7 @@ export function Navbar() {
 
     return (
       <div className="space-y-0.5">
-        <p className="px-2 pt-2 pb-1 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+        <p className={cn('px-2 pt-2 pb-1 text-[10px] font-black uppercase tracking-widest text-muted-foreground', isDesktopCollapsed && 'lg:hidden')}>
           {title}
         </p>
         {items.map((item) => renderNavItem(item, isMobile))}
@@ -536,16 +560,31 @@ export function Navbar() {
     const hasSubItems = item.subItems && item.subItems.length > 0
     const isExpanded = openSubmenus[item.href] || (hasSubItems && isActive(item.href) && Object.keys(openSubmenus).length === 0)
     const active = isActive(item.href)
+    const isCompactDesktop = !isMobile && isDesktopCollapsed
+    const labelClassName = cn('truncate', isCompactDesktop && 'sr-only')
+    const triggerClassName = cn(
+      'flex w-full items-center justify-between rounded-lg text-sm font-medium transition-colors',
+      isCompactDesktop ? 'px-2 py-2.5 justify-center' : 'px-3 py-2.5',
+      active ? 'bg-secondary/50 text-primary' : 'hover:bg-secondary'
+    )
 
     return (
-      <div key={item.href} className="space-y-0.5">
+      <div key={item.href} className={cn('space-y-0.5', isCompactDesktop && 'relative')}>
         {hasSubItems ? (
           <button
-            onClick={(e) => toggleSubmenu(item.href, e)}
-            className={cn(
-              'flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
-              active ? 'bg-secondary/50 text-primary' : 'hover:bg-secondary'
-            )}
+            onClick={(e) => {
+              if (isCompactDesktop) {
+                e.preventDefault()
+                e.stopPropagation()
+                setIsDesktopCollapsed(false)
+                setOpenSubmenus({ [item.href]: true })
+                return
+              }
+              toggleSubmenu(item.href, e)
+            }}
+            className={triggerClassName}
+            title={isCompactDesktop ? item.label : undefined}
+            aria-label={item.label}
           >
             <div className="flex items-center gap-2.5">
               <div className="relative">
@@ -554,31 +593,37 @@ export function Navbar() {
                   <span className="absolute -right-0.5 -top-0.5 flex h-2.5 w-2.5 rounded-full bg-red-500 border-2 border-background" />
                 )}
               </div>
-              <span className="truncate">{item.label}</span>
-              {item.isBeta && (
+              <span className={labelClassName}>{item.label}</span>
+              {item.isBeta && !isCompactDesktop && (
                 <Badge variant="secondary" className="ml-1 px-1.5 py-0 text-[9px] uppercase tracking-wide">
                   Beta
                 </Badge>
               )}
             </div>
-            <motion.div
-              animate={{ rotate: isExpanded ? 90 : 0 }}
-              transition={{ duration: 0.2 }}
-            >
-              <ChevronRight className="h-4 w-4 opacity-50" />
-            </motion.div>
+            {!isCompactDesktop && (
+              <motion.div
+                animate={{ rotate: isExpanded ? 90 : 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                <ChevronRight className="h-4 w-4 opacity-50" />
+              </motion.div>
+            )}
           </button>
         ) : (
           <Link
             href={item.href}
             onClick={() => {
               if (isMobile) setIsOpen(false)
+              if (isCompactDesktop) setIsDesktopCollapsed(false)
 
               const queryIndex = item.href.indexOf('?')
               setCurrentSearch(queryIndex >= 0 ? item.href.slice(queryIndex) : '')
             }}
+            title={isCompactDesktop ? item.label : undefined}
+            aria-label={item.label}
             className={cn(
-              'flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
+              'flex items-center gap-2.5 rounded-lg text-sm font-medium transition-colors',
+              isCompactDesktop ? 'justify-center px-2 py-2.5' : 'px-3 py-2.5',
               active ? 'bg-secondary text-primary' : 'hover:bg-secondary'
             )}
           >
@@ -588,8 +633,8 @@ export function Navbar() {
                 <span className="absolute -right-0.5 -top-0.5 flex h-2.5 w-2.5 rounded-full bg-red-500 border-2 border-background" />
               )}
             </div>
-            <span className="truncate">{item.label}</span>
-            {item.isBeta && (
+            <span className={labelClassName}>{item.label}</span>
+            {item.isBeta && !isCompactDesktop && (
               <Badge variant="secondary" className="ml-1 px-1.5 py-0 text-[9px] uppercase tracking-wide">
                 Beta
               </Badge>
@@ -598,7 +643,7 @@ export function Navbar() {
         )}
 
         <AnimatePresence initial={false}>
-          {hasSubItems && isExpanded && (
+          {hasSubItems && isExpanded && !isCompactDesktop && (
             <motion.div
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
@@ -613,6 +658,7 @@ export function Navbar() {
                     href={subItem.href}
                     onClick={() => {
                       if (isMobile) setIsOpen(false)
+                      if (isCompactDesktop) setIsDesktopCollapsed(false)
 
                       const queryIndex = subItem.href.indexOf('?')
                       setCurrentSearch(queryIndex >= 0 ? subItem.href.slice(queryIndex) : '')
@@ -640,6 +686,7 @@ export function Navbar() {
             </motion.div>
           )}
         </AnimatePresence>
+
       </div>
     )
   }
@@ -764,64 +811,105 @@ export function Navbar() {
 
       {/* Desktop sidebar */}
       {!loading && (
-        <aside className="hidden lg:flex lg:sticky lg:top-0 lg:h-screen lg:shrink-0 w-72 border-r bg-background/95 backdrop-blur-sm flex-col">
-          <div className="h-16 border-b px-5 flex items-center">
-            <Link href="/" className="flex items-center gap-3">
+        <div className={cn('hidden lg:block lg:relative lg:h-screen lg:shrink-0', isDesktopCollapsed ? 'lg:w-20' : 'lg:w-72')}>
+          <aside className={cn('lg:flex lg:fixed lg:top-0 lg:left-0 lg:h-screen border-r bg-background/95 backdrop-blur-sm flex-col overflow-hidden', isDesktopCollapsed ? 'lg:w-20' : 'lg:w-72')}>
+          <div className={cn('h-16 border-b flex items-center gap-3', isDesktopCollapsed ? 'px-3 justify-center' : 'px-5 justify-between')}>
+            <Link href="/" className={cn('flex items-center gap-3 min-w-0', isDesktopCollapsed && 'justify-center')}>
               <Logo width={40} height={40} />
-              <span className="font-extrabold text-2xl tracking-tight shrink-0">
+              <span className={cn('font-extrabold text-2xl tracking-tight shrink-0', isDesktopCollapsed && 'hidden')}>
                 ABI Planer
               </span>
             </Link>
+            {!isDesktopCollapsed && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9 shrink-0 rounded-full"
+                onClick={toggleDesktopCollapsed}
+                aria-label="Menüleiste einklappen"
+                title="Menüleiste einklappen"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+            )}
           </div>
 
-          <div className="border-b px-4 py-2 flex justify-center">
+          <div className={cn('border-b py-2', isDesktopCollapsed ? 'hidden' : 'px-4 flex justify-center')}>
             <CountdownHeader />
           </div>
 
-          <nav className="flex-1 p-4 overflow-y-auto">
+          <nav className={cn('flex-1 overflow-y-auto', isDesktopCollapsed ? 'p-2' : 'p-4')}>
             <div className="space-y-0.5">
               {renderQuickActions()}
               {renderGroupedNav()}
             </div>
           </nav>
 
-          <div className="p-4 border-t">
+          <div className={cn('border-t', isDesktopCollapsed ? 'p-2' : 'p-4')}>
             {profile ? (
               <>
-                  <Link href="/profil" className="flex items-center gap-3 rounded-md px-3 py-2.5 hover:bg-secondary transition-colors">
+                <Link
+                  href="/profil"
+                  className={cn('flex items-center rounded-md hover:bg-secondary transition-colors', isDesktopCollapsed ? 'justify-center px-2 py-2.5' : 'gap-3 px-3 py-2.5')}
+                  title={isDesktopCollapsed ? profile.full_name ?? 'Profil' : undefined}
+                >
                   <Avatar size="default">
                     <AvatarFallback className="bg-primary/10 text-primary font-bold">{userInitial}</AvatarFallback>
                   </Avatar>
-                  <div className="min-w-0 flex-1">
+                  <div className={cn('min-w-0 flex-1', isDesktopCollapsed && 'sr-only')}>
                     <div className="text-sm font-semibold truncate flex items-center gap-1.5">
                       {profile.full_name}
-                      {isVerified && (
-                        <ShieldCheck className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
-                      )}
+                      {isVerified && <ShieldCheck className="h-3.5 w-3.5 text-emerald-500 shrink-0" />}
                     </div>
                     <div className="text-[10px] text-muted-foreground uppercase mt-0.5">{getRoleLabel(profile.role)}</div>
                   </div>
                 </Link>
-                <Button variant="ghost" className="w-full justify-start gap-3 mt-2 text-destructive hover:bg-destructive/10" onClick={handleSignOut}>
+                <Button
+                  variant="ghost"
+                  className={cn('mt-2 text-destructive hover:bg-destructive/10', isDesktopCollapsed ? 'h-10 w-10 px-0 justify-center' : 'w-full justify-start gap-3')}
+                  onClick={handleSignOut}
+                  aria-label="Abmelden"
+                  title="Abmelden"
+                >
                   <LogOut className="h-4 w-4" />
-                  Abmelden
+                  <span className={cn(isDesktopCollapsed && 'sr-only')}>Abmelden</span>
                 </Button>
               </>
             ) : (
-                <div className="space-y-2">
-                  <Link href="/login" className={cn(buttonVariants({ variant: 'default' }), 'w-full justify-center')}>
-                    Anmelden
-                  </Link>
-                  <Link 
-                    href="/zugang" 
-                    className="block text-center text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors"
-                  >
-                    Warum ein Konto?
-                  </Link>
-                </div>
+              <div className={cn('space-y-2', isDesktopCollapsed && 'flex flex-col items-center')}>
+                <Link
+                  href="/login"
+                  className={cn(buttonVariants({ variant: 'default' }), isDesktopCollapsed ? 'h-10 w-10 px-0 justify-center rounded-xl' : 'w-full justify-center')}
+                  title="Anmelden"
+                  aria-label="Anmelden"
+                >
+                  <User className="h-4 w-4" />
+                  <span className={cn(isDesktopCollapsed && 'sr-only')}>Anmelden</span>
+                </Link>
+                <Link
+                  href="/zugang"
+                  className={cn('block text-center text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors', isDesktopCollapsed && 'sr-only')}
+                >
+                  Warum ein Konto?
+                </Link>
+              </div>
             )}
           </div>
-        </aside>
+          </aside>
+          {isDesktopCollapsed && (
+            <div className="fixed left-20 top-3 z-40 h-11 w-7 rounded-r-lg border border-l-0 bg-background/95 shadow-sm backdrop-blur-sm">
+              <button
+                type="button"
+                className="flex h-full w-full items-center justify-center rounded-r-lg text-foreground/80 transition-colors hover:bg-secondary hover:text-foreground"
+                onClick={toggleDesktopCollapsed}
+                aria-label="Menüleiste ausklappen"
+                title="Menüleiste ausklappen"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
+          )}
+        </div>
       )}
     </>
   )

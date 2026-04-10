@@ -9,6 +9,8 @@ const MAX_TRADES_PER_DAY = 3;
 const EXCLUDED_RARITIES: TeacherRarity[] = ['iconic'];
 const EXCLUDED_VARIANTS: CardVariant[] = ['black_shiny_holo'];
 const ANALYTICS_WINDOW_DAYS = 7;
+const ONLINE_STALE_MINUTES = 5;
+const MAX_SESSION_MINUTES = 12 * 60;
 const CALLABLE_CORS_ORIGINS = [
   /https?:\/\/([a-z0-9-]+\.)*localhost(:\d+)?$/,
   "https://abi-planer-27.web.app",
@@ -162,29 +164,57 @@ function getSectionFromAction(action: string, details: any): AnalyticsSection {
   return 'Sonstiges';
 }
 
-function computeAverageSessionMinutes(profiles: any[], now: Date): number {
-  const durations = profiles
-    .map((profile) => {
-      if (profile?.isOnline) {
-        const onlineSince = getTimestampDate(profile.onlineSince);
-        const fallbackLastOnline = getTimestampDate(profile.lastOnline);
-        const start = onlineSince || fallbackLastOnline;
-        return start ? Math.max(0, (now.getTime() - start.getTime()) / 60000) : 0;
-      }
+export function isProfileEffectivelyOnline(profile: any, now: Date): boolean {
+  if (!profile?.isOnline) return false;
 
-      const storedDuration = Number(profile?.lastSessionDurationSeconds);
-      if (Number.isFinite(storedDuration) && storedDuration > 0) {
-        return storedDuration / 60;
-      }
+  const lastOnline = getTimestampDate(profile.lastOnline);
+  if (!lastOnline) return true;
 
-      return 0;
-    })
+  return (now.getTime() - lastOnline.getTime()) <= ONLINE_STALE_MINUTES * 60 * 1000;
+}
+
+function getSessionDurationMinutes(profile: any, now: Date): number {
+  const sanitizeDuration = (minutes: number): number => {
+    if (!Number.isFinite(minutes) || minutes <= 0) return 0;
+    if (minutes > MAX_SESSION_MINUTES) return 0;
+    return minutes;
+  };
+
+  if (isProfileEffectivelyOnline(profile, now)) {
+    const onlineSince = getTimestampDate(profile.onlineSince);
+    const fallbackLastOnline = getTimestampDate(profile.lastOnline);
+    const start = onlineSince || fallbackLastOnline;
+    const onlineMinutes = start ? Math.max(0, (now.getTime() - start.getTime()) / 60000) : 0;
+    return sanitizeDuration(onlineMinutes);
+  }
+
+  const storedDuration = Number(profile?.lastSessionDurationSeconds);
+  if (Number.isFinite(storedDuration) && storedDuration > 0) {
+    return sanitizeDuration(storedDuration / 60);
+  }
+
+  return 0;
+}
+
+export function computeAverageSessionMinutes(profiles: any[], now: Date): number {
+  const liveDurations = profiles
+    .filter((profile) => isProfileEffectivelyOnline(profile, now))
+    .map((profile) => getSessionDurationMinutes(profile, now))
     .filter((value) => value > 0);
 
-  if (durations.length === 0) return 0;
+  if (liveDurations.length > 0) {
+    const totalLive = liveDurations.reduce((sum, value) => sum + value, 0);
+    return totalLive / liveDurations.length;
+  }
 
-  const total = durations.reduce((sum, value) => sum + value, 0);
-  return total / durations.length;
+  const storedDurations = profiles
+    .map((profile) => getSessionDurationMinutes(profile, now))
+    .filter((value) => value > 0);
+
+  if (storedDurations.length === 0) return 0;
+
+  const totalStored = storedDurations.reduce((sum, value) => sum + value, 0);
+  return totalStored / storedDurations.length;
 }
 
 function getHttpStatusFromHttpsErrorCode(code: string): number {
@@ -229,12 +259,10 @@ async function assertAdminRole(db: FirebaseFirestore.Firestore, uid: string) {
 }
 
 async function buildGlobalStats(db: FirebaseFirestore.Firestore) {
-  const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
-  const onlineSnap = await db.collection("profiles")
-    .where("last_visited.dashboard", ">=", fiveMinutesAgo.toISOString())
-    .count().get();
-
   const profilesSnap = await db.collection("profiles").get();
+  const now = new Date();
+  const profiles = profilesSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as any[];
+  const onlineUsersCount = profiles.filter((profile) => isProfileEffectivelyOnline(profile, now)).length;
   let totalCards = 0;
 
   const inventoriesSnap = await db.collection("user_teachers").get();
@@ -254,7 +282,7 @@ async function buildGlobalStats(db: FirebaseFirestore.Firestore) {
     .count().get();
 
   return {
-    online_users_count: onlineSnap.data().count,
+    online_users_count: onlineUsersCount,
     total_users: profilesSnap.size,
     total_cards_count: totalCards,
     active_trades_count: activeTradesSnap.data().count,
@@ -279,13 +307,12 @@ async function buildSystemAnalytics(db: FirebaseFirestore.Firestore) {
   const logs = logsSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as any[];
 
   const currentOnlineUsers = profiles
-    .filter((profile) => profile?.isOnline)
+    .filter((profile) => isProfileEffectivelyOnline(profile, now))
     .map((profile) => {
       const onlineSince = getTimestampDate(profile.onlineSince);
       const lastOnline = getTimestampDate(profile.lastOnline);
-      const sessionStart = onlineSince || lastOnline;
       const currentSection = getMostRecentVisitedSection(profile.last_visited);
-      const onlineMinutes = sessionStart ? Math.max(0, (now.getTime() - sessionStart.getTime()) / 60000) : 0;
+      const onlineMinutes = getSessionDurationMinutes(profile, now);
 
       return {
         id: profile.id,
@@ -394,6 +421,50 @@ async function buildSystemAnalytics(db: FirebaseFirestore.Firestore) {
     section_usage: sectionStats,
     recent_actions: recentActions,
     average_session_minutes: Math.round(computeAverageSessionMinutes(profiles, now) * 10) / 10,
+  };
+}
+
+async function resetSessionStatisticsInProfiles(db: FirebaseFirestore.Firestore) {
+  const batchSize = 400;
+  let processedProfiles = 0;
+  let resetProfiles = 0;
+  let lastDoc: FirebaseFirestore.QueryDocumentSnapshot | null = null;
+
+  while (true) {
+    let query: FirebaseFirestore.Query = db
+      .collection("profiles")
+      .orderBy(admin.firestore.FieldPath.documentId())
+      .limit(batchSize);
+
+    if (lastDoc) {
+      query = query.startAfter(lastDoc);
+    }
+
+    const snap = await query.get();
+    if (snap.empty) break;
+
+    const batch = db.batch();
+    snap.docs.forEach((profileDoc) => {
+      processedProfiles += 1;
+      batch.update(profileDoc.ref, {
+        isOnline: false,
+        onlineSince: FieldValue.delete(),
+        lastOnline: FieldValue.delete(),
+        lastSessionDurationSeconds: FieldValue.delete(),
+      });
+      resetProfiles += 1;
+    });
+
+    await batch.commit();
+    lastDoc = snap.docs[snap.docs.length - 1];
+
+    if (snap.size < batchSize) break;
+  }
+
+  return {
+    processed_profiles: processedProfiles,
+    reset_profiles: resetProfiles,
+    generated_at: new Date().toISOString(),
   };
 }
 
@@ -868,6 +939,23 @@ export const getSystemAnalytics = onCall({ cors: CALLABLE_CORS_ORIGINS }, async 
 });
 
 /**
+ * Setzt Presence-/Session-Felder fuer alle Profile zurueck.
+ */
+export const resetSessionStatistics = onCall({ cors: CALLABLE_CORS_ORIGINS }, async (request) => {
+  if (!request.auth) throw new HttpsError("unauthenticated", "Anmeldung erforderlich.");
+
+  try {
+    const db = getFirestore("abi-data");
+    await assertAdminRole(db, request.auth.uid);
+    return await resetSessionStatisticsInProfiles(db);
+  } catch (error) {
+    logger.error("[resetSessionStatistics] Error resetting session statistics:", error);
+    if (error instanceof HttpsError) throw error;
+    throw new HttpsError("internal", "Ein interner Fehler ist beim Zuruecksetzen der Session-Statistiken aufgetreten.");
+  }
+});
+
+/**
  * HTTP endpoint variant for admin global stats to avoid browser CORS callable constraints in subdomain local setups.
  */
 export const getGlobalStatsHttp = onRequest({ cors: CALLABLE_CORS_ORIGINS }, async (request, response) => {
@@ -902,6 +990,29 @@ export const getSystemAnalyticsHttp = onRequest({ cors: CALLABLE_CORS_ORIGINS },
       return;
     }
     response.status(500).json({ error: "internal", message: "Ein interner Fehler ist bei den Analytics aufgetreten." });
+  }
+});
+
+/**
+ * HTTP endpoint variant for resetting session statistics globally.
+ */
+export const resetSessionStatisticsHttp = onRequest({ cors: CALLABLE_CORS_ORIGINS }, async (request, response) => {
+  try {
+    const db = getFirestore("abi-data");
+    const adminUid = await requireAdminUidFromHttpRequest(request, db);
+    const payload = await resetSessionStatisticsInProfiles(db);
+    logger.info("[resetSessionStatisticsHttp] Session statistics reset completed", {
+      adminUid,
+      resetProfiles: payload.reset_profiles,
+    });
+    response.status(200).json(payload);
+  } catch (error: any) {
+    logger.error("[resetSessionStatisticsHttp] Error resetting session statistics:", error);
+    if (error instanceof HttpsError) {
+      response.status(getHttpStatusFromHttpsErrorCode(error.code)).json({ error: error.code, message: error.message });
+      return;
+    }
+    response.status(500).json({ error: "internal", message: "Ein interner Fehler ist beim Zuruecksetzen der Session-Statistiken aufgetreten." });
   }
 });
 

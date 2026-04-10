@@ -1,12 +1,14 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
+import { usePathname } from 'next/navigation'
+import { isAdSenseAllowedRoute } from './adsenseRoutes'
 
 // Use a module-level variable to track injection globally across remounts
 let scriptInjected = false
 
 export function AdSenseScript() {
-  const [hasInjected, setHasInjected] = useState(scriptInjected)
+  const pathname = usePathname()
 
   useEffect(() => {
     const checkAndInject = () => {
@@ -17,6 +19,10 @@ export function AdSenseScript() {
         }
       }
 
+      if (!isAdSenseAllowedRoute(pathname)) {
+        return
+      }
+
       const consent = localStorage.getItem('cookie-consent-accepted')
       if (consent === 'true' && !scriptInjected) {
         const script = document.createElement('script')
@@ -25,7 +31,6 @@ export function AdSenseScript() {
         script.crossOrigin = 'anonymous'
         document.head.appendChild(script)
         scriptInjected = true
-        setHasInjected(true)
       }
     }
 
@@ -38,7 +43,7 @@ export function AdSenseScript() {
     return () => {
       window.removeEventListener('cookie-consent-changed', checkAndInject)
     }
-  }, [])
+  }, [pathname])
 
   return null
 }

@@ -5,6 +5,7 @@ export type PackSource = 'random' | 'custom'
 export type PackSelection = {
   packSource: PackSource
   customPackQueueId?: string | null
+  packId?: string
 }
 
 export type AvailablePack = {
@@ -14,6 +15,7 @@ export type AvailablePack = {
   source: PackSource
   description?: string | null
   queueId?: string | null
+  packId?: string
   isHighlighted?: boolean
 }
 

@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useMemo, Suspense } from 'react'
+import { Suspense, useMemo } from 'react'
 import { ArrowLeft, ShoppingBag, Sparkles } from 'lucide-react'
 import { ProtectedSystemGate } from '@/components/ui/ProtectedSystemGate'
 import { useAuth } from '@/context/AuthContext'
@@ -14,16 +14,37 @@ function PackPreviewCard({
   count,
   source,
   isSelected,
+  packId
 }: {
   count: number
   source: 'random' | 'custom'
   isSelected: boolean
+  packId?: string
 }) {
   const isCustom = source === 'custom'
-  const cardTopClass = isCustom ? 'bg-fuchsia-700' : 'bg-blue-600'
-  const cardBottomClass = isCustom ? 'bg-gradient-to-b from-purple-800 to-fuchsia-900' : 'bg-blue-700'
-  const iconChipClass = isCustom ? 'bg-fuchsia-200' : 'bg-white'
-  const labelChipClass = isCustom ? 'bg-fuchsia-500 text-white' : 'bg-white text-black'
+  // Support style if packId matches, regardless of source
+  const isSupport = packId === 'support_vol_1'
+  
+  const cardTopClass = isSupport
+    ? 'bg-emerald-600'
+    : isCustom 
+      ? 'bg-fuchsia-700' 
+      : 'bg-blue-600'
+  const cardBottomClass = isSupport
+    ? 'bg-gradient-to-b from-emerald-700 to-teal-900'
+    : isCustom 
+      ? 'bg-gradient-to-b from-purple-800 to-fuchsia-900' 
+      : 'bg-blue-700'
+  const iconChipClass = isSupport
+    ? 'bg-emerald-200'
+    : isCustom 
+      ? 'bg-fuchsia-200' 
+      : 'bg-white'
+  const labelChipClass = isSupport
+    ? 'bg-emerald-500 text-white'
+    : isCustom 
+      ? 'bg-fuchsia-500 text-white' 
+      : 'bg-white text-black'
 
   return (
     <div
@@ -58,16 +79,16 @@ function PackPreviewCard({
 
           <div className="relative z-10 flex flex-col items-center h-full w-full px-6 pt-10">
             <div className={cn('relative mb-4 px-4 py-2 border-4 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] -rotate-1', labelChipClass)}>
-              <h2 className="font-black text-3xl tracking-tighter italic uppercase">
-                {isCustom ? 'CUSTOM PACK' : 'ABI PLANER'}
+              <h2 className="font-black text-3xl tracking-tighter italic uppercase text-center">
+                {isSupport ? 'SUPPORT VOL. 1' : isCustom ? 'CUSTOM PACK' : 'ABI PLANER'}
               </h2>
             </div>
 
             <div className={cn(
               'px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-[0.2em] mb-auto border-4 border-black',
-              isCustom ? 'bg-fuchsia-100 text-black' : 'bg-white text-black'
+              isSupport ? 'bg-emerald-100 text-black' : isCustom ? 'bg-fuchsia-100 text-black' : 'bg-white text-black'
             )}>
-              3 Lehrer Karten
+              {isSupport ? '1 Support Karte' : '3 Lehrer Karten'}
             </div>
 
             <div className="w-full flex justify-between items-end pb-12">
@@ -151,12 +172,12 @@ function ShopPreviewCard() {
   )
 }
 
-function SammelkartenPackSelectionContent() {
+function PackSelectionContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const selectedId = searchParams.get('selected')
   const { user, loading } = useAuth()
-  const { getRemainingBoosters } = useUserTeachers()
+  const { getRemainingBoosters, getRemainingSupportBoosters } = useUserTeachers()
   const { queueEntries, loading: customQueueLoading } = useCustomPackQueue()
 
   const availablePacks = useMemo(() => {
@@ -166,6 +187,7 @@ function SammelkartenPackSelectionContent() {
       count: number
       source: 'random' | 'custom'
       queueId?: string
+      packId?: string
     }>
 
     const remainingBoosters = Math.max(0, Number(getRemainingBoosters?.() || 0))
@@ -173,18 +195,30 @@ function SammelkartenPackSelectionContent() {
       packs.push({ id: 'random-pack', name: 'Standard Booster', count: remainingBoosters, source: 'random' })
     }
 
+    const remainingSupport = Math.max(0, Number(getRemainingSupportBoosters?.() || 0))
+    if (remainingSupport > 0) {
+      packs.push({ 
+        id: 'support-vol-1', 
+        name: 'Support Pack Vol. 1', 
+        count: remainingSupport, 
+        source: 'random',
+        packId: 'support_vol_1'
+      })
+    }
+
     queueEntries.forEach((entry, index) => {
       packs.push({
         id: entry.id,
-        name: `Custom Pack ${index + 1}`,
-        count: entry.slots.length,
+        name: (entry.name || `Custom Pack ${index + 1}`).trim(),
+        count: entry.remainingPacks,
         source: 'custom',
-        queueId: entry.id
+        queueId: entry.id,
+        packId: entry.packId // Wichtig für das grüne Design, falls es ein Support-Pack ist!
       })
     })
 
     return packs
-  }, [getRemainingBoosters, queueEntries])
+  }, [getRemainingBoosters, getRemainingSupportBoosters, queueEntries])
 
   const handleSelectPack = (packId: string) => {
     router.push(`/sammelkarten?pack=${encodeURIComponent(packId)}`)
@@ -263,6 +297,7 @@ function SammelkartenPackSelectionContent() {
                       count={pack.count}
                       source={pack.source}
                       isSelected={isSelected}
+                      packId={pack.packId}
                     />
                     <p className="text-center text-xs font-black uppercase tracking-[0.18em] text-slate-700">
                       {pack.name}
@@ -281,12 +316,11 @@ function SammelkartenPackSelectionContent() {
 export default function SammelkartenPackSelectionPage() {
   return (
     <Suspense fallback={
-      <div className="container mx-auto py-12 text-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto" />
-        <p className="mt-4 text-sm text-muted-foreground">Lade Booster-Auswahl...</p>
+      <div className="container mx-auto py-12 flex items-center justify-center">
+        <div className="animate-pulse text-slate-400 font-black uppercase tracking-widest">Lade Auswahl...</div>
       </div>
     }>
-      <SammelkartenPackSelectionContent />
+      <PackSelectionContent />
     </Suspense>
   )
 }

@@ -5,9 +5,9 @@ import { db } from '@/lib/firebase'
 import {
   DEFAULT_GODPACK_WEIGHTS,
   DEFAULT_RARITY_WEIGHTS,
-  DEFAULT_TEACHERS,
   DEFAULT_VARIANTS_PROBABILITIES
 } from '../constants'
+import { CARD_SETS } from '@/constants/cardRegistry'
 
 function getTimeLeftString(resetHour: number) {
   const now = new Date()
@@ -57,7 +57,7 @@ export function useSammelkartenConfig() {
           if (globalSnap.exists()) {
             const data = globalSnap.data()
             setConfig({
-              loot_teachers: data.loot_teachers || DEFAULT_TEACHERS,
+              loot_teachers: data.loot_teachers || (CARD_SETS['teacher_vol1']?.cards || []) as any,
               rarity_weights: DEFAULT_RARITY_WEIGHTS,
               godpack_weights: DEFAULT_GODPACK_WEIGHTS,
               variant_probabilities: DEFAULT_VARIANTS_PROBABILITIES,

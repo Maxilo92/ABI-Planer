@@ -2,10 +2,11 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { collection, getDocs, limit, orderBy, query, startAfter, type DocumentData, type QueryDocumentSnapshot } from 'firebase/firestore'
-import { Activity, Copy, FileJson, ShieldAlert } from 'lucide-react'
+import { httpsCallable } from 'firebase/functions'
+import { Activity, Copy, FileJson, ShieldAlert, RefreshCcw } from 'lucide-react'
 import { usePathname, useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { db } from '@/lib/firebase'
+import { db, functions } from '@/lib/firebase'
 import { useAuth } from '@/context/AuthContext'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -38,7 +39,27 @@ export default function AdminLogsPage() {
   const [hasMore, setHasMore] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [lastVisible, setLastVisible] = useState<QueryDocumentSnapshot<DocumentData> | null>(null)
+  const [fixingNames, setFixingNames] = useState(false)
   const sentinelRef = useRef<HTMLDivElement | null>(null)
+
+  const handleFixNames = async () => {
+    if (!confirm('Möchtest du alle "Unbekannt"-Einträge in den Logs jetzt reparieren? Dieser Vorgang kann einige Sekunden dauern.')) return
+    
+    setFixingNames(true)
+    try {
+      const fixFn = httpsCallable(functions, 'fixLogNames')
+      const result = await fixFn()
+      const { fixedCount } = result.data as { fixedCount: number }
+      
+      toast.success(`${fixedCount} Einträge wurden erfolgreich aktualisiert.`)
+      void loadInitial()
+    } catch (error: any) {
+      console.error('Error fixing log names:', error)
+      toast.error(error.message || 'Fehler beim Reparieren der Namen.')
+    } finally {
+      setFixingNames(false)
+    }
+  }
   const router = useRouter()
   const pathname = usePathname()
 
@@ -363,6 +384,18 @@ export default function AdminLogsPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <h1 className="text-3xl font-bold tracking-tight">Admin Logs</h1>
+          {activeTab === 'logs' && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleFixNames} 
+              disabled={fixingNames || loading}
+              className="gap-2 h-8 text-xs font-semibold"
+            >
+              <RefreshCcw className={`h-3 w-3 ${fixingNames ? 'animate-spin' : ''}`} />
+              {fixingNames ? 'Repariere...' : 'Namen reparieren'}
+            </Button>
+          )}
         </div>
         <p className="text-muted-foreground text-sm">Nachvollziehbare Aktivitäten für Moderation und Support</p>
       </div>

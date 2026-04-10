@@ -13,6 +13,7 @@ const RIP_START_ZONE_PROGRESS = 0.2
 type PackOpeningStageProps = {
   gameState: 'idle' | 'ripping' | 'revealed'
   getRemainingBoosters: () => number
+  getRemainingSupportBoosters: () => number
   isGodpack: boolean
   timeLeft: string
   availablePacks: AvailablePack[]
@@ -21,12 +22,10 @@ type PackOpeningStageProps = {
 }
 
 export function PackOpeningStage(props: PackOpeningStageProps) {
-  const { gameState, getRemainingBoosters, isGodpack, timeLeft, availablePacks, selectedPackId, handleOpenPack } = props
+  const { gameState, getRemainingBoosters, getRemainingSupportBoosters, isGodpack, timeLeft, availablePacks, selectedPackId, handleOpenPack } = props
   const [ripProgress, setRipProgress] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
   const [isTriggered, setIsTriggered] = useState(false)
-  const [burstVisible, setBurstVisible] = useState(false)
-  const [burstX, setBurstX] = useState(0)
   const lineRef = useRef<HTMLDivElement | null>(null)
   const activePointerIdRef = useRef<number | null>(null)
   const hasTriggeredRef = useRef(false)
@@ -38,8 +37,6 @@ export function PackOpeningStage(props: PackOpeningStageProps) {
       setIsDragging(false)
       setIsTriggered(false)
       setRipProgress(0)
-      setBurstVisible(false)
-      setBurstX(0)
     }
   }, [gameState])
 
@@ -62,8 +59,6 @@ export function PackOpeningStage(props: PackOpeningStageProps) {
     hasTriggeredRef.current = false
     setIsDragging(true)
     setRipProgress(startProgress)
-    setBurstVisible(false)
-    setBurstX(0)
 
     event.currentTarget.setPointerCapture(event.pointerId)
   }, [gameState, getProgressFromClientX, isTriggered])
@@ -80,8 +75,6 @@ export function PackOpeningStage(props: PackOpeningStageProps) {
       hasTriggeredRef.current = true
       setIsDragging(false)
       setIsTriggered(true)
-      setBurstX(progress * 100)
-      setBurstVisible(true)
       handleOpenPack()
     }
   }, [getProgressFromClientX, handleOpenPack, isDragging])
@@ -113,33 +106,46 @@ export function PackOpeningStage(props: PackOpeningStageProps) {
 
   if (!(gameState === 'idle' || gameState === 'ripping')) return null
 
-  if (getRemainingBoosters() > 0 || gameState === 'ripping') {
+  const totalBoosters = getRemainingBoosters() + getRemainingSupportBoosters()
+
+  if (totalBoosters > 0 || gameState === 'ripping') {
     const packs = availablePacks.length > 0
       ? availablePacks
       : [{ id: 'random', name: 'Booster', count: getRemainingBoosters(), source: 'random' as const }]
 
     const selectedPack = packs.find((pack) => pack.id === selectedPackId) || packs[0]
     const isCustomPack = selectedPack.source === 'custom'
+    const isSupportPack = selectedPack.packId === 'support_vol_1'
+    const currentRemaining = isSupportPack ? getRemainingSupportBoosters() : (isCustomPack ? selectedPack.count : getRemainingBoosters())
+    
     const cardTopClass = isCustomPack
       ? 'bg-fuchsia-700'
-      : isGodpack
-        ? 'bg-neutral-950'
-        : 'bg-blue-600'
+      : isSupportPack
+        ? 'bg-emerald-600'
+        : isGodpack
+          ? 'bg-neutral-950'
+          : 'bg-blue-600'
     const cardBottomClass = isCustomPack
       ? 'bg-gradient-to-b from-purple-800 to-fuchsia-900'
-      : isGodpack
-        ? 'bg-neutral-900'
-        : 'bg-blue-700'
+      : isSupportPack
+        ? 'bg-gradient-to-b from-emerald-700 to-teal-900'
+        : isGodpack
+          ? 'bg-neutral-900'
+          : 'bg-blue-700'
     const iconChipClass = isCustomPack
       ? 'bg-fuchsia-200'
-      : isGodpack
-        ? 'bg-amber-400'
-        : 'bg-white'
+      : isSupportPack
+        ? 'bg-emerald-200'
+        : isGodpack
+          ? 'bg-amber-400'
+          : 'bg-white'
     const labelChipClass = isCustomPack
       ? 'bg-fuchsia-500 text-white'
-      : isGodpack
-        ? 'bg-amber-500 text-black'
-        : 'bg-white text-black'
+      : isSupportPack
+        ? 'bg-emerald-500 text-white'
+        : isGodpack
+          ? 'bg-amber-500 text-black'
+          : 'bg-white text-black'
     const isRipAnimating = gameState === 'ripping' || isTriggered
     const ripLineTop = 'calc(33.333% - 1px)'
 
@@ -193,13 +199,6 @@ export function PackOpeningStage(props: PackOpeningStageProps) {
               </div>
             )}
 
-            {burstVisible && (
-              <div
-                className="pointer-events-none absolute z-40 h-24 w-24 -translate-x-1/2 -translate-y-1/2 rounded-full animate-rip-burst bg-[radial-gradient(circle,rgba(255,255,255,0.96)_0%,rgba(255,201,94,0.86)_35%,rgba(255,119,61,0.2)_70%,rgba(255,119,61,0)_100%)]"
-                style={{ left: `${burstX}%`, top: ripLineTop }}
-              />
-            )}
-
             <div className="absolute inset-0 flex flex-col h-full w-full">
               <div
                 className={cn(
@@ -233,7 +232,7 @@ export function PackOpeningStage(props: PackOpeningStageProps) {
                 <div className="relative z-10 flex flex-col items-center h-full w-full px-6 pt-10">
                   <div className={cn('relative mb-4 px-4 py-2 border-4 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] -rotate-1', labelChipClass)}>
                     <h2 className="font-black text-3xl tracking-tighter italic uppercase">
-                      {isCustomPack ? 'CUSTOM PACK' : 'ABI PLANER'}
+                      {isCustomPack ? 'CUSTOM PACK' : isSupportPack ? 'SUPPORT VOL. 1' : 'ABI PLANER'}
                     </h2>
                     {isGodpack && !isCustomPack && (
                       <div className="absolute -top-3 -right-3 bg-red-500 text-white text-[8px] font-black px-2 py-1 rounded-full border-2 border-black animate-bounce shadow-md">
@@ -244,9 +243,9 @@ export function PackOpeningStage(props: PackOpeningStageProps) {
 
                   <div className={cn(
                     'px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-[0.2em] mb-auto border-4 border-black',
-                    isCustomPack ? 'bg-fuchsia-100 text-black' : isGodpack ? 'bg-amber-500 text-black' : 'bg-white text-black'
+                    isCustomPack ? 'bg-fuchsia-100 text-black' : isSupportPack ? 'bg-emerald-100 text-black' : isGodpack ? 'bg-amber-500 text-black' : 'bg-white text-black'
                   )}>
-                    {isGodpack ? 'SPECIAL EDITION' : '3 Lehrer Karten'}
+                    {isGodpack ? 'SPECIAL EDITION' : isSupportPack ? '1 Support Karte' : '3 Lehrer Karten'}
                   </div>
 
                   <div className="w-full flex justify-between items-end pb-12">

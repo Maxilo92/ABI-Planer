@@ -5,7 +5,9 @@ import type { SystemAnalytics, SystemAnalyticsActionStat, SystemAnalyticsOnlineU
 
 type LocalAnalyticsError = Error & { status?: number }
 
-const ANALYTICS_WINDOW_DAYS = 30
+const ANALYTICS_WINDOW_DAYS = 7
+const ONLINE_STALE_MINUTES = 5
+const MAX_SESSION_MINUTES = 12 * 60
 
 function toLocalError(message: string, status: number): LocalAnalyticsError {
   const error = new Error(message) as LocalAnalyticsError
@@ -86,6 +88,59 @@ function getMostRecentVisitedSection(lastVisited: Record<string, string> | null 
   return latest.section
 }
 
+function isProfileEffectivelyOnline(profile: Record<string, unknown>, now: Date): boolean {
+  if (!profile?.isOnline) return false
+
+  const lastOnline = getTimestampDate(profile.lastOnline)
+  if (!lastOnline) return true
+
+  return (now.getTime() - lastOnline.getTime()) <= ONLINE_STALE_MINUTES * 60 * 1000
+}
+
+function getSessionDurationMinutes(profile: Record<string, unknown>, now: Date): number {
+  const sanitizeDuration = (minutes: number): number => {
+    if (!Number.isFinite(minutes) || minutes <= 0) return 0
+    if (minutes > MAX_SESSION_MINUTES) return 0
+    return minutes
+  }
+
+  if (isProfileEffectivelyOnline(profile, now)) {
+    const onlineSince = getTimestampDate(profile.onlineSince)
+    const fallbackLastOnline = getTimestampDate(profile.lastOnline)
+    const start = onlineSince || fallbackLastOnline
+    const onlineMinutes = start ? Math.max(0, (now.getTime() - start.getTime()) / 60000) : 0
+    return sanitizeDuration(onlineMinutes)
+  }
+
+  const storedDuration = Number(profile?.lastSessionDurationSeconds)
+  if (Number.isFinite(storedDuration) && storedDuration > 0) {
+    return sanitizeDuration(storedDuration / 60)
+  }
+
+  return 0
+}
+
+function computeAverageSessionMinutes(profiles: Array<Record<string, unknown>>, now: Date): number {
+  const liveDurations = profiles
+    .filter((profile) => isProfileEffectivelyOnline(profile, now))
+    .map((profile) => getSessionDurationMinutes(profile, now))
+    .filter((value) => value > 0)
+
+  if (liveDurations.length > 0) {
+    const totalLive = liveDurations.reduce((sum, value) => sum + value, 0)
+    return totalLive / liveDurations.length
+  }
+
+  const storedDurations = profiles
+    .map((profile) => getSessionDurationMinutes(profile, now))
+    .filter((value) => value > 0)
+
+  if (storedDurations.length === 0) return 0
+
+  const totalStored = storedDurations.reduce((sum, value) => sum + value, 0)
+  return totalStored / storedDurations.length
+}
+
 function getSectionFromAction(action: string, details: Record<string, unknown> | null | undefined): string {
   const actionMap: Record<string, string> = {
     ACCOUNT_CREATED: 'Registrierung',
@@ -153,31 +208,6 @@ function getSectionFromAction(action: string, details: Record<string, unknown> |
   return 'Sonstiges'
 }
 
-function computeAverageSessionMinutes(profiles: Array<Record<string, unknown>>, now: Date): number {
-  const durations = profiles
-    .map((profile) => {
-      if (profile?.isOnline) {
-        const onlineSince = getTimestampDate(profile.onlineSince)
-        const fallbackLastOnline = getTimestampDate(profile.lastOnline)
-        const start = onlineSince || fallbackLastOnline
-        return start ? Math.max(0, (now.getTime() - start.getTime()) / 60000) : 0
-      }
-
-      const storedDuration = Number(profile?.lastSessionDurationSeconds)
-      if (Number.isFinite(storedDuration) && storedDuration > 0) {
-        return storedDuration / 60
-      }
-
-      return 0
-    })
-    .filter((value) => value > 0)
-
-  if (durations.length === 0) return 0
-
-  const total = durations.reduce((sum, value) => sum + value, 0)
-  return total / durations.length
-}
-
 async function verifyAdminFromHeader(authHeader: string): Promise<void> {
   const app = getAdminApp()
   const auth = getAuth(app)
@@ -231,13 +261,12 @@ export async function buildAnalyticsFromPastLogs(authHeader: string): Promise<Sy
     }) as Array<Record<string, unknown> & { id: string; action: string; user_id: string }>
 
   const currentOnlineUsers = profiles
-    .filter((profile) => profile?.isOnline)
+    .filter((profile) => isProfileEffectivelyOnline(profile, now))
     .map((profile) => {
       const onlineSince = getTimestampDate(profile.onlineSince)
       const lastOnline = getTimestampDate(profile.lastOnline)
-      const sessionStart = onlineSince || lastOnline
       const currentSection = getMostRecentVisitedSection((profile.last_visited || null) as Record<string, string> | null)
-      const onlineMinutes = sessionStart ? Math.max(0, (now.getTime() - sessionStart.getTime()) / 60000) : 0
+      const onlineMinutes = getSessionDurationMinutes(profile, now)
 
       return {
         id: profile.id,

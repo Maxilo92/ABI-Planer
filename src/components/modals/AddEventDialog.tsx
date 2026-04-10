@@ -113,7 +113,7 @@ export function AddEventDialog({ defaultGroup, triggerLabel = 'Termin hinzufüge
         mentioned_groups: normalizedMentionedGroups,
       })
 
-      await logAction('EVENT_CREATED', user.uid, null, {
+      await logAction('EVENT_CREATED', user.uid, profile?.full_name, {
         title,
         location,
         start_date: new Date(startDate).toISOString(),
