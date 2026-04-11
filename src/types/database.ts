@@ -303,6 +303,22 @@ export interface NewsEntry {
   is_ai_generated?: boolean;
 }
 
+export interface FaqEntry {
+  id: string;
+  question: string;
+  answer: string;
+  category: string;
+  keywords: string[];
+  priority: number;
+  is_published: boolean;
+  created_at: string;
+  updated_at?: string | null;
+  created_by: string;
+  updated_by?: string | null;
+  helpful_count?: number;
+  helpful_by?: string[];
+}
+
 export interface Comment {
   id: string;
   content: string;

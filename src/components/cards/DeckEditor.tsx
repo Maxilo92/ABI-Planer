@@ -5,7 +5,6 @@ import { useDecks } from '@/hooks/useDecks'
 import { useUserTeachers } from '@/hooks/useUserTeachers'
 import { db } from '@/lib/firebase'
 import { doc, onSnapshot } from 'firebase/firestore'
-import { LootTeacher, CardVariant } from '@/types/database'
 import { CardData, CardVariant as NewCardVariant } from '@/types/cards'
 import { TeacherCard } from './TeacherCard'
 import { Button } from '@/components/ui/button'
@@ -13,6 +12,7 @@ import { Plus, Save, ArrowLeft, Loader2, Image as ImageIcon } from 'lucide-react
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
+import { buildTeacherCatalogFromSettings, findUserTeacherEntry, TeacherCatalogEntry } from '@/lib/cardCatalog'
 
 import { DeckSelection } from './DeckSelection'
 
@@ -44,7 +44,7 @@ function getTeacherRarityHex(rarity: string) {
 export const DeckEditor: React.FC<DeckEditorProps> = ({ deckId, onBack }) => {
   const { decks, updateDeck, loading: loadingDecks } = useDecks()
   const { teachers: userTeachers, loading: loadingUserTeachers } = useUserTeachers()
-  const [globalTeachers, setGlobalTeachers] = useState<LootTeacher[]>([])
+  const [globalTeachers, setGlobalTeachers] = useState<TeacherCatalogEntry[]>([])
   const [loadingGlobal, setLoadingGlobal] = useState(true)
   const [saving, setSaving] = useState(false)
   const [isSelecting, setIsSelecting] = useState(false)
@@ -66,9 +66,7 @@ export const DeckEditor: React.FC<DeckEditorProps> = ({ deckId, onBack }) => {
     const unsubscribe = onSnapshot(doc(db, 'settings', 'sammelkarten'), (snapshot) => {
       if (snapshot.exists()) {
         const data = snapshot.data()
-        if (Array.isArray(data.loot_teachers)) {
-          setGlobalTeachers(data.loot_teachers)
-        }
+        setGlobalTeachers(buildTeacherCatalogFromSettings(data))
       }
       setLoadingGlobal(false)
     })
@@ -113,7 +111,7 @@ export const DeckEditor: React.FC<DeckEditorProps> = ({ deckId, onBack }) => {
   }
 
   const handleSelectCard = (id: string) => {
-    setCardIds(prev => [...prev, id])
+    setCardIds(prev => (prev.includes(id) ? prev : [...prev, id]))
     if (!coverCardId) {
       setCoverCardId(id)
     }
@@ -122,14 +120,18 @@ export const DeckEditor: React.FC<DeckEditorProps> = ({ deckId, onBack }) => {
 
   const slots = useMemo(() => {
     const filledSlots = cardIds.map(id => {
-      const teacher = globalTeachers.find(t => (t.id || t.name) === id)
-      const userData = userTeachers?.[id]
-      const globalIndex = globalTeachers.findIndex(t => (t.id || t.name) === id)
+      const teacher = globalTeachers.find(t => t.fullId === id || t.baseId === id)
 
       if (!teacher) return { id, type: 'empty' as const }
 
+      const userData = findUserTeacherEntry(userTeachers, teacher)
+      const globalIndex = globalTeachers.findIndex(t => t.fullId === teacher.fullId)
+
+
       const cardData: CardData = {
-        id: teacher.id || teacher.name,
+        id: teacher.fullId,
+        setId: teacher.setId,
+        fullId: teacher.fullId,
         name: teacher.name,
         rarity: teacher.rarity,
         variant: getBestVariant(userData?.variants),

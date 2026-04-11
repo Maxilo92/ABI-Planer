@@ -114,9 +114,9 @@ export function SammelkartenFooterActions(props: SammelkartenFooterActionsProps)
             className={cn(
               'rounded-full px-8 border-2 transition-all duration-500 shadow-xl w-full',
               canOpenAnotherTen
-                ? 'border-neutral-900 !bg-neutral-900 !text-white hover:!bg-neutral-800 hover:border-neutral-800'
+                ? 'border-neutral-900 !bg-neutral-900 !text-white hover:!bg-neutral-800 hover:border-neutral-800 dark:border-blue-600 dark:!bg-blue-600 dark:hover:!bg-blue-700 dark:hover:border-blue-700'
                 : singlePacksRemaining
-                  ? 'border-neutral-900 !bg-neutral-900 !text-white hover:!bg-neutral-800 hover:border-neutral-800'
+                  ? 'border-neutral-900 !bg-neutral-900 !text-white hover:!bg-neutral-800 hover:border-neutral-800 dark:border-blue-600 dark:!bg-blue-600 dark:hover:!bg-blue-700 dark:hover:border-blue-700'
                   : 'border-destructive bg-destructive text-white hover:bg-destructive/90'
             )}
           >

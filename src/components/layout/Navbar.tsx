@@ -221,6 +221,33 @@ export function Navbar() {
 
   const isAuthPage = ['/login', '/register', '/waiting'].includes(pathname)
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    if (!isOpen) return
+
+    const body = document.body
+    const scrollY = window.scrollY
+    const prevOverflow = body.style.overflow
+    const prevPosition = body.style.position
+    const prevTop = body.style.top
+    const prevWidth = body.style.width
+
+    // Prevent background scrolling while the mobile drawer is open.
+    body.style.overflow = 'hidden'
+    body.style.position = 'fixed'
+    body.style.top = `-${scrollY}px`
+    body.style.width = '100%'
+
+    return () => {
+      body.style.overflow = prevOverflow
+      body.style.position = prevPosition
+      body.style.top = prevTop
+      body.style.width = prevWidth
+      window.scrollTo(0, scrollY)
+    }
+  }, [isOpen])
+
   const userInitial = profile?.full_name?.substring(0, 1).toUpperCase() || 'U'
 
   const getRoleLabel = (role: string) => {
@@ -731,31 +758,25 @@ export function Navbar() {
 
       {/* Mobile drawer */}
       {!loading && isOpen && (
-        <div className="lg:hidden fixed inset-0 z-[90] pointer-events-none">
-          <motion.button 
+        <div className="lg:hidden fixed inset-0 z-[90]">
+          <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute left-0 right-0 top-16 bottom-0 bg-black/50 pointer-events-auto" 
+            className="absolute inset-0 bg-black/50" 
             onClick={() => setIsOpen(false)} 
-            aria-label="Navigation schliessen" 
+            aria-label="Navigation schliessen"
+            style={{ touchAction: 'none' }}
           />
           <motion.aside 
             initial={{ x: '-100%' }}
             animate={{ x: 0 }}
             exit={{ x: '-100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            drag="x"
-            dragConstraints={{ left: 0, right: 0 }}
-            dragElastic={0.05}
-            onDragEnd={(_, info) => {
-              if (info.offset.x < -100) {
-                setIsOpen(false)
-              }
-            }}
-            className="absolute left-0 top-16 bottom-0 w-[85vw] max-w-80 border-r bg-background flex flex-col shadow-2xl touch-pan-y pt-4 pointer-events-auto"
+            className="absolute left-0 top-16 bottom-0 w-[85vw] max-w-80 border-r bg-background flex flex-col shadow-2xl pt-4"
+            style={{ touchAction: 'pan-y' }}
           >
-            <div className="flex-1 px-4 pb-4 overflow-y-auto space-y-0.5">
+            <div className="flex-1 px-4 pb-4 overflow-y-auto overscroll-contain space-y-0.5" style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' }}>
               {renderQuickActions(true)}
               {renderGroupedNav(true)}
             </div>

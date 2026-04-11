@@ -243,6 +243,11 @@ service cloud.firestore {
       }
     }
 
+    match /faqs/{faqId} {
+      allow read: if resource.data.is_published == true || isPlanner();
+      allow create, update, delete: if isPlanner();
+    }
+
     match /user_teachers/{userId} {
       allow read: if isAuthenticated() || isServiceAccount();
       allow write: if isServiceAccount() || isAdmin(); // Cloud Functions or Admin

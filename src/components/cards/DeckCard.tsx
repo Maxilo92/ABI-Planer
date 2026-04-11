@@ -10,8 +10,8 @@ import { TeacherCard } from './TeacherCard'
 import { useUserTeachers } from '@/hooks/useUserTeachers'
 import { db } from '@/lib/firebase'
 import { doc, onSnapshot } from 'firebase/firestore'
-import { LootTeacher, CardVariant } from '@/types/database'
 import { CardData, CardVariant as NewCardVariant } from '@/types/cards'
+import { buildTeacherCatalogFromSettings, findUserTeacherEntry, TeacherCatalogEntry } from '@/lib/cardCatalog'
 
 interface DeckCardProps {
   deck: UserDeck
@@ -41,16 +41,14 @@ function getTeacherRarityHex(rarity: string) {
 
 export const DeckCard: React.FC<DeckCardProps> = ({ deck, onEdit, onDelete }) => {
   const { teachers: userTeachers, loading: loadingUserTeachers } = useUserTeachers()
-  const [globalTeachers, setGlobalTeachers] = useState<LootTeacher[]>([])
+  const [globalTeachers, setGlobalTeachers] = useState<TeacherCatalogEntry[]>([])
   const [loadingGlobal, setLoadingGlobal] = useState(true)
 
   useEffect(() => {
     const unsubscribe = onSnapshot(doc(db, 'settings', 'sammelkarten'), (snapshot) => {
       if (snapshot.exists()) {
         const data = snapshot.data()
-        if (Array.isArray(data.loot_teachers)) {
-          setGlobalTeachers(data.loot_teachers)
-        }
+        setGlobalTeachers(buildTeacherCatalogFromSettings(data))
       }
       setLoadingGlobal(false)
     })
@@ -60,15 +58,17 @@ export const DeckCard: React.FC<DeckCardProps> = ({ deck, onEdit, onDelete }) =>
   const coverCardData = useMemo(() => {
     if (loadingUserTeachers || loadingGlobal || !userTeachers) return null
 
-    const teacher = globalTeachers.find(t => (t.id || t.name) === deck.coverCardId)
+    const teacher = globalTeachers.find(t => t.fullId === deck.coverCardId || t.baseId === deck.coverCardId)
     if (!teacher) return null
 
-    const userData = userTeachers[deck.coverCardId]
+    const userData = findUserTeacherEntry(userTeachers, teacher)
     const variant = getBestVariant(userData?.variants)
-    const globalIndex = globalTeachers.findIndex(t => (t.id || t.name) === deck.coverCardId)
+    const globalIndex = globalTeachers.findIndex(t => t.fullId === teacher.fullId)
 
     return {
-      id: teacher.id || teacher.name,
+      id: teacher.fullId,
+      setId: teacher.setId,
+      fullId: teacher.fullId,
       name: teacher.name,
       rarity: teacher.rarity,
       variant,

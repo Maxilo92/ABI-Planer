@@ -50,7 +50,7 @@ function PackPreviewCard({
     <div
       className={cn(
         'relative w-64 h-[400px] group transition-all duration-300',
-        isSelected ? 'scale-[1.02] ring-4 ring-sky-300/80 rounded-[2rem]' : 'group-hover:scale-[1.02]'
+        isSelected ? 'scale-[1.02]' : 'group-hover:scale-[1.02]'
       )}
       style={{
         filter: 'drop-shadow(0 20px 50px rgba(0,0,0,0.5))',
@@ -59,7 +59,7 @@ function PackPreviewCard({
     >
       <div className="absolute inset-0 flex flex-col h-full w-full">
         <div className="relative w-full h-1/3 z-20 overflow-hidden">
-          <div className={cn('absolute inset-0 border-x-4 border-t-4 border-black', cardTopClass)} />
+          <div className={cn('absolute inset-0', cardTopClass)} />
 
           <div className="absolute top-0 left-0 right-0 h-10 opacity-30 bg-[repeating-linear-gradient(90deg,transparent,transparent_2px,rgba(0,0,0,1)_2px,rgba(0,0,0,1)_4px)] border-b-2 border-black/20" />
 
@@ -71,7 +71,7 @@ function PackPreviewCard({
         </div>
 
         <div className="relative w-full h-2/3 z-10 -mt-[1px] overflow-hidden">
-          <div className={cn('absolute inset-0 border-x-4 border-b-4 border-black', cardBottomClass)} />
+          <div className={cn('absolute inset-0', cardBottomClass)} />
 
           <div className="absolute bottom-0 left-0 right-0 h-10 opacity-30 bg-[repeating-linear-gradient(90deg,transparent,transparent_2px,rgba(0,0,0,1)_2px,rgba(0,0,0,1)_4px)] border-t-2 border-black/20" />
 
@@ -118,51 +118,51 @@ function PackPreviewCard({
 function ShopPreviewCard() {
   return (
     <div
-      className="relative w-64 h-[400px] group transition-all duration-300 group-hover:scale-[1.02]"
+      className="relative w-64 h-[400px] group transition-all duration-300 opacity-50"
       style={{
-        filter: 'drop-shadow(0 20px 50px rgba(0,0,0,0.5))',
+        filter: 'drop-shadow(0 20px 50px rgba(0,0,0,0.25))',
         perspective: '1000px'
       }}
     >
       <div className="absolute inset-0 flex flex-col h-full w-full">
         <div className="relative w-full h-1/3 z-20 overflow-hidden">
-          <div className="absolute inset-0 border-x-4 border-t-4 border-black bg-emerald-600" />
+          <div className="absolute inset-0 border-x-4 border-t-4 border-gray-400 bg-gray-300 dark:border-gray-600 dark:bg-gray-700" />
 
-          <div className="absolute top-0 left-0 right-0 h-10 opacity-30 bg-[repeating-linear-gradient(90deg,transparent,transparent_2px,rgba(0,0,0,1)_2px,rgba(0,0,0,1)_4px)] border-b-2 border-black/20" />
+          <div className="absolute top-0 left-0 right-0 h-10 opacity-20 bg-[repeating-linear-gradient(90deg,transparent,transparent_2px,rgba(0,0,0,1)_2px,rgba(0,0,0,1)_4px)] border-b-2 border-gray-300/50 dark:border-gray-600/50" />
 
           <div className="absolute inset-0 flex items-center justify-center pt-8">
-            <div className="p-3 rounded-2xl border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] bg-white">
-              <ShoppingBag className="h-8 w-8 text-black" />
+            <div className="p-3 rounded-2xl border-4 border-gray-400 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.2)] bg-gray-200 dark:border-gray-600 dark:bg-gray-600">
+              <ShoppingBag className="h-8 w-8 text-gray-600 dark:text-gray-400" />
             </div>
           </div>
         </div>
 
         <div className="relative w-full h-2/3 z-10 -mt-[1px] overflow-hidden">
-          <div className="absolute inset-0 border-x-4 border-b-4 border-black bg-gradient-to-b from-emerald-700 to-teal-900" />
+          <div className="absolute inset-0 border-x-4 border-b-4 border-gray-400 bg-gradient-to-b from-gray-400 to-gray-500 dark:border-gray-600 dark:from-gray-700 dark:to-gray-800" />
 
-          <div className="absolute bottom-0 left-0 right-0 h-10 opacity-30 bg-[repeating-linear-gradient(90deg,transparent,transparent_2px,rgba(0,0,0,1)_2px,rgba(0,0,0,1)_4px)] border-t-2 border-black/20" />
+          <div className="absolute bottom-0 left-0 right-0 h-10 opacity-20 bg-[repeating-linear-gradient(90deg,transparent,transparent_2px,rgba(0,0,0,1)_2px,rgba(0,0,0,1)_4px)] border-t-2 border-gray-300/50 dark:border-gray-600/50" />
 
           <div className="relative z-10 flex flex-col items-center h-full w-full px-6 pt-10">
-            <div className="relative mb-4 px-4 py-2 border-4 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] -rotate-1 bg-white text-black">
+            <div className="relative mb-4 px-4 py-2 border-4 border-gray-400 shadow-[6px_6px_0px_0px_rgba(0,0,0,0.15)] -rotate-1 bg-gray-200 text-gray-600 dark:border-gray-600 dark:bg-gray-600 dark:text-gray-400">
               <h2 className="font-black text-3xl tracking-tighter italic uppercase">SHOP</h2>
             </div>
 
-            <div className="px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-[0.2em] mb-auto border-4 border-black bg-emerald-100 text-black">
-              Neue Booster holen
+            <div className="px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-[0.2em] mb-auto border-4 border-gray-400 bg-gray-300 text-gray-600 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-400">
+              Packs holen
             </div>
 
             <div className="w-full flex justify-between items-end pb-12">
               <div className="flex flex-col gap-1">
-                <span className="text-[10px] font-black text-black/40 uppercase">Sammelkarten</span>
+                <span className="text-[10px] font-black text-gray-400/60 uppercase">Ausgegraut</span>
                 <div className="flex gap-1">
                   {[...Array(4)].map((_, i) => (
-                    <div key={i} className="w-3 h-1 bg-black/20 rounded-sm" />
+                    <div key={i} className="w-3 h-1 bg-gray-400/30 rounded-sm" />
                   ))}
                 </div>
               </div>
 
-              <div className="w-14 h-14 rounded-2xl flex items-center justify-center border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all group-hover:-translate-y-1 group-hover:-translate-x-1 group-hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] bg-white">
-                <ShoppingBag className="h-7 w-7 text-black" />
+              <div className="w-14 h-14 rounded-2xl flex items-center justify-center border-4 border-gray-400 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.15)] bg-gray-200 dark:border-gray-600 dark:bg-gray-600">
+                <span className="text-3xl font-black text-gray-600 dark:text-gray-400">+</span>
               </div>
             </div>
           </div>
@@ -244,34 +244,34 @@ function PackSelectionContent() {
         <div className="mb-6">
           <Link
             href="/sammelkarten"
-            className="inline-flex items-center gap-2 rounded-full border border-slate-300/90 bg-white/90 px-4 py-2 text-xs font-black uppercase tracking-[0.2em] text-slate-700 transition-colors hover:border-slate-400 hover:bg-white"
+            className="inline-flex items-center gap-2 rounded-full border border-slate-300/90 dark:border-slate-600/90 bg-white/90 dark:bg-slate-900/90 px-4 py-2 text-xs font-black uppercase tracking-[0.2em] text-slate-700 dark:text-slate-200 transition-colors hover:border-slate-400 dark:hover:border-slate-500 hover:bg-white dark:hover:bg-slate-800"
           >
             <ArrowLeft className="h-4 w-4" />
             Zurück
           </Link>
         </div>
 
-        <div className="mb-8 rounded-3xl border border-slate-300/80 bg-white/85 p-6 shadow-sm backdrop-blur-sm">
-          <p className="text-[11px] font-black uppercase tracking-[0.24em] text-slate-500">Sammelkarten</p>
-          <h1 className="mt-2 text-3xl font-black tracking-tight text-slate-900">Wähle dein Pack</h1>
-          <p className="mt-3 text-sm text-slate-600">
+        <div className="mb-8">
+          <p className="text-[11px] font-black uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">Sammelkarten</p>
+          <h1 className="mt-2 text-3xl font-black tracking-tight text-slate-900 dark:text-white">Wähle dein Pack</h1>
+          <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">
             Hier siehst du den Shop zuerst und danach alle verfügbaren Booster. Wähle ein Pack aus, um zur Öffnung zurückzukehren.
           </p>
         </div>
 
         {customQueueLoading ? (
-          <div className="rounded-2xl border border-slate-300/80 bg-white/90 p-6 text-sm text-slate-600">
+          <div className="text-sm text-slate-600 dark:text-slate-300 text-center py-8">
             Lade verfügbare Packs...
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 justify-items-center">
             <Link
               href="/shop?category=sammelkarten"
-              className="group w-full rounded-3xl border p-5 text-left transition-all hover:-translate-y-0.5 hover:shadow-md bg-white/80 border-emerald-300/90"
+              className="group cursor-pointer transition-all hover:-translate-y-0.5"
             >
               <div className="flex flex-col items-center gap-3">
                 <ShopPreviewCard />
-                <p className="text-center text-xs font-black uppercase tracking-[0.18em] text-slate-700">
+                <p className="text-center text-xs font-black uppercase tracking-[0.18em] text-slate-700 dark:text-slate-200 mt-2">
                   Booster-Shop
                 </p>
               </div>
@@ -285,24 +285,17 @@ function PackSelectionContent() {
                   key={pack.id}
                   type="button"
                   onClick={() => handleSelectPack(pack.id)}
-                  className={cn(
-                    'group w-full rounded-3xl border p-5 text-left transition-all hover:-translate-y-0.5 hover:shadow-md bg-white/80',
-                    isSelected
-                      ? 'border-sky-400 bg-sky-50/70'
-                      : 'border-slate-300/90'
-                  )}
+                  className="group cursor-pointer transition-all hover:-translate-y-0.5 flex flex-col items-center gap-3"
                 >
-                  <div className="flex flex-col items-center gap-3">
-                    <PackPreviewCard
-                      count={pack.count}
-                      source={pack.source}
-                      isSelected={isSelected}
-                      packId={pack.packId}
-                    />
-                    <p className="text-center text-xs font-black uppercase tracking-[0.18em] text-slate-700">
-                      {pack.name}
-                    </p>
-                  </div>
+                  <PackPreviewCard
+                    count={pack.count}
+                    source={pack.source}
+                    isSelected={isSelected}
+                    packId={pack.packId}
+                  />
+                  <p className="text-center text-xs font-black uppercase tracking-[0.18em] text-slate-700 dark:text-slate-200">
+                    {pack.name}
+                  </p>
                 </button>
               )
             })}

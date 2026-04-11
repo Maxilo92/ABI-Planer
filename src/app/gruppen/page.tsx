@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useMemo, useState } from 'react'
 import { db } from '@/lib/firebase'
-import { collection, doc, onSnapshot, orderBy, query, updateDoc } from 'firebase/firestore'
+import { collection, doc, onSnapshot, query, updateDoc, where } from 'firebase/firestore'
 import { useAuth } from '@/context/AuthContext'
 import { GroupMessage, PlanningGroup, Profile, Settings } from '@/types/database'
 import { Loader2, Plus, Users } from 'lucide-react'
@@ -45,16 +45,13 @@ function getChatInitial(label: string): string {
   return (label || '?').trim().charAt(0).toUpperCase() || '?'
 }
 
-function getOnlineSubtitle(onlineCount: number): string {
-  return onlineCount === 1 ? '1 online' : `${onlineCount} online`
-}
-
 function GroupsPageContent() {
   const { profile, user, loading: authLoading } = useAuth()
   const [loading, setLoading] = useState(true)
   const [messages, setMessages] = useState<GroupMessage[]>([])
   const [presenceProfiles, setPresenceProfiles] = useState<Profile[]>([])
   const [activeChatId, setActiveChatId] = useState<string>('hub')
+  const [isMobileChatOpen, setIsMobileChatOpen] = useState(false)
   const [planningGroups, setPlanningGroups] = useState<PlanningGroup[]>([])
   const [selectedJoinGroup, setSelectedJoinGroup] = useState('')
   const { joinGroup, isJoining } = useGroupJoin()
@@ -67,17 +64,73 @@ function GroupsPageContent() {
       return
     }
 
-    const qMessages = query(collection(db, 'group_messages'), orderBy('created_at', 'desc'))
-    const unsubscribeMessages = onSnapshot(qMessages, (snapshot) => {
-      setMessages(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as GroupMessage)))
+    const messageSnapshots = new Map<string, GroupMessage[]>()
+    const unsubscribeMessages: Array<() => void> = []
+
+    const syncMessages = () => {
+      const merged = Array.from(messageSnapshots.values()).flat()
+      merged.sort((left, right) => toDate(right.created_at).getTime() - toDate(left.created_at).getTime())
+      setMessages(merged)
       setLoading(false)
-    }, (error) => {
-      console.error('Error listening to group messages:', error)
-      setLoading(false)
+    }
+
+    const subscribeToMessages = (sourceKey: string, q: ReturnType<typeof query>) => {
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+        messageSnapshots.set(
+          sourceKey,
+          snapshot.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() } as GroupMessage))
+        )
+        syncMessages()
+      }, (error) => {
+        console.error(`Error listening to group messages (${sourceKey}):`, error)
+        messageSnapshots.delete(sourceKey)
+        syncMessages()
+      })
+
+      unsubscribeMessages.push(unsubscribe)
+    }
+
+    subscribeToMessages('hub', query(
+      collection(db, 'group_messages'),
+      where('type', '==', 'hub'),
+      where('group_name', '==', 'hub')
+    ))
+
+    const ownGroups = profile.planning_groups || []
+    ownGroups.forEach((groupName) => {
+      subscribeToMessages(`group:${groupName}`, query(
+        collection(db, 'group_messages'),
+        where('type', '==', 'internal'),
+        where('group_name', '==', groupName)
+      ))
     })
 
+    subscribeToMessages('role:viewer', query(
+      collection(db, 'group_messages'),
+      where('type', '==', 'role'),
+      where('role_access', '==', 'viewer')
+    ))
+
+    if (['planner', 'admin', 'admin_main', 'admin_co'].includes(profile.role || '')) {
+      subscribeToMessages('role:planner', query(
+        collection(db, 'group_messages'),
+        where('type', '==', 'role'),
+        where('role_access', '==', 'planner')
+      ))
+    }
+
+    if (['admin', 'admin_main', 'admin_co'].includes(profile.role || '')) {
+      subscribeToMessages('role:admin', query(
+        collection(db, 'group_messages'),
+        where('type', '==', 'role'),
+        where('role_access', '==', 'admin')
+      ))
+    }
+
+    setLoading(false)
+
     return () => {
-      unsubscribeMessages()
+      unsubscribeMessages.forEach((unsubscribe) => unsubscribe())
     }
   }, [authLoading, profile?.is_approved])
 
@@ -140,6 +193,7 @@ function GroupsPageContent() {
   const chats = useMemo<ChatItem[]>(() => {
     const ownGroups = profile?.planning_groups || []
     const latestByGroup = new Map<string, GroupMessage | null>()
+    const latestOwnMessageByChatId = new Map<string, number>()
 
     ownGroups.forEach((group) => {
       latestByGroup.set(group, null)
@@ -149,6 +203,26 @@ function GroupsPageContent() {
     const latestByRole = new Map<string, GroupMessage | null>()
 
     for (const msg of messages) {
+      if (user?.uid && msg.created_by === user.uid) {
+        let chatId: string | null = null
+
+        if (msg.type === 'hub' && msg.group_name === 'hub') {
+          chatId = 'hub'
+        } else if (msg.type === 'internal') {
+          chatId = `group:${msg.group_name}`
+        } else if (msg.type === 'role' && msg.role_access) {
+          chatId = `role:${msg.role_access}`
+        }
+
+        if (chatId) {
+          const messageTime = getLastMessageTime(msg)
+          const knownTime = latestOwnMessageByChatId.get(chatId) ?? 0
+          if (messageTime > knownTime) {
+            latestOwnMessageByChatId.set(chatId, messageTime)
+          }
+        }
+      }
+
       if (msg.type === 'hub' && msg.group_name === 'hub' && !latestHubMessage) {
         latestHubMessage = msg
       }
@@ -224,6 +298,13 @@ function GroupsPageContent() {
     }
 
     const baseChats = [hubChat, systemChat, ...roleChats, ...internalChats].sort((a, b) => {
+      const ownTimeA = latestOwnMessageByChatId.get(a.id) ?? 0
+      const ownTimeB = latestOwnMessageByChatId.get(b.id) ?? 0
+
+      if (ownTimeA !== ownTimeB) {
+        return ownTimeB - ownTimeA
+      }
+
       const timeA = getLastMessageTime(a.latestMessage)
       const timeB = getLastMessageTime(b.latestMessage)
       
@@ -242,7 +323,7 @@ function GroupsPageContent() {
     }
 
     return [...baseChats, abiBotChat]
-  }, [messages, profile?.planning_groups, profile?.role])
+  }, [messages, profile?.planning_groups, profile?.role, user?.uid])
 
   useEffect(() => {
     if (chats.length === 0) return
@@ -339,23 +420,26 @@ function GroupsPageContent() {
 
   return (
     <div className="flex flex-col gap-6 pb-20">
-      <div className="space-y-3">
+      <div className={cn("space-y-3", isMobileChatOpen && "hidden lg:block")}>
         <h1 className="text-3xl md:text-5xl font-black tracking-tight">Gruppen</h1>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6">
-        <aside className="lg:col-span-4 border-r border-border/70 pr-0 lg:pr-4">
-          <div className="px-1 pb-3 space-y-3">
+        <aside className={cn(
+          "lg:col-span-4 border-r border-border/70 pr-0 lg:pr-4",
+          isMobileChatOpen && "hidden lg:block"
+        )}>
+          <div className="pb-3 space-y-3">
             <p className="text-xs uppercase tracking-widest text-muted-foreground font-black">Chats</p>
 
             <div className="flex flex-wrap items-center gap-2">
               <select
-                className="flex-1 min-w-[180px] h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm"
+                className="flex-1 min-w-[150px] h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm"
                 value={selectedJoinGroup}
                 onChange={(e) => setSelectedJoinGroup(e.target.value)}
                 disabled={joinableGroups.length === 0 || isJoining}
               >
-                <option value="">Gruppe beitreten...</option>
+                <option value="">Beitreten...</option>
                 {joinableGroups.map((groupName) => (
                   <option key={groupName} value={groupName}>{groupName}</option>
                 ))}
@@ -364,18 +448,19 @@ function GroupsPageContent() {
               <Button
                 size="sm"
                 variant="outline"
-                className="h-9"
+                className="h-9 px-3"
                 disabled={!selectedJoinGroup || isJoining}
                 onClick={async () => {
                   if (!selectedJoinGroup) return
                   const joined = await joinGroup(selectedJoinGroup)
                   if (joined) {
                     setActiveChatId(`group:${selectedJoinGroup}`)
+                    setIsMobileChatOpen(true)
                     setSelectedJoinGroup('')
                   }
                 }}
               >
-                Beitreten
+                Go
               </Button>
 
               <Button
@@ -394,14 +479,17 @@ function GroupsPageContent() {
             {chats.map((chat) => {
               const latestDate = chat.latestMessage ? toDate(chat.latestMessage.created_at) : null
               const isActive = activeChat?.id === chat.id
-              const onlineCount = onlineCountByChatId.get(chat.id) ?? 0
+              const chatPreview = getChatPreview(chat.latestMessage)
 
               return (
                 <button
                   key={chat.id}
-                  onClick={() => setActiveChatId(chat.id)}
+                  onClick={() => {
+                    setActiveChatId(chat.id)
+                    setIsMobileChatOpen(true)
+                  }}
                   className={cn(
-                    'w-full text-left px-2 py-3 transition-colors',
+                    'w-full text-left px-0 py-3 transition-colors',
                     isActive ? 'bg-muted/70' : 'hover:bg-muted/40'
                   )}
                 >
@@ -416,7 +504,7 @@ function GroupsPageContent() {
                       <div className="min-w-0">
                         <p className="font-bold truncate">{chat.label}</p>
                         <div className="mt-0.5 flex items-center gap-2 min-w-0">
-                          <p className="text-sm text-muted-foreground truncate">{getOnlineSubtitle(onlineCount)}</p>
+                          <p className="text-sm text-muted-foreground truncate">{chatPreview}</p>
                         </div>
                       </div>
                     </div>
@@ -430,7 +518,21 @@ function GroupsPageContent() {
           </div>
         </aside>
 
-        <div className="lg:col-span-8 space-y-4">
+        <div className={cn(
+          "lg:col-span-8 space-y-4",
+          !isMobileChatOpen && "hidden lg:block"
+        )}>
+          {isMobileChatOpen && (
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="lg:hidden mb-2 -ml-2 h-8 text-primary font-bold"
+              onClick={() => setIsMobileChatOpen(false)}
+            >
+              <Users className="h-4 w-4 mr-2" /> Zurück zur Übersicht
+            </Button>
+          )}
+
           {activeChat && activeChat.type === 'internal' && !activeChat.isAbiBot && (
             <div className="flex flex-wrap items-center gap-2">
               <AddTodoDialog defaultGroup={activeChat.groupName} />

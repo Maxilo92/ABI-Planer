@@ -9,6 +9,7 @@ import { toDate, cn } from '@/lib/utils'
 import { Trash2, Pin, PinOff, Reply, ChevronDown, ChevronUp } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { MediaAttachment } from './MediaAttachment'
+import { ChatMarkdown } from './ChatMarkdown'
 
 interface MessageItemProps {
   msg: GroupMessage
@@ -90,12 +91,16 @@ export const MessageItem = memo(function MessageItem({
               : isImageOnlyMessage
                 ? "bg-transparent border-0 p-0 shadow-none"
               : isOwn 
-                ? "bg-gradient-to-br from-primary via-primary to-primary/90 text-primary-foreground rounded-[2rem] rounded-tr-none shadow-primary/20 hover:shadow-primary/30" 
+                ? "bg-gradient-to-br from-primary via-primary to-primary/90 text-primary-foreground rounded-[2rem] rounded-tr-none shadow-none" 
                 : "bg-background/80 dark:bg-muted/20 backdrop-blur-xl border border-primary/10 text-foreground rounded-[2rem] rounded-tl-none shadow-black/5 hover:shadow-primary/5"
           )}>
             <div className={cn("relative z-10", isImageOnlyMessage ? "space-y-0" : "space-y-3")}>
               {msg.content && (
-                <p className="leading-relaxed whitespace-pre-wrap text-[15px] font-medium tracking-tight">{msg.content}</p>
+                <ChatMarkdown
+                  content={msg.content}
+                  tone={isOwn ? 'inverse' : 'default'}
+                  className="text-[15px] font-medium tracking-tight"
+                />
               )}
               
               {msg.media_url && (

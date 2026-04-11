@@ -6,7 +6,6 @@ import {
   collection, 
   query, 
   where, 
-  orderBy, 
   onSnapshot, 
   addDoc, 
   serverTimestamp, 
@@ -19,7 +18,6 @@ import {
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { useAuth } from '@/context/AuthContext'
 import { GroupMessage, Settings, PlanningGroup, Profile, AbiBotMessage } from '@/types/database'
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
@@ -40,6 +38,7 @@ import {
   Image as ImageIcon,
   X,
   Reply
+  ,Wrench
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
@@ -54,6 +53,7 @@ import {
 import { logAction } from '@/lib/logging'
 import { MessageItem } from './MessageItem'
 import { MediaAttachment } from './MediaAttachment'
+import { ChatMarkdown } from './ChatMarkdown'
 
 interface GroupWallProps {
   groupName: string
@@ -92,9 +92,9 @@ export function GroupWall({
 
   // ABI Bot State
   const [botMessages, setBotMessages] = useState<AbiBotMessage[]>([])
-  const [botLoadingHistory, setBotLoadingHistory] = useState(false)
   const [botSending, setBotSending] = useState(false)
-  const [botRateLimitHint, setBotRateLimitHint] = useState<string | null>(null)
+  const [botThinking, setBotThinking] = useState(false)
+  const [botLookupHint, setBotLookupHint] = useState<string | null>(null)
 
   const chatMode: 'team' | 'abi-bot' = abiBotMode ? 'abi-bot' : 'team'
   
@@ -136,23 +136,39 @@ export function GroupWall({
   }, [type])
 
   useEffect(() => {
+    if (type === 'system') {
+      setMessages([])
+      return
+    }
+
     if (!groupName || !profile?.is_approved) return
 
-    const q = query(
+    const baseQuery = [
       collection(db, 'group_messages'),
       where('group_name', '==', groupName),
       where('type', '==', type),
-      orderBy('created_at', 'asc')
-    )
+    ] as const
+
+    const q = type === 'role' && roleAccess
+      ? query(
+          collection(db, 'group_messages'),
+          where('group_name', '==', groupName),
+          where('type', '==', type),
+          where('role_access', '==', roleAccess)
+        )
+      : query(...baseQuery)
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      setMessages(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as GroupMessage)))
+      const next = snapshot.docs
+        .map(doc => ({ id: doc.id, ...doc.data() } as GroupMessage))
+        .sort((a, b) => toDate(a.created_at).getTime() - toDate(b.created_at).getTime())
+      setMessages(next)
     }, (error) => {
       console.error('GroupWall: Error listening to messages:', error)
     })
 
     return () => unsubscribe()
-  }, [groupName, type, profile?.is_approved])
+  }, [groupName, type, profile?.is_approved, roleAccess])
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -165,49 +181,8 @@ export function GroupWall({
     setReplyTo(null)
     setAttachment(null)
     setTargetGroup(null)
+    setBotMessages([])
   }, [abiBotMode])
-
-  useEffect(() => {
-    if (!user || !profile?.is_approved || !abiBotMode) {
-      return
-    }
-
-    const loadBotHistory = async () => {
-      setBotLoadingHistory(true)
-      setBotRateLimitHint(null)
-      try {
-        const idToken = await user.getIdToken()
-        const query = new URLSearchParams({
-          chatType: type,
-          groupName,
-          roleAccess: roleAccess || '',
-        })
-
-        const response = await fetch(`/api/chats/abi-bot?${query.toString()}`, {
-          method: 'GET',
-          headers: {
-            Authorization: `Bearer ${idToken}`,
-          },
-        })
-
-        const payload = await response.json().catch(() => null)
-        if (!response.ok || !payload?.ok) {
-          const errorMsg = payload?.error || 'Konversation konnte nicht geladen werden.'
-          const details = payload?.details ? ` (${payload.details})` : ''
-          throw new Error(`${errorMsg}${details}`)
-        }
-
-        setBotMessages(Array.isArray(payload.messages) ? payload.messages : [])
-      } catch (error: any) {
-        console.error('Error loading ABI bot conversation:', error)
-        toast.error(`ABI Bot Verlauf: ${error.message}`)
-      } finally {
-        setBotLoadingHistory(false)
-      }
-    }
-
-    loadBotHistory()
-  }, [abiBotMode, user, profile?.is_approved, type, groupName, roleAccess])
 
   const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -293,9 +268,14 @@ export function GroupWall({
   const handleSendBotMessage = async () => {
     if (!newMessage.trim() || !user || !profile) return
 
-    setBotSending(true)
-    setBotRateLimitHint(null)
+    const historyForApi = botMessages.slice(-12).map((msg) => ({
+      role: msg.role,
+      content: msg.content,
+    }))
 
+    setBotSending(true)
+    setBotThinking(true)
+    setBotLookupHint('Suche in Hilfe & FAQ')
     const prompt = newMessage.trim()
     setNewMessage('')
 
@@ -316,35 +296,31 @@ export function GroupWall({
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          chatType: type,
-          groupName,
-          roleAccess: roleAccess || null,
           prompt,
+          history: historyForApi,
         }),
       })
 
       const payload = await response.json().catch(() => null)
 
       if (response.status === 429) {
-        const resetAt = payload?.rateLimit?.resetAt
-        const remaining = payload?.rateLimit?.remaining
         setBotMessages((prev) => prev.filter((msg) => msg.id !== optimisticUserMessage.id))
-        setBotRateLimitHint(
-          typeof resetAt === 'string'
-            ? `Rate-Limit erreicht. Wieder verfuegbar um ${format(new Date(resetAt), 'HH:mm:ss', { locale: de })}.`
-            : 'Rate-Limit erreicht. Maximal 10 ABI-Bot Nachrichten pro Minute.'
-        )
-        toast.error(
-          typeof remaining === 'number'
-            ? `Rate-Limit erreicht (${remaining} verbleibend in diesem Fenster).`
-            : 'Rate-Limit erreicht. Maximal 10 ABI-Bot Nachrichten pro Minute.'
-        )
+        setBotThinking(false)
+        setBotLookupHint(null)
+        toast.error('Rate-Limit erreicht. Maximal 10 ABI-Bot Nachrichten pro Minute.')
         return
       }
 
       if (!response.ok || !payload?.ok || typeof payload?.answer !== 'string') {
         throw new Error(payload?.error || 'ABI Bot konnte nicht antworten.')
       }
+
+      const usedFaqLookup = Boolean(payload?.meta?.faqLookupUsed || payload?.meta?.faqMatches > 0)
+      setBotLookupHint(
+        usedFaqLookup
+          ? 'Antwort basiert auf der Hilfe & FAQ.'
+          : 'Ohne passenden FAQ-Treffer beantwortet.'
+      )
 
       const assistantMessage: AbiBotMessage = {
         id: `local_assistant_${Date.now()}`,
@@ -360,8 +336,17 @@ export function GroupWall({
       toast.error('ABI Bot Antwort fehlgeschlagen.')
     } finally {
       setBotSending(false)
+      setBotThinking(false)
+      window.setTimeout(() => setBotLookupHint(null), 2200)
     }
   }
+
+  const handleClearBotChat = useCallback(() => {
+    setBotMessages([])
+    setBotThinking(false)
+    setBotLookupHint(null)
+    toast.success('ABI Bot Chat wurde geloescht.')
+  }, [])
 
   const handleDeleteMessage = useCallback(async (messageId: string) => {
     const currentMessages = messagesRef.current
@@ -435,103 +420,129 @@ export function GroupWall({
   const handleReply = useCallback((msg: GroupMessage) => setReplyTo(msg), [])
 
   return (
-    <Card className="flex flex-col h-[600px] md:h-[700px] lg:h-[800px] shadow-2xl shadow-primary/5 border-primary/10 overflow-hidden rounded-[2rem] bg-card/50 backdrop-blur-xl transition-all duration-500 hover:shadow-primary/10">
-      <CardHeader className="py-5 px-8 border-b border-primary/10 bg-muted/20 backdrop-blur-xl relative overflow-hidden group/header">
-        <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-primary/5 opacity-0 group-hover/header:opacity-100 transition-opacity duration-700" />
-        <div className="flex items-center justify-between relative z-10">
-          <div className="flex items-center gap-4">
-            <div className="bg-primary/10 p-2.5 rounded-2xl shadow-inner group-hover/header:scale-110 transition-transform duration-500">
-              <MessageSquare className="h-6 w-6 text-primary" />
-            </div>
-            <div>
-              <CardTitle className="text-xl font-black tracking-tight">
-                {type === 'hub' ? 'Shared Hub' : type === 'role' ? (
-                  roleAccess === 'admin' ? 'Admin-Intern' : 
-                  roleAccess === 'planner' ? 'Planer-Chat' : 'Öffentlicher Chat'
-                ) : 'Team-Pinnwand'}
-              </CardTitle>
-              <div className="flex items-center gap-2 mt-0.5">
-                <div className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" />
-                <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest opacity-70">
-                  {propOnlineCount ?? 0} online
-                </p>
-              </div>
+    <div className="flex flex-col h-[600px] md:h-[700px] lg:h-[800px] overflow-hidden transition-all duration-500">
+      <div className="py-5 px-1 border-b border-border/50 flex items-center justify-between relative z-10">
+        <div className="flex items-center gap-4">
+          <div className="bg-primary/10 p-2.5 rounded-2xl shadow-inner">
+            <MessageSquare className="h-6 w-6 text-primary" />
+          </div>
+          <div>
+            <h3 className="text-xl font-black tracking-tight">
+              {type === 'hub' ? 'Shared Hub' : type === 'role' ? (
+                roleAccess === 'admin' ? 'Admin-Intern' : 
+                roleAccess === 'planner' ? 'Planer-Chat' : 'Öffentlicher Chat'
+              ) : 'Team-Pinnwand'}
+            </h3>
+            <div className="flex items-center gap-2 mt-0.5">
+              <div className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" />
+              <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest opacity-70">
+                {propOnlineCount ?? 0} online
+              </p>
             </div>
           </div>
-          {type === 'hub' ? (
-            <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 font-black px-4 py-1.5 rounded-xl shadow-lg shadow-primary/5 animate-pulse">
-              GLOBAL HUB
-            </Badge>
-          ) : type === 'role' ? (
-            <Badge variant="outline" className={cn(
-              "font-black px-4 py-1.5 rounded-xl shadow-lg shadow-primary/5",
-              roleAccess === 'admin' ? "bg-red-100 text-red-600 border-red-200" :
-              roleAccess === 'planner' ? "bg-amber-100 text-amber-600 border-amber-200" :
-              "bg-blue-100 text-blue-600 border-blue-200"
-            )}>
-              {roleAccess?.toUpperCase()} CHAT
-            </Badge>
-          ) : (
-            <div className="flex -space-x-3 overflow-hidden">
-               {/* Avatars would go here if we had them in props, for now just a placeholder */}
-            </div>
-          )}
         </div>
+        {type === 'hub' && !abiBotMode ? (
+          <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 font-black px-4 py-1.5 rounded-xl shadow-lg shadow-primary/5 animate-pulse">
+            GLOBAL HUB
+          </Badge>
+        ) : type === 'role' ? (
+          <Badge variant="outline" className={cn(
+            "font-black px-4 py-1.5 rounded-xl shadow-lg shadow-primary/5",
+            roleAccess === 'admin' ? "bg-red-100 text-red-600 border-red-200" :
+            roleAccess === 'planner' ? "bg-amber-100 text-amber-600 border-amber-200" :
+            "bg-blue-100 text-blue-600 border-blue-200"
+          )}>
+            {roleAccess?.toUpperCase()} CHAT
+          </Badge>
+        ) : null}
         {abiBotMode && (
-          <div className="mt-4">
+          <div className="ml-2 flex items-center gap-2">
             <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 font-black px-4 py-1.5 rounded-xl shadow-lg shadow-primary/5">
-              ABI BOT CHAT
+              ABI BOT
             </Badge>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-9"
+              onClick={handleClearBotChat}
+              disabled={botSending || botMessages.length === 0}
+            >
+              Chat loeschen
+            </Button>
           </div>
         )}
-      </CardHeader>
-      
-      <CardContent 
+      </div>
+
+      <div 
         ref={scrollRef}
-        className="flex-1 overflow-y-auto p-8 space-y-8 scroll-smooth bg-gradient-to-b from-transparent via-muted/5 to-muted/10 custom-scrollbar"
+        className="flex-1 overflow-y-auto py-8 px-2 space-y-8 scroll-smooth custom-scrollbar"
       >
         {chatMode === 'abi-bot' ? (
           <div className="space-y-4">
-            <div className="rounded-2xl border border-primary/20 bg-primary/5 px-4 py-3">
-              <p className="text-xs font-bold text-primary/80">
-                ABI Bot ist chatbezogen aktiv. Jede Konversation wird vollstaendig protokolliert. Limit: 10 Nachrichten pro Minute.
-              </p>
-              {botRateLimitHint && (
-                <p className="text-xs font-bold text-destructive mt-2">{botRateLimitHint}</p>
-              )}
-            </div>
+            {(botThinking || botLookupHint) && (
+              <div className="flex w-full justify-start">
+                <div className="max-w-[85%] rounded-2xl px-4 py-3 shadow bg-primary/5 border border-primary/15 text-foreground">
+                  <p className="text-[10px] uppercase tracking-wider font-black opacity-70 mb-1">ABI Bot</p>
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    {botThinking ? <Wrench className="h-4 w-4 animate-pulse text-primary" /> : <MessageSquare className="h-4 w-4 text-primary" />}
+                    <span>{botLookupHint || 'Suche in Hilfe & FAQ'}</span>
+                  </div>
+                </div>
+              </div>
+            )}
 
-            {botLoadingHistory ? (
-              <div className="text-sm text-muted-foreground font-semibold">ABI Bot Verlauf wird geladen...</div>
-            ) : botMessages.length === 0 ? (
+            {botMessages.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-center space-y-4 py-16">
                 <MessageSquare className="h-12 w-12 text-primary/30" />
-                <p className="text-base font-bold text-muted-foreground">Starte den ABI Bot Chat fuer diesen Kanal.</p>
+                <p className="text-base font-bold text-muted-foreground">Starte den ABI Bot Chat.</p>
               </div>
             ) : (
-              botMessages.map((msg) => {
-                const isAssistant = msg.role === 'assistant'
-                return (
-                  <div
-                    key={msg.id}
-                    className={cn('flex w-full', isAssistant ? 'justify-start' : 'justify-end')}
-                  >
+              <>
+                {botMessages.map((msg) => {
+                  const isAssistant = msg.role === 'assistant'
+                  return (
                     <div
-                      className={cn(
-                        'max-w-[85%] rounded-2xl px-4 py-3 shadow',
-                        isAssistant
-                          ? 'bg-muted border border-border text-foreground'
-                          : 'bg-primary text-primary-foreground'
-                      )}
+                      key={msg.id}
+                      className={cn('flex w-full', isAssistant ? 'justify-start' : 'justify-end')}
                     >
-                      <p className="text-[10px] uppercase tracking-wider font-black opacity-70 mb-1">
-                        {isAssistant ? 'ABI Bot' : 'Du'}
-                      </p>
-                      <p className="text-sm whitespace-pre-wrap break-words">{msg.content}</p>
+                      <div
+                        className={cn(
+                          'max-w-[85%] rounded-2xl px-4 py-3',
+                          isAssistant
+                            ? 'bg-muted border border-border text-foreground shadow'
+                            : 'bg-primary text-primary-foreground shadow-none'
+                        )}
+                      >
+                        <p className="text-[10px] uppercase tracking-wider font-black opacity-70 mb-1">
+                          {isAssistant ? 'ABI Bot' : 'Du'}
+                        </p>
+                        <ChatMarkdown
+                          content={msg.content}
+                          tone={isAssistant ? 'default' : 'inverse'}
+                          className="text-sm"
+                        />
+                        {isAssistant && botLookupHint && !botSending && (
+                          <p className="mt-2 text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground/70">
+                            {botLookupHint}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
+                {botSending && (
+                  <div className="flex w-full justify-start">
+                    <div className="max-w-[85%] rounded-2xl px-4 py-3 shadow bg-muted border border-border text-foreground">
+                      <p className="text-[10px] uppercase tracking-wider font-black opacity-70 mb-1">ABI Bot</p>
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground" aria-label="ABI Bot sucht in Hilfe und FAQ">
+                        <Wrench className="h-4 w-4 animate-pulse text-primary" />
+                        <span>{botLookupHint || 'Suche in Hilfe & FAQ'}</span>
+                      </div>
                     </div>
                   </div>
-                )
-              })
+                )}
+              </>
             )}
           </div>
         ) : messages.length === 0 ? (
@@ -594,10 +605,10 @@ export function GroupWall({
             ))}
           </div>
         )}
-      </CardContent>
+      </div>
 
       {(type !== 'system' || chatMode === 'abi-bot') && (
-        <CardFooter className="p-6 border-t border-primary/10 bg-muted/40 backdrop-blur-2xl flex flex-col gap-4">
+        <div className="py-6 px-1 border-t border-border/50 flex flex-col gap-4">
           <form onSubmit={handleSendMessage} className="flex flex-col gap-4 w-full">
             {/* Active Reply Indicator */}
             {chatMode === 'team' && replyTo && (
@@ -646,7 +657,7 @@ export function GroupWall({
                           "h-14 text-[10px] font-black uppercase tracking-[0.15em] gap-3 px-5 transition-all rounded-2xl shadow-xl",
                           targetGroup 
                             ? "bg-primary text-primary-foreground border-primary shadow-primary/20" 
-                            : "bg-background/50 backdrop-blur-md border-primary/10 hover:border-primary/30"
+                            : "bg-background border-primary/10 hover:border-primary/30"
                         )}
                       >
                         <Target className={cn("h-5 w-5", targetGroup ? "text-primary-foreground" : "text-primary")} />
@@ -690,7 +701,7 @@ export function GroupWall({
                       type="button"
                       variant="outline"
                       size="icon"
-                      className="h-14 w-14 rounded-2xl bg-background/50 backdrop-blur-md border-primary/10 hover:border-primary/30 hover:bg-background transition-all shadow-xl"
+                      className="h-14 w-14 rounded-2xl bg-background border-primary/10 hover:border-primary/30 hover:bg-background transition-all shadow-xl"
                       onClick={() => fileInputRef.current?.click()}
                       disabled={loading}
                     >
@@ -713,7 +724,7 @@ export function GroupWall({
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
                     disabled={loading || botSending}
-                    className="pr-14 bg-background/50 backdrop-blur-md border-primary/10 focus:bg-background focus:ring-4 focus:ring-primary/5 transition-all rounded-2xl h-14 font-medium text-base shadow-inner"
+                    className="pr-14 bg-background border-primary/10 focus:bg-background focus:ring-4 focus:ring-primary/5 transition-all rounded-2xl h-14 font-medium text-base shadow-inner"
                   />
                   <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center text-muted-foreground/30 group-focus-within/input:text-primary/50 transition-colors">
                     <span className="text-[10px] font-black mr-2 hidden sm:inline tracking-tighter uppercase">Cmd + Enter</span>
@@ -730,8 +741,8 @@ export function GroupWall({
               </Button>
             </div>
           </form>
-        </CardFooter>
+        </div>
       )}
-    </Card>
+    </div>
   )
 }

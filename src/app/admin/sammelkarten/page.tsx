@@ -29,7 +29,7 @@ import { logAction } from '@/lib/logging'
 import { TeacherRarity, LootTeacher, CardProposal, TeacherAttack } from '@/types/database'
 import { SammelkartenConfig, CardSet } from '@/types/cards'
 import { CARD_SETS } from '@/constants/cardRegistry'
-import { cn, getRarityColor, getRarityLabel } from '@/lib/utils'
+import { cn, getRarityColor, getRarityLabel, restoreGermanUmlauts } from '@/lib/utils'
 import { TeacherEditDialog } from '@/components/admin/TeacherEditDialog'
 import { NotificationPreviewDialog } from '@/components/admin/NotificationPreviewDialog'
 import { TeacherList } from '@/components/admin/TeacherList'
@@ -162,6 +162,19 @@ const VARIANT_CHART_COLORS: Record<string, string> = {
 }
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Tooltip, Legend)
+
+function normalizeVisibleTeacherText(teacher: LootTeacher): LootTeacher {
+  return {
+    ...teacher,
+    name: restoreGermanUmlauts(teacher.name || ''),
+    description: teacher.description ? restoreGermanUmlauts(teacher.description) : teacher.description,
+    attacks: teacher.attacks?.map((attack) => ({
+      ...attack,
+      name: restoreGermanUmlauts(attack.name || ''),
+      description: attack.description ? restoreGermanUmlauts(attack.description) : attack.description,
+    }))
+  }
+}
 
 export default function CardManagerPage() {
   const { user, profile } = useAuth()
@@ -583,12 +596,13 @@ export default function CardManagerPage() {
       return
     }
 
-    const id = generateTeacherId(newTeacherName.trim(), currentSet.cards.map(t => t.id))
-    const newTeacher: LootTeacher = {
+    const normalizedName = restoreGermanUmlauts(newTeacherName.trim())
+    const id = generateTeacherId(normalizedName, currentSet.cards.map(t => t.id))
+    const newTeacher = normalizeVisibleTeacherText({
       id,
-      name: newTeacherName.trim(),
+      name: normalizedName,
       rarity: newTeacherRarity
-    }
+    })
     
     const updatedCards = [...(currentSet.cards || []), newTeacher]
     const updatedSets = {
@@ -641,7 +655,7 @@ export default function CardManagerPage() {
       const updatedCards = [...currentSet.cards]
       const index = updatedCards.findIndex(t => t.id === updatedTeacher.id)
       if (index !== -1) {
-        updatedCards[index] = updatedTeacher
+        updatedCards[index] = normalizeVisibleTeacherText(updatedTeacher)
       }
       return { 
         ...prev, 
@@ -1126,19 +1140,26 @@ export default function CardManagerPage() {
 
         for (let i = 1; i < rows.length; i++) {
           const cols = parseCSVRow(rows[i]).map(c => c.trim())
-          const name = cols[nameIdx]
+          const name = restoreGermanUmlauts(cols[nameIdx])
           if (!name) continue
 
           const rarity = (cols[rarityIdx] as TeacherRarity) || 'common'
           const hp = hpIdx !== -1 ? parseInt(cols[hpIdx]) : undefined
-          const description = descIdx !== -1 ? cols[descIdx] : undefined
+          const description = descIdx !== -1 ? restoreGermanUmlauts(cols[descIdx]) : undefined
           let attacks: any[] | undefined = undefined;
           
           if (attacksIdx !== -1 && cols[attacksIdx]) {
             try {
               // Handle both JSON string and potential double-escaped strings
               const rawAttacks = cols[attacksIdx].startsWith('[') ? cols[attacksIdx] : cols[attacksIdx].replace(/^"|"$/g, '').replace(/""/g, '"');
-              attacks = JSON.parse(rawAttacks);
+              const parsedAttacks = JSON.parse(rawAttacks);
+              if (Array.isArray(parsedAttacks)) {
+                attacks = parsedAttacks.map((attack) => ({
+                  ...attack,
+                  name: typeof attack?.name === 'string' ? restoreGermanUmlauts(attack.name) : attack?.name,
+                  description: typeof attack?.description === 'string' ? restoreGermanUmlauts(attack.description) : attack?.description,
+                }));
+              }
             } catch (e) {
               console.warn("Failed to parse attacks for", name, e);
             }
@@ -1148,14 +1169,14 @@ export default function CardManagerPage() {
             ? cols[idIdx] 
             : generateTeacherId(name, [...existingIds, ...currentBatchIds])
           
-          newTeachers.push({
+          newTeachers.push(normalizeVisibleTeacherText({
             id,
             name,
             rarity: ['common', 'rare', 'epic', 'mythic', 'legendary', 'iconic'].includes(rarity) ? rarity : 'common',
             hp: isNaN(hp as any) ? undefined : hp,
             description,
             attacks
-          })
+          }))
           currentBatchIds.push(id)
         }
 
@@ -1873,28 +1894,35 @@ export default function CardManagerPage() {
             <div className="xl:col-span-3 space-y-8">
               
               <Tabs defaultValue="teachers" className="w-full">
-                <TabsList className="w-fit bg-muted/50 p-1 rounded-xl border border-border/60">
-                  <TabsTrigger value="teachers" className="px-4 py-1.5 text-xs gap-2 transition-all">
-                    <Users className="h-3.5 w-3.5" />
-                    <span>Lehrerpool</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="weights" className="px-4 py-1.5 text-xs gap-2 transition-all">
-                    <TrendingUp className="h-3.5 w-3.5" />
-                    <span>Drop-Rates</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="limits" className="px-4 py-1.5 text-xs gap-2 transition-all">
-                    <Settings2 className="h-3.5 w-3.5" />
-                    <span>Parameter</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="proposals" className="px-4 py-1.5 text-xs gap-2 transition-all">
-                    <Sparkles className="h-3.5 w-3.5" />
-                    <span>Ideen-Labor</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="trading" className="px-4 py-1.5 text-xs gap-2 transition-all">
-                    <ArrowLeftRight className="h-3.5 w-3.5" />
-                    <span>Trading</span>
-                  </TabsTrigger>
-                </TabsList>
+                <div className="overflow-x-auto">
+                  <TabsList className="w-fit bg-muted/50 p-1 rounded-xl border border-border/60 inline-flex">
+                    <TabsTrigger value="teachers" className="px-3 sm:px-4 py-1.5 text-xs gap-2 transition-all shrink-0">
+                      <Users className="h-3.5 w-3.5" />
+                      <span className="hidden sm:inline">Lehrerpool</span>
+                      <span className="sm:hidden">Pool</span>
+                    </TabsTrigger>
+                    <TabsTrigger value="weights" className="px-3 sm:px-4 py-1.5 text-xs gap-2 transition-all shrink-0">
+                      <TrendingUp className="h-3.5 w-3.5" />
+                      <span className="hidden sm:inline">Drop-Rates</span>
+                      <span className="sm:hidden">Rates</span>
+                    </TabsTrigger>
+                    <TabsTrigger value="limits" className="px-3 sm:px-4 py-1.5 text-xs gap-2 transition-all shrink-0">
+                      <Settings2 className="h-3.5 w-3.5" />
+                      <span className="hidden sm:inline">Parameter</span>
+                      <span className="sm:hidden">Param</span>
+                    </TabsTrigger>
+                    <TabsTrigger value="proposals" className="px-3 sm:px-4 py-1.5 text-xs gap-2 transition-all shrink-0">
+                      <Sparkles className="h-3.5 w-3.5" />
+                      <span className="hidden sm:inline">Ideen-Labor</span>
+                      <span className="sm:hidden">Labor</span>
+                    </TabsTrigger>
+                    <TabsTrigger value="trading" className="px-3 sm:px-4 py-1.5 text-xs gap-2 transition-all shrink-0">
+                      <ArrowLeftRight className="h-3.5 w-3.5" />
+                      <span className="hidden sm:inline">Trading</span>
+                      <span className="sm:hidden">Trade</span>
+                    </TabsTrigger>
+                  </TabsList>
+                </div>
 
                 <TabsContent value="teachers" className="mt-6">
                   {/* Set Selector & Management */}
@@ -1938,7 +1966,7 @@ export default function CardManagerPage() {
                             <GraduationCap className="h-5 w-5 text-primary" />
                             Karten-Pool: {currentSet?.name || 'Set wählen'}
                           </CardTitle>
-                          <div className="flex flex-wrap items-center gap-2">
+                          <div className="flex flex-col gap-2">
                             <input
                               type="file"
                               accept=".csv"
@@ -1946,59 +1974,68 @@ export default function CardManagerPage() {
                               onChange={handleCSVUpload}
                               className="hidden"
                             />
-                            <Button variant="outline" size="sm" onClick={handleCleanupDuplicates} title="Bereinigt Duplikate nach Name">
-                              <Trash2 className="h-3 w-3 mr-2" />
-                              Cleanup Pool
-                            </Button>
-                            <Button variant="outline" size="sm" onClick={handleCleanupInventory} disabled={isCleaningInventory} title="Entfernt nicht mehr existierende Lehrer aus allen Inventaren">
-                              {isCleaningInventory ? <Loader2 className="h-3 w-3 animate-spin mr-2" /> : <Database className="h-3 w-3 mr-2" />}
-                              Cleanup Inventories
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={handleSyncOpenedPacksToInventory}
-                              disabled={isSyncingOpenedPacks}
-                              title="Synchronisiert booster_stats.total_opened anhand Inventar (ceil(Karten/3))"
-                            >
-                              {isSyncingOpenedPacks ? <Loader2 className="h-3 w-3 animate-spin mr-2" /> : <RefreshCw className="h-3 w-3 mr-2" />}
-                              Sync Packs
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={handleCleanupLegacyTeachersVoted}
-                              disabled={isCleaningLegacyVotes}
-                              title="Entfernt die alten Felder teachers_voted und rated_teachers aus Profilen"
-                            >
-                              {isCleaningLegacyVotes ? <Loader2 className="h-3 w-3 animate-spin mr-2" /> : <Trash2 className="h-3 w-3 mr-2" />}
-                              Cleanup Legacy
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={handleMigrateInventory}
-                              disabled={isMigratingInventory}
-                              title="Migriert booster_stats Felder in das neue inventory Map-System"
-                            >
-                              {isMigratingInventory ? <Loader2 className="h-3 w-3 animate-spin mr-2" /> : <Database className="h-3 w-3 mr-2" />}
-                              Migrate Inventory
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={handleMigrateTeacherVol1}
-                              disabled={isMigratingTeacherVol1}
-                              title="Migriert alte teachers_v1/Legacy-Karten auf teacher_vol1"
-                            >
-                              {isMigratingTeacherVol1 ? <Loader2 className="h-3 w-3 animate-spin mr-2" /> : <Database className="h-3 w-3 mr-2" />}
-                              Migrate teacher_vol1
-                            </Button>
-                            <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} disabled={importing}>
-
-                              {importing ? <Loader2 className="h-3 w-3 animate-spin mr-2" /> : <Upload className="h-3 w-3 mr-2" />}
-                              Bulk Import
-                            </Button>
+                            {/* Essential buttons visible on all sizes */}
+                            <div className="flex flex-wrap gap-2">
+                              <Button variant="outline" size="sm" onClick={handleCleanupDuplicates} title="Bereinigt Duplikate nach Name" className="flex-1">
+                                <Trash2 className="h-3 w-3 mr-2" />
+                                <span className="hidden sm:inline">Cleanup Pool</span>
+                                <span className="sm:hidden">Cleanup</span>
+                              </Button>
+                              <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} disabled={importing} className="flex-1">
+                                {importing ? <Loader2 className="h-3 w-3 animate-spin mr-2" /> : <Upload className="h-3 w-3 mr-2" />}
+                                <span className="hidden sm:inline">Bulk Import</span>
+                                <span className="sm:hidden">Import</span>
+                              </Button>
+                            </div>
+                            {/* Hidden admin tools section on mobile */}
+                            <details className="sm:hidden">
+                              <summary className="text-xs font-semibold cursor-pointer text-muted-foreground hover:text-foreground transition-colors p-1">▼ Admin-Tools</summary>
+                              <div className="mt-2 space-y-2 pl-3 border-l-2 border-border/50 pb-2">
+                                <Button variant="outline" size="sm" onClick={handleCleanupInventory} disabled={isCleaningInventory} title="Inventare bereinigen" className="w-full text-xs h-9">
+                                  {isCleaningInventory ? <Loader2 className="h-3 w-3 animate-spin mr-2" /> : <Database className="h-3 w-3 mr-2" />}
+                                  Inv. Cleanup
+                                </Button>
+                                <Button variant="outline" size="sm" onClick={handleSyncOpenedPacksToInventory} disabled={isSyncingOpenedPacks} title="Packs synchronisieren" className="w-full text-xs h-9">
+                                  {isSyncingOpenedPacks ? <Loader2 className="h-3 w-3 animate-spin mr-2" /> : <RefreshCw className="h-3 w-3 mr-2" />}
+                                  Sync Packs
+                                </Button>
+                                <Button variant="outline" size="sm" onClick={handleCleanupLegacyTeachersVoted} disabled={isCleaningLegacyVotes} title="Legacy-Daten entfernen" className="w-full text-xs h-9">
+                                  {isCleaningLegacyVotes ? <Loader2 className="h-3 w-3 animate-spin mr-2" /> : <Trash2 className="h-3 w-3 mr-2" />}
+                                  Legacy Cleanup
+                                </Button>
+                                <Button variant="outline" size="sm" onClick={handleMigrateInventory} disabled={isMigratingInventory} title="Inventar migrieren" className="w-full text-xs h-9">
+                                  {isMigratingInventory ? <Loader2 className="h-3 w-3 animate-spin mr-2" /> : <Database className="h-3 w-3 mr-2" />}
+                                  Inv. Migrieren
+                                </Button>
+                                <Button variant="outline" size="sm" onClick={handleMigrateTeacherVol1} disabled={isMigratingTeacherVol1} title="Lehrer migrieren" className="w-full text-xs h-9">
+                                  {isMigratingTeacherVol1 ? <Loader2 className="h-3 w-3 animate-spin mr-2" /> : <Database className="h-3 w-3 mr-2" />}
+                                  Teacher Migrieren
+                                </Button>
+                              </div>
+                            </details>
+                            {/* Desktop version - all visible */}
+                            <div className="hidden sm:flex flex-wrap gap-2">
+                              <Button variant="outline" size="sm" onClick={handleCleanupInventory} disabled={isCleaningInventory} title="Inventare bereinigen">
+                                {isCleaningInventory ? <Loader2 className="h-3 w-3 animate-spin mr-2" /> : <Database className="h-3 w-3 mr-2" />}
+                                Cleanup Inventories
+                              </Button>
+                              <Button variant="outline" size="sm" onClick={handleSyncOpenedPacksToInventory} disabled={isSyncingOpenedPacks} title="Packs synchronisieren">
+                                {isSyncingOpenedPacks ? <Loader2 className="h-3 w-3 animate-spin mr-2" /> : <RefreshCw className="h-3 w-3 mr-2" />}
+                                Sync Packs
+                              </Button>
+                              <Button variant="outline" size="sm" onClick={handleCleanupLegacyTeachersVoted} disabled={isCleaningLegacyVotes} title="Legacy-Daten entfernen">
+                                {isCleaningLegacyVotes ? <Loader2 className="h-3 w-3 animate-spin mr-2" /> : <Trash2 className="h-3 w-3 mr-2" />}
+                                Cleanup Legacy
+                              </Button>
+                              <Button variant="outline" size="sm" onClick={handleMigrateInventory} disabled={isMigratingInventory} title="Inventar migrieren">
+                                {isMigratingInventory ? <Loader2 className="h-3 w-3 animate-spin mr-2" /> : <Database className="h-3 w-3 mr-2" />}
+                                Migrate Inventory
+                              </Button>
+                              <Button variant="outline" size="sm" onClick={handleMigrateTeacherVol1} disabled={isMigratingTeacherVol1} title="Lehrer migrieren">
+                                {isMigratingTeacherVol1 ? <Loader2 className="h-3 w-3 animate-spin mr-2" /> : <Database className="h-3 w-3 mr-2" />}
+                                Migrate teacher_vol1
+                              </Button>
+                            </div>
                             <Button variant="outline" size="sm" onClick={handleExportCSV}>
                               <TrendingUp className="h-3.5 w-3.5 rotate-90 mr-2" />
                               Full CSV Export

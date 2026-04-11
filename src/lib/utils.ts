@@ -93,3 +93,21 @@ export function normalizeChars(str: string): string {
   return str.replace(/[äöüßÄÖÜ]/g, match => charMap[match])
 }
 
+/**
+ * Restores common ASCII umlaut transliterations for user-facing German text.
+ * Keeps technical IDs/slugs out of scope by only applying this where explicitly used.
+ */
+export function restoreGermanUmlauts(str: string): string {
+  if (typeof str !== 'string') return ''
+  return str
+    .replace(/AE/g, 'Ä')
+    .replace(/OE/g, 'Ö')
+    .replace(/UE/g, 'Ü')
+    .replace(/Ae/g, 'Ä')
+    .replace(/Oe/g, 'Ö')
+    .replace(/Ue/g, 'Ü')
+    .replace(/ae/g, 'ä')
+    .replace(/oe/g, 'ö')
+    .replace(/ue/g, 'ü')
+}
+

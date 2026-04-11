@@ -376,7 +376,7 @@ export const TeacherCard = React.memo(({
 
   return (
     <div
-      className={cn("relative aspect-[2.5/3.5] perspective-1000 @container rounded-xl overflow-hidden isolate", className, interactive && "cursor-pointer")}
+      className={cn("relative aspect-[2.5/3.5] perspective-1000 @container rounded-xl overflow-visible sm:overflow-hidden isolate", className, interactive && "cursor-pointer")}
       style={{ containerType: 'inline-size' }}
       onClick={() => {
         if (interactive && !isLocked) {

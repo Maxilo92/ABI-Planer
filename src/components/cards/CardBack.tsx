@@ -26,8 +26,8 @@ export const CardBack: React.FC<CardBackProps> = ({ isLocked, cardNumber }) => {
       
       <div className="relative z-10 flex flex-col items-center">
         <div className={cn(
-          "w-[25%] aspect-square rounded-full flex items-center justify-center mb-[4%] border border-white/10",
-          isLocked ? "bg-neutral-900" : "bg-white/5"
+          "w-[25%] aspect-square flex items-center justify-center mb-[4%]",
+          isLocked ? "bg-neutral-900" : ""
         )}>
           {isLocked ? (
             <Lock className="text-white/40 w-[12cqw] h-[12cqw]" />

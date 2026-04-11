@@ -21,6 +21,20 @@ const maleNames = new Set([
   'Steven', 'Alexander'
 ]);
 
+function restoreGermanUmlauts(str) {
+  if (typeof str !== 'string') return '';
+  return str
+    .replace(/AE/g, 'Ä')
+    .replace(/OE/g, 'Ö')
+    .replace(/UE/g, 'Ü')
+    .replace(/Ae/g, 'Ä')
+    .replace(/Oe/g, 'Ö')
+    .replace(/Ue/g, 'Ü')
+    .replace(/ae/g, 'ä')
+    .replace(/oe/g, 'ö')
+    .replace(/ue/g, 'ü');
+}
+
 function getSalutation(firstName) {
   const cleanName = firstName.replace('Dr. ', '').replace('Dr. Mateo', 'Mateo').split(' ')[0];
   if (femaleNames.has(cleanName)) return 'Frau';
@@ -41,7 +55,7 @@ teacherLines.forEach(line => {
   if (!lastName) return; // Skip incomplete lines
 
   const salutation = getSalutation(firstName);
-  const fullName = `${salutation} ${lastName.trim()}`;
+  const fullName = restoreGermanUmlauts(`${salutation} ${lastName.trim()}`);
   
   // Basic slug generation
   const id = fullName.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-');

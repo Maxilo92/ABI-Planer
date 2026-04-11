@@ -13,18 +13,31 @@ function getAdminApp() {
   const projectId = process.env.FIREBASE_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID
   const clientEmail = process.env.FIREBASE_CLIENT_EMAIL
   const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n')
+  const isBypass = process.env.MAESTRO_DEV_BYPASS === 'true'
 
   if (projectId && clientEmail && privateKey) {
-    return initializeApp({
-      credential: cert({ projectId, clientEmail, privateKey }),
-      projectId,
-    })
+    try {
+      return initializeApp({
+        credential: cert({ projectId, clientEmail, privateKey }),
+        projectId,
+      })
+    } catch (error) {
+      console.error('Failed to initialize admin app with cert in close-session route:', error)
+    }
   }
 
-  return initializeApp({
-    credential: applicationDefault(),
-    projectId,
-  })
+  try {
+    return initializeApp({
+      credential: applicationDefault(),
+      projectId,
+    })
+  } catch (error: any) {
+    if (isBypass) {
+      console.warn('Close-session: Admin SDK init failed, bypass active:', error?.message || String(error))
+      return initializeApp({ projectId: projectId || 'dev-project' })
+    }
+    throw error
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -69,6 +82,19 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ ok: true, durationSeconds }, { status: 200 })
   } catch (error) {
+    const message = error instanceof Error ? error.message : String(error)
+    if (message.includes('Could not load the default credentials')) {
+      // Local dev fallback: closing presence should not fail hard if ADC is missing.
+      return NextResponse.json(
+        {
+          ok: true,
+          skipped: true,
+          reason: 'firebase_admin_credentials_missing',
+        },
+        { status: 200 }
+      )
+    }
+
     console.error('Error closing session:', error)
     return NextResponse.json({ ok: false, error: 'Failed to close session' }, { status: 502 })
   }

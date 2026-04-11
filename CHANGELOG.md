@@ -8,6 +8,209 @@
 
 # Changelog
 
+## [1.5.34] - 2026-04-11 - Posteingang Listener Berechtigung gefixt
+
+### Fixed - Gruppenchat Permissions
+
+- Im Posteingang (`type=system`) wird kein `group_messages`-Snapshot mehr gestartet.
+- Dadurch verschwindet der Fehler `Missing or insufficient permissions` aus der Konsole in der lokalen Entwicklung.
+- Betroffen: [src/components/groups/GroupWall.tsx](src/components/groups/GroupWall.tsx)
+
+## [1.5.33] - 2026-04-11 - Eigene Chat-Nachrichten ohne Glow
+
+### Changed - Chat Bubble Styling
+
+- Eigene Nachrichten-Bubbles haben keinen farbigen Glow/Shadow-Effekt mehr und wirken dadurch ruhiger.
+- Fremde Nachrichten behalten ihre bisherige visuelle Hervorhebung unveraendert.
+- Betroffen: [src/components/groups/MessageItem.tsx](src/components/groups/MessageItem.tsx), [src/components/groups/GroupWall.tsx](src/components/groups/GroupWall.tsx)
+
+## [1.5.32] - 2026-04-11 - Chat Markdown Basis Support
+
+### Changed - Gruppenchat & ABI Bot
+
+- ABI-Bot-Nachrichten und normale Gruppen-Nachrichten unterstuetzen jetzt Basis-Markdown (fett, kursiv, Listen) statt reinem Plaintext-Rendering.
+- Links in Chatnachrichten sind klickbar und werden sicher in einem neuen Tab geoeffnet (`target=_blank`, `rel=noopener noreferrer`).
+- Das Rendering ist restriktiv gehalten (kein HTML-Rendering, keine erweiterten Markdown-Elemente ausserhalb des Basis-Scopes).
+- Betroffen: [src/components/groups/ChatMarkdown.tsx](src/components/groups/ChatMarkdown.tsx), [src/components/groups/GroupWall.tsx](src/components/groups/GroupWall.tsx), [src/components/groups/MessageItem.tsx](src/components/groups/MessageItem.tsx)
+
+## [1.5.31] - 2026-04-11 - Sichtbare Umlaute in Lehrertexten
+
+### Changed - Karten Admin & Import
+
+- Sichtbare Lehrertexte werden beim manuellen Anlegen, Bearbeiten und CSV-Import jetzt auf echte Umlaute normalisiert (`ae/oe/ue` -> `ä/ö/ü`).
+- Die Umstellung betrifft nur sichtbare Textfelder (z. B. `name`, `description`, Attacken-Texte), nicht technische IDs.
+- Betroffen: [src/app/admin/sammelkarten/page.tsx](src/app/admin/sammelkarten/page.tsx), [src/lib/utils.ts](src/lib/utils.ts), [scripts/process_teachers.js](scripts/process_teachers.js)
+
+### Added - Alt-Daten Migration
+
+- Neues idempotentes Migrationsskript fuer bestehende Lehrer-Textfelder in `settings/sammelkarten` mit Dry-Run und Apply-Modus.
+- Neue Skripte: `npm run migrate:visible-umlauts` (Dry-Run) und `npm run migrate:visible-umlauts:apply` (Write).
+- Betroffen: [scripts/migrate_visible_teacher_umlauts.ts](scripts/migrate_visible_teacher_umlauts.ts), [package.json](package.json)
+
+## [1.5.30] - 2026-04-11 - ABI Bot FAQ-Hinweis statt Tool Use
+
+### Changed - ABI Bot UX
+
+- Die technische Anzeige `Tool Use` wurde im ABI-Bot-Chat durch die nutzerfreundliche Formulierung `Suche in Hilfe & FAQ` ersetzt.
+- Die Umbenennung gilt konsistent fuer Start-/Sending-Fallbacks und die laufende Bot-Statusanzeige.
+- Betroffen: [src/components/groups/GroupWall.tsx](src/components/groups/GroupWall.tsx)
+
+## [1.5.29] - 2026-04-11 - Dev Credentials Fallback fuer Presence & Audit
+
+### Fixed - Lokale Entwicklung
+
+- `POST /api/presence/close-session` liefert bei fehlenden Firebase-ADC in Local Dev keinen `502` mehr, sondern einen sicheren Fallback-`200` mit `skipped`-Hinweis.
+- ABI-Bot-Auditlogging erzeugt bei fehlenden ADC keinen wiederholten Error-Stacktrace mehr, sondern nur noch einen einmaligen Warnhinweis.
+- Next.js Dev-CORS-Warnung fuer `dashboard.abi-planer-27.localhost` ist ueber `allowedDevOrigins` in der Next-Config freigeschaltet.
+- Betroffen: [src/app/api/presence/close-session/route.ts](src/app/api/presence/close-session/route.ts), [src/app/api/chats/abi-bot/route.ts](src/app/api/chats/abi-bot/route.ts), [next.config.ts](next.config.ts)
+
+## [1.5.28] - 2026-04-11 - ABI Bot Keine falschen Versprechen
+
+### Fixed - ABI Bot Antwortverhalten
+
+- Der ABI Bot verspricht nicht mehr, selbst UI- oder Code-Aenderungen "jetzt" durchzufuehren.
+- Zusaetzliche Sicherheitslogik filtert Antworten mit solchen Handlungsversprechen und ersetzt sie durch transparente Support-Antworten.
+- Betroffen: [src/app/api/chats/abi-bot/route.ts](src/app/api/chats/abi-bot/route.ts)
+
+## [1.5.27] - 2026-04-11 - Chatliste zeigt letzte Nachricht
+
+### Changed - Chat Preview in Liste
+
+- In der Gruppen-Chatliste wird unter dem Chatnamen jetzt die letzte Nachricht angezeigt statt der Anzahl aktuell online befindlicher Personen.
+- Betroffen: [src/app/gruppen/page.tsx](src/app/gruppen/page.tsx)
+
+## [1.5.26] - 2026-04-11 - Gruppen ohne Pflicht-Index
+
+### Fixed - Gruppen & Notifications
+
+- `group_messages`-Listener nutzen kein `orderBy(created_at)` mehr in kombinierten Filter-Queries, damit in der lokalen Entwicklung nicht fuer jeden Chat ein Composite-Index erzwungen wird.
+- Die Reihenfolge der Nachrichten bleibt erhalten durch clientseitige Sortierung nach `created_at`.
+- Betroffen: [src/app/gruppen/page.tsx](src/app/gruppen/page.tsx), [src/components/groups/GroupWall.tsx](src/components/groups/GroupWall.tsx), [src/hooks/useNotifications.ts](src/hooks/useNotifications.ts)
+
+## [1.5.25] - 2026-04-11 - ABI Bot Tool Use Label
+
+### Changed - ABI Bot UX
+
+- Wenn der ABI Bot Hilfe oder FAQ nachschlägt, erscheint jetzt eine explizite `Tool Use`-Markierung statt einer generischen Ladeanzeige.
+- Betroffen: [src/components/groups/GroupWall.tsx](src/components/groups/GroupWall.tsx)
+
+## [1.5.24] - 2026-04-11 - ABI Bot Group Listener Fix
+
+### Fixed - Gruppen & Notifications
+
+- Die Gruppen-Ansicht und der Benachrichtigungs-Hook lauschen jetzt nur noch auf Firestore-Teilbereiche, die mit den Regeln vereinbar sind.
+- Dadurch verschwindet der `Missing or insufficient permissions`-Fehler bei `group_messages`-Snapshots in der lokalen Entwicklung.
+- Betroffen: [src/app/gruppen/page.tsx](src/app/gruppen/page.tsx), [src/components/groups/GroupWall.tsx](src/components/groups/GroupWall.tsx), [src/hooks/useNotifications.ts](src/hooks/useNotifications.ts)
+
+## [1.5.23] - 2026-04-11 - ABI Bot Lookup Status
+
+### Changed - ABI Bot Lookup Status
+
+- Der ABI Bot zeigt jetzt beim Nachschlagen eine sichtbare Statusanzeige wie "Ich schaue in Hilfe & FAQ nach" an.
+- Nach einer Antwort wird angezeigt, ob die Antwort auf Hilfe-/FAQ-Kontext basiert.
+- Betroffen: [src/components/groups/GroupWall.tsx](src/components/groups/GroupWall.tsx), [src/app/api/chats/abi-bot/route.ts](src/app/api/chats/abi-bot/route.ts)
+
+## [1.5.22] - 2026-04-11 - ABI Bot Help Support Foundation
+
+### Changed - ABI Bot Support
+
+- Der ABI Bot nutzt jetzt eine gemeinsame Hilfe-Wissensbasis aus [src/lib/helpFaqs.ts](src/lib/helpFaqs.ts), statt nur den reinen Chatverlauf zu bewerten.
+- Fragen zu App-Funktionen, Orten und Abläufen bekommen jetzt passende FAQ-Kontexte als Prompt-Hilfe.
+- Die Hilfe-Seite [src/app/hilfe/page.tsx](src/app/hilfe/page.tsx) nutzt denselben Shared-Content wie der Bot.
+
+### Added - Support API
+
+- Neue FAQ-Such-API unter [src/app/api/faqs/route.ts](src/app/api/faqs/route.ts) für UI- oder Support-Integrationen.
+- Neue Logging-Aktionen für FAQ- und ABI-Bot-Support-Flows.
+
+## [1.5.21] - 2026-04-11 - Chatliste nach letzter eigener Nachricht
+
+### Changed - Gruppen Chatliste
+
+- Die Chatliste unter Gruppen priorisiert jetzt den Chat, in dem der Nutzer zuletzt selbst geschrieben hat.
+- Falls keine eigene Nachricht vorliegt, bleibt die bestehende Sortierung nach letzter Chat-Aktivität erhalten.
+- Betroffen: [src/app/gruppen/page.tsx](src/app/gruppen/page.tsx)
+
+## [1.5.20] - 2026-04-11 - ABI Bot Header & Context Fixes
+
+### Changed - ABI Bot UX
+
+- Im ABI-Bot-Modus wird das Label `GLOBAL HUB` jetzt nicht mehr angezeigt.
+- Neuer Button `Chat loeschen` im ABI-Bot-Header, um den aktuellen Bot-Chatverlauf sofort zurueckzusetzen.
+
+### Fixed - ABI Bot Antworten
+
+- Der ABI-Bot erhaelt jetzt den aktuellen In-Memory-Chatverlauf pro Anfrage vom Frontend, damit Rueckfragen wie "was habe ich gerade gesagt" korrekt beantwortet werden koennen.
+- Die Systemanweisung wurde gehaertet, damit interne Instruktionen nicht mehr in Antworten wiederholt werden.
+- Betroffen: [src/components/groups/GroupWall.tsx](src/components/groups/GroupWall.tsx), [src/app/api/chats/abi-bot/route.ts](src/app/api/chats/abi-bot/route.ts)
+
+## [1.5.19] - 2026-04-11 - ABI Bot Bouncing Dots
+
+### Changed - ABI Bot UX
+
+- Der Typing-Indikator im ABI-Bot-Chat wurde verfeinert: Die drei Punkte springen jetzt nacheinander auf und ab.
+- Dadurch wirkt der Wartezustand lebendiger und klarer als beim statischen `...`.
+- Betroffen: [src/components/groups/GroupWall.tsx](src/components/groups/GroupWall.tsx)
+
+## [1.5.18] - 2026-04-11 - ABI Bot Typing Indicator
+
+### Changed - ABI Bot UX
+
+- Im ABI-Bot-Chat wird waehrend einer laufenden API-Anfrage jetzt ein klarer `...`-Indikator angezeigt.
+- So ist fuer Nutzer sofort sichtbar, dass der Bot gerade antwortet und die Anfrage verarbeitet.
+- Betroffen: [src/components/groups/GroupWall.tsx](src/components/groups/GroupWall.tsx)
+
+## [1.5.17] - 2026-04-11 - ABI Bot Stateless Simple Mode
+
+### Changed - ABI Bot
+
+- ABI Bot laeuft jetzt im strikt simplen Modus ohne Verlaufssync: kein Laden aus Server, kein lokaler Cache, keine Persistenz.
+- Frontend in [src/components/groups/GroupWall.tsx](src/components/groups/GroupWall.tsx) nutzt nur noch den aktuellen In-Memory-Chat und sendet pro Nachricht direkt an die API.
+- API in [src/app/api/chats/abi-bot/route.ts](src/app/api/chats/abi-bot/route.ts) arbeitet jetzt als reiner Prompt-Antwort-Endpunkt ohne Historienkontext.
+
+## [1.5.16] - 2026-04-11 - ABI Bot Local History Cache
+
+### Changed - ABI Bot Performance
+
+- Das Laden des ABI-Bot-Verlaufs wurde beschleunigt: Der Verlauf wird jetzt zuerst lokal aus `localStorage` geladen.
+- Falls lokal noch kein Verlauf vorhanden ist, wird einmalig die API genutzt und das Ergebnis danach lokal gecacht.
+- Neue ABI-Bot-Nachrichten werden fortlaufend lokal gespeichert, damit der Chat beim erneuten Öffnen sofort sichtbar ist.
+- Betroffen: [src/components/groups/GroupWall.tsx](src/components/groups/GroupWall.tsx)
+
+## [1.5.15] - 2026-04-11 - Mobile Menü Scroll Lock Fix
+
+### Fixed - Navigation auf Smartphone
+
+- Der mobile Navigations-Drawer sperrt den Seitenhintergrund beim Öffnen jetzt zuverlässig über einen robusten Body-Scroll-Lock (inklusive sauberer Wiederherstellung der vorherigen Scroll-Position beim Schließen).
+- Das seitliche Drawer-Drag-Verhalten wurde entfernt, damit vertikale Touch-Gesten nicht mehr mit dem Menü-Scroll kollidieren.
+- Der scrollbare Menübereich nutzt nun zusätzliche Touch-Stabilisierung für iOS/Smartphone (`overscroll-contain`, `-webkit-overflow-scrolling: touch`).
+- Betroffen: [src/components/layout/Navbar.tsx](src/components/layout/Navbar.tsx)
+
+## [1.5.14] - 2026-04-11 - Gruppen-Layout Optimierung
+
+### Changed - Gruppen-Ansicht
+
+- Das Layout der Gruppen-Seite wurde für Mobilgeräte optimiert. Im Hochformat werden Chat-Liste und aktiver Chat nun nacheinander (mit einem "Zurück"-Button) angezeigt, statt nebeneinander.
+- Die Chat-Liste wurde linksbündig zur Menüleiste ausgerichtet (Padding entfernt).
+- Die "Kachel-Optik" des aktiven Chats wurde durch ein flaches Design ersetzt, das sich nahtlos in die Seite einfügt (Card-Komponenten entfernt, Schatten und Abrundungen reduziert).
+
+## [1.5.13] - 2026-04-11 - ABI Bot Simplified Chat Flow
+
+### Changed - ABI Bot Chat
+
+- Der ABI Bot Chat wurde auf einen einfachen KI-Flow reduziert: Nachrichten senden, Antwort erhalten, Verlauf laden.
+- Die API-Route [src/app/api/chats/abi-bot/route.ts](src/app/api/chats/abi-bot/route.ts) erwartet jetzt nur noch `prompt` statt kanalgebundener Parameter (`chatType`, `groupName`, `roleAccess`).
+- Der Verlauf bleibt erhalten, wird aber als einfacher User-Chat gespeichert (`chat_key` pro User), damit der Bot ohne kanalbezogene Sonderlogik stabil laeuft.
+- In [src/components/groups/GroupWall.tsx](src/components/groups/GroupWall.tsx) wurden die ABI-Bot-Requests auf den neuen API-Vertrag umgestellt und die spezielle Hinweis-/Rate-Limit-Box entfernt.
+- Die Freigabepruefung bleibt bestehen: Nur freigegebene Nutzer koennen den ABI Bot weiterhin verwenden.
+
+## [1.5.12] - 2026-04-11 - Mobile Karten-Crop Fix
+
+### Fixed - Sammelkarten Mobile Rendering
+
+- In der Karten-Render-Pipeline wurde das harte Clipping auf kleinen Screens entschärft, sodass Karten unten nicht mehr zu früh abgeschnitten werden.
+- Betroffen: [src/components/cards/CardRenderer.tsx](src/components/cards/CardRenderer.tsx), [src/components/cards/TeacherCard.tsx](src/components/cards/TeacherCard.tsx)
+
 ## [1.5.11] - 2026-04-11 - Pack Opening Build Fix
 
 ### Fixed - Pack Opening TypeScript Build

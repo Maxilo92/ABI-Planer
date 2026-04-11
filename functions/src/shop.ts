@@ -257,6 +257,9 @@ export const stripeWebhook = onRequest({
         return;
       }
 
+      // For NP and booster purchases, userId is guaranteed to be present at this point
+      const safeUserId = userId as string;
+
       // 3. Rate limiting check (security check #3)
       if (userId) {
         const rateLimitCheck = await checkRateLimit(userId, "purchase", 3600);
@@ -281,7 +284,7 @@ export const stripeWebhook = onRequest({
       if (isNPPack) {
         try {
           const result = await atomicNPUpdate(
-            userId,
+            safeUserId,
             amount,
             "purchase_stripe",
             {
@@ -292,7 +295,7 @@ export const stripeWebhook = onRequest({
             }
           );
           
-          logger.info(`[NP_PURCHASE] Success. User: ${userId}, Amount: +${amount} NP, Balance: ${result.newBalance}, TX ID: ${result.transactionId}`);
+          logger.info(`[NP_PURCHASE] Success. User: ${safeUserId}, Amount: +${amount} NP, Balance: ${result.newBalance}, TX ID: ${result.transactionId}`);
           
           if (result.fraudAlert) {
             logger.warn(`[NP_FRAUD_ALERT] ${result.fraudAlert}`);
@@ -306,17 +309,17 @@ export const stripeWebhook = onRequest({
         }
       } else {
         const shopEarningRef = db.collection("shop_earnings").doc(session.id);
-        const shopEarningPayload = buildShopEarningPayload(session, itemId, userId);
+        const shopEarningPayload = buildShopEarningPayload(session, itemId, userId || safeUserId);
 
         if (isBoosterPurchase) {
           // 6. Booster purchases update inventory and earnings atomically.
           const supportBonus = SUPPORT_BONUS[itemId] || 0;
-          const profileRef = db.collection("profiles").doc(userId);
+          const profileRef = db.collection("profiles").doc(safeUserId);
 
           try {
             await db.runTransaction(async (transaction) => {
               const profileSnap = await transaction.get(profileRef);
-              if (!profileSnap.exists) throw new Error(`Profile ${userId} not found`);
+              if (!profileSnap.exists) throw new Error(`Profile ${safeUserId} not found`);
 
               const updates: any = {
                 "booster_stats.extra_available": FieldValue.increment(amount),

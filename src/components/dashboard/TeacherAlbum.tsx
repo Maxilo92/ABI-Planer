@@ -7,7 +7,6 @@ import { doc, onSnapshot } from "firebase/firestore";
 import { useEffect, useState, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  LootTeacher,
   TeacherRarity,
   Profile,
   CardVariant,
@@ -26,7 +25,6 @@ import {
   ChevronLeft,
   Rotate3d,
   ArrowDownAZ,
-  ArrowDownZA,
   ArrowUp10,
   LayoutGrid,
   Package,
@@ -56,16 +54,14 @@ import {
   DropdownMenuContent,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-  DropdownMenuCheckboxItem,
   DropdownMenuTrigger,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
+import { buildTeacherCatalogFromSettings, findUserTeacherEntry, TeacherCatalogEntry } from "@/lib/cardCatalog";
 
-import { CARD_SETS, getCard } from "@/constants/cardRegistry";
+import { CARD_SETS } from "@/constants/cardRegistry";
 
-const DEFAULT_TEACHERS: LootTeacher[] = (CARD_SETS["teacher_vol1"]?.cards || []) as LootTeacher[];
+const DEFAULT_TEACHERS: TeacherCatalogEntry[] = buildTeacherCatalogFromSettings({ sets: CARD_SETS });
 
 const getNextLevelCount = (level: number): number => {
   return Math.pow(level, 2) + 1;
@@ -224,20 +220,6 @@ const VARIANT_MAP: Record<string, number> = {
 
 const INFINITE_SCROLL_BATCH_SIZE = 24;
 
-const CANONICAL_TEACHER_SET_ID = "teacher_vol1";
-const LEGACY_TEACHER_SET_ID = "teachers_v1";
-
-function getUserTeacherEntry(userTeachers: any, teacher: LootTeacher) {
-  if (!userTeachers) return undefined;
-  const baseId = teacher.id || teacher.name;
-  return (
-    userTeachers[baseId] ||
-    userTeachers[`${CANONICAL_TEACHER_SET_ID}:${baseId}`] ||
-    userTeachers[`${LEGACY_TEACHER_SET_ID}:${baseId}`] ||
-    userTeachers[teacher.name]
-  );
-}
-
 function getBestVariant(
   variants: Record<string, number> | undefined,
 ): NewCardVariant {
@@ -249,9 +231,9 @@ function getBestVariant(
 }
 
 function mapTeacherToCardData(
-  teacher: LootTeacher,
+  teacher: TeacherCatalogEntry,
   userData: any,
-  globalTeachers: LootTeacher[] | Map<string, number> | number,
+  globalTeachers: TeacherCatalogEntry[] | Map<string, number> | number,
   forcedVariant?: NewCardVariant,
 ): CardData {
   const variant = forcedVariant || getBestVariant(userData?.variants);
@@ -260,17 +242,19 @@ function mapTeacherToCardData(
   if (typeof globalTeachers === "number") {
     globalIndex = globalTeachers;
   } else if (globalTeachers instanceof Map) {
-    globalIndex = globalTeachers.get(teacher.id || teacher.name) ?? -1;
+    globalIndex = globalTeachers.get(teacher.fullId) ?? -1;
   } else {
     globalIndex = globalTeachers.findIndex(
-      (t) => (t.id || t.name) === (teacher.id || teacher.name),
+      (t) => t.fullId === teacher.fullId,
     );
   }
 
   const level = calculateLevel(userData?.count || 0);
 
   return {
-    id: teacher.id || teacher.name,
+    id: teacher.fullId,
+    setId: teacher.setId,
+    fullId: teacher.fullId,
     name: teacher.name,
     rarity: teacher.rarity,
     type: "teacher",
@@ -293,10 +277,10 @@ function TeacherCardDetail({
   currentIndex,
   onNavigate,
 }: {
-  teacher: LootTeacher;
+  teacher: TeacherCatalogEntry;
   userData: any;
   onClose: () => void;
-  globalTeachers: LootTeacher[] | Map<string, number>;
+  globalTeachers: TeacherCatalogEntry[] | Map<string, number>;
   allTeachers: any[];
   currentIndex: number;
   onNavigate: (index: number) => void;
@@ -557,7 +541,7 @@ export function TeacherAlbum({
     targetProfile !== undefined ? targetProfile : currentProfile;
   const { teachers: userTeachers, loading: loadingUserTeachers } =
     useUserTeachers(userId);
-  const [globalTeachers, setGlobalTeachers] = useState<LootTeacher[]>([]);
+  const [globalTeachers, setGlobalTeachers] = useState<TeacherCatalogEntry[]>([]);
   const [loadingGlobal, setLoadingGlobal] = useState(true);
   const [visibleCount, setVisibleCount] = useState(
     initialLimit && initialLimit > 0 ? initialLimit : INFINITE_SCROLL_BATCH_SIZE,
@@ -568,6 +552,7 @@ export function TeacherAlbum({
   // Filters state
   const [search, setSearch] = useState("");
   const [rarityFilters, setRarityFilters] = useState<TeacherRarity[]>([]);
+  const [setFilters, setSetFilters] = useState<string[]>([]);
   const [variantFilters, setVariantFilters] = useState<NewCardVariant[]>([]);
   const [ownershipFilter, setOwnershipFilter] = useState<
     "all" | "owned" | "missing"
@@ -587,14 +572,24 @@ export function TeacherAlbum({
   const globalIndexMap = useMemo(() => {
     const map = new Map<string, number>();
     globalTeachers.forEach((t, i) => {
-      map.set(t.id || t.name, i);
+      map.set(t.fullId, i);
     });
     return map;
   }, [globalTeachers]);
 
+  const availableSets = useMemo(() => {
+    const map = new Map<string, { id: string; name: string }>();
+    globalTeachers.forEach((teacher) => {
+      if (!map.has(teacher.setId)) {
+        map.set(teacher.setId, { id: teacher.setId, name: teacher.setName });
+      }
+    });
+    return Array.from(map.values());
+  }, [globalTeachers]);
+
   const teacherMetadata = useMemo(() => {
     return globalTeachers.map((t, index) => {
-      const userData = getUserTeacherEntry(userTeachers, t);
+      const userData = findUserTeacherEntry(userTeachers, t);
       const isOwned = !!userData;
       const bestVariant = getBestVariant(userData?.variants);
       return {
@@ -605,7 +600,7 @@ export function TeacherAlbum({
         rarityWeight: RARITY_MAP[t.rarity] ?? 99,
         variantWeight: VARIANT_MAP[bestVariant] ?? 99,
         level: userData?.level || 1,
-        nameLower: t.name.toLowerCase(),
+        nameLower: `${t.name} ${t.setName}`.toLowerCase(),
         cardData: mapTeacherToCardData(t, userData, index, bestVariant),
       };
     });
@@ -627,10 +622,10 @@ export function TeacherAlbum({
 
     let unsubscribeGlobal: (() => void) | null = null;
 
-    const deduplicate = (teachers: LootTeacher[]) => {
+    const deduplicate = (teachers: TeacherCatalogEntry[]) => {
       const seen = new Set();
       return teachers.filter((t) => {
-        const id = t.id || t.name;
+        const id = t.fullId;
         if (seen.has(id)) return false;
         seen.add(id);
         return true;
@@ -643,11 +638,9 @@ export function TeacherAlbum({
       (snapshot) => {
         if (snapshot.exists()) {
           const data = snapshot.data();
-          if (
-            Array.isArray(data.loot_teachers) &&
-            data.loot_teachers.length > 0
-          ) {
-            setGlobalTeachers(deduplicate(data.loot_teachers));
+          const catalog = buildTeacherCatalogFromSettings(data);
+          if (catalog.length > 0) {
+            setGlobalTeachers(deduplicate(catalog));
             setLoadingGlobal(false);
             // If we found data in sammelkarten, we don't need the global listener anymore
             if (unsubscribeGlobal) {
@@ -665,10 +658,10 @@ export function TeacherAlbum({
             (globalSnap) => {
               if (globalSnap.exists()) {
                 const globalData = globalSnap.data();
+                const catalog = buildTeacherCatalogFromSettings(globalData);
                 setGlobalTeachers(
-                  Array.isArray(globalData.loot_teachers) &&
-                    globalData.loot_teachers.length > 0
-                    ? deduplicate(globalData.loot_teachers)
+                  catalog.length > 0
+                    ? deduplicate(catalog)
                     : DEFAULT_TEACHERS,
                 );
               } else {
@@ -705,6 +698,10 @@ export function TeacherAlbum({
 
       // Rarity filter
       if (rarityFilters.length > 0 && !rarityFilters.includes(t.rarity))
+        return false;
+
+      // Set filter
+      if (setFilters.length > 0 && !setFilters.includes(t.setId))
         return false;
 
       // Ownership filter
@@ -790,6 +787,7 @@ export function TeacherAlbum({
     teacherMetadata,
     search,
     rarityFilters,
+    setFilters,
     variantFilters,
     ownershipFilter,
     sortKey,
@@ -800,7 +798,7 @@ export function TeacherAlbum({
 
   const totalTeachers = globalTeachers.length;
   const ownedCount = globalTeachers.reduce(
-    (acc, teacher) => (getUserTeacherEntry(userTeachers, teacher) ? acc + 1 : acc),
+    (acc, teacher) => (findUserTeacherEntry(userTeachers, teacher) ? acc + 1 : acc),
     0,
   );
   const totalCardsCollected = Object.values(userTeachers || {}).reduce(
@@ -830,6 +828,7 @@ export function TeacherAlbum({
     search,
     ownershipFilter,
     rarityFilters,
+    setFilters,
     variantFilters,
     sortKey,
     sortOrder,
@@ -891,9 +890,18 @@ export function TeacherAlbum({
     );
   };
 
+  const toggleSet = (setId: string) => {
+    setSetFilters((prev) =>
+      prev.includes(setId)
+        ? prev.filter((id) => id !== setId)
+        : [...prev, setId],
+    );
+  };
+
   const clearFilters = () => {
     setSearch("");
     setRarityFilters([]);
+    setSetFilters([]);
     setVariantFilters([]);
     setOwnershipFilter("all");
     setSortKey("rarity");
@@ -903,6 +911,7 @@ export function TeacherAlbum({
   const activeFilterCount =
     (search ? 1 : 0) +
     rarityFilters.length +
+    setFilters.length +
     variantFilters.length +
     (ownershipFilter !== "all" ? 1 : 0) +
     (sortKey !== "rarity" || sortOrder !== "desc" ? 1 : 0);
@@ -1128,6 +1137,33 @@ export function TeacherAlbum({
                     </div>
                   </div>
 
+                  {availableSets.length > 1 && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <div className="space-y-1">
+                        <DropdownMenuLabel className="text-[10px] font-black uppercase tracking-widest opacity-50 px-2 py-1">
+                          Sets
+                        </DropdownMenuLabel>
+                        <div className="space-y-1 px-1 max-h-32 overflow-y-auto">
+                          {availableSets.map((set) => (
+                            <button
+                              key={set.id}
+                              onClick={() => toggleSet(set.id)}
+                              className={cn(
+                                "w-full text-left px-2 py-1.5 rounded-md text-xs transition-all",
+                                setFilters.includes(set.id)
+                                  ? "bg-primary/10 text-primary font-bold"
+                                  : "text-muted-foreground hover:bg-muted",
+                              )}
+                            >
+                              {set.name}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </>
+                  )}
+
                   <DropdownMenuSeparator />
 
                   <div className="space-y-1">
@@ -1207,7 +1243,7 @@ export function TeacherAlbum({
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4 md:gap-6">
             {displayedTeachers.map((m, idx) => {
               const teacher = m.teacher;
-              const teacherId = teacher.id || teacher.name;
+              const teacherId = teacher.fullId;
               const isOwned = m.isOwned;
 
               return (

@@ -7,8 +7,7 @@ import {
   query, 
   where, 
   onSnapshot, 
-  doc,
-  orderBy
+  doc
 } from 'firebase/firestore'
 import { useAuth } from '@/context/AuthContext'
 import { Todo, Event, NewsEntry, Poll, GroupMessage } from '@/types/database'
@@ -175,26 +174,52 @@ export function useNotifications() {
     })
 
     // 6. Gruppen: New messages in hub or own planning groups since last visit.
-    const groupsQuery = query(collection(db, 'group_messages'), orderBy('created_at', 'desc'))
-    const unsubscribeGroups = onSnapshot(groupsQuery, (snapshot) => {
-      const lastVisited = lastVisitedGruppen ? new Date(lastVisitedGruppen) : new Date(0)
-      const ownGroups = new Set(profileGroups)
+    const groupStates = new Map<string, boolean>()
+    const groupUnsubscribes = new Map<string, () => void>()
 
-      const hasNewGroupMessage = snapshot.docs.some((docSnap) => {
-        const data = docSnap.data() as GroupMessage
-        if (data.created_by === profileId) return false
+    const syncGroupNotifications = () => {
+      const hasNewGroupMessage = Array.from(groupStates.values()).some(Boolean)
+      setNotifications(prev => ({ ...prev, gruppen: hasNewGroupMessage }))
+    }
 
-        const createdAt = data.created_at ? toDate(data.created_at) : new Date(0)
-        if (createdAt <= lastVisited) return false
+    const subscribeGroupQuery = (key: string, q: ReturnType<typeof query>) => {
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+        const lastVisited = lastVisitedGruppen ? new Date(lastVisitedGruppen) : new Date(0)
 
-        if (data.type === 'hub' && data.group_name === 'hub') return true
-        return data.type === 'internal' && ownGroups.has(data.group_name)
+        const hasNewMessage = snapshot.docs.some((docSnap) => {
+          const data = docSnap.data() as GroupMessage
+          if (data.created_by === profileId) return false
+
+          const createdAt = data.created_at ? toDate(data.created_at) : new Date(0)
+          return createdAt > lastVisited
+        })
+
+        groupStates.set(key, hasNewMessage)
+        syncGroupNotifications()
+      }, (error) => {
+        handleSnapshotError(`gruppen:${key}`, error)
+        groupStates.set(key, false)
+        syncGroupNotifications()
       })
 
-      setNotifications(prev => ({ ...prev, gruppen: hasNewGroupMessage }))
-    }, (error) => {
-      handleSnapshotError('gruppen', error)
+      groupUnsubscribes.set(key, unsubscribe)
+    }
+
+    subscribeGroupQuery('hub', query(
+      collection(db, 'group_messages'),
+      where('type', '==', 'hub'),
+      where('group_name', '==', 'hub')
+    ))
+
+    profileGroups.forEach((groupName) => {
+      subscribeGroupQuery(`group:${groupName}`, query(
+        collection(db, 'group_messages'),
+        where('type', '==', 'internal'),
+        where('group_name', '==', groupName)
+      ))
     })
+
+    syncGroupNotifications()
 
     return () => {
       unsubscribeTodos()
@@ -204,7 +229,8 @@ export function useNotifications() {
       voteUnsubscribes.clear()
       unsubscribeNews()
       unsubscribeMessages()
-      unsubscribeGroups()
+      groupUnsubscribes.forEach((unsubscribe) => unsubscribe())
+      groupUnsubscribes.clear()
     }
   }, [
     authLoading, 

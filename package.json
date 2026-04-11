@@ -1,6 +1,6 @@
 {
   "name": "abi-planer",
-  "version": "1.5.11",
+  "version": "1.5.14",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -14,6 +14,8 @@
     "cleanup:session-metrics": "node scripts/cleanup_session_metrics.js",
     "cleanup:session-metrics:apply": "node scripts/cleanup_session_metrics.js --apply --reset-online",
     "migrate:cards": "npx ts-node scripts/migrate_card_settings.ts",
+    "migrate:visible-umlauts": "npx ts-node scripts/migrate_visible_teacher_umlauts.ts",
+    "migrate:visible-umlauts:apply": "npx ts-node scripts/migrate_visible_teacher_umlauts.ts --apply",
     "boneyard:build": "boneyard-js build http://localhost:3000 http://dashboard.abi-planer-27.localhost:3000 --no-scan",
     "check": "npm run test:regressions && npx tsc --noEmit && npm run build"
   },
