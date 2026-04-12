@@ -78,7 +78,10 @@ function GroupsPageContent() {
       const unsubscribe = onSnapshot(q, (snapshot) => {
         messageSnapshots.set(
           sourceKey,
-          snapshot.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() } as GroupMessage))
+          snapshot.docs.map((docSnap) => {
+            const data = docSnap.data() as Record<string, unknown>
+            return { id: docSnap.id, ...data } as GroupMessage
+          })
         )
         syncMessages()
       }, (error) => {
