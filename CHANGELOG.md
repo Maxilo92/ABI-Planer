@@ -8,6 +8,259 @@
 
 # Changelog
 
+## [1.10.19] - 2026-04-12
+
+### Fixed
+
+- **Combat Win Condition:** Ein Match endet bei KOs jetzt konsistent über Punkte; bei leerem Deck entscheidet nicht mehr automatisch der letzte Angriff.
+- **Combat Visibility:** Die aktuelle Attacke und ihr Schaden werden in der zentralen Kampfansage für beide Seiten klarer angezeigt.
+- **Deck Persistenz:** Die gewählte Deck-ID bleibt jetzt pro Nutzer auch nach Reload als Standard erhalten.
+- **Cleanup Fallback:** `endMyOpenMatches` fällt in Dev nach einem Proxy-Fehler wieder auf die Callable-Variante zurück.
+
+## [1.10.18] - 2026-04-12
+### Changed
+
+- **Combat Wide-Screen Scaling:** Die Kampfansicht unter `/sammelkarten/kaempfe` skaliert auf großen Bildschirmen nun stärker mit.
+
+    - **HUD und Rundenanzeige:** Top-Bar, Log-Button und Turn-Indikator wachsen auf großen Viewports mit.
+    - **Kartenlayout:** Aktive Karten, Bench-Karten und Reserve-Stacks erhalten auf `xl`/`2xl` mehr Breite.
+    - **Overlay-Präsenz:** Fokus-Overlay und Kampflog nutzen auf Wide Screens etwas mehr Platz, ohne Mobile zu beeinflussen.
+
+
+## [1.10.17] - 2026-04-12
+### Added
+- **Adaptive KI-Lernen:** Der KI-Gegner wertet nun global und anonymisiert Matchdaten aus, um stärkere Decks und sinnvollere Attacken zu bevorzugen.
+    - **Deck-Lernen:** AI-Decks werden aus mehreren Kandidaten nach bisherigen Erfolgswerten und Karten-Synergien ausgewählt.
+    - **Attacken-Lernen:** Angriffsauswahl berücksichtigt jetzt historische Winrates, Schaden und die Spielsituation.
+
+### Changed
+- **ELO-Difficulty Scaling:** Die KI spielt je nach ELO spürbar unterschiedlich aggressiv, flexibel und vorhersehbar, statt nur an harten Schwellen zu hängen.
+- **Post-Match Learning:** Abgeschlossene AI-Matches schreiben jetzt aggregierte Karten-, Deck- und Attackenwerte fort, ohne personenbezogene Profile anzulegen.
+
+## [1.10.17] - 2026-04-12
+
+### Fixed
+
+- **Local Dev Combat Cleanup:** `endMyOpenMatches` now uses a same-origin Next.js proxy in development, so the Kaempfe page no longer depends on browser-side cross-origin callable traffic when `NEXT_PUBLIC_USE_FIREBASE_EMULATOR` is disabled.
+- **Auth Forwarding:** The proxy forwards the current Firebase ID token server-side before relaying to Cloud Functions, preserving the existing cleanup behavior without changing production callable endpoints.
+
+## [1.10.16] - 2026-04-12
+### Fixed
+- **Stuck-Round Cleanup:** Neue Callable `endMyOpenMatches` beendet alle offenen Matches des aktuellen Nutzers (`active` und `waiting_for_opponent`) und löscht verwaiste Queue-Einträge.
+- **Auto Cleanup beim Kampfstart:** Die Kampf-Lobby bereinigt offene Alt-Runden automatisch beim Öffnen und vor dem Start neuer Runden (PvP/PvE/Freund/Code).
+- **30-Minuten Match-Limit:** Aktive Matches enden jetzt spätestens nach 30 Minuten automatisch.
+    - **Entscheidung:** Spieler mit mehr Punkten gewinnt.
+    - **Gleichstand:** Match endet als Unentschieden (`winner = null`).
+- **Unentschieden UI:** Endscreen im Kampf zeigt bei `winner = null` nun korrekt `UNENTSCHIEDEN` statt Niederlage.
+
+## [1.10.15] - 2026-04-12
+### Added
+- **Kampflog im Sammelkarten-Menü:** Unter `Sammelkarten` wurde ein neuer Unterpunkt `Kampflog` als letzter Eintrag ergänzt.
+- **Kampfhistorie-Seite:** Neue Seite unter `/sammelkarten/kaempfe/log` zeigt alle beendeten Kämpfe des eingeloggten Spielers.
+    - **Direkte Detailnavigation:** Klick auf einen Log-Eintrag öffnet die passende Kampf-Detailseite (`/sammelkarten/kaempfe/{matchId}`).
+    - **Resultat-Badges:** Einträge zeigen Modus sowie Ergebnis (`Sieg`, `Niederlage`, `Unentschieden`).
+
+### Changed
+- **Firestore Indexes (Matches):** Composite-Indizes für Kampf-Historienabfragen nach `playerA_uid`/`playerB_uid` + `status` + `createdAt` wurden hinzugefügt.
+
+### Fixed
+- **KI Namensanzeige im Kampf:** Die Gegner-Perspektive im `GameBoard` wurde gegen Auth-Race-Conditions abgesichert, damit bei KI-Matches nicht mehr versehentlich der eigene Name als Gegner erscheint.
+- **KI Name Fallback:** Falls alte/inkonsistente Matchdaten keinen gueltigen `ki-vorname` enthalten, wird jetzt ein stabiler `ki-vorname` aus der Match-ID abgeleitet (pro Match konstant, inkl. optionalem ELO-Suffix).
+- **KI Start ohne Dev-Fallback:** Der stille Redirect auf Test-Matches wurde entfernt. Bei Startfehlern zeigt die UI nun eine klare Fehlermeldung statt auf nicht-persistente Testpfade zu wechseln.
+
+## [1.10.14] - 2026-04-12
+### Changed
+- **KI Gegnername (stabil pro Match):** Beim Start eines KI-Kampfes wird jetzt serverseitig ein zufaelliger Vorname erzeugt und im Match gespeichert.
+    - **Format:** Immer mit Praefix `ki-` (z. B. `ki-tom`, `ki-mike`).
+    - **Custom ELO:** Bei Custom-KI bleibt die ELO sichtbar (`ki-vorname (ELO X)`).
+    - **Reload-Stabilitaet:** Der Name bleibt beim Aktualisieren der Seite unveraendert, da keine clientseitige Neugenerierung erfolgt.
+- **Combat Turn UI (Detailview):** Gegnerzug-Verhalten bleibt konsistent: Karten werden nicht turn-basiert ausgegraut, nur Aktionsbuttons in der Detailansicht sind bei `!isMyTurn` deaktiviert.
+
+## [1.10.13] - 2026-04-12
+### Fixed
+- **Combat Top HUD Layout:** Oberes HUD wurde in eine zweizeilige, responsive Struktur umgebaut, damit Punkte-Leisten, Menü/Log-Buttons und Rundenanzeige auf kleinen Breiten nicht mehr überlappen.
+- **Invalid Attack Guard:** Angriffsbuttons im Fokus-Overlay verwenden jetzt ausschließlich die Angriffe der aktuell aktiven Server-Karte.
+    - **Index Validation:** Client prüft `attackIndex` vor dem Callable-Aufruf.
+    - **Stale Focus Protection:** Angriffsauswahl wird nur angezeigt, wenn die Fokuskarte mit der aktuellen aktiven Karte übereinstimmt.
+
+## [1.10.12] - 2026-04-12
+### Changed
+- **Switch Cost Rework:** Normales Einwechseln vergibt keine Gegnerpunkte mehr. Stattdessen wird dem wechselnden Spieler 1 eigener Punkt abgezogen.
+- **No-Point Guard:** Ein normales Einwechseln ist jetzt gesperrt, wenn der Spieler 0 Punkte hat.
+- **UI Copy/State:** Switch-Button zeigt jetzt `Einwechseln (-1 Punkt)` bzw. `Kein Wechsel (0 Punkte)` und deaktiviert sich korrekt.
+
+## [1.10.11] - 2026-04-12
+### Changed
+- **Combat Button Copy:** Der Switch-Button im Fokus-Overlay wurde gekürzt auf `Einwechseln (+1 Gegner)`, damit die Beschriftung auf kleineren Viewports sauber passt.
+
+## [1.10.11] - 2026-04-12
+### Fixed
+- **Mobile Combat Baseline (320px):** Kernbereiche der Kampf-UI wurden für kleine Displays stabilisiert, damit keine kritischen Layout-Brüche mehr auftreten und Aktionen zuverlässig bedienbar bleiben.
+    - **GameBoard Topbar:** Obere Leiste und Kontrollbuttons sind jetzt responsiv skaliert; zentrale Rundenanzeige nutzt auf kleinen Screens kompaktere Abstände und Schrift.
+    - **Touch Targets:** Primäre Rundungs-/Log-/Menü-Buttons im Kampf wurden auf mobile-taugliche Größen angehoben.
+    - **Action Log Panel:** Kampflog nutzt jetzt eine viewport-basierte Breite mit mobilen Offsets statt starrem Desktop-Fokus, wodurch Überlagerungen auf schmalen Geräten reduziert werden.
+    - **Board Positioning:** Spieler-/Gegnerbereiche wurden für schmale Viewports enger und stabiler positioniert (rechts/links/bottom/top samt Spacing).
+- **Combat Lobby Mobile Layout:** Die Kampf-Lobby (`/sammelkarten/kaempfe`) wurde für 320px entzerrt.
+    - **Responsive Typography:** Große Überschriften und Countdown-Texte skalieren nun stufenweise (`sm:`), damit Inhalte nicht aus dem Viewport laufen.
+    - **Card/Button Sizing:** Auswahlkarten und CTA-Elemente (PvP/PvE/Ready) haben reduzierte Mobile-Paddings und kleinere Typo-Stufen.
+    - **Queue Table Overflow:** Warteschlangen-Tabelle wurde mit horizontalem Overflow-Container und mobilen Zellbreiten/Paddings abgesichert.
+- **Support Dice Overlay Responsive:** Das Würfel-Overlay wurde für Mobile verkleinert und skaliert jetzt über CSS-Variablen statt fester `128px`-Geometrie.
+    - **Dice 3D Geometry:** `translateZ` ist nun an die aktuelle Würfelgröße gebunden.
+    - **Overlay Spacing:** Header/Content/Footer paddings und Result-Typografie sind mobilfreundlich abgestuft.
+
+## [1.10.10] - 2026-04-12
+### Changed
+- **Switch Penalty Rule:** Normales Einwechseln (ohne Kartenfähigkeit/`freeSwitch`) gibt jetzt dem Gegner direkt einen Punkt.
+- **Points HUD Source:** Die Punkteanzeige im Kampf nutzt jetzt explizit `player.points` (mit Legacy-Fallback), damit Switch-Strafpunkte korrekt sichtbar sind.
+- **Win Condition Alignment:** Der Match-Sieg bleibt bei 3 Punkten, jetzt konsistent aus K.O.-Punkten plus Switch-Strafpunkten.
+
+## [1.10.9] - 2026-04-12
+### Changed
+- **Combat Hover Polish:** Hover auf Handkarten ist jetzt ein ruhiger, kleiner Standard-Hover ohne springenden Bounce-Effekt.
+- **Switch Costs Turn:** Normales Einwechseln kostet jetzt einen Punkt/Zug (Turn wird an den Gegner übergeben). Die Logik bleibt vorbereitet für spätere Gratis-Wechsel über Karteneffekte (`freeSwitch`).
+
+### Removed
+- **Combat Layout Option:** Die experimentelle "Layout"-Option wurde aus der Kampf-Auswahl entfernt.
+    - **UI Cleanup:** Kampfauswahl zeigt nur noch die produktiven Optionen (Spieler/PvE).
+    - **Code Cleanup:** `LayoutExperiment` wurde vollständig entfernt.
+
+### Fixed
+- **KO Replacement Flow:** Nach dem Verlust der aktiven Karte muss jetzt manuell eine Handkarte als Ersatz gewählt werden.
+- **Draw After Replacement:** Nach erfolgreicher Ersatzwahl wird automatisch eine Karte aus dem Stapel (`reserve`) in die Hand (`bench`) nachgezogen.
+
+## [1.10.8] - 2026-04-12
+### Changed
+- **Combat Handcards Hover Behavior:** Handkarten auf der Bank vergrößern sich beim Hover jetzt nur noch minimal (subtiler Preview-Effekt statt starker Zoom).
+- **Detailview Interaction:** Klick auf Handkarten bleibt konsequent eine reine Detailansicht (Karte ansehen), ohne direkte Kampfaktion.
+
+## [1.10.7] - 2026-04-12
+### Fixed
+- **Combat Handcards Radius:** Handkarten im Kampf haben nun einen kompakteren Eckenradius, damit kleine Karten nicht mehr zu rund wirken.
+- **SpecCard Foil Layer in Combat:** `TeacherSpecCard` rendert im Kampf jetzt immer einen sichtbaren Foil-Layer (auch bei `normal`-Variante), damit Effektfolien auf Handkarten zuverlässig erkennbar sind.
+    - **Compact Radius Token:** Handkarten setzen explizit `--card-radius:0.9cqw`.
+    - **Forced Combat Overlay:** `CardEffectOverlay` unterstützt eine Combat-Force-Variante mit subtiler Shimmer-Folie für normale Karten.
+
+## [1.10.6] - 2026-04-12
+### Fixed
+- **Combat Card Scaling Consistency:** Kartengrößen im Kampf werden nun responsiv über Breitenklassen statt globaler `scale`-Transforms gesteuert. Dadurch skaliert der `cqw`-basierte Eckenradius wieder proportional zur tatsächlichen Kartengröße.
+- **Combat Foil Visibility:** Effektfolien (`holo`, `shiny`, `black_shiny_holo`, `iconic`) sind im dunklen Kampf-Layout wieder deutlich sichtbar.
+    - **Combat Context Rendering:** `TeacherSpecCard` gibt nun einen expliziten Combat-Kontext an den Overlay-Layer weiter.
+    - **Dark Board Blend Tuning:** `CardEffectOverlay` nutzt im Kampf angepasste Blend-/Opacity-Profile für bessere Sichtbarkeit auf `bg-neutral-950`.
+    - **Coverage Across Views:** Die Anpassung gilt für aktive Karte, Bankkarten und Fokus-Overlay.
+
+## [1.10.5] - 2026-04-12
+### Changed
+- **Balanced Card Aesthetics:** Der Eckenradius wurde für eine bessere Balance leicht erhöht (`1.4cqw` / `rounded-xl`). Dies orientiert sich besser an den internen Elementen und Texten der Karten.
+- **Ultra-Vivid Foil Effects:** Die Folien-Effekte (Holo, Shiny, Black Shiny) wurden massiv verstärkt. Höhere Deckkraft, schnellere Animationen und intensivere Glanzeffekte sorgen dafür, dass die Seltenheit der Karten deutlich spürbar ist.
+
+## [1.10.4] - 2026-04-12
+### Changed
+- **Interaktionsschutz (Handkarten):** Das Anklicken einer Handkarte (Bank) ist nun rein informativ und führt niemals direkt zu einem Wechsel.
+    - **Separater Aktions-Button:** Die Aktion "Einwechseln" wurde aus der Kartenansicht in einen separaten Button unterhalb der Karte im Focus-Overlay verschoben.
+    - **Read-Only Kartenansicht:** Bankkarten zeigen im Overlay nun ihre Angriffe statisch an, damit man sie vor dem Einwechseln in Ruhe prüfen kann, ohne dass ein Klick auf die Karte den Wechsel auslöst.
+
+## [1.10.3] - 2026-04-12
+### Changed
+- **TCG Card Aesthetics:** Der Eckenradius der Sammelkarten wurde reduziert (`2.2cqw` -> `0.8cqw` / `rounded-xl` -> `rounded-lg`), um einen realistischeren und weniger "runden" TCG-Look zu erzielen.
+- **Combat Foil Integration:** Im Kampfmodus werden nun automatisch die seltensten Folien-Varianten (Holo, Shiny, Black Shiny) angezeigt, die ein Spieler für die jeweilige Karte besitzt. Dies gilt sowohl für den eigenen Spieler als auch für den Gegner.
+
+## [1.10.3] - 2026-04-12
+### Changed
+- **Combat Turn Optimization (Handkarten):** Ein Klick auf eine Handkarte (Bank) gilt nun nicht mehr automatisch als beendeter Zug.
+    - **Focus Overlay for Bench:** Das Anklicken einer Karte auf der Bank öffnet nun zuerst eine vergrößerte Detailansicht, anstatt sofort den Wechsel zu erzwingen.
+    - **Free Switch Action:** Der Wechsel der aktiven Karte (Switch) wurde zu einer "freien Aktion" herabgestuft. Das bedeutet, man kann nun einwechseln und im selben Zug noch angreifen.
+    - **AI Adaptation:** Auch der KI-Gegner kann nun die neue Mechanik nutzen und nach einem Wechsel direkt angreifen.
+
+## [1.10.2] - 2026-04-12
+### Changed
+- **Visual Consistency (Album Sync):** Die Darstellung der Karten im Kampf wurde exakt an das Lehrer-Album angepasst.
+    - **Full Data Sync:** `adaptToCardData` nutzt nun die zentrale `cardRegistry`, um fehlende Metadaten (Farben, Kartennummern) zu ergänzen.
+    - **Static HP Display:** Handkarten und die aktive Karte des Gegners zeigen nun ihre ursprünglichen Max-HP an (wie im Album), während der aktuelle Schaden über die separaten HP-Balken getrackt wird.
+    - **Clean UI:** Redundante Schlagschatten (`shadow-2xl`) wurden entfernt, da die Karten bereits einen integrierten Hard-Shadow besitzen.
+    - **Interaction Fix:** Die eigenen Handkarten sind nun wieder klickbar und haben einen verbesserten Hover-Zustand.
+
+## [1.10.1] - 2026-04-12
+### Fixed
+- **Combat Card Layout Refinement:** Umfassende Korrekturen am visuellen Erscheinungsbild der Karten im Kampf.
+    - **Corner Radius:** Der Eckenradius wurde von 3.5cqw auf 2.2cqw reduziert, um einen realistischeren und schärferen TCG-Look zu erzielen.
+    - **Foil Effects Visibility:** Fix für verschwundene oder überdeckte Folien-Effekte. Der Z-Index der Inhalts-Ebene wurde erhöht (z-30), damit sie korrekt über den Spezialeffekten (z-20) liegt, ohne diese zu verdecken.
+    - **Iconic Card Effects:** Iconic-Karten zeigen nun auch im Kampf ihren spezifischen goldenen Aura-Effekt an (Prop-Fix).
+    - **Responsive Attack Buttons:** Die Angriffs-Buttons im Fokus-Overlay nutzen nun container-relative Einheiten (`cqw`) statt fester Pixelwerte, was das "zerstörte" Layout bei unterschiedlichen Skalierungen behebt.
+    - **GameBoard Styling:** Der Eckenradius des gesamten Spielfelds wurde auf einen festen Wert (`2rem`) gesetzt, um unnatürlich große Rundungen auf Desktop-Monitoren zu vermeiden.
+- **TypeScript Alignment:** `CardData` wurde um ein optionales `count`-Feld erweitert, um Build-Fehler im `LayoutExperiment` zu beheben.
+
+## [1.10.0] - 2026-04-12
+### Added
+- **Server-Side Combat Engine:** Das gesamte Kampfsystem wurde auf serverseitige Logik (Firebase Cloud Functions) umgestellt.
+    - **Anti-Cheat:** Sämtliche Schadensberechnungen, HP-Abzüge und KI-Züge erfolgen nun sicher auf dem Server.
+    - **Match Persistence:** Der Spielzustand wird in Echtzeit in Firestore synchronisiert. Ein Neuladen der Seite ("F5") stellt das laufende Match exakt wieder her.
+    - **Battle Log:** Neues UI-Panel ("Kampflog") zeigt alle Spielzüge (Angriffe, Wechsel, Knockouts) chronologisch an.
+    - **First-to-3 Condition:** Matches enden nun regelkonform, sobald ein Spieler 3 Karten im Friedhof hat (Knockout-System).
+    - **Sync-Animations:** Clientseitige Animationen (Shake, Action-Toasts) werden nun direkt durch Änderungen am serverseitigen `actionLog` getriggert.
+- **Improved GameBoard UI:** Überarbeitetes Interface mit Fokus auf Server-Daten, Ladezuständen für Züge und verbesserter Punkteanzeige.
+
+## [1.9.9] - 2026-04-12
+### Added
+- **TCG Standard Refinement:** Karten-Layout wurde auf exakte physische TCG-Maße optimiert.
+    - **Corner Radius:** Auf 3.5cqw korrigiert für natürlichen Look.
+    - **Albumsnummer:** Karten zeigen nun ihre echte Index-Nummer (`#83`) statt technischer IDs.
+    - **UI-Platz:** Beschreibung in der Detailansicht wird nun ausgeblendet, um Platz für beide Attacken-Buttons zu schaffen.
+    - **Button-Visibility:** Fix für abgeschnittene Buttons beim Hovern durch `overflow-visible` und Z-Index Korrekturen.
+- **AI Combat Fix:** Die KI greift nun nach jedem Spielerzug zuverlässig mit einer zufälligen Attacke an.
+- **Live HP:** Karten zeigen jetzt direkt ihren aktuellen HP-Stand (inkl. erlittenem Schaden) an.
+
+## [1.9.8] - 2026-04-12
+### Changed
+- **Combat UX Overhaul:** Umfassendes Update des Spielbretts basierend auf Feedback.
+    - **Visuals:** Karten nutzen nun die korrekten Raritätsfarben aus dem Album. Border-Radius ist proportional zur Kartengröße (`cqw`).
+    - **Interaction:** Handkarten vergrößern sich beim Hovern deutlich (2.2x) für bessere Lesbarkeit auf kleinen Bildschirmen.
+    - **Logic:** Gewinnbedingung auf 3 Kills gesetzt. Die HP-Anzeige zeigt nun die HP der aktiven Karte an.
+    - **Rules:** Karten ohne Attacken werden sofort zerstört (Gegner erhält Kill).
+    - **UI:** Menüleiste (Sidebar) auf Desktop nun sichtbar. In-Game Menü mit "Aufgeben"-Option hinzugefügt. Attacken-Buttons im Fokus-Overlay haben eine feste Größe.
+- **Data Loading:** Fehlerbehebung beim Laden des Decks; reale Kartendaten werden nun zuverlässiger bevorzugt.
+
+## [1.9.7] - 2026-04-12
+### Added
+- **Combat Game Board:** Implementierung des finalen Spielbretts für Sammelkarten-Kämpfe.
+    - **Layout:** Spezifische Anordnung mit Stapel (unten links), 3 Handkarten (rechts daneben) und aktiver Karte (darüber). Gegner-Seite (oben rechts) gespiegelt mit verdeckten Karten.
+    - **Interaction:** Klick auf die eigene aktive Karte öffnet ein Fokus-Overlay zur Auswahl von Attacken (mit den stylischen Buttons aus dem Layout-Experiment).
+    - **Simulation:** Integrierte Angriffs-Animationen, HP-Balken-Updates und eine einfache KI-Gegenangriffs-Logik für PvE-Tests.
+- **Match Integration:** Die Kampf-Seite (`/kaempfe/[matchId]`) lädt nun das echte Deck des Spielers und generiert ein zufälliges Gegner-Deck für KI-Matches. Ein 3-sekündiger Fallback-Timer stellt sicher, dass Tests auch ohne vollständige Datenbank-Einträge funktionieren.
+
+## [1.9.6] - 2026-04-12
+### Changed
+- **Combat UX Refinement:** Das Layout der Attacken-Buttons wurde basierend auf Nutzerfeedback optimiert.
+    - **Kontrast:** Raritätsspezifische Hintergrundfarben für Buttons sorgen für besseren Kontrast zur Karte.
+    - **Layout:** Attacken-Titel und -Beschreibungen sind nun linksbündig ausgerichtet.
+    - **Cleanup:** Das "DMG"-Label und das Schwerter-Icon auf den Buttons wurden entfernt.
+    - **HP-Visuals:** Das Herz-Icon neben der HP-Anzeige auf der Karte wurde entfernt.
+- **Color Consistency:** Die Raritätsfarben im Kampf-Experiment entsprechen nun exakt denen im Album und der restlichen App.
+
+## [1.9.5] - 2026-04-12
+### Added
+- **Combat UX Experiment:** Neue "Layout"-Option in der Kampf-Auswahl für UI/UX Experimente hinzugefügt.
+- **Attack Selection Experiment:** Erstes Experiment implementiert, bei dem Attacken von der Karte getrennt und als eigenständige Buttons mit Titel, Schaden und Beschreibung dargestellt werden.
+- **TeacherSpecCard Enhancement:** Neuer `hideAttacks`-Prop hinzugefügt, um Attacken auf der Karte für Layout-Zwecke auszublenden.
+
+## [1.9.4] - 2026-04-12
+### Changed
+- **PvE Matchmaking:** Die Option "KI Training" (Standard-Schwierigkeit) wurde entfernt. PvE-Matches führen nun direkt zur "Custom KI"-Auswahl, bei der die Schwierigkeit (ELO) individuell eingestellt werden kann.
+
+### Fixed
+- **Cloud Functions (CORS Alignment):** Unified CORS configuration across all callable and request-based Cloud Functions.
+    - **Robust Local Testing:** Added a specific regex to `CALLABLE_CORS_ORIGINS` that reliably allows all `localhost` subdomains and ports (e.g., `http://dashboard.abi-planer-27.localhost:3000`).
+    - **System-wide Consistency:** Replaced various `cors: true` and local `ALLOWED_ORIGINS` definitions with a shared constant in `functions/src/constants/cors.ts` to ensure reliable preflight handling for all modules (Combat, Shop, MFA, Gifts, etc.).
+
+## [1.9.2] - 2026-04-12
+### Improved
+- **Queue Resilience:** Die Warteschlange kann nun mit Seitenaktualisierungen (Page Reload) umgehen. Der Spielmodus und das gewählte Deck werden automatisch aus Firestore wiederhergestellt, falls der Nutzer bereits in der Suche war.
+
+## [1.9.1] - 2026-04-12
+### Added
+- **Queue Table Toggle:** Die integrierte Warteschlangen-Tabelle kann nun per Button ein- und ausgeblendet werden (standardmäßig ausgeblendet).
+- **Smooth Animations:** Sanfte Ein- und Ausblend-Animationen beim Umschalten der Listen-Ansicht.
+- **Improved Layout:** Größere Abstände und optimierte Animationen im Such-Bildschirm für ein hochwertigeres Look & Feel.
+
 ## [1.5.34] - 2026-04-11 - Posteingang Listener Berechtigung gefixt
 
 ### Fixed - Gruppenchat Permissions
