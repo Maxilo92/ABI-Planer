@@ -1,4 +1,5 @@
 import { onCall, HttpsError } from "firebase-functions/v2/https";
+import { CALLABLE_CORS_ORIGINS } from "./constants/cors";
 import * as admin from "firebase-admin";
 import { getFirestore } from "firebase-admin/firestore";
 
@@ -37,16 +38,6 @@ type CustomPackSlot = {
     variant?: "normal" | "holo" | "shiny" | "black_shiny_holo";
 };
 
-const ALLOWED_ORIGINS = [
-    "https://abi-planer-27.de",
-    "https://dashboard.abi-planer-27.de",
-    "https://abi-planer-75319.web.app",
-    "https://abi-planer-75319.firebaseapp.com",
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    /\.localhost:3000$/,
-];
-
 const isAdminRole = (role: unknown): boolean => {
     return role === "admin" || role === "admin_main" || role === "admin_co";
 };
@@ -56,7 +47,7 @@ const LEGACY_TEACHER_PACK_ID = "teachers_v1";
 const normalizePackId = (packId: string) => packId === LEGACY_TEACHER_PACK_ID ? TEACHER_PACK_ID : packId;
 
 export const giftBoosterPack = onCall({
-    cors: ALLOWED_ORIGINS,
+    cors: CALLABLE_CORS_ORIGINS,
     region: "europe-west3",
 }, async (request) => {
     if (!request.auth?.uid) {

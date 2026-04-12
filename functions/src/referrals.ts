@@ -1,5 +1,6 @@
 import { onDocumentWritten } from "firebase-functions/v2/firestore";
 import { onCall, HttpsError } from "firebase-functions/v2/https";
+import { CALLABLE_CORS_ORIGINS } from "./constants/cors";
 import * as admin from "firebase-admin";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
 
@@ -271,7 +272,7 @@ export const awardReferralBoosters = onDocumentWritten({
  */
 export const claimReferral = onCall({
     region: "europe-west3",
-    cors: true,
+    cors: CALLABLE_CORS_ORIGINS,
 }, async (request) => {
     if (!request.auth) {
         throw new HttpsError("unauthenticated", "Auth required.");
@@ -311,7 +312,7 @@ export const claimReferral = onCall({
  */
 export const adminMigrateReferrals = onCall({
     region: "europe-west3",
-    cors: true,
+    cors: CALLABLE_CORS_ORIGINS,
 }, async (request) => {
     if (!request.auth) {
         throw new HttpsError("unauthenticated", "Auth required.");
@@ -375,7 +376,7 @@ export const adminMigrateReferrals = onCall({
  */
 export const debugCheckReferralCode = onCall({
     region: "europe-west3",
-    cors: true,
+    cors: CALLABLE_CORS_ORIGINS,
 }, async (request) => {
     if (!request.auth) throw new HttpsError("unauthenticated", "Auth required.");
     

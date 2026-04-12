@@ -1,4 +1,5 @@
 import { onCall, HttpsError, onRequest } from "firebase-functions/v2/https";
+import { CALLABLE_CORS_ORIGINS } from "./constants/cors";
 import { getFirestore, FieldValue, Timestamp } from "firebase-admin/firestore";
 import * as logger from "firebase-functions/logger";
 import * as admin from "firebase-admin";
@@ -11,13 +12,6 @@ const EXCLUDED_VARIANTS: CardVariant[] = ['black_shiny_holo'];
 const ANALYTICS_WINDOW_DAYS = 7;
 const ONLINE_STALE_MINUTES = 5;
 const MAX_SESSION_MINUTES = 12 * 60;
-const CALLABLE_CORS_ORIGINS = [
-  /https?:\/\/([a-z0-9-]+\.)*localhost(:\d+)?$/,
-  "https://abi-planer-27.web.app",
-  "https://abi-planer-27.firebaseapp.com",
-  "https://abi-planer-27.de",
-  "https://dashboard.abi-planer-27.de",
-];
 
 type AnalyticsSection =
   | 'Dashboard'
@@ -1019,7 +1013,7 @@ export const resetSessionStatisticsHttp = onRequest({ cors: CALLABLE_CORS_ORIGIN
 /**
  * Öffentliche Kennzahlen für die Landingpage.
  */
-export const getLandingStats = onRequest({ cors: true }, async (_request, response) => {
+export const getLandingStats = onRequest({ cors: CALLABLE_CORS_ORIGINS }, async (_request, response) => {
   const db = getFirestore("abi-data");
 
   const [profilesSnap, dailyActiveSnap, newsSnap, inventoriesSnap] = await Promise.all([

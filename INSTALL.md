@@ -29,9 +29,14 @@ NEXT_PUBLIC_FIREBASE_APP_ID=xxx
 
 # Serverseitige Secrets (nicht im Client exposed)
 GROQ_API_KEY=gsk_xxx
+
+# Optional: Lokal gegen die Firebase Emulatoren arbeiten
+NEXT_PUBLIC_USE_FIREBASE_EMULATOR=true
 ```
 
 `GROQ_API_KEY` darf **nicht** mit `NEXT_PUBLIC_` praefixed sein, da der Key ausschliesslich serverseitig genutzt wird.
+
+Wenn `NEXT_PUBLIC_USE_FIREBASE_EMULATOR` **nicht** gesetzt ist, nutzt die Kampfeseite in der lokalen Entwicklung für `endMyOpenMatches` automatisch einen same-origin Proxy, damit Browser-CORS bei `*.localhost` nicht blockiert.
 
 ## 3. Firestore Datenbank Initialisierung
 Damit das Dashboard (Countdown & Finanzziel) korrekt funktioniert, musst du **einmalig** dieses Dokument manuell in Firestore anlegen:

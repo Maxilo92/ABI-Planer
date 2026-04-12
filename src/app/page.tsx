@@ -18,6 +18,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { cn, toDate } from '@/lib/utils'
 import { Footer } from '@/components/layout/Footer'
 import { DashboardComponentKey, Poll, PollOption, PollVote, FinanceEntry, ShopEarning } from '@/types/database'
+import type { SystemFeatures } from '@/types/system'
 import Link from 'next/link'
 import { 
   ArrowRight, 
@@ -734,7 +735,17 @@ export default function Dashboard() {
   const [rootMode, setRootMode] = useState<'unknown' | 'landing' | 'dashboard'>('unknown')
   const isBoneyardBuild = typeof window !== 'undefined' && Boolean((window as any).__BONEYARD_BUILD)
   const { user, profile, loading: authLoading } = useAuth()
+  const [features, setFeatures] = useState<SystemFeatures | null>(null)
   const [settings, setSettings] = useState<any>(null)
+
+  useEffect(() => {
+    const unsub = onSnapshot(doc(db, 'settings', 'features'), (snap) => {
+      if (snap.exists()) {
+        setFeatures(snap.data() as SystemFeatures)
+      }
+    })
+    return () => unsub()
+  }, [])
   const [todos, setTodos] = useState<any[]>([])
   const [events, setEvents] = useState<any[]>([])
   const [news, setNews] = useState<any[]>([])
@@ -1427,10 +1438,25 @@ export default function Dashboard() {
 
   const sortedComponentKeys = sortedComponents.map((key) => key)
 
+  const isAdmin = ['admin', 'admin_main', 'admin_co'].includes(profile?.role || '')
+  const isFeatureEnabled = (statusKey: string, legacyKey: string) => {
+    const status = features?.[statusKey as keyof SystemFeatures]
+    if (status === 'enabled') return true
+    if (status === 'admins_only') return isAdmin
+    if (status === 'disabled') return false
+    return features?.[legacyKey as keyof SystemFeatures] !== false
+  }
+
   const dashboardItems = sortedComponentKeys.reduce<DashboardItem[]>((items, key) => {
     if (key === 'polls') {
+      if (!isFeatureEnabled('polls_status', 'is_polls_enabled')) return items
       return [...items, ...unvotedPolls.map((poll) => ({ type: 'poll' as const, poll }))]
     }
+
+    if (key === 'todos' && !isFeatureEnabled('todos_status', 'is_todos_enabled')) return items
+    if (key === 'events' && !isFeatureEnabled('calendar_status', 'is_calendar_enabled')) return items
+    if (key === 'news' && !isFeatureEnabled('news_status', 'is_news_enabled')) return items
+    if (key === 'cards' && !isFeatureEnabled('sammelkarten_status', 'is_sammelkarten_enabled')) return items
 
     return [...items, { type: 'component' as const, key }]
   }, [])

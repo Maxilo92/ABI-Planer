@@ -1,4 +1,5 @@
 import { onCall, HttpsError } from "firebase-functions/v2/https";
+import { CALLABLE_CORS_ORIGINS } from "./constants/cors";
 import { getFirestore } from "firebase-admin/firestore";
 import * as logger from "firebase-functions/logger";
 import * as admin from "firebase-admin";
@@ -149,7 +150,7 @@ const sanitizeEditedProposal = (proposal: EditedProposalPayload | undefined) => 
  * If dryRun=true, returns preview without making changes.
  */
 export const removeTeacherCards = onCall({
-  cors: true,
+  cors: CALLABLE_CORS_ORIGINS,
   region: "europe-west3",
 }, async (request) => {
   if (!request.auth?.uid) {
@@ -357,7 +358,7 @@ export const removeTeacherCards = onCall({
  * This is like "runGlobalRaritySync" but for individual user albums.
  */
 export const validateAndFixRarities = onCall({
-  cors: true,
+  cors: CALLABLE_CORS_ORIGINS,
   region: "europe-west3",
 }, async (request) => {
   if (!request.auth?.uid) {
@@ -621,7 +622,7 @@ export const validateAndFixRarities = onCall({
  * total_opened = Math.ceil(total_cards_in_inventory / 3)
  */
 export const syncOpenedPacksToInventory = onCall({
-  cors: true,
+  cors: CALLABLE_CORS_ORIGINS,
   region: "europe-west3",
 }, async (request) => {
   if (!request.auth?.uid) {
@@ -745,7 +746,7 @@ export const syncOpenedPacksToInventory = onCall({
  * Also migrates `profiles.booster_stats.inventory.teachers_v1` to `teacher_vol1`.
  */
 export const migrateTeacherVol1Inventory = onCall({
-  cors: true,
+  cors: CALLABLE_CORS_ORIGINS,
   region: "europe-west3",
 }, async (request) => {
   if (!request.auth?.uid) {
@@ -890,7 +891,7 @@ export const migrateTeacherVol1Inventory = onCall({
  * Legacy keys seen in production: `teachers_voted`, `rated_teachers`.
  */
 export const cleanupLegacyTeachersVoted = onCall({
-  cors: true,
+  cors: CALLABLE_CORS_ORIGINS,
   region: "europe-west3",
 }, async (request) => {
   if (!request.auth?.uid) {
@@ -989,7 +990,7 @@ export const cleanupLegacyTeachersVoted = onCall({
  * Accepting a proposal grants reward packs once by incrementing booster_stats.extra_available.
  */
 export const moderateCardProposal = onCall({
-  cors: true,
+  cors: CALLABLE_CORS_ORIGINS,
   region: "europe-west3",
 }, async (request) => {
   if (!request.auth?.uid) {
@@ -1162,7 +1163,7 @@ export const moderateCardProposal = onCall({
  * - reward_packs_awarded derives from reward_claimed when not present
  */
 export const backfillCardProposalUsageStatus = onCall({
-  cors: true,
+  cors: CALLABLE_CORS_ORIGINS,
   region: "europe-west3",
 }, async (request) => {
   if (!request.auth?.uid) {

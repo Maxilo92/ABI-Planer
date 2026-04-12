@@ -1,4 +1,5 @@
 import { onCall, HttpsError } from "firebase-functions/v2/https";
+import { CALLABLE_CORS_ORIGINS } from "./constants/cors";
 import * as admin from "firebase-admin";
 import { getFirestore } from "firebase-admin/firestore";
 import { authenticator } from "otplib";
@@ -7,7 +8,7 @@ import { authenticator } from "otplib";
  * Authorize a danger action with 2FA and create a delayed action.
  */
 export const authorizeDangerAction = onCall({
-  cors: true,
+  cors: CALLABLE_CORS_ORIGINS,
   region: "europe-west3",
 }, async (request) => {
   // 1. Verify Authentication

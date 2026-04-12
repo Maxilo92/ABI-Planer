@@ -1,4 +1,5 @@
 import { onCall, HttpsError } from "firebase-functions/v2/https";
+import { CALLABLE_CORS_ORIGINS } from "./constants/cors";
 import * as admin from "firebase-admin";
 import { getFirestore } from "firebase-admin/firestore";
 
@@ -12,7 +13,7 @@ const isAdminRole = (role: unknown): boolean => {
 
 // Nur Packs schenken, kein Popup
 export const giftOnlyPacks = onCall({
-    cors: true,
+    cors: CALLABLE_CORS_ORIGINS,
     region: "europe-west3",
 }, async (request) => {
     if (!request.auth?.uid) {
@@ -101,7 +102,7 @@ export const giftOnlyPacks = onCall({
 
 // Nur Popup schicken, keine Packs
 export const sendUserPopup = onCall({
-    cors: true,
+    cors: CALLABLE_CORS_ORIGINS,
     region: "europe-west3",
 }, async (request) => {
     if (!request.auth?.uid) {

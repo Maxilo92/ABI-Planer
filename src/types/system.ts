@@ -1,11 +1,25 @@
+export type FeatureStatus = 'disabled' | 'admins_only' | 'enabled';
+
 export interface SystemFeatures {
-  is_trading_enabled: boolean;
-  is_shop_enabled: boolean;
-  is_news_enabled: boolean;
-  is_calendar_enabled: boolean;
-  is_todos_enabled: boolean;
-  is_polls_enabled: boolean;
-  is_sammelkarten_enabled: boolean;
+  trading_status: FeatureStatus;
+  combat_status: FeatureStatus;
+  shop_status: FeatureStatus;
+  news_status: FeatureStatus;
+  calendar_status: FeatureStatus;
+  todos_status: FeatureStatus;
+  polls_status: FeatureStatus;
+  sammelkarten_status: FeatureStatus;
+  
+  // Legacy support for older builds/components
+  is_trading_enabled?: boolean;
+  is_combat_enabled?: boolean;
+  is_shop_enabled?: boolean;
+  is_news_enabled?: boolean;
+  is_calendar_enabled?: boolean;
+  is_todos_enabled?: boolean;
+  is_polls_enabled?: boolean;
+  is_sammelkarten_enabled?: boolean;
+
   maintenance_mode: boolean;
   maintenance_message?: string;
   updated_at?: any;

@@ -26,3 +26,4 @@ export * from "./cardsManager";
 export * from "./trades";
 export * from "./groupMessages";
 export * from "./npAdmin";
+export * from "./combat";

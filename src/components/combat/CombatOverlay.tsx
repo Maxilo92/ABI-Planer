@@ -57,24 +57,24 @@ const CombatOverlay: React.FC<CombatOverlayProps> = ({
             className="relative w-full max-w-lg bg-card border border-border rounded-2xl overflow-hidden shadow-2xl"
           >
             {/* Header */}
-            <div className="p-6 text-center border-b border-border">
-              <h2 className="text-2xl font-bold text-foreground">
+            <div className="p-4 sm:p-6 text-center border-b border-border">
+              <h2 className="text-xl sm:text-2xl font-bold text-foreground">
                 Support-Karte eingesetzt!
               </h2>
-              <p className="text-muted-foreground mt-1">
+              <p className="text-sm sm:text-base text-muted-foreground mt-1">
                 {supportCard.name}
               </p>
             </div>
 
             {/* Content */}
-            <div className="p-8 flex flex-col items-center gap-8">
+            <div className="p-4 sm:p-8 flex flex-col items-center gap-6 sm:gap-8">
               {/* Dice Area */}
-              <div className="py-12">
+              <div className="py-6 sm:py-12">
                 <DiceRoller ref={diceRef} />
               </div>
 
               {/* Result Area */}
-              <div className="h-24 flex flex-col items-center justify-center">
+              <div className="min-h-24 flex flex-col items-center justify-center px-2">
                 <AnimatePresence mode="wait">
                   {isRolling ? (
                     <motion.p
@@ -82,7 +82,7 @@ const CombatOverlay: React.FC<CombatOverlayProps> = ({
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
-                      className="text-xl font-medium text-brand animate-pulse"
+                      className="text-lg sm:text-xl font-medium text-brand animate-pulse"
                     >
                       Würfeln...
                     </motion.p>
@@ -93,14 +93,14 @@ const CombatOverlay: React.FC<CombatOverlayProps> = ({
                       animate={{ opacity: 1, y: 0 }}
                       className="text-center"
                     >
-                      <div className="flex items-center justify-center gap-3 text-3xl font-bold">
+                      <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 text-2xl sm:text-3xl font-bold">
                         <span className="text-brand">{result}</span>
-                        <span className="text-muted-foreground text-xl">×</span>
+                        <span className="text-muted-foreground text-lg sm:text-xl">×</span>
                         <span className="text-primary">{multiplier}</span>
-                        <span className="text-muted-foreground text-xl">=</span>
+                        <span className="text-muted-foreground text-lg sm:text-xl">=</span>
                         <span className="text-destructive">{result * multiplier} Schaden</span>
                       </div>
-                      <p className="text-muted-foreground mt-2">
+                      <p className="text-sm sm:text-base text-muted-foreground mt-2">
                         Kritischer Treffer!
                       </p>
                     </motion.div>
@@ -110,7 +110,7 @@ const CombatOverlay: React.FC<CombatOverlayProps> = ({
             </div>
 
             {/* Footer */}
-            <div className="p-6 bg-muted/30 flex justify-center">
+            <div className="p-4 sm:p-6 bg-muted/30 flex justify-center">
               <AnimatePresence>
                 {showResult && (
                   <motion.div
@@ -119,7 +119,7 @@ const CombatOverlay: React.FC<CombatOverlayProps> = ({
                   >
                     <Button 
                       onClick={onClose}
-                      className="px-8 py-6 text-lg font-semibold rounded-xl shadow-lg hover:scale-105 transition-transform"
+                      className="px-6 sm:px-8 py-5 sm:py-6 text-base sm:text-lg font-semibold rounded-xl shadow-lg hover:scale-105 transition-transform"
                     >
                       Schließen
                     </Button>

@@ -1,5 +1,6 @@
 import { onDocumentDeleted } from "firebase-functions/v2/firestore";
 import { onCall, HttpsError } from "firebase-functions/v2/https";
+import { CALLABLE_CORS_ORIGINS } from "./constants/cors";
 import * as admin from "firebase-admin";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
 
@@ -12,7 +13,7 @@ if (admin.apps.length === 0) {
  */
 export const toggleUserEmailVerification = onCall({
   region: "europe-west3",
-  cors: true,
+  cors: CALLABLE_CORS_ORIGINS,
 }, async (request) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "Auth required.");
@@ -55,7 +56,7 @@ export const toggleUserEmailVerification = onCall({
  */
 export const bootstrapMissingProfile = onCall({
   region: "europe-west3",
-  cors: true,
+  cors: CALLABLE_CORS_ORIGINS,
 }, async (request) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "Auth required.");
@@ -226,7 +227,7 @@ export const onProfileDeleted = onDocumentDeleted({
  */
 export const cleanupNonExistentTeachers = onCall({
   region: "europe-west3",
-  cors: true,
+  cors: CALLABLE_CORS_ORIGINS,
   maxInstances: 1,
   memory: "512MiB",
   timeoutSeconds: 300,
@@ -322,7 +323,7 @@ export const cleanupNonExistentTeachers = onCall({
  */
 export const handleTeacherRarityChange = onCall({
   region: "europe-west3",
-  cors: true,
+  cors: CALLABLE_CORS_ORIGINS,
   maxInstances: 1,
   memory: "512MiB",
   timeoutSeconds: 300,

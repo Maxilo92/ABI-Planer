@@ -9,39 +9,65 @@ export const CardEffectOverlay: React.FC<{
   tintColor?: string;
   isIconic?: boolean;
   effectsEnabled?: boolean;
+  isCombat?: boolean;
+  forceVisible?: boolean;
 }> = ({ 
   variant, 
   tintColor,
   isIconic,
   effectsEnabled = true,
+  isCombat = false,
+  forceVisible = false,
 }) => {
   if (!effectsEnabled) return null;
-  if (variant === 'normal' && !isIconic) return null;
+  if (variant === 'normal' && !isIconic && !forceVisible) return null;
 
   const getOverlayStyles = () => {
+    if (variant === 'normal' && forceVisible) {
+      return isCombat
+        ? cn(
+            "bg-[linear-gradient(110deg,rgba(255,255,255,0)_0%,rgba(255,255,255,0.1)_20%,rgba(255,255,255,0.35)_50%,rgba(255,255,255,0.1)_80%,rgba(255,255,255,0)_100%)]",
+            "bg-[length:200%_100%] animate-[shimmer_7s_infinite_linear] mix-blend-screen opacity-70",
+            "before:absolute before:inset-0 before:bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.14)_0%,transparent_72%)]"
+          )
+        : "bg-[linear-gradient(110deg,rgba(255,255,255,0)_0%,rgba(255,255,255,0.05)_20%,rgba(255,255,255,0.22)_50%,rgba(255,255,255,0.05)_80%,rgba(255,255,255,0)_100%)] bg-[length:200%_100%] animate-[shimmer_9s_infinite_linear] mix-blend-overlay opacity-55";
+    }
+
     if (isIconic) {
       // Iconic Golden Aura: Premium gold shimmer with particles
-      return "bg-[radial-gradient(circle_at_50%_50%,rgba(251,191,36,0.15)_0%,transparent_70%)] after:absolute after:inset-0 after:bg-[repeating-conic-gradient(from_0deg,rgba(251,191,36,0.05)_0deg,rgba(251,191,36,0.05)_10deg,transparent_10deg,transparent_20deg)] after:animate-[spin_20s_linear_infinite] after:opacity-20 shadow-[inset_0_0_80px_rgba(251,191,36,0.2)]";
+      return isCombat
+        ? "bg-[radial-gradient(circle_at_50%_50%,rgba(251,191,36,0.35)_0%,transparent_72%)] mix-blend-screen after:absolute after:inset-0 after:bg-[repeating-conic-gradient(from_0deg,rgba(251,191,36,0.12)_0deg,rgba(251,191,36,0.12)_10deg,transparent_10deg,transparent_20deg)] after:animate-[spin_12s_linear_infinite] after:opacity-55 shadow-[inset_0_0_110px_rgba(251,191,36,0.4)]"
+        : "bg-[radial-gradient(circle_at_50%_50%,rgba(251,191,36,0.25)_0%,transparent_70%)] after:absolute after:inset-0 after:bg-[repeating-conic-gradient(from_0deg,rgba(251,191,36,0.1)_0deg,rgba(251,191,36,0.1)_10deg,transparent_10deg,transparent_20deg)] after:animate-[spin_15s_linear_infinite] after:opacity-40 shadow-[inset_0_0_80px_rgba(251,191,36,0.3)]";
     }
 
     switch (variant) {
       case 'holo':
-        // 02 Holo Oil-Slick: More intense, complex iridescent oil film
-        return "bg-[radial-gradient(circle_at_20%_20%,rgba(45,212,191,0.5)_0%,transparent_50%),radial-gradient(circle_at_80%_80%,rgba(232,121,249,0.5)_0%,transparent_50%),radial-gradient(circle_at_50%_50%,rgba(163,230,81,0.3)_0%,transparent_70%),radial-gradient(circle_at_10%_90%,rgba(251,191,36,0.3)_0%,transparent_40%)] mix-blend-color-dodge opacity-90 shadow-[inset_0_0_100px_rgba(255,255,255,0.2)] brightness-110";
+        // 02 Holo Oil-Slick: Combat uses screen blend for dark board visibility
+        return isCombat
+          ? "bg-[radial-gradient(circle_at_20%_20%,rgba(45,212,191,0.7)_0%,transparent_52%),radial-gradient(circle_at_80%_80%,rgba(232,121,249,0.65)_0%,transparent_52%),radial-gradient(circle_at_50%_50%,rgba(163,230,81,0.5)_0%,transparent_72%),radial-gradient(circle_at_10%_90%,rgba(251,191,36,0.52)_0%,transparent_44%)] mix-blend-screen opacity-95 shadow-[inset_0_0_120px_rgba(255,255,255,0.38)] brightness-125 saturate-150 animate-pulse"
+          : "bg-[radial-gradient(circle_at_20%_20%,rgba(45,212,191,0.6)_0%,transparent_50%),radial-gradient(circle_at_80%_80%,rgba(232,121,249,0.6)_0%,transparent_50%),radial-gradient(circle_at_50%_50%,rgba(163,230,81,0.5)_0%,transparent_70%),radial-gradient(circle_at_10%_90%,rgba(251,191,36,0.5)_0%,transparent_40%)] mix-blend-color-dodge opacity-100 shadow-[inset_0_0_120px_rgba(255,255,255,0.4)] brightness-125 animate-pulse";
       
       case 'shiny': 
-        // 03 Shiny Sparkle: Multi-layered, ultra-soft metallic shimmer
-        // Keep the effect fully local (no remote texture fetch) to avoid first-render network latency.
-        return cn(
-          "bg-[linear-gradient(110deg,rgba(255,255,255,0)_0%,rgba(255,255,255,0.05)_20%,rgba(255,255,255,0.2)_40%,rgba(255,255,255,0.5)_50%,rgba(255,255,255,0.2)_60%,rgba(255,255,255,0.05)_80%,rgba(255,255,255,0)_100%)]",
-          "bg-[length:200%_100%] animate-[shimmer_12s_infinite_linear] mix-blend-overlay opacity-90 shadow-[inset_0_0_100px_rgba(255,255,255,0.2)]",
-          "before:absolute before:inset-0 before:bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.2)_0%,transparent_70%)]",
-          "after:absolute after:inset-0 after:bg-[repeating-linear-gradient(45deg,rgba(255,255,255,0.03)_0px,rgba(255,255,255,0.03)_1px,transparent_1px,transparent_3px)] after:opacity-30 after:mix-blend-color-dodge"
-        );
+        // 03 Shiny Sparkle: Multi-layered metallic shimmer with moving highlight
+        return isCombat
+          ? cn(
+              "bg-[linear-gradient(110deg,rgba(255,255,255,0)_0%,rgba(255,255,255,0.2)_20%,rgba(255,255,255,0.55)_42%,rgba(255,255,255,0.8)_50%,rgba(255,255,255,0.55)_58%,rgba(255,255,255,0.2)_80%,rgba(255,255,255,0)_100%)]",
+              "bg-[length:200%_100%] animate-[shimmer_5s_infinite_linear] mix-blend-screen opacity-95 shadow-[inset_0_0_110px_rgba(255,255,255,0.35)]",
+              "before:absolute before:inset-0 before:bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.32)_0%,transparent_72%)]",
+              "after:absolute after:inset-0 after:bg-[repeating-linear-gradient(45deg,rgba(255,255,255,0.08)_0px,rgba(255,255,255,0.08)_1px,transparent_1px,transparent_3px)] after:opacity-60 after:mix-blend-screen"
+            )
+          : cn(
+              "bg-[linear-gradient(110deg,rgba(255,255,255,0)_0%,rgba(255,255,255,0.1)_20%,rgba(255,255,255,0.4)_40%,rgba(255,255,255,0.7)_50%,rgba(255,255,255,0.4)_60%,rgba(255,255,255,0.1)_80%,rgba(255,255,255,0)_100%)]",
+              "bg-[length:200%_100%] animate-[shimmer_6s_infinite_linear] mix-blend-overlay opacity-100 shadow-[inset_0_0_100px_rgba(255,255,255,0.3)]",
+              "before:absolute before:inset-0 before:bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.3)_0%,transparent_70%)]",
+              "after:absolute after:inset-0 after:bg-[repeating-linear-gradient(45deg,rgba(255,255,255,0.05)_0px,rgba(255,255,255,0.05)_1px,transparent_1px,transparent_3px)] after:opacity-50 after:mix-blend-color-dodge"
+            );
 
       case 'black_shiny_holo':
         // Cosmic Void: Deep space effect for Black Shiny
-        return "bg-black opacity-80 after:absolute after:inset-0 after:bg-[radial-gradient(circle_at_50%_50%,rgba(147,51,234,0.4)_0%,transparent_70%),radial-gradient(circle_at_20%_80%,rgba(59,130,246,0.4)_0%,transparent_70%)] after:mix-blend-screen before:absolute before:inset-0 before:bg-[repeating-radial-gradient(circle,rgba(255,255,255,0.09)_0px,rgba(255,255,255,0.09)_1px,transparent_1px,transparent_3px)] before:opacity-20 before:mix-blend-overlay after:animate-pulse shadow-[inset_0_0_60px_rgba(255,255,255,0.1)]";
+        return isCombat
+          ? "bg-black opacity-95 after:absolute after:inset-0 after:bg-[radial-gradient(circle_at_50%_50%,rgba(147,51,234,0.7)_0%,transparent_72%),radial-gradient(circle_at_20%_80%,rgba(59,130,246,0.68)_0%,transparent_72%)] after:mix-blend-screen before:absolute before:inset-0 before:bg-[repeating-radial-gradient(circle,rgba(255,255,255,0.18)_0px,rgba(255,255,255,0.18)_1px,transparent_1px,transparent_3px)] before:opacity-45 before:mix-blend-screen after:animate-pulse shadow-[inset_0_0_120px_rgba(255,255,255,0.26)]"
+          : "bg-black opacity-90 after:absolute after:inset-0 after:bg-[radial-gradient(circle_at_50%_50%,rgba(147,51,234,0.6)_0%,transparent_70%),radial-gradient(circle_at_20%_80%,rgba(59,130,246,0.6)_0%,transparent_70%)] after:mix-blend-screen before:absolute before:inset-0 before:bg-[repeating-radial-gradient(circle,rgba(255,255,255,0.15)_0px,rgba(255,255,255,0.15)_1px,transparent_1px,transparent_3px)] before:opacity-30 before:mix-blend-overlay after:animate-pulse shadow-[inset_0_0_100px_rgba(255,255,255,0.2)]";
 
       default:
         return "";
@@ -49,12 +75,12 @@ export const CardEffectOverlay: React.FC<{
   };
 
   const isBlackShiny = variant === 'black_shiny_holo';
-  const getTintOpacity = () => '25'; // Vivid tint (approx 15%)
+  const getTintOpacity = () => isCombat ? '55' : '40';
 
   return (
     <div 
       className={cn(
-        "absolute -inset-px pointer-events-none z-20 transition-all duration-500 will-change-transform rounded-[inherit] overflow-hidden [&::before]:rounded-[inherit] [&::after]:rounded-[inherit]",
+        "absolute -inset-px pointer-events-none z-40 transition-all duration-500 will-change-transform rounded-[inherit] overflow-hidden [&::before]:rounded-[inherit] [&::after]:rounded-[inherit]",
         getOverlayStyles()
       )}
       style={isBlackShiny && tintColor ? { backgroundColor: `${tintColor}${getTintOpacity()}` } : undefined}

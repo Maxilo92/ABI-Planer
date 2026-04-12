@@ -8,6 +8,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Switch } from '@/components/ui/switch'
+import { Label } from '@/components/ui/label'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { 
@@ -16,12 +19,63 @@ import {
   Calendar, CheckSquare, AlertTriangle,
   RefreshCw, Lock, Server, TrendingUp,
   Clock, CheckCircle2, LineChart as LineChartIcon, MessageSquare, FolderOpen, BarChart3,
-  DollarSign, Settings, BarChart2, MessageSquareHeart
+  DollarSign, Settings, BarChart2, MessageSquareHeart, Swords, Construction
 } from 'lucide-react'
 import { AnimatePresence, motion, type Variants } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
-import type { GlobalStats, SystemAnalytics, SystemAnalyticsActionStat, SystemAnalyticsTimelinePoint, SystemFeatures } from '@/types/system'
+import type { GlobalStats, SystemAnalytics, SystemAnalyticsActionStat, SystemAnalyticsTimelinePoint, SystemFeatures, FeatureStatus } from '@/types/system'
+// ... rest of imports
+
+function FeatureStatusToggle({
+  label,
+  description,
+  icon,
+  status,
+  onStatusChange,
+}: {
+  label: string
+  description: string
+  icon: ReactNode
+  status: FeatureStatus | undefined
+  onStatusChange: (status: FeatureStatus) => void
+}) {
+  const currentStatus = status || 'enabled'
+
+  return (
+    <div className="flex items-start gap-4 rounded-xl border bg-card p-4 transition-all hover:shadow-md">
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/5 text-primary">
+        {icon}
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center justify-between mb-1">
+          <p className="text-sm font-black uppercase tracking-tight truncate">{label}</p>
+        </div>
+        <p className="text-[10px] text-muted-foreground line-clamp-1 mb-3">{description}</p>
+        <div className="flex flex-wrap gap-1.5">
+          {[
+            { id: 'disabled', label: 'Gesperrt', color: 'bg-red-500/10 text-red-600 border-red-500/20' },
+            { id: 'admins_only', label: 'Nur Admins', color: 'bg-amber-500/10 text-amber-600 border-amber-500/20' },
+            { id: 'enabled', label: 'Aktiv', color: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' },
+          ].map((s) => (
+            <button
+              key={s.id}
+              onClick={() => onStatusChange(s.id as FeatureStatus)}
+              className={cn(
+                'px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-widest border transition-all',
+                currentStatus === s.id
+                  ? s.color
+                  : 'bg-secondary text-muted-foreground border-transparent hover:border-border'
+              )}
+            >
+              {s.label}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import {
@@ -39,6 +93,22 @@ import {
 import { Line, Bar } from 'react-chartjs-2'
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Filler, Tooltip, Legend)
+
+/**
+ * Formats an ISO string for use in a datetime-local input.
+ */
+const formatDateForInput = (isoString: string | null | undefined) => {
+  if (!isoString) return ''
+  try {
+    const date = new Date(isoString)
+    if (isNaN(date.getTime())) return ''
+    const offset = date.getTimezoneOffset() * 60000
+    const localDate = new Date(date.getTime() - offset)
+    return localDate.toISOString().slice(0, 16)
+  } catch (e) {
+    return ''
+  }
+}
 
 const adminLinks = [
   { href: '/admin', label: 'Benutzer', description: 'Nutzerkonten verwalten & Aktionen', icon: Users },
@@ -96,6 +166,7 @@ function AnimatedWordFlow({
 export default function AdminSystemDashboard() {
   const { profile, user, loading: authLoading } = useAuth()
   const [features, setFeatures] = useState<SystemFeatures | null>(null)
+  const [maintenance, setMaintenance] = useState<any>(null)
   const [stats, setStats] = useState<GlobalStats | null>(null)
   const [analytics, setAnalytics] = useState<SystemAnalytics | null>(null)
   const [aiSummary, setAiSummary] = useState<string | null>(null)
@@ -103,12 +174,36 @@ export default function AdminSystemDashboard() {
   const [aiSummaryError, setAiSummaryError] = useState<string | null>(null)
   const [aiSummaryMeta, setAiSummaryMeta] = useState<{ generatedAt?: string; model?: string } | null>(null)
   const [loadingData, setLoadingData] = useState(true)
+  const [savingMaintenance, setSavingMaintenance] = useState(false)
   const [resettingSessionStats, setResettingSessionStats] = useState(false)
   const [cardsByUser, setCardsByUser] = useState<Array<{ label: string; value: number }>>([])
   const [loadingCardsByUser, setLoadingCardsByUser] = useState(false)
   const router = useRouter()
 
   const isAdmin = profile?.role === 'admin' || profile?.role === 'admin_main' || profile?.role === 'admin_co'
+
+  const handleSaveMaintenance = async (data: any) => {
+    if (!isAdmin) return
+    setSavingMaintenance(true)
+    try {
+      await updateDoc(doc(db, 'settings', 'global'), {
+        maintenance: data
+      })
+      
+      // Also update the feature toggle for immediate effect consistency
+      await updateDoc(doc(db, 'settings', 'features'), {
+        maintenance_mode: data.active,
+        updated_at: new Date().toISOString()
+      })
+
+      toast.success('Wartungseinstellungen gespeichert.')
+    } catch (error) {
+      console.error('Error saving maintenance:', error)
+      toast.error('Fehler beim Speichern.')
+    } finally {
+      setSavingMaintenance(false)
+    }
+  }
 
   const parseProxyOrDirectPayload = (payload: any) => {
     if (payload && typeof payload === 'object' && 'ok' in payload) {
@@ -483,29 +578,28 @@ export default function AdminSystemDashboard() {
     }
   }
 
-  // 1. Feature Toggles laden
+  // 1. Feature Toggles & Maintenance laden
   useEffect(() => {
     if (!isAdmin) return
     const unsub = onSnapshot(doc(db, 'settings', 'features'), (snap) => {
+// ... same logic
+    })
+
+    const unsubM = onSnapshot(doc(db, 'settings', 'global'), (snap) => {
       if (snap.exists()) {
-        setFeatures(snap.data() as SystemFeatures)
-      } else {
-        // Initialisierung falls nicht vorhanden
-        const initial: SystemFeatures = {
-          is_trading_enabled: false,
-          is_shop_enabled: true,
-          is_news_enabled: true,
-          is_calendar_enabled: true,
-          is_todos_enabled: true,
-          is_polls_enabled: true,
-          is_sammelkarten_enabled: true,
-          maintenance_mode: false
-        }
-        setDoc(doc(db, 'settings', 'features'), initial)
-        setFeatures(initial)
+        setMaintenance(snap.data().maintenance || {
+          active: false,
+          start: null,
+          end: null,
+          message: ''
+        })
       }
     })
-    return () => unsub()
+
+    return () => {
+      unsub()
+      unsubM()
+    }
   }, [isAdmin])
 
   // 2. Statistiken laden
@@ -609,20 +703,29 @@ export default function AdminSystemDashboard() {
     if (isAdmin) loadData()
   }, [isAdmin, user?.uid])
 
-  const toggleFeature = async (key: keyof SystemFeatures) => {
+  const updateFeatureStatus = async (key: keyof SystemFeatures, status: FeatureStatus) => {
     if (!features) return
-    const newValue = !features[key]
-    
+
     try {
-      await updateDoc(doc(db, 'settings', 'features'), {
-        [key]: newValue,
+      // Create legacy boolean for older components
+      const isEnabled = status === 'enabled'
+      const legacyKey = key.replace('_status', '_enabled')
+
+      const featureUpdate: any = {
+        [key]: status,
+        [legacyKey]: isEnabled,
         updated_at: new Date().toISOString()
-      })
-      toast.success(`${key} wurde ${newValue ? 'aktiviert' : 'deaktiviert'}`)
+      }
+      
+      await updateDoc(doc(db, 'settings', 'features'), featureUpdate)
+
+      toast.success(`${key} wurde auf '${status}' gesetzt`)
     } catch (error) {
-      toast.error('Fehler beim Aktualisieren des Features.')
+      console.error('Error updating feature status:', error)
+      toast.error('Fehler beim Aktualisieren des Status.')
     }
   }
+
 
   const resetSessionStatisticsClientSide = async () => {
     const batchSize = 250
@@ -1010,57 +1113,131 @@ export default function AdminSystemDashboard() {
             <CardDescription>Hier können einzelne Module der App im Notfall sofort abgeschaltet werden.</CardDescription>
           </CardHeader>
           <CardContent className="pt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-            <ToggleRow
+            <FeatureStatusToggle
               label="Sammelkarten System"
               description="Globaler Zugriff auf Karten & Album"
               icon={<Sparkles className="w-4 h-4" />}
-              enabled={features?.is_sammelkarten_enabled}
-              onToggle={() => toggleFeature('is_sammelkarten_enabled')}
+              status={features?.sammelkarten_status}
+              onStatusChange={(s) => updateFeatureStatus('sammelkarten_status', s)}
             />
-            <ToggleRow
+            <FeatureStatusToggle
               label="Trading Feature"
               description="Karten-Tausch zwischen Freunden"
               icon={<ArrowLeftRight className="w-4 h-4" />}
-              enabled={features?.is_trading_enabled}
-              onToggle={() => toggleFeature('is_trading_enabled')}
+              status={features?.trading_status}
+              onStatusChange={(s) => updateFeatureStatus('trading_status', s)}
             />
-            <ToggleRow
+            <FeatureStatusToggle
+              label="Kampf System"
+              description="Sammelkarten-Duelle gegen andere Schüler"
+              icon={<Swords className="w-4 h-4" />}
+              status={features?.combat_status}
+              onStatusChange={(s) => updateFeatureStatus('combat_status', s)}
+            />
+            <FeatureStatusToggle
               label="Shop & Stripe"
               description="Kauf von Boostern & Spenden"
               icon={<ShoppingBag className="w-4 h-4" />}
-              enabled={features?.is_shop_enabled}
-              onToggle={() => toggleFeature('is_shop_enabled')}
+              status={features?.shop_status}
+              onStatusChange={(s) => updateFeatureStatus('shop_status', s)}
             />
-            <ToggleRow
+            <FeatureStatusToggle
               label="News & Ankündigungen"
               description="News-Feed und Push-Benachrichtigungen"
               icon={<Megaphone className="w-4 h-4" />}
-              enabled={features?.is_news_enabled}
-              onToggle={() => toggleFeature('is_news_enabled')}
+              status={features?.news_status}
+              onStatusChange={(s) => updateFeatureStatus('news_status', s)}
             />
-            <ToggleRow
+            <FeatureStatusToggle
               label="Kalender & Events"
               description="Event-Planung und Termine"
               icon={<Calendar className="w-4 h-4" />}
-              enabled={features?.is_calendar_enabled}
-              onToggle={() => toggleFeature('is_calendar_enabled')}
+              status={features?.calendar_status}
+              onStatusChange={(s) => updateFeatureStatus('calendar_status', s)}
             />
-            <ToggleRow
+            <FeatureStatusToggle
               label="Todos & Aufgaben"
               description="Aufgabenverwaltung der Gruppen"
               icon={<CheckSquare className="w-4 h-4" />}
-              enabled={features?.is_todos_enabled}
-              onToggle={() => toggleFeature('is_todos_enabled')}
+              status={features?.todos_status}
+              onStatusChange={(s) => updateFeatureStatus('todos_status', s)}
             />
-            <div className="md:col-span-2 pt-4 border-t">
-              <ToggleRow
-                label="Wartungsmodus"
-                description="Sperrt den Zugriff für alle Nicht-Admins"
-                icon={<Lock className="w-4 h-4" />}
-                enabled={features?.maintenance_mode}
-                onToggle={() => toggleFeature('maintenance_mode')}
-                critical
-              />
+            <FeatureStatusToggle
+              label="Umfragen"
+              description="Jahrgangsweite Abstimmungen"
+              icon={<BarChart2 className="w-4 h-4" />}
+              status={features?.polls_status}
+              onStatusChange={(s) => updateFeatureStatus('polls_status', s)}
+            />
+            
+            <div className="md:col-span-2 pt-6 mt-4 border-t space-y-6">
+              <div className="flex items-center gap-2 mb-2">
+                <Construction className="w-5 h-5 text-amber-500" />
+                <h3 className="font-black uppercase tracking-tight text-sm">Wartungspause & Sperre</h3>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Beginn der Wartung</Label>
+                  <Input
+                    type="datetime-local"
+                    value={formatDateForInput(maintenance?.start)}
+                    className="h-9 text-xs"
+                    onChange={(e) => {
+                      const val = e.target.value ? new Date(e.target.value).toISOString() : null
+                      handleSaveMaintenance({ ...maintenance, start: val })
+                    }}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Voraussichtliches Ende</Label>
+                  <Input
+                    type="datetime-local"
+                    value={formatDateForInput(maintenance?.end)}
+                    className="h-9 text-xs"
+                    onChange={(e) => {
+                      const val = e.target.value ? new Date(e.target.value).toISOString() : null
+                      handleSaveMaintenance({ ...maintenance, end: val })
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Wartungsmeldung</Label>
+                <Textarea
+                  placeholder="Wir führen Wartungsarbeiten durch..."
+                  value={maintenance?.message || ''}
+                  className="min-h-[80px] text-xs"
+                  onChange={(e) => {
+                    // We don't want to save on every keystroke, but this is consistent with how it was in global-settings
+                    // For better UX we could add a save button just for the message or use a debounced save.
+                    setMaintenance({ ...maintenance, message: e.target.value })
+                  }}
+                  onBlur={(e) => handleSaveMaintenance({ ...maintenance, message: e.target.value })}
+                />
+              </div>
+
+              <div className={cn(
+                "flex items-center justify-between p-4 rounded-xl border transition-colors",
+                maintenance?.active ? "bg-red-500/5 border-red-500/20" : "bg-muted/30 border-transparent"
+              )}>
+                <div className="space-y-0.5">
+                  <p className={cn("text-xs font-black uppercase tracking-tight", maintenance?.active ? "text-red-500" : "")}>
+                    Sofortige Sperre
+                  </p>
+                  <p className="text-[10px] text-muted-foreground">Alle Nutzer außer Admins blockieren.</p>
+                </div>
+                <Button 
+                  size="sm"
+                  variant={maintenance?.active ? "destructive" : "outline"}
+                  className="h-8 text-[10px] font-black uppercase tracking-widest"
+                  disabled={savingMaintenance}
+                  onClick={() => handleSaveMaintenance({ ...maintenance, active: !maintenance?.active })}
+                >
+                  {maintenance?.active ? "Wartung beenden" : "Wartung starten"}
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>

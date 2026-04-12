@@ -1,4 +1,5 @@
 import { onCall, HttpsError } from "firebase-functions/v2/https";
+import { CALLABLE_CORS_ORIGINS } from "./constants/cors";
 import * as admin from "firebase-admin";
 import { getFirestore } from "firebase-admin/firestore";
 import { authenticator } from "otplib";
@@ -14,7 +15,7 @@ if (admin.apps.length === 0) {
  * Setup 2FA for any authenticated user.
  */
 export const setup2FA = onCall({
-  cors: true,
+  cors: CALLABLE_CORS_ORIGINS,
   region: "europe-west3",
 }, async (request) => {
   if (!request.auth) {
@@ -43,7 +44,7 @@ export const setup2FA = onCall({
  * Verify the initial 2FA code and save the secret.
  */
 export const verifyInitial2FA = onCall({
-  cors: true,
+  cors: CALLABLE_CORS_ORIGINS,
   region: "europe-west3",
 }, async (request) => {
   if (!request.auth) {
@@ -88,7 +89,7 @@ export const verifyInitial2FA = onCall({
  * Verify a 2FA code during login.
  */
 export const verifyLogin2FA = onCall({
-  cors: true,
+  cors: CALLABLE_CORS_ORIGINS,
   region: "europe-west3",
 }, async (request) => {
   if (!request.auth) {
@@ -139,7 +140,7 @@ export const verifyLogin2FA = onCall({
  * Disable 2FA for the current user.
  */
 export const disable2FA = onCall({
-  cors: true,
+  cors: CALLABLE_CORS_ORIGINS,
   region: "europe-west3",
 }, async (request) => {
   if (!request.auth) {

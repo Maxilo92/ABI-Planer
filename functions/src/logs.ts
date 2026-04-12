@@ -1,4 +1,5 @@
 import { onCall, HttpsError } from "firebase-functions/v2/https";
+import { CALLABLE_CORS_ORIGINS } from "./constants/cors";
 import * as admin from "firebase-admin";
 import { getFirestore } from "firebase-admin/firestore";
 
@@ -7,7 +8,7 @@ import { getFirestore } from "firebase-admin/firestore";
  */
 export const fixLogNames = onCall({
   region: "europe-west3",
-  cors: true,
+  cors: CALLABLE_CORS_ORIGINS,
   memory: "512MiB",
   timeoutSeconds: 300,
 }, async (request) => {

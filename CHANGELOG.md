@@ -8,6 +8,12 @@
 
 # Changelog
 
+## [1.10.20] - 2026-04-12
+
+### Fixed
+
+- **Combat Friend Avatar Typing:** Die Freundesliste im Kampf nutzt für das Profilbild jetzt einen defensiven Zugriff auf `photo_url`, damit der Next.js-TypeScript-Build nicht mehr an der Profilanzeige scheitert.
+
 ## [1.10.19] - 2026-04-12
 
 ### Fixed

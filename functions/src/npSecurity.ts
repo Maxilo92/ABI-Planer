@@ -18,7 +18,8 @@ export type NPTransactionType =
   | "admin_adjustment" 
   | "subscription_monthly_stipend"
   | "cosmetic_purchase"
-  | "chargeback_reversal";
+  | "chargeback_reversal"
+  | "combat_win";
 
 export interface NPTransaction {
   id: string;

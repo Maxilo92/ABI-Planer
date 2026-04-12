@@ -252,7 +252,7 @@ function SammelkartenContent() {
               setGameState={setGameState}
               timeLeft={timeLeft}
               allFlipped={allFlipped}
-              isTradingEnabled={isTradingEnabled}
+              isTradingEnabled={!!isTradingEnabled}
               getRandomOpenableBoosters={getRandomOpenableBoosters}
             />          </div>
         </div>

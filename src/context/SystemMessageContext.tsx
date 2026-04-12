@@ -114,6 +114,7 @@ export const SystemMessageProvider = ({ children }: { children: ReactNode }) => 
   // --- Global Listeners (Shared) ---
   useEffect(() => {
     if (loading || typeof window === 'undefined' || !db || !(db as any).app) return
+    const unsubscribers: (() => void)[] = []
     
     // A. Global Settings (Popups & Cookies)
     const globalDocRef = doc(db, 'settings', 'global')
@@ -121,7 +122,11 @@ export const SystemMessageProvider = ({ children }: { children: ReactNode }) => 
       if (!docSnap.exists()) return
       const settings = docSnap.data()
       
-      setMaintenance(settings.maintenance || null)
+      setMaintenance(prev => ({
+        ...(prev || {}),
+        ...settings.maintenance,
+        active: prev?.active ?? settings.maintenance?.active ?? false
+      }))
       
       const isAuthRoute = AUTH_ROUTES.includes(pathname)
 
@@ -209,8 +214,25 @@ export const SystemMessageProvider = ({ children }: { children: ReactNode }) => 
         }, 3000)
       }
     }, (err) => console.error('SystemMessage: Global Settings Snapshot failed:', err))
+    unsubscribers.push(unsubGlobal)
 
-    return () => unsubGlobal()
+    // B. Feature Toggles (Maintenance Mode Emergency)
+    const featuresDocRef = doc(db, 'settings', 'features')
+    const unsubFeatures = onSnapshot(featuresDocRef, (docSnap) => {
+      if (!docSnap.exists()) return
+      const data = docSnap.data()
+      const isMaintenanceActive = !!data.maintenance_mode
+
+      setMaintenance(prev => ({
+        active: isMaintenanceActive,
+        start: prev?.start || null,
+        end: prev?.end || null,
+        message: prev?.message || data.maintenance_message || 'Der ABI Planer befindet sich aktuell in Wartungsarbeiten.'
+      }))
+    })
+    unsubscribers.push(unsubFeatures)
+
+    return () => unsubscribers.forEach(unsub => unsub())
   }, [loading, pathname, pushMessage, dismissMessage])
 
   // --- User Specific Listeners ---

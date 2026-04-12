@@ -25,6 +25,7 @@ export interface CardData {
   hp?: number;
   attacks?: TeacherAttack[];
   level?: number;
+  count?: number;
 }
 
 export interface RarityWeights {

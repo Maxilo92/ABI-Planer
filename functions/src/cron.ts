@@ -1,5 +1,6 @@
 import { onSchedule } from "firebase-functions/v2/scheduler";
 import { onRequest } from "firebase-functions/v2/https";
+import { CALLABLE_CORS_ORIGINS } from "./constants/cors";
 import * as admin from "firebase-admin";
 import { getFirestore } from "firebase-admin/firestore";
 import { emptyAllAlbums } from "./actions/emptyAllAlbums";
@@ -266,7 +267,7 @@ export const syncPublicLandingStats = onSchedule("every 15 minutes", async () =>
 /**
  * Manual backfill endpoint for the public landing stats cache.
  */
-export const rebuildPublicLandingStats = onRequest({ cors: true }, async (_request, response) => {
+export const rebuildPublicLandingStats = onRequest({ cors: CALLABLE_CORS_ORIGINS }, async (_request, response) => {
   const db = getFirestore("abi-data");
 
   try {

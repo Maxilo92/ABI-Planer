@@ -1,5 +1,6 @@
 import * as admin from 'firebase-admin'
 import { onCall, HttpsError } from 'firebase-functions/v2/https'
+import { CALLABLE_CORS_ORIGINS } from "./constants/cors";
 import { getFirestore } from "firebase-admin/firestore"
 
 if (admin.apps.length === 0) {
@@ -16,7 +17,7 @@ interface UserTeacher {
 }
 
 export const runGlobalRaritySync = onCall({
-  cors: true,
+  cors: CALLABLE_CORS_ORIGINS,
   region: "europe-west3",
 }, async (request) => {
   if (!request.auth?.uid) {

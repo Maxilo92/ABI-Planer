@@ -1,4 +1,5 @@
 import { onCall, HttpsError } from "firebase-functions/v2/https";
+import { CALLABLE_CORS_ORIGINS } from "./constants/cors";
 import * as logger from "firebase-functions/logger";
 import { getFirestore, Timestamp, Query } from "firebase-admin/firestore";
 import { logNPTransaction, checkFraudPatterns, type NPTransaction } from "./npSecurity";
@@ -11,7 +12,7 @@ const db = getFirestore("abi-data");
  */
 export const adminReviewNPTransactions = onCall({
   region: "europe-west3",
-  cors: true,
+  cors: CALLABLE_CORS_ORIGINS,
 }, async (request) => {
   if (!request.auth) throw new HttpsError("unauthenticated", "Auth required.");
 
@@ -77,7 +78,7 @@ export const adminReviewNPTransactions = onCall({
  */
 export const adminAdjustNP = onCall({
   region: "europe-west3",
-  cors: true,
+  cors: CALLABLE_CORS_ORIGINS,
 }, async (request) => {
   if (!request.auth) throw new HttpsError("unauthenticated", "Auth required.");
 
@@ -170,7 +171,7 @@ export const adminAdjustNP = onCall({
  */
 export const adminGetNPMetrics = onCall({
   region: "europe-west3",
-  cors: true,
+  cors: CALLABLE_CORS_ORIGINS,
 }, async (request) => {
   if (!request.auth) throw new HttpsError("unauthenticated", "Auth required.");
 
@@ -265,7 +266,7 @@ export const adminGetNPMetrics = onCall({
  */
 export const adminExportNPTransactions = onCall({
   region: "europe-west3",
-  cors: true,
+  cors: CALLABLE_CORS_ORIGINS,
 }, async (request) => {
   if (!request.auth) throw new HttpsError("unauthenticated", "Auth required.");
 

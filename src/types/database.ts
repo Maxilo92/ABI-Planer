@@ -16,6 +16,7 @@ export interface PlanningGroup {
 export interface Profile {
   id: string;
   full_name: string | null;
+  photo_url: string | null;
   email: string;
   role: UserRole;
   planning_groups: string[];

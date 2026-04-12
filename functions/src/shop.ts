@@ -1,4 +1,5 @@
 import { onCall, HttpsError, onRequest } from "firebase-functions/v2/https";
+import { CALLABLE_CORS_ORIGINS } from "./constants/cors";
 import * as logger from "firebase-functions/logger";
 import { getFirestore, FieldValue, Timestamp } from "firebase-admin/firestore";
 import Stripe from "stripe";
@@ -176,18 +177,8 @@ const getCurrentBoosterDay = (config?: any): string => {
   return berlin.hour < resetHour ? addDaysToDayString(baseDay, -1) : baseDay;
 };
 
-const ALLOWED_ORIGINS = [
-  "https://abi-planer-27.de",
-  "https://dashboard.abi-planer-27.de",
-  "https://abi-planer-75319.web.app",
-  "https://abi-planer-75319.firebaseapp.com",
-  "http://localhost:3000",
-  "http://127.0.0.1:3000",
-  /\.localhost:3000$/,
-];
-
 export const createStripeCheckoutSession = onCall({
-  cors: ALLOWED_ORIGINS,
+  cors: CALLABLE_CORS_ORIGINS,
   maxInstances: 10,
   memory: "256MiB",
   region: "europe-west3",
@@ -213,7 +204,7 @@ export const createStripeCheckoutSession = onCall({
 });
 
 export const stripeWebhook = onRequest({
-  cors: true,
+  cors: CALLABLE_CORS_ORIGINS,
   region: "europe-west3",
   secrets: ["STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET"],
 }, async (req, res) => {
@@ -367,7 +358,7 @@ export const stripeWebhook = onRequest({
 });
 
 export const openBooster = onCall({
-  cors: ALLOWED_ORIGINS,
+  cors: CALLABLE_CORS_ORIGINS,
   maxInstances: 10,
   memory: "256MiB",
   region: "europe-west3",
@@ -501,7 +492,7 @@ export const openBooster = onCall({
   });
 });
 
-export const migrateBoosterStats = onCall({ cors: ALLOWED_ORIGINS, region: "europe-west3" }, async (request) => {
+export const migrateBoosterStats = onCall({ cors: CALLABLE_CORS_ORIGINS, region: "europe-west3" }, async (request) => {
   if (!request.auth?.uid) throw new HttpsError("unauthenticated", "Anmeldung erforderlich.");
   const db = getFirestore("abi-data");
   const profileRef = db.collection("profiles").doc(request.auth.uid);
@@ -522,7 +513,7 @@ export const migrateBoosterStats = onCall({ cors: ALLOWED_ORIGINS, region: "euro
   });
 });
 
-export const purchaseBoosters = onCall({ cors: ALLOWED_ORIGINS, region: "europe-west3" }, async (request) => {
+export const purchaseBoosters = onCall({ cors: CALLABLE_CORS_ORIGINS, region: "europe-west3" }, async (request) => {
   if (!request.auth?.uid) throw new HttpsError("unauthenticated", "Anmeldung erforderlich.");
   const { amount, itemId } = request.data;
   const db = getFirestore("abi-data");

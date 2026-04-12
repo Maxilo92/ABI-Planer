@@ -17,41 +17,39 @@ service cloud.firestore {
     function getProfile() {
       return get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data;
     }
+
+    function profileExists() {
+      return isAuthenticated() && exists(/databases/$(database)/documents/profiles/$(request.auth.uid));
+    }
     
     function isApproved() {
-      return isAuthenticated() && getProfile().is_approved == true;
+      return profileExists() && getProfile().get('is_approved', false) == true;
     }
 
     function isPlanner() {
-      return isAuthenticated() && (
-        getProfile().role == 'planner' ||
-        getProfile().role == 'admin' ||
-        getProfile().role == 'admin_main' ||
-        getProfile().role == 'admin_co'
+      return profileExists() && (
+        getProfile().get('role', 'none') in ['planner', 'admin', 'admin_main', 'admin_co']
       );
     }
 
     function isAdmin() {
-      return isAuthenticated() && (
-        getProfile().role == 'admin' ||
-        getProfile().role == 'admin_main' ||
-        getProfile().role == 'admin_co'
+      return profileExists() && (
+        getProfile().get('role', 'none') in ['admin', 'admin_main', 'admin_co']
       );
     }
 
     function isGroupLeader(groupName) {
-      return isAuthenticated() && groupName in getProfile().get('led_groups', []);
+      return profileExists() && groupName in getProfile().get('led_groups', []);
     }
 
     function isMainAdmin() {
-      return isAuthenticated() && (
-        getProfile().role == 'admin_main' ||
-        getProfile().role == 'admin'
+      return profileExists() && (
+        getProfile().get('role', 'none') in ['admin_main', 'admin']
       );
     }
 
     function isCoAdmin() {
-      return isAuthenticated() && getProfile().role == 'admin_co';
+      return profileExists() && getProfile().get('role', 'none') == 'admin_co';
     }
 
     match /profiles/{userId} {
@@ -356,6 +354,33 @@ service cloud.firestore {
         && request.resource.data.userId == resource.data.userId;
 
       allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+
+    match /matchmaking_queue/{userId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && request.auth.uid == userId;
+      allow update: if isAuthenticated() && request.auth.uid == userId;
+      allow delete: if isAuthenticated() && request.auth.uid == userId;
+    }
+
+    match /matches/{matchId} {
+      allow read: if isAuthenticated() && (
+        request.auth.uid == resource.data.playerA_uid ||
+        request.auth.uid == resource.data.playerB_uid ||
+        request.auth.uid == resource.data.playerA.uid ||
+        request.auth.uid == resource.data.playerB.uid
+      );
+      allow create, update, delete: if isServiceAccount();
+    }
+
+    match /combat_events/{eventId} {
+      allow read: if isAuthenticated();
+      allow write: if isPlanner();
+    }
+
+    match /combat_stats/{userId} {
+      allow read: if isAuthenticated() || isServiceAccount();
+      allow write: if isServiceAccount();
     }
     
     match /feedback/{feedbackId} {

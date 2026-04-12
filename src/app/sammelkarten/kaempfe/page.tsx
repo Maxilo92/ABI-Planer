@@ -732,10 +732,11 @@ export default function KaempfePage() {
                     const friendId = f.members.find(m => m !== user?.uid)
                     const p = friendId ? relatedProfiles[friendId] : null
                     if (!p) return null
+                    const avatarUrl = (p as { photo_url?: string | null }).photo_url ?? null
                     return (
                       <button key={f.id} disabled={!selectedDeckId || isFriendLoading} onClick={() => { handleCreateFriendMatch(friendId!); setShowFriendModal(false); setCurrentStep(3); }} className="w-full p-5 rounded-[2rem] bg-muted/30 border border-border hover:border-primary hover:bg-muted/50 transition-all flex items-center justify-between group">
                         <div className="flex items-center gap-4 text-left">
-                          <div className="h-14 w-14 rounded-full bg-background overflow-hidden border-2 border-border">{p.photo_url ? <img src={p.photo_url} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center font-black text-xl">{p.full_name?.[0]}</div>}</div>
+                          <div className="h-14 w-14 rounded-full bg-background overflow-hidden border-2 border-border">{avatarUrl ? <img src={avatarUrl} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center font-black text-xl">{p.full_name?.[0]}</div>}</div>
                           <div><div className="font-black uppercase text-lg leading-tight tracking-tighter">{p.full_name}</div><div className="text-[9px] font-black uppercase text-success tracking-widest flex items-center gap-1.5"><div className="h-1.5 w-1.5 rounded-full bg-success animate-pulse" />Bereit</div></div>
                         </div>
                         <Swords className="h-6 w-6 text-muted-foreground/30 group-hover:text-primary transition-all group-hover:rotate-12" />

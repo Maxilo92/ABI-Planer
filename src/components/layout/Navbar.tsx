@@ -162,6 +162,7 @@ export function Navbar() {
     }
 
     sammelkartenSubItems.push({ href: '/sammelkarten/kaempfe', label: 'Kämpfe', icon: Swords, isBeta: true })
+    sammelkartenSubItems.push({ href: '/sammelkarten/kaempfe/log', label: 'Kampflog', icon: FileText })
 
     navItems.push({
       href: '/sammelkarten-root',
