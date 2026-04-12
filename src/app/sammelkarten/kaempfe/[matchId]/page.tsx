@@ -1,0 +1,75 @@
+'use client'
+
+import React, { useEffect, useState } from 'react'
+import { useParams, useRouter } from 'next/navigation'
+import { useSammelkartenConfig } from '@/app/sammelkarten/_modules/hooks/useSammelkartenConfig'
+import { Loader2 } from 'lucide-react'
+import { useAuth } from '@/context/AuthContext'
+import { db } from '@/lib/firebase'
+import { doc, onSnapshot } from 'firebase/firestore'
+import { GameBoard } from '@/components/combat/GameBoard'
+
+export default function MatchPage() {
+  const { matchId } = useParams()
+  const router = useRouter()
+  const { isCombatEnabled, loading: configLoading } = useSammelkartenConfig()
+  const { user, profile, loading: authLoading } = useAuth()
+  const isAdmin = ['admin', 'admin_main', 'admin_co'].includes(profile?.role || '')
+
+  const [matchData, setMatchData] = useState<any>(null)
+  const [loadingMatch, setLoadingMatch] = useState(true)
+
+  useEffect(() => {
+    if (configLoading || authLoading) return
+    if (isCombatEnabled === false && !isAdmin) {
+      router.replace('/sammelkarten')
+    }
+  }, [isCombatEnabled, configLoading, authLoading, isAdmin, router])
+
+  // Fetch Match Data from Firestore - This is our Single Source of Truth
+  useEffect(() => {
+    if (!matchId || typeof matchId !== 'string' || authLoading) return
+
+    const unsubMatch = onSnapshot(doc(db, 'matches', matchId), (snap) => {
+      if (snap.exists()) {
+        setMatchData(snap.data())
+        setLoadingMatch(false)
+      } else {
+        // Handle match not found (e.g. invalid ID)
+        if (!loadingMatch) router.replace('/sammelkarten/kaempfe')
+      }
+    }, (error) => {
+      console.error("Error listening to match:", error)
+    })
+
+    return () => unsubMatch()
+  }, [matchId, authLoading])
+
+  if (configLoading || authLoading || loadingMatch) {
+    return (
+      <div className="h-screen bg-background flex flex-col items-center justify-center text-foreground p-6">
+        <div className="space-y-6 flex flex-col items-center">
+          <div className="h-20 w-20 bg-brand/10 rounded-3xl flex items-center justify-center border border-brand/20 shadow-2xl">
+            <Loader2 className="h-10 w-10 text-brand animate-spin" />
+          </div>
+          <h1 className="text-3xl font-black italic uppercase tracking-tighter text-center">Kampf wird geladen...</h1>
+          <p className="text-muted-foreground font-medium animate-pulse">Synchronisierung mit Server</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (isCombatEnabled === false && !isAdmin) {
+    return null
+  }
+
+  return (
+    <div className="w-full h-[calc(100vh-12rem)] min-h-[600px] xl:h-[calc(100vh-11rem)] 2xl:h-[calc(100vh-10rem)]">
+      <GameBoard 
+        matchData={matchData} 
+        currentUserId={user?.uid || ''}
+        onExit={() => router.push('/sammelkarten/kaempfe')}
+      />
+    </div>
+  )
+}
