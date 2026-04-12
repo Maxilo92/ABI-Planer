@@ -16,6 +16,7 @@
 - **Combat Visibility:** Die aktuelle Attacke und ihr Schaden werden in der zentralen Kampfansage für beide Seiten klarer angezeigt.
 - **Deck Persistenz:** Die gewählte Deck-ID bleibt jetzt pro Nutzer auch nach Reload als Standard erhalten.
 - **Cleanup Fallback:** `endMyOpenMatches` fällt in Dev nach einem Proxy-Fehler wieder auf die Callable-Variante zurück.
+- **Combat Match Page Typing:** `useSammelkartenConfig` gibt den Combat-Feature-Schalter jetzt explizit typisiert zurück, damit die Match-Seite sauber durch den TypeScript-Build kommt.
 
 ## [1.10.18] - 2026-04-12
 ### Changed

@@ -2,12 +2,22 @@ import { useEffect, useState } from 'react'
 import { doc, onSnapshot } from 'firebase/firestore'
 import { SammelkartenConfig } from '@/types/cards'
 import { db } from '@/lib/firebase'
+import { useAuth } from '@/context/AuthContext'
 import {
   DEFAULT_GODPACK_WEIGHTS,
   DEFAULT_RARITY_WEIGHTS,
   DEFAULT_VARIANTS_PROBABILITIES
 } from '../constants'
 import { CARD_SETS } from '@/constants/cardRegistry'
+
+type SammelkartenConfigState = {
+  config: SammelkartenConfig | null
+  isTradingEnabled: boolean | null
+  isCombatEnabled: boolean | null
+  isSammelkartenEnabled: boolean | null
+  loading: boolean
+  timeLeft: string
+}
 
 function getTimeLeftString(resetHour: number) {
   const now = new Date()
@@ -30,17 +40,40 @@ function getTimeLeftString(resetHour: number) {
   return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
 }
 
-export function useSammelkartenConfig() {
+export function useSammelkartenConfig(): SammelkartenConfigState {
+  const { profile } = useAuth()
+  const isAdmin = ['admin', 'admin_main', 'admin_co'].includes(profile?.role || '')
   const [config, setConfig] = useState<SammelkartenConfig | null>(null)
-  const [isTradingEnabled, setIsTradingEnabled] = useState(false)
+  const [isTradingEnabled, setIsTradingEnabled] = useState<boolean | null>(null)
+  const [isCombatEnabled, setIsCombatEnabled] = useState<boolean | null>(null)
+  const [isSammelkartenEnabled, setIsSammelkartenEnabled] = useState<boolean | null>(null)
+  const [loading, setLoading] = useState(true)
   const [timeLeft, setTimeLeft] = useState('')
 
   useEffect(() => {
     const unsub = onSnapshot(doc(db, 'settings', 'features'), (snap) => {
-      if (snap.exists()) setIsTradingEnabled(!!snap.data().is_trading_enabled)
+      if (snap.exists()) {
+        const data = snap.data()
+        
+        const check = (statusKey: string, legacyKey: string) => {
+          const status = data[statusKey]
+          if (status === 'enabled') return true
+          if (status === 'admins_only') return isAdmin
+          if (status === 'disabled') return false
+          return data[legacyKey] !== false
+        }
+
+        setIsTradingEnabled(check('trading_status', 'is_trading_enabled'))
+        setIsCombatEnabled(check('combat_status', 'is_combat_enabled'))
+        setIsSammelkartenEnabled(check('sammelkarten_status', 'is_sammelkarten_enabled'))
+        setLoading(false)
+      }
+    }, (error) => {
+      console.error('useSammelkartenConfig: Error listening to features settings:', error)
+      setLoading(false)
     })
     return () => unsub()
-  }, [])
+  }, [isAdmin])
 
   useEffect(() => {
     let unsubGlobal: (() => void) | null = null
@@ -90,6 +123,9 @@ export function useSammelkartenConfig() {
   return {
     config,
     isTradingEnabled,
+    isCombatEnabled,
+    isSammelkartenEnabled,
+    loading,
     timeLeft
   }
 }
