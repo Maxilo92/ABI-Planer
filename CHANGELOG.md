@@ -8,6 +8,28 @@
 
 # Changelog
 
+## [1.11.4] - 2026-04-13
+
+### Fixed
+- **Feedback:** Kritischen Fehler behoben, bei dem die Toggles für Anonymität und Privatsphäre keine Auswirkung hatten. 
+  - Privatsphäre-Einstellungen werden nun sowohl serverseitig (Firestore Rules) als auch clientseitig zuverlässig erzwungen.
+  - Planer sehen private/anonyme Einträge weiterhin, jedoch mit klaren visuellen Indikatoren, um Verwechslungen mit der öffentlichen Ansicht zu vermeiden.
+  - Altdaten ohne Privatsphäre-Felder werden nun standardmäßig als öffentlich behandelt (Korrektur der Firestore-Regeln).
+  - Fehlerhafte Bild-Referenzen zwischen `AddFeedbackDialog` und `FeedbackPage` vereinheitlicht (`image_url`).
+  - Fehlender `updateDoc` Import im `AddFeedbackDialog` behoben.
+  - Unterstützung für die automatische Migration von Altdaten bei der KI-Analyse im Admin-Bereich hinzugefügt.
+
+## [1.11.3] - 2026-04-13
+
+### Fixed
+- **Hilfe:** Namensextraktion aus der E-Mail für Lehrer-Sammelkarten-Vorschläge verbessert. Die Sortierung erfolgt nun nach "Longest Match", um die betroffenen Lehrer bei Beschwerden zuverlässiger an die oberste Stelle zu setzen.
+
+## [1.11.2] - 2026-04-13
+
+### Added
+- **Hilfe:** Untermenü "Lehrer-Beschwerden" hinzugefügt. Lehrer können nun nach E-Mail-Verifizierung Korrekturwünsche oder Löschanträge für ihre Sammelkarten mit höchster Priorität an die Administratoren senden.
+- **Admin:** Feedback-Verwaltung um einen speziellen "Lehrer-Anfrage" Badge und Unterstützung für den Typ "Beschwerde" erweitert.
+
 ## [1.11.1] - 2026-04-13
 
 ### Added

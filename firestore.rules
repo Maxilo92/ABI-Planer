@@ -384,7 +384,7 @@ service cloud.firestore {
     }
     
     match /feedback/{feedbackId} {
-      allow read: if isPlanner() || (isAuthenticated() && resource.data.created_by == request.auth.uid) || (isApproved() && resource.data.is_private == false);
+      allow read: if isPlanner() || (isAuthenticated() && resource.data.created_by == request.auth.uid) || (isApproved() && resource.data.get('is_private', false) == false);
         allow create: if isApproved();
         allow update, delete: if isAdmin();
     }

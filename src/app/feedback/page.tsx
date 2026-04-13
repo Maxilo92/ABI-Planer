@@ -302,9 +302,18 @@ export default function FeedbackPage() {
     return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
   })
 
+  // Robust filtering for display
   const filteredItems = sortedItems.filter(item => {
+    // Admins/Planners see everything that is fetched, but we badge it clearly.
     if (canViewAllFeedback) return true
-    return !item.is_private || item.created_by === user?.uid
+    
+    // Normal users see:
+    // 1. Their own feedback
+    // 2. Public feedback (is_private explicitly false OR missing)
+    if (item.created_by === user?.uid) return true
+    
+    const isPrivate = item.is_private === true // Treats undefined/null as false
+    return !isPrivate
   })
 
   return (
@@ -536,60 +545,79 @@ export default function FeedbackPage() {
           <p className="text-muted-foreground italic">Noch keine öffentlichen Meldungen vorhanden.</p>
         ) : (
           <div className="grid grid-cols-1 gap-4">
-            {filteredItems.map((item) => (
-              <Card key={item.id} className="overflow-hidden">
-                <CardHeader className="pb-3">
-                  <div className="flex justify-between items-start">
-                    <div className="flex items-center gap-2">
-                      {getIcon(item.type)}
-                      <CardTitle className="text-lg">{item.title}</CardTitle>
+            {filteredItems.map((item) => {
+              const isItemPrivate = item.is_private === true
+              const isItemAnonymous = item.is_anonymous === true
+              const isOwnItem = item.created_by === user?.uid
+
+              return (
+                <Card key={item.id} className={cn(
+                  "overflow-hidden transition-all",
+                  isItemPrivate && "border-l-4 border-l-warning"
+                )}>
+                  <CardHeader className="pb-3">
+                    <div className="flex justify-between items-start">
+                      <div className="flex items-center gap-2">
+                        {getIcon(item.type)}
+                        <CardTitle className="text-lg">{item.title}</CardTitle>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {canViewAllFeedback && item.category && (
+                          <Badge variant="outline" className="border-primary/30 bg-primary/5 text-primary text-[10px]">
+                            {item.category}
+                          </Badge>
+                        )}
+                        {canViewAllFeedback && item.importance && (
+                          <Badge 
+                            variant="outline" 
+                            className={cn(
+                              "text-[10px]",
+                              item.importance >= 8 ? "border-destructive/40 bg-destructive/10 text-destructive" :
+                              item.importance >= 5 ? "border-amber-500/40 bg-amber-500/10 text-amber-600" :
+                              "border-success/40 bg-success/10 text-success"
+                            )}
+                          >
+                            Prio {item.importance}
+                          </Badge>
+                        )}
+                        {getStatusBadge(item.status)}
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      {canViewAllFeedback && item.category && (
-                        <Badge variant="outline" className="border-primary/30 bg-primary/5 text-primary text-[10px]">
-                          {item.category}
+                    <CardDescription className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                      <span>
+                        {(isItemAnonymous && !canViewAllFeedback) ? 'Anonym' : (item.created_by_name || 'Unbekannt')}
+                      </span>
+                      <span>•</span>
+                      <span>{toDate(item.created_at).toLocaleDateString('de-DE')}</span>
+                      
+                      {isItemAnonymous && canViewAllFeedback && (
+                        <Badge variant="outline" className="text-[10px] h-4 px-1">Anonym</Badge>
+                      )}
+                      {isItemPrivate && (
+                        <Badge variant="outline" className="text-[10px] h-4 px-1 border-warning/50 text-warning bg-warning/5">
+                          {canViewAllFeedback ? 'Privat' : 'Nur für dich sichtbar'}
                         </Badge>
                       )}
-                      {canViewAllFeedback && item.importance && (
-                        <Badge 
-                          variant="outline" 
-                          className={cn(
-                            "text-[10px]",
-                            item.importance >= 8 ? "border-destructive/40 bg-destructive/10 text-destructive" :
-                            item.importance >= 5 ? "border-amber-500/40 bg-amber-500/10 text-amber-600" :
-                            "border-success/40 bg-success/10 text-success"
-                          )}
-                        >
-                          Prio {item.importance}
-                        </Badge>
+                      {isOwnItem && (
+                        <Badge variant="outline" className="text-[10px] h-4 px-1 border-primary/50 text-primary bg-primary/5">Eigenes</Badge>
                       )}
-                      {getStatusBadge(item.status)}
-                    </div>
-                  </div>
-                  <CardDescription>
-                    {(item.is_anonymous && !canViewAllFeedback) ? 'Anonym' : (item.created_by_name || 'Unbekannt')} • {toDate(item.created_at).toLocaleDateString('de-DE')}
-                    {canViewAllFeedback && item.is_anonymous && (
-                      <Badge variant="outline" className="ml-2 text-[10px] h-4 px-1">Anonym</Badge>
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <p className="text-sm text-muted-foreground whitespace-pre-wrap">{item.description}</p>
+                    {(item.image_url || (item as any).image?.url) && (
+                      <div className="mt-2">
+                        <img 
+                          src={item.image_url || (item as any).image?.url} 
+                          alt={item.title} 
+                          className="rounded-md border max-h-64 object-contain bg-muted/20"
+                        />
+                      </div>
                     )}
-                    {canViewAllFeedback && item.is_private && (
-                      <Badge variant="outline" className="ml-2 text-[10px] h-4 px-1 border-warning/50 text-warning">Privat</Badge>
-                    )}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <p className="text-sm text-muted-foreground whitespace-pre-wrap">{item.description}</p>
-                  {item.image_url && (
-                    <div className="mt-2">
-                      <img 
-                        src={item.image_url} 
-                        alt={item.title} 
-                        className="rounded-md border max-h-64 object-contain bg-muted/20"
-                      />
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
+                  </CardContent>
+                </Card>
+              )
+            })}
           </div>
         )}
       </div>

@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react'
 import { db } from '@/lib/firebase'
-import { collection, addDoc } from 'firebase/firestore'
+import { collection, addDoc, doc, updateDoc } from 'firebase/firestore'
 import { useAuth } from '@/context/AuthContext'
 import { 
   Dialog, 
@@ -131,7 +131,7 @@ function FeedbackForm({ onSuccess }: { onSuccess: () => void }) {
         created_by_name: profile?.full_name || user.displayName || 'Unbekannt',
         is_anonymous: isAnonymous,
         is_private: isPrivate,
-        image: uploadedImage.current || null,
+        image_url: uploadedImage.current?.url || null,
       }
       
       const docRef = await addDoc(collection(db, 'feedback'), feedbackData)

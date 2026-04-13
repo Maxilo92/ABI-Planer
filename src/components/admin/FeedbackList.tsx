@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input'
 import { doc, updateDoc, deleteDoc } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import { toast } from 'sonner'
-import { Trash2, Bug, Lightbulb, HelpCircle, ChevronsRight, CheckCircle, XCircle, Download, Sparkles, TrendingUp } from 'lucide-react'
+import { Trash2, Bug, Lightbulb, HelpCircle, ChevronsRight, CheckCircle, XCircle, Download, Sparkles, TrendingUp, ShieldAlert, UserCheck } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { logAction } from '@/lib/logging'
 import { Feedback, FeedbackType, FeedbackStatus } from '@/types/database'
@@ -75,7 +75,10 @@ export function FeedbackList({ feedbackItems }: FeedbackListProps) {
           const docRef = doc(db, 'feedback', item.id)
           await updateDoc(docRef, {
             category: data.category,
-            importance: data.importance
+            importance: data.importance,
+            // Migrate old data if fields are missing
+            is_private: item.is_private ?? false,
+            is_anonymous: item.is_anonymous ?? false
           })
         } else {
           errors++
@@ -109,6 +112,7 @@ export function FeedbackList({ feedbackItems }: FeedbackListProps) {
   const getIcon = (type: string) => {
     if (type === 'bug') return <Bug className="h-4 w-4 text-destructive" />
     if (type === 'feature') return <Lightbulb className="h-4 w-4 text-info" />
+    if (type === 'complaint') return <ShieldAlert className="h-4 w-4 text-destructive" />
     return <HelpCircle className="h-4 w-4 text-muted-foreground" />
   }
 
@@ -284,6 +288,7 @@ export function FeedbackList({ feedbackItems }: FeedbackListProps) {
               <option value="all">Alle Typen</option>
               <option value="bug">Bug</option>
               <option value="feature">Feature</option>
+              <option value="complaint">Beschwerde</option>
               <option value="other">Sonstiges</option>
             </select>
 
@@ -371,6 +376,16 @@ export function FeedbackList({ feedbackItems }: FeedbackListProps) {
                     <CardTitle className="text-lg">{item.title}</CardTitle>
                   </div>
                   <div className="flex flex-wrap items-center gap-2 mt-1">
+                    {item.is_teacher_request && (
+                      <Badge variant="outline" className="border-destructive/40 bg-destructive/10 text-destructive text-[10px] py-0 h-5 flex items-center gap-1">
+                        <UserCheck className="h-2.5 w-2.5" /> Lehrer-Anfrage
+                      </Badge>
+                    )}
+                    {item.teacher_card_name && (
+                      <Badge variant="outline" className="border-muted-foreground/30 bg-muted/5 text-muted-foreground text-[10px] py-0 h-5 flex items-center gap-1">
+                        Karte: {item.teacher_card_name}
+                      </Badge>
+                    )}
                     {item.category && (
                       <Badge variant="outline" className="border-primary/30 bg-primary/5 text-primary text-[10px] py-0 h-5 flex items-center gap-1">
                         <Sparkles className="h-2.5 w-2.5" /> {item.category}
@@ -404,11 +419,11 @@ export function FeedbackList({ feedbackItems }: FeedbackListProps) {
             <CardContent>
               <div className="space-y-4">
                 <p className="text-sm whitespace-pre-wrap">{item.description}</p>
-                {item.image_url && (
+                {(item.image_url || (item as any).image?.url) && (
                   <div className="mt-2">
-                    <a href={item.image_url} target="_blank" rel="noopener noreferrer" className="inline-block">
+                    <a href={item.image_url || (item as any).image?.url} target="_blank" rel="noopener noreferrer" className="inline-block">
                       <img 
-                        src={item.image_url} 
+                        src={item.image_url || (item as any).image?.url} 
                         alt={item.title} 
                         className="rounded-md border max-h-48 object-contain bg-muted/20 hover:opacity-90 transition-opacity"
                       />
