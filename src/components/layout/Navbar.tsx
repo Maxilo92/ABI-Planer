@@ -9,10 +9,11 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { db, getFirebaseAuth } from '@/lib/firebase'
 import { signOut } from 'firebase/auth'
-import { onSnapshot, doc, getDoc } from 'firebase/firestore'
+import { doc, getDoc } from 'firebase/firestore'
 import { useRouter, usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/context/AuthContext'
+import { useSystemFeatures } from '@/hooks/useSystemFeatures'
 import { CountdownHeader } from './CountdownHeader'
 import { useNotifications } from '@/hooks/useNotifications'
 import Logo from '@/components/Logo'
@@ -99,14 +100,7 @@ export function Navbar() {
 
   const isAdmin = profile?.role === 'admin_main' || profile?.role === 'admin_co' || profile?.role === 'admin'
 
-  const [isTradingEnabled, setIsTradingEnabled] = useState(false)
-
-  useEffect(() => {
-    const unsub = onSnapshot(doc(db, 'settings', 'features'), (snap) => {
-      if (snap.exists()) setIsTradingEnabled(!!snap.data().is_trading_enabled)
-    })
-    return () => unsub()
-  }, [])
+  const { isEnabled } = useSystemFeatures()
 
   const navItems: NavItem[] = [
     {
@@ -115,8 +109,8 @@ export function Navbar() {
       icon: LayoutDashboard,
       subItems: [
         { href: '/', label: 'Dashboard', icon: LayoutDashboard },
-        { href: '/news', label: 'News', icon: Megaphone, notify: notifications.news },
-        ...(profile ? [
+        ...(isEnabled('news_status') ? [{ href: '/news', label: 'News', icon: Megaphone, notify: notifications.news }] : []),
+        ...(profile && isEnabled('polls_status') ? [
           { href: '/abstimmungen', label: 'Umfragen', icon: BarChart2, notify: notifications.umfragen }
         ] : []),
       ],
@@ -128,8 +122,8 @@ export function Navbar() {
         icon: Calendar,
         notify: notifications.gruppen,
         subItems: [
-          { href: '/kalender', label: 'Kalender', icon: Calendar, notify: notifications.kalender },
-          { href: '/todos', label: 'Todos', icon: CheckSquare, notify: notifications.todos },
+          ...(isEnabled('calendar_status') ? [{ href: '/kalender', label: 'Kalender', icon: Calendar, notify: notifications.kalender }] : []),
+          ...(isEnabled('todos_status') ? [{ href: '/todos', label: 'Todos', icon: CheckSquare, notify: notifications.todos }] : []),
           { href: '/gruppen', label: 'Gruppen', icon: Users, notify: notifications.gruppen },
         ],
       }
@@ -140,7 +134,7 @@ export function Navbar() {
       icon: Euro,
       subItems: [
         { href: '/finanzen', label: 'Kassenstand', icon: Euro },
-        { href: '/shop', label: 'Shop', icon: ShoppingBag },
+        ...(isEnabled('shop_status') ? [{ href: '/shop', label: 'Shop', icon: ShoppingBag }] : []),
       ],
     },
     /* {
@@ -150,19 +144,21 @@ export function Navbar() {
     }, */
   ]
 
-  if (profile) {
+  if (profile && isEnabled('sammelkarten_status')) {
     const sammelkartenSubItems: NavItem[] = [
       { href: '/sammelkarten?view=sammelkarten', label: 'Booster öffnen', icon: Gift },
       { href: '/sammelkarten?view=album', label: 'Lehrer-Album', icon: Trophy },
       { href: '/sammelkarten?view=decks', label: 'Meine Decks', icon: LayoutDashboard },
     ]
 
-    if (isTradingEnabled) {
+    if (isEnabled('trading_status')) {
       sammelkartenSubItems.push({ href: '/sammelkarten/tausch', label: 'Tausch-Zentrum', icon: ArrowLeftRight, notify: notifications.karten })
     }
 
-    sammelkartenSubItems.push({ href: '/sammelkarten/kaempfe', label: 'Kämpfe', icon: Swords, isBeta: true })
-    sammelkartenSubItems.push({ href: '/sammelkarten/kaempfe/log', label: 'Kampflog', icon: FileText })
+    if (isEnabled('combat_status')) {
+      sammelkartenSubItems.push({ href: '/sammelkarten/kaempfe', label: 'Kämpfe', icon: Swords, isBeta: true })
+      sammelkartenSubItems.push({ href: '/sammelkarten/kaempfe/log', label: 'Kampflog', icon: FileText })
+    }
 
     navItems.push({
       href: '/sammelkarten-root',
