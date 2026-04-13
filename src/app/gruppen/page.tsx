@@ -5,7 +5,7 @@ import { db } from '@/lib/firebase'
 import { collection, doc, onSnapshot, query, updateDoc, where } from 'firebase/firestore'
 import { useAuth } from '@/context/AuthContext'
 import { GroupMessage, PlanningGroup, Profile, Settings } from '@/types/database'
-import { Loader2, Plus, Users } from 'lucide-react'
+import { type LucideIcon, Loader2, Plus, Users, Globe, Inbox, Hash, ClipboardList, Shield, Bot, ArrowLeft } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ProtectedSystemGate } from '@/components/ui/ProtectedSystemGate'
 import { cn, getOnlineStatus, toDate } from '@/lib/utils'
@@ -16,6 +16,8 @@ import { format } from 'date-fns'
 import { de } from 'date-fns/locale'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Card } from '@/components/ui/card'
 import { useGroupJoin } from '@/hooks/useGroupJoin'
 
 type ChatItem = {
@@ -43,6 +45,16 @@ function getChatPreview(message: GroupMessage | null): string {
 
 function getChatInitial(label: string): string {
   return (label || '?').trim().charAt(0).toUpperCase() || '?'
+}
+
+function getChatIcon(chat: ChatItem): { icon: LucideIcon; bg: string; text: string } {
+  if (chat.isAbiBot)              return { icon: Bot,           bg: 'bg-primary/15',                             text: 'text-primary' }
+  if (chat.type === 'hub')        return { icon: Globe,         bg: 'bg-primary/15',                             text: 'text-primary' }
+  if (chat.id === 'system')       return { icon: Inbox,         bg: 'bg-muted',                                  text: 'text-muted-foreground' }
+  if (chat.id === 'role:viewer')  return { icon: Users,         bg: 'bg-blue-100 dark:bg-blue-900/30',           text: 'text-blue-600 dark:text-blue-400' }
+  if (chat.id === 'role:planner') return { icon: ClipboardList, bg: 'bg-amber-100 dark:bg-amber-900/30',         text: 'text-amber-600 dark:text-amber-400' }
+  if (chat.id === 'role:admin')   return { icon: Shield,        bg: 'bg-red-100 dark:bg-red-900/30',             text: 'text-red-600 dark:text-red-400' }
+  return { icon: Hash, bg: 'bg-secondary', text: 'text-secondary-foreground' }
 }
 
 function GroupsPageContent() {
@@ -356,7 +368,12 @@ function GroupsPageContent() {
       .filter((groupName): groupName is string => !!groupName && !own.has(groupName))
   }, [planningGroups, profile?.planning_groups])
 
-  const canCreateGroup = profile?.role === 'planner' || profile?.role === 'admin' || profile?.role === 'admin_main' || profile?.role === 'admin_co'
+  const canCreateGroup = profile?.role === 'admin' || profile?.role === 'admin_main' || profile?.role === 'admin_co'
+
+  const groupedChats = useMemo(() => ({
+    systemAndRole: chats.filter((c) => c.type === 'hub' || c.type === 'role' || c.id === 'system' || c.isAbiBot),
+    internal: chats.filter((c) => c.type === 'internal'),
+  }), [chats])
 
   const onlineCountByChatId = useMemo(() => {
     const counts = new Map<string, number>()
@@ -423,116 +440,158 @@ function GroupsPageContent() {
 
   return (
     <div className="flex flex-col gap-6 pb-20">
-      <div className={cn("space-y-3", isMobileChatOpen && "hidden lg:block")}>
-        <h1 className="text-3xl md:text-5xl font-black tracking-tight">Gruppen</h1>
+      <div className={cn("space-y-1", isMobileChatOpen && "hidden lg:block")}>
+        <h1 className="text-2xl md:text-4xl font-black tracking-tight">Gruppen</h1>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6">
-        <aside className={cn(
-          "lg:col-span-4 border-r border-border/70 pr-0 lg:pr-4",
-          isMobileChatOpen && "hidden lg:block"
-        )}>
-          <div className="pb-3 space-y-3">
-            <p className="text-xs uppercase tracking-widest text-muted-foreground font-black">Chats</p>
-
-            <div className="flex flex-wrap items-center gap-2">
-              <select
-                className="flex-1 min-w-[150px] h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm"
-                value={selectedJoinGroup}
-                onChange={(e) => setSelectedJoinGroup(e.target.value)}
-                disabled={joinableGroups.length === 0 || isJoining}
-              >
-                <option value="">Beitreten...</option>
-                {joinableGroups.map((groupName) => (
-                  <option key={groupName} value={groupName}>{groupName}</option>
-                ))}
-              </select>
-
-              <Button
-                size="sm"
-                variant="outline"
-                className="h-9 px-3"
-                disabled={!selectedJoinGroup || isJoining}
-                onClick={async () => {
-                  if (!selectedJoinGroup) return
-                  const joined = await joinGroup(selectedJoinGroup)
-                  if (joined) {
-                    setActiveChatId(`group:${selectedJoinGroup}`)
-                    setIsMobileChatOpen(true)
-                    setSelectedJoinGroup('')
-                  }
-                }}
-              >
-                Go
-              </Button>
-
-              <Button
-                size="sm"
-                className="h-9"
-                render={<Link href="/einstellungen#planungsgruppen" />}
-                disabled={!canCreateGroup}
-                title={canCreateGroup ? 'Planungsgruppe erstellen' : 'Nur Planer/Admins können Gruppen erstellen'}
-              >
-                <Plus className="h-4 w-4 mr-1" /> Erstellen
-              </Button>
+        <aside className={cn("lg:col-span-4 xl:col-span-3", isMobileChatOpen && "hidden lg:block")}>
+          <Card className="rounded-2xl border border-border/50 shadow-xl bg-background/60 backdrop-blur-xl overflow-hidden gap-0 py-0">
+            {/* Beitreten + Erstellen */}
+            <div className="px-4 pt-4 pb-3 border-b border-border/50">
+              <div className="flex flex-wrap items-center gap-2">
+                <Select value={selectedJoinGroup} onValueChange={(v) => setSelectedJoinGroup(v ?? '')}>
+                  <SelectTrigger className="flex-1 min-w-[120px] h-9 rounded-lg text-xs md:text-sm">
+                    <SelectValue placeholder="Wählen..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {joinableGroups.map((name) => (
+                      <SelectItem key={name} value={name}>{name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-9 px-3 font-black text-[10px] uppercase tracking-wider"
+                    disabled={!selectedJoinGroup || isJoining || joinableGroups.length === 0}
+                    onClick={async () => {
+                      if (!selectedJoinGroup) return
+                      const joined = await joinGroup(selectedJoinGroup)
+                      if (joined) {
+                        setActiveChatId(`group:${selectedJoinGroup}`)
+                        setIsMobileChatOpen(true)
+                        setSelectedJoinGroup('')
+                      }
+                    }}
+                  >
+                    {isJoining ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : 'Beitreten'}
+                  </Button>
+                  <Button
+                    size="sm"
+                    className="h-9 w-9 p-0 shrink-0"
+                    render={<Link href="/admin/global-settings#planungsgruppen" />}
+                    disabled={!canCreateGroup}
+                    title={canCreateGroup ? 'Planungsgruppe erstellen' : 'Nur Admins können Gruppen erstellen'}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
             </div>
-          </div>
 
-          <div className="divide-y">
-            {chats.map((chat) => {
-              const latestDate = chat.latestMessage ? toDate(chat.latestMessage.created_at) : null
-              const isActive = activeChat?.id === chat.id
-              const chatPreview = getChatPreview(chat.latestMessage)
-
-              return (
-                <button
-                  key={chat.id}
-                  onClick={() => {
-                    setActiveChatId(chat.id)
-                    setIsMobileChatOpen(true)
-                  }}
-                  className={cn(
-                    'w-full text-left px-0 py-3 transition-colors',
-                    isActive ? 'bg-muted/70' : 'hover:bg-muted/40'
-                  )}
-                >
-                  <div className="flex items-start justify-between gap-3 rounded-lg px-2 py-1">
-                    <div className="min-w-0 flex items-start gap-2.5">
-                      <div className={cn(
-                        'h-8 w-8 rounded-full mt-0.5 shrink-0 flex items-center justify-center text-xs font-black uppercase',
-                        chat.type === 'hub' ? 'bg-primary/20 text-primary' : 'bg-muted text-foreground/70'
-                      )}>
-                        {getChatInitial(chat.label)}
-                      </div>
-                      <div className="min-w-0">
-                        <p className="font-bold truncate">{chat.label}</p>
-                        <div className="mt-0.5 flex items-center gap-2 min-w-0">
-                          <p className="text-sm text-muted-foreground truncate">{chatPreview}</p>
+            {/* Chat-Liste */}
+            <div className="overflow-y-auto max-h-[calc(100vh-280px)] py-2">
+              {/* Sektion: Chats */}
+              {groupedChats.systemAndRole.length > 0 && (
+                <div className="mb-1">
+                  <p className="px-4 pt-2 pb-1.5 text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Chats</p>
+                  {groupedChats.systemAndRole.map((chat) => {
+                    const { icon: ChatIcon, bg, text } = getChatIcon(chat)
+                    const latestDate = chat.latestMessage ? toDate(chat.latestMessage.created_at) : null
+                    const isActive = activeChat?.id === chat.id
+                    const chatPreview = getChatPreview(chat.latestMessage)
+                    const onlineCount = onlineCountByChatId.get(chat.id) ?? 0
+                    return (
+                      <button
+                        key={chat.id}
+                        onClick={() => { setActiveChatId(chat.id); setIsMobileChatOpen(true) }}
+                        className="w-full text-left px-2 py-0.5"
+                      >
+                        <div className={cn(
+                          'flex items-center gap-2.5 rounded-xl px-2 py-2 transition-all duration-200 border-l-2',
+                          isActive ? 'bg-primary/10 border-primary' : 'hover:bg-muted/60 border-transparent'
+                        )}>
+                          <div className={cn('h-8 w-8 rounded-lg shrink-0 flex items-center justify-center', bg)}>
+                            <ChatIcon className={cn('h-4 w-4', text)} />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center justify-between gap-1">
+                              <p className={cn('text-sm font-bold truncate', isActive ? 'text-primary' : 'text-foreground')}>{chat.label}</p>
+                              <span className="text-[10px] text-muted-foreground shrink-0">{latestDate ? format(latestDate, 'HH:mm', { locale: de }) : ''}</span>
+                            </div>
+                            <div className="flex items-center justify-between gap-1 mt-0.5">
+                              <p className="text-xs text-muted-foreground truncate opacity-70 font-medium">{chatPreview}</p>
+                              {onlineCount > 0 && (
+                                <span className="shrink-0 inline-flex items-center h-4 min-w-4 px-1 rounded-full bg-primary/15 text-primary text-[9px] font-black">{onlineCount}</span>
+                              )}
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    </div>
-                    <span className="text-[11px] text-muted-foreground shrink-0 pt-0.5">
-                      {latestDate ? format(latestDate, 'HH:mm', { locale: de }) : '-'}
-                    </span>
-                  </div>
-                </button>
-              )
-            })}
-          </div>
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
+
+              {/* Sektion: Meine Gruppen */}
+              {groupedChats.internal.length > 0 && (
+                <div className="mt-2">
+                  <p className="px-4 pt-2 pb-1.5 text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Meine Gruppen</p>
+                  {groupedChats.internal.map((chat) => {
+                    const { icon: ChatIcon, bg, text } = getChatIcon(chat)
+                    const latestDate = chat.latestMessage ? toDate(chat.latestMessage.created_at) : null
+                    const isActive = activeChat?.id === chat.id
+                    const chatPreview = getChatPreview(chat.latestMessage)
+                    const onlineCount = onlineCountByChatId.get(chat.id) ?? 0
+                    return (
+                      <button
+                        key={chat.id}
+                        onClick={() => { setActiveChatId(chat.id); setIsMobileChatOpen(true) }}
+                        className="w-full text-left px-2 py-0.5"
+                      >
+                        <div className={cn(
+                          'flex items-center gap-2.5 rounded-xl px-2 py-2 transition-all duration-200 border-l-2',
+                          isActive ? 'bg-primary/10 border-primary' : 'hover:bg-muted/60 border-transparent'
+                        )}>
+                          <div className={cn('h-8 w-8 rounded-lg shrink-0 flex items-center justify-center', bg)}>
+                            <ChatIcon className={cn('h-4 w-4', text)} />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center justify-between gap-1">
+                              <p className={cn('text-sm font-bold truncate', isActive ? 'text-primary' : 'text-foreground')}>{chat.label}</p>
+                              <span className="text-[10px] text-muted-foreground shrink-0">{latestDate ? format(latestDate, 'HH:mm', { locale: de }) : ''}</span>
+                            </div>
+                            <div className="flex items-center justify-between gap-1 mt-0.5">
+                              <p className="text-xs text-muted-foreground truncate opacity-70 font-medium">{chatPreview}</p>
+                              {onlineCount > 0 && (
+                                <span className="shrink-0 inline-flex items-center h-4 min-w-4 px-1 rounded-full bg-primary/15 text-primary text-[9px] font-black">{onlineCount}</span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          </Card>
         </aside>
 
         <div className={cn(
-          "lg:col-span-8 space-y-4",
+          "lg:col-span-8 xl:col-span-9 space-y-4",
           !isMobileChatOpen && "hidden lg:block"
         )}>
           {isMobileChatOpen && (
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="lg:hidden mb-2 -ml-2 h-8 text-primary font-bold"
+            <Button
+              variant="ghost"
+              size="sm"
+              className="lg:hidden mb-2 -ml-2 h-8 text-primary font-black text-[11px] uppercase tracking-wider"
               onClick={() => setIsMobileChatOpen(false)}
             >
-              <Users className="h-4 w-4 mr-2" /> Zurück zur Übersicht
+              <ArrowLeft className="h-4 w-4 mr-1.5" /> Zurück
             </Button>
           )}
 

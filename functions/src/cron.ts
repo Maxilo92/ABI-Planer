@@ -339,6 +339,44 @@ export const archiveAuditLogs = onSchedule("every sunday 03:00", async (event) =
     }
 
   } catch (error) {
-    console.error("Error during log archival/cleanup:", error);
+  console.error("Error during log archival/cleanup:", error);
   }
-});
+  });
+
+  /**
+  * Scheduled function to expire card trades every hour.
+  */
+  export const expireTrades = onSchedule("every hour", async () => {
+  const db = getFirestore("abi-data");
+  const now = admin.firestore.Timestamp.now();
+
+  console.log("Checking for expired card trades...");
+
+  try {
+  const tradesRef = db.collection("card_trades");
+  const expiredQuery = tradesRef
+    .where("status", "in", ["pending", "countered"])
+    .where("expiresAt", "<=", now)
+    .limit(500);
+
+  const snapshot = await expiredQuery.get();
+
+  if (snapshot.empty) {
+    console.log("No expired trades found.");
+    return;
+  }
+
+  const batch = db.batch();
+  snapshot.forEach(doc => {
+    batch.update(doc.ref, {
+      status: "expired",
+      updatedAt: now
+    });
+  });
+
+  await batch.commit();
+  console.log(`Successfully expired ${snapshot.size} trades.`);
+  } catch (error) {
+  console.error("Error during trade expiration:", error);
+  }
+  });

@@ -17,6 +17,25 @@ import { de } from 'date-fns/locale'
 import { cn } from '@/lib/utils'
 import { TradeNegotiationModal } from '@/components/cards/TradeNegotiationModal'
 import { useRouter } from 'next/navigation'
+import { useCountdown } from '@/hooks/useCountdown'
+
+function TradeCountdown({ targetDate }: { targetDate: any }) {
+  const dateStr = targetDate?.toDate ? targetDate.toDate().toISOString() : (targetDate instanceof Date ? targetDate.toISOString() : targetDate)
+  const { days, hours, minutes, seconds } = useCountdown(dateStr)
+  
+  const isExpired = days === 0 && hours === 0 && minutes === 0 && seconds === 0
+  
+  if (isExpired) return <span className="text-red-500 font-bold uppercase tracking-widest text-[10px]">Abgelaufen</span>
+
+  return (
+    <span className={cn(
+      "font-mono font-bold tracking-tight text-[10px] tabular-nums",
+      days === 0 && hours < 6 ? "text-red-500 animate-pulse" : "text-blue-500"
+    )}>
+      {days > 0 && `${days}d `}{hours.toString().padStart(2, '0')}:{minutes.toString().padStart(2, '0')}:{seconds.toString().padStart(2, '0')}
+    </span>
+  )
+}
 
 export default function TradeCenterPage() {
   const { profile } = useAuth()
@@ -50,6 +69,7 @@ export default function TradeCenterPage() {
       case 'completed': return <Badge variant="secondary" className="bg-green-100 text-green-700 border-green-200">Abgeschlossen</Badge>
       case 'declined': return <Badge variant="secondary" className="bg-red-100 text-red-700 border-red-200">Abgelehnt</Badge>
       case 'cancelled': return <Badge variant="secondary" className="bg-gray-100 text-gray-700 border-gray-200">Abgebrochen</Badge>
+      case 'expired': return <Badge variant="secondary" className="bg-orange-100 text-orange-700 border-orange-200">Abgelaufen</Badge>
       default: return <Badge variant="outline">{status}</Badge>
     }
   }
@@ -58,7 +78,7 @@ export default function TradeCenterPage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
         <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
-        <p className="text-muted-foreground animate-pulse">Lade Tausch-Zentrum...</p>
+        <p className="text-muted-foreground animate-pulse">Lade Trading-Hub...</p>
       </div>
     )
   }
@@ -70,7 +90,7 @@ export default function TradeCenterPage() {
         <div>
           <h1 className="text-3xl font-black uppercase tracking-tighter flex items-center gap-2">
             <ArrowLeftRight className="w-8 h-8 text-blue-500" />
-            Tausch-Zentrum
+            Trading-Hub
           </h1>
           <p className="text-muted-foreground">Tausche Karten mit deinen Freunden.</p>
         </div>
@@ -137,31 +157,42 @@ export default function TradeCenterPage() {
             </div>
           ) : (
             <div className="grid gap-4">
-              {activeTrades.map((trade) => (
-                <Card 
-                  key={trade.id} 
-                  className={cn(
-                    "cursor-pointer hover:border-blue-300 transition-colors border-2",
-                    trade.lastActorId !== currentUserId ? "border-blue-500 bg-blue-50/30" : ""
-                  )}
-                  onClick={() => setSelectedTrade(trade)}
-                >
-                  <CardHeader className="p-4 flex flex-row items-center justify-between space-y-0">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-muted rounded-full flex items-center justify-center shrink-0">
-                        <User className="w-6 h-6 text-muted-foreground" />
+              {activeTrades.map((trade) => {
+                const isExpired = trade.expiresAt?.toDate 
+                  ? trade.expiresAt.toDate().getTime() < Date.now() 
+                  : (trade.expiresAt instanceof Date ? trade.expiresAt.getTime() < Date.now() : false)
+
+                return (
+                  <Card 
+                    key={trade.id} 
+                    className={cn(
+                      "transition-colors border-2",
+                      !isExpired && "cursor-pointer hover:border-blue-300",
+                      !isExpired && trade.lastActorId !== currentUserId ? "border-blue-500 bg-blue-50/30" : "",
+                      isExpired && "opacity-60 grayscale-[0.5] border-muted bg-muted/10 cursor-not-allowed"
+                    )}
+                    onClick={() => !isExpired && setSelectedTrade(trade)}
+                  >
+                    <CardHeader className="p-4 flex flex-row items-center justify-between space-y-0">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-muted rounded-full flex items-center justify-center shrink-0">
+                          <User className="w-6 h-6 text-muted-foreground" />
+                        </div>
+                        <div>
+                          <p className="font-black uppercase text-sm tracking-tight leading-none">
+                            {trade.senderId === currentUserId ? trade.receiverName : trade.senderName}
+                          </p>
+                          <p className="text-[10px] text-muted-foreground mt-1 uppercase font-bold tracking-widest">
+                            Zuletzt aktiv: {trade.updatedAt ? format(trade.updatedAt.toDate ? trade.updatedAt.toDate() : trade.updatedAt, 'HH:mm, dd. MMM', { locale: de }) : 'Unbekannt'}
+                          </p>
+                          <div className="flex items-center gap-1.5 mt-1">
+                            <Clock className="w-3 h-3 text-muted-foreground" />
+                            <TradeCountdown targetDate={trade.expiresAt} />
+                          </div>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-black uppercase text-sm tracking-tight leading-none">
-                          {trade.senderId === currentUserId ? trade.receiverName : trade.senderName}
-                        </p>
-                        <p className="text-[10px] text-muted-foreground mt-1 uppercase font-bold tracking-widest">
-                          Zuletzt aktiv: {trade.updatedAt ? format(trade.updatedAt.toDate ? trade.updatedAt.toDate() : trade.updatedAt, 'HH:mm, dd. MMM', { locale: de }) : 'Unbekannt'}
-                        </p>
-                      </div>
-                    </div>
-                    {getStatusBadge(trade.status)}
-                  </CardHeader>
+                      {getStatusBadge(trade.status)}
+                    </CardHeader>
                   <CardContent className="px-4 pb-4 pt-0">
                     <div className="flex items-center justify-between gap-2 p-3 bg-muted/40 rounded-xl border">
                       <div className="flex-1 text-center">
@@ -192,10 +223,11 @@ export default function TradeCenterPage() {
                     )}
                   </CardContent>
                 </Card>
-              ))}
-            </div>
-          )}
-        </TabsContent>
+              );
+            })}
+          </div>
+        )}
+      </TabsContent>
 
         <TabsContent value="past" className="space-y-4">
           {pastTrades.length === 0 ? (

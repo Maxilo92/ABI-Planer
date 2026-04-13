@@ -1,6 +1,6 @@
 import { Rarity, CardVariant } from './cards';
 
-export type TradeStatus = 'pending' | 'countered' | 'accepted' | 'declined' | 'cancelled' | 'completed';
+export type TradeStatus = 'pending' | 'countered' | 'accepted' | 'declined' | 'cancelled' | 'completed' | 'expired';
 
 export interface CardSelection {
   teacherId: string;

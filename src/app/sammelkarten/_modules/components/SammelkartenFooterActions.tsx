@@ -254,7 +254,7 @@ export function SammelkartenFooterActions(props: SammelkartenFooterActionsProps)
             <Link href="/sammelkarten/tausch" className="w-full max-sm:max-w-[280px] sm:max-w-sm mt-0.5">
               <Button variant="secondary" size="sm" className="w-full text-blue-500 hover:text-blue-600 bg-blue-500/10 hover:bg-blue-500/20 border-blue-500/20 font-bold uppercase tracking-tight shadow-sm">
                 <ArrowLeftRight className="h-3.5 w-3.5 mr-2" />
-                Tausch-Zentrum
+                Trading-Hub
               </Button>
             </Link>
           )}

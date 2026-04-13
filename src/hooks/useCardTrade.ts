@@ -29,8 +29,9 @@ function normalizeTrade(id: string, data: Record<string, any>): CardTrade {
 }
 
 export function useCardTrade() {
-  const { user } = useAuth()
+  const { user, profile } = useAuth()
   const currentUserId = user?.uid ?? ''
+  const isAdmin = ['admin', 'admin_main', 'admin_co'].includes(profile?.role || '')
   
   const [activeTrades, setActiveTrades] = useState<CardTrade[]>([])
   const [pastTrades, setPastTrades] = useState<CardTrade[]>([])
@@ -40,13 +41,23 @@ export function useCardTrade() {
   useEffect(() => {
     const unsub = onSnapshot(doc(db, 'settings', 'features'), (snap) => {
       if (snap.exists()) {
-        setIsTradingEnabled(!!snap.data().is_trading_enabled)
+        const data = snap.data()
+        // Check new status-based field with legacy fallback
+        const status = data.trading_status || (data.is_trading_enabled ? 'enabled' : 'disabled')
+        
+        if (status === 'enabled') {
+          setIsTradingEnabled(true)
+        } else if (status === 'admins_only') {
+          setIsTradingEnabled(isAdmin)
+        } else {
+          setIsTradingEnabled(false)
+        }
       } else {
         setIsTradingEnabled(false)
       }
     })
     return () => unsub()
-  }, [currentUserId])
+  }, [currentUserId, isAdmin])
 
   useEffect(() => {
     if (!currentUserId) {
@@ -66,11 +77,11 @@ export function useCardTrade() {
       orderBy('updatedAt', 'desc')
     )
 
-    // Abgeschlossene Trades (Status completed, declined oder cancelled)
+    // Abgeschlossene Trades (Status completed, declined, cancelled oder expired)
     const pastQuery = query(
       tradesRef,
       where('members', 'array-contains', currentUserId),
-      where('status', 'in', ['completed', 'declined', 'cancelled']),
+      where('status', 'in', ['completed', 'declined', 'cancelled', 'expired']),
       orderBy('updatedAt', 'desc'),
       limit(20)
     )

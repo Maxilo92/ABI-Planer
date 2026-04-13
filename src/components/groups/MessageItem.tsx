@@ -41,7 +41,7 @@ export const MessageItem = memo(function MessageItem({
 
   return (
     <div className={cn(
-      "flex flex-col group",
+      "flex flex-col group overflow-visible",
       isOwn ? "items-end" : "items-start",
       msg.parent_id && "pl-8 mt-1" // Indent replies
     )}>
@@ -58,7 +58,7 @@ export const MessageItem = memo(function MessageItem({
         )}
         
         <div className={cn(
-          "flex flex-col min-w-0",
+          "flex flex-col min-w-0 relative",
           isOwn ? "items-end" : "items-start"
         )}>
           <div className={cn(
@@ -83,7 +83,32 @@ export const MessageItem = memo(function MessageItem({
               </div>
             )}
           </div>
-          
+
+          <div className={cn(
+            "absolute bottom-full mb-1 flex items-center gap-1.5 z-30",
+            "opacity-0 group-hover:opacity-100 transition-all duration-150",
+            "scale-95 group-hover:scale-100",
+            isOwn ? "right-0" : "left-0"
+          )}>
+            <div className="flex items-center gap-1 bg-background/95 backdrop-blur-md border border-border/50 rounded-xl shadow-xl px-1 py-1">
+              {!msg.parent_id && (
+                <button onClick={() => onReply(msg)} className="p-1.5 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all" title="Antworten">
+                  <Reply className="h-3.5 w-3.5" />
+                </button>
+              )}
+              {canManage && (
+                <button onClick={() => onPin(msg.id, !!isPinned)} className={cn("p-1.5 rounded-lg transition-all", isPinned ? "text-amber-500 hover:bg-amber-50" : "text-muted-foreground hover:text-primary hover:bg-primary/10")} title={isPinned ? "Anheftung aufheben" : "Anheften"}>
+                  {isPinned ? <PinOff className="h-3.5 w-3.5" /> : <Pin className="h-3.5 w-3.5" />}
+                </button>
+              )}
+              {(canManage || isOwn) && (
+                <button onClick={() => onDelete(msg.id)} className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all" title="Löschen">
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
+          </div>
+
           <div className={cn(
             "relative group p-4 shadow-xl transition-all duration-300",
             isPinned 
@@ -114,41 +139,6 @@ export const MessageItem = memo(function MessageItem({
               )}
             </div>
             
-            <div className={cn(
-              "absolute top-2 flex items-center gap-2 transition-all opacity-0 group-hover:opacity-100 z-20 scale-90 group-hover:scale-100",
-              isOwn ? "right-full mr-4" : "left-full ml-4"
-            )}>
-              {!msg.parent_id && (
-                <button
-                  onClick={() => onReply(msg)}
-                  className="p-2 bg-background/80 backdrop-blur-md border border-primary/10 rounded-xl text-muted-foreground hover:text-primary hover:border-primary/30 shadow-2xl transition-all hover:scale-110 active:scale-90"
-                  title="Antworten"
-                >
-                  <Reply className="h-4 w-4" />
-                </button>
-              )}
-              {canManage && (
-                <button
-                  onClick={() => onPin(msg.id, !!isPinned)}
-                  className={cn(
-                    "p-2 bg-background/80 backdrop-blur-md border rounded-xl shadow-2xl transition-all hover:scale-110 active:scale-90",
-                    isPinned ? "text-amber-500 border-amber-200 bg-amber-50" : "text-muted-foreground border-primary/10 hover:text-primary hover:border-primary/30"
-                  )}
-                  title={isPinned ? "Anheftung aufheben" : "Anheften"}
-                >
-                  {isPinned ? <PinOff className="h-4 w-4" /> : <Pin className="h-4 w-4" />}
-                </button>
-              )}
-              {(canManage || isOwn) && (
-                <button
-                  onClick={() => onDelete(msg.id)}
-                  className="p-2 bg-background/80 backdrop-blur-md border border-primary/10 rounded-xl text-muted-foreground hover:text-destructive hover:border-destructive/30 shadow-2xl transition-all hover:scale-110 active:scale-90"
-                  title="Löschen"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              )}
-            </div>
           </div>
         </div>
 

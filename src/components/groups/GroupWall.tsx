@@ -51,6 +51,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { logAction } from '@/lib/logging'
+import { Card } from '@/components/ui/card'
 import { MessageItem } from './MessageItem'
 import { MediaAttachment } from './MediaAttachment'
 import { ChatMarkdown } from './ChatMarkdown'
@@ -345,7 +346,7 @@ export function GroupWall({
     setBotMessages([])
     setBotThinking(false)
     setBotLookupHint(null)
-    toast.success('ABI Bot Chat wurde geloescht.')
+    toast.success('ABI Bot Chat wurde gelöscht.')
   }, [])
 
   const handleDeleteMessage = useCallback(async (messageId: string) => {
@@ -420,8 +421,8 @@ export function GroupWall({
   const handleReply = useCallback((msg: GroupMessage) => setReplyTo(msg), [])
 
   return (
-    <div className="flex flex-col h-[600px] md:h-[700px] lg:h-[800px] overflow-hidden transition-all duration-500">
-      <div className="py-5 px-1 border-b border-border/50 flex items-center justify-between relative z-10">
+    <Card className="flex flex-col min-h-[500px] h-[calc(100vh-280px)] md:h-[calc(100vh-240px)] overflow-hidden rounded-2xl border border-border/50 shadow-xl bg-background/60 backdrop-blur-xl gap-0 py-0">
+      <div className="py-4 md:py-5 px-1 border-b border-border/50 flex items-center justify-between relative z-10">
         <div className="flex items-center gap-4">
           <div className="bg-primary/10 p-2.5 rounded-2xl shadow-inner">
             <MessageSquare className="h-6 w-6 text-primary" />
@@ -468,7 +469,7 @@ export function GroupWall({
               onClick={handleClearBotChat}
               disabled={botSending || botMessages.length === 0}
             >
-              Chat loeschen
+              Chat löschen
             </Button>
           </div>
         )}
@@ -476,22 +477,10 @@ export function GroupWall({
 
       <div 
         ref={scrollRef}
-        className="flex-1 overflow-y-auto py-8 px-2 space-y-8 scroll-smooth custom-scrollbar"
+        className="flex-1 overflow-y-auto py-4 md:py-8 px-2 space-y-6 md:space-y-8 scroll-smooth custom-scrollbar"
       >
         {chatMode === 'abi-bot' ? (
           <div className="space-y-4">
-            {(botThinking || botLookupHint) && (
-              <div className="flex w-full justify-start">
-                <div className="max-w-[85%] rounded-2xl px-4 py-3 shadow bg-primary/5 border border-primary/15 text-foreground">
-                  <p className="text-[10px] uppercase tracking-wider font-black opacity-70 mb-1">ABI Bot</p>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    {botThinking ? <Wrench className="h-4 w-4 animate-pulse text-primary" /> : <MessageSquare className="h-4 w-4 text-primary" />}
-                    <span>{botLookupHint || 'Suche in Hilfe & FAQ'}</span>
-                  </div>
-                </div>
-              </div>
-            )}
-
             {botMessages.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-center space-y-4 py-16">
                 <MessageSquare className="h-12 w-12 text-primary/30" />
@@ -608,11 +597,11 @@ export function GroupWall({
       </div>
 
       {(type !== 'system' || chatMode === 'abi-bot') && (
-        <div className="py-6 px-1 border-t border-border/50 flex flex-col gap-4">
-          <form onSubmit={handleSendMessage} className="flex flex-col gap-4 w-full">
+        <div className="py-4 md:py-6 px-1 border-t border-border/50 flex flex-col gap-3 md:gap-4">
+          <form onSubmit={handleSendMessage} className="flex flex-col gap-3 md:gap-4 w-full">
             {/* Active Reply Indicator */}
             {chatMode === 'team' && replyTo && (
-              <div className="flex items-center justify-between bg-primary/10 border border-primary/20 rounded-2xl px-4 py-3 animate-in slide-in-from-bottom-4 shadow-inner">
+              <div className="flex items-center justify-between bg-primary/10 border border-primary/20 rounded-2xl px-4 py-2.5 animate-in slide-in-from-bottom-4 shadow-inner">
                 <div className="flex items-center gap-3 min-w-0">
                   <div className="p-1.5 bg-primary/20 rounded-lg">
                     <Reply className="h-4 w-4 text-primary" />
@@ -644,7 +633,7 @@ export function GroupWall({
               </div>
             )}
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 md:gap-3">
               {chatMode === 'team' && type === 'hub' && (
                 <DropdownMenu>
                   <DropdownMenuTrigger
@@ -654,13 +643,13 @@ export function GroupWall({
                         variant="outline"
                         size="sm"
                         className={cn(
-                          "h-14 text-[10px] font-black uppercase tracking-[0.15em] gap-3 px-5 transition-all rounded-2xl shadow-xl",
+                          "h-11 md:h-12 text-[9px] md:text-[10px] font-black uppercase tracking-[0.12em] gap-2 md:gap-3 px-3 md:px-4 transition-all rounded-2xl shadow-xl",
                           targetGroup 
                             ? "bg-primary text-primary-foreground border-primary shadow-primary/20" 
                             : "bg-background border-primary/10 hover:border-primary/30"
                         )}
                       >
-                        <Target className={cn("h-5 w-5", targetGroup ? "text-primary-foreground" : "text-primary")} />
+                        <Target className={cn("h-4 w-4 md:h-5 md:w-5", targetGroup ? "text-primary-foreground" : "text-primary")} />
                         <span className="hidden sm:inline">{targetGroup || "Empfänger"}</span>
                       </Button>
                     }
@@ -687,7 +676,7 @@ export function GroupWall({
                 </DropdownMenu>
               )}
               
-              <div className="relative flex-1 flex items-center gap-3">
+              <div className="relative flex-1 flex items-center gap-2 md:gap-3 min-w-0">
                 <input 
                   type="file"
                   ref={fileInputRef}
@@ -701,16 +690,16 @@ export function GroupWall({
                       type="button"
                       variant="outline"
                       size="icon"
-                      className="h-14 w-14 rounded-2xl bg-background border-primary/10 hover:border-primary/30 hover:bg-background transition-all shadow-xl"
+                      className="h-11 w-11 md:h-12 md:w-12 rounded-2xl bg-background border-primary/10 hover:border-primary/30 hover:bg-background transition-all shadow-xl"
                       onClick={() => fileInputRef.current?.click()}
                       disabled={loading}
                     >
-                      <Paperclip className="h-5 w-5 text-muted-foreground" />
+                      <Paperclip className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground" />
                     </Button>
                   </div>
                 )}
 
-                <div className="relative flex-1 group/input">
+                <div className="relative flex-1 group/input min-w-0">
                   <Input 
                     placeholder={
                       chatMode === 'abi-bot'
@@ -724,10 +713,10 @@ export function GroupWall({
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
                     disabled={loading || botSending}
-                    className="pr-14 bg-background border-primary/10 focus:bg-background focus:ring-4 focus:ring-primary/5 transition-all rounded-2xl h-14 font-medium text-base shadow-inner"
+                    className="pr-10 md:pr-14 bg-background border-primary/10 focus:bg-background focus:ring-4 focus:ring-primary/5 transition-all rounded-2xl h-11 md:h-12 font-medium text-sm md:text-base shadow-inner"
                   />
-                  <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center text-muted-foreground/30 group-focus-within/input:text-primary/50 transition-colors">
-                    <span className="text-[10px] font-black mr-2 hidden sm:inline tracking-tighter uppercase">Cmd + Enter</span>
+                  <div className="absolute right-3 md:right-4 top-1/2 -translate-y-1/2 flex items-center text-muted-foreground/30 group-focus-within/input:text-primary/50 transition-colors">
+                    <span className="text-[9px] font-black mr-2 hidden sm:inline tracking-tighter uppercase">Cmd + Enter</span>
                   </div>
                 </div>
               </div>
@@ -735,14 +724,14 @@ export function GroupWall({
                 type="submit" 
                 size="icon" 
                 disabled={loading || botSending || (chatMode === 'team' ? (!newMessage.trim() && !attachment) : !newMessage.trim())}
-                className="h-14 w-14 rounded-2xl shadow-2xl shadow-primary/20 shrink-0 transition-all hover:scale-105 active:scale-95 bg-primary hover:bg-primary/90"
+                className="h-11 w-11 md:h-12 md:w-12 rounded-2xl shadow-2xl shadow-primary/20 shrink-0 transition-all hover:scale-105 active:scale-95 bg-primary hover:bg-primary/90"
               >
-                {botSending ? <MessageSquare className="h-5 w-5 text-primary-foreground animate-pulse" /> : <Send className="h-5 w-5 text-primary-foreground" />}
+                {botSending ? <MessageSquare className="h-4 w-4 md:h-5 md:w-5 text-primary-foreground animate-pulse" /> : <Send className="h-4 w-4 md:h-5 md:w-5 text-primary-foreground" />}
               </Button>
             </div>
           </form>
         </div>
       )}
-    </div>
+    </Card>
   )
 }

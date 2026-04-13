@@ -173,7 +173,7 @@ export function Navbar() {
     ]
 
     if (isEnabled('trading_status')) {
-      sammelkartenSubItems.push({ href: '/sammelkarten/tausch', label: 'Tausch-Zentrum', icon: ArrowLeftRight, notify: notifications.karten })
+      sammelkartenSubItems.push({ href: '/sammelkarten/tausch', label: 'Trading-Hub', icon: ArrowLeftRight, notify: notifications.karten })
     }
 
     if (isEnabled('combat_status')) {

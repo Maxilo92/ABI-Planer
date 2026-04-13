@@ -679,11 +679,16 @@ export const counterTradeOffer = onCall({ cors: CALLABLE_CORS_ORIGINS }, async (
       throw new HttpsError("failed-precondition", "Du musst auf die Reaktion des Partners warten.");
     }
 
-    if (trade.roundCount >= 2) {
+    if (trade.roundCount >= 3) {
       throw new HttpsError("failed-precondition", "Maximale Anzahl an Verhandlungsrunden erreicht.");
     }
 
-    // Karten-Validierung (muss zum ursprünglichen Match passen)
+    const now = Timestamp.now();
+    if (trade.expiresAt && trade.expiresAt.toMillis() < now.toMillis()) {
+      throw new HttpsError("failed-precondition", "Dieser Tausch ist bereits abgelaufen.");
+    }
+
+    // ... (Karten-Validierung bleibt gleich)
     validateCardEligibility(newOfferedCard);
     validateCardEligibility(newRequestedCard);
     
@@ -701,7 +706,7 @@ export const counterTradeOffer = onCall({ cors: CALLABLE_CORS_ORIGINS }, async (
       await ensureUserOwnsCardVariant(db, trade.senderId, newOfferedCard);
     }
 
-    const nextRound = trade.roundCount + 1;
+    const nextRound = (trade.roundCount || 0) + 1;
     const opponentId = trade.senderId === userId ? trade.receiverId : trade.senderId;
 
     transaction.update(tradeRef, {
@@ -710,7 +715,8 @@ export const counterTradeOffer = onCall({ cors: CALLABLE_CORS_ORIGINS }, async (
       roundCount: nextRound,
       lastActorId: userId,
       status: 'countered',
-      updatedAt: Timestamp.now()
+      updatedAt: now,
+      expiresAt: Timestamp.fromMillis(now.toMillis() + 48 * 60 * 60 * 1000)
     });
 
     // Benachrichtigung
@@ -762,6 +768,11 @@ export const acceptTradeOffer = onCall({ cors: CALLABLE_CORS_ORIGINS }, async (r
 
     if (trade.lastActorId === userId) {
       throw new HttpsError("failed-precondition", "Du kannst dein eigenes Angebot nicht annehmen.");
+    }
+
+    const now = new Date();
+    if (trade.expiresAt && trade.expiresAt.toMillis() < now.getTime()) {
+      throw new HttpsError("failed-precondition", "Dieser Tausch ist bereits abgelaufen und kann nicht mehr angenommen werden.");
     }
 
     const opponentId = trade.senderId === userId ? trade.receiverId : trade.senderId;

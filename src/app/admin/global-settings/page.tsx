@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { db } from '@/lib/firebase'
-import { doc, setDoc, onSnapshot } from 'firebase/firestore'
+import { doc, setDoc, onSnapshot, collection, query, where, getDocs, writeBatch } from 'firebase/firestore'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -12,10 +12,12 @@ import { useAuth } from '@/context/AuthContext'
 import { usePathname, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { toast } from 'sonner'
-import { Loader2, Plus, Trash2, RotateCcw, Cookie, GraduationCap, Sparkles, Construction } from 'lucide-react'
+import { Loader2, Plus, Trash2, RotateCcw, Cookie, GraduationCap, Sparkles, Construction, Users, Save } from 'lucide-react'
 import { logAction } from '@/lib/logging'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Profile } from '@/types/database'
 
 interface CustomPopupMessage {
   id: string
@@ -27,6 +29,13 @@ interface CustomPopupMessage {
   chance?: number
   enabled?: boolean
   routes?: string[]
+}
+
+interface PlanningGroupRow {
+  id: string
+  before: string
+  after: string
+  leaderUserId: string
 }
 
 interface GlobalSettings {
@@ -136,6 +145,10 @@ export default function GlobalSettingsPage() {
     enabled: true,
     routes: ['*'],
   })
+  const [planningGroupRows, setPlanningGroupRows] = useState<PlanningGroupRow[]>([])
+  const [originalGroups, setOriginalGroups] = useState<{ name: string; leader_user_id: string | null }[]>([])
+  const [planners, setPlanners] = useState<Profile[]>([])
+  const [savingGroups, setSavingGroups] = useState(false)
   const [isGuardOpen, setIsGuardOpen] = useState(false)
   const [nextPath, setNextPath] = useState<string | null>(null)
   const router = useRouter()
@@ -240,6 +253,32 @@ export default function GlobalSettingsPage() {
       unsubscribe()
     }
   }, [profile, authLoading, isAdmin, router, pathname])
+
+  useEffect(() => {
+    const unsubscribe = onSnapshot(doc(db, 'settings', 'config'), (snap) => {
+      const groups: any[] = snap.exists() ? (snap.data().planning_groups || []) : []
+      setOriginalGroups(groups.map((g: any) => ({ name: g.name, leader_user_id: g.leader_user_id || null })))
+      setPlanningGroupRows(groups.map((g: any, i: number) => ({
+        id: `group-${i}`,
+        before: g.name,
+        after: g.name,
+        leaderUserId: g.leader_user_id || '',
+      })))
+    })
+    return () => unsubscribe()
+  }, [])
+
+  useEffect(() => {
+    const q = query(collection(db, 'profiles'), where('is_approved', '==', true))
+    const unsubscribe = onSnapshot(q, (snap) => {
+      setPlanners(
+        snap.docs
+          .map(d => ({ id: d.id, ...d.data() } as Profile))
+          .filter(p => p.role === 'planner' || (p.role || '').includes('admin'))
+      )
+    })
+    return () => unsubscribe()
+  }, [])
 
   const handleSave = async (settingsToSave?: GlobalSettings): Promise<boolean> => {
     if (!user || !isAdmin) return false
@@ -382,6 +421,68 @@ export default function GlobalSettingsPage() {
       const ok = await handleSave(updatedSettings)
       if (!ok) setSettings(old)
     }, 0)
+  }
+
+  const migratePlanningGroupName = async (from: string, to: string) => {
+    const targets = [
+      { col: 'profiles', field: 'planning_group' },
+      { col: 'todos', field: 'assigned_to_group' },
+    ]
+    for (const target of targets) {
+      const docs = await getDocs(query(collection(db, target.col), where(target.field, '==', from)))
+      if (docs.empty) continue
+      let batch = writeBatch(db)
+      let ops = 0
+      for (const d of docs.docs) {
+        batch.update(doc(db, target.col, d.id), { [target.field]: to })
+        if (++ops >= 400) { await batch.commit(); batch = writeBatch(db); ops = 0 }
+      }
+      if (ops > 0) await batch.commit()
+    }
+  }
+
+  const handleSavePlanningGroups = async () => {
+    const rows = planningGroupRows.map(r => ({ ...r, after: r.after.trim() }))
+    const seen = new Set<string>()
+    const planning_groups = rows
+      .filter(r => r.after.length > 0 && !seen.has(r.after) && !!seen.add(r.after))
+      .map(r => {
+        const leader = planners.find(p => p.id === r.leaderUserId)
+        return { name: r.after, leader_user_id: leader?.id || null, leader_name: leader?.full_name || null }
+      })
+
+    if (planning_groups.length === 0) { toast.error('Mindestens eine Gruppe erforderlich.'); return }
+    const renamed = rows.filter(r => r.before.trim().length > 0 && r.after.length > 0 && r.before !== r.after)
+
+    setSavingGroups(true)
+    try {
+      const affected = new Set<string>()
+      originalGroups.forEach(g => { if (g.leader_user_id) affected.add(g.leader_user_id) })
+      planning_groups.forEach(g => { if (g.leader_user_id) affected.add(g.leader_user_id) })
+
+      const batch = writeBatch(db)
+      for (const uid of Array.from(affected)) {
+        const led = planning_groups.filter(g => g.leader_user_id === uid).map(g => g.name)
+        batch.update(doc(db, 'profiles', uid), { led_groups: led, is_group_leader: led.length > 0 })
+      }
+      batch.set(doc(db, 'settings', 'config'), { planning_groups }, { merge: true })
+      await batch.commit()
+
+      for (const r of renamed) await migratePlanningGroupName(r.before, r.after)
+
+      toast.success(renamed.length > 0
+        ? 'Planungsgruppen aktualisiert und Zuordnungen umbenannt.'
+        : 'Planungsgruppen gespeichert.')
+      if (user) await logAction('SETTINGS_UPDATED', user.uid, profile?.full_name, {
+        field: 'planning_groups', total: planning_groups.length,
+        renamed: renamed.map(r => ({ before: r.before, after: r.after }))
+      })
+    } catch (e) {
+      console.error(e)
+      toast.error('Fehler beim Speichern der Planungsgruppen.')
+    } finally {
+      setSavingGroups(false)
+    }
   }
 
   const handleResetToDefault = () => {
@@ -718,6 +819,75 @@ export default function GlobalSettingsPage() {
                   <Plus className="h-4 w-4 mr-2" /> Custom Popup hinzufügen
                 </Button>
               </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card id="planungsgruppen">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5" /> Planungsgruppen
+            </CardTitle>
+            <CardDescription>
+              Verwaltung der Planungsgruppen. Jede Gruppe erscheint als eigener Chat unter /gruppen.
+              Umbenennungen werden automatisch in Profilen und Todos übernommen.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              {planningGroupRows.map((row) => (
+                <div key={row.id} className="grid grid-cols-1 md:grid-cols-[1fr_1fr_auto] gap-2 items-center">
+                  <Input
+                    value={row.after}
+                    onChange={(e) => setPlanningGroupRows(prev =>
+                      prev.map(r => r.id === row.id ? { ...r, after: e.target.value } : r)
+                    )}
+                    placeholder="z.B. Ballplanung"
+                  />
+                  <Select
+                    value={row.leaderUserId || '__none__'}
+                    onValueChange={(v) => setPlanningGroupRows(prev =>
+                      prev.map(r => r.id === row.id ? { ...r, leaderUserId: v === '__none__' ? '' : v } : r)
+                    )}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Kein Gruppenleiter">
+                        {row.leaderUserId 
+                          ? (planners.find(p => p.id === row.leaderUserId)?.full_name || planners.find(p => p.id === row.leaderUserId)?.email || row.leaderUserId)
+                          : 'Kein Gruppenleiter'
+                        }
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none__">Kein Gruppenleiter</SelectItem>
+                      {planners.map(p => (
+                        <SelectItem key={p.id} value={p.id}>{p.full_name || p.email}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    variant="ghost" size="icon"
+                    onClick={() => setPlanningGroupRows(prev => prev.filter(r => r.id !== row.id))}
+                    disabled={planningGroupRows.length <= 1}
+                    title="Gruppe entfernen"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+            <Button variant="outline" className="gap-2"
+              onClick={() => setPlanningGroupRows(prev => [
+                ...prev,
+                { id: `group-new-${Date.now()}`, before: '', after: '', leaderUserId: '' }
+              ])}>
+              <Plus className="h-4 w-4" /> Gruppe hinzufügen
+            </Button>
+            <div className="flex justify-end">
+              <Button onClick={handleSavePlanningGroups} disabled={savingGroups} className="gap-2">
+                {savingGroups ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                {savingGroups ? 'Speichern...' : 'Gruppen speichern'}
+              </Button>
             </div>
           </CardContent>
         </Card>

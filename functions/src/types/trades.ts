@@ -1,6 +1,6 @@
 import { Timestamp } from 'firebase-admin/firestore';
 
-export type TradeStatus = 'pending' | 'countered' | 'accepted' | 'declined' | 'cancelled' | 'completed';
+export type TradeStatus = 'pending' | 'countered' | 'accepted' | 'declined' | 'cancelled' | 'completed' | 'expired';
 
 export type CardVariant = 'normal' | 'holo' | 'shiny' | 'black_shiny_holo';
 export type TeacherRarity = 'common' | 'rare' | 'epic' | 'mythic' | 'legendary' | 'iconic';

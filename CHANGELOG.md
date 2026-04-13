@@ -8,7 +8,69 @@
 
 # Changelog
 
-+## [1.10.33] - 2026-04-13
+## [1.10.43] - 2026-04-13
+
+### Fixed
+- **UI (Gruppen):** Layout-Optimierung der Gruppenseite für bessere Skalierbarkeit.
+- **Sidebar:** Der Header (Gruppe wählen + Beitreten) ist nun flexibler und bricht bei Platzmangel sauber um.
+- **Chat Wall:** Die Höhe der Chat-Pinnwand ist nun viewport-abhängig statt fixiert (h-[calc(100vh-280px)]).
+- **Footer:** Die Chat-Eingabe und Buttons sind kompakter gestaltet, um Platz auf kleineren Displays zu sparen.
+- **Grid:** Rebalancing der Spaltenverteilung (xl:col-span-3/9) für mehr Platz im Hauptchat auf breiten Bildschirmen.
+
+## [1.10.42] - 2026-04-13
+
+### Fixed
+- **UI-Verbesserung (ABI Bot):** Ein Anzeigefehler im Chat wurde behoben, bei dem Status-Meldungen des Bots ("Suche in Hilfe & FAQ") fälschlicherweise redundant am oberen Rand des Chatfensters erschienen. Diese Meldungen werden nun nur noch am unteren Ende des Chats (im aktuellen Kontext) angezeigt.
+
+## [1.10.41] - 2026-04-13
+
+### Fixed
+- **UI (Base UI):** Der React-Warnhinweis "A component is changing the uncontrolled value state of Select to be controlled" wurde behoben. Die `Select`-Komponente in `src/app/gruppen/page.tsx` und `src/app/admin/global-settings/page.tsx` wird nun von Anfang an korrekt kontrolliert (mit einem definierten String-Wert statt `undefined`), um Zustandswechsel-Konflikte zu vermeiden.
+
+## [1.10.40] - 2026-04-13
+
+### Fixed
+- **UI-Verbesserung (Admin):** In der Verwaltung der Planungsgruppen werden nun korrekt die Namen der Gruppenleiter (statt deren IDs) in der Auswahl angezeigt.
+
+## [1.10.39] - 2026-04-13
+
+### Fixed
+- **Parsing-Fehler:** Der Syntax-Fehler (Parsing ecmascript source code failed) in `src/app/sammelkarten/tausch/page.tsx` wurde endgültig behoben. Die Klammersetzung im `activeTrades.map`-Block wurde korrigiert, um den JSX-Ausdruck und die Arrow-Function sauber zu schließen.
+
+## [1.10.38] - 2026-04-13
+
+### Fixed
+- **Rendering-Fehler:** Ein Syntax-Fehler in der Trading-Liste wurde behoben, der durch die Deaktivierung abgelaufener Trades entstanden war.
+
+## [1.10.37] - 2026-04-13
+
+### Changed
+- **Deaktivierung abgelaufener Trades:** Abgelaufene Tauschgeschäfte werden nun in der Liste ausgegraut und können nicht mehr geöffnet werden. Falls ein Tausch während der Ansicht abläuft, werden alle Interaktionsmöglichkeiten (Annehmen/Gegenangebot) gesperrt und ein entsprechender Hinweis angezeigt.
+
+## [1.10.36] - 2026-04-13
+
+### Added
+- **Visual Countdown:** Der 48-Stunden-Countdown ist nun für jeden Tausch im Trading-Hub und im Verhandlungs-Modal sichtbar. Ein rotes Pulsieren warnt, wenn weniger als 6 Stunden verbleiben.
+
+## [1.10.35] - 2026-04-13
+
+### Added
+- **Handels-Zeitlimit:** Tausche haben nun ein Zeitlimit von **48 Stunden pro Zug**. Wenn ein Partner nicht innerhalb von 48 Stunden reagiert, verfällt der Tausch automatisch (Status: Abgelaufen).
+- **Auto-Cleanup:** Ein stündlicher Cron-Job prüft nun das System auf abgelaufene Tauschgeschäfte und markiert diese.
+
+### Fixed
+- **Trading Security:** Alle Tausch-Aktionen (Annehmen, Ablehnen, Counter) prüfen nun serverseitig auf das Zeitlimit.
+- **Verhandlungs-Logik:** Ein Fehler wurde behoben, durch den die Verhandlungsrunden bei Gegenangeboten nicht korrekt gezählt wurden. Die maximale Anzahl der Runden wurde auf 3 erhöht.
+
+## [1.10.34] - 2026-04-13
+
+### Changed
+- **Branding:** Das "Tausch-Zentrum" wurde in **Trading-Hub** umbenannt.
+
+### Fixed
+- **Berechtigungen (Trading):** Administratoren können den Trading-Hub nun auch dann betreten und nutzen, wenn das System im Control Center auf "Admins Only" eingestellt ist (bisher wurden Admins fälschlicherweise ebenfalls nach `/sammelkarten` umgeleitet).
+
+## [1.10.33] - 2026-04-13
 +
 +### Fixed
 +- **10er Pack Sichtbarkeit:** Der Button zum Öffnen von 10 Packs wird nun korrekt nur dann angezeigt, wenn mindestens 10 Booster *des aktuell ausgewählten Typs* vorhanden sind (statt der Summe aller Booster-Typen).

@@ -2492,7 +2492,7 @@ export default function CardManagerPage() {
                       <div className="flex items-center justify-between p-4 bg-muted/30 rounded-xl border">
                         <div className="space-y-0.5">
                           <Label className="text-base font-bold uppercase tracking-tight">System Aktiviert</Label>
-                          <p className="text-sm text-muted-foreground">Wenn deaktiviert, ist das Tausch-Zentrum für Nutzer komplett unsichtbar.</p>
+                          <p className="text-sm text-muted-foreground">Wenn deaktiviert, ist der Trading-Hub für Nutzer komplett unsichtbar.</p>
                         </div>
                         <Button 
                           variant={systemFeatures?.is_trading_enabled ? "default" : "outline"}
