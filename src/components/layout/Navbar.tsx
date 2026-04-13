@@ -46,6 +46,7 @@ export function Navbar() {
   const [quickActionsHydrated, setQuickActionsHydrated] = useState(false)
   const skipQuickActionTrackingRef = useRef(false)
   const { user, profile, loading } = useAuth()
+  const { isEnabled } = useSystemFeatures()
   const notifications = useNotifications()
   const router = useRouter()
   const pathname = usePathname()
