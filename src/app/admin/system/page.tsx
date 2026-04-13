@@ -582,7 +582,9 @@ export default function AdminSystemDashboard() {
   useEffect(() => {
     if (!isAdmin) return
     const unsub = onSnapshot(doc(db, 'settings', 'features'), (snap) => {
-// ... same logic
+      if (snap.exists()) {
+        setFeatures(snap.data() as SystemFeatures)
+      }
     })
 
     const unsubM = onSnapshot(doc(db, 'settings', 'global'), (snap) => {
