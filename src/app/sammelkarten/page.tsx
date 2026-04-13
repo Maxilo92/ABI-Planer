@@ -90,14 +90,6 @@ function SammelkartenContent() {
     return packs
   }, [customPackQueue, getRemainingBoosters, getRemainingSupportBoosters])
 
-  const randomOpenableBoosters = useMemo(() => {
-    return availablePacks
-      .filter((pack) => pack.source === 'random')
-      .reduce((sum, pack) => sum + Math.max(0, Math.floor(pack.count || 0)), 0)
-  }, [availablePacks])
-
-  const getRandomOpenableBoosters = useCallback(() => randomOpenableBoosters, [randomOpenableBoosters])
-
   const selectedPack = useMemo(() => {
     if (availablePacks.length === 0) return null
     if (packParam) {
@@ -106,6 +98,10 @@ function SammelkartenContent() {
 
     return availablePacks[0]
   }, [availablePacks, packParam])
+
+  const getRandomOpenableBoosters = useCallback(() => {
+    return selectedPack?.count || 0
+  }, [selectedPack])
 
   const getActivePackSelection = useCallback((): PackSelection | null => {
     if (!selectedPack) return null

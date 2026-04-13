@@ -8,7 +8,13 @@
 
 # Changelog
 
-+## [1.10.32] - 2026-04-13
++## [1.10.33] - 2026-04-13
++
++### Fixed
++- **10er Pack Sichtbarkeit:** Der Button zum Öffnen von 10 Packs wird nun korrekt nur dann angezeigt, wenn mindestens 10 Booster *des aktuell ausgewählten Typs* vorhanden sind (statt der Summe aller Booster-Typen).
++
+ ## [1.10.32] - 2026-04-13
+
 +
 +### Added
 +- **10er Pack Animation:** Ein neues Bestätigungsmodal beim Öffnen von 10er Packs erlaubt es nun, eine hochwertige Aufreiß-Animation zuzuschalten.
