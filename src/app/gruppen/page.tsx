@@ -5,7 +5,29 @@ import { db } from '@/lib/firebase'
 import { collection, doc, onSnapshot, query, updateDoc, where } from 'firebase/firestore'
 import { useAuth } from '@/context/AuthContext'
 import { GroupMessage, PlanningGroup, Profile, Settings } from '@/types/database'
-import { type LucideIcon, Loader2, Plus, Users, Globe, Inbox, Hash, ClipboardList, Shield, Bot, ArrowLeft } from 'lucide-react'
+import { 
+  type LucideIcon, 
+  Loader2, 
+  Plus, 
+  Users, 
+  Globe, 
+  Inbox, 
+  Hash, 
+  ClipboardList, 
+  Shield, 
+  Bot, 
+  ArrowLeft,
+  MoreVertical,
+  LogOut
+} from 'lucide-react'
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuLabel,
+  ContextMenuSeparator,
+  ContextMenuTrigger,
+} from "@/components/ui/context-menu"
 import { Skeleton } from '@/components/ui/skeleton'
 import { ProtectedSystemGate } from '@/components/ui/ProtectedSystemGate'
 import { cn, getOnlineStatus, toDate } from '@/lib/utils'
@@ -66,7 +88,7 @@ function GroupsPageContent() {
   const [isMobileChatOpen, setIsMobileChatOpen] = useState(false)
   const [planningGroups, setPlanningGroups] = useState<PlanningGroup[]>([])
   const [selectedJoinGroup, setSelectedJoinGroup] = useState('')
-  const { joinGroup, isJoining } = useGroupJoin()
+  const { joinGroup, leaveGroup, isJoining, isLeaving } = useGroupJoin()
 
   useEffect(() => {
     if (authLoading) return
@@ -565,46 +587,63 @@ function GroupsPageContent() {
                       const chatPreview = getChatPreview(chat.latestMessage)
                       const onlineCount = onlineCountByChatId.get(chat.id) ?? 0
                       return (
-                        <button
-                          key={chat.id}
-                          onClick={() => { setActiveChatId(chat.id); setIsMobileChatOpen(true) }}
-                          className="w-full text-left group"
-                        >
-                          <div className={cn(
-                            'flex items-center gap-3 rounded-2xl px-3 py-3 transition-all duration-300',
-                            isActive ? 'bg-primary shadow-lg shadow-primary/20' : 'hover:bg-primary/5'
-                          )}>
-                            <div className={cn(
-                              'h-10 w-10 rounded-xl shrink-0 flex items-center justify-center transition-transform duration-300 group-hover:scale-110',
-                              isActive ? 'bg-primary-foreground/20' : bg
-                            )}>
-                              <ChatIcon className={cn('h-5 w-5', isActive ? 'text-primary-foreground' : text)} />
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <div className="flex items-center justify-between gap-1">
-                                <p className={cn('text-sm font-black truncate', isActive ? 'text-primary-foreground' : 'text-foreground')}>
-                                  {chat.label}
-                                </p>
-                                <span className={cn('text-[10px] shrink-0 font-medium', isActive ? 'text-primary-foreground/60' : 'text-muted-foreground')}>
-                                  {latestDate ? format(latestDate, 'HH:mm', { locale: de }) : ''}
-                                </span>
-                              </div>
-                              <div className="flex items-center justify-between gap-2 mt-0.5">
-                                <p className={cn('text-xs truncate font-medium', isActive ? 'text-primary-foreground/70' : 'text-muted-foreground opacity-70')}>
-                                  {chatPreview}
-                                </p>
-                                {onlineCount > 0 && (
-                                  <span className={cn(
-                                    "shrink-0 inline-flex items-center h-4 min-w-4 px-1 rounded-full text-[9px] font-black",
-                                    isActive ? "bg-primary-foreground/20 text-primary-foreground" : "bg-primary/15 text-primary"
+                        <ContextMenu key={chat.id}>
+                          <ContextMenuTrigger
+                            render={
+                              <button
+                                onClick={() => { setActiveChatId(chat.id); setIsMobileChatOpen(true) }}
+                                className="w-full text-left group"
+                              >
+                                <div className={cn(
+                                  'flex items-center gap-3 rounded-2xl px-3 py-3 transition-all duration-300',
+                                  isActive ? 'bg-primary shadow-lg shadow-primary/20' : 'hover:bg-primary/5'
+                                )}>
+                                  <div className={cn(
+                                    'h-10 w-10 rounded-xl shrink-0 flex items-center justify-center transition-transform duration-300 group-hover:scale-110',
+                                    isActive ? 'bg-primary-foreground/20' : bg
                                   )}>
-                                    {onlineCount}
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        </button>
+                                    <ChatIcon className={cn('h-5 w-5', isActive ? 'text-primary-foreground' : text)} />
+                                  </div>
+                                  <div className="min-w-0 flex-1">
+                                    <div className="flex items-center justify-between gap-1">
+                                      <p className={cn('text-sm font-black truncate', isActive ? 'text-primary-foreground' : 'text-foreground')}>
+                                        {chat.label}
+                                      </p>
+                                      <span className={cn('text-[10px] shrink-0 font-medium', isActive ? 'text-primary-foreground/60' : 'text-muted-foreground')}>
+                                        {latestDate ? format(latestDate, 'HH:mm', { locale: de }) : ''}
+                                      </span>
+                                    </div>
+                                    <div className="flex items-center justify-between gap-2 mt-0.5">
+                                      <p className={cn('text-xs truncate font-medium', isActive ? 'text-primary-foreground/70' : 'text-muted-foreground opacity-70')}>
+                                        {chatPreview}
+                                      </p>
+                                      {onlineCount > 0 && (
+                                        <span className={cn(
+                                          "shrink-0 inline-flex items-center h-4 min-w-4 px-1 rounded-full text-[9px] font-black",
+                                          isActive ? "bg-primary-foreground/20 text-primary-foreground" : "bg-primary/15 text-primary"
+                                        )}>
+                                          {onlineCount}
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              </button>
+                            }
+                          />
+                          <ContextMenuContent className="w-64 rounded-2xl p-2 shadow-2xl border-primary/10 backdrop-blur-xl">
+                            <ContextMenuLabel className="text-[10px] font-black text-muted-foreground uppercase tracking-widest px-3 py-2">{chat.label}</ContextMenuLabel>
+                            <ContextMenuSeparator className="bg-primary/10" />
+                            <ContextMenuItem 
+                              className="rounded-xl p-3 font-bold text-destructive hover:bg-destructive/10 hover:text-destructive focus:bg-destructive/10 focus:text-destructive transition-all gap-3"
+                              disabled={isLeaving}
+                              onClick={() => leaveGroup(chat.groupName)}
+                            >
+                              <LogOut className="h-4 w-4" /> 
+                              <span>{isLeaving ? 'Verlasse...' : 'Gruppe verlassen'}</span>
+                            </ContextMenuItem>
+                          </ContextMenuContent>
+                        </ContextMenu>
                       )
                     })}
                   </div>

@@ -37,8 +37,10 @@ import {
   Paperclip,
   Image as ImageIcon,
   X,
-  Reply
-  ,Wrench
+  Reply,
+  Wrench,
+  MoreVertical,
+  LogOut
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
@@ -55,6 +57,7 @@ import { Card } from '@/components/ui/card'
 import { MessageItem } from './MessageItem'
 import { MediaAttachment } from './MediaAttachment'
 import { ChatMarkdown } from './ChatMarkdown'
+import { useGroupJoin } from '@/hooks/useGroupJoin'
 
 interface GroupWallProps {
   groupName: string
@@ -74,6 +77,7 @@ export function GroupWall({
   onlineCount: propOnlineCount 
 }: GroupWallProps) {
   const { user, profile } = useAuth()
+  const { leaveGroup, isLeaving } = useGroupJoin()
   const [messages, setMessages] = useState<GroupMessage[]>([])
   const messagesRef = useRef<GroupMessage[]>([])
   
@@ -458,7 +462,7 @@ export function GroupWall({
             </Badge>
           ) : null}
           {abiBotMode && (
-            <div className="flex items-center gap-2">
+            <div className="hidden sm:flex items-center gap-2">
               <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 font-black px-3 py-1 rounded-xl shadow-lg shadow-primary/5">
                 ABI BOT
               </Badge>
@@ -474,6 +478,54 @@ export function GroupWall({
               </Button>
             </div>
           )}
+
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              render={
+                <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl hover:bg-primary/10 text-muted-foreground hover:text-primary transition-all">
+                  <MoreVertical className="h-5 w-5" />
+                </Button>
+              }
+            />
+            <DropdownMenuContent align="end" className="w-56 rounded-2xl p-2 shadow-2xl border-primary/10 backdrop-blur-xl">
+              <DropdownMenuLabel className="text-[10px] font-black text-muted-foreground uppercase tracking-widest px-3 py-2">Optionen</DropdownMenuLabel>
+              <DropdownMenuSeparator className="bg-primary/10" />
+              
+              {type === 'internal' && !abiBotMode && (
+                <DropdownMenuItem 
+                  className="rounded-xl p-3 font-bold text-destructive hover:bg-destructive/10 hover:text-destructive focus:bg-destructive/10 focus:text-destructive transition-all gap-3"
+                  disabled={isLeaving}
+                  onClick={() => leaveGroup(groupName)}
+                >
+                  <LogOut className="h-4 w-4" /> 
+                  <span>{isLeaving ? 'Verlasse...' : 'Gruppe verlassen'}</span>
+                </DropdownMenuItem>
+              )}
+
+              {abiBotMode && (
+                <DropdownMenuItem 
+                  className="rounded-xl p-3 font-bold sm:hidden transition-all gap-3"
+                  onClick={handleClearBotChat}
+                  disabled={botSending || botMessages.length === 0}
+                >
+                  <Trash2 className="h-4 w-4" /> 
+                  <span>Chat löschen</span>
+                </DropdownMenuItem>
+              )}
+
+              <DropdownMenuItem 
+                className="rounded-xl p-3 font-bold transition-all gap-3"
+                onClick={() => {
+                  if (scrollRef.current) {
+                    scrollRef.current.scrollTop = scrollRef.current.scrollHeight
+                  }
+                }}
+              >
+                <ChevronRight className="h-4 w-4 rotate-90" />
+                <span>Nach unten scrollen</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 

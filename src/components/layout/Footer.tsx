@@ -5,6 +5,7 @@ import { useAuth } from '@/context/AuthContext'
 import { toast } from 'sonner'
 import { useUserTeachers } from '@/hooks/useUserTeachers'
 import { getMainBaseUrl } from '@/lib/dashboard-url'
+import { Coffee } from 'lucide-react'
 
 export function Footer() {
   const version = process.env.NEXT_PUBLIC_APP_VERSION ?? '0.0.0'
@@ -77,6 +78,16 @@ export function Footer() {
         </div>
         
         <div className="flex items-center gap-3">
+          <a 
+            href="https://buymeacoffee.com/maxilo" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-500 text-[10px] font-bold tracking-wider hover:bg-amber-500/20 transition-all group"
+          >
+            <Coffee className="w-3 h-3 group-hover:rotate-12 transition-transform" />
+            <span className="hidden sm:inline">Kaffee spendieren</span>
+          </a>
+          
           <div className="relative">
             {showFeedback && (
               <div className="absolute -top-10 left-1/2 -translate-x-1/2 px-2 py-1 bg-primary text-primary-foreground rounded-md text-[10px] font-bold animate-bounce shadow-md whitespace-nowrap z-10">

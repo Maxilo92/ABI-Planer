@@ -328,7 +328,7 @@ export interface Comment {
   author_name: string;
 }
 
-export type FeedbackType = 'bug' | 'feature' | 'other';
+export type FeedbackType = 'bug' | 'feature' | 'complaint' | 'other';
 export type FeedbackStatus = 'new' | 'in_progress' | 'implemented' | 'rejected';
 
 export interface Feedback {
@@ -345,6 +345,9 @@ export interface Feedback {
   is_private: boolean;
   category?: string;
   importance?: number; // 1-10
+  is_teacher_request?: boolean;
+  teacher_card_id?: string;
+  teacher_card_name?: string;
 }
 
 export type CardVariant = 'normal' | 'holo' | 'shiny' | 'black_shiny_holo';

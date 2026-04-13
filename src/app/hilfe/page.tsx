@@ -3,7 +3,7 @@
 import { helpFaqSections } from '@/lib/helpFaqs'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, HelpCircle } from 'lucide-react'
+import { ArrowLeft, HelpCircle, ShieldAlert } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { ChevronDown } from 'lucide-react'
@@ -88,6 +88,25 @@ export default function HilfePage() {
               </div>
             </section>
           ))}
+
+          <section className="bg-destructive/5 dark:bg-destructive/10 border border-destructive/20 dark:border-destructive/30 rounded-lg p-6 space-y-3">
+            <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
+              <span className="p-1 bg-destructive/10 rounded-md">
+                <ShieldAlert className="h-5 w-5 text-destructive" />
+              </span>
+              Bist du ein Lehrer?
+            </h3>
+            <p className="text-muted-foreground leading-relaxed">
+              Du bist mit einer Karte unzufrieden oder möchtest, dass Informationen angepasst werden? Wir nehmen den Schutz deiner Persönlichkeitsrechte ernst.
+            </p>
+            <Button 
+              variant="outline" 
+              className="w-full sm:w-auto border-destructive/30 hover:bg-destructive/5 hover:text-destructive gap-2"
+              onClick={() => router.push('/hilfe/beschwerden')}
+            >
+              Beschwerde einreichen
+            </Button>
+          </section>
 
           <section className="bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-lg p-6 space-y-3">
             <h3 className="text-lg font-semibold text-foreground">Deine Frage ist nicht beantwortet?</h3>

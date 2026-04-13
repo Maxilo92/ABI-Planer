@@ -8,7 +8,22 @@
 
 # Changelog
 
-## [1.10.45] - 2026-04-13
+## [1.11.1] - 2026-04-13
+
+### Added
+- **Footer:** Globaler "Buy Me a Coffee"-Link hinzugefügt, damit Nutzer den Entwickler einfacher unterstützen können.
+
+## [1.11.0] - 2026-04-13
+
+### Added
+- **Chat-Menüs:** Das Chat-Fenster hat nun oben rechts ein Drei-Punkte-Menü (Vertical Ellipsis) für schnellen Zugriff auf Optionen wie "Gruppe verlassen" oder "Nach unten scrollen".
+- **Kontext-Menü (Sidebar):** Chats in der Seitenleiste können nun per Rechtsklick (Kontextmenü) verwaltet werden (z.B. "Gruppe verlassen").
+- **Feature:** Nutzer können nun Planungsgruppen selbstständig verlassen.
+
+### Changed
+- **Hook-Erweiterung:** Der `useGroupJoin`-Hook wurde um die `leaveGroup`-Funktion erweitert.
+
+## [1.10.42] - 2026-04-13
 
 ### Fixed
 - **Contrast (Gruppen):** Lesbarkeit des aktiven Chats in der Sidebar verbessert. Die Texte verwenden nun `primary-foreground`, um in jedem Theme einen hohen Kontrast zum aktiven Hintergrund zu gewährleisten.
