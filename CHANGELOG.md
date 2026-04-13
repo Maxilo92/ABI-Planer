@@ -8,6 +8,13 @@
 
 # Changelog
 
+## [1.10.44] - 2026-04-13
+
+### Changed
+- **Mobile Experience (Gruppen):** Implementierung eines "Two-Step" Systems für mobile Geräte. Die Chat-Liste und der aktive Chat werden nun jeweils im Vollbild angezeigt, um die Bedienbarkeit auf kleinen Displays zu maximieren.
+- **UI Polishing:** Überarbeitung der Sidebar-Header und Card-Toleranzen. Die Abstände und Radien (md:rounded-3xl) wurden für ein moderneres, luftigeres Design optimiert.
+- **ABI Bot:** Redundante Status-Anzeigen im Chat-Verlauf entfernt. Der Bot-Status ("Suche...") erscheint nun nur noch während der aktiven Generierung am Ende des Chats.
+
 ## [1.10.43] - 2026-04-13
 
 ### Fixed

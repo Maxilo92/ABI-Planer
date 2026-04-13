@@ -421,18 +421,18 @@ export function GroupWall({
   const handleReply = useCallback((msg: GroupMessage) => setReplyTo(msg), [])
 
   return (
-    <Card className="flex flex-col min-h-[500px] h-[calc(100vh-280px)] md:h-[calc(100vh-240px)] overflow-hidden rounded-2xl border border-border/50 shadow-xl bg-background/60 backdrop-blur-xl gap-0 py-0">
-      <div className="py-4 md:py-5 px-1 border-b border-border/50 flex items-center justify-between relative z-10">
-        <div className="flex items-center gap-4">
-          <div className="bg-primary/10 p-2.5 rounded-2xl shadow-inner">
-            <MessageSquare className="h-6 w-6 text-primary" />
+    <Card className="flex flex-col h-full min-h-0 overflow-hidden rounded-2xl md:rounded-3xl border border-border/50 shadow-2xl bg-background/60 backdrop-blur-xl gap-0 py-0">
+      <div className="shrink-0 py-4 md:py-5 px-4 md:px-6 border-b border-border/50 flex items-center justify-between relative z-10 bg-muted/10">
+        <div className="flex items-center gap-3 md:gap-4 min-w-0">
+          <div className="bg-primary/10 p-2 md:p-2.5 rounded-xl md:rounded-2xl shadow-inner shrink-0">
+            <MessageSquare className="h-5 w-5 md:h-6 md:w-6 text-primary" />
           </div>
-          <div>
-            <h3 className="text-xl font-black tracking-tight">
+          <div className="min-w-0">
+            <h3 className="text-lg md:text-xl font-black tracking-tight truncate">
               {type === 'hub' ? 'Shared Hub' : type === 'role' ? (
                 roleAccess === 'admin' ? 'Admin-Intern' : 
                 roleAccess === 'planner' ? 'Planer-Chat' : 'Öffentlicher Chat'
-              ) : 'Team-Pinnwand'}
+              ) : groupName}
             </h3>
             <div className="flex items-center gap-2 mt-0.5">
               <div className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" />
@@ -442,42 +442,44 @@ export function GroupWall({
             </div>
           </div>
         </div>
-        {type === 'hub' && !abiBotMode ? (
-          <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 font-black px-4 py-1.5 rounded-xl shadow-lg shadow-primary/5 animate-pulse">
-            GLOBAL HUB
-          </Badge>
-        ) : type === 'role' ? (
-          <Badge variant="outline" className={cn(
-            "font-black px-4 py-1.5 rounded-xl shadow-lg shadow-primary/5",
-            roleAccess === 'admin' ? "bg-red-100 text-red-600 border-red-200" :
-            roleAccess === 'planner' ? "bg-amber-100 text-amber-600 border-amber-200" :
-            "bg-blue-100 text-blue-600 border-blue-200"
-          )}>
-            {roleAccess?.toUpperCase()} CHAT
-          </Badge>
-        ) : null}
-        {abiBotMode && (
-          <div className="ml-2 flex items-center gap-2">
-            <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 font-black px-4 py-1.5 rounded-xl shadow-lg shadow-primary/5">
-              ABI BOT
+        <div className="flex items-center gap-2 shrink-0 ml-2">
+          {type === 'hub' && !abiBotMode ? (
+            <Badge variant="outline" className="hidden sm:inline-flex bg-primary/10 text-primary border-primary/20 font-black px-3 py-1 rounded-xl shadow-lg shadow-primary/5 animate-pulse">
+              GLOBAL HUB
             </Badge>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="h-9"
-              onClick={handleClearBotChat}
-              disabled={botSending || botMessages.length === 0}
-            >
-              Chat löschen
-            </Button>
-          </div>
-        )}
+          ) : type === 'role' ? (
+            <Badge variant="outline" className={cn(
+              "hidden sm:inline-flex font-black px-3 py-1 rounded-xl shadow-lg shadow-primary/5",
+              roleAccess === 'admin' ? "bg-red-100 text-red-600 border-red-200" :
+              roleAccess === 'planner' ? "bg-amber-100 text-amber-600 border-amber-200" :
+              "bg-blue-100 text-blue-600 border-blue-200"
+            )}>
+              {roleAccess?.toUpperCase()} CHAT
+            </Badge>
+          ) : null}
+          {abiBotMode && (
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 font-black px-3 py-1 rounded-xl shadow-lg shadow-primary/5">
+                ABI BOT
+              </Badge>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-8 md:h-9 px-3 rounded-lg text-[10px] font-black uppercase tracking-wider"
+                onClick={handleClearBotChat}
+                disabled={botSending || botMessages.length === 0}
+              >
+                Löschen
+              </Button>
+            </div>
+          )}
+        </div>
       </div>
 
       <div 
         ref={scrollRef}
-        className="flex-1 overflow-y-auto py-4 md:py-8 px-2 space-y-6 md:space-y-8 scroll-smooth custom-scrollbar"
+        className="flex-1 overflow-y-auto py-4 md:py-8 px-3 md:px-6 space-y-6 md:space-y-8 scroll-smooth custom-scrollbar min-h-0"
       >
         {chatMode === 'abi-bot' ? (
           <div className="space-y-4">
@@ -497,7 +499,7 @@ export function GroupWall({
                     >
                       <div
                         className={cn(
-                          'max-w-[85%] rounded-2xl px-4 py-3',
+                          'max-w-[90%] md:max-w-[85%] rounded-2xl px-4 py-3',
                           isAssistant
                             ? 'bg-muted border border-border text-foreground shadow'
                             : 'bg-primary text-primary-foreground shadow-none'
@@ -511,20 +513,15 @@ export function GroupWall({
                           tone={isAssistant ? 'default' : 'inverse'}
                           className="text-sm"
                         />
-                        {isAssistant && botLookupHint && !botSending && (
-                          <p className="mt-2 text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground/70">
-                            {botLookupHint}
-                          </p>
-                        )}
                       </div>
                     </div>
                   )
                 })}
                 {botSending && (
-                  <div className="flex w-full justify-start">
-                    <div className="max-w-[85%] rounded-2xl px-4 py-3 shadow bg-muted border border-border text-foreground">
+                  <div className="flex w-full justify-start animate-in fade-in slide-in-from-bottom-2">
+                    <div className="max-w-[90%] md:max-w-[85%] rounded-2xl px-4 py-3 shadow bg-muted border border-border text-foreground">
                       <p className="text-[10px] uppercase tracking-wider font-black opacity-70 mb-1">ABI Bot</p>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground" aria-label="ABI Bot sucht in Hilfe und FAQ">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Wrench className="h-4 w-4 animate-pulse text-primary" />
                         <span>{botLookupHint || 'Suche in Hilfe & FAQ'}</span>
                       </div>
