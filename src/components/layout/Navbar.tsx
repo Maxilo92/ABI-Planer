@@ -100,7 +100,27 @@ export function Navbar() {
 
   const isAdmin = profile?.role === 'admin_main' || profile?.role === 'admin_co' || profile?.role === 'admin'
 
-  const { isEnabled } = useSystemFeatures()
+  const [isTradingEnabled, setIsTradingEnabled] = useState(false)
+
+  useEffect(() => {
+    const unsub = onSnapshot(doc(db, 'settings', 'features'), (snap) => {
+      if (snap.exists()) {
+        const data = snap.data()
+        const status = data.trading_status
+        if (status === 'enabled') {
+          setIsTradingEnabled(true)
+        } else if (status === 'admins_only') {
+          setIsTradingEnabled(isAdmin)
+        } else if (status === 'disabled') {
+          setIsTradingEnabled(false)
+        } else {
+          // Fallback to legacy boolean field
+          setIsTradingEnabled(!!data.is_trading_enabled)
+        }
+      }
+    })
+    return () => unsub()
+  }, [isAdmin])
 
   const navItems: NavItem[] = [
     {
