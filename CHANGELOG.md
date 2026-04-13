@@ -8,6 +8,11 @@
 
 # Changelog
 
+## [1.10.45] - 2026-04-13
+
+### Fixed
+- **Contrast (Gruppen):** Lesbarkeit des aktiven Chats in der Sidebar verbessert. Die Texte verwenden nun `primary-foreground`, um in jedem Theme einen hohen Kontrast zum aktiven Hintergrund zu gewährleisten.
+
 ## [1.10.44] - 2026-04-13
 
 ### Changed
