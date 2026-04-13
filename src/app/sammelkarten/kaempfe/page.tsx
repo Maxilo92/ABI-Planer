@@ -128,6 +128,58 @@ export default function KaempfePage() {
     return () => unsubscribe()
   }, [user, router])
 
+  // Check for active matches and redirect if user is in a round
+  useEffect(() => {
+    if (!user) return
+    
+    // Check playerA query
+    const playerAQuery = query(
+      collection(db, 'matches'),
+      where('status', '==', 'active'),
+      where('playerA_uid', '==', user.uid),
+      limit(1)
+    )
+    
+    const unsubscribeA = onSnapshot(
+      playerAQuery,
+      (snapshot) => {
+        if (!snapshot.empty) {
+          const matchId = snapshot.docs[0].id
+          router.push(`/sammelkarten/kaempfe/${matchId}`)
+        }
+      },
+      (error) => {
+        console.error('Error checking playerA active matches:', error)
+      }
+    )
+
+    // Check playerB query separately
+    const playerBQuery = query(
+      collection(db, 'matches'),
+      where('status', '==', 'active'),
+      where('playerB_uid', '==', user.uid),
+      limit(1)
+    )
+    
+    const unsubscribeB = onSnapshot(
+      playerBQuery,
+      (snapshot) => {
+        if (!snapshot.empty) {
+          const matchId = snapshot.docs[0].id
+          router.push(`/sammelkarten/kaempfe/${matchId}`)
+        }
+      },
+      (error) => {
+        console.error('Error checking playerB active matches:', error)
+      }
+    )
+
+    return () => {
+      unsubscribeA()
+      unsubscribeB()
+    }
+  }, [user, router])
+
   useEffect(() => {
     if (!isSearching) {
       setAllQueueEntries([])
@@ -166,8 +218,14 @@ export default function KaempfePage() {
   useEffect(() => {
     if (!user || !functions || cleanupRanRef.current) return
     cleanupRanRef.current = true
-    void endMyOpenMatches(user, functions).catch((err) => {
-      console.error('Combat cleanup failed:', err)
+    void endMyOpenMatches(user, functions, db).catch((err) => {
+      // This should rarely happen since endMyOpenMatches has built-in fallbacks
+      // Only log as warning in dev, since the fallback should handle it
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('Combat cleanup encountered an error (fallback should have handled it):', err)
+      } else {
+        console.error('Combat cleanup failed:', err)
+      }
     })
   }, [user, functions])
 
@@ -175,7 +233,7 @@ export default function KaempfePage() {
     if (!user || !selectedDeckId) return
     try {
       if (functions) {
-        void endMyOpenMatches(user, functions).catch((err) => {
+        void endMyOpenMatches(user, functions, db).catch((err) => {
           console.error('Combat cleanup failed (non-blocking):', err)
         })
       }
@@ -208,7 +266,7 @@ export default function KaempfePage() {
     setIsAiLoading(true)
     try {
       if (functions) {
-        void endMyOpenMatches(user, functions).catch((err) => {
+        void endMyOpenMatches(user, functions, db).catch((err) => {
           console.error('Combat cleanup failed (non-blocking):', err)
         })
       }
@@ -233,7 +291,7 @@ export default function KaempfePage() {
     if (!user || !selectedDeckId || !functions) return
     setIsFriendLoading(true)
     try {
-      void endMyOpenMatches(user, functions).catch((err) => {
+      void endMyOpenMatches(user, functions, db).catch((err) => {
         console.error('Combat cleanup failed (non-blocking):', err)
       })
       const createFriendMatch = httpsCallable(functions, 'createFriendMatch')

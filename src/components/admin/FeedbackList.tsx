@@ -31,6 +31,9 @@ export function FeedbackList({ feedbackItems }: FeedbackListProps) {
   const [sortField, setSortField] = useState<SortField>('importance')
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc')
 
+  const [isBulkAnalyzing, setIsBulkAnalyzing] = useState(false)
+  const [bulkProgress, setBulkProgress] = useState(0)
+
   const categories = useMemo(() => {
     const cats = new Set<string>()
     feedbackItems.forEach(item => {
@@ -38,6 +41,70 @@ export function FeedbackList({ feedbackItems }: FeedbackListProps) {
     })
     return Array.from(cats).sort()
   }, [feedbackItems])
+
+  const handleBulkAnalyze = async () => {
+    const itemsToAnalyze = feedbackItems.filter(item => !item.importance || !item.category)
+    
+    if (itemsToAnalyze.length === 0) {
+      if (!window.confirm('Alle Einträge haben bereits KI-Daten. Möchtest du trotzdem eine Neuanalyse für ALLE Einträge erzwingen?')) {
+        return
+      }
+      // Re-analyze all
+      itemsToAnalyze.push(...feedbackItems)
+    }
+
+    if (!window.confirm(`${itemsToAnalyze.length} Einträge werden jetzt per KI analysiert. Dies kann einen Moment dauern. Fortfahren?`)) {
+      return
+    }
+
+    setIsBulkAnalyzing(true)
+    setBulkProgress(0)
+    let processed = 0
+    let errors = 0
+
+    for (const item of itemsToAnalyze) {
+      try {
+        const response = await fetch('/api/feedback/analyze', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title: item.title, description: item.description }),
+        })
+
+        const data = await response.json()
+        if (data.ok) {
+          const docRef = doc(db, 'feedback', item.id)
+          await updateDoc(docRef, {
+            category: data.category,
+            importance: data.importance
+          })
+        } else {
+          errors++
+        }
+      } catch (err) {
+        console.error('Error analyzing item:', item.id, err)
+        errors++
+      }
+
+      processed++
+      setBulkProgress(Math.round((processed / itemsToAnalyze.length) * 100))
+    }
+
+    setIsBulkAnalyzing(false)
+    setBulkProgress(0)
+    
+    if (errors > 0) {
+      toast.error(`Analyse abgeschlossen mit ${errors} Fehlern.`)
+    } else {
+      toast.success(`${processed} Einträge erfolgreich analysiert.`)
+    }
+
+    if (user) {
+      await logAction('FEEDBACK_BULK_ANALYZE', user.uid, profile?.full_name, {
+        count: processed,
+        errors
+      })
+    }
+  }
 
   const getIcon = (type: string) => {
     if (type === 'bug') return <Bug className="h-4 w-4 text-destructive" />
@@ -231,8 +298,34 @@ export function FeedbackList({ feedbackItems }: FeedbackListProps) {
               ))}
             </select>
 
-            <Button variant="outline" onClick={handleExportCsv} className="justify-center">
+            <Button 
+              variant="outline" 
+              onClick={handleExportCsv} 
+              className="justify-center"
+              disabled={isBulkAnalyzing}
+            >
               <Download className="h-4 w-4 mr-2" /> Export CSV
+            </Button>
+
+            <Button
+              variant="default"
+              className={cn(
+                "justify-center bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white border-0",
+                isBulkAnalyzing && "relative"
+              )}
+              onClick={handleBulkAnalyze}
+              disabled={isBulkAnalyzing}
+            >
+              {isBulkAnalyzing ? (
+                <>
+                  <span className="mr-2">Analysiere ({bulkProgress}%)</span>
+                  <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                </>
+              ) : (
+                <>
+                  <Sparkles className="h-4 w-4 mr-2" /> KI Analyse
+                </>
+              )}
             </Button>
           </div>
 

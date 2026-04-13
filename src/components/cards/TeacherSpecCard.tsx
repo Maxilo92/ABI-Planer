@@ -10,11 +10,12 @@ import { cn } from '@/lib/utils';
 import { TEACHERS_V1 } from '@/constants/sets/teachers_v1';
 
 // Hilfsfunktion zum Finden des Index im Original-Array (Albumsnummer)
-const getAlbumNumber = (id: string) => {
+const getAlbumNumber = (id: string | undefined) => {
+  if (!id) return '??';
   const index = TEACHERS_V1.findIndex(t => t.id === id);
   if (index !== -1) return index + 1;
   // Fallback: Falls ID das fullId Format hat (setId:cardId)
-  if (id.includes(':')) {
+  if (typeof id === 'string' && id.includes(':')) {
     const cardId = id.split(':')[1];
     const idx = TEACHERS_V1.findIndex(t => t.id === cardId);
     return idx !== -1 ? idx + 1 : '??';
@@ -50,21 +51,25 @@ export const TeacherSpecCard = React.memo(({
   currentHp,
   isCombat = false,
 }: TeacherSpecCardProps) => {
-  const isBlckShiny = data.variant === 'black_shiny_holo';
-  const isIconic = data.rarity === 'iconic';
-  const isShiny = data.variant === 'shiny';
-  const isGlass = data.variant === 'holo';
+  // Safely handle potentially undefined properties
+  const variant = data?.variant || 0;
+  const rarity = data?.rarity || 'common';
+  
+  const isBlckShiny = variant === 'black_shiny_holo';
+  const isIconic = rarity === 'iconic';
+  const isShiny = variant === 'shiny';
+  const isGlass = variant === 'holo';
   const useLightText = isBlckShiny || isIconic || isGlass || isShiny;
   const radiusClass = "rounded-[var(--card-radius,1.2cqw)]";
 
   // Nutze Raritätsfarbe, wenn Standard-Blau oder keine Farbe vorhanden ist
   const cardColor = useMemo(() => {
     if (isBlckShiny || isIconic) return '#0a0a0a';
-    if (!data.color || data.color === '#3b82f6') {
-      return RARITY_COLORS[data.rarity] || data.color || '#94a3b8';
+    if (!data?.color || data?.color === '#3b82f6') {
+      return RARITY_COLORS[rarity] || data?.color || '#94a3b8';
     }
-    return data.color;
-  }, [data.color, data.rarity, isBlckShiny, isIconic]);
+    return data?.color || '#94a3b8';
+  }, [data?.color, rarity, isBlckShiny, isIconic]);
 
   const getStyleClasses = () => {
     switch (styleVariant) {
@@ -212,11 +217,11 @@ export const TeacherSpecCard = React.memo(({
 
             <div className="flex justify-between items-end">
               <div className={styleClasses.numberTag}>
-                #{getAlbumNumber(data.id)}
+                #{getAlbumNumber(data?.id)}
               </div>
               <RaritySymbol
-                rarity={data.rarity}
-                variant={data.variant}
+                rarity={rarity}
+                variant={variant}
                 size={0}
                 className="w-[12cqw] h-[12cqw]"
                 color={useLightText ? 'white' : (styleVariant === 'modern-flat' ? 'black' : 'white')}

@@ -8,7 +8,7 @@ import { doc, onSnapshot } from 'firebase/firestore'
 import { CardData, CardVariant as NewCardVariant } from '@/types/cards'
 import { TeacherCard } from './TeacherCard'
 import { Button } from '@/components/ui/button'
-import { Plus, Save, ArrowLeft, Loader2, Image as ImageIcon } from 'lucide-react'
+import { Plus, Save, ArrowLeft, Loader2, Image as ImageIcon, GraduationCap } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
@@ -48,6 +48,7 @@ export const DeckEditor: React.FC<DeckEditorProps> = ({ deckId, onBack }) => {
   const [loadingGlobal, setLoadingGlobal] = useState(true)
   const [saving, setSaving] = useState(false)
   const [isSelecting, setIsSelecting] = useState(false)
+  const [isSelectingCover, setIsSelectingCover] = useState(false)
 
   const deck = useMemo(() => decks.find(d => d.id === deckId), [decks, deckId])
   const [title, setTitle] = useState('')
@@ -98,25 +99,70 @@ export const DeckEditor: React.FC<DeckEditorProps> = ({ deckId, onBack }) => {
     }
   }
 
-  const handleSetCover = (id: string) => {
-    setCoverCardId(id)
-  }
-
   const handleAddCard = () => {
     if (cardIds.length >= 10) {
       alert('Ein Deck kann maximal 10 Karten enthalten.')
       return
     }
     setIsSelecting(true)
+    setIsSelectingCover(false)
+  }
+
+  const handleAddCover = () => {
+    setIsSelecting(true)
+    setIsSelectingCover(true)
   }
 
   const handleSelectCard = (id: string) => {
-    setCardIds(prev => (prev.includes(id) ? prev : [...prev, id]))
-    if (!coverCardId) {
+    if (isSelectingCover) {
       setCoverCardId(id)
+      // Ensure cover card is in the deck
+      setCardIds(prev => {
+        if (prev.includes(id)) return prev
+        if (prev.length < 10) return [...prev, id]
+        
+        // If deck is full, replace the old cover or the first card
+        const newIds = [...prev]
+        const oldCoverIndex = coverCardId ? newIds.indexOf(coverCardId) : -1
+        if (oldCoverIndex !== -1) {
+          newIds[oldCoverIndex] = id
+        } else {
+          newIds[0] = id
+        }
+        return newIds
+      })
+    } else {
+      setCardIds(prev => (prev.includes(id) ? prev : [...prev, id]))
+      if (!coverCardId) {
+        setCoverCardId(id)
+      }
     }
     setIsSelecting(false)
+    setIsSelectingCover(false)
   }
+
+  const coverCardData = useMemo(() => {
+    if (!coverCardId) return null
+    const teacher = globalTeachers.find(t => t.fullId === coverCardId || t.baseId === coverCardId)
+    if (!teacher) return null
+
+    const userData = findUserTeacherEntry(userTeachers, teacher)
+    const globalIndex = globalTeachers.findIndex(t => t.fullId === teacher.fullId)
+
+    return {
+      id: teacher.fullId,
+      setId: teacher.setId,
+      fullId: teacher.fullId,
+      name: teacher.name,
+      rarity: teacher.rarity,
+      variant: getBestVariant(userData?.variants),
+      color: getTeacherRarityHex(teacher.rarity),
+      cardNumber: (globalIndex + 1).toString().padStart(3, '0'),
+      description: teacher.description,
+      hp: teacher.hp,
+      attacks: teacher.attacks,
+    } as CardData
+  }, [coverCardId, globalTeachers, userTeachers])
 
   const slots = useMemo(() => {
     const filledSlots = cardIds.map(id => {
@@ -175,15 +221,19 @@ export const DeckEditor: React.FC<DeckEditorProps> = ({ deckId, onBack }) => {
     return (
       <DeckSelection 
         onSelect={handleSelectCard}
-        onBack={() => setIsSelecting(false)}
-        excludeCardIds={cardIds}
-        title={`Karte hinzufügen (${cardIds.length}/10)`}
+        onBack={() => {
+          setIsSelecting(false)
+          setIsSelectingCover(false)
+        }}
+        excludeCardIds={isSelectingCover ? [] : cardIds}
+        includeCardIds={isSelectingCover ? cardIds : undefined}
+        title={isSelectingCover ? "Cover wählen" : `Karte hinzufügen (${cardIds.length}/10)`}
       />
     )
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 pb-20">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={onBack} className="rounded-full">
@@ -204,7 +254,7 @@ export const DeckEditor: React.FC<DeckEditorProps> = ({ deckId, onBack }) => {
         </Button>
       </div>
 
-      <div className="bg-muted/30 rounded-3xl p-4 sm:p-6 border border-white/10 space-y-6">
+      <div className="bg-muted/30 rounded-3xl p-4 sm:p-6 border border-white/10 space-y-8">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
           <div className="space-y-2">
             <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-1">
@@ -217,69 +267,107 @@ export const DeckEditor: React.FC<DeckEditorProps> = ({ deckId, onBack }) => {
               className="bg-background/50 border-white/10 text-base sm:text-lg font-bold h-11"
             />
           </div>
-          <div className="grid grid-cols-2 gap-3 items-end">
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-1">
-                Status
-              </label>
-              <div className="h-11 flex items-center px-3 sm:px-4 bg-background/50 border border-white/10 rounded-xl">
-                <span className={cn("text-xs sm:text-sm font-bold truncate", cardIds.length === 10 ? "text-emerald-500" : "text-amber-500")}>
-                  {cardIds.length}/10 Karten
-                </span>
-              </div>
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-1">
+              Status
+            </label>
+            <div className="h-11 flex items-center px-3 sm:px-4 bg-background/50 border border-white/10 rounded-xl">
+              <span className={cn("text-xs sm:text-sm font-bold truncate", cardIds.length === 10 ? "text-emerald-500" : "text-amber-500")}>
+                {cardIds.length}/10 Karten {cardIds.length === 10 ? "bereit" : "unvollständig"}
+              </span>
             </div>
-            {coverCardId && (
-              <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-1">
-                  Cover
-                </label>
-                <div className="h-11 flex items-center px-3 sm:px-4 bg-blue-500/10 text-blue-500 border border-blue-500/20 rounded-xl gap-2 overflow-hidden">
-                  <ImageIcon className="w-3.5 h-3.5 shrink-0" />
-                  <span className="text-[10px] font-black uppercase truncate">OK</span>
-                </div>
-              </div>
-            )}
           </div>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
-          {slots.map((slot, index) => (
-            <div key={slot.id} className="flex flex-col items-center gap-2">
-              {slot.type === 'filled' ? (
-                <div className="w-full aspect-[2.5/3.5] relative group">
-                  <TeacherCard 
-                    data={slot.data!} 
-                    styleVariant="modern-flat"
-                    isFlippedExternally={true}
-                    interactive={false}
-                    isCover={coverCardId === slot.id}
-                    showDeckControls={true}
-                    onRemove={() => handleRemoveCard(slot.id)}
-                    onSetCover={() => handleSetCover(slot.id)}
-                  />
-                </div>
-              ) : (
-                <button
-                  onClick={handleAddCard}
-                  className="w-full aspect-[2.5/3.5] bg-background/50 border-2 border-dashed border-white/10 rounded-xl flex flex-col items-center justify-center gap-2 hover:bg-background/80 hover:border-blue-500/50 transition-all group"
-                  style={{ containerType: 'inline-size' }}
+        {/* Dedicated Cover Spot */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-2 px-1">
+            <ImageIcon className="w-4 h-4 text-blue-500" />
+            <h3 className="text-sm font-black uppercase tracking-widest text-muted-foreground">Deck Cover</h3>
+          </div>
+          
+          <div className="flex flex-col items-center sm:items-start">
+            {coverCardData ? (
+              <div className="w-full max-w-[160px] aspect-[2.5/3.5] relative group">
+                <TeacherCard 
+                  data={coverCardData} 
+                  styleVariant="modern-flat"
+                  isFlippedExternally={true}
+                  interactive={false}
+                  isCover={true}
+                  showDeckControls={true}
+                  onRemove={() => handleAddCover()} // Re-select cover
+                />
+                <button 
+                  onClick={handleAddCover}
+                  className="absolute inset-0 z-50 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-xl"
                 >
-                  <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center group-hover:bg-blue-500/20 group-hover:text-blue-500 transition-colors">
-                    <Plus className="w-6 h-6" />
-                  </div>
-                  <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground group-hover:text-blue-500 transition-colors">
-                    Hinzufügen
-                  </span>
+                  <span className="text-[10px] font-black uppercase text-white bg-blue-600 px-3 py-1.5 rounded-full shadow-lg">Ändern</span>
                 </button>
-              )}
-              <span className="text-[10px] font-black text-muted-foreground/50 uppercase">
-                Slot {index + 1}
-              </span>
-            </div>
-          ))}
+              </div>
+            ) : (
+              <button
+                onClick={handleAddCover}
+                className="w-full max-w-[160px] aspect-[2.5/3.5] bg-background/50 border-2 border-dashed border-white/10 rounded-xl flex flex-col items-center justify-center gap-2 hover:bg-background/80 hover:border-blue-500/50 transition-all group"
+              >
+                <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center group-hover:bg-blue-500/20 group-hover:text-blue-500 transition-colors">
+                  <Plus className="w-6 h-6" />
+                </div>
+                <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground group-hover:text-blue-500 transition-colors">
+                  Cover wählen
+                </span>
+              </button>
+            )}
+            <p className="mt-2 text-[10px] text-muted-foreground font-medium italic">
+              Nur Karten aus deinem Team stehen als Cover zur Auswahl.
+            </p>
+          </div>
+        </div>
+
+        {/* Team Slots */}
+        <div className="space-y-4 pt-4 border-t border-white/5">
+          <div className="flex items-center gap-2 px-1">
+            <GraduationCap className="w-4 h-4 text-emerald-500" />
+            <h3 className="text-sm font-black uppercase tracking-widest text-muted-foreground">Team ({cardIds.length}/10)</h3>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
+            {slots.map((slot, index) => (
+              <div key={slot.id} className="flex flex-col items-center gap-2">
+                {slot.type === 'filled' ? (
+                  <div className="w-full aspect-[2.5/3.5] relative group">
+                    <TeacherCard 
+                      data={slot.data!} 
+                      styleVariant="modern-flat"
+                      isFlippedExternally={true}
+                      interactive={false}
+                      isCover={coverCardId === slot.id}
+                      showDeckControls={true}
+                      onRemove={() => handleRemoveCard(slot.id)}
+                    />
+                  </div>
+                ) : (
+                  <button
+                    onClick={handleAddCard}
+                    className="w-full aspect-[2.5/3.5] bg-background/50 border-2 border-dashed border-white/10 rounded-xl flex flex-col items-center justify-center gap-2 hover:bg-background/80 hover:border-blue-500/50 transition-all group"
+                    style={{ containerType: 'inline-size' }}
+                  >
+                    <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center group-hover:bg-blue-500/20 group-hover:text-blue-500 transition-colors">
+                      <Plus className="w-6 h-6" />
+                    </div>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground group-hover:text-blue-500 transition-colors">
+                      Hinzufügen
+                    </span>
+                  </button>
+                )}
+                <span className="text-[10px] font-black text-muted-foreground/50 uppercase">
+                  Slot {index + 1}
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
-
     </div>
   )
 }

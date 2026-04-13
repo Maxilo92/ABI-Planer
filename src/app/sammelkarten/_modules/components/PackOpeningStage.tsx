@@ -19,10 +19,29 @@ type PackOpeningStageProps = {
   availablePacks: AvailablePack[]
   selectedPackId: string | null
   handleOpenPack: () => void
+  isMassOpening?: boolean
+  isAnimatedMassOpening?: boolean
+  currentRippingPackIndex?: number
+  setCurrentRippingPackIndex?: (index: number) => void
+  setGameState?: (state: 'idle' | 'ripping' | 'revealed') => void
 }
 
 export function PackOpeningStage(props: PackOpeningStageProps) {
-  const { gameState, getRemainingBoosters, getRemainingSupportBoosters, isGodpack, timeLeft, availablePacks, selectedPackId, handleOpenPack } = props
+  const { 
+    gameState, 
+    getRemainingBoosters, 
+    getRemainingSupportBoosters, 
+    isGodpack, 
+    timeLeft, 
+    availablePacks, 
+    selectedPackId, 
+    handleOpenPack,
+    isMassOpening,
+    isAnimatedMassOpening,
+    currentRippingPackIndex,
+    setCurrentRippingPackIndex,
+    setGameState
+  } = props
   const [ripProgress, setRipProgress] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
   const [isTriggered, setIsTriggered] = useState(false)
@@ -30,6 +49,23 @@ export function PackOpeningStage(props: PackOpeningStageProps) {
   const lineRef = useRef<HTMLDivElement | null>(null)
   const activePointerIdRef = useRef<number | null>(null)
   const hasTriggeredRef = useRef(false)
+
+  // Sequential ripping logic
+  useEffect(() => {
+    if (gameState === 'ripping' && isMassOpening && isAnimatedMassOpening && currentRippingPackIndex !== undefined && currentRippingPackIndex >= 0) {
+      if (currentRippingPackIndex < 10) {
+        setIsTriggered(true)
+        const timer = setTimeout(() => {
+          setIsTriggered(false)
+          setCurrentRippingPackIndex?.(currentRippingPackIndex + 1)
+        }, 600) // Duration of one rip
+        return () => clearTimeout(timer)
+      } else {
+        // All 10 packs ripped
+        setGameState?.('revealed')
+      }
+    }
+  }, [gameState, isMassOpening, isAnimatedMassOpening, currentRippingPackIndex, setCurrentRippingPackIndex, setGameState])
 
   useEffect(() => {
     if (!document.getElementById('ripDragHintAnimation')) {
@@ -155,7 +191,6 @@ export function PackOpeningStage(props: PackOpeningStageProps) {
     const selectedPack = packs.find((pack) => pack.id === selectedPackId) || packs[0]
     const isCustomPack = selectedPack.source === 'custom'
     const isSupportPack = selectedPack.packId === 'support_vol_1'
-    const currentRemaining = isSupportPack ? getRemainingSupportBoosters() : (isCustomPack ? selectedPack.count : getRemainingBoosters())
     
     const cardTopClass = isCustomPack
       ? 'bg-fuchsia-700'
@@ -231,7 +266,7 @@ export function PackOpeningStage(props: PackOpeningStageProps) {
                   willChange: isDragging ? 'transform, filter' : 'auto'
                 }}
               >
-                {!isRipAnimating && (
+                {!isRipAnimating && !isAnimatedMassOpening && (
                   <div className="absolute left-0 right-0 z-30" style={{ top: ripLineTop }}>
                     <div
                       ref={lineRef}

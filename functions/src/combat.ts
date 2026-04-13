@@ -29,8 +29,12 @@ const KNOCKOUTS_TO_WIN = 3;
 type MatchResult = 'win' | 'loss' | 'draw';
 
 function getPoints(player: any): number {
+  // Always use explicit points field if available
   if (typeof player?.points === 'number') return player.points;
-  return player?.graveyard?.length || 0;
+  // Fallback to graveyard length for legacy matches
+  const fallbackPoints = player?.graveyard?.length || 0;
+  logger.warn(`[Combat] getPoints: No explicit points field, using fallback: ${fallbackPoints}`);
+  return fallbackPoints;
 }
 
 /**
@@ -74,6 +78,18 @@ function createCombatCard(fullId: string, instanceId: string, variant: string = 
     logger.error(`[Combat] Error creating combat card for ${fullId}:`, e);
     return null;
   }
+}
+
+/**
+ * Fisher-Yates shuffle algorithm for randomizing card order
+ */
+function shuffleArray<T>(array: T[]): T[] {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
 }
 
 /**
@@ -359,6 +375,12 @@ export const onQueueJoin = onDocumentCreated({
         return createCombatCard(id, `b-${i}`, variant);
       }).filter(Boolean);
 
+      // Shuffle cards for randomization
+      const shuffledCardsA = shuffleArray(cardsA);
+      const shuffledCardsB = shuffleArray(cardsB);
+
+      logger.info(`[Combat Matchmaking] Match ${matchId} created. Cards shuffled for both players (A=${shuffledCardsA.length}, B=${shuffledCardsB.length})`);
+
       transaction.set(matchRef, {
         id: matchId,
         mode: mode,
@@ -369,9 +391,9 @@ export const onQueueJoin = onDocumentCreated({
           name: dataA.userName || "Spieler A",
           photoUrl: dataA.userPhoto || null,
           elo: playerADoc.elo,
-          activeCard: cardsA[0] || null,
-          bench: cardsA.slice(1, 4),
-          reserve: cardsA.slice(4),
+          activeCard: shuffledCardsA[0] || null,
+          bench: shuffledCardsA.slice(1, 4),
+          reserve: shuffledCardsA.slice(4),
           graveyard: [],
           points: 0,
           status: 'ready'
@@ -381,9 +403,9 @@ export const onQueueJoin = onDocumentCreated({
           name: dataB.userName || "Spieler B",
           photoUrl: dataB.userPhoto || null,
           elo: playerBDoc.elo,
-          activeCard: cardsB[0] || null,
-          bench: cardsB.slice(1, 4),
-          reserve: cardsB.slice(4),
+          activeCard: shuffledCardsB[0] || null,
+          bench: shuffledCardsB.slice(1, 4),
+          reserve: shuffledCardsB.slice(4),
           graveyard: [],
           points: 0,
           status: 'ready'
@@ -456,6 +478,10 @@ export const startAiMatch = onCall({
       throw new HttpsError("failed-precondition", "Deck is empty or invalid");
     }
 
+    // Shuffle cards for randomization
+    const shuffledPlayerCards = shuffleArray(playerCards);
+    const shuffledAiCards = shuffleArray(aiCards);
+
     const matchId = db.collection("matches").doc().id;
     const matchRef = db.collection("matches").doc(matchId);
 
@@ -471,9 +497,9 @@ export const startAiMatch = onCall({
         name: profileData?.full_name || "Spieler",
         photoUrl: profileData?.photo_url || null,
         elo: playerElo,
-        activeCard: playerCards[0] || null,
-        bench: playerCards.slice(1, 4),
-        reserve: playerCards.slice(4),
+        activeCard: shuffledPlayerCards[0] || null,
+        bench: shuffledPlayerCards.slice(1, 4),
+        reserve: shuffledPlayerCards.slice(4),
         graveyard: [],
         points: 0,
         status: 'ready'
@@ -483,9 +509,9 @@ export const startAiMatch = onCall({
         name: aiOpponentName,
         photoUrl: null,
         elo: customElo !== undefined ? customElo : Math.max(800, playerElo - 100),
-        activeCard: aiCards[0] || null,
-        bench: aiCards.slice(1, 4),
-        reserve: aiCards.slice(4),
+        activeCard: shuffledAiCards[0] || null,
+        bench: shuffledAiCards.slice(1, 4),
+        reserve: shuffledAiCards.slice(4),
         graveyard: [],
         points: 0,
         status: 'ready'
@@ -723,21 +749,26 @@ export const onMatchUpdated = onDocumentUpdated({
             logEntry.pointsAwardedTo = AI_BOT_ID;
             logEntry.newPoints = bot.points;
 
+            // Check for 3-point victory condition
             if (bot.points >= KNOCKOUTS_TO_WIN) {
               player.activeCard = null;
               nextMatchStatus = 'finished';
               winner = AI_BOT_ID;
               logEntry.matchEnded = true;
+              logEntry.reason = 'knockout_limit_reached';
+              logger.info(`[Combat] AI Match ${event.params.matchId} ended: AI reached ${KNOCKOUTS_TO_WIN} knockouts`);
             } else if (player.bench.length > 0) {
               player.activeCard = null;
               player.pendingReplacement = true;
               logEntry.replacementRequired = true;
             } else {
+              // Player has no bench cards left - match ends
               player.activeCard = null;
               nextMatchStatus = 'finished';
               winner = resolveWinnerByPoints({ playerA: player, playerB: bot });
               logEntry.matchEnded = true;
               logEntry.deckDepleted = true;
+              logger.info(`[Combat] AI Match ${event.params.matchId} ended: No bench cards left for player. Winner: ${winner}`);
             }
           }
         }
@@ -902,21 +933,26 @@ export const submitCombatAction = onCall({
           logEntry.pointsAwardedTo = uid;
           logEntry.newPoints = player.points;
           
+          // Check for 3-point victory condition
           if (player.points >= KNOCKOUTS_TO_WIN) {
             opponent.activeCard = null;
             nextStatus = 'finished';
             winner = uid;
             logEntry.matchEnded = true;
+            logEntry.reason = 'knockout_limit_reached';
+            logger.info(`[Combat] Match ${matchId} ended: ${uid} reached ${KNOCKOUTS_TO_WIN} knockouts`);
           } else if (opponent.bench.length > 0) {
             opponent.activeCard = null;
             opponent.pendingReplacement = true;
             logEntry.replacementRequired = true;
           } else {
+            // Opponent has no bench cards left - match ends
             opponent.activeCard = null;
             nextStatus = 'finished';
             winner = resolveWinnerByPoints({ playerA: isPlayerA ? player : opponent, playerB: isPlayerA ? opponent : player });
             logEntry.matchEnded = true;
             logEntry.deckDepleted = true;
+            logger.info(`[Combat] Match ${matchId} ended: No bench cards left for opponent. Winner by points: ${winner}`);
           }
         }
       } else if (action.type === 'switch') {
@@ -1036,6 +1072,9 @@ export const createFriendMatch = onCall({
       throw new HttpsError("failed-precondition", "Deck is empty or invalid");
     }
 
+    // Shuffle cards for randomization
+    const shuffledPlayerCards = shuffleArray(playerCards);
+
     const matchId = db.collection("matches").doc().id;
     const matchRef = db.collection("matches").doc(matchId);
 
@@ -1048,9 +1087,9 @@ export const createFriendMatch = onCall({
         name: profileSnap.data()?.full_name || "Spieler",
         photoUrl: profileSnap.data()?.photo_url || null,
         elo: playerElo,
-        activeCard: playerCards[0] || null,
-        bench: playerCards.slice(1, 4),
-        reserve: playerCards.slice(4),
+        activeCard: shuffledPlayerCards[0] || null,
+        bench: shuffledPlayerCards.slice(1, 4),
+        reserve: shuffledPlayerCards.slice(4),
         graveyard: [],
         points: 0,
         status: 'ready'
@@ -1129,6 +1168,9 @@ export const createMatchWithCode = onCall({
       throw new HttpsError("failed-precondition", "Deck is empty or invalid");
     }
 
+    // Shuffle cards for randomization
+    const shuffledPlayerCards = shuffleArray(playerCards);
+
     // Generate a simple 6-digit code
     const inviteCode = Math.floor(100000 + Math.random() * 900000).toString();
 
@@ -1144,9 +1186,9 @@ export const createMatchWithCode = onCall({
         name: profileSnap.data()?.full_name || "Spieler",
         photoUrl: profileSnap.data()?.photo_url || null,
         elo: playerElo,
-        activeCard: playerCards[0] || null,
-        bench: playerCards.slice(1, 4),
-        reserve: playerCards.slice(4),
+        activeCard: shuffledPlayerCards[0] || null,
+        bench: shuffledPlayerCards.slice(1, 4),
+        reserve: shuffledPlayerCards.slice(4),
         graveyard: [],
         points: 0,
         status: 'ready'
@@ -1218,14 +1260,17 @@ export const joinMatchByCode = onCall({
 
     if (playerCards.length === 0) throw new HttpsError("failed-precondition", "Deck is empty or invalid");
 
+    // Shuffle cards for randomization
+    const shuffledPlayerCards = shuffleArray(playerCards);
+
     const playerB = {
       uid: uid,
       name: profileSnap.data()?.full_name || "Gegner",
       photoUrl: profileSnap.data()?.photo_url || null,
       elo: playerElo,
-      activeCard: playerCards[0] || null,
-      bench: playerCards.slice(1, 4),
-      reserve: playerCards.slice(4),
+      activeCard: shuffledPlayerCards[0] || null,
+      bench: shuffledPlayerCards.slice(1, 4),
+      reserve: shuffledPlayerCards.slice(4),
       graveyard: [],
       points: 0,
       status: 'ready'
@@ -1312,14 +1357,17 @@ export const joinMatchById = onCall({
       throw new HttpsError("failed-precondition", "Deck is empty or invalid");
     }
 
+    // Shuffle cards for randomization
+    const shuffledPlayerCards = shuffleArray(playerCards);
+
     const playerB = {
       uid: uid,
       name: profileSnap.data()?.full_name || "Gegner",
       photoUrl: profileSnap.data()?.photo_url || null,
       elo: playerElo,
-      activeCard: playerCards[0] || null,
-      bench: playerCards.slice(1, 4),
-      reserve: playerCards.slice(4),
+      activeCard: shuffledPlayerCards[0] || null,
+      bench: shuffledPlayerCards.slice(1, 4),
+      reserve: shuffledPlayerCards.slice(4),
       graveyard: [],
       points: 0,
       status: 'ready'
@@ -1404,6 +1452,96 @@ export const endMyOpenMatches = onCall({
 
   await db.collection("matchmaking_queue").doc(uid).delete().catch(() => undefined);
   return { ended, draws };
+});
+
+/**
+ * Player selects their starting active card from bench/reserve
+ */
+export const selectInitialCard = onCall({
+  cors: CALLABLE_CORS_ORIGINS,
+  region: "europe-west3",
+}, async (request) => {
+  const { matchId, cardInstanceId } = request.data;
+  const uid = request.auth?.uid;
+
+  if (!uid) throw new HttpsError("unauthenticated", "Authentication required");
+  if (!matchId || !cardInstanceId) throw new HttpsError("invalid-argument", "matchId and cardInstanceId required");
+
+  const db = getDb();
+  const matchRef = db.collection("matches").doc(matchId);
+
+  try {
+    const result = await db.runTransaction(async (transaction) => {
+      const matchSnap = await transaction.get(matchRef);
+      if (!matchSnap.exists) throw new HttpsError("not-found", "Match not found");
+
+      const data = matchSnap.data() as any;
+      const isPlayerA = uid === data.playerA_uid;
+      const player = isPlayerA ? data.playerA : data.playerB;
+
+      if (!player) throw new HttpsError("failed-precondition", "Player not found in match");
+
+      // Find the card in bench or reserve
+      let selectedCard = null;
+      let benchIndex = -1;
+      let reserveIndex = -1;
+
+      if (player.bench) {
+        benchIndex = player.bench.findIndex((card: any) => card.instanceId === cardInstanceId);
+        if (benchIndex >= 0) {
+          selectedCard = player.bench[benchIndex];
+        }
+      }
+
+      if (!selectedCard && player.reserve) {
+        reserveIndex = player.reserve.findIndex((card: any) => card.instanceId === cardInstanceId);
+        if (reserveIndex >= 0) {
+          selectedCard = player.reserve[reserveIndex];
+        }
+      }
+
+      if (!selectedCard) {
+        throw new HttpsError("invalid-argument", "Card not found in bench or reserve");
+      }
+
+      // Swap with active card
+      const oldActive = player.activeCard;
+      player.activeCard = selectedCard;
+
+      if (benchIndex >= 0) {
+        player.bench[benchIndex] = oldActive;
+      } else if (reserveIndex >= 0) {
+        player.reserve[reserveIndex] = oldActive;
+      }
+
+      const logEntry = {
+        type: 'initial_card_selected',
+        actor: uid,
+        timestamp: new Date().toISOString(),
+        selectedCard: selectedCard.name,
+        selectedCardInstanceId: cardInstanceId
+      };
+
+      const updateData: any = {
+        actionLog: FieldValue.arrayUnion(logEntry)
+      };
+
+      if (isPlayerA) {
+        updateData.playerA = player;
+      } else {
+        updateData.playerB = player;
+      }
+
+      transaction.update(matchRef, updateData);
+      return { success: true };
+    });
+
+    return result;
+  } catch (error) {
+    logger.error("[Combat] Error in selectInitialCard:", error);
+    if (error instanceof HttpsError) throw error;
+    throw new HttpsError("internal", "Internal error");
+  }
 });
 
 

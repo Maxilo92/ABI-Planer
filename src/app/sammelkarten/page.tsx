@@ -135,6 +135,10 @@ function SammelkartenContent() {
     massCollectionResults,
     flippedCards,
     isGodpack,
+    isAnimatedMassOpening,
+    currentRippingPackIndex,
+    setCurrentRippingPackIndex,
+    massFlippedCards,
     consecutiveOpenCount,
     speedMultiplier,
     handleOpenPack,
@@ -219,6 +223,10 @@ function SammelkartenContent() {
               <MassPackReveal
                 gameState={gameState}
                 isMassOpening={isMassOpening}
+                isAnimatedMassOpening={isAnimatedMassOpening}
+                currentRippingPackIndex={currentRippingPackIndex}
+                massFlippedCards={massFlippedCards}
+                handleFlipCard={handleFlipCard}
                 massRevealedTeachers={massRevealedTeachers}
                 massCollectionResults={massCollectionResults}
                 showDebug={showDebug}
@@ -234,10 +242,15 @@ function SammelkartenContent() {
                 availablePacks={availablePacks}
                 selectedPackId={selectedPack?.id || null}
                 handleOpenPack={handleOpenPack}
+                isMassOpening={isMassOpening}
+                isAnimatedMassOpening={isAnimatedMassOpening}
+                currentRippingPackIndex={currentRippingPackIndex}
+                setCurrentRippingPackIndex={setCurrentRippingPackIndex}
+                setGameState={setGameState}
               />
-            </div>
+              </div>
 
-            <SammelkartenFooterActions
+              <SammelkartenFooterActions
               showDebug={showDebug}
               speedMultiplier={speedMultiplier}
               consecutiveOpenCount={consecutiveOpenCount}
@@ -254,7 +267,8 @@ function SammelkartenContent() {
               allFlipped={allFlipped}
               isTradingEnabled={!!isTradingEnabled}
               getRandomOpenableBoosters={getRandomOpenableBoosters}
-            />          </div>
+              />
+          </div>
         </div>
       ) : view === 'decks' && activeDeckId ? (
         <div className="max-w-6xl mx-auto px-4">

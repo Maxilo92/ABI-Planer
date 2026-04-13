@@ -6,7 +6,7 @@ import { db } from '@/lib/firebase'
 import { doc, onSnapshot } from 'firebase/firestore'
 import { TeacherRarity } from '@/types/database'
 import { CardData, CardVariant as NewCardVariant } from '@/types/cards'
-import { TeacherCard } from '@/components/cards/TeacherCard'
+import { TeacherSpecCard } from '@/components/cards/TeacherSpecCard'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Search, X, Filter, Loader2, ArrowLeft } from 'lucide-react'
@@ -20,10 +20,27 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 
+const RARITY_PRIORITY: Record<TeacherRarity, number> = {
+  iconic: 0,
+  legendary: 1,
+  mythic: 2,
+  epic: 3,
+  rare: 4,
+  common: 5
+}
+
+const VARIANT_PRIORITY: Record<NewCardVariant, number> = {
+  black_shiny_holo: 0,
+  shiny: 1,
+  holo: 2,
+  normal: 3
+}
+
 interface DeckSelectionProps {
   onSelect: (cardId: string) => void
   onBack: () => void
   excludeCardIds: string[]
+  includeCardIds?: string[]
   title?: string
 }
 
@@ -63,6 +80,7 @@ export const DeckSelection: React.FC<DeckSelectionProps> = ({
   onSelect,
   onBack,
   excludeCardIds,
+  includeCardIds,
   title = "Karte auswählen"
 }) => {
   const { teachers: userTeachers, loading: loadingUserTeachers } = useUserTeachers()
@@ -102,6 +120,11 @@ export const DeckSelection: React.FC<DeckSelectionProps> = ({
         const isOwned = !!findUserTeacherEntry(userTeachers, t)
         const isExcluded = excludeCardIds.includes(id) || excludeCardIds.includes(t.baseId)
         
+        // If includeCardIds is provided, only show cards from that list
+        if (includeCardIds && !includeCardIds.includes(id) && !includeCardIds.includes(t.baseId)) {
+          return false
+        }
+
         if (!isOwned || isExcluded) return false
         
         if (search && !t.name.toLowerCase().includes(search.toLowerCase())) return false
@@ -130,6 +153,20 @@ export const DeckSelection: React.FC<DeckSelectionProps> = ({
         }
         
         return cardData
+      })
+      .sort((a, b) => {
+        // First by rarity
+        const rarityA = RARITY_PRIORITY[a.rarity as TeacherRarity] ?? 10
+        const rarityB = RARITY_PRIORITY[b.rarity as TeacherRarity] ?? 10
+        if (rarityA !== rarityB) return rarityA - rarityB
+
+        // Then by variant
+        const variantA = VARIANT_PRIORITY[a.variant as NewCardVariant] ?? 10
+        const variantB = VARIANT_PRIORITY[b.variant as NewCardVariant] ?? 10
+        if (variantA !== variantB) return variantA - variantB
+
+        // Then by name
+        return a.name.localeCompare(b.name)
       })
   }, [globalTeachers, userTeachers, excludeCardIds, search, rarityFilters, setFilters])
 
@@ -274,26 +311,20 @@ export const DeckSelection: React.FC<DeckSelectionProps> = ({
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredCards.map((card) => (
               <div
                 key={card.id}
                 onClick={() => onSelect(card.id)}
                 className="flex flex-col items-center w-full cursor-pointer group"
               >
-                <div className="relative transition-all duration-300 transform group-hover:scale-[1.05] group-hover:-rotate-1 active:scale-95 w-full aspect-[2.5/3.5]">
-                  <TeacherCard
+                <div className="relative transition-all duration-300 transform group-hover:scale-[1.02] active:scale-95 w-full aspect-[2.5/3.5]">
+                  <TeacherSpecCard
                     data={card}
                     styleVariant="modern-flat"
-                    isFlippedExternally={true}
-                    interactive={false}
+                    className="shadow-xl"
                   />
-                  <div className="absolute inset-0 bg-blue-500/0 group-hover:bg-blue-500/10 transition-colors rounded-xl" />
-                </div>
-                <div className="w-full mt-3 text-center">
-                  <h3 className="font-black text-[10px] sm:text-xs uppercase tracking-tight line-clamp-1 opacity-80 group-hover:text-blue-500 transition-colors">
-                    {card.name}
-                  </h3>
+                  <div className="absolute inset-0 bg-blue-500/0 group-hover:bg-blue-500/5 transition-colors rounded-[var(--card-radius,1.2cqw)]" />
                 </div>
               </div>
             ))}

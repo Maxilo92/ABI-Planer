@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { httpsCallable } from 'firebase/functions';
 import { functions } from '@/lib/firebase';
 import { getCard } from '@/constants/cardRegistry';
+import { InitialCardSelection } from './InitialCardSelection';
 
 interface GameBoardProps {
   matchData: any;
@@ -78,6 +79,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   const [showMenu, setShowMenu] = useState(false);
   const [showLog, setShowLog] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showInitialCardSelection, setShowInitialCardSelection] = useState(false);
   
   const lastActionTimestamp = useRef<string | null>(null);
 
@@ -140,6 +142,16 @@ export const GameBoard: React.FC<GameBoardProps> = ({
       setTimeout(() => setAttackAnimation(null), 1000);
     }
   }, [matchData.actionLog, currentUserId]);
+
+  // Show initial card selection on first turn
+  useEffect(() => {
+    // Only show if it's the player's turn and this is the first action (match just started)
+    const isFirstTurn = matchData.actionLog?.length === 1 && matchData.actionLog[0]?.type === 'match_start';
+    const isMyTurn = matchData.currentTurn === currentUserId;
+    const matchActive = matchData.status === 'active';
+    
+    setShowInitialCardSelection(isFirstTurn && isMyTurn && matchActive);
+  }, [matchData.currentTurn, matchData.status, matchData.actionLog?.length, currentUserId]);
 
   const handleAction = async (action: any) => {
     if (!isMyTurn || isSubmitting || isFinished) return;
@@ -233,6 +245,17 @@ export const GameBoard: React.FC<GameBoardProps> = ({
 
   return (
     <div className="relative w-full h-full bg-neutral-950 overflow-hidden flex flex-col p-2 sm:p-4 lg:p-5 xl:p-6 2xl:p-8 font-sans select-none rounded-[2rem] xl:rounded-[2.5rem] 2xl:rounded-[3rem] border border-white/5 shadow-2xl">
+      {/* Initial Card Selection Modal */}
+      <AnimatePresence>
+        {showInitialCardSelection && (
+          <InitialCardSelection
+            matchData={matchData}
+            currentUserId={currentUserId}
+            onClose={() => setShowInitialCardSelection(false)}
+          />
+        )}
+      </AnimatePresence>
+
       {/* Background Decor */}
       <div className="absolute inset-0 opacity-10 pointer-events-none">
         <div className="absolute top-0 left-0 w-full h-1/2 bg-gradient-to-b from-red-500/20 to-transparent" />

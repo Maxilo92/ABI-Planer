@@ -36,12 +36,15 @@ export function useSammelkartenGame(input: UseSammelkartenGameInput) {
 
   const [gameState, setGameState] = useState<'idle' | 'ripping' | 'revealed'>('idle')
   const [isMassOpening, setIsMassOpening] = useState(false)
+  const [isAnimatedMassOpening, setIsAnimatedMassOpening] = useState(false)
+  const [currentRippingPackIndex, setCurrentRippingPackIndex] = useState(-1)
   const [showDebug, setShowDebug] = useState(false)
   const [revealedTeachers, setRevealedTeachers] = useState<LootTeacher[] | null>(null)
   const [collectionResults, setCollectionResults] = useState<MaybeCollectionResult[] | null>(null)
   const [massRevealedTeachers, setMassRevealedTeachers] = useState<MassPackReveal[] | null>(null)
   const [massCollectionResults, setMassCollectionResults] = useState<MaybeCollectionResult[][] | null>(null)
   const [flippedCards, setFlippedCards] = useState<boolean[]>([false, false, false])
+  const [massFlippedCards, setMassFlippedCards] = useState<boolean[][]>(Array(10).fill(null).map(() => Array(3).fill(false)))
   const [isGodpack, setIsGodpack] = useState(false)
   const [isAnimating, setIsAnimating] = useState(false)
   const [consecutiveOpenCount, setConsecutiveOpenCount] = useState(0)
@@ -61,15 +64,24 @@ export function useSammelkartenGame(input: UseSammelkartenGameInput) {
     return () => clearTimeout(timer)
   }, [consecutiveOpenCount, gameState])
 
-  const handleFlipCard = useCallback((index: number) => {
-    setFlippedCards((prev) => {
-      const next = [...prev]
-      next[index] = true
-      return next
-    })
+  const handleFlipCard = useCallback((index: number, packIndex?: number) => {
+    if (packIndex !== undefined) {
+      setMassFlippedCards((prev) => {
+        const next = [...prev]
+        next[packIndex] = [...next[packIndex]]
+        next[packIndex][index] = true
+        return next
+      })
+    } else {
+      setFlippedCards((prev) => {
+        const next = [...prev]
+        next[index] = true
+        return next
+      })
+    }
   }, [])
 
-  const handleOpenTenPacks = useCallback(async () => {
+  const handleOpenTenPacks = useCallback(async (options?: { useAnimation?: boolean }) => {
     if (getRandomOpenableBoosters() < 10) {
       pushMessage({
         type: 'toast',
@@ -80,14 +92,17 @@ export function useSammelkartenGame(input: UseSammelkartenGameInput) {
       return
     }
 
+    const useAnimation = options?.useAnimation ?? false
     const isReopen = gameState === 'revealed'
     if (!isReopen) setGameState('ripping')
 
     setIsAnimating(true)
     setIsMassOpening(true)
+    setIsAnimatedMassOpening(useAnimation)
     setMassRevealedTeachers(null)
     setMassCollectionResults(null)
     setConsecutiveOpenCount((prev) => prev + 1)
+    setCurrentRippingPackIndex(useAnimation ? 0 : -1)
 
     try {
       const selection = getActivePackSelection()
@@ -100,15 +115,22 @@ export function useSammelkartenGame(input: UseSammelkartenGameInput) {
       const packsData = buildMassPackReveal(allResults, teachers)
       const processedResults = processMassCollectionResults(allResults, userTeachers)
 
+      // Set initial flipped state: if not animating, all are revealed
+      setMassFlippedCards(Array(10).fill(null).map(() => Array(3).fill(!useAnimation)))
+
       setTimeout(() => {
         setMassRevealedTeachers(packsData)
         setMassCollectionResults(processedResults)
       }, isReopen ? 100 : 300)
 
-      setTimeout(() => {
-        setGameState('revealed')
-        setIsAnimating(false)
-      }, isReopen ? 200 : 700)
+      if (useAnimation) {
+        // We handle the rest of the flow in the ripping animation
+      } else {
+        setTimeout(() => {
+          setGameState('revealed')
+          setIsAnimating(false)
+        }, isReopen ? 200 : 700)
+      }
     } catch (err: any) {
       pushMessage({
         type: 'toast',
@@ -118,8 +140,9 @@ export function useSammelkartenGame(input: UseSammelkartenGameInput) {
       })
       setGameState('idle')
       setIsMassOpening(false)
+      setIsAnimatedMassOpening(false)
     }
-  }, [getRandomOpenableBoosters, pushMessage, gameState, collectMassBoosters, config, userTeachers])
+  }, [getRandomOpenableBoosters, pushMessage, gameState, collectMassBoosters, config, userTeachers, getActivePackSelection])
 
   const handleOpenPack = useCallback(async () => {
     const selection = getActivePackSelection()
@@ -188,7 +211,7 @@ export function useSammelkartenGame(input: UseSammelkartenGameInput) {
       })
       setGameState('idle')
     }
-  }, [getRemainingBoosters, pushMessage, gameState, collectBooster, config, userTeachers, getActivePackSelection])
+  }, [getRemainingBoosters, getRemainingSupportBoosters, pushMessage, gameState, collectBooster, config, userTeachers, getActivePackSelection])
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -209,8 +232,23 @@ export function useSammelkartenGame(input: UseSammelkartenGameInput) {
           }
         }
       } else if (gameState === 'revealed' && isMassOpening) {
-        if (getRandomOpenableBoosters() >= 10) {
-          handleOpenTenPacks()
+        // Handle flipping in mass mode
+        let nextPackIdx = -1
+        let nextCardIdx = -1
+
+        for (let p = 0; p < massFlippedCards.length; p++) {
+          const c = massFlippedCards[p].findIndex(f => !f)
+          if (c !== -1) {
+            nextPackIdx = p
+            nextCardIdx = c
+            break
+          }
+        }
+
+        if (nextCardIdx !== -1) {
+          handleFlipCard(nextCardIdx, nextPackIdx)
+        } else if (getRandomOpenableBoosters() >= 10) {
+          handleOpenTenPacks({ useAnimation: isAnimatedMassOpening })
         } else {
           setGameState('idle')
         }
@@ -227,7 +265,9 @@ export function useSammelkartenGame(input: UseSammelkartenGameInput) {
     handleFlipCard,
     handleOpenPack,
     handleOpenTenPacks,
-    isMassOpening
+    isMassOpening,
+    isAnimatedMassOpening,
+    massFlippedCards
   ])
 
   return {
@@ -243,11 +283,17 @@ export function useSammelkartenGame(input: UseSammelkartenGameInput) {
     flippedCards,
     isGodpack,
     isAnimating,
+    isAnimatedMassOpening,
+    currentRippingPackIndex,
+    setCurrentRippingPackIndex,
     consecutiveOpenCount,
     speedMultiplier,
     handleOpenPack,
     handleOpenTenPacks,
     handleFlipCard,
-    allFlipped: flippedCards.every((value) => value === true)
+    massFlippedCards,
+    allFlipped: isMassOpening 
+      ? massFlippedCards.every((pack) => pack.every((flipped) => flipped))
+      : flippedCards.every((value) => value === true)
   }
 }

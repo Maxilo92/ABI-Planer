@@ -7,7 +7,7 @@ import { useTheme } from 'next-themes'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { Sun, Moon, ArrowRight } from 'lucide-react'
-import { getDashboardRedirectUrl } from '@/lib/dashboard-url'
+import { getDashboardRedirectUrl, getDashboardBaseUrl } from '@/lib/dashboard-url'
 import Logo from '@/components/Logo'
 
 export function LandingHeader({ isAuthenticated }: { isAuthenticated: boolean }) {
@@ -15,6 +15,7 @@ export function LandingHeader({ isAuthenticated }: { isAuthenticated: boolean })
   const { resolvedTheme, setTheme } = useTheme()
   const [isThemeReady, setIsThemeReady] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
+  const dashboardBaseUrl = getDashboardBaseUrl()
 
   useEffect(() => {
     setIsThemeReady(true)
@@ -81,9 +82,9 @@ export function LandingHeader({ isAuthenticated }: { isAuthenticated: boolean })
           ) : (
             <>
               <Button variant="ghost" size="sm" className="h-9 px-4 font-bold hidden sm:flex" asChild>
-                <Link href="/login">Anmelden</Link>
+                <a href={`${dashboardBaseUrl}/login`}>Anmelden</a>
               </Button>
-              <Button onClick={() => router.push('/register')} size="sm" className="h-9 px-5 rounded-lg font-bold shadow-lg shadow-primary/20">
+              <Button onClick={() => window.location.href = `${dashboardBaseUrl}/register`} size="sm" className="h-9 px-5 rounded-lg font-bold shadow-lg shadow-primary/20">
                 Registrieren
               </Button>
             </>

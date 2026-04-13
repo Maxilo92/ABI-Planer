@@ -14,6 +14,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import Link from 'next/link'
 import Logo from '@/components/Logo'
 import { logAction } from '@/lib/logging'
+import { getMainBaseUrl } from '@/lib/dashboard-url'
 
 const OPTION_TEACHER = 'Lehrer'
 const OPTION_OTHER_GRADE = 'andere KlassenStufe'
@@ -35,6 +36,7 @@ function RegisterForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const ref = searchParams.get('ref')
+  const mainBaseUrl = getMainBaseUrl()
 
   const isSpecialOption = selectedCourse === OPTION_TEACHER || selectedCourse === OPTION_OTHER_GRADE
 
@@ -392,15 +394,15 @@ function RegisterForm() {
                         />
                         <Label htmlFor="termsAccepted" className="!block text-xs leading-relaxed text-muted-foreground font-medium cursor-pointer">
                           Ich akzeptiere die{' '}
-                          <Link
-                            href="/agb"
+                          <a
+                            href={`${mainBaseUrl}/agb`}
                             target="_blank"
                             rel="noopener noreferrer"
                             onClick={(e) => e.stopPropagation()}
                             className="underline hover:text-primary"
                           >
                             AGB
-                          </Link>
+                          </a>
                           .
                         </Label>
                       </div>
@@ -469,9 +471,9 @@ function RegisterForm() {
                   </Link>
                   <br />
                   <span className="text-xs">
-                    <Link href="/datenschutz" className="underline hover:text-primary" target="_blank" rel="noopener noreferrer">
+                    <a href={`${mainBaseUrl}/datenschutz`} className="underline hover:text-primary" target="_blank" rel="noopener noreferrer">
                       Datenschutzerklärung
-                    </Link>
+                    </a>
                   </span>
                 </p>
               </CardFooter>

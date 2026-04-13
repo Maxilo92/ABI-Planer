@@ -63,6 +63,7 @@ export type LogActionType =
   | 'CLEANUP_LEGACY_TEACHERS_VOTED'
   | 'GLOBAL_RARITY_SYNC_TRIGGERED'
   | 'CARDS_SETTINGS_UPDATED'
+  | 'FEEDBACK_BULK_ANALYZE'
 
 export interface LogEntry {
   action: LogActionType

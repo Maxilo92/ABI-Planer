@@ -35,9 +35,20 @@ export const CardEffectOverlay: React.FC<{
 
     if (isIconic) {
       // Iconic Golden Aura: Premium gold shimmer with particles
-      return isCombat
-        ? "bg-[radial-gradient(circle_at_50%_50%,rgba(251,191,36,0.35)_0%,transparent_72%)] mix-blend-screen after:absolute after:inset-0 after:bg-[repeating-conic-gradient(from_0deg,rgba(251,191,36,0.12)_0deg,rgba(251,191,36,0.12)_10deg,transparent_10deg,transparent_20deg)] after:animate-[spin_12s_linear_infinite] after:opacity-55 shadow-[inset_0_0_110px_rgba(251,191,36,0.4)]"
-        : "bg-[radial-gradient(circle_at_50%_50%,rgba(251,191,36,0.25)_0%,transparent_70%)] after:absolute after:inset-0 after:bg-[repeating-conic-gradient(from_0deg,rgba(251,191,36,0.1)_0deg,rgba(251,191,36,0.1)_10deg,transparent_10deg,transparent_20deg)] after:animate-[spin_15s_linear_infinite] after:opacity-40 shadow-[inset_0_0_80px_rgba(251,191,36,0.3)]";
+      // Fixed: Using a much larger inset and centering to prevent cut-off during rotation
+      const iconicBase = isCombat
+        ? "bg-[radial-gradient(circle_at_50%_50%,rgba(251,191,36,0.35)_0%,transparent_72%)] mix-blend-screen"
+        : "bg-[radial-gradient(circle_at_50%_50%,rgba(251,191,36,0.25)_0%,transparent_70%)]";
+      
+      const sunburstClass = isCombat
+        ? "after:absolute after:-inset-[100%] after:bg-[repeating-conic-gradient(from_0deg,rgba(251,191,36,0.12)_0deg,rgba(251,191,36,0.12)_10deg,transparent_10deg,transparent_20deg)] after:animate-[spin_12s_linear_infinite] after:opacity-55"
+        : "after:absolute after:-inset-[100%] after:bg-[repeating-conic-gradient(from_0deg,rgba(251,191,36,0.1)_0deg,rgba(251,191,36,0.1)_10deg,transparent_10deg,transparent_20deg)] after:animate-[spin_15s_linear_infinite] after:opacity-40";
+
+      return cn(
+        iconicBase,
+        sunburstClass,
+        isCombat ? "shadow-[inset_0_0_110px_rgba(251,191,36,0.4)]" : "shadow-[inset_0_0_80px_rgba(251,191,36,0.3)]"
+      );
     }
 
     switch (variant) {

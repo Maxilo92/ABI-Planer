@@ -1,10 +1,10 @@
 'use client'
 
-import Link from 'next/link'
 import { useState } from 'react'
 import { useAuth } from '@/context/AuthContext'
 import { toast } from 'sonner'
 import { useUserTeachers } from '@/hooks/useUserTeachers'
+import { getMainBaseUrl } from '@/lib/dashboard-url'
 
 export function Footer() {
   const version = process.env.NEXT_PUBLIC_APP_VERSION ?? '0.0.0'
@@ -12,6 +12,7 @@ export function Footer() {
   const { claimExtraBoosters } = useUserTeachers()
   const [clickCount, setClickCount] = useState(0)
   const [showFeedback, setShowFeedback] = useState<string | null>(null)
+  const mainBaseUrl = getMainBaseUrl()
 
   const handleVersionClick = async () => {
     const alreadyClaimed = profile?.booster_stats?.extra_boosters_claimed
@@ -57,21 +58,21 @@ export function Footer() {
         <div className="w-full md:w-auto flex flex-wrap items-center justify-center md:justify-start gap-x-2 gap-y-2 font-medium">
           <span className="text-center md:text-left">&copy; {new Date().getFullYear()} Maximilian Priesnitz</span>
           <div className="flex flex-wrap items-center justify-center md:justify-start gap-1.5">
-            <Link href="/impressum" className="hover:text-primary transition-colors py-1 px-2 rounded-md hover:bg-secondary/50">
+            <a href={`${mainBaseUrl}/impressum`} className="hover:text-primary transition-colors py-1 px-2 rounded-md hover:bg-secondary/50">
               Impressum
-            </Link>
+            </a>
             <span className="hidden md:inline text-muted-foreground/30 mx-1">•</span>
-            <Link href="/agb" className="hover:text-primary transition-colors py-1 px-2 rounded-md hover:bg-secondary/50">
+            <a href={`${mainBaseUrl}/agb`} className="hover:text-primary transition-colors py-1 px-2 rounded-md hover:bg-secondary/50">
               AGB
-            </Link>
+            </a>
             <span className="hidden md:inline text-muted-foreground/30 mx-1">•</span>
-            <Link href="/uber" className="hover:text-primary transition-colors py-1 px-2 rounded-md hover:bg-secondary/50">
+            <a href={`${mainBaseUrl}/uber`} className="hover:text-primary transition-colors py-1 px-2 rounded-md hover:bg-secondary/50">
               Über
-            </Link>
+            </a>
             <span className="hidden md:inline text-muted-foreground/30 mx-1">•</span>
-            <Link href="/datenschutz" className="hover:text-primary transition-colors py-1 px-2 rounded-md hover:bg-secondary/50">
+            <a href={`${mainBaseUrl}/datenschutz`} className="hover:text-primary transition-colors py-1 px-2 rounded-md hover:bg-secondary/50">
               Datenschutz
-            </Link>
+            </a>
           </div>
         </div>
         

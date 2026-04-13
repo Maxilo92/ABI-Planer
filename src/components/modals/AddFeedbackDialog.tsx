@@ -136,6 +136,24 @@ function FeedbackForm({ onSuccess }: { onSuccess: () => void }) {
       
       const docRef = await addDoc(collection(db, 'feedback'), feedbackData)
 
+      // Background analysis with Groq
+      try {
+        const analysisResponse = await fetch('/api/feedback/analyze', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title, description }),
+        })
+        const analysis = await analysisResponse.json()
+        if (analysis.ok) {
+          await updateDoc(doc(db, 'feedback', docRef.id), {
+            category: analysis.category,
+            importance: analysis.importance
+          })
+        }
+      } catch (analysisError) {
+        console.error('Error analyzing feedback:', analysisError)
+      }
+
       await logAction('FEEDBACK_SUBMIT', user.uid, profile?.full_name, {
         id: docRef.id,
         title,

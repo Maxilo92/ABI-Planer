@@ -1,7 +1,18 @@
 import Link from 'next/link'
+import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { ArrowLeft, ArrowLeftRight, Clock, LayoutGrid, Trophy, Zap } from 'lucide-react'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Switch } from "@/components/ui/switch"
+import { Label } from "@/components/ui/label"
 
 import { AvailablePack } from '../types'
 
@@ -20,7 +31,7 @@ type SammelkartenFooterActionsProps = {
   getRemainingSupportBoosters: () => number
   selectedPack: AvailablePack | null
   handleOpenPack: () => void
-  handleOpenTenPacks: () => void
+  handleOpenTenPacks: (options?: { useAnimation?: boolean }) => void
   setGameState: (state: 'idle' | 'ripping' | 'revealed') => void
   timeLeft: string
   allFlipped: boolean
@@ -48,11 +59,60 @@ export function SammelkartenFooterActions(props: SammelkartenFooterActionsProps)
     getRandomOpenableBoosters
   } = props
 
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false)
+  const [useAnimation, setUseAnimation] = useState(true)
+
   const isSupportPack = selectedPack?.packId === 'support_vol_1'
   const currentRemaining = isSupportPack ? getRemainingSupportBoosters() : getRemainingBoosters()
 
+  const onConfirmOpenTen = () => {
+    handleOpenTenPacks({ useAnimation })
+    setIsConfirmOpen(false)
+  }
+
   return (
     <div className="flex flex-col gap-3 mt-6 w-full items-center">
+      <Dialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
+        <DialogContent className="sm:max-w-md bg-neutral-900 border-white/10 text-white rounded-[2rem]">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-black uppercase tracking-tighter italic">10 Packs öffnen</DialogTitle>
+            <DialogDescription className="text-neutral-400">
+              Du bist dabei, 10 Booster gleichzeitig zu öffnen. Möchtest du die Animation sehen oder direkt zum Ergebnis?
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/10 my-4">
+            <div className="flex flex-col gap-0.5">
+              <Label htmlFor="animation-toggle" className="text-sm font-bold uppercase tracking-wide">Pack-Animation</Label>
+              <span className="text-[10px] text-neutral-500 font-medium">Zeigt das Aufreißen der Packs</span>
+            </div>
+            <Switch 
+              id="animation-toggle" 
+              checked={useAnimation} 
+              onCheckedChange={setUseAnimation}
+              className="data-[state=checked]:bg-blue-600"
+            />
+          </div>
+
+          <DialogFooter className="flex flex-col sm:flex-row gap-3">
+            <Button 
+              variant="ghost" 
+              onClick={() => setIsConfirmOpen(false)}
+              className="rounded-full font-bold text-neutral-400 hover:text-white hover:bg-white/5"
+            >
+              Abbrechen
+            </Button>
+            <Button 
+              onClick={onConfirmOpenTen}
+              className="rounded-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-black uppercase tracking-widest px-8 shadow-xl shadow-blue-900/20"
+            >
+              <Zap className="h-4 w-4 mr-2 fill-current" />
+              Jetzt öffnen
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {showDebug && (
         <div className="flex gap-2 w-full max-sm:max-w-[280px] sm:max-w-sm mb-1 animate-in fade-in slide-in-from-bottom-2 duration-500">
           <div className="flex-1 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-xl p-2 text-center transition-all shadow-sm">
@@ -86,7 +146,7 @@ export function SammelkartenFooterActions(props: SammelkartenFooterActionsProps)
               variant="secondary"
               size="lg"
               className="rounded-full px-8 border-2 border-white/10 shadow-lg bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-500 hover:to-purple-500 transition-all font-black uppercase tracking-widest gap-2"
-              onClick={handleOpenTenPacks}
+              onClick={() => setIsConfirmOpen(true)}
             >
               10er Pack öffnen
             </Button>
@@ -104,7 +164,7 @@ export function SammelkartenFooterActions(props: SammelkartenFooterActionsProps)
           <Button
             onClick={
               canOpenAnotherTen
-                ? handleOpenTenPacks
+                ? onConfirmOpenTen
                 : singlePacksRemaining
                   ? handleOpenPack
                   : () => setGameState('idle')

@@ -5,9 +5,12 @@ import { useParams, useRouter } from 'next/navigation'
 import { useSammelkartenConfig } from '@/app/sammelkarten/_modules/hooks/useSammelkartenConfig'
 import { Loader2 } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
-import { db } from '@/lib/firebase'
+import { db, functions } from '@/lib/firebase'
 import { doc, onSnapshot } from 'firebase/firestore'
+import { httpsCallable } from 'firebase/functions'
 import { GameBoard } from '@/components/combat/GameBoard'
+import { InitialCardSelection } from '@/components/combat/InitialCardSelection'
+import { CombatDebugPanel } from '@/components/combat/CombatDebugPanel'
 
 export default function MatchPage() {
   const { matchId } = useParams()
@@ -32,8 +35,25 @@ export default function MatchPage() {
 
     const unsubMatch = onSnapshot(doc(db, 'matches', matchId), (snap) => {
       if (snap.exists()) {
-        setMatchData(snap.data())
-        setLoadingMatch(false)
+        const data = snap.data();
+        setMatchData(data);
+        setLoadingMatch(false);
+        
+        // Log for debugging
+        if (typeof window !== 'undefined') {
+          console.log('[MatchPage] matchData loaded:', {
+            id: matchId,
+            status: data?.status,
+            playerA_has_activeCard: !!data?.playerA?.activeCard,
+            playerB_has_activeCard: !!data?.playerB?.activeCard,
+            playerA_bench_count: data?.playerA?.bench?.length,
+            playerB_bench_count: data?.playerB?.bench?.length,
+            playerA_points: data?.playerA?.points,
+            playerB_points: data?.playerB?.points,
+          });
+          // Full Firestore document for inspection
+          console.log('[MatchPage] Full match document:', data);
+        }
       } else {
         // Handle match not found (e.g. invalid ID)
         if (!loadingMatch) router.replace('/sammelkarten/kaempfe')
@@ -64,12 +84,15 @@ export default function MatchPage() {
   }
 
   return (
-    <div className="w-full h-[calc(100vh-12rem)] min-h-[600px] xl:h-[calc(100vh-11rem)] 2xl:h-[calc(100vh-10rem)]">
-      <GameBoard 
-        matchData={matchData} 
-        currentUserId={user?.uid || ''}
-        onExit={() => router.push('/sammelkarten/kaempfe')}
-      />
-    </div>
+    <>
+      <CombatDebugPanel matchData={matchData} userId={user?.uid || ''} />
+      <div className="w-full h-[calc(100vh-12rem)] min-h-[600px] xl:h-[calc(100vh-11rem)] 2xl:h-[calc(100vh-10rem)]">
+        <GameBoard 
+          matchData={matchData} 
+          currentUserId={user?.uid || ''}
+          onExit={() => router.push('/sammelkarten/kaempfe')}
+        />
+      </div>
+    </>
   )
 }

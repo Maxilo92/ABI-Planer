@@ -275,7 +275,7 @@ export const TeacherCard = React.memo(({
       
       {/* Deck Controls */}
       {showDeckControls && (
-        <div className="absolute inset-x-0 top-0 z-50 flex justify-between p-[4%] lg:opacity-0 lg:group-hover:opacity-100 opacity-100 transition-opacity">
+        <div className="absolute inset-x-0 top-0 z-50 flex justify-between p-[4%] opacity-100 transition-opacity">
           <div className="flex gap-[1.5cqw]">
             {onRemove && (
               <button

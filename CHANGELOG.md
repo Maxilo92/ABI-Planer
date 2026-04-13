@@ -8,11 +8,142 @@
 
 # Changelog
 
++## [1.10.32] - 2026-04-13
++
++### Added
++- **10er Pack Animation:** Ein neues Bestätigungsmodal beim Öffnen von 10er Packs erlaubt es nun, eine hochwertige Aufreiß-Animation zuzuschalten.
++- **Sequentielles Aufreißen:** Bei aktivierter Animation werden alle 10 Packs nacheinander automatisch aufgerissen, was den Prozess immersiver macht.
++- **30-Karten Reveal:** Alle 30 Karten (aus 10 Packs) werden nun verdeckt präsentiert und können einzeln (oder via Leertaste) umgedreht werden, um die Spannung zu erhöhen.
++
++### Fixed
++- **Hook Dependencies:** Fehlende Abhängigkeiten in den Sammelkarten-Hooks behoben, um stabile React-Re-Renders zu gewährleisten.
++- **Keyboard Support:** Die Leertaste unterstützt nun auch das sequentielle Umdrehen aller 30 Karten im Massen-Modus.
++
+ ## [1.10.31] - 2026-04-13
+### Fixed
+- **Iconic Card Background:** Der rotierende Sunburst-Hintergrund bei Ikonen-Karten wurde massiv vergrößert, sodass bei der Rotation keine "abgeschnittenen" Ränder mehr an den Ecken sichtbar sind.
+- **Deck Cover Selection:** Bei der Wahl eines Deck-Covers werden nun ausschließlich Karten angezeigt, die bereits Teil des aktuellen 10er-Teams sind. Dies verhindert Inkonsistenzen zwischen Cover und Deck-Inhalt.
+
+## [1.10.30] - 2026-04-13
+
+### Fixed
+- **Syntax Error (PackOpeningStage):** Korrumpierter Code in `PackOpeningStage.tsx` bereinigt, der die gesamte Karten-Öffnen-Ansicht blockiert hat.
+
+## [1.10.29] - 2026-04-13
+
+### Fixed
+- **Syntax Error (FooterActions):** Korrumpierter Code in `SammelkartenFooterActions.tsx` bereinigt, der einen `Unterminated string constant` Fehler verursachte.
+
+## [1.10.28] - 2026-04-13
+
+### Fixed
+- **ReferenceError (DeckEditor):** Fehlender Import für `GraduationCap` Icon behoben.
+
+## [1.10.27] - 2026-04-13
+
+### Added
+- **Dedicated Cover Slot:** Im Deck-Editor gibt es nun einen separaten Spot für die Cover-Wahl am Anfang der Liste. Die dort gewählte Karte wird automatisch als Cover (`coverCardId`) gesetzt und mit den 10 Team-Karten synchronisiert.
+- **SpecCard Selection:** In der Deck-Kartenauswahl werden nun standardmäßig die detaillierten `TeacherSpecCard`-Komponenten (inkl. HP und Attacken) angezeigt, um die taktische Zusammenstellung zu erleichtern.
+- **Selection Sorting:** Die Kartenauswahl sortiert nun automatisch nach Seltenheit (Iconic > Legendary > ...) und Variante, sodass die "SpecCards" immer zuerst erscheinen.
+
+### Fixed
+- **Deck Controls Visibility:** Die Bearbeitungs-Buttons ("Aus Deck entfernen") auf den Karten im Deck-Editor sind nun auf allen Geräten dauerhaft sichtbar und nicht mehr an einen Hover-Status gebunden.
+- **Selection Grid:** Optimierung des Grids in der Kartenauswahl für die detaillierte Spec-Ansicht (größere Karten, weniger Spalten für bessere Lesbarkeit auf Mobile).
+
+## [1.10.26] - 2026-04-13
+
+### Added
+
+- **KI-Feedback-Sortierung:** Alle Feedback-Einträge im Admin-Bereich können nun KI-gestützt sortiert werden.
+- **Bulk KI-Analyse:** Ein neuer Button in der Admin-Feedback-Liste ermöglicht die nachträgliche Analyse aller (auch alter) Einträge, um Prio- und Kategoriedaten zu vervollständigen.
+- **Automatisierte Analyse:** Der Feedback-Dialog (`AddFeedbackDialog`) führt nun direkt nach dem Absenden eine Hintergrund-Analyse via KI durch, um eine konsistente Prio-Sortierung zu gewährleisten.
+- **Logging:** Die Bulk-KI-Analyse wird nun revisionssicher im System-Log protokolliert.
+
+## [1.10.25] - 2026-04-13
+
+### Changed
+
+- **Domain-Trennung (Domain Separation):** Striktes Routing zwischen Hauptdomain (`abi-planer-27.de`) und Dashboard-Subdomain (`dashboard.abi-planer-27.de`) via Next.js Middleware implementiert.
+- **Routen-Sicherheit:** Alle App-spezifischen Routen (Dashboard, Sammelkarten, Finanzen, Login, etc.) sind nun ausschließlich über die Dashboard-Subdomain erreichbar. Landing-Page-Inhalte (AGB, Impressum, etc.) sind auf die Hauptdomain beschränkt.
+- **Cross-Domain Navigation:** Verlinkungen im Header und Footer wurden auf absolute URLs umgestellt, um einen reibungslosen Übergang zwischen Informational-Content und App-Funktionen zu gewährleisten.
+- **Fehlerbehandlung:** Unberechtigte Zugriffe auf domain-fremde Routen werden nun mit einem sauberen 404-Statuscode quittiert, um die Trennung auch auf Suchmaschinenebene zu forcieren.
+
+## [1.10.24] - 2026-04-12
+
+### IMPORTANT - DEPLOYMENT REQUIRED
+
+⚠️ **Diese Version erfordert ein Cloud Functions Deployment!**
+
+```bash
+cd functions && npm run build && npm run deploy
+```
+
+Ohne Deployment funktionieren Kartenmischung und aktive Match-Umleitung nicht.
+
+### Added
+
+- **Combat Initial Card Selection UI:** Neue Komponente erlaubt Spielern, ihre Startkarte zu wählen. (Backend-Cloud-Function: `selectInitialCard`)
+- **Combat Debug Panel:** Automatische Console-Logs zeigen Kartenzustand und Shuffle-Status mit `[COMBAT DEBUG]` Logger.
+
+### Changed
+
+- **All Combat Match Creation:** Shuffle-Logik implementiert in:
+  - matchmaking (`onQueueJoin`) 
+  - AI matches (`startAiMatch`)
+  - Friend matches (`createFriendMatch`)
+  - Code-based matches (`createMatchWithCode`, `joinMatchByCode`, `joinMatchById`)
+
+- **Active Match Detection Logging:** Bessere Debug-Ausgaben zeigen Match-Status und redirects.
+
+### Fixed
+
+- **Active Match Detection Listener:** Fixed nested Firestore listeners - jetzt zwei parallele Queries (playerA / playerB) statt nested.
+
+---
+
+## Debugging-Guide
+
+Wenn Kartenmischung/Umleitung nicht funktioniert:
+
+1. **Open DevTools Console** (F12)
+2. **Start a new match**
+3. **Look for `[COMBAT DEBUG]`** group in console
+4. **Check "Card sequence"** - sollte NICHT in Reihenfolge sein
+5. Wenn leer → **Karten wurden in Firestore nicht richtig gespeichert**
+
+## [1.10.23] - 2026-04-12
+
+### Changed
+
+- **Combat All Matches Deck Shuffling:** Alle Match-Typen (Matchmaking, AI, Friend, Code-based) verwenden jetzt Fisher-Yates Shuffle für 10er-Decks. Karten werden random verteilt auf activeCard, bench (3), und reserve (6). Macht Spiel fairer und weniger vorhersehbar.
+
+### Added
+
+- **Backend Support für Initial Card Selection:** Neue Cloud Function `selectInitialCard` erlaubt Spielern, ihre Startkarte selbst zu wählen (statt immer die erste zu nutzen). Ready für Frontend-Integration.
+
+### Fixed
+
+- **Active Match Detection Listener Leak:** Fixed nested Firestore listeners die verhindert haben dass Redirect funktioniert. Jetzt läuft automat Redirect stabil zu aktiver Runde.
+
+## [1.10.22] - 2026-04-12
+
+### Fixed
+
+- **Combat Cleanup Dev Logging:** In lokalen Dev-Umgebungen zeigt Cleanup jetzt nur Warnings statt Errors an, wenn Production Cloud Functions nicht erreichbar sind (das Fallback-System funktioniert normal). Reduziert Noise in der Browser Console.
+
+## [1.10.21] - 2026-04-12
+
+### Fixed
+
+- **Combat Active Round Redirect:** Wenn ein Spieler noch in einer aktiven Runde (`status === 'active'`) ist und zu `/sammelkarten/kaempfe` navigiert, wird er jetzt automatisch zur laufenden Runde umgeleitet.
+- **Combat 3-Knockout Win Condition:** Zusätzliche Robustheit für die 3-Punkte-Gewinn-Bedingung mit expliziter Konsistenzbprüfung und erweiterten Logging. Match endet garantiert, wenn ein Spieler 3 Knockouts erreicht.
+
 ## [1.10.20] - 2026-04-12
 
 ### Fixed
 
 - **Combat Friend Avatar Typing:** Die Freundesliste im Kampf nutzt für das Profilbild jetzt einen defensiven Zugriff auf `photo_url`, damit der Next.js-TypeScript-Build nicht mehr an der Profilanzeige scheitert.
+- **Combat Cleanup Degradation:** `endMyOpenMatches` fällt jetzt nach Proxy- und Callable-Fehlern auf eine lokale Queue-Bereinigung zurück, damit die Kampfseite in der lokalen Entwicklung nicht mehr an einem fehlenden Cloud-Function-Endpunkt hängen bleibt.
 
 ## [1.10.19] - 2026-04-12
 
