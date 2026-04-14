@@ -31,6 +31,7 @@ interface TeacherSpecCardProps {
   renderAttacks?: (scaledAttacks: any[]) => React.ReactNode;
   currentHp?: number; // Zeigt den aktuellen HP-Stand auf der Karte an
   isCombat?: boolean;
+  compact?: boolean;
 }
 
 const RARITY_COLORS: Record<string, string> = {
@@ -50,6 +51,7 @@ export const TeacherSpecCard = React.memo(({
   renderAttacks,
   currentHp,
   isCombat = false,
+  compact = false,
 }: TeacherSpecCardProps) => {
   // Safely handle potentially undefined properties
   const variant = data?.variant || 0;
@@ -81,11 +83,13 @@ export const TeacherSpecCard = React.memo(({
             !isBlckShiny && !isShiny && !isIconic && "border-black shadow-[1.5cqw_1.5cqw_0px_0px_rgba(0,0,0,1)] border-[0.6cqw]",
             isIconic && "border-amber-500/60 shadow-[0_0_15px_rgba(251,191,36,0.4)] border-[1cqw]",
             isShiny && "shadow-[0_0_10px_rgba(255,255,255,0.4)] border-slate-300 border-[0.8cqw]",
-            isBlckShiny && "shadow-[0_0_8cqw_rgba(147,51,234,0.5)] border-purple-500/50 border-[0.8cqw]"
+            isBlckShiny && "shadow-[0_0_8cqw_rgba(147,51,234,0.5)] border-purple-500/50 border-[0.8cqw]",
+            compact && "shadow-none border-[0.4cqw]"
           ),
           header: useLightText ? (isShiny ? "text-slate-600" : "text-white") : "text-black",
           text: cn(
             "font-sans uppercase font-black tracking-tighter leading-[0.95]",
+            compact ? "text-[2.5cqw]" : "text-[4cqw]",
             isIconic ? "text-transparent bg-clip-text bg-gradient-to-b from-amber-100 via-amber-200 to-amber-500 drop-shadow-[0_0_10px_rgba(251,191,36,0.5)]" :
             isBlckShiny ? "text-transparent bg-clip-text bg-gradient-to-b from-white to-purple-200" : 
             (isShiny ? "text-slate-800" : 

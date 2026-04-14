@@ -588,49 +588,47 @@ function GroupsPageContent() {
                       const onlineCount = onlineCountByChatId.get(chat.id) ?? 0
                       return (
                         <ContextMenu key={chat.id}>
-                          <ContextMenuTrigger
-                            render={
-                              <button
-                                onClick={() => { setActiveChatId(chat.id); setIsMobileChatOpen(true) }}
-                                className="w-full text-left group"
-                              >
+                          <ContextMenuTrigger asChild>
+                            <button
+                              onClick={() => { setActiveChatId(chat.id); setIsMobileChatOpen(true) }}
+                              className="w-full text-left group"
+                            >
+                              <div className={cn(
+                                'flex items-center gap-3 rounded-2xl px-3 py-3 transition-all duration-300',
+                                isActive ? 'bg-primary shadow-lg shadow-primary/20' : 'hover:bg-primary/5'
+                              )}>
                                 <div className={cn(
-                                  'flex items-center gap-3 rounded-2xl px-3 py-3 transition-all duration-300',
-                                  isActive ? 'bg-primary shadow-lg shadow-primary/20' : 'hover:bg-primary/5'
+                                  'h-10 w-10 rounded-xl shrink-0 flex items-center justify-center transition-transform duration-300 group-hover:scale-110',
+                                  isActive ? 'bg-primary-foreground/20' : bg
                                 )}>
-                                  <div className={cn(
-                                    'h-10 w-10 rounded-xl shrink-0 flex items-center justify-center transition-transform duration-300 group-hover:scale-110',
-                                    isActive ? 'bg-primary-foreground/20' : bg
-                                  )}>
-                                    <ChatIcon className={cn('h-5 w-5', isActive ? 'text-primary-foreground' : text)} />
+                                  <ChatIcon className={cn('h-5 w-5', isActive ? 'text-primary-foreground' : text)} />
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex items-center justify-between gap-1">
+                                    <p className={cn('text-sm font-black truncate', isActive ? 'text-primary-foreground' : 'text-foreground')}>
+                                      {chat.label}
+                                    </p>
+                                    <span className={cn('text-[10px] shrink-0 font-medium', isActive ? 'text-primary-foreground/60' : 'text-muted-foreground')}>
+                                      {latestDate ? format(latestDate, 'HH:mm', { locale: de }) : ''}
+                                    </span>
                                   </div>
-                                  <div className="min-w-0 flex-1">
-                                    <div className="flex items-center justify-between gap-1">
-                                      <p className={cn('text-sm font-black truncate', isActive ? 'text-primary-foreground' : 'text-foreground')}>
-                                        {chat.label}
-                                      </p>
-                                      <span className={cn('text-[10px] shrink-0 font-medium', isActive ? 'text-primary-foreground/60' : 'text-muted-foreground')}>
-                                        {latestDate ? format(latestDate, 'HH:mm', { locale: de }) : ''}
+                                  <div className="flex items-center justify-between gap-2 mt-0.5">
+                                    <p className={cn('text-xs truncate font-medium', isActive ? 'text-primary-foreground/70' : 'text-muted-foreground opacity-70')}>
+                                      {chatPreview}
+                                    </p>
+                                    {onlineCount > 0 && (
+                                      <span className={cn(
+                                        "shrink-0 inline-flex items-center h-4 min-w-4 px-1 rounded-full text-[9px] font-black",
+                                        isActive ? "bg-primary-foreground/20 text-primary-foreground" : "bg-primary/15 text-primary"
+                                      )}>
+                                        {onlineCount}
                                       </span>
-                                    </div>
-                                    <div className="flex items-center justify-between gap-2 mt-0.5">
-                                      <p className={cn('text-xs truncate font-medium', isActive ? 'text-primary-foreground/70' : 'text-muted-foreground opacity-70')}>
-                                        {chatPreview}
-                                      </p>
-                                      {onlineCount > 0 && (
-                                        <span className={cn(
-                                          "shrink-0 inline-flex items-center h-4 min-w-4 px-1 rounded-full text-[9px] font-black",
-                                          isActive ? "bg-primary-foreground/20 text-primary-foreground" : "bg-primary/15 text-primary"
-                                        )}>
-                                          {onlineCount}
-                                        </span>
-                                      )}
-                                    </div>
+                                    )}
                                   </div>
                                 </div>
-                              </button>
-                            }
-                          />
+                              </div>
+                            </button>
+                          </ContextMenuTrigger>
                           <ContextMenuContent className="w-64 rounded-2xl p-2 shadow-2xl border-primary/10 backdrop-blur-xl">
                             <ContextMenuLabel className="text-[10px] font-black text-muted-foreground uppercase tracking-widest px-3 py-2">{chat.label}</ContextMenuLabel>
                             <ContextMenuSeparator className="bg-primary/10" />

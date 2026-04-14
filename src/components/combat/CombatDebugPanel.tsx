@@ -24,7 +24,7 @@ export function CombatDebugPanel({ matchData, userId }: { matchData: any; userId
     console.group('Player A (Your)');
     console.log('  Active Card:', currentPlayer?.activeCard?.name || 'NONE');
     console.log('  Active HP:', currentPlayer?.activeCard?.hp);
-    console.log('  Bench:', currentPlayer?.bench?.map(c => c.name) || []);
+    console.log('  Bench:', currentPlayer?.bench?.map((c: any) => c.name) || []);
     console.log('  Reserve:', currentPlayer?.reserve?.length || 0);
     const pointsA = currentPlayer?.points ?? 0;
     console.log('  Points:', pointsA, pointsA === 0 ? '(initialized)' : '');
@@ -33,7 +33,7 @@ export function CombatDebugPanel({ matchData, userId }: { matchData: any; userId
 
     console.group('Player B (Opponent)');
     console.log('  Active Card:', opponent?.activeCard?.name || 'NONE');
-    console.log('  Bench:', opponent?.bench?.map(c => c.name) || []);
+    console.log('  Bench:', opponent?.bench?.map((c: any) => c.name) || []);
     console.log('  Reserve:', opponent?.reserve?.length || 0);
     const pointsB = opponent?.points ?? 0;
     console.log('  Points:', pointsB, pointsB === 0 ? '(initialized)' : '');

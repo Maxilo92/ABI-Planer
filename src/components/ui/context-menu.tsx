@@ -35,8 +35,9 @@ function ContextMenuTrigger({
   children,
   className,
   asChild = false,
+  render,
   ...props
-}: React.ComponentProps<"div"> & { asChild?: boolean }) {
+}: React.ComponentProps<"div"> & { asChild?: boolean; render?: React.ReactNode }) {
   const context = React.useContext(ContextMenuContext)
   
   const handleContextMenu = (e: React.MouseEvent) => {
@@ -46,9 +47,11 @@ function ContextMenuTrigger({
     context.setOpen(true)
   }
 
-  if (asChild && React.isValidElement(children)) {
-    const child = children as React.ReactElement<any>
-    const childProps = children.props as {
+  const resolvedRender = asChild && React.isValidElement(children) ? children : render
+
+  if (resolvedRender && React.isValidElement(resolvedRender)) {
+    const child = resolvedRender as React.ReactElement<any>
+    const childProps = child.props as {
       className?: string
       onContextMenu?: (e: React.MouseEvent) => void
     }

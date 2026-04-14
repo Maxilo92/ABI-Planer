@@ -8,6 +8,13 @@
 
 # Changelog
 
+## [1.11.6] - 2026-04-14
+
+### Fixed
+- **UI/Build:** Kritischen Fehler in `src/app/gruppen/page.tsx` behoben, bei dem ein ungültiges `render`-Prop am `ContextMenuTrigger` verwendet wurde.
+- **TCG/Combat:** Fehlendes `compact`-Prop in `TeacherSpecCard` hinzugefügt und Styling-Logik implementiert, um TypeScript-Fehler in der Kartenauswahl zu beheben.
+- **Combat:** Implizite `any`-Typen in `CombatDebugPanel` behoben.
+
 ## [1.11.5] - 2026-04-14
 
 ### Fixed
