@@ -66,6 +66,10 @@ export interface Profile {
     month: string;
     counts: Record<string, number>;
   } | null;
+  task_stats?: {
+    completed_count: number;
+    earned_boosters: number;
+  } | null;
   currencies?: {
     notepunkte: number; // NP balance, default 0
   };
@@ -345,6 +349,7 @@ export interface Feedback {
   is_private: boolean;
   category?: string;
   importance?: number; // 1-10
+  ai_reasoning?: string;
   is_teacher_request?: boolean;
   teacher_card_id?: string;
   teacher_card_name?: string;
@@ -463,3 +468,34 @@ export interface CustomPackQueueEntry {
   allowRandomFill?: boolean;
   slots: CustomPackQueueSlot[];
 }
+
+export interface Task {
+  id: string;
+  title: string;
+  description: string;
+  reward_boosters: number;
+  complexity: number; // 1-10
+  status: 'open' | 'claimed' | 'in_review' | 'completed' | 'rejected';
+  task_image_urls: string[]; // Max 3 Bilder zur Erklärung
+  
+  // Zuweisung
+  assignee_id?: string | null;
+  assignee_name?: string | null;
+  claimed_at?: string | Timestamp | Date | null;
+  
+  // Einreichung
+  proof_media_url?: string | null;
+  proof_media_type?: 'image' | 'video' | null;
+  proof_storage_path?: string | null; // Pfad für gezieltes Löschen
+  submitted_at?: string | Timestamp | Date | null;
+  
+  // Review
+  rejected_reason?: string | null;
+  rejected_at?: string | Timestamp | Date | null;
+  completed_at?: string | Timestamp | Date | null;
+  reviewed_by?: string | null;
+
+  created_by: string;
+  created_at: string | Timestamp | Date;
+}
+

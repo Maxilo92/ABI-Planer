@@ -112,6 +112,26 @@ service cloud.firestore {
       }
     }
 
+    match /tasks/{taskId} {
+      allow read: if isAuthenticated() && isLernsax();
+      allow create: if isPlanner();
+      allow update: if (
+        // Case 1: Planner/Admin update task (including claim override)
+        (isPlanner() && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['id', 'created_at', 'created_by'])) ||
+        
+        // Case 2: Claiming/Unclaiming an open task
+        (resource.data.status == 'open' && request.resource.data.status == 'claimed' &&
+         request.resource.data.assignee_id == request.auth.uid &&
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'assignee_id', 'assignee_name', 'claimed_at'])) ||
+        
+        // Case 3: Submitting proof for a claimed task
+        (resource.data.status in ['claimed', 'rejected'] && resource.data.assignee_id == request.auth.uid &&
+         request.resource.data.status == 'in_review' &&
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'proof_media_url', 'proof_media_type', 'proof_storage_path', 'submitted_at']))
+      );
+      allow delete: if isAdmin();
+    }
+
     match /friend_requests/{requestId} {
       allow read: if isAuthenticated() && (
         resource.data.fromUserId == request.auth.uid ||
@@ -384,7 +404,7 @@ service cloud.firestore {
     }
     
     match /feedback/{feedbackId} {
-      allow read: if isPlanner() || (isAuthenticated() && resource.data.created_by == request.auth.uid) || (isApproved() && resource.data.get('is_private', false) == false);
+      allow read: if isPlanner() || (isAuthenticated() && resource.data.created_by == request.auth.uid) || (isAuthenticated() && resource.data.get('is_private', false) == false);
         allow create: if isApproved();
         allow update, delete: if isAdmin();
     }
@@ -452,6 +472,24 @@ service cloud.firestore {
     match /fraud_alerts/{alertId} {
       allow read: if isAdmin();
       allow write: if isServiceAccount(); // Only Cloud Functions
+    }
+
+    // ====== Admin Background Tasks ======
+    match /admin_tasks/{taskId} {
+      allow read: if isAdmin();
+      allow write: if false; // Only Cloud Functions (Service Account)
+    }
+
+    // ====== Teacher Invitation System ======
+    match /teacher_invitations/{tokenId} {
+      allow get: if true; // Public can verify if token exists
+      allow list, create, update, delete: if isAdmin();
+    }
+
+    match /teacher_submissions/{submissionId} {
+      allow create: if request.resource.data.invitationId != null && 
+                    get(/databases/$(database)/documents/teacher_invitations/$(request.resource.data.invitationId)).data.status == 'pending';
+      allow read, update, delete: if isAdmin();
     }
   }
 }

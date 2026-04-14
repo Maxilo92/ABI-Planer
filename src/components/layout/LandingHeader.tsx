@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import { useTheme } from 'next-themes'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import { Sun, Moon, ArrowRight, Loader2 } from 'lucide-react'
+import { Sun, Moon, ArrowRight, Loader2, Coffee } from 'lucide-react'
 import { getDashboardRedirectUrl, getDashboardBaseUrl } from '@/lib/dashboard-url'
 import Logo from '@/components/Logo'
 
@@ -55,11 +55,20 @@ export function LandingHeader({ isAuthenticated }: { isAuthenticated: boolean })
           </div>
         </Link>
 
-        <nav className="hidden md:flex items-center gap-8">
+        <nav className="hidden lg:flex items-center gap-8">
           <Link href="/#features" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Planen</Link>
           <Link href="/#tcg" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Sammeln</Link>
           <Link href="/news" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">News</Link>
           <a href={`${dashboardBaseUrl}/zugang`} className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Vorteile</a>
+          <a 
+            href="https://buymeacoffee.com/maxilo" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-amber-600 dark:text-amber-500 hover:opacity-80 transition-opacity"
+          >
+            <Coffee className="w-4 h-4" />
+            Support
+          </a>
         </nav>
 
         <div className="flex items-center gap-3">

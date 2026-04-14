@@ -122,11 +122,17 @@ export const SystemMessageProvider = ({ children }: { children: ReactNode }) => 
       if (!docSnap.exists()) return
       const settings = docSnap.data()
       
-      setMaintenance(prev => ({
-        ...(prev || {}),
-        ...settings.maintenance,
-        active: prev?.active ?? settings.maintenance?.active ?? false
-      }))
+      setMaintenance(prev => {
+        const next = {
+          ...(prev || {}),
+          ...settings.maintenance,
+        }
+        // Prefer the active state from global settings if it exists, otherwise fallback to prev
+        if (settings.maintenance && typeof settings.maintenance.active === 'boolean') {
+          next.active = settings.maintenance.active
+        }
+        return next
+      })
       
       const isAuthRoute = AUTH_ROUTES.includes(pathname)
 
@@ -225,9 +231,9 @@ export const SystemMessageProvider = ({ children }: { children: ReactNode }) => 
 
       setMaintenance(prev => ({
         active: isMaintenanceActive,
-        start: prev?.start || null,
-        end: prev?.end || null,
-        message: prev?.message || data.maintenance_message || 'Der ABI Planer befindet sich aktuell in Wartungsarbeiten.'
+        message: data.maintenance_message || prev?.message || 'Der ABI Planer befindet sich aktuell in Wartungsarbeiten.',
+        start: prev?.start ?? null,
+        end: prev?.end ?? null
       }))
     })
     unsubscribers.push(unsubFeatures)
@@ -431,11 +437,25 @@ export const SystemMessageProvider = ({ children }: { children: ReactNode }) => 
     const isAdmin = ['admin_main', 'admin', 'admin_co'].includes(userRole)
     
     const checkMaintenance = () => {
-      if (!maintenance) return
+      if (!maintenance || typeof window === 'undefined') return
+
+      const hostname = window.location.hostname
+      const isDashboardSubdomain = hostname === 'localhost' || 
+                                  hostname === '127.0.0.1' || 
+                                  hostname.startsWith('dashboard.') || 
+                                  hostname.startsWith('app.')
+
+      // Maintenance only affects the dashboard/app subdomains
+      if (!isDashboardSubdomain) return
 
       const now = new Date()
       const startTime = maintenance.start ? new Date(maintenance.start) : null
-      const isActuallyActive = maintenance.active || (startTime && now >= startTime)
+      const endTime = maintenance.end ? new Date(maintenance.end) : null
+      
+      // Active if:
+      // 1. Explicitly active
+      // 2. Scheduled: now >= start AND (no end OR now < end)
+      const isActuallyActive = maintenance.active || (startTime && now >= startTime && (!endTime || now < endTime))
 
       if (isActuallyActive) {
         const isMaintenancePath = pathname === '/maintenance'

@@ -19,6 +19,7 @@ interface AppShellProps {
 }
 
 const authRoutes = new Set(['/login', '/register', '/waiting', '/unauthorized', '/zugang', '/vorteile'])
+const noMenuRoutes = new Set(['/lehrer/erstellen'])
 
 export function AppShell({ children }: AppShellProps) {
   const pathname = usePathname()
@@ -42,7 +43,12 @@ export function AppShell({ children }: AppShellProps) {
     return isLocalDashboardHost || hostname.startsWith('dashboard.') || hostname.startsWith('app.')
   }, [hostname, isBoneyardBuild])
 
-  const isPublicLandingRoute = isDashboardSubdomain === false && !authRoutes.has(pathname) && pathname !== '/maintenance'
+  const isNoMenuRoute = useMemo(() => {
+    if (!pathname) return false
+    return noMenuRoutes.has(pathname) || pathname.startsWith('/lehrer/erstellen/')
+  }, [pathname])
+
+  const isPublicLandingRoute = (isDashboardSubdomain === false || isNoMenuRoute) && !authRoutes.has(pathname) && pathname !== '/maintenance'
   
   const isAuthRoute = authRoutes.has(pathname) || 
     pathname?.startsWith('/vorteile/') || 
@@ -51,7 +57,13 @@ export function AppShell({ children }: AppShellProps) {
   const isNewsDetail = pathname?.startsWith('/news/')
   const isAdmin = ['admin_main', 'admin', 'admin_co'].includes(profile?.role || '')
   const isMaintenanceActive = Boolean(
-    maintenance && (maintenance.active || (maintenance.start && new Date(maintenance.start) <= new Date()))
+    isDashboardSubdomain && 
+    maintenance && (
+      maintenance.active || (
+        maintenance.start && new Date(maintenance.start) <= new Date() && 
+        (!maintenance.end || new Date(maintenance.end) > new Date())
+      )
+    )
   )
 
   const showMaintenanceBanner = maintenance?.start && 
@@ -152,7 +164,7 @@ export function AppShell({ children }: AppShellProps) {
     <TwoFactorGate>
       <div className="min-h-[100dvh] bg-background lg:flex pb-safe">
         <Navbar />
-        <div className="flex-1 flex flex-col min-h-[100dvh]">
+        <div className="flex-1 flex flex-col min-h-[100dvh] min-w-0">
           {showMaintenanceBanner && maintenance?.start && (
             <MaintenanceBanner 
               startTime={maintenance.start} 
@@ -166,8 +178,8 @@ export function AppShell({ children }: AppShellProps) {
           )}
           <EmailVerificationBanner />
           <SystemMessageHost />
-          <main className="flex-1 px-4 py-8 sm:px-6 lg:px-8">
-            <div className="mx-auto max-w-7xl">
+          <main className="flex-1 px-4 py-8 sm:px-6 lg:px-8 min-w-0">
+            <div className="mx-auto max-w-7xl w-full">
               {children}
             </div>
           </main>

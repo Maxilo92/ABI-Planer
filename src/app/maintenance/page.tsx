@@ -61,7 +61,7 @@ export default function MaintenancePage() {
     )
   }
 
-  const isMaintenanceActive = maintenance?.active || (maintenance?.start && new Date(maintenance.start) <= now)
+  const isMaintenanceActive = maintenance?.active || (maintenance?.start && new Date(maintenance.start) <= now && (!maintenance.end || new Date(maintenance.end) > now))
   const estimatedEnd = maintenance?.end ? new Date(maintenance.end) : null
   const hasEnded = estimatedEnd && estimatedEnd <= now
 

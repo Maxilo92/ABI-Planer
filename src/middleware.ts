@@ -14,15 +14,13 @@ export function middleware(request: NextRequest) {
   
   // Routes categorization
   const landingOnlyRoutes = [
-    '/agb',
-    '/datenschutz',
-    '/impressum',
     '/uber',
     '/vorteile',
   ]
 
   // Dashboard-specific routes (everything app-related)
   const dashboardOnlyRoutes = [
+    '/lehrer',
     '/abstimmungen',
     '/admin',
     '/battle-pass',

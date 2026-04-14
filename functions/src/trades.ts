@@ -253,27 +253,48 @@ async function assertAdminRole(db: FirebaseFirestore.Firestore, uid: string) {
 }
 
 async function buildGlobalStats(db: FirebaseFirestore.Firestore) {
-  const profilesSnap = await db.collection("profiles").get();
+  const [profilesSnap, newsSnap, pollsSnap, inventoriesSnap, activeTradesSnap, completedTradesSnap, sammelkartenSettingsSnap] = await Promise.all([
+    db.collection("profiles").get(),
+    db.collection("news").count().get(),
+    db.collection("polls").count().get(),
+    db.collection("user_teachers").get(),
+    db.collection("card_trades").where("status", "in", ["pending", "countered"]).count().get(),
+    db.collection("card_trades").where("status", "==", "completed").count().get(),
+    db.collection("settings").doc("sammelkarten").get(),
+  ]);
+
   const now = new Date();
   const profiles = profilesSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as any[];
   const onlineUsersCount = profiles.filter((profile) => isProfileEffectivelyOnline(profile, now)).length;
-  let totalCards = 0;
+  
+  const settings = sammelkartenSettingsSnap.data() || {};
+  const teachers = settings.loot_teachers || [];
+  const teacherRarityMap = new Map<string, string>(
+    teachers.map((t: any) => [t.id, t.rarity])
+  );
 
-  const inventoriesSnap = await db.collection("user_teachers").get();
+  let totalCards = 0;
+  const rarityDistribution: Record<string, number> = {
+    common: 0,
+    rare: 0,
+    epic: 0,
+    mythic: 0,
+    legendary: 0,
+    iconic: 0,
+  };
+
   inventoriesSnap.forEach((doc) => {
     const inv = doc.data();
-    Object.values(inv).forEach((card: any) => {
-      totalCards += (card.count || 0);
+    Object.entries(inv).forEach(([teacherId, card]: [string, any]) => {
+      const count = Number(card.count || 0);
+      totalCards += count;
+      
+      const rarity = teacherRarityMap.get(teacherId) || card.rarity || 'unknown';
+      if (rarity !== 'unknown') {
+        rarityDistribution[rarity] = (rarityDistribution[rarity] || 0) + count;
+      }
     });
   });
-
-  const activeTradesSnap = await db.collection("card_trades")
-    .where("status", "in", ["pending", "countered"])
-    .count().get();
-
-  const completedTradesSnap = await db.collection("card_trades")
-    .where("status", "==", "completed")
-    .count().get();
 
   return {
     online_users_count: onlineUsersCount,
@@ -281,6 +302,9 @@ async function buildGlobalStats(db: FirebaseFirestore.Firestore) {
     total_cards_count: totalCards,
     active_trades_count: activeTradesSnap.data().count,
     completed_trades_count: completedTradesSnap.data().count,
+    news_count: newsSnap.data().count,
+    polls_count: pollsSnap.data().count,
+    rarity_distribution: rarityDistribution,
   };
 }
 
@@ -326,6 +350,8 @@ async function buildSystemAnalytics(db: FirebaseFirestore.Firestore) {
   const activityByDay = new Map<string, { date: string; label: string; actions: number; uniqueUsers: Set<string> }>();
   const sectionUsage = new Map<string, number>();
   const actionUsage = new Map<string, number>();
+  const activityByHour = new Map<number, { hour: number; actions: number; users: Set<string> }>();
+  const userActionCounts = new Map<string, { id: string; name: string | null; count: number }>();
 
   logs.forEach((entry) => {
     const timestamp = getTimestampDate(entry.timestamp);
@@ -343,6 +369,17 @@ async function buildSystemAnalytics(db: FirebaseFirestore.Firestore) {
     existingDay.actions += 1;
     existingDay.uniqueUsers.add(entry.user_id);
     activityByDay.set(dayKey, existingDay);
+
+    const hour = timestamp.getHours();
+    const existingHour = activityByHour.get(hour) || { hour, actions: 0, users: new Set<string>() };
+    existingHour.actions += 1;
+    existingHour.users.add(entry.user_id);
+    activityByHour.set(hour, existingHour);
+
+    const existingUser = userActionCounts.get(entry.user_id) || { id: entry.user_id, name: entry.user_name || null, count: 0 };
+    existingUser.count += 1;
+    if (entry.user_name && !existingUser.name) existingUser.name = entry.user_name;
+    userActionCounts.set(entry.user_id, existingUser);
 
     sectionUsage.set(section, (sectionUsage.get(section) || 0) + 1);
     actionUsage.set(entry.action, (actionUsage.get(entry.action) || 0) + 1);
@@ -372,6 +409,48 @@ async function buildSystemAnalytics(db: FirebaseFirestore.Firestore) {
       unique_users: entry.uniqueUsers.size,
       actions: entry.actions,
     }));
+
+  const activityByHourList = Array.from({ length: 24 }, (_, i) => {
+    const data = activityByHour.get(i) || { hour: i, actions: 0, users: new Set<string>() };
+    return {
+      hour: i,
+      actions: data.actions,
+      users: data.users.size,
+    };
+  });
+
+  const topActiveUsers = Array.from(userActionCounts.values())
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 10)
+    .map(u => ({
+      user_id: u.id,
+      name: u.name,
+      action_count: u.count
+    }));
+
+  const durationBuckets: Record<string, number> = {
+    '< 5 min': 0,
+    '5 - 15 min': 0,
+    '15 - 30 min': 0,
+    '30 - 60 min': 0,
+    '> 60 min': 0,
+  };
+
+  profiles.forEach((profile) => {
+    const minutes = getSessionDurationMinutes(profile, now);
+    if (minutes <= 0) return;
+
+    if (minutes < 5) durationBuckets['< 5 min']++;
+    else if (minutes < 15) durationBuckets['5 - 15 min']++;
+    else if (minutes < 30) durationBuckets['15 - 30 min']++;
+    else if (minutes < 60) durationBuckets['30 - 60 min']++;
+    else durationBuckets['> 60 min']++;
+  });
+
+  const sessionDurationDistribution = Object.entries(durationBuckets).map(([range, count]) => ({
+    range,
+    count,
+  }));
 
   const topActions = Array.from(actionUsage.entries())
     .map(([action, count]) => ({ action, count }))
@@ -411,6 +490,9 @@ async function buildSystemAnalytics(db: FirebaseFirestore.Firestore) {
     current_online_users_count: currentOnlineUsersWithActivity.length,
     current_online_users: currentOnlineUsersWithActivity,
     activity_timeline: activityTimeline,
+    activity_by_hour: activityByHourList,
+    top_active_users: topActiveUsers,
+    session_duration_distribution: sessionDurationDistribution,
     top_actions: topActions,
     section_usage: sectionStats,
     recent_actions: recentActions,
@@ -782,7 +864,6 @@ export const acceptTradeOffer = onCall({ cors: CALLABLE_CORS_ORIGINS }, async (r
     const userProfileSnap = await transaction.get(userProfileRef);
     const userProfile = userProfileSnap.data() as any;
 
-    const now = new Date();
     const today = now.toISOString().split("T")[0];
     const tradeStats = userProfile.trade_stats || { daily_trades_count: 0, last_trade_date: null };
 

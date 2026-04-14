@@ -19,6 +19,29 @@ service firebase.storage {
         && (request.resource.contentType.matches('image/.*') || request.resource.contentType == 'application/pdf');
     }
 
+    match /task-images/{taskId}/{allPaths=**} {
+      allow read: if true;
+      allow write: if request.auth != null && (
+        firestore.get(/databases/(default)/documents/profiles/$(request.auth.uid)).data.role in ['planner', 'admin', 'admin_main', 'admin_co']
+      ) && request.resource.size < 5 * 1024 * 1024 && request.resource.contentType.matches('image/.*');
+    }
+
+    match /task-proofs/{taskId}/{allPaths=**} {
+      allow read: if isAuthenticated() && (
+        request.auth.uid == firestore.get(/databases/(default)/documents/tasks/$(taskId)).data.assignee_id ||
+        firestore.get(/databases/(default)/documents/profiles/$(request.auth.uid)).data.role in ['admin', 'admin_main', 'admin_co']
+      );
+      allow write: if isAuthenticated() && (
+        request.auth.uid == firestore.get(/databases/(default)/documents/tasks/$(taskId)).data.assignee_id
+      ) && request.resource.size < 30 * 1024 * 1024 && (request.resource.contentType.matches('image/.*') || request.resource.contentType.matches('video/.*'));
+    }
+
+    match /teacher_submissions/{tokenId}/{allPaths=**} {
+      allow read: if true;
+      allow write: if request.resource.size < 5 * 1024 * 1024 
+                   && request.resource.contentType.matches('image/.*');
+    }
+
     match /{allPaths=**} {
       allow read: if false;
       allow write: if false;

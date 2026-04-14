@@ -31,6 +31,8 @@ export interface GlobalStats {
   total_cards_count: number;
   active_trades_count: number;
   completed_trades_count: number;
+  news_count?: number;
+  polls_count?: number;
   rarity_distribution?: Record<string, number>;
 }
 
@@ -74,6 +76,23 @@ export interface SystemAnalyticsRecentAction {
   details: string;
 }
 
+export interface ActivityByHour {
+  hour: number;
+  actions: number;
+  users: number;
+}
+
+export interface TopActiveUser {
+  user_id: string;
+  name: string | null;
+  action_count: number;
+}
+
+export interface SessionDurationBucket {
+  range: string;
+  count: number;
+}
+
 export interface SystemAnalytics {
   window_days: number;
   generated_at: string;
@@ -85,4 +104,7 @@ export interface SystemAnalytics {
   section_usage: SystemAnalyticsSectionStat[];
   recent_actions: SystemAnalyticsRecentAction[];
   average_session_minutes: number;
+  activity_by_hour?: ActivityByHour[];
+  top_active_users?: TopActiveUser[];
+  session_duration_distribution?: SessionDurationBucket[];
 }

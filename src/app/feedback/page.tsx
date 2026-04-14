@@ -199,11 +199,14 @@ export default function FeedbackPage() {
           body: JSON.stringify({ title, description }),
         })
         const analysis = await analysisResponse.json()
-        if (analysis.ok) {
+        if (analysis.ok && analysis.category && analysis.importance !== undefined) {
           await updateDoc(doc(db, 'feedback', docRef.id), {
-            category: analysis.category,
-            importance: analysis.importance
+            category: analysis.category || 'Allgemein',
+            importance: analysis.importance ?? 5,
+            ai_reasoning: analysis.ai_reasoning || 'Keine Begründung verfügbar'
           })
+        } else {
+          console.warn('Analysis result incomplete for feedback:', analysis)
         }
       } catch (analysisError) {
         console.error('Error analyzing feedback:', analysisError)

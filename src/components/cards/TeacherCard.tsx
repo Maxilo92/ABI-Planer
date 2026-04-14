@@ -370,8 +370,17 @@ export const TeacherCard = React.memo(({
     </div>
   );
 
+  const wrappedFrontSide = (
+    <div
+      className={cn("relative aspect-[2.5/3.5] @container rounded-xl overflow-visible sm:overflow-hidden isolate", className)}
+      style={{ containerType: 'inline-size' }}
+    >
+      {frontSide}
+    </div>
+  );
+
   if (frontOnly) {
-    return frontSide;
+    return wrappedFrontSide;
   }
 
   return (

@@ -37,7 +37,8 @@ import {
   Trophy,
   Gamepad2,
   Sword,
-  Loader2
+  Loader2,
+  Coffee
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useTheme } from 'next-themes'
@@ -685,6 +686,47 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
                 )}
                 </Skeleton>
              </div>
+          </div>
+        </section>
+
+        {/* Support the Project Section */}
+        <section className="px-6 py-20 md:py-32 relative overflow-hidden">
+          <div className="max-w-7xl mx-auto">
+            <motion.div 
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="relative rounded-[3rem] border border-amber-500/20 bg-amber-500/5 p-8 md:p-16 overflow-hidden group"
+            >
+              {/* Background Decoration */}
+              <div className="absolute -top-24 -right-24 w-64 h-64 bg-amber-500/10 rounded-full blur-[80px] group-hover:bg-amber-500/20 transition-colors duration-700" />
+              <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-amber-500/10 rounded-full blur-[80px]" />
+              
+              <div className="grid lg:grid-cols-[1fr_auto] gap-12 items-center relative z-10">
+                <div className="space-y-6">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-500 text-[10px] font-black uppercase tracking-[0.3em]">
+                    <Coffee className="h-3.5 w-3.5" />
+                    <span>Community Support</span>
+                  </div>
+                  <h2 className="text-4xl md:text-6xl font-black tracking-tight italic uppercase leading-[0.9]">
+                    Unterstütze <br />
+                    <span className="text-amber-500">das Projekt.</span>
+                  </h2>
+                  <p className="text-muted-foreground text-lg md:text-xl leading-relaxed max-w-2xl font-medium">
+                    Der ABI Planer ist und bleibt kostenlos für alle Schüler. Wenn dir die Plattform gefällt und du uns helfen möchtest, die Serverkosten zu decken und neue Features zu entwickeln, freuen wir uns über einen kleinen Kaffee.
+                  </p>
+                </div>
+                
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <Button size="lg" asChild className="h-16 px-10 text-xs font-black uppercase tracking-[0.25em] rounded-2xl bg-amber-500 text-white hover:bg-amber-600 shadow-xl shadow-amber-500/20 border-none group">
+                    <a href="https://buymeacoffee.com/maxilo" target="_blank" rel="noopener noreferrer">
+                      Kaffee spendieren
+                      <Coffee className="ml-2 h-4 w-4 transition-transform group-hover:rotate-12" />
+                    </a>
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
           </div>
         </section>
 

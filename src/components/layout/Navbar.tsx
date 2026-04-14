@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { LayoutDashboard, CheckSquare, Calendar, Euro, DollarSign, Megaphone, BarChart2, LogOut, Menu, X, ShieldCheck, User, MessageSquareHeart, Settings, Users, ChevronRight, ChevronLeft, Sparkles, HelpCircle, Gift, Trophy, AlertTriangle, ShoppingBag, UserPlus, Server, ArrowLeftRight, Pin, PinOff, Swords, FileText, ShieldAlert } from 'lucide-react'
+import { LayoutDashboard, CheckSquare, Calendar, Euro, DollarSign, Megaphone, BarChart2, LogOut, Menu, X, ShieldCheck, User, MessageSquareHeart, Settings, Users, ChevronRight, ChevronLeft, Sparkles, HelpCircle, Gift, Trophy, AlertTriangle, ShoppingBag, UserPlus, Server, ArrowLeftRight, Pin, PinOff, Swords, FileText, ShieldAlert, Briefcase } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button, buttonVariants } from '@/components/ui/button'
@@ -145,6 +145,7 @@ export function Navbar() {
         subItems: [
           ...(isEnabled('calendar_status') ? [{ href: '/kalender', label: 'Kalender', icon: Calendar, notify: notifications.kalender }] : []),
           ...(isEnabled('todos_status') ? [{ href: '/todos', label: 'Todos', icon: CheckSquare, notify: notifications.todos }] : []),
+          { href: '/aufgaben', label: 'Aufgaben', icon: Briefcase },
           { href: '/gruppen', label: 'Gruppen', icon: Users, notify: notifications.gruppen },
         ],
       }
@@ -219,6 +220,7 @@ export function Navbar() {
       { href: '/admin', label: 'Benutzer', icon: Users },
       { href: '/admin/changelog', label: 'Changelog', icon: FileText },
       { href: '/admin/sammelkarten', label: 'Sammelkarten Manager', icon: Sparkles },
+      { href: '/admin/aufgaben', label: 'Aufgaben Prüfung', icon: Briefcase },
       { href: '/admin/trades', label: 'Trade Moderation', icon: ArrowLeftRight },
       { href: '/admin/global-settings', label: 'Globale Einstellungen', icon: Settings },
       { href: '/admin/shop-earnings', label: 'Shop Einnahmen', icon: DollarSign },

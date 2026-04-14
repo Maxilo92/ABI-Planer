@@ -291,6 +291,8 @@ export async function buildAnalyticsFromPastLogs(authHeader: string): Promise<Sy
   const activityByDay = new Map<string, { date: string; label: string; actions: number; uniqueUsers: Set<string> }>()
   const sectionUsage = new Map<string, number>()
   const actionUsage = new Map<string, number>()
+  const activityByHour = new Map<number, { hour: number; actions: number; users: Set<string> }>()
+  const userActionCounts = new Map<string, { id: string; name: string | null; count: number }>()
 
   logs.forEach((entry) => {
     const timestamp = getTimestampDate(entry.timestamp)
@@ -312,16 +314,27 @@ export async function buildAnalyticsFromPastLogs(authHeader: string): Promise<Sy
     if (entry.user_id) existingDay.uniqueUsers.add(entry.user_id)
     activityByDay.set(dayKey, existingDay)
 
-    sectionUsage.set(section, (sectionUsage.get(section) || 0) + 1)
-    actionUsage.set(action, (actionUsage.get(action) || 0) + 1)
+    const hour = timestamp.getHours()
+    const existingHour = activityByHour.get(hour) || { hour, actions: 0, users: new Set<string>() }
+    existingHour.actions += 1
+    if (entry.user_id) existingHour.users.add(entry.user_id)
+    activityByHour.set(hour, existingHour)
 
     if (entry.user_id) {
+      const existingUser = userActionCounts.get(entry.user_id) || { id: entry.user_id, name: (entry.user_name as string) || null, count: 0 }
+      existingUser.count += 1
+      if (entry.user_name && !existingUser.name) existingUser.name = entry.user_name as string
+      userActionCounts.set(entry.user_id, existingUser)
+
       const previous = latestActionByUser.get(entry.user_id)
       const currentTimestamp = timestamp.toISOString()
       if (!previous || previous.timestamp < currentTimestamp) {
         latestActionByUser.set(entry.user_id, { action, timestamp: currentTimestamp })
       }
     }
+
+    sectionUsage.set(section, (sectionUsage.get(section) || 0) + 1)
+    actionUsage.set(action, (actionUsage.get(action) || 0) + 1)
   })
 
   const currentOnlineUsersWithActivity = currentOnlineUsers.map((user) => {
@@ -342,6 +355,48 @@ export async function buildAnalyticsFromPastLogs(authHeader: string): Promise<Sy
       unique_users: entry.uniqueUsers.size,
       actions: entry.actions,
     }))
+
+  const activityByHourList = Array.from({ length: 24 }, (_, i) => {
+    const data = activityByHour.get(i) || { hour: i, actions: 0, users: new Set<string>() }
+    return {
+      hour: i,
+      actions: data.actions,
+      users: data.users.size,
+    }
+  })
+
+  const topActiveUsers = Array.from(userActionCounts.values())
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 10)
+    .map(u => ({
+      user_id: u.id,
+      name: u.name,
+      action_count: u.count
+    }))
+
+  const durationBuckets: Record<string, number> = {
+    '< 5 min': 0,
+    '5 - 15 min': 0,
+    '15 - 30 min': 0,
+    '30 - 60 min': 0,
+    '> 60 min': 0,
+  }
+
+  profiles.forEach((profile) => {
+    const minutes = getSessionDurationMinutes(profile, now)
+    if (minutes <= 0) return
+
+    if (minutes < 5) durationBuckets['< 5 min']++
+    else if (minutes < 15) durationBuckets['5 - 15 min']++
+    else if (minutes < 30) durationBuckets['15 - 30 min']++
+    else if (minutes < 60) durationBuckets['30 - 60 min']++
+    else durationBuckets['> 60 min']++
+  })
+
+  const sessionDurationDistribution = Object.entries(durationBuckets).map(([range, count]) => ({
+    range,
+    count,
+  }))
 
   const topActions: SystemAnalyticsActionStat[] = Array.from(actionUsage.entries())
     .map(([action, count]) => ({ action, count }))
@@ -382,6 +437,9 @@ export async function buildAnalyticsFromPastLogs(authHeader: string): Promise<Sy
     current_online_users_count: currentOnlineUsersWithActivity.length,
     current_online_users: currentOnlineUsersWithActivity,
     activity_timeline: activityTimeline,
+    activity_by_hour: activityByHourList,
+    top_active_users: topActiveUsers,
+    session_duration_distribution: sessionDurationDistribution,
     top_actions: topActions,
     section_usage: sectionStats,
     recent_actions: recentActions,

@@ -729,10 +729,10 @@ export default function AdminPage() {
           <CardTitle>Registrierte Profile</CardTitle>
           <CardDescription>Kurs- und Gruppenzuweisungen sowie Systemrollen konfigurieren.</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="min-w-0">
           {/* Desktop Table */}
-          <div className="hidden lg:block overflow-x-auto">
-            <Table className="min-w-[860px]">
+          <div className="hidden xl:block overflow-x-auto w-full max-w-full">
+            <Table className="min-w-[860px] w-full">
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-12">
@@ -891,7 +891,7 @@ export default function AdminPage() {
           </div>
 
           {/* Mobile List View (Functional) */}
-          <div className="lg:hidden space-y-4">
+          <div className="xl:hidden space-y-4">
             {filteredProfiles.map((p) => {
               const isMainAdminAccount = p.role === 'admin_main' || p.role === 'admin'
               const isSelf = p.id === profile.id

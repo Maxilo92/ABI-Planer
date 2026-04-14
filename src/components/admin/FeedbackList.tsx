@@ -6,7 +6,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { doc, updateDoc, deleteDoc } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import { toast } from 'sonner'
 import { Trash2, Bug, Lightbulb, HelpCircle, ChevronsRight, CheckCircle, XCircle, Download, Sparkles, TrendingUp, ShieldAlert, UserCheck } from 'lucide-react'
@@ -14,6 +13,9 @@ import { useAuth } from '@/context/AuthContext'
 import { logAction } from '@/lib/logging'
 import { Feedback, FeedbackType, FeedbackStatus } from '@/types/database'
 import { cn } from '@/lib/utils'
+import { getFunctions, httpsCallable } from 'firebase/functions'
+import { doc, onSnapshot, updateDoc, deleteDoc } from 'firebase/firestore'
+import { useEffect } from 'react'
 
 type SortField = 'created_at' | 'title' | 'status' | 'type' | 'importance'
 
@@ -34,6 +36,35 @@ export function FeedbackList({ feedbackItems }: FeedbackListProps) {
   const [isBulkAnalyzing, setIsBulkAnalyzing] = useState(false)
   const [bulkProgress, setBulkProgress] = useState(0)
 
+  // Sync background analysis progress from Firestore
+  useEffect(() => {
+    const taskRef = doc(db, 'admin_tasks', 'feedback_bulk_analyze')
+    const unsubscribe = onSnapshot(taskRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const data = snapshot.data()
+        if (data.status === 'running') {
+          setIsBulkAnalyzing(true)
+          const progress = data.total > 0 ? Math.round((data.processed / data.total) * 100) : 0
+          setBulkProgress(progress)
+        } else if (data.status === 'completed' || data.status === 'failed') {
+          // Keep active state for a short moment after completion
+          if (data.status === 'completed' && isBulkAnalyzing) {
+            setBulkProgress(100)
+            setTimeout(() => {
+              setIsBulkAnalyzing(false)
+              setBulkProgress(0)
+            }, 3000)
+          } else {
+            setIsBulkAnalyzing(false)
+            setBulkProgress(0)
+          }
+        }
+      }
+    })
+
+    return () => unsubscribe()
+  }, [isBulkAnalyzing])
+
   const categories = useMemo(() => {
     const cats = new Set<string>()
     feedbackItems.forEach(item => {
@@ -49,63 +80,39 @@ export function FeedbackList({ feedbackItems }: FeedbackListProps) {
       if (!window.confirm('Alle Einträge haben bereits KI-Daten. Möchtest du trotzdem eine Neuanalyse für ALLE Einträge erzwingen?')) {
         return
       }
-      // Re-analyze all
       itemsToAnalyze.push(...feedbackItems)
     }
 
-    if (!window.confirm(`${itemsToAnalyze.length} Einträge werden jetzt per KI analysiert. Dies kann einen Moment dauern. Fortfahren?`)) {
+    if (!window.confirm(`${itemsToAnalyze.length} Einträge werden jetzt im Hintergrund analysiert. Du kannst die App frei weiter nutzen. Fortfahren?`)) {
       return
     }
 
     setIsBulkAnalyzing(true)
     setBulkProgress(0)
-    let processed = 0
-    let errors = 0
-
-    for (const item of itemsToAnalyze) {
-      try {
-        const response = await fetch('/api/feedback/analyze', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ title: item.title, description: item.description }),
-        })
-
-        const data = await response.json()
-        if (data.ok) {
-          const docRef = doc(db, 'feedback', item.id)
-          await updateDoc(docRef, {
-            category: data.category,
-            importance: data.importance,
-            // Migrate old data if fields are missing
-            is_private: item.is_private ?? false,
-            is_anonymous: item.is_anonymous ?? false
-          })
-        } else {
-          errors++
-        }
-      } catch (err) {
-        console.error('Error analyzing item:', item.id, err)
-        errors++
-      }
-
-      processed++
-      setBulkProgress(Math.round((processed / itemsToAnalyze.length) * 100))
-    }
-
-    setIsBulkAnalyzing(false)
-    setBulkProgress(0)
     
-    if (errors > 0) {
-      toast.error(`Analyse abgeschlossen mit ${errors} Fehlern.`)
-    } else {
-      toast.success(`${processed} Einträge erfolgreich analysiert.`)
-    }
+    try {
+      const functions = getFunctions(undefined, 'europe-west3')
+      const bulkAnalyze = httpsCallable(functions, 'bulkAnalyzeFeedback')
+      
+      const itemIds = itemsToAnalyze.map(item => item.id)
+      const result = await bulkAnalyze({ itemIds }) as { data: { ok: boolean, taskId: string } }
 
-    if (user) {
-      await logAction('FEEDBACK_BULK_ANALYZE', user.uid, profile?.full_name, {
-        count: processed,
-        errors
-      })
+      if (result.data.ok) {
+        toast.success('Hintergrund-Analyse gestartet.')
+        if (user) {
+          await logAction('FEEDBACK_BULK_ANALYZE', user.uid, profile?.full_name, {
+            count: itemIds.length,
+            mode: 'background'
+          })
+        }
+      } else {
+        toast.error('Fehler beim Starten der Hintergrund-Analyse.')
+        setIsBulkAnalyzing(false)
+      }
+    } catch (err) {
+      console.error('Error triggering bulk analysis:', err)
+      toast.error('Ein Fehler ist aufgetreten.')
+      setIsBulkAnalyzing(false)
     }
   }
 
@@ -205,6 +212,10 @@ export function FeedbackList({ feedbackItems }: FeedbackListProps) {
         result = a.status.localeCompare(b.status, 'de')
       } else if (sortField === 'importance') {
         result = (a.importance || 0) - (b.importance || 0)
+        // Secondary sort by date if importance is equal
+        if (result === 0) {
+          result = toDate(a.created_at).getTime() - toDate(b.created_at).getTime()
+        }
       } else {
         result = a.type.localeCompare(b.type, 'de')
       }
@@ -315,22 +326,29 @@ export function FeedbackList({ feedbackItems }: FeedbackListProps) {
             <Button
               variant="default"
               className={cn(
-                "justify-center bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white border-0",
-                isBulkAnalyzing && "relative"
+                "justify-center bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white border-0 overflow-hidden relative",
+                isBulkAnalyzing && "opacity-90 cursor-wait"
               )}
               onClick={handleBulkAnalyze}
               disabled={isBulkAnalyzing}
             >
-              {isBulkAnalyzing ? (
-                <>
-                  <span className="mr-2">Analysiere ({bulkProgress}%)</span>
-                  <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                </>
-              ) : (
-                <>
-                  <Sparkles className="h-4 w-4 mr-2" /> KI Analyse
-                </>
+              {/* Progress Fill */}
+              {isBulkAnalyzing && (
+                <div 
+                  className="absolute inset-y-0 left-0 bg-white/20 transition-all duration-300 ease-out z-0"
+                  style={{ width: `${bulkProgress}%` }}
+                />
               )}
+
+              <span className="relative z-10 flex items-center justify-center">
+                {isBulkAnalyzing ? (
+                  <>Analysiere... {bulkProgress}%</>
+                ) : (
+                  <>
+                    <Sparkles className="h-4 w-4 mr-2" /> KI Analyse
+                  </>
+                )}
+              </span>
             </Button>
           </div>
 
@@ -403,6 +421,11 @@ export function FeedbackList({ feedbackItems }: FeedbackListProps) {
                       >
                         <TrendingUp className="h-2.5 w-2.5" /> Prio {item.importance}
                       </Badge>
+                    )}
+                    {item.ai_reasoning && (
+                      <span className="text-[10px] text-muted-foreground italic flex items-center gap-1">
+                        &quot;{item.ai_reasoning}&quot;
+                      </span>
                     )}
                   </div>
                 </div>

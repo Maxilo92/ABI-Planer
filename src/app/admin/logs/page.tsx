@@ -277,7 +277,7 @@ export default function AdminLogsPage() {
 
     return (
       <>
-        <div className="space-y-3 lg:hidden">
+        <div className="space-y-3 xl:hidden">
           {filteredLogs.map((entry) => (
             <ContextMenu key={entry.id}>
               <ContextMenuTrigger asChild>
@@ -309,7 +309,7 @@ export default function AdminLogsPage() {
           ))}
         </div>
 
-        <div className="hidden lg:block overflow-x-auto">
+        <div className="hidden xl:block overflow-x-auto">
           <Table className="min-w-[860px]">
             <TableHeader>
               <TableRow>

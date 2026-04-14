@@ -27,3 +27,5 @@ export * from "./trades";
 export * from "./groupMessages";
 export * from "./npAdmin";
 export * from "./combat";
+export * from "./feedback";
+export * from "./tasks";

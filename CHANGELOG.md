@@ -8,6 +8,279 @@
 
 # Changelog
 
+## [1.12.23] - 2026-04-14
+### Behoben
+- **Layout (Sidebar Clipping):** Fix für ein Problem, bei dem zu breite Tabellen in der Admin-Ansicht die gesamte Inhaltskarte nach links in die Seitenleiste verschoben haben. 
+    - Durch `min-w-0` in der `AppShell` und explizite Breitenbeschränkungen in den Tabellen-Containern bleibt der Inhalt nun korrekt positioniert und scrollt bei Bedarf innerhalb der Karte.
+    - `w-full` für den Inhalts-Wrapper in der `AppShell` sorgt für stabile Zentrierung auch bei breitem Inhalt.
+
+## [1.12.22] - 2026-04-14
+### Geändert
+- **Admin-Dashboard:** Der Breakpoint für die Benutzerliste und Admin-Logs wurde von `lg` (1024px) auf `xl` (1280px) angehoben. Dies stellt sicher, dass die Liste rechtzeitig in das kompakte Kartenformat wechselt, bevor horizontales Scrollen in der Tabellenansicht erforderlich ist.
+
+## [1.12.20] - 2026-04-14
+### Geändert
+- **Lehrer-Einladungen:** Die Bestätigungsseite nach der Karteneinreichung wurde personalisiert. Sie zeigt nun eine Dankesnachricht, einen direkten Link zur Anmeldung und Kontaktinformationen für Rückfragen.
+
+## [1.12.19] - 2026-04-14
+### Behoben
+- **UI (Hydration/DOM Nesting):** Behebung eines kritischen Hydration-Fehlers (`<button> cannot be a descendant of <button>`) in `PopoverTrigger`, `DropdownMenuTrigger` und `DialogTrigger`. 
+    - Die Komponenten unterstützen nun das `asChild`-Prop-Pattern durch internes Mapping auf das `render`-Prop von `@base-ui/react`.
+    - Dies verhindert ungültige Verschachtelungen, wenn ein `Button` (der selbst ein `<button>` rendert) als Kind übergeben wird.
+    - Betrifft insbesondere die QR-Code-Ansicht in der Lehrer-Einladungs-Tabelle.
+
+## [1.12.18] - 2026-04-14
+### Geändert
+- **Lehrer-Einladungen:** Die Liste der Einladungen im Admin-Bereich wurde komplett überarbeitet und nutzt nun ein kompaktes Tabellen-Layout statt Kacheln. 
+- **UI:** Implementierung eines QR-Code-Popovers für schnellen Zugriff ohne Platzverschwendung. Alle Labels und Status-Badges sind nun auch auf kleineren Bildschirmen optimal sichtbar und werden nicht mehr abgeschnitten.
+
+## [1.12.17] - 2026-04-14
+### Geändert
+- **Admin-Dashboard (Einladungen):** Optimierung der mobilen Benutzeroberfläche für die Verwaltung von Lehrer-Einladungen. Formularelemente und Karten wurden für eine bessere Bedienbarkeit auf Smartphones angepasst (Responsive Layouts, größere Touch-Ziele).
+
+## [1.12.16] - 2026-04-14
+### Geändert
+- **Admin-Dashboard:** Die Statistiken und der Pack-Simulator in der rechten Seitenleiste wurden für den Tab "Einladungen" entfernt, um mehr Platz für die Verwaltung der Lehrer-Einladungen zu schaffen.
+
+## [1.12.15] - 2026-04-14
+### Geändert
+- **Lehrer-Kartendesigner:** Der Rechtstext wurde gekürzt und präziser formuliert. Detaillierte Bestimmungen (Rechteeinräumung, Druckfreigabe, Balancing) werden nun explizit auf die Seite `/agb/sammelkarten` ausgelagert, um die Übersichtlichkeit auf Mobilgeräten zu erhöhen.
+
+## [1.12.14] - 2026-04-14
+### Geändert
+- **Lehrer-Kartendesigner:** Optimierung der mobilen Responsivität für die Seite `/lehrer/erstellen`. Die rechtliche Bestätigung, Header-Elemente und Eingabefelder wurden für kleine Displays angepasst (Mobile-First).
+- **UI:** Besseres Layout für die Einreichungs-Bestätigung und den Zuschneide-Dialog auf Smartphones.
+
+## [1.12.13] - 2026-04-14
+### Geändert
+- **Lehrerbrief:** Der Brief nutzt nun den vollen Namen im Adressfeld (Fenster), aber nur noch die Anrede und den Nachnamen in der persönlichen Grußformel (z.B. "Sehr geehrte Frau Müller").
+- **Lehrer-Einladungen:** Das System unterstützt nun Namen mit mehreren Vornamen. Für die persönliche Anrede wird automatisch das letzte Wort als Nachname extrahiert (z.B. "Max Moritz Müller" -> "Sehr geehrter Herr Müller").
+- **Kartendesigner:** Die Begrüßung auf der Erstellungsseite wurde professionalisiert und nutzt nun ebenfalls die Anrede und den Nachnamen.
+
+## [1.12.12] - 2026-04-14
+### Hinzugefügt
+- **Lehrer-Einladungen:** Einführung der Anrede (Herr/Frau) bei der Erstellung von Einladungen.
+- **Validierung:** Zwingende Angabe von Vor- und Nachname für eine korrekte Adressierung.
+- **UI:** Neuer Button-Toggle zur einfachen Auswahl der Anrede im Admin-Bereich.
+- **Lehrerbrief:** Dynamische Grußformel (z.B. "Sehr geehrte Frau ...") basierend auf der gewählten Anrede.
+
+## [1.12.11] - 2026-04-14
+### Geändert
+- **Branding:** Alle Referenzen auf "HGR Planer" und "hgr-planer.de" im Lehrerbrief wurden durch **"Abi Planer 2027"** und **"abi-planer-27.de"** ersetzt.
+- **Lehrerbrief:** Korrektur des Footers und der Absenderzeile zur Sicherstellung der Konsistenz der neuen Domain.
+
+## [1.12.10] - 2026-04-14
+### Geändert
+- **Lehrer-Einladungen:** Alle generierten Links (QR-Code und Text) verweisen nun auf die öffentliche Domain **https://abi-planer-27.de** statt auf localhost oder eine dashboard-Subdomain.
+- **Lehrerbrief:** Der Logo-Pfad in der Druckansicht wurde ebenfalls auf die Hauptdomain fixiert.
+
+## [1.12.09] - 2026-04-14
+### Geändert
+- **Lehrerbrief:** Entfernung des redundanten Zugangscodes aus der Druckansicht und dem Word-Export (Code bleibt als Teil des direkten Links sichtbar).
+
+## [1.12.08] - 2026-04-14
+### Geändert
+- **Lehrerbrief:** Aktualisierung des Projektjahres auf **2027**.
+- **UI:** Layout-Optimierung im Druck-Design zur Vermeidung von Clipping am unteren Seitenrand.
+- **Adressfeld:** Reduzierung der Fensteransicht auf den Namen der Lehrkraft für eine saubere Optik.
+- **Validierung:** Bei der Generierung von Einladungen sind nun Vor- und Nachname der Lehrkraft zwingend erforderlich.
+
+## [1.12.07] - 2026-04-14
+### Behoben
+- **Kartendesigner:** Korrektur eines Syntaxfehlers in der `handleSubmit`-Funktion und Ergänzung fehlender Firebase-Imports (`collection`).
+
+## [1.12.06] - 2026-04-14
+### Geändert
+- **Lehrerbrief:** Komplettes Redesign für Fensterbrief-Kompatibilität (DIN 5008).
+- **Header:** Logo und Projektname stehen nun nebeneinander statt untereinander.
+- **UI:** Entfernung von Kacheln/Boxen im Brief-Design für einen klassischeren und professionelleren Look.
+
+## [1.12.06] - 2026-04-14
+### Hinzugefügt
+- **Kartendesigner:** Lehrer können nun zusätzlich KP/HP und den Schaden ihrer Spezial-Attacken vorschlagen.
+- **UI:** Optimierung des Designer-Layouts für HP und Damage-Eingaben.
+
+## [1.12.05] - 2026-04-14
+### Behoben
+- **Routing:** Rechtliche Seiten (AGB, Datenschutz, Impressum) sind nun auch über die Dashboard-Subdomain erreichbar (Fix für 404 Fehler).
+- **Middleware:** Korrektur der Routen-Kategorisierung für das Lehrer-Einladungssystem.
+
+## [1.12.04] - 2026-04-14
+### Hinzugefügt
+- **Seltenheits-Vorschlag:** Lehrer können nun im Kartendesigner eine gewünschte Seltenheitsstufe für ihre Karte vorschlagen.
+- **Rechtliche Ergänzung:** Die AGB und die Bestätigung im Designer wurden um einen Passus zur möglichen Anpassung von Kartendetails (Balancing/Produktion) erweitert.
+
+## [1.12.03] - 2026-04-14
+### Geändert
+- **Kartendesigner:** Die Vorschau zeigt nun beide Seiten der Karte (Vorderseite & Speccard) über ein Tab-System an.
+
+## [1.12.02] - 2026-04-14
+### Hinzugefügt
+- **Sammelkarten-AGB:** Einführung einer spezialisierten AGB-Seite für Sammelkarten (`/agb/sammelkarten`).
+- **Physische Sammelkarten:** Rechtliche Absicherung für den geplanten Druck und Verkauf physischer Sammelkarten.
+  - Einbindung der neuen Klauseln in den Kartendesigner für Lehrer (`/lehrer/erstellen/[token]`).
+  - Verlinkung der spezialisierten AGB in den allgemeinen Geschäftsbedingungen.
+
+## [1.12.01] - 2026-04-14
+### Behoben
+- **TeacherCard:** Fehler bei der `frontOnly`-Darstellung behoben, durch den Karten ohne festes Seitenverhältnis gestreckt wurden.
+- **Kartendesigner (Lehrer):** Vorschau-Größe auf Desktop-Geräten optimiert, damit die Karte nicht mehr den ganzen Bildschirm einnimmt.
+
+## [1.12.00] - 2026-04-14
+### Hinzugefügt
+- **Lehrer-Einladungssystem:** Einführung eines Systems zur offiziellen Aufnahme von Lehrkräften als Sammelkarten.
+  - **Brief-Generator (Admin):** Neues Tool im Sammelkarten-Dashboard (`Einladungen`) zum Erstellen personalisierter A4-Briefe für Lehrer.
+  - **Exporte:** Unterstützung für den Export der Einladungsbriefe als Word-Datei (.docx) und Direktdruck (inkl. Print-to-PDF) mit Logo und QR-Code.
+  - **Kartendesigner (Öffentlich):** Eine öffentliche Seite (`/lehrer/erstellen/[token]`), auf der Lehrer ohne Login ihre Karte gestalten können.
+  - **Foto-Upload & Zuschnitt:** Integrierter Bild-Editor für Lehrer zum Hochladen und Zuschneiden von Fotos im 4:3-Format.
+  - **Echtzeit-Vorschau:** Interaktive Karten-Vorschau für Lehrer während des Gestaltungsprozesses.
+  - **Rechtliche Absicherung:** Integrierte Bestätigung für Namens- und Bildrechte vor der Einreichung.
+  - **Review-System (Admin):** Neuer Bereich zur Sichtung und Genehmigung der eingereichten Lehrer-Entwürfe.
+
+## [1.11.28] - 2026-04-14
+### Hinzugefügt
+- **Community Support (Landingpage):** Einführung einer prominenten Spenden-Option zur Unterstützung des Projekts ohne Login.
+  - **Support-Sektion:** Neuer Bereich auf der Landingpage, der die Notwendigkeit von Spenden für Serverkosten und Weiterentwicklung erklärt.
+  - **Buy Me a Coffee Integration:** Direkte Verlinkung zum BMC-Profil in der Landing-Sektion und im Header.
+  - **Header-Integration:** "Support"-Link mit Kaffee-Icon im Landing-Header für schnellen Zugriff von jeder Position auf der Startseite.
+
+## [1.11.27] - 2026-04-14
+### Hinzugefügt
+- **Aufgaben Marketplace:** Einführung eines gamifizierten Aufgaben-Systems parallel zu den To-Dos.
+  - **Marketplace (`/aufgaben`):** Alle Nutzer können offene Aufgaben (z.B. Aufbau-Hilfe, Fahrdienste) durchstöbern und annehmen.
+  - **Aufgaben-Details (`/aufgaben/[id]`):** Anzeige von Komplexität (Lvl 1-10), Belohnungen und bis zu 3 Erklärbildern.
+  - **Beweis-Einreichung:** Nutzer können Foto- oder Video-Beweise (max. 30MB) direkt in der App hochladen.
+  - **Client-Komprimierung:** Automatische Bildkomprimierung vor dem Upload zur Entlastung der Datenbank.
+  - **Admin Prüfung (`/admin/aufgaben`):** Zentrales Dashboard für Admins zur Validierung der Beweise (inkl. Download-Option).
+  - **Automatische Löschung:** Zur Kosteneinsparung werden Beweismedien nach der Freigabe automatisch aus dem Storage entfernt.
+  - **Helfer-Ranking (`/aufgaben/leaderboard`):** Rangliste der Schüler mit den meisten abgeschlossenen Aufgaben und verdienten Boostern.
+  - **Automatischer Reset:** Ein Cronjob setzt abgelehnte Aufgaben nach 7 Tagen automatisch wieder auf "offen", falls keine Nachbesserung erfolgt.
+- **Backend:** Neue Cloud Function `adminReviewTask` für sichere Booster-Vergabe und Storage-Cleanup.
+
+## [1.11.26] - 2026-04-14
+### Hinzugefügt
+- **Analytics Dashboard (Admin):** Erweiterung um drei neue Diagramme für tiefere Einblicke:
+  - **Aktivität nach Wochentag:** Visualisierung der Lastverteilung über die Woche.
+  - **Karten-Raritäten:** Systemweite Verteilung aller Sammelkarten nach Seltenheit (Iconic bis Common).
+  - **Tausch-Status:** Verhältnis von aktiven zu abgeschlossenen Trades.
+- **Header-Metriken:** Neue Stat-Cards für News-Einträge und Umfragen-Anzahl.
+- **Daten-Anreicherung:** Backend-Update in `buildGlobalStats` zur automatischen Aggregation der Raritätsverteilung aus Nutzerinventaren.
+- **Optimierung:** Layout-Anpassungen für eine kompaktere und konsistentere Darstellung der Analyse-Module.
+
+## [1.11.25] - 2026-04-14
+
+### Fixed
+- **Feedback Sichtbarkeit:** Öffentliche Meldungen (`is_private != true`) sind nun für alle angemeldeten Nutzer sichtbar, nicht mehr nur für freigegebene (`is_approved`) Accounts.
+- **Privatsphäre-Regeln:** Private Feedbacks bleiben weiterhin auf Ersteller sowie Planer/Admins beschränkt; anonyme Anzeige bleibt unverändert.
+
+## [1.11.24] - 2026-04-14
+
+### Added
+- **Admin System Analytics:** 3 neue Diagramme hinzugefügt: "Aktivität nach Uhrzeit", "Aktivste Nutzer (Top 10)" und "Session-Dauer Verteilung".
+- **Analytics Engine:** Die Datenberechnung wurde auf Client-, API- und Cloud-Functions-Ebene erweitert, um stündliche Aktivitätsmuster, Nutzer-Rankings und Sitzungsdauern präzise zu erfassen.
+
+## [1.11.23] - 2026-04-14
+
+### Refactored
+- **Admin System Dashboard:** Das System-Dashboard wurde in Sub-Routen aufgeteilt (`/admin/system`, `/admin/system/analytics`, `/admin/system/control`), um die Wartbarkeit zu erhöhen und die Ladezeiten der einzelnen Sektionen zu optimieren.
+- **Shared Components:** Gemeinsam genutzte UI-Komponenten (Charts, StatCards) wurden in `src/components/admin/system/SystemComponents.tsx` ausgelagert.
+
+## [1.11.22] - 2026-04-14
+
+### Changed
+- **Maintenance Scope:** Die Wartungssperre wurde auf Dashboard-Subdomains (`dashboard.*`, `app.*`) eingeschränkt. Die Landingpage auf der Hauptdomain (`abi-planer-27.de`) bleibt auch während Wartungsarbeiten für alle Nutzer erreichbar.
+
+## [1.11.21] - 2026-04-14
+
+
+### Fixed
+- **Security Rules:** Fehlende Lese-Berechtigungen für die `admin_tasks`-Collection in `firestore.rules` hinzugefügt, um den `permission-denied`-Fehler beim Tracking der Hintergrund-Analyse zu beheben.
+
+## [1.11.19] - 2026-04-14
+
+
+### Added
+- **Maintenance Planning:** Neuer Button "Planung löschen" im Admin-Panel hinzugefügt, um geplante Wartungsfenster (Start/Ende) mit einem Klick zu entfernen.
+
+## [1.11.20] - 2026-04-14
+
+### Fixed
+- **Maintenance Mode Fix:** Kritischen Fehler behoben, bei dem die App für Nutzer gesperrt blieb, obwohl das Admin-Panel "Online" anzeigte.
+- **Improved Maintenance UI:** Die System-Steuerung im Admin-Bereich zeigt nun den "effektiven" Status an (berücksichtigt geplante Wartungsfenster).
+- **Manual Override:** Admins können geplante Wartungen nun jederzeit manuell über "Wartung beenden" aufheben, wodurch alle Zeitpläne und Flags zuverlässig zurückgesetzt werden.
+- **Automatic Expiry:** Wartungspausen enden nun automatisch, sobald der voraussichtliche Endzeitpunkt erreicht ist.
+- **State-Sync:** Synchronisierung zwischen globalen Wartungseinstellungen und dem Feature-Toggle (`maintenance_mode`) verbessert.
+
+## [1.11.19] - 2026-04-14
+
+### Fixed
+- **Admin:** Doppelte Import-Statements in `FeedbackList.tsx` behoben, die zu Kompilierungsfehlern führten.
+
+## [1.11.18] - 2026-04-14
+
+### Improved
+- **Feedback KI-Analyse (UI & Backend):** Der Ladebalken im Analyse-Button ist nun persistent und wird in Echtzeit mit dem Backend-Job synchronisiert. Auch nach dem Verlassen und Zurückkehren auf die Seite bleibt der Fortschritt sichtbar.
+- **Task Management:** Einführung einer Task-Tracking-Logik via Firestore (`admin_tasks`), um langlaufende Hintergrund-Jobs sicher zu überwachen.
+
+## [1.11.17] - 2026-04-14
+
+### Fixed
+- **Feedback KI-Analyse (Backend):** CORS-Fehler behoben, der den Aufruf der Cloud Function von lokalen Subdomains blockierte. Die Funktion nutzt nun die globalen `CALLABLE_CORS_ORIGINS`.
+
+## [1.11.16] - 2026-04-14
+
+### Improved
+- **Feedback KI-Analyse (Backend):** Die Bulk-Analyse wurde in eine asynchrone Cloud Function (`bulkAnalyzeFeedback`) ausgelagert. Admins können den Vorgang nun starten und die Seite verlassen, während die Analyse im Hintergrund mit niedriger Priorität (3s Intervall) abläuft.
+- **API-Priorisierung:** Durch die Verlagerung in das Backend werden interaktive API-Anfragen im Frontend nicht mehr durch den Bulk-Analyse-Loop verzögert.
+- **UI-Entkoppelung:** Der Analyse-Button im Admin-Dashboard blockiert nun nicht mehr den Thread und zeigt lediglich den Start des Hintergrund-Jobs an.
+
+## [1.11.15] - 2026-04-14
+
+### Improved
+- **Feedback KI-Analyse Robustheit:** Implementierung einer automatischen Retry-Logik (bis zu 2 Versuche) bei `429 (Too Many Requests)` Fehlern in der Bulk-Analyse.
+- **Throttling:** Erhöhung der Standard-Verzögerung zwischen Analyse-Anfragen auf 1500ms (und 3000ms bei Retries), um Rate-Limits der Groq-API zuverlässiger zu umgehen.
+
+## [1.11.14] - 2026-04-14
+
+### Improved
+- **Feedback KI-Analyse Stability:** Einführung eines 800ms Throttlings zwischen API-Anfragen in der Bulk-Analyse, um Rate-Limits (502/429 Fehler) der Groq-API zu verhindern.
+- **API Fehlerbehandlung:** Die Analyse-Route gibt nun den tatsächlichen Status-Code der Upstream-KI-Schnittstelle zurück, was das Debugging bei Rate-Limits verbessert.
+
+## [1.11.13] - 2026-04-14
+
+### Improved
+- **Feedback KI-Analyse UI:** Der Analyse-Button im Admin-Dashboard fungiert nun selbst als dynamische Fortschrittsanzeige. Der bisherige Spinner wurde durch einen integrierten Ladebalken-Effekt innerhalb des Buttons ersetzt, um ein flüssigeres UI-Feedback zu bieten.
+
+## [1.11.12] - 2026-04-14
+
+### Fixed
+- **Feedback KI-Analyse:** Fehler behoben, bei dem unvollständige KI-Antworten zu `undefined`-Werten in Firestore führten (`FirebaseError`).
+- **Robustheit:** Einführung von Validierung und Fallback-Werten in der API-Route und den Frontend-Komponenten für die Feedback-Kategorisierung.
+- **Fehlerbehandlung:** Bessere Abhandlung von API-Gateways-Fehlern (502) während der Bulk-Analyse.
+
+## [1.11.11] - 2026-04-14
+
+
+### Improved
+- **Admin System Control Center:** Deutliche Erweiterung der Statistiken um "Benutzer gesamt", "Erfolgreiche Trades", "News/Posts" und "Umfragen".
+- **Live-Aktivitäts-Graph:** Unterstützung für Umschalten zwischen Aktionen und eindeutigen Nutzern.
+- **Aktivitäts-Historie:** Neue Echtzeit-Tabelle mit den aktuellsten Log-Einträgen direkt im Dashboard.
+
+### Changed
+- **Admin System Control Center:** Die redundante shortcuts-Sektion (Admin-Bereiche) wurde entfernt, da diese permanent über die Navigationsleiste erreichbar ist.
+
+## [1.11.11] - 2026-04-14
+
+### Improved
+- **Feedback KI-Analyse:** Der Analyse-Prompt wurde verfeinert, um eine differenziertere Wichtigkeit (1-10) zu vergeben. Die KI wird nun angewiesen, clumping (Häufung in der Mitte) zu vermeiden und kritischer zu bewerten.
+- **Feedback Ranking:** Einführung eines sekundären Sortierkriteriums (Datum) für Einträge mit gleicher Priorität, um ein stabiles und logisches Ranking im Admin-Dashboard zu gewährleisten.
+- **Feedback Transparenz:** Die KI-Begründung (`ai_reasoning`) wird nun in der Datenbank gespeichert und auf den Feedback-Karten im Admin-Bereich angezeigt, um Entscheidungen nachvollziehbar zu machen.
+
+## [1.11.10] - 2026-04-14
+
+### Fixed
+- Stabilitätsverbesserungen im Bereich der Lehrer-Import-Schnittstelle.
+
 ## [1.11.9] - 2026-04-14
 
 ### Fixed

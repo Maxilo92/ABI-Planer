@@ -379,4 +379,67 @@ export const archiveAuditLogs = onSchedule("every sunday 03:00", async (event) =
   } catch (error) {
   console.error("Error during trade expiration:", error);
   }
-  });
+});
+
+/**
+ * Scheduled function to cleanup rejected tasks that haven't been corrected in 7 days.
+ * Resets them to 'open' and removes the current assignment.
+ */
+export const cleanupRejectedTasks = onSchedule("every day 04:00", async (event) => {
+  console.log("Starting cleanup of rejected tasks (7-day timeout)...");
+  const db = getFirestore();
+  const now = admin.firestore.Timestamp.now();
+  const sevenDaysAgo = admin.firestore.Timestamp.fromMillis(now.toMillis() - 7 * 24 * 60 * 60 * 1000);
+
+  try {
+    const tasksRef = db.collection("tasks");
+    const snapshot = await tasksRef
+      .where("status", "==", "rejected")
+      .where("rejected_at", "<=", sevenDaysAgo)
+      .get();
+
+    if (snapshot.empty) {
+      console.log("No rejected tasks to cleanup.");
+      return;
+    }
+
+    console.log(`Found ${snapshot.docs.length} rejected tasks to reset.`);
+
+    const batch = db.batch();
+    const bucket = admin.storage().bucket();
+
+    for (const docSnapshot of snapshot.docs) {
+      const taskData = docSnapshot.data();
+      
+      // 1. Delete proof from storage if it exists
+      if (taskData.proof_storage_path) {
+        try {
+          await bucket.file(taskData.proof_storage_path).delete();
+          console.log(`Deleted proof for task ${docSnapshot.id} during reset.`);
+        } catch (storageError) {
+          console.error(`Failed to delete proof for task ${docSnapshot.id} during reset:`, storageError);
+        }
+      }
+
+      // 2. Reset task status and assignment
+      batch.update(docSnapshot.ref, {
+        status: "open",
+        assignee_id: null,
+        assignee_name: null,
+        claimed_at: null,
+        proof_media_url: null,
+        proof_media_type: null,
+        proof_storage_path: null,
+        submitted_at: null,
+        rejected_reason: null,
+        rejected_at: null,
+      });
+    }
+
+    await batch.commit();
+    console.log(`Successfully reset ${snapshot.docs.length} tasks back to the marketplace.`);
+
+  } catch (error) {
+    console.error("Error during rejected tasks cleanup:", error);
+  }
+});
