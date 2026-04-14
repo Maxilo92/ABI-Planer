@@ -36,7 +36,8 @@ import {
   Zap,
   Trophy,
   Gamepad2,
-  Sword
+  Sword,
+  Loader2
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useTheme } from 'next-themes'
@@ -735,20 +736,47 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
 
 export default function Dashboard() {
   const router = useRouter()
-  const [rootMode, setRootMode] = useState<'unknown' | 'landing' | 'dashboard'>('unknown')
-  const isBoneyardBuild = typeof window !== 'undefined' && Boolean((window as any).__BONEYARD_BUILD)
   const { user, profile, loading: authLoading } = useAuth()
+  const [rootMode, setRootMode] = useState<'unknown' | 'landing' | 'dashboard'>('unknown')
   const [features, setFeatures] = useState<SystemFeatures | null>(null)
   const [settings, setSettings] = useState<any>(null)
+  const isBoneyardBuild = typeof window !== 'undefined' && Boolean((window as any).__BONEYARD_BUILD)
 
+  // Initialize rootMode as soon as possible
   useEffect(() => {
+    if (typeof window === 'undefined') return
+    const host = window.location.hostname
+    const isDashboardHost = host === 'localhost' || host === '127.0.0.1' || host.startsWith('dashboard.') || host.startsWith('app.')
+    setRootMode(isDashboardHost ? 'dashboard' : 'landing')
+  }, [])
+
+  // Auto-redirect logged-in users from landing to dashboard
+  useEffect(() => {
+    if (rootMode === 'landing' && user && !authLoading) {
+      // Use location.href for a full page transition to ensure the middleware/routing context is updated
+      window.location.href = getDashboardRedirectUrl(window.location)
+    }
+  }, [rootMode, user, authLoading])
+
+  // Redirect non-logged-in users from dashboard root to login
+  useEffect(() => {
+    if (isBoneyardBuild) return
+    if (rootMode === 'dashboard' && !authLoading && !user) {
+      router.replace('/login')
+    }
+  }, [authLoading, isBoneyardBuild, rootMode, router, user])
+
+  // Fetch features
+  useEffect(() => {
+    if (rootMode !== 'dashboard') return
     const unsub = onSnapshot(doc(db, 'settings', 'features'), (snap) => {
       if (snap.exists()) {
         setFeatures(snap.data() as SystemFeatures)
       }
     })
     return () => unsub()
-  }, [])
+  }, [rootMode])
+
   const [todos, setTodos] = useState<any[]>([])
   const [events, setEvents] = useState<any[]>([])
   const [news, setNews] = useState<any[]>([])
@@ -771,36 +799,6 @@ export default function Dashboard() {
   const markLoaded = (key: keyof typeof initialLoadState) => {
     setInitialLoadState((previous) => (previous[key] ? previous : { ...previous, [key]: true }))
   }
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-    const host = window.location.hostname
-    const isDashboardHost = host.startsWith('dashboard.') || host.startsWith('app.')
-    setRootMode(isDashboardHost ? 'dashboard' : 'landing')
-  }, [])
-
-  useEffect(() => {
-    if (rootMode === 'landing' && user && !authLoading) {
-      window.location.href = getDashboardRedirectUrl(window.location)
-    }
-  }, [rootMode, user, authLoading])
-
-  useEffect(() => {
-    if (isBoneyardBuild) return
-    if (rootMode !== 'dashboard') return
-    if (authLoading) return
-    if (!user) {
-      router.replace('/login')
-    }
-  }, [authLoading, isBoneyardBuild, rootMode, router, user])
-
-  useEffect(() => {
-    if (rootMode !== 'dashboard') return
-    const timer = setTimeout(() => {
-      setTimeoutReached(true)
-    }, 3000)
-    return () => clearTimeout(timer)
-  }, [rootMode])
 
   // Activity Tracking: Dashboard-Besuch festhalten (für Admin-Statistiken)
   useEffect(() => {
@@ -826,6 +824,14 @@ export default function Dashboard() {
       updateLastVisited()
     }
   }, [profile?.id, profile?.last_visited?.dashboard, authLoading, rootMode])
+
+  useEffect(() => {
+    if (rootMode !== 'dashboard') return
+    const timer = setTimeout(() => {
+      setTimeoutReached(true)
+    }, 3000)
+    return () => clearTimeout(timer)
+  }, [rootMode])
 
   useEffect(() => {
     if (rootMode !== 'dashboard') return
@@ -1029,11 +1035,16 @@ export default function Dashboard() {
 
   const resolvedRootMode =
     rootMode === 'unknown' && isBoneyardBuild && typeof window !== 'undefined'
-      ? (window.location.hostname.startsWith('dashboard.') || window.location.hostname.startsWith('app.') ? 'dashboard' : 'landing')
+      ? (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname.startsWith('dashboard.') || window.location.hostname.startsWith('app.') ? 'dashboard' : 'landing')
       : rootMode
 
   if (resolvedRootMode === 'unknown') {
-    return <div className="min-h-screen bg-background" />
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-8 text-center">
+        <Loader2 className="h-10 w-10 animate-spin text-primary mb-4" />
+        <p className="text-sm text-muted-foreground animate-pulse">Initialisiere Plattform...</p>
+      </div>
+    )
   }
 
   if (resolvedRootMode === 'landing') {
@@ -1041,7 +1052,12 @@ export default function Dashboard() {
   }
 
   if (!isBoneyardBuild && (authLoading || !user)) {
-    return <div className="min-h-screen bg-background" />
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-8 text-center">
+        <Loader2 className="h-10 w-10 animate-spin text-primary mb-4" />
+        <p className="text-sm text-muted-foreground animate-pulse">Sichere Verbindung wird hergestellt...</p>
+      </div>
+    )
   }
 
   const NewsPreview = ({ items, loading }: { items: any[], loading?: boolean }) => (

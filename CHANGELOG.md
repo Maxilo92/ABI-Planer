@@ -8,6 +8,14 @@
 
 # Changelog
 
+## [1.11.8] - 2026-04-14
+
+### Fixed
+- **Stability:** Einführung von Loader-Platzhaltern für `AppShell` und `Dashboard`, um "weiße Seiten" während der Initialisierung zu verhindern.
+- **Routing:** Die Middleware-Logik für die Domänen-Trennung wurde robuster gestaltet und unterstützt nun auch `.localhost` für die lokale Entwicklung.
+- **Performance:** Die Erkennung der Subdomain in der `AppShell` wurde optimiert, um Layout-Flashes zu vermeiden.
+- **UX:** Der Theme-Toggle auf der Landing-Page zeigt nun einen Loader, bis der Theme-Status geladen ist.
+
 ## [1.11.7] - 2026-04-14
 
 ### Fixed

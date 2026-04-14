@@ -25,7 +25,7 @@ export function AppShell({ children }: AppShellProps) {
   const { maintenance } = useSystemMessage()
   const { profile, user, loading: authLoading } = useAuth()
   const [dismissedBanner, setDismissedBanner] = useState<string | null>(null)
-  const [hostname, setHostname] = useState('')
+  const [hostname, setHostname] = useState<string | null>(null)
   const isBoneyardBuild = typeof window !== 'undefined' && Boolean((window as any).__BONEYARD_BUILD)
 
   useEffect(() => {
@@ -36,15 +36,25 @@ export function AppShell({ children }: AppShellProps) {
 
   const isDashboardSubdomain = useMemo(() => {
     if (isBoneyardBuild) return false
-    const isLocalDashboardHost = hostname === 'localhost' || hostname === '127.0.0.1'
+    if (hostname === null) return null // Initial loading state
+    const isLocalDashboardHost = hostname === 'localhost' || hostname === '127.0.0.1' || hostname.endsWith('.localhost')
     return isLocalDashboardHost || hostname.startsWith('dashboard.') || hostname.startsWith('app.')
   }, [hostname, isBoneyardBuild])
 
-  const isPublicLandingRoute = !isDashboardSubdomain && !authRoutes.has(pathname) && pathname !== '/maintenance'
+  // While hostname is not determined, show a minimal loading state to prevent flash
+  if (hostname === null) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary/20" />
+      </div>
+    )
+  }
+
+  const isPublicLandingRoute = isDashboardSubdomain === false && !authRoutes.has(pathname) && pathname !== '/maintenance'
   
   const isAuthRoute = authRoutes.has(pathname) || 
     pathname?.startsWith('/vorteile/') || 
-    (pathname === '/' && !isDashboardSubdomain)
+    (pathname === '/' && isDashboardSubdomain === false)
   const isMaintenancePage = pathname === '/maintenance'
   const isNewsDetail = pathname?.startsWith('/news/')
   const isAdmin = ['admin_main', 'admin', 'admin_co'].includes(profile?.role || '')
@@ -62,7 +72,7 @@ export function AppShell({ children }: AppShellProps) {
 
   useEffect(() => {
     if (isBoneyardBuild) return
-    if (!isDashboardSubdomain) return
+    if (isDashboardSubdomain !== true) return
     if (authLoading) return
     if (authRoutes.has(pathname)) return
     if (!user) {
@@ -78,7 +88,7 @@ export function AppShell({ children }: AppShellProps) {
     )
   }
 
-  if (!isBoneyardBuild && isDashboardSubdomain && !isAuthRoute && (authLoading || !user)) {
+  if (!isBoneyardBuild && isDashboardSubdomain === true && !isAuthRoute && (authLoading || !user)) {
     return (
       <div className="min-h-screen bg-background lg:flex">
         {/* Sidebar Skeleton */}

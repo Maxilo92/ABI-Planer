@@ -8,7 +8,9 @@ export function middleware(request: NextRequest) {
   const pathname = url.pathname
 
   // Local development or production domains
-  const isDashboardSubdomain = hostname.startsWith('dashboard.') || hostname.startsWith('app.')
+  const isDashboardSubdomain = hostname.startsWith('dashboard.') || hostname.startsWith('app.') || hostname.includes('dashboard.')
+  
+  const isLandingDomain = hostname === 'abi-planer-27.de' || hostname === 'www.abi-planer-27.de' || (hostname.endsWith('.localhost') && !hostname.startsWith('dashboard.'))
   
   // Routes categorization
   const landingOnlyRoutes = [
@@ -55,8 +57,8 @@ export function middleware(request: NextRequest) {
     if (landingOnlyRoutes.some(route => pathname === route || pathname.startsWith(route + '/'))) {
       return new NextResponse(null, { status: 404 })
     }
-  } else {
-    // On main domain, hide dashboard-only pages
+  } else if (isLandingDomain) {
+    // On main domain, hide dashboard-only pages and redirect
     if (dashboardOnlyRoutes.some(route => pathname === route || pathname.startsWith(route + '/'))) {
       const dashboardBaseUrl = getDashboardBaseUrl()
       const redirectUrl = new URL(pathname, dashboardBaseUrl)
@@ -66,7 +68,7 @@ export function middleware(request: NextRequest) {
         redirectUrl.searchParams.set(key, value)
       })
       
-      return NextResponse.redirect(redirectUrl)
+      return NextResponse.redirect(redirectUrl, { status: 307 })
     }
   }
 

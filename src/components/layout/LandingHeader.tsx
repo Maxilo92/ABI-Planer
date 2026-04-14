@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import { useTheme } from 'next-themes'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import { Sun, Moon, ArrowRight } from 'lucide-react'
+import { Sun, Moon, ArrowRight, Loader2 } from 'lucide-react'
 import { getDashboardRedirectUrl, getDashboardBaseUrl } from '@/lib/dashboard-url'
 import Logo from '@/components/Logo'
 
@@ -69,7 +69,7 @@ export function LandingHeader({ isAuthenticated }: { isAuthenticated: boolean })
             className="h-9 w-9 rounded-full"
             onClick={toggleTheme}
           >
-            {isThemeReady && resolvedTheme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            {!isThemeReady ? <Loader2 className="h-4 w-4 animate-spin opacity-20" /> : resolvedTheme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </Button>
           
           <div className="h-4 w-px bg-border mx-1 hidden sm:block" />
