@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { getDashboardBaseUrl } from '@/lib/dashboard-url'
 
 export function middleware(request: NextRequest) {
   const url = request.nextUrl.clone()
@@ -57,7 +58,15 @@ export function middleware(request: NextRequest) {
   } else {
     // On main domain, hide dashboard-only pages
     if (dashboardOnlyRoutes.some(route => pathname === route || pathname.startsWith(route + '/'))) {
-      return new NextResponse(null, { status: 404 })
+      const dashboardBaseUrl = getDashboardBaseUrl()
+      const redirectUrl = new URL(pathname, dashboardBaseUrl)
+      
+      // Preserve query parameters
+      url.searchParams.forEach((value, key) => {
+        redirectUrl.searchParams.set(key, value)
+      })
+      
+      return NextResponse.redirect(redirectUrl)
     }
   }
 

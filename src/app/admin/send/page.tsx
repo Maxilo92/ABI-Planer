@@ -913,7 +913,7 @@ function AdminSendContent() {
                 ) : (
                   recipients.map((r) => (
                     <ContextMenu key={r.id}>
-                      <ContextMenuTrigger className="block">
+                      <ContextMenuTrigger asChild>
                         <div className="flex items-center justify-between gap-3 rounded-md border bg-background px-3 py-2 shadow-sm cursor-context-menu">
                           <div className="min-w-0">
                             <p className="truncate text-sm font-medium">{r.full_name || r.email}</p>

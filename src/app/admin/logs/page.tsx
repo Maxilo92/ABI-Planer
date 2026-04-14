@@ -280,7 +280,7 @@ export default function AdminLogsPage() {
         <div className="space-y-3 lg:hidden">
           {filteredLogs.map((entry) => (
             <ContextMenu key={entry.id}>
-              <ContextMenuTrigger>
+              <ContextMenuTrigger asChild>
                 <div className="rounded-xl border border-border/70 bg-card/70 p-3 space-y-2 cursor-pointer transition-colors active:bg-accent/10">
                   <div className="flex items-center justify-between gap-3">
                     <Badge variant="outline">{entry.action}</Badge>
@@ -326,16 +326,6 @@ export default function AdminLogsPage() {
                     <TableRow className="cursor-pointer transition-colors hover:bg-muted/50">
                       <TableCell className="whitespace-nowrap text-sm">
                         {toDate(entry.timestamp).toLocaleString('de-DE')}
-                        <ContextMenuContent>
-                          <ContextMenuItem onClick={() => handleCopyRow(entry)}>
-                            <Copy className="h-4 w-4 mr-2" />
-                            <span>Zeile kopieren</span>
-                          </ContextMenuItem>
-                          <ContextMenuItem onClick={() => handleCopyJson(entry)}>
-                            <FileJson className="h-4 w-4 mr-2" />
-                            <span>JSON kopieren</span>
-                          </ContextMenuItem>
-                        </ContextMenuContent>
                       </TableCell>
                       <TableCell>
                         <Badge variant="outline">{entry.action}</Badge>
@@ -351,6 +341,16 @@ export default function AdminLogsPage() {
                       </TableCell>
                     </TableRow>
                   </ContextMenuTrigger>
+                  <ContextMenuContent>
+                    <ContextMenuItem onClick={() => handleCopyRow(entry)}>
+                      <Copy className="h-4 w-4 mr-2" />
+                      <span>Zeile kopieren</span>
+                    </ContextMenuItem>
+                    <ContextMenuItem onClick={() => handleCopyJson(entry)}>
+                      <FileJson className="h-4 w-4 mr-2" />
+                      <span>JSON kopieren</span>
+                    </ContextMenuItem>
+                  </ContextMenuContent>
                 </ContextMenu>
               ))}
             </TableBody>

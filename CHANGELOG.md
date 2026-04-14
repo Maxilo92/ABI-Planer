@@ -8,6 +8,14 @@
 
 # Changelog
 
+## [1.11.7] - 2026-04-14
+
+### Fixed
+- **Redirection:** Middleware leitet nun App-Routen von der Hauptdomain auf die Dashboard-Subdomain weiter, statt einen 404 zurückzugeben.
+- **Navigation:** Links auf der Landingpage (Header und MainDomainLanding) wurden auf absolute URLs umgestellt, um korrekt auf die Dashboard-Subdomain zu verweisen.
+- **Auto-Redirect:** Eingeloggte Nutzer werden nun automatisch von der Landingpage auf die Dashboard-Subdomain weitergeleitet.
+- **UI/Hydration:** Behebung von DOM-Nesting-Fehlern in der Benutzerverwaltung und in den Admin-Logs durch Verschieben von `ContextMenuContent` aus `TableCell` heraus.
+
 ## [1.11.6] - 2026-04-14
 
 ### Fixed

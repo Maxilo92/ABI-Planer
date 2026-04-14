@@ -59,7 +59,7 @@ export function LandingHeader({ isAuthenticated }: { isAuthenticated: boolean })
           <Link href="/#features" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Planen</Link>
           <Link href="/#tcg" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Sammeln</Link>
           <Link href="/news" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">News</Link>
-          <Link href="/zugang" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Vorteile</Link>
+          <a href={`${dashboardBaseUrl}/zugang`} className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Vorteile</a>
         </nav>
 
         <div className="flex items-center gap-3">

@@ -45,9 +45,12 @@ import { motion, useScroll, useSpring } from 'framer-motion'
 import { logAction } from '@/lib/logging'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import { getDashboardBaseUrl, getDashboardRedirectUrl } from '@/lib/dashboard-url'
+
 function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
   const [landingNews, setLandingNews] = useState<any[]>([])
   const [landingNewsLoading, setLandingNewsLoading] = useState(true)
+  const dashboardBaseUrl = getDashboardBaseUrl()
   const [landingStats, setLandingStats] = useState({
     totalUsers: null as number | null,
     dailyActiveUsers: null as number | null,
@@ -211,13 +214,13 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
 
             <motion.div variants={itemVariants} className="flex flex-col sm:flex-row items-center justify-center gap-6 pt-6">
               <Button size="lg" asChild className="h-16 px-10 text-xs font-black uppercase tracking-[0.25em] rounded-2xl bg-brand text-brand-foreground hover:bg-brand/90 shadow-2xl shadow-brand/30 group">
-                <Link href="/register">
+                <a href={`${dashboardBaseUrl}/register`}>
                   Jahrgang joinen
                   <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
-                </Link>
+                </a>
               </Button>
               <Button variant="outline" size="lg" asChild className="h-16 px-10 text-xs font-black uppercase tracking-[0.25em] rounded-2xl border-2 border-brand/20 hover:bg-brand/5 backdrop-blur-sm">
-                <Link href="/vorteile">Features checken</Link>
+                <a href={`${dashboardBaseUrl}/vorteile`}>Features checken</a>
               </Button>
             </motion.div>
           </motion.div>
@@ -253,7 +256,7 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
                 </div>
                 <div className="pt-10">
                    <Button asChild variant="secondary" className="rounded-xl font-black uppercase tracking-widest text-[10px] h-12 px-8">
-                      <Link href="/vorteile/finanzen">Planung entdecken</Link>
+                      <a href={`${dashboardBaseUrl}/vorteile/finanzen`}>Planung entdecken</a>
                    </Button>
                 </div>
              </motion.div>
@@ -285,7 +288,7 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
                 </div>
                 <div className="pt-10">
                    <Button asChild className="rounded-xl font-black uppercase tracking-widest text-[10px] h-12 px-8 bg-white text-brand hover:bg-white/90">
-                      <Link href="/vorteile/sammelkarten">Karten-Action</Link>
+                      <a href={`${dashboardBaseUrl}/vorteile/sammelkarten`}>Karten-Action</a>
                    </Button>
                 </div>
              </motion.div>
@@ -406,9 +409,9 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
                   <p className="text-muted-foreground text-lg max-w-md">Behaltet Einnahmen und Ausgaben transparent im Blick. Automatische Kalkulationen helfen euch, das Sparziel für den Abiball sicher zu erreichen.</p>
                 </div>
                 <div className="pt-8 relative z-10">
-                   <Link href="/vorteile/finanzen" className="inline-flex items-center text-brand font-black uppercase tracking-widest text-[10px] gap-2 hover:gap-3 transition-all">
+                   <a href={`${dashboardBaseUrl}/vorteile/finanzen`} className="inline-flex items-center text-brand font-black uppercase tracking-widest text-[10px] gap-2 hover:gap-3 transition-all">
                       Details ansehen <ArrowRight className="h-4 w-4" />
-                   </Link>
+                   </a>
                 </div>
               </motion.div>
 
@@ -425,9 +428,9 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
                   <p className="text-brand-foreground/80 font-medium">Koordiniert Aufgaben in Teams wie Abizeitung oder Merch. Behaltet Deadlines im Griff und arbeitet effizient zusammen.</p>
                 </div>
                 <div className="pt-2">
-                   <Link href="/vorteile/gruppen" className="inline-flex items-center text-brand-foreground font-black uppercase tracking-widest text-[10px] gap-2 hover:gap-3 transition-all">
+                   <a href={`${dashboardBaseUrl}/vorteile/gruppen`} className="inline-flex items-center text-brand-foreground font-black uppercase tracking-widest text-[10px] gap-2 hover:gap-3 transition-all">
                       Details ansehen <ArrowRight className="h-4 w-4" />
-                   </Link>
+                   </a>
                 </div>
               </motion.div>
 
@@ -444,9 +447,9 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
                   <p className="text-muted-foreground font-medium">Trefft wichtige Entscheidungen schnell und für alle nachvollziehbar. Schluss mit dem Chaos in Messenger-Gruppen.</p>
                 </div>
                 <div className="pt-2">
-                   <Link href="/vorteile/abstimmungen" className="inline-flex items-center text-brand font-black uppercase tracking-widest text-[10px] gap-2 hover:gap-3 transition-all">
+                   <a href={`${dashboardBaseUrl}/vorteile/abstimmungen`} className="inline-flex items-center text-brand font-black uppercase tracking-widest text-[10px] gap-2 hover:gap-3 transition-all">
                       Details ansehen <ArrowRight className="h-4 w-4" />
-                   </Link>
+                   </a>
                 </div>
               </motion.div>
 
@@ -462,9 +465,9 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
                   <h3 className="text-3xl font-black uppercase tracking-tight italic">Alle Termine</h3>
                   <p className="text-muted-foreground text-lg">Alle Termine an einem Ort – von der ersten Party bis zur Zeugnisvergabe. Synchronisiert für den gesamten Jahrgang.</p>
                   <div className="pt-2">
-                    <Link href="/vorteile/kalender" className="inline-flex items-center text-brand font-black uppercase tracking-widest text-[10px] gap-2 hover:gap-3 transition-all">
+                    <a href={`${dashboardBaseUrl}/vorteile/kalender`} className="inline-flex items-center text-brand font-black uppercase tracking-widest text-[10px] gap-2 hover:gap-3 transition-all">
                         Details ansehen <ArrowRight className="h-4 w-4" />
-                    </Link>
+                    </a>
                   </div>
                 </div>
                 <div className="w-full md:w-64 aspect-square bg-muted/30 rounded-2xl flex items-center justify-center border border-border/50 group-hover:border-brand/30 transition-colors">
@@ -551,10 +554,10 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
 
                    <div className="flex flex-wrap gap-4 pt-4">
                       <Button size="lg" asChild className="h-16 px-10 text-xs font-black uppercase tracking-[0.25em] rounded-2xl bg-brand text-brand-foreground hover:bg-brand/90 shadow-2xl shadow-brand/40">
-                        <Link href="/register">Account erstellen</Link>
+                        <a href={`${dashboardBaseUrl}/register`}>Account erstellen</a>
                       </Button>
                       <Button variant="ghost" asChild className={isDarkTheme ? 'h-16 px-8 text-xs font-black uppercase tracking-[0.25em] rounded-2xl hover:bg-white/5 text-zinc-400 hover:text-white' : 'h-16 px-8 text-xs font-black uppercase tracking-[0.25em] rounded-2xl hover:bg-muted/70 text-muted-foreground hover:text-foreground'}>
-                        <Link href="/vorteile/sammelkarten">Wie es funktioniert</Link>
+                        <a href={`${dashboardBaseUrl}/vorteile/sammelkarten`}>Wie es funktioniert</a>
                       </Button>
                    </div>
                 </motion.div>
@@ -709,13 +712,13 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
               className="flex flex-col sm:flex-row items-center justify-center gap-6 pt-6"
             >
                <Button size="lg" asChild className="h-20 px-12 text-sm font-black uppercase tracking-[0.3em] rounded-3xl bg-brand text-brand-foreground hover:bg-brand/90 shadow-2xl shadow-brand/40 group">
-                  <Link href="/register">
+                  <a href={`${dashboardBaseUrl}/register`}>
                     Jetzt joinen
                     <Rocket className="ml-3 h-6 w-6 transition-transform group-hover:-translate-y-1 group-hover:translate-x-1" />
-                  </Link>
+                  </a>
                </Button>
                <Button variant="ghost" asChild className="h-20 px-10 text-sm font-black uppercase tracking-[0.3em] rounded-3xl hover:bg-brand/5">
-                  <Link href="/login">Einloggen</Link>
+                  <a href={`${dashboardBaseUrl}/login`}>Einloggen</a>
                </Button>
             </motion.div>
           </div>
@@ -775,6 +778,12 @@ export default function Dashboard() {
     const isDashboardHost = host.startsWith('dashboard.') || host.startsWith('app.')
     setRootMode(isDashboardHost ? 'dashboard' : 'landing')
   }, [])
+
+  useEffect(() => {
+    if (rootMode === 'landing' && user && !authLoading) {
+      window.location.href = getDashboardRedirectUrl(window.location)
+    }
+  }, [rootMode, user, authLoading])
 
   useEffect(() => {
     if (isBoneyardBuild) return
