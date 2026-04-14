@@ -847,7 +847,7 @@ export default function GlobalSettingsPage() {
                   <Select
                     value={row.leaderUserId || '__none__'}
                     onValueChange={(v) => setPlanningGroupRows(prev =>
-                      prev.map(r => r.id === row.id ? { ...r, leaderUserId: v === '__none__' ? '' : v } : r)
+                      prev.map(r => r.id === row.id ? { ...r, leaderUserId: (v === '__none__' || !v) ? '' : v } : r)
                     )}
                   >
                     <SelectTrigger>

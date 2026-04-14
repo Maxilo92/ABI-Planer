@@ -8,6 +8,12 @@
 
 # Changelog
 
+## [1.11.5] - 2026-04-14
+
+### Fixed
+- **Admin:** TypeScript-Fehler in der Planungsgruppen-Verwaltung behoben, der den Build auf Firebase App Hosting blockierte. 
+  - Die Typisierung von `leaderUserId` im `onValueChange`-Handler wurde korrigiert, um sicherzustellen, dass immer ein String (auch bei leerer Auswahl) verarbeitet wird.
+
 ## [1.11.4] - 2026-04-13
 
 ### Fixed
