@@ -42,15 +42,6 @@ export function AppShell({ children }: AppShellProps) {
     return isLocalDashboardHost || hostname.startsWith('dashboard.') || hostname.startsWith('app.')
   }, [hostname, isBoneyardBuild])
 
-  // While hostname is not determined, show a minimal loading state to prevent flash
-  if (hostname === null) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary/20" />
-      </div>
-    )
-  }
-
   const isPublicLandingRoute = isDashboardSubdomain === false && !authRoutes.has(pathname) && pathname !== '/maintenance'
   
   const isAuthRoute = authRoutes.has(pathname) || 
@@ -80,6 +71,16 @@ export function AppShell({ children }: AppShellProps) {
       router.replace('/login')
     }
   }, [authLoading, isBoneyardBuild, isDashboardSubdomain, pathname, router, user])
+
+  // While hostname is not determined, show a minimal loading state to prevent flash
+  // This return MUST be after all hooks have been declared
+  if (hostname === null) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary/20" />
+      </div>
+    )
+  }
 
   if (isPublicLandingRoute) {
     return (
