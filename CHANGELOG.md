@@ -8,6 +8,12 @@
 
 # Changelog
 
+## [1.11.9] - 2026-04-14
+
+### Fixed
+- **AppShell:** Fehlendes Import-Statement für `Loader2` hinzugefügt, um `ReferenceError` zu beheben.
+- **Stability:** Weitere Stabilitäts-Fixes für das Domänen-Routing und die Initialisierung.
+
 ## [1.11.8] - 2026-04-14
 
 ### Fixed
