@@ -1,15 +1,15 @@
 'use client'
 
 import React from 'react'
-import { LootTeacher } from '@/types/database'
+import { CardConfig } from '@/types/cards'
 import { Button } from '@/components/ui/button'
 import { Pencil, Trash2 } from 'lucide-react'
 import { cn, getRarityColor, getRarityLabel } from '@/lib/utils'
 
 interface TeacherListItemProps {
-  teacher: LootTeacher;
-  onEdit: (teacher: LootTeacher) => void;
-  onRemove: (teacher: LootTeacher) => void;
+  teacher: CardConfig;
+  onEdit: (teacher: CardConfig) => void;
+  onRemove: (teacher: CardConfig) => void;
 }
 
 /**

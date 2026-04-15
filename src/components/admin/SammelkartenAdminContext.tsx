@@ -60,23 +60,23 @@ interface SammelkartenAdminContextType {
   filteredTeachers: CardConfig[]
   rarityDistribution: Record<string, number>
   handleAddTeacher: () => void
-  handleRemoveTeacher: (teacher: LootTeacher) => Promise<void>
-  handleEditTeacher: (teacher: LootTeacher) => void
-  handleUpdateTeacher: (updatedTeacher: LootTeacher, options?: { skipRaritySync?: boolean }) => Promise<void>
+  handleRemoveTeacher: (teacher: CardConfig) => Promise<void>
+  handleEditTeacher: (teacher: CardConfig) => void
+  handleUpdateTeacher: (updatedTeacher: CardConfig, options?: { skipRaritySync?: boolean }) => Promise<void>
   
   // Teacher Edit Dialog
   isEditDialogOpen: boolean
   setIsEditDialogOpen: (val: boolean) => void
-  editingTeacher: LootTeacher | null
-  handleSaveAndRemoveTeacher: (updatedTeacher: LootTeacher, options: { compensate: boolean }) => Promise<void>
-  handleRemoveTeacherOnly: (teacher: LootTeacher, options: { compensate: boolean }) => Promise<void>
+  editingTeacher: CardConfig | null
+  handleSaveAndRemoveTeacher: (updatedTeacher: CardConfig, options: { compensate: boolean }) => Promise<void>
+  handleRemoveTeacherOnly: (teacher: CardConfig, options: { compensate: boolean }) => Promise<void>
 
   // CSV/Import
   fileInputRef: React.RefObject<HTMLInputElement | null>
   importing: boolean
   isImportDialogOpen: boolean
   setIsImportDialogOpen: (val: boolean) => void
-  parsedTeachers: LootTeacher[]
+  parsedTeachers: CardConfig[]
   importMode: 'merge' | 'overwrite'
   setImportMode: (mode: 'merge' | 'overwrite') => void
   handleCSVUpload: (e: React.ChangeEvent<HTMLInputElement>) => void
@@ -246,7 +246,7 @@ export function SammelkartenAdminProvider({ children }: { children: React.ReactN
   const [newTeacherRarity, setNewTeacherRarity] = useState<TeacherRarity>('common')
   const [teacherSearch, setTeacherSearch] = useState('')
   const [teacherSort, setTeacherSort] = useState<'name-asc' | 'name-desc' | 'rarity-asc' | 'rarity-desc'>('name-asc')
-  const [editingTeacher, setEditingTeacher] = useState<LootTeacher | null>(null)
+  const [editingTeacher, setEditingTeacher] = useState<CardConfig | null>(null)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
 
   // Simulation State
@@ -286,7 +286,7 @@ export function SammelkartenAdminProvider({ children }: { children: React.ReactN
   // Import States
   const [importing, setImporting] = useState(false)
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false)
-  const [parsedTeachers, setParsedTeachers] = useState<LootTeacher[]>([])
+  const [parsedTeachers, setParsedTeachers] = useState<CardConfig[]>([])
   const [importMode, setImportMode] = useState<'merge' | 'overwrite'>('merge')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -543,7 +543,7 @@ export function SammelkartenAdminProvider({ children }: { children: React.ReactN
     setNewTeacherName('')
   }
 
-  const handleRemoveTeacher = useCallback(async (teacher: LootTeacher) => {
+  const handleRemoveTeacher = useCallback(async (teacher: CardConfig) => {
     if (!confirm(`Möchtest du ${teacher.name} wirklich entfernen?`)) return
     
     setLocalConfig(prev => {
@@ -558,13 +558,13 @@ export function SammelkartenAdminProvider({ children }: { children: React.ReactN
     setIsDirty(true)
   }, [selectedSetId, currentSet])
 
-  const handleEditTeacher = useCallback((teacher: LootTeacher) => {
+  const handleEditTeacher = useCallback((teacher: CardConfig) => {
     setEditingTeacher({ ...teacher })
     setIsEditDialogOpen(true)
   }, [])
 
   const handleUpdateTeacher = useCallback(async (
-    updatedTeacher: LootTeacher,
+    updatedTeacher: CardConfig,
     options?: { skipRaritySync?: boolean }
   ) => {
     if (!selectedSetId || !currentSet) return
@@ -585,7 +585,7 @@ export function SammelkartenAdminProvider({ children }: { children: React.ReactN
       const updatedCards = [...currentSet.cards]
       const index = updatedCards.findIndex(t => t.id === updatedTeacher.id)
       if (index !== -1) {
-        updatedCards[index] = normalizeVisibleTeacherText(updatedTeacher)
+        updatedCards[index] = updatedTeacher
       }
       return { 
         ...prev, 
@@ -632,7 +632,7 @@ export function SammelkartenAdminProvider({ children }: { children: React.ReactN
     }
   }, [selectedSetId, currentSet, user, profile?.full_name])
 
-  const runRemoveTeacherFromAlbums = useCallback(async (teacher: LootTeacher, compensate: boolean) => {
+  const runRemoveTeacherFromAlbums = useCallback(async (teacher: CardConfig, compensate: boolean) => {
     const removeFn = httpsCallable<
       { teacherId: string; dryRun?: boolean; compensate?: boolean },
       {
@@ -674,12 +674,12 @@ export function SammelkartenAdminProvider({ children }: { children: React.ReactN
     }
   }, [user, profile])
 
-  const handleSaveAndRemoveTeacher = useCallback(async (updatedTeacher: LootTeacher, options: { compensate: boolean }) => {
+  const handleSaveAndRemoveTeacher = useCallback(async (updatedTeacher: CardConfig, options: { compensate: boolean }) => {
     await handleUpdateTeacher(updatedTeacher, { skipRaritySync: true })
     await runRemoveTeacherFromAlbums(updatedTeacher, options.compensate)
   }, [handleUpdateTeacher, runRemoveTeacherFromAlbums])
 
-  const handleRemoveTeacherOnly = useCallback(async (teacher: LootTeacher, options: { compensate: boolean }) => {
+  const handleRemoveTeacherOnly = useCallback(async (teacher: CardConfig, options: { compensate: boolean }) => {
     await runRemoveTeacherFromAlbums(teacher, options.compensate)
   }, [runRemoveTeacherFromAlbums])
 

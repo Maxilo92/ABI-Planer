@@ -363,7 +363,7 @@ export default function PoolPage() {
                     <span className="font-medium">{t.name}</span>
                     <div className="flex gap-2">
                       <Badge variant="outline" className="text-[8px] h-4">{t.rarity}</Badge>
-                      {t.hp && <span className="text-muted-foreground">HP: {t.hp}</span>}
+                      {t.type === 'teacher' && (t as any).hp && <span className="text-muted-foreground">HP: {(t as any).hp}</span>}
                     </div>
                   </div>
                 ))}

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { LootTeacher, TeacherRarity, AttackEffect } from '@/types/database'
+import { TeacherRarity, AttackEffect } from '@/types/database'
 import {
   Dialog,
   DialogContent,
@@ -18,7 +18,7 @@ import { Trash2, Loader2 } from 'lucide-react'
 import { TeacherCard } from '@/components/cards/TeacherCard'
 import { TeacherSpecCard } from '@/components/cards/TeacherSpecCard'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { CardData } from '@/types/cards'
+import { CardData, CardConfig, TeacherCardConfig } from '@/types/cards'
 
 const RARITY_COLORS: Record<TeacherRarity, string> = {
   common: '#94a3b8',
@@ -49,11 +49,11 @@ const ATTACK_EFFECTS: { value: AttackEffect; label: string }[] = [
 
 interface TeacherEditDialogProps {
   isOpen: boolean
-  teacher: LootTeacher | null
-  onSave: (updatedTeacher: LootTeacher) => void | Promise<void>
+  teacher: CardConfig | null
+  onSave: (updatedTeacher: CardConfig) => void | Promise<void>
   onClose: () => void
-  onSaveAndRemove?: (updatedTeacher: LootTeacher, options: { compensate: boolean }) => Promise<void>
-  onRemoveOnly?: (teacher: LootTeacher, options: { compensate: boolean }) => Promise<void>
+  onSaveAndRemove?: (updatedTeacher: CardConfig, options: { compensate: boolean }) => Promise<void>
+  onRemoveOnly?: (teacher: CardConfig, options: { compensate: boolean }) => Promise<void>
 }
 
 export function TeacherEditDialog({
@@ -64,7 +64,7 @@ export function TeacherEditDialog({
   onSaveAndRemove,
   onRemoveOnly,
 }: TeacherEditDialogProps) {
-  const [localTeacher, setLocalTeacher] = useState<LootTeacher | null>(null)
+  const [localTeacher, setLocalTeacher] = useState<CardConfig | null>(null)
   const [previewTab, setPreviewTab] = useState<'art' | 'spec'>('art')
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -77,31 +77,40 @@ export function TeacherEditDialog({
   }, [teacher, isOpen])
 
   const cardData = useMemo(
-    (): CardData => ({
-      id: localTeacher?.id || 'preview',
-      cardNumber: '???',
-      name: localTeacher?.name || 'Vorschau',
-      rarity: localTeacher?.rarity || 'common',
-      variant: 'normal',
-      color: RARITY_COLORS[localTeacher?.rarity || 'common'],
-      description: localTeacher?.description,
-      hp: localTeacher?.hp,
-      attacks: localTeacher?.attacks,
-    }),
+    (): CardData => {
+      const isTeacher = localTeacher?.type === 'teacher';
+      const teacherCard = isTeacher ? (localTeacher as TeacherCardConfig) : null;
+      
+      return {
+        id: localTeacher?.id || 'preview',
+        cardNumber: '???',
+        name: localTeacher?.name || 'Vorschau',
+        rarity: localTeacher?.rarity || 'common',
+        variant: 'normal',
+        color: RARITY_COLORS[localTeacher?.rarity || 'common'],
+        description: localTeacher?.description,
+        hp: teacherCard?.hp,
+        attacks: teacherCard?.attacks,
+      };
+    },
     [localTeacher]
   )
 
-  const buildTeacherPayload = (): LootTeacher | null => {
+  const buildTeacherPayload = (): CardConfig | null => {
     if (!localTeacher) return null
 
-    const cleanedAttacks = (localTeacher.attacks || []).filter((a) => a.name && a.name.trim() !== '')
-    return {
-      ...localTeacher,
-      type: 'teacher',
-      hp: localTeacher.hp || 100,
-      attacks: cleanedAttacks,
-      description: localTeacher.description?.trim() || undefined,
+    if (localTeacher.type === 'teacher') {
+      const t = localTeacher as TeacherCardConfig;
+      const cleanedAttacks = (t.attacks || []).filter((a) => a.name && a.name.trim() !== '')
+      return {
+        ...t,
+        hp: t.hp || 100,
+        attacks: cleanedAttacks,
+        description: t.description?.trim() || undefined,
+      }
     }
+
+    return localTeacher;
   }
 
   const handleSaveOnly = async () => {
@@ -159,12 +168,16 @@ export function TeacherEditDialog({
 
   if (!localTeacher && isOpen) return null
 
+  // Helper for teacher fields
+  const isTeacher = localTeacher?.type === 'teacher';
+  const tDraft = isTeacher ? (localTeacher as TeacherCardConfig) : null;
+
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-md md:max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Lehrer bearbeiten</DialogTitle>
-          <DialogDescription>Ändere Details, Seltenheit und Kampfwerte des Lehrers.</DialogDescription>
+          <DialogTitle>Karte bearbeiten</DialogTitle>
+          <DialogDescription>Ändere Details, Seltenheit und Kampfwerte der Karte.</DialogDescription>
         </DialogHeader>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
@@ -184,14 +197,16 @@ export function TeacherEditDialog({
                   id="edit-teacher-hp"
                   type="number"
                   placeholder="100"
-                  value={localTeacher?.hp ?? ''}
+                  disabled={!isTeacher}
+                  value={tDraft?.hp ?? ''}
                   onChange={(e) =>
-                    setLocalTeacher((prev) =>
-                      prev ? { ...prev, hp: e.target.value === '' ? 100 : parseInt(e.target.value) } : null
-                    )
+                    setLocalTeacher((prev) => {
+                      if (!prev || prev.type !== 'teacher') return prev;
+                      return { ...prev, hp: e.target.value === '' ? 100 : parseInt(e.target.value) };
+                    })
                   }
                 />
-                {localTeacher?.rarity && (
+                {isTeacher && localTeacher?.rarity && (
                   <p className="text-[9px] text-muted-foreground italic">
                     Empf.: {RECOMMENDED_STATS[localTeacher.rarity].hp}
                   </p>
@@ -226,91 +241,108 @@ export function TeacherEditDialog({
               />
             </div>
 
-            <div className="space-y-4 pt-4 border-t">
-              <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground">Angriffe (Max. 2)</Label>
-              {[0, 1].map((idx) => (
-                <div key={idx} className="space-y-2 p-3 bg-muted/30 rounded-lg border">
-                  <div className="flex justify-between items-center mb-1">
-                    <Label className="text-[10px] uppercase font-bold text-muted-foreground">Angriff {idx + 1}</Label>
-                    {localTeacher?.attacks?.[idx]?.name && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-4 w-4 text-destructive"
-                        onClick={() => {
-                          const newAttacks = [...(localTeacher?.attacks || [])]
-                          newAttacks.splice(idx, 1)
-                          setLocalTeacher((prev) => (prev ? { ...prev, attacks: newAttacks } : null))
-                        }}
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
-                    )}
-                  </div>
-                  <div className="grid grid-cols-4 gap-2">
-                    <Input
-                      placeholder="Name"
-                      className="col-span-3 h-8 text-xs"
-                      value={localTeacher?.attacks?.[idx]?.name || ''}
-                      onChange={(e) => {
-                        const newAttacks = [...(localTeacher?.attacks || [])]
-                        if (!newAttacks[idx]) newAttacks[idx] = { name: '', effect: 'none', damage: 0 }
-                        newAttacks[idx].name = e.target.value
-                        setLocalTeacher((prev) => (prev ? { ...prev, attacks: newAttacks } : null))
-                      }}
-                    />
-                    <div className="flex flex-col gap-1">
-                      <Input
-                        placeholder="DMG"
-                        type="number"
-                        className="h-8 text-xs"
-                        value={localTeacher?.attacks?.[idx]?.damage ?? ''}
-                        onChange={(e) => {
-                          const newAttacks = [...(localTeacher?.attacks || [])]
-                          if (!newAttacks[idx]) newAttacks[idx] = { name: '', effect: 'none', damage: 0 }
-                          newAttacks[idx].damage = e.target.value === '' ? 0 : parseInt(e.target.value)
-                          setLocalTeacher((prev) => (prev ? { ...prev, attacks: newAttacks } : null))
-                        }}
-                      />
-                      {localTeacher?.rarity && (
-                        <p className="text-[8px] text-muted-foreground text-center italic">
-                          {RECOMMENDED_STATS[localTeacher.rarity].dmg}
-                        </p>
+            {isTeacher && (
+              <div className="space-y-4 pt-4 border-t">
+                <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground">Angriffe (Max. 2)</Label>
+                {[0, 1].map((idx) => (
+                  <div key={idx} className="space-y-2 p-3 bg-muted/30 rounded-lg border">
+                    <div className="flex justify-between items-center mb-1">
+                      <Label className="text-[10px] uppercase font-bold text-muted-foreground">Angriff {idx + 1}</Label>
+                      {tDraft?.attacks?.[idx]?.name && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-4 w-4 text-destructive"
+                          onClick={() => {
+                            const newAttacks = [...(tDraft?.attacks || [])]
+                            newAttacks.splice(idx, 1)
+                            setLocalTeacher((prev) => {
+                              if (!prev || prev.type !== 'teacher') return prev;
+                              return { ...prev, attacks: newAttacks };
+                            })
+                          }}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
                       )}
                     </div>
+                    <div className="grid grid-cols-4 gap-2">
+                      <Input
+                        placeholder="Name"
+                        className="col-span-3 h-8 text-xs"
+                        value={tDraft?.attacks?.[idx]?.name || ''}
+                        onChange={(e) => {
+                          const newAttacks = [...(tDraft?.attacks || [])]
+                          if (!newAttacks[idx]) newAttacks[idx] = { name: '', effect: 'none', damage: 0 }
+                          newAttacks[idx].name = e.target.value
+                          setLocalTeacher((prev) => {
+                            if (!prev || prev.type !== 'teacher') return prev;
+                            return { ...prev, attacks: newAttacks };
+                          })
+                        }}
+                      />
+                      <div className="flex flex-col gap-1">
+                        <Input
+                          placeholder="DMG"
+                          type="number"
+                          className="h-8 text-xs"
+                          value={tDraft?.attacks?.[idx]?.damage ?? ''}
+                          onChange={(e) => {
+                            const newAttacks = [...(tDraft?.attacks || [])]
+                            if (!newAttacks[idx]) newAttacks[idx] = { name: '', effect: 'none', damage: 0 }
+                            newAttacks[idx].damage = e.target.value === '' ? 0 : parseInt(e.target.value)
+                            setLocalTeacher((prev) => {
+                              if (!prev || prev.type !== 'teacher') return prev;
+                              return { ...prev, attacks: newAttacks };
+                            })
+                          }}
+                        />
+                        {localTeacher?.rarity && (
+                          <p className="text-[8px] text-muted-foreground text-center italic">
+                            {RECOMMENDED_STATS[localTeacher.rarity].dmg}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                      <select
+                        className="h-8 w-full rounded-md border border-input bg-transparent px-2 py-1 text-[10px] shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                        value={tDraft?.attacks?.[idx]?.effect || 'none'}
+                        onChange={(e) => {
+                          const newAttacks = [...(tDraft?.attacks || [])]
+                          if (!newAttacks[idx]) newAttacks[idx] = { name: '', effect: 'none', damage: 0 }
+                          newAttacks[idx].effect = e.target.value as AttackEffect
+                          setLocalTeacher((prev) => {
+                            if (!prev || prev.type !== 'teacher') return prev;
+                            return { ...prev, attacks: newAttacks };
+                          })
+                        }}
+                      >
+                        {ATTACK_EFFECTS.map((eff) => (
+                          <option key={eff.value} value={eff.value}>
+                            {eff.label}
+                          </option>
+                        ))}
+                      </select>
+                      <Input
+                        placeholder="Beschreibung (Manuell)"
+                        className="h-8 text-[10px]"
+                        value={tDraft?.attacks?.[idx]?.description || ''}
+                        onChange={(e) => {
+                          const newAttacks = [...(tDraft?.attacks || [])]
+                          if (!newAttacks[idx]) newAttacks[idx] = { name: '', effect: 'none', damage: 0 }
+                          newAttacks[idx].description = e.target.value
+                          setLocalTeacher((prev) => {
+                            if (!prev || prev.type !== 'teacher') return prev;
+                            return { ...prev, attacks: newAttacks };
+                          })
+                        }}
+                      />
+                    </div>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                    <select
-                      className="h-8 w-full rounded-md border border-input bg-transparent px-2 py-1 text-[10px] shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                      value={localTeacher?.attacks?.[idx]?.effect || 'none'}
-                      onChange={(e) => {
-                        const newAttacks = [...(localTeacher?.attacks || [])]
-                        if (!newAttacks[idx]) newAttacks[idx] = { name: '', effect: 'none', damage: 0 }
-                        newAttacks[idx].effect = e.target.value as AttackEffect
-                        setLocalTeacher((prev) => (prev ? { ...prev, attacks: newAttacks } : null))
-                      }}
-                    >
-                      {ATTACK_EFFECTS.map((eff) => (
-                        <option key={eff.value} value={eff.value}>
-                          {eff.label}
-                        </option>
-                      ))}
-                    </select>
-                    <Input
-                      placeholder="Beschreibung (Manuell)"
-                      className="h-8 text-[10px]"
-                      value={localTeacher?.attacks?.[idx]?.description || ''}
-                      onChange={(e) => {
-                        const newAttacks = [...(localTeacher?.attacks || [])]
-                        if (!newAttacks[idx]) newAttacks[idx] = { name: '', effect: 'none', damage: 0 }
-                        newAttacks[idx].description = e.target.value
-                        setLocalTeacher((prev) => (prev ? { ...prev, attacks: newAttacks } : null))
-                      }}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="flex flex-col items-center justify-start space-y-4 pt-6 md:pt-0 border-t md:border-t-0 md:border-l md:pl-6">

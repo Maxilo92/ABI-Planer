@@ -1,0 +1,33 @@
+[debug] [2026-04-14T20:01:52.551Z] ----------------------------------------------------------------------
+[debug] [2026-04-14T20:01:52.556Z] Command:       /Users/maximilian/.nvm/versions/node/v24.11.0/bin/node /Users/maximilian/.nvm/versions/node/v24.11.0/bin/firebase deploy --only firestore:indexes
+[debug] [2026-04-14T20:01:52.557Z] CLI Version:   15.12.0
+[debug] [2026-04-14T20:01:52.557Z] Platform:      darwin
+[debug] [2026-04-14T20:01:52.557Z] Node Version:  v24.11.0
+[debug] [2026-04-14T20:01:52.557Z] Time:          Tue Apr 14 2026 22:01:52 GMT+0200 (Mitteleuropäische Sommerzeit)
+[debug] [2026-04-14T20:01:52.557Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-04-14T20:01:54.959Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-04-14T20:01:54.959Z] > authorizing via signed-in user (finex.servicebot@gmail.com)
+[debug] [2026-04-14T20:01:54.959Z] [iam] checking project abi-planer-75319 for permissions ["datastore.indexes.create","datastore.indexes.delete","datastore.indexes.list","datastore.indexes.update","firebase.projects.get"]
+[debug] [2026-04-14T20:01:54.961Z] Checked if tokens are valid: true, expires at: 1776199086694
+[debug] [2026-04-14T20:01:54.961Z] Checked if tokens are valid: true, expires at: 1776199086694
+[debug] [2026-04-14T20:01:54.963Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/abi-planer-75319:testIamPermissions [none]
+[debug] [2026-04-14T20:01:54.963Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/abi-planer-75319:testIamPermissions  x-goog-user-project=abi-planer-75319
+[debug] [2026-04-14T20:01:54.963Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/abi-planer-75319:testIamPermissions {"permissions":["datastore.indexes.create","datastore.indexes.delete","datastore.indexes.list","datastore.indexes.update","firebase.projects.get"]}
+[debug] [2026-04-14T20:01:55.840Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/abi-planer-75319:testIamPermissions 200
+[debug] [2026-04-14T20:01:55.841Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/abi-planer-75319:testIamPermissions {"permissions":["datastore.indexes.create","datastore.indexes.delete","datastore.indexes.list","datastore.indexes.update","firebase.projects.get"]}
+[info] 
+[info] === Deploying to 'abi-planer-75319'...
+[info] 
+[info] i  deploying firestore 
+[info] i  firestore: ensuring required API firestore.googleapis.com is enabled... 
+[info] i  firestore: ensuring required API firestore.googleapis.com is enabled... 
+[info] i  firestore: deploying indexes... 
+[debug] [2026-04-14T20:01:56.150Z] TypeError: Cannot read properties of undefined (reading 'map')
+    at deployIndexes (/Users/maximilian/.nvm/versions/node/v24.11.0/lib/node_modules/firebase-tools/lib/deploy/firestore/deploy.js:24:38)
+    at default_1 (/Users/maximilian/.nvm/versions/node/v24.11.0/lib/node_modules/firebase-tools/lib/deploy/firestore/deploy.js:51:11)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async chain (/Users/maximilian/.nvm/versions/node/v24.11.0/lib/node_modules/firebase-tools/lib/deploy/index.js:45:9)
+    at async deploy (/Users/maximilian/.nvm/versions/node/v24.11.0/lib/node_modules/firebase-tools/lib/deploy/index.js:126:9)
+[error] 
+[error] Error: An unexpected error has occurred.

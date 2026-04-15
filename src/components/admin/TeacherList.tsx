@@ -1,13 +1,13 @@
 'use client'
 
 import React from 'react'
-import { LootTeacher } from '@/types/database'
+import { CardConfig } from '@/types/cards'
 import { TeacherListItem } from './TeacherListItem'
 
 interface TeacherListProps {
-  teachers: LootTeacher[];
-  onEdit: (teacher: LootTeacher) => void;
-  onRemove: (teacher: LootTeacher) => void;
+  teachers: CardConfig[];
+  onEdit: (teacher: CardConfig) => void;
+  onRemove: (teacher: CardConfig) => void;
 }
 
 /**

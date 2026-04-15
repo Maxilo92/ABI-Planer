@@ -8,6 +8,15 @@
 
 # Changelog
 
+## [1.12.25] - 2026-04-15
+### Geändert
+- **Sammelkarten Admin System:** Vollständige Umstellung auf das neue `CardConfig` Typ-System zur Unterstützung verschiedener Kartentypen (Lehrer, Support, etc.).
+    - `TeacherList`, `TeacherListItem` und `TeacherEditDialog` unterstützen nun generische Kartenkonfigurationen.
+    - `SammelkartenAdminContext` bietet nun typsichere Funktionen für alle Kartentypen.
+### Behoben
+- **Build (Type Error):** Fix für `Type 'CardConfig[]' is not assignable to type 'LootTeacher[]'` Fehler auf der Pool-Seite.
+- **UI (Import Preview):** Sicherer Zugriff auf HP-Werte in der Import-Vorschau für Nicht-Lehrer-Karten.
+
 ## [1.12.24] - 2026-04-15
 ### Behoben
 - **Build (Turbopack):** Behebung von Export-Fehlern (`Export getProposalStatusBadge doesn't exist in target module`) in `src/app/admin/sammelkarten/ideen-labor/page.tsx`.
