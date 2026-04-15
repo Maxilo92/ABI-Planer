@@ -10,6 +10,35 @@ export type CardVariant =
 
 export type CardStyle = 'soft-glass' | 'modern-flat' | 'playful-pattern' | 'modern-premium' | 'holographic-edge';
 
+export type CardType = 'teacher' | 'support' | 'event' | 'item';
+
+export interface BaseCard {
+  id: string; // The cardId within the set (e.g., "001")
+  name: string;
+  rarity: TeacherRarity;
+  type: CardType;
+  description?: string;
+  style?: CardStyle;
+  color?: string; // Optional override for set color
+}
+
+export interface TeacherCardConfig extends BaseCard {
+  type: 'teacher';
+  hp: number;
+  attacks: TeacherAttack[];
+}
+
+export interface SupportCardConfig extends BaseCard {
+  type: 'support';
+  effect: string;
+  effectId?: string; // The ID of the hardcoded effect handler
+  baseMultiplier?: number;
+  incrementPerLevel?: number;
+  flavorText?: string;
+}
+
+export type CardConfig = TeacherCardConfig | SupportCardConfig;
+
 export interface CardData {
   id: string; // The cardId within the set (e.g., "001")
   setId?: string; // The set ID (e.g., "teachers_v1")
@@ -19,7 +48,7 @@ export interface CardData {
   rarity: Rarity;
   variant: CardVariant;
   color: string;
-  type?: 'teacher' | 'support' | 'event' | 'item';
+  type?: CardType;
   style?: CardStyle;
   description?: string;
   hp?: number;
@@ -68,7 +97,15 @@ export interface CardSet {
   name: string;
   prefix: string;
   color: string;
-  cards: LootTeacher[];
+  cards: CardConfig[];
+}
+
+export interface SetDefinition {
+  id: string; // e.g., 'teachers_v1'
+  name: string;
+  prefix: string; // e.g., 'T1' for T1-001
+  color: string; // Default color for cards in this set
+  cards: CardConfig[];
 }
 
 export interface SammelkartenConfig {

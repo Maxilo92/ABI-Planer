@@ -19,6 +19,7 @@ const FALLBACK_TEACHERS: LootTeacher[] = [
     id: 'promo-herr-schmidt', 
     name: 'Herr Schmidt', 
     rarity: 'legendary', 
+    type: 'teacher',
     description: 'Ein legendärer Lehrer mit unglaublicher Geduld.',
     hp: 120,
     attacks: [{ name: 'Klausur-Schreck', damage: 80 }]
@@ -27,6 +28,7 @@ const FALLBACK_TEACHERS: LootTeacher[] = [
     id: 'promo-frau-mueller', 
     name: 'Frau Müller', 
     rarity: 'epic', 
+    type: 'teacher',
     description: 'Kennt alle Tricks und Kniffe der Mathematik.',
     hp: 100,
     attacks: [{ name: 'Formel-Sturm', damage: 60 }]

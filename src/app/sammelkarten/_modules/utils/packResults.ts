@@ -45,7 +45,9 @@ function resolveTeacherMeta(resultTeacherId: string, teachers: LootTeacher[]): L
       id: resolved.id,
       name: resolved.name,
       rarity: resolved.rarity as any,
-      ...teacherMeta,
+      type: 'teacher',
+      hp: (resolved as any).hp || 100,
+      attacks: (resolved as any).attacks || [],
       description: resolved.description,
     } as LootTeacher
   }
@@ -55,7 +57,7 @@ function resolveTeacherMeta(resultTeacherId: string, teachers: LootTeacher[]): L
       const id = t.id || t.name
       return id === resultTeacherId || id === baseId
     }) ||
-    ({ id: baseId, name: 'Unbekannte Karte', rarity: 'common' } as LootTeacher)
+    ({ id: baseId, name: 'Unbekannte Karte', rarity: 'common', type: 'teacher', hp: 100, attacks: [] } as LootTeacher)
   )
 }
 

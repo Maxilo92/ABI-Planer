@@ -224,7 +224,7 @@ export function TeacherInvitationsTab() {
           }),
           new Paragraph({
             children: [
-              new TextRun({ text: "Vielen Dank für Ihre Unterstützung!", italic: true, size: 22, color: "64748b" }),
+              new TextRun({ text: "Vielen Dank für Ihre Unterstützung!", italics: true, size: 22, color: "64748b" }),
             ],
             alignment: AlignmentType.CENTER,
           }),

@@ -106,7 +106,7 @@ export default function TeacherCreateCardPage() {
     fetchInvitation()
   }, [token])
 
-  const onCropComplete = (croppedArea, croppedAreaPixels) => {
+  const onCropComplete = (_croppedArea: any, croppedAreaPixels: any) => {
     setCroppedAreaPixels(croppedAreaPixels)
   }
 
@@ -121,6 +121,7 @@ export default function TeacherCreateCardPage() {
 
   const generateCroppedImage = async () => {
     try {
+      if (!imagePreview) return
       const croppedImage = await getCroppedImg(imagePreview, croppedAreaPixels)
       setCroppedImage(croppedImage as string)
       setIsCropping(false)

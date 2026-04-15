@@ -402,7 +402,7 @@ function SammelkartenAdminLayoutContent({ children }: { children: React.ReactNod
                         <div key={rarity} className="flex items-center justify-between text-xs">
                           <span className={cn("font-bold", getRarityColor(rarity as TeacherRarity))}>{getRarityLabel(rarity as TeacherRarity)}</span>
                           <span className="font-mono font-medium">
-                            {count} <span className="text-muted-foreground text-[10px]">({((count / (simResults.totalPacks * 3)) * 100).toFixed(1)}%)</span>
+                            {count as number} <span className="text-muted-foreground text-[10px]">({(((count as number) / (simResults.totalPacks * 3)) * 100).toFixed(1)}%)</span>
                           </span>
                         </div>
                       ))}
@@ -414,7 +414,7 @@ function SammelkartenAdminLayoutContent({ children }: { children: React.ReactNod
                         <div key={variant} className="flex items-center justify-between text-xs">
                           <span className="font-bold capitalize">{variant.replace(/_/g, ' ')}</span>
                           <span className="font-mono font-medium">
-                            {count} <span className="text-muted-foreground text-[10px]">({((count / (simResults.totalPacks * 3)) * 100).toFixed(2)}%)</span>
+                            {count as number} <span className="text-muted-foreground text-[10px]">({(((count as number) / (simResults.totalPacks * 3)) * 100).toFixed(2)}%)</span>
                           </span>
                         </div>
                       ))}

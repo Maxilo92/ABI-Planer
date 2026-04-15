@@ -8,7 +8,7 @@ import { useAuth } from '@/context/AuthContext'
 import { toast } from 'sonner'
 import { logAction } from '@/lib/logging'
 import { TeacherRarity, LootTeacher, CardProposal, TeacherAttack } from '@/types/database'
-import { SammelkartenConfig, CardSet } from '@/types/cards'
+import { SammelkartenConfig, CardSet, CardConfig } from '@/types/cards'
 import { CARD_SETS } from '@/constants/cardRegistry'
 import { restoreGermanUmlauts } from '@/lib/utils'
 
@@ -55,9 +55,9 @@ interface SammelkartenAdminContextType {
   setNewTeacherRarity: (val: TeacherRarity) => void
   teacherSearch: string
   setTeacherSearch: (val: string) => void
-  teacherSort: string
-  setTeacherSort: (val: string) => void
-  filteredTeachers: LootTeacher[]
+  teacherSort: 'name-asc' | 'name-desc' | 'rarity-asc' | 'rarity-desc'
+  setTeacherSort: (val: 'name-asc' | 'name-desc' | 'rarity-asc' | 'rarity-desc') => void
+  filteredTeachers: CardConfig[]
   rarityDistribution: Record<string, number>
   handleAddTeacher: () => void
   handleRemoveTeacher: (teacher: LootTeacher) => Promise<void>
@@ -175,9 +175,11 @@ const DEFAULT_LIMITS = {
 function normalizeVisibleTeacherText(teacher: LootTeacher): LootTeacher {
   return {
     ...teacher,
+    type: 'teacher',
+    hp: teacher.hp || 100,
     name: restoreGermanUmlauts(teacher.name || ''),
     description: teacher.description ? restoreGermanUmlauts(teacher.description) : teacher.description,
-    attacks: teacher.attacks?.map((attack) => ({
+    attacks: (teacher.attacks || []).map((attack) => ({
       ...attack,
       name: restoreGermanUmlauts(attack.name || ''),
       description: attack.description ? restoreGermanUmlauts(attack.description) : attack.description,
@@ -293,9 +295,9 @@ export function SammelkartenAdminProvider({ children }: { children: React.ReactN
 
   // Load Config
   useEffect(() => {
-    const unsub = onSnapshot(doc(db, 'settings', 'sammelkarten'), (doc) => {
-      if (doc.exists()) {
-        const data = doc.data() as SammelkartenConfig
+    const unsub = onSnapshot(doc(db, 'settings', 'sammelkarten'), (snapshot) => {
+      if (snapshot.exists()) {
+        const data = snapshot.data() as SammelkartenConfig
         setConfig(data)
         if (!isDirty) {
           setLocalConfig(data)
@@ -318,9 +320,9 @@ export function SammelkartenAdminProvider({ children }: { children: React.ReactN
 
   // Load Features
   useEffect(() => {
-    const unsub = onSnapshot(doc(db, 'settings', 'features'), (doc) => {
-      if (doc.exists()) {
-        setSystemFeatures(doc.data())
+    const unsub = onSnapshot(doc(db, 'settings', 'features'), (snapshot) => {
+      if (snapshot.exists()) {
+        setSystemFeatures(snapshot.data())
       }
     })
     return () => unsub()
@@ -443,7 +445,7 @@ export function SammelkartenAdminProvider({ children }: { children: React.ReactN
     const allSets = [...staticSets]
     customSets.forEach(cs => {
       if (!allSets.some(s => s.id === cs.id)) {
-        allSets.push(cs)
+        allSets.push(cs as any)
       }
     })
     return allSets
@@ -526,7 +528,10 @@ export function SammelkartenAdminProvider({ children }: { children: React.ReactN
     const newTeacher = normalizeVisibleTeacherText({
       id,
       name: normalizedName,
-      rarity: newTeacherRarity
+      rarity: newTeacherRarity,
+      type: 'teacher',
+      hp: 100,
+      attacks: []
     })
     
     const updatedCards = [...(currentSet.cards || []), newTeacher]
@@ -734,11 +739,12 @@ export function SammelkartenAdminProvider({ children }: { children: React.ReactN
         
         const teacher: any = {
           name: row[0].trim(),
-          rarity: (row[1].trim().toLowerCase() || 'common') as TeacherRarity
+          rarity: (row[1].trim().toLowerCase() || 'common') as TeacherRarity,
+          type: 'teacher',
+          hp: row[2] ? parseInt(row[2]) : 100,
+          description: row[3] ? row[3].trim() : '',
+          attacks: []
         }
-        
-        if (row[2]) teacher.hp = parseInt(row[2])
-        if (row[3]) teacher.description = row[3].trim()
         
         // ID generieren falls nicht vorhanden
         teacher.id = generateTeacherId(teacher.name, teachers.map(t => t.id))
@@ -759,14 +765,14 @@ export function SammelkartenAdminProvider({ children }: { children: React.ReactN
       let updatedCards = [...(currentSet.cards || [])]
       
       if (mode === 'overwrite') {
-        updatedCards = parsedTeachers
+        updatedCards = parsedTeachers as any
       } else {
         parsedTeachers.forEach(newT => {
           const idx = updatedCards.findIndex(t => t.id === newT.id || t.name === newT.name)
           if (idx !== -1) {
-            updatedCards[idx] = newT
+            updatedCards[idx] = newT as any
           } else {
-            updatedCards.push(newT)
+            updatedCards.push(newT as any)
           }
         })
       }
@@ -792,7 +798,7 @@ export function SammelkartenAdminProvider({ children }: { children: React.ReactN
     const rows = currentSet.cards.map(t => [
       t.name,
       t.rarity,
-      t.hp || '',
+      (t as any).hp || '',
       t.description || ''
     ])
     
@@ -825,7 +831,7 @@ export function SammelkartenAdminProvider({ children }: { children: React.ReactN
 
     const teachers = currentSet.cards
     const seenNames = new Map<string, string>() // name -> canonicalId
-    const canonicalTeachers: LootTeacher[] = []
+    const canonicalTeachers: CardConfig[] = []
     let cleanedCount = 0
 
     teachers.forEach(t => {
@@ -992,7 +998,7 @@ export function SammelkartenAdminProvider({ children }: { children: React.ReactN
       if (!acc[c.rarity]) acc[c.rarity] = []
       acc[c.rarity].push(c)
       return acc
-    }, {} as Record<TeacherRarity, LootTeacher[]>)
+    }, {} as Record<TeacherRarity, CardConfig[]>)
 
     for (let i = 0; i < simCount; i++) {
       const isGodpack = Math.random() < localConfig.global_limits.godpack_chance
@@ -1133,7 +1139,7 @@ export function SammelkartenAdminProvider({ children }: { children: React.ReactN
     return cardProposals.reduce((acc, p) => {
       acc[p.status] = (acc[p.status] || 0) + 1
       return acc
-    }, { pending: 0, accepted: 0, rejected: 0 } as Record<string, number>)
+    }, { pending: 0, accepted: 0, rejected: 0 } as { pending: number, accepted: number, rejected: number })
   }, [cardProposals])
 
   const value = {

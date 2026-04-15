@@ -200,9 +200,10 @@ export interface LootTeacher {
   id: string;
   name: string;
   rarity: TeacherRarity;
+  type: 'teacher';
   description?: string;
-  hp?: number;
-  attacks?: TeacherAttack[];
+  hp: number;
+  attacks: TeacherAttack[];
 }
 
 export interface CustomPopupMessage {

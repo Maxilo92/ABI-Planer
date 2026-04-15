@@ -91,13 +91,15 @@ export function TeacherEditDialog({
     [localTeacher]
   )
 
-  const buildTeacherPayload = () => {
+  const buildTeacherPayload = (): LootTeacher | null => {
     if (!localTeacher) return null
 
     const cleanedAttacks = (localTeacher.attacks || []).filter((a) => a.name && a.name.trim() !== '')
     return {
       ...localTeacher,
-      attacks: cleanedAttacks.length > 0 ? cleanedAttacks : undefined,
+      type: 'teacher',
+      hp: localTeacher.hp || 100,
+      attacks: cleanedAttacks,
       description: localTeacher.description?.trim() || undefined,
     }
   }
@@ -185,7 +187,7 @@ export function TeacherEditDialog({
                   value={localTeacher?.hp ?? ''}
                   onChange={(e) =>
                     setLocalTeacher((prev) =>
-                      prev ? { ...prev, hp: e.target.value === '' ? undefined : parseInt(e.target.value) } : null
+                      prev ? { ...prev, hp: e.target.value === '' ? 100 : parseInt(e.target.value) } : null
                     )
                   }
                 />
@@ -252,7 +254,7 @@ export function TeacherEditDialog({
                       value={localTeacher?.attacks?.[idx]?.name || ''}
                       onChange={(e) => {
                         const newAttacks = [...(localTeacher?.attacks || [])]
-                        if (!newAttacks[idx]) newAttacks[idx] = { name: '', effect: 'none' }
+                        if (!newAttacks[idx]) newAttacks[idx] = { name: '', effect: 'none', damage: 0 }
                         newAttacks[idx].name = e.target.value
                         setLocalTeacher((prev) => (prev ? { ...prev, attacks: newAttacks } : null))
                       }}
@@ -265,8 +267,8 @@ export function TeacherEditDialog({
                         value={localTeacher?.attacks?.[idx]?.damage ?? ''}
                         onChange={(e) => {
                           const newAttacks = [...(localTeacher?.attacks || [])]
-                          if (!newAttacks[idx]) newAttacks[idx] = { name: '', effect: 'none' }
-                          newAttacks[idx].damage = e.target.value === '' ? undefined : parseInt(e.target.value)
+                          if (!newAttacks[idx]) newAttacks[idx] = { name: '', effect: 'none', damage: 0 }
+                          newAttacks[idx].damage = e.target.value === '' ? 0 : parseInt(e.target.value)
                           setLocalTeacher((prev) => (prev ? { ...prev, attacks: newAttacks } : null))
                         }}
                       />
@@ -283,7 +285,7 @@ export function TeacherEditDialog({
                       value={localTeacher?.attacks?.[idx]?.effect || 'none'}
                       onChange={(e) => {
                         const newAttacks = [...(localTeacher?.attacks || [])]
-                        if (!newAttacks[idx]) newAttacks[idx] = { name: '', effect: 'none' }
+                        if (!newAttacks[idx]) newAttacks[idx] = { name: '', effect: 'none', damage: 0 }
                         newAttacks[idx].effect = e.target.value as AttackEffect
                         setLocalTeacher((prev) => (prev ? { ...prev, attacks: newAttacks } : null))
                       }}
@@ -300,7 +302,7 @@ export function TeacherEditDialog({
                       value={localTeacher?.attacks?.[idx]?.description || ''}
                       onChange={(e) => {
                         const newAttacks = [...(localTeacher?.attacks || [])]
-                        if (!newAttacks[idx]) newAttacks[idx] = { name: '', effect: 'none' }
+                        if (!newAttacks[idx]) newAttacks[idx] = { name: '', effect: 'none', damage: 0 }
                         newAttacks[idx].description = e.target.value
                         setLocalTeacher((prev) => (prev ? { ...prev, attacks: newAttacks } : null))
                       }}
