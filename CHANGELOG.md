@@ -8,6 +8,12 @@
 
 # Changelog
 
+## [1.12.24] - 2026-04-15
+### Behoben
+- **Build (Turbopack):** Behebung von Export-Fehlern (`Export getProposalStatusBadge doesn't exist in target module`) in `src/app/admin/sammelkarten/ideen-labor/page.tsx`.
+    - Zirkuläre Abhängigkeiten zwischen `utils.tsx` und der `Badge`-Komponente wurden durch Verschieben der Helferfunktionen direkt in die betroffene Seite aufgelöst.
+    - Bereinigung von ungenutzten Importen in `src/lib/utils.tsx`.
+
 ## [1.12.23] - 2026-04-14
 ### Behoben
 - **Layout (Sidebar Clipping):** Fix für ein Problem, bei dem zu breite Tabellen in der Admin-Ansicht die gesamte Inhaltskarte nach links in die Seitenleiste verschoben haben. 

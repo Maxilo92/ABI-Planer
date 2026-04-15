@@ -3,7 +3,6 @@ import { twMerge } from "tailwind-merge"
 import { formatDistanceToNow } from 'date-fns'
 import { de } from 'date-fns/locale'
 import { TeacherRarity } from '@/types/database'
-
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
@@ -110,4 +109,3 @@ export function restoreGermanUmlauts(str: string): string {
     .replace(/oe/g, 'ö')
     .replace(/ue/g, 'ü')
 }
-

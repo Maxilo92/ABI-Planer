@@ -6,7 +6,37 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Loader2, Sparkles } from 'lucide-react'
-import { getProposalStatusBadge, getProposalUsageBadge } from '@/lib/utils'
+
+/**
+ * Returns a Badge for a card proposal status.
+ */
+function getProposalStatusBadge(status: 'pending' | 'accepted' | 'rejected') {
+  switch (status) {
+    case 'pending':
+      return <Badge variant="secondary">Wartend</Badge>
+    case 'accepted':
+      return <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20">Angenommen</Badge>
+    case 'rejected':
+      return <Badge variant="destructive">Abgelehnt</Badge>
+    default:
+      return <Badge variant="outline">{status}</Badge>
+  }
+}
+
+/**
+ * Returns a Badge for a card proposal usage status.
+ */
+function getProposalUsageBadge(usageStatus?: 'unknown' | 'used' | 'not_used') {
+  switch (usageStatus) {
+    case 'used':
+      return <Badge variant="outline" className="border-primary/30 text-primary">Schon verwendet</Badge>
+    case 'not_used':
+      return <Badge variant="outline" className="border-emerald-500/30 text-emerald-500">Neu / Unbenutzt</Badge>
+    case 'unknown':
+    default:
+      return <Badge variant="outline" className="text-muted-foreground border-muted-foreground/30">Unbekannt</Badge>
+  }
+}
 
 export default function IdeenLaborPage() {
   const {
