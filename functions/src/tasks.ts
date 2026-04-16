@@ -1,4 +1,5 @@
 import { onCall, HttpsError } from "firebase-functions/v2/https";
+import { CALLABLE_CORS_ORIGINS } from "./constants/cors";
 import * as admin from "firebase-admin";
 import { logger } from "firebase-functions";
 
@@ -30,7 +31,10 @@ export interface Task {
   created_at: any;
 }
 
-export const adminReviewTask = onCall(async (request) => {
+export const adminReviewTask = onCall({
+  cors: CALLABLE_CORS_ORIGINS,
+  region: "europe-west3",
+}, async (request) => {
   const { taskId, action, rejectedReason } = request.data as { 
     taskId: string; 
     action: 'approve' | 'reject'; 

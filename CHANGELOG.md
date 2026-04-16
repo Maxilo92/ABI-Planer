@@ -8,6 +8,10 @@
 
 # Changelog
 
+## [1.14.1] - 2026-04-16
+### Behoben
+- **2FA Login CORS Fix:** Korrektur der CORS-Konfiguration für Cloud Functions (insbesondere `verifyLogin2FA`). Die Verwendung von Regex in der `CALLABLE_CORS_ORIGINS` Liste wurde durch explizite Domain-Strings ersetzt, um Preflight-Fehler auf der TCG-Subdomain zu beheben.
+
 ## [1.14.0] - 2026-04-16
 ### Behoben
 - **CORS Policy Violations:** Cross-Subdomain-Navigation (z. B. vom Dashboard zum TCG-Modul) nutzt nun Standard-`<a>`-Tags anstelle von `next/link`. Dies verhindert das fehlerhafte Abrufen von RSC-Payloads über Subdomain-Grenzen hinweg und behebt `ERR_BLOCKED_BY_CORS`.

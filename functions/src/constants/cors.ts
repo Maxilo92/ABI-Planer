@@ -4,7 +4,9 @@
  * and production domains.
  */
 export const CALLABLE_CORS_ORIGINS = [
-  /https?:\/\/([a-z0-9-]+\.)*localhost(:\d+)?$/,
+  "http://localhost:3000",
+  "http://localhost:3001",
+  "http://localhost:5000",
   "https://abi-planer-27.de",
   "https://dashboard.abi-planer-27.de",
   "https://tcg.abi-planer-27.de",

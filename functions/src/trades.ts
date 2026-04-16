@@ -657,7 +657,7 @@ function validateCardEligibility(card: CardSelection) {
 /**
  * Startet ein neues Tauschangebot.
  */
-export const sendTradeOffer = onCall({ cors: CALLABLE_CORS_ORIGINS }, async (request) => {
+export const sendTradeOffer = onCall({ cors: CALLABLE_CORS_ORIGINS, region: "europe-west3" }, async (request) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "Anmeldung erforderlich.");
   }
@@ -733,7 +733,7 @@ export const sendTradeOffer = onCall({ cors: CALLABLE_CORS_ORIGINS }, async (req
 /**
  * Erstellt ein Gegenangebot.
  */
-export const counterTradeOffer = onCall({ cors: CALLABLE_CORS_ORIGINS }, async (request) => {
+export const counterTradeOffer = onCall({ cors: CALLABLE_CORS_ORIGINS, region: "europe-west3" }, async (request) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "Anmeldung erforderlich.");
   }
@@ -824,7 +824,7 @@ export const counterTradeOffer = onCall({ cors: CALLABLE_CORS_ORIGINS }, async (
 /**
  * Akzeptiert einen Tausch und führt den atomaren Wechsel durch.
  */
-export const acceptTradeOffer = onCall({ cors: CALLABLE_CORS_ORIGINS }, async (request) => {
+export const acceptTradeOffer = onCall({ cors: CALLABLE_CORS_ORIGINS, region: "europe-west3" }, async (request) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "Anmeldung erforderlich.");
   }
@@ -966,7 +966,7 @@ export const acceptTradeOffer = onCall({ cors: CALLABLE_CORS_ORIGINS }, async (r
 /**
  * Lehnt ein Tauschangebot ab.
  */
-export const declineTradeOffer = onCall({ cors: CALLABLE_CORS_ORIGINS }, async (request) => {
+export const declineTradeOffer = onCall({ cors: CALLABLE_CORS_ORIGINS, region: "europe-west3" }, async (request) => {
   if (!request.auth) throw new HttpsError("unauthenticated", "Anmeldung erforderlich.");
   const { tradeId } = request.data;
   const db = getFirestore("abi-data");
@@ -978,7 +978,7 @@ export const declineTradeOffer = onCall({ cors: CALLABLE_CORS_ORIGINS }, async (
 /**
  * Bricht ein eigenes Tauschangebot ab.
  */
-export const cancelTradeOffer = onCall({ cors: CALLABLE_CORS_ORIGINS }, async (request) => {
+export const cancelTradeOffer = onCall({ cors: CALLABLE_CORS_ORIGINS, region: "europe-west3" }, async (request) => {
   if (!request.auth) throw new HttpsError("unauthenticated", "Anmeldung erforderlich.");
   const { tradeId } = request.data;
   const db = getFirestore("abi-data");
@@ -993,7 +993,7 @@ export const cancelTradeOffer = onCall({ cors: CALLABLE_CORS_ORIGINS }, async (r
 /**
  * Aggregiert globale System-Statistiken für das Admin Dashboard.
  */
-export const getGlobalStats = onCall({ cors: CALLABLE_CORS_ORIGINS }, async (request) => {
+export const getGlobalStats = onCall({ cors: CALLABLE_CORS_ORIGINS, region: "europe-west3" }, async (request) => {
   if (!request.auth) throw new HttpsError("unauthenticated", "Anmeldung erforderlich.");
   
   try {
@@ -1010,7 +1010,7 @@ export const getGlobalStats = onCall({ cors: CALLABLE_CORS_ORIGINS }, async (req
 /**
  * Liefert Analytics-Daten fuer das Admin System Control Center.
  */
-export const getSystemAnalytics = onCall({ cors: CALLABLE_CORS_ORIGINS }, async (request) => {
+export const getSystemAnalytics = onCall({ cors: CALLABLE_CORS_ORIGINS, region: "europe-west3" }, async (request) => {
   if (!request.auth) throw new HttpsError("unauthenticated", "Anmeldung erforderlich.");
 
   try {
@@ -1027,7 +1027,7 @@ export const getSystemAnalytics = onCall({ cors: CALLABLE_CORS_ORIGINS }, async 
 /**
  * Setzt Presence-/Session-Felder fuer alle Profile zurueck.
  */
-export const resetSessionStatistics = onCall({ cors: CALLABLE_CORS_ORIGINS }, async (request) => {
+export const resetSessionStatistics = onCall({ cors: CALLABLE_CORS_ORIGINS, region: "europe-west3" }, async (request) => {
   if (!request.auth) throw new HttpsError("unauthenticated", "Anmeldung erforderlich.");
 
   try {
@@ -1135,7 +1135,7 @@ export const getLandingStats = onRequest({ cors: CALLABLE_CORS_ORIGINS }, async 
 /**
  * Findet Freunde, die eine bestimmte Karte besitzen.
  */
-export const getFriendsWithCard = onCall({ cors: CALLABLE_CORS_ORIGINS }, async (request) => {
+export const getFriendsWithCard = onCall({ cors: CALLABLE_CORS_ORIGINS, region: "europe-west3" }, async (request) => {
   if (!request.auth) throw new HttpsError("unauthenticated", "Anmeldung erforderlich.");
   const { teacherId, variant } = request.data;
   const userId = request.auth.uid;
