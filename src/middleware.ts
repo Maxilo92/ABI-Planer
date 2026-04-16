@@ -2,14 +2,38 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { getAppBaseUrl, getMainBaseUrl } from '@/lib/dashboard-url'
 
+function normalizeRequestHost(hostHeader: string): string {
+  // Strip port and convert to lowercase
+  return hostHeader.split(':')[0].toLowerCase()
+}
+
+function safeRedirect(request: NextRequest, targetUrl: URL) {
+  const current = request.nextUrl
+  const currentHost = normalizeRequestHost(request.headers.get('host') || '')
+  const targetHost = normalizeRequestHost(targetUrl.host)
+
+  // Guard against redirect loops (e.g. misconfigured target domains/env vars).
+  if (
+    currentHost === targetHost &&
+    current.pathname === targetUrl.pathname &&
+    current.search === targetUrl.search
+  ) {
+    return NextResponse.next()
+  }
+
+  return NextResponse.redirect(targetUrl, { status: 307 })
+}
+
 function getRequestBaseUrl(request: NextRequest, target: 'dashboard' | 'tcg' | 'main'): string {
-  const hostname = request.headers.get('host') || ''
+  const hostname = normalizeRequestHost(request.headers.get('host') || '')
   const isLocal = hostname.includes('localhost') || hostname.includes('127.0.0.1')
   
   if (isLocal) {
     const protocol = 'http:' // No SSL on localhost usually
-    const port = hostname.includes(':') ? `:${hostname.split(':')[1]}` : ''
-    const baseHost = hostname.split(':')[0].replace(/^(dashboard|tcg|app)\./, '')
+    // Keep the original port if present in the request
+    const originalHostHeader = request.headers.get('host') || ''
+    const port = originalHostHeader.includes(':') ? `:${originalHostHeader.split(':')[1]}` : ''
+    const baseHost = hostname.replace(/^(dashboard|tcg|app)\./, '')
     
     if (target === 'main') return `${protocol}//${baseHost}${port}`
     return `${protocol}//${target}.${baseHost}${port}`
@@ -22,12 +46,12 @@ function getRequestBaseUrl(request: NextRequest, target: 'dashboard' | 'tcg' | '
 
 export function middleware(request: NextRequest) {
   const url = request.nextUrl.clone()
-  const hostname = request.headers.get('host') || ''
+  const hostname = normalizeRequestHost(request.headers.get('host') || '')
   const pathname = url.pathname
 
   // Local development or production domains
-  const isDashboardSubdomain = hostname.startsWith('dashboard.') || hostname.startsWith('app.') || hostname.includes('dashboard.')
-  const isTcgSubdomain = hostname.startsWith('tcg.') || hostname.includes('.tcg.')
+  const isDashboardSubdomain = hostname === 'dashboard.abi-planer-27.de' || hostname === 'app.abi-planer-27.de' || (hostname.startsWith('dashboard.') && hostname.endsWith('.localhost'))
+  const isTcgSubdomain = hostname === 'tcg.abi-planer-27.de' || (hostname.startsWith('tcg.') && hostname.endsWith('.localhost'))
   
   const isLandingDomain = hostname === 'abi-planer-27.de' || hostname === 'www.abi-planer-27.de' || (hostname.endsWith('.localhost') && !hostname.startsWith('dashboard.') && !hostname.startsWith('tcg.')) || (hostname === 'localhost')
   
@@ -83,7 +107,7 @@ export function middleware(request: NextRequest) {
         redirectUrl.searchParams.set(key, value)
       })
 
-      return NextResponse.redirect(redirectUrl, { status: 307 })
+      return safeRedirect(request, redirectUrl)
     }
 
     return NextResponse.next()
@@ -99,7 +123,7 @@ export function middleware(request: NextRequest) {
         redirectUrl.searchParams.set(key, value)
       })
       
-      return NextResponse.redirect(redirectUrl, { status: 307 })
+      return safeRedirect(request, redirectUrl)
     }
 
     return NextResponse.next()
@@ -115,7 +139,7 @@ export function middleware(request: NextRequest) {
         redirectUrl.searchParams.set(key, value)
       })
       
-      return NextResponse.redirect(redirectUrl, { status: 307 })
+      return safeRedirect(request, redirectUrl)
     }
 
     return NextResponse.next()
@@ -124,7 +148,7 @@ export function middleware(request: NextRequest) {
   // 4. Special case: Root Path `/` on TCG subdomain
   if (isTcgSubdomain && pathname === '/') {
     const tcgBaseUrl = getRequestBaseUrl(request, 'tcg')
-    return NextResponse.redirect(new URL('/sammelkarten', tcgBaseUrl), { status: 307 })
+    return safeRedirect(request, new URL('/sammelkarten', tcgBaseUrl))
   }
 
   return NextResponse.next()

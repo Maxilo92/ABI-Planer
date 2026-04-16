@@ -13,6 +13,7 @@ import { doc, onSnapshot } from 'firebase/firestore'
 import { LootTeacher, CardVariant } from '@/types/database'
 import { TeacherCard } from '@/components/cards/TeacherCard'
 import { CardData } from '@/types/cards'
+import { getTcgBaseUrl, getDashboardBaseUrl } from '@/lib/dashboard-url'
 
 const FALLBACK_TEACHERS: LootTeacher[] = [
   { 
@@ -75,6 +76,9 @@ export function SammelkartenPromo({
   const [isConfigLoading, setIsConfigLoading] = useState(true)
   const { resolvedTheme } = useTheme()
   const isDarkTheme = resolvedTheme === 'dark'
+  
+  const tcgUrl = getTcgBaseUrl()
+  const dashboardUrl = getDashboardBaseUrl()
 
   useEffect(() => {
     // We always try to fetch the settings, as we now allow public read
@@ -243,15 +247,15 @@ export function SammelkartenPromo({
 
             <div className="flex flex-col gap-3 sm:flex-row sm:justify-center lg:justify-start">
               {isAuthenticated ? (
-                <Button render={<Link href="/sammelkarten" />} className="h-11 px-6 text-xs font-black uppercase tracking-[0.2em]">
+                <Button render={<a href={`${tcgUrl}/sammelkarten`} />} className="h-11 px-6 text-xs font-black uppercase tracking-[0.2em]">
                   Jetzt sammeln <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               ) : (
-                <Button render={<Link href="/register" />} className="h-11 px-6 text-xs font-black uppercase tracking-[0.2em]">
+                <Button render={<a href={`${dashboardUrl}/register`} />} className="h-11 px-6 text-xs font-black uppercase tracking-[0.2em]">
                   Konto erstellen <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               )}
-              <Button variant="ghost" className="h-11 px-4 text-[10px] font-black uppercase tracking-[0.2em]" render={<Link href="/zugang">Mehr dazu</Link>} />
+              <Button variant="ghost" className="h-11 px-4 text-[10px] font-black uppercase tracking-[0.2em]" render={<a href={`${dashboardUrl}/zugang`}>Mehr dazu</a>} />
             </div>
           </div>
         </div>
@@ -337,20 +341,20 @@ export function SammelkartenPromo({
             
             <div className="pt-2 w-full max-w-[240px] mx-auto sm:mx-0">
                {isAuthenticated ? (
-                <Button render={<Link href="/sammelkarten" />} className={isDarkTheme ? 'w-full bg-white text-indigo-950 hover:bg-white/90 font-black rounded-xl h-12 text-base gap-2 shadow-xl group/btn transition-all active:scale-95' : 'w-full bg-foreground text-background hover:bg-foreground/90 font-black rounded-xl h-12 text-base gap-2 shadow-xl group/btn transition-all active:scale-95'}>
+                <Button render={<a href={`${tcgUrl}/sammelkarten`} />} className={isDarkTheme ? 'w-full bg-white text-indigo-950 hover:bg-white/90 font-black rounded-xl h-12 text-base gap-2 shadow-xl group/btn transition-all active:scale-95' : 'w-full bg-foreground text-background hover:bg-foreground/90 font-black rounded-xl h-12 text-base gap-2 shadow-xl group/btn transition-all active:scale-95'}>
                   Jetzt sammeln <ArrowRight className="h-5 w-5 group-hover/btn:translate-x-1 transition-transform" />
                 </Button>
               ) : (
                 <div className="space-y-3 text-center">
-                  <Button render={<Link href="/register" />} className={isDarkTheme ? 'w-full bg-white text-indigo-950 hover:bg-white/90 font-black rounded-xl h-12 text-base gap-2 shadow-xl group/btn transition-all active:scale-95' : 'w-full bg-foreground text-background hover:bg-foreground/90 font-black rounded-xl h-12 text-base gap-2 shadow-xl group/btn transition-all active:scale-95'}>
+                  <Button render={<a href={`${dashboardUrl}/register`} />} className={isDarkTheme ? 'w-full bg-white text-indigo-950 hover:bg-white/90 font-black rounded-xl h-12 text-base gap-2 shadow-xl group/btn transition-all active:scale-95' : 'w-full bg-foreground text-background hover:bg-foreground/90 font-black rounded-xl h-12 text-base gap-2 shadow-xl group/btn transition-all active:scale-95'}>
                     Konto erstellen <ArrowRight className="h-5 w-5 group-hover/btn:translate-x-1 transition-transform" />
                   </Button>
-                  <Link 
-                    href="/zugang" 
+                  <a 
+                    href={`${dashboardUrl}/zugang`} 
                     className={isDarkTheme ? 'inline-block text-[10px] font-black uppercase tracking-widest text-white/50 hover:text-white transition-colors' : 'inline-block text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors'}
                   >
                     Warum ein Konto?
-                  </Link>
+                  </a>
                 </div>
               )}
             </div>

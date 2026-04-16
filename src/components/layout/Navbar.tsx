@@ -590,27 +590,43 @@ export function Navbar() {
 
             return (
               <div key={action.href} className="group flex items-center gap-2 px-2 py-1.5">
-                <Link
-                  href={action.href}
-                  onClick={() => {
-                    skipQuickActionTrackingRef.current = true
+                {action.href.startsWith('http') ? (
+                  <a
+                    href={action.href}
+                    className={cn(
+                      'block min-w-0 flex-1 truncate text-sm font-medium transition-colors',
+                      active
+                        ? 'text-primary'
+                        : index === 0
+                          ? 'text-foreground hover:text-primary'
+                          : 'text-muted-foreground hover:text-foreground'
+                    )}
+                  >
+                    {action.label}
+                  </a>
+                ) : (
+                  <Link
+                    href={action.href}
+                    onClick={() => {
+                      skipQuickActionTrackingRef.current = true
 
-                    if (isMobile) setIsOpen(false)
+                      if (isMobile) setIsOpen(false)
 
-                    const queryIndex = action.href.indexOf('?')
-                    setCurrentSearch(queryIndex >= 0 ? action.href.slice(queryIndex) : '')
-                  }}
-                  className={cn(
-                    'block min-w-0 flex-1 truncate text-sm font-medium transition-colors',
-                    active
-                      ? 'text-primary'
-                      : index === 0
-                        ? 'text-foreground hover:text-primary'
-                        : 'text-muted-foreground hover:text-foreground'
-                  )}
-                >
-                  {action.label}
-                </Link>
+                      const queryIndex = action.href.indexOf('?')
+                      setCurrentSearch(queryIndex >= 0 ? action.href.slice(queryIndex) : '')
+                    }}
+                    className={cn(
+                      'block min-w-0 flex-1 truncate text-sm font-medium transition-colors',
+                      active
+                        ? 'text-primary'
+                        : index === 0
+                          ? 'text-foreground hover:text-primary'
+                          : 'text-muted-foreground hover:text-foreground'
+                    )}
+                  >
+                    {action.label}
+                  </Link>
+                )}
 
                 <div className="flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                   <button
@@ -728,36 +744,62 @@ export function Navbar() {
             )}
           </button>
         ) : (
-          <Link
-            href={item.href}
-            onClick={() => {
-              if (isMobile) setIsOpen(false)
-              if (isCompactDesktop) setIsDesktopCollapsed(false)
-
-              const queryIndex = item.href.indexOf('?')
-              setCurrentSearch(queryIndex >= 0 ? item.href.slice(queryIndex) : '')
-            }}
-            title={isCompactDesktop ? item.label : undefined}
-            aria-label={item.label}
-            className={cn(
-              'flex items-center gap-2.5 rounded-lg text-sm font-medium transition-colors',
-              isCompactDesktop ? 'justify-center px-2 py-2.5' : 'px-3 py-2.5',
-              active ? 'bg-secondary text-primary' : 'hover:bg-secondary'
-            )}
-          >
-            <div className="relative">
-              <item.icon className="h-4 w-4" />
-              {item.notify && (
-                <span className="absolute -right-0.5 -top-0.5 flex h-2.5 w-2.5 rounded-full bg-red-500 border-2 border-background" />
+          item.isExternalLink ? (
+            <a
+              href={item.href}
+              title={isCompactDesktop ? item.label : undefined}
+              aria-label={item.label}
+              className={cn(
+                'flex items-center gap-2.5 rounded-lg text-sm font-medium transition-colors',
+                isCompactDesktop ? 'justify-center px-2 py-2.5' : 'px-3 py-2.5',
+                active ? 'bg-secondary text-primary' : 'hover:bg-secondary'
               )}
-            </div>
-            <span className={labelClassName}>{item.label}</span>
-            {item.isBeta && !isCompactDesktop && (
-              <Badge variant="secondary" className="ml-1 px-1.5 py-0 text-[9px] uppercase tracking-wide">
-                Beta
-              </Badge>
-            )}
-          </Link>
+            >
+              <div className="relative">
+                <item.icon className="h-4 w-4" />
+                {item.notify && (
+                  <span className="absolute -right-0.5 -top-0.5 flex h-2.5 w-2.5 rounded-full bg-red-500 border-2 border-background" />
+                )}
+              </div>
+              <span className={labelClassName}>{item.label}</span>
+              {item.isBeta && !isCompactDesktop && (
+                <Badge variant="secondary" className="ml-1 px-1.5 py-0 text-[9px] uppercase tracking-wide">
+                  Beta
+                </Badge>
+              )}
+            </a>
+          ) : (
+            <Link
+              href={item.href}
+              onClick={() => {
+                if (isMobile) setIsOpen(false)
+                if (isCompactDesktop) setIsDesktopCollapsed(false)
+
+                const queryIndex = item.href.indexOf('?')
+                setCurrentSearch(queryIndex >= 0 ? item.href.slice(queryIndex) : '')
+              }}
+              title={isCompactDesktop ? item.label : undefined}
+              aria-label={item.label}
+              className={cn(
+                'flex items-center gap-2.5 rounded-lg text-sm font-medium transition-colors',
+                isCompactDesktop ? 'justify-center px-2 py-2.5' : 'px-3 py-2.5',
+                active ? 'bg-secondary text-primary' : 'hover:bg-secondary'
+              )}
+            >
+              <div className="relative">
+                <item.icon className="h-4 w-4" />
+                {item.notify && (
+                  <span className="absolute -right-0.5 -top-0.5 flex h-2.5 w-2.5 rounded-full bg-red-500 border-2 border-background" />
+                )}
+              </div>
+              <span className={labelClassName}>{item.label}</span>
+              {item.isBeta && !isCompactDesktop && (
+                <Badge variant="secondary" className="ml-1 px-1.5 py-0 text-[9px] uppercase tracking-wide">
+                  Beta
+                </Badge>
+              )}
+            </Link>
+          )
         )}
 
         <AnimatePresence initial={false}>
@@ -771,34 +813,58 @@ export function Navbar() {
             >
               <div className="ml-5 pl-3 border-l-2 space-y-0.5 py-0.5 mt-0.5">
                 {item.subItems!.map((subItem) => (
-                  <Link
-                    key={subItem.href}
-                    href={subItem.href}
-                    onClick={() => {
-                      if (isMobile) setIsOpen(false)
-                      if (isCompactDesktop) setIsDesktopCollapsed(false)
-
-                      const queryIndex = subItem.href.indexOf('?')
-                      setCurrentSearch(queryIndex >= 0 ? subItem.href.slice(queryIndex) : '')
-                    }}
-                    className={cn(
-                      'flex items-center gap-2 rounded-md px-2.5 py-2 text-sm font-medium transition-colors',
-                      isActive(subItem.href) ? 'text-primary bg-secondary/30' : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
-                    )}
-                  >
-                    <div className="relative">
-                      <subItem.icon className="h-4 w-4" />
-                      {subItem.notify && (
-                        <span className="absolute -right-0.5 -top-0.5 flex h-2.5 w-2.5 rounded-full bg-red-500 border-2 border-background" />
+                  subItem.isExternalLink ? (
+                    <a
+                      key={subItem.href}
+                      href={subItem.href}
+                      className={cn(
+                        'flex items-center gap-2 rounded-md px-2.5 py-2 text-sm font-medium transition-colors',
+                        isActive(subItem.href) ? 'text-primary bg-secondary/30' : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
                       )}
-                    </div>
-                    <span className="truncate">{subItem.label}</span>
-                    {subItem.isBeta && (
-                      <Badge variant="secondary" className="ml-1 px-1.5 py-0 text-[9px] uppercase tracking-wide">
-                        Beta
-                      </Badge>
-                    )}
-                  </Link>
+                    >
+                      <div className="relative">
+                        <subItem.icon className="h-4 w-4" />
+                        {subItem.notify && (
+                          <span className="absolute -right-0.5 -top-0.5 flex h-2.5 w-2.5 rounded-full bg-red-500 border-2 border-background" />
+                        )}
+                      </div>
+                      <span className="truncate">{subItem.label}</span>
+                      {subItem.isBeta && (
+                        <Badge variant="secondary" className="ml-1 px-1.5 py-0 text-[9px] uppercase tracking-wide">
+                          Beta
+                        </Badge>
+                      )}
+                    </a>
+                  ) : (
+                    <Link
+                      key={subItem.href}
+                      href={subItem.href}
+                      onClick={() => {
+                        if (isMobile) setIsOpen(false)
+                        if (isCompactDesktop) setIsDesktopCollapsed(false)
+
+                        const queryIndex = subItem.href.indexOf('?')
+                        setCurrentSearch(queryIndex >= 0 ? subItem.href.slice(queryIndex) : '')
+                      }}
+                      className={cn(
+                        'flex items-center gap-2 rounded-md px-2.5 py-2 text-sm font-medium transition-colors',
+                        isActive(subItem.href) ? 'text-primary bg-secondary/30' : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
+                      )}
+                    >
+                      <div className="relative">
+                        <subItem.icon className="h-4 w-4" />
+                        {subItem.notify && (
+                          <span className="absolute -right-0.5 -top-0.5 flex h-2.5 w-2.5 rounded-full bg-red-500 border-2 border-background" />
+                        )}
+                      </div>
+                      <span className="truncate">{subItem.label}</span>
+                      {subItem.isBeta && (
+                        <Badge variant="secondary" className="ml-1 px-1.5 py-0 text-[9px] uppercase tracking-wide">
+                          Beta
+                        </Badge>
+                      )}
+                    </Link>
+                  )
                 ))}
               </div>
             </motion.div>

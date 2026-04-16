@@ -325,9 +325,9 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
           </div>
         </section>
 
-        {/* Public Stats - Clean Numbers with one Growth Graph */}
+        {/* Public Stats - Clean Numbers */}
         <section className="px-6 py-20 border-t border-border/40">
-          <div className="max-w-7xl mx-auto space-y-16">
+          <div className="max-w-7xl mx-auto">
             <div className="grid gap-12 grid-cols-2 xl:grid-cols-4 text-center">
               {[
                 { label: 'Registrierte Nutzer', value: landingStatsLoading ? '...' : formatMetric(landingStats.totalUsers) },
@@ -343,28 +343,6 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
                 </div>
               ))}
             </div>
-
-            <div className="max-w-4xl mx-auto h-[200px] opacity-30">
-               <Line 
-                  options={{
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false }, tooltip: { enabled: false } },
-                    scales: { x: { display: false }, y: { display: false } },
-                    elements: { line: { tension: 0.4 }, point: { radius: 0 } }
-                  }}
-                  data={{
-                    labels: ['', '', '', '', '', ''],
-                    datasets: [{
-                      data: [5, 15, 40, 70, 90, 100],
-                      borderColor: '#7dd200',
-                      borderWidth: 4,
-                      fill: false,
-                    }]
-                  }}
-               />
-               <p className="text-center text-[10px] font-bold uppercase tracking-[0.3em] text-muted-foreground mt-4">Plattform-Wachstum & Engagement</p>
-            </div>
           </div>
         </section>
 
@@ -372,96 +350,7 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
           <div className="h-px w-full bg-gradient-to-r from-transparent via-border to-transparent" />
         </div>
 
-        {/* Success Metrics Charts - Open Space */}
-        <section className="px-6 py-32">
-          <div className="max-w-7xl mx-auto space-y-20">
-            <div className="text-center space-y-4">
-              <p className="text-brand font-bold uppercase tracking-widest text-[11px]">Performance Boost</p>
-              <h2 className="text-4xl md:text-5xl font-extrabold tracking-tight">Erfolgreich zum Ziel.</h2>
-              <p className="text-muted-foreground max-w-2xl mx-auto font-medium">
-                Daten aus echten Jahrgängen zeigen: Mit strukturierter Planung steigt die Effizienz und Koordination spürbar an.
-              </p>
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-16 lg:gap-24">
-              <div className="space-y-6">
-                <p className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Planungs-Effizienz</p>
-                <div className="h-[300px] w-full relative">
-                  <Line 
-                    options={{
-                      responsive: true,
-                      maintainAspectRatio: false,
-                      plugins: { legend: { display: false }, tooltip: { enabled: true } },
-                      scales: {
-                        x: { display: false },
-                        y: { display: false, min: 0 }
-                      },
-                      elements: {
-                        line: { tension: 0.4 },
-                        point: { radius: 0 }
-                      }
-                    }}
-                    data={{
-                      labels: ['Woche 1', 'Woche 2', 'Woche 3', 'Woche 4', 'Woche 5', 'Woche 6'],
-                      datasets: [{
-                        label: 'Effizienz',
-                        data: [10, 15, 45, 60, 85, 98],
-                        borderColor: '#7dd200',
-                        backgroundColor: 'rgba(125, 210, 0, 0.1)',
-                        fill: true,
-                        borderWidth: 4,
-                      }]
-                    }}
-                  />
-                </div>
-                <p className="text-sm text-muted-foreground leading-relaxed font-medium">
-                  Strukturiertes Budgeting und Aufgabenverteilung verkürzen Abstimmungswege um bis zu 70%.
-                </p>
-              </div>
-
-              <div className="space-y-6">
-                <p className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Team-Koordination</p>
-                <div className="h-[300px] w-full relative">
-                  <Line 
-                    options={{
-                      responsive: true,
-                      maintainAspectRatio: false,
-                      plugins: { legend: { display: false }, tooltip: { enabled: true } },
-                      scales: {
-                        x: { display: false },
-                        y: { display: false, min: 0 }
-                      },
-                      elements: {
-                        line: { tension: 0.4 },
-                        point: { radius: 0 }
-                      }
-                    }}
-                    data={{
-                      labels: ['Start', 'Setup', 'Phase 1', 'Phase 2', 'Phase 3', 'Finale'],
-                      datasets: [{
-                        label: 'Koordination',
-                        data: [5, 12, 25, 55, 80, 100],
-                        borderColor: '#3b82f6',
-                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                        fill: true,
-                        borderWidth: 4,
-                      }]
-                    }}
-                  />
-                </div>
-                <p className="text-sm text-muted-foreground leading-relaxed font-medium">
-                  Zentrale Termine und News sorgen für eine lückenlose Informationskette im gesamten Jahrgang.
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="h-px w-full bg-gradient-to-r from-transparent via-border to-transparent" />
-        </div>
-
-        {/* Editorial Section - Pure Typography */}
+        {/* Editorial Section - Integrated Momentum Graph */}
         <section className="px-6 py-24">
           <div className="max-w-7xl mx-auto space-y-16">
             <div className="space-y-6 text-center md:text-left">
@@ -471,16 +360,39 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
               </h2>
             </div>
             
-            <div className="grid md:grid-cols-2 gap-12 lg:gap-24">
-              <div className="space-y-6 text-lg leading-relaxed text-muted-foreground font-medium">
-                <p>
-                  ABI Planer bündelt Budget, Aufgaben, Termine und Abstimmungen an einem zentralen Ort.
-                  Kein Suchen mehr in unübersichtlichen Chats oder veralteten Tabellen.
-                </p>
-                <p>
-                  So entsteht ein dauerhaftes Archiv für euren Abschluss. Alle Entscheidungen und
-                  Zuständigkeiten sind jederzeit transparent für alle Beteiligten einsehbar.
-                </p>
+            <div className="grid md:grid-cols-2 gap-12 lg:gap-24 items-center">
+              <div className="space-y-8">
+                <div className="space-y-6 text-lg leading-relaxed text-muted-foreground font-medium">
+                  <p>
+                    ABI Planer bündelt Budget, Aufgaben, Termine und Abstimmungen an einem zentralen Ort.
+                    Kein Suchen mehr in unübersichtlichen Chats oder veralteten Tabellen.
+                  </p>
+                  <p>
+                    So entsteht ein dauerhaftes Archiv für euren Abschluss. Alle Entscheidungen und
+                    Zuständigkeiten sind jederzeit transparent für alle Beteiligten einsehbar.
+                  </p>
+                </div>
+                <div className="h-[120px] w-full opacity-20">
+                   <Line 
+                      options={{
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false }, tooltip: { enabled: false } },
+                        scales: { x: { display: false }, y: { display: false } },
+                        elements: { line: { tension: 0.4 }, point: { radius: 0 } }
+                      }}
+                      data={{
+                        labels: ['', '', '', '', '', ''],
+                        datasets: [{
+                          data: [5, 20, 45, 75, 90, 100],
+                          borderColor: '#7dd200',
+                          borderWidth: 4,
+                          fill: false,
+                        }]
+                      }}
+                   />
+                   <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-muted-foreground mt-2">Plattform-Momentum & Wachstum</p>
+                </div>
               </div>
               <div className="grid gap-8">
                 {[
@@ -549,9 +461,30 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
                 </a>
               </Button>
             </div>
-            <div className="flex-1 w-full aspect-video bg-muted/20 rounded-[2.5rem] border border-border/50 order-1 md:order-2 relative overflow-hidden group">
+            <div className="flex-1 w-full aspect-video bg-muted/20 rounded-[2.5rem] border border-border/50 order-1 md:order-2 relative overflow-hidden group p-12">
               <div className="absolute inset-0 bg-gradient-to-br from-brand/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
-              <DollarSign className="h-24 w-24 text-brand/20 group-hover:text-brand/40 transition-all duration-700 group-hover:scale-110" />
+              <div className="w-full h-full relative z-10 opacity-40 group-hover:opacity-100 transition-opacity duration-700">
+                <Line 
+                  options={{
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false }, tooltip: { enabled: false } },
+                    scales: { x: { display: false }, y: { display: false } },
+                    elements: { line: { tension: 0.4 }, point: { radius: 0 } }
+                  }}
+                  data={{
+                    labels: ['', '', '', '', '', ''],
+                    datasets: [{
+                      data: [10, 25, 40, 65, 85, 100],
+                      borderColor: '#7dd200',
+                      borderWidth: 4,
+                      fill: false,
+                    }]
+                  }}
+                />
+                <p className="absolute bottom-0 left-0 text-[10px] font-bold uppercase tracking-widest text-brand/60">Planungs-Effizienz</p>
+              </div>
+              <DollarSign className="absolute top-8 right-8 h-12 w-12 text-brand/10 group-hover:text-brand/20 transition-all duration-700" />
             </div>
           </div>
 
@@ -569,9 +502,30 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
                 </a>
               </Button>
             </div>
-            <div className="flex-1 w-full aspect-video bg-brand rounded-[2.5rem] flex items-center justify-center shadow-2xl shadow-brand/20 relative overflow-hidden group">
+            <div className="flex-1 w-full aspect-video bg-brand rounded-[2.5rem] flex items-center justify-center shadow-2xl shadow-brand/20 relative overflow-hidden group p-12">
               <div className="absolute inset-0 bg-gradient-to-tr from-black/10 to-transparent opacity-30" />
-              <Users className="h-24 w-24 text-white/30 group-hover:text-white/50 transition-all duration-700 group-hover:scale-110" />
+              <div className="w-full h-full relative z-10 opacity-60 group-hover:opacity-100 transition-opacity duration-700">
+                <Line 
+                  options={{
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false }, tooltip: { enabled: false } },
+                    scales: { x: { display: false }, y: { display: false } },
+                    elements: { line: { tension: 0.3 }, point: { radius: 2, backgroundColor: '#fff' } }
+                  }}
+                  data={{
+                    labels: ['', '', '', '', ''],
+                    datasets: [{
+                      data: [20, 50, 45, 80, 100],
+                      borderColor: 'rgba(255,255,255,0.7)',
+                      borderWidth: 4,
+                      fill: false,
+                    }]
+                  }}
+                />
+                <p className="absolute bottom-0 left-0 text-[10px] font-bold uppercase tracking-widest text-white/60">Team-Koordination</p>
+              </div>
+              <Users className="absolute top-8 left-8 h-12 w-12 text-white/10 group-hover:text-white/30 transition-all duration-700" />
             </div>
           </div>
 

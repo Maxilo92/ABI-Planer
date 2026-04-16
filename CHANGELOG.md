@@ -8,6 +8,33 @@
 
 # Changelog
 
+## [1.14.0] - 2026-04-16
+### Behoben
+- **CORS Policy Violations:** Cross-Subdomain-Navigation (z. B. vom Dashboard zum TCG-Modul) nutzt nun Standard-`<a>`-Tags anstelle von `next/link`. Dies verhindert das fehlerhafte Abrufen von RSC-Payloads über Subdomain-Grenzen hinweg und behebt `ERR_BLOCKED_BY_CORS`.
+- **Redirect-Schleifen (Finaler Fix):** Die Middleware normalisiert Hostnamen nun konsistent ohne Port-Angaben und verwendet eine verbesserte Loop-Prävention in `safe_redirect`.
+- **Navbar & Promo-Links:** Alle Navigations- und Promo-Links, die Subdomain-Grenzen überschreiten, wurden auf absolute URLs und Hard-Navigation umgestellt.
+
+## [1.13.15] - 2026-04-16
+### Behoben
+- **Redirect-Schleife auf TCG-Domain:** Die Middleware normalisiert den Host nun robust (ohne Port) und nutzt einen Redirect-Guard, der identische Ziel-URLs erkennt und Self-Redirects verhindert (`ERR_TOO_MANY_REDIRECTS`).
+- **Domain-Routing robuster:** Subdomain-Erkennung und Weiterleitungen bleiben aktiv, vermeiden aber Endlosschleifen bei fehlerhaften oder inkonsistenten URL-Konfigurationen.
+
+## [1.13.14] - 2026-04-16
+### Geändert
+- **Kontextuelle Graphen-Integration:** Die 3 Kern-Graphen wurden direkt in die funktionalen Blöcke der Landing Page eingebettet, statt isoliert zu stehen.
+- **Storytelling mit Daten:** 
+    - Der **Momentum-Graph** wurde in die Mission-Sektion integriert, um den Gesamterfolg der Plattform zu untermauern.
+    - Der **Effizienz-Graph** visualisiert nun direkt im Finanzen-Feature den Optimierungsvorteil.
+    - Der **Koordinations-Graph** wurde in das Teams-Feature eingebettet, um die verbesserte Zusammenarbeit zu zeigen.
+- **Layout-Bereinigung:** Entfernung der separaten 'Success Metrics' Sektion für ein flüssigeres, integriertes Nutzererlebnis.
+
+## [1.13.13] - 2026-04-16
+### Geändert
+- **Graphen-Konsolidierung:** Reduktion der Chart.js Visualisierungen auf die 3 aussagekräftigsten Graphen, um die Seite übersichtlicher zu gestalten.
+- **Zentraler Wachstums-Graph:** Ein neuer, prominenter Graph in der Stats-Sektion visualisiert das gesamte Plattform-Engagement.
+- **Performance-Fokus:** Beibehaltung der zwei Graphen für Planungs-Effizienz und Team-Koordination als Kern-Visuals.
+- **Minimalistische Icons:** Rückkehr zu sauberen Icons in den Sektionen Features und Sammelkarten zur Unterstützung des Open Space Designs.
+
 ## [1.13.12] - 2026-04-16
 ### Geändert
 - **Ganzheitliche Datenvisualisierung:** Vollständiger Ersatz von statischen Metriken und Icons durch interaktive Chart.js Graphen auf der gesamten Landing Page.
