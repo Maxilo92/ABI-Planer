@@ -8,6 +8,10 @@
 
 # Changelog
 
+## [1.14.2] - 2026-04-16
+### Behoben
+- **2FA Login CORS Robustness:** Die CORS-Konfiguration für Cloud Functions wurde auf `cors: true` umgestellt. Dies ist für Callable Functions sicher (da sie durch Firebase Auth geschützt sind) und stellt eine robustere Preflight-Handhabung über alle Subdomains hinweg sicher, was die verbleibenden `ERR_FAILED` Fehler beim 2FA-Login auf `tcg.abi-planer-27.de` behebt.
+
 ## [1.14.1] - 2026-04-16
 ### Behoben
 - **2FA Login CORS Fix:** Korrektur der CORS-Konfiguration für Cloud Functions (insbesondere `verifyLogin2FA`). Die Verwendung von Regex in der `CALLABLE_CORS_ORIGINS` Liste wurde durch explizite Domain-Strings ersetzt, um Preflight-Fehler auf der TCG-Subdomain zu beheben.
