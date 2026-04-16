@@ -4,8 +4,9 @@ import React from 'react'
 import { useDecks } from '@/hooks/useDecks'
 import { DeckCard } from './DeckCard'
 import { Button } from '@/components/ui/button'
-import { Plus, LayoutGrid, Loader2 } from 'lucide-react'
+import { Plus, LayoutGrid } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
+import { usePopupManager } from '@/modules/popup/usePopupManager'
 
 interface DeckGridProps {
   onEditDeck: (deckId: string) => void
@@ -14,15 +15,23 @@ interface DeckGridProps {
 
 export const DeckGrid: React.FC<DeckGridProps> = ({ onEditDeck, onCreateDeck }) => {
   const { decks, loading, deleteDeck } = useDecks()
+  const { confirm } = usePopupManager()
 
   const handleDelete = async (deckId: string) => {
-    if (window.confirm('Möchtest du dieses Deck wirklich löschen?')) {
-      try {
-        await deleteDeck(deckId)
-      } catch (err) {
-        console.error('Failed to delete deck:', err)
-        alert('Fehler beim Löschen des Decks.')
-      }
+    const confirmed = await confirm({
+      title: 'Deck löschen?',
+      content: 'Möchtest du dieses Deck wirklich löschen?',
+      priority: 'high',
+      confirmLabel: 'Deck löschen',
+      confirmVariant: 'destructive',
+    })
+    if (!confirmed) return
+
+    try {
+      await deleteDeck(deckId)
+    } catch (err) {
+      console.error('Failed to delete deck:', err)
+      alert('Fehler beim Löschen des Decks.')
     }
   }
 

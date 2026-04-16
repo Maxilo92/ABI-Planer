@@ -39,6 +39,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { cn } from '@/lib/utils'
+import { usePopupManager } from '@/modules/popup/usePopupManager'
 
 type BulkActionType =
   | 'approve'
@@ -275,6 +276,7 @@ function PlanningGroupsPopover({
 
 export default function AdminPage() {
   const { user, profile, loading: authLoading } = useAuth()
+  const { confirm } = usePopupManager()
   const { pushMessage } = useSystemMessage()
   const functions = getFirebaseFunctions()
   const [profiles, setProfiles] = useState<Profile[]>([])
@@ -441,19 +443,26 @@ export default function AdminPage() {
       return
     }
 
-    if (confirm('Bist du sicher, dass du diesen Nutzer löschen möchtest? (Löscht das Profil-Dokument, das Auth-Konto und alle zugehörigen Daten permanent)')) {
-      try {
-        await deleteDoc(doc(db, 'profiles', id))
+    const confirmed = await confirm({
+      title: 'Nutzer löschen?',
+      content: 'Bist du sicher, dass du diesen Nutzer löschen möchtest? (Löscht das Profil-Dokument, das Auth-Konto und alle zugehörigen Daten permanent)',
+      priority: 'high',
+      confirmLabel: 'Nutzer löschen',
+      confirmVariant: 'destructive',
+    })
+    if (!confirmed) return
 
-        if (user) {
-          await logAction('PROFILE_DELETED', user.uid, profile?.full_name, {
-            target_user_id: id,
-            target_user_name: target.full_name,
-          })
-        }
-      } catch (err) {
-        console.error('Error deleting profile:', err)
+    try {
+      await deleteDoc(doc(db, 'profiles', id))
+
+      if (user) {
+        await logAction('PROFILE_DELETED', user.uid, profile?.full_name, {
+          target_user_id: id,
+          target_user_name: target.full_name,
+        })
       }
+    } catch (err) {
+      console.error('Error deleting profile:', err)
     }
   }
 

@@ -18,6 +18,7 @@ import { cn } from '@/lib/utils'
 import { TradeNegotiationModal } from '@/components/cards/TradeNegotiationModal'
 import { useRouter } from 'next/navigation'
 import { useCountdown } from '@/hooks/useCountdown'
+import { getTradeStatusMeta } from '@/modules/shared/status'
 
 function TradeCountdown({ targetDate }: { targetDate: any }) {
   const dateStr = targetDate?.toDate ? targetDate.toDate().toISOString() : (targetDate instanceof Date ? targetDate.toISOString() : targetDate)
@@ -62,16 +63,8 @@ export default function TradeCenterPage() {
   const showLockedBanner = !teachersLoading && !canTrade
 
   const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'pending': return <Badge variant="secondary" className="bg-blue-100 text-blue-700 border-blue-200">Offen</Badge>
-      case 'countered': return <Badge variant="secondary" className="bg-purple-100 text-purple-700 border-purple-200">Gegenangebot</Badge>
-      case 'accepted': return <Badge variant="secondary" className="bg-green-100 text-green-700 border-green-200">Angenommen</Badge>
-      case 'completed': return <Badge variant="secondary" className="bg-green-100 text-green-700 border-green-200">Abgeschlossen</Badge>
-      case 'declined': return <Badge variant="secondary" className="bg-red-100 text-red-700 border-red-200">Abgelehnt</Badge>
-      case 'cancelled': return <Badge variant="secondary" className="bg-gray-100 text-gray-700 border-gray-200">Abgebrochen</Badge>
-      case 'expired': return <Badge variant="secondary" className="bg-orange-100 text-orange-700 border-orange-200">Abgelaufen</Badge>
-      default: return <Badge variant="outline">{status}</Badge>
-    }
+    const meta = getTradeStatusMeta(status)
+    return <Badge variant={meta.variant} className={meta.className}>{meta.label}</Badge>
   }
 
   if (loading) {

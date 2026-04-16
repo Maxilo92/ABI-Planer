@@ -10,33 +10,13 @@ import { TeacherCard } from './TeacherCard'
 import { useUserTeachers } from '@/hooks/useUserTeachers'
 import { db } from '@/lib/firebase'
 import { doc, onSnapshot } from 'firebase/firestore'
-import { CardData, CardVariant as NewCardVariant } from '@/types/cards'
 import { buildTeacherCatalogFromSettings, findUserTeacherEntry, TeacherCatalogEntry } from '@/lib/cardCatalog'
+import { mapTeacherCatalogToCardData } from '@/modules/cards/cardData'
 
 interface DeckCardProps {
   deck: UserDeck
   onEdit: (deckId: string) => void
   onDelete: (deckId: string) => void
-}
-
-function getBestVariant(variants: Record<string, number> | undefined): NewCardVariant {
-  if (!variants) return 'normal'
-  if (variants.black_shiny_holo) return 'black_shiny_holo'
-  if (variants.shiny) return 'shiny'
-  if (variants.holo) return 'holo'
-  return 'normal'
-}
-
-function getTeacherRarityHex(rarity: string) {
-  switch (rarity) {
-    case 'common': return '#64748b'
-    case 'rare': return '#10b981'
-    case 'epic': return '#9333ea'
-    case 'mythic': return '#dc2626'
-    case 'legendary': return '#f59e0b'
-    case 'iconic': return '#000000'
-    default: return '#64748b'
-  }
 }
 
 export const DeckCard: React.FC<DeckCardProps> = ({ deck, onEdit, onDelete }) => {
@@ -62,22 +42,7 @@ export const DeckCard: React.FC<DeckCardProps> = ({ deck, onEdit, onDelete }) =>
     if (!teacher) return null
 
     const userData = findUserTeacherEntry(userTeachers, teacher)
-    const variant = getBestVariant(userData?.variants)
-    const globalIndex = globalTeachers.findIndex(t => t.fullId === teacher.fullId)
-
-    return {
-      id: teacher.fullId,
-      setId: teacher.setId,
-      fullId: teacher.fullId,
-      name: teacher.name,
-      rarity: teacher.rarity,
-      variant,
-      color: getTeacherRarityHex(teacher.rarity),
-      cardNumber: (globalIndex + 1).toString().padStart(3, '0'),
-      description: teacher.description,
-      hp: teacher.hp,
-      attacks: teacher.attacks,
-    } as CardData
+    return mapTeacherCatalogToCardData(teacher, userData, globalTeachers)
   }, [deck.coverCardId, userTeachers, globalTeachers, loadingUserTeachers, loadingGlobal])
 
   const isReady = deck.cardIds.length === 10

@@ -32,8 +32,8 @@ const FEATURES = [
   },
   { 
     id: 'abstimmungen', 
-    title: 'Interaktive Polls', 
-    desc: 'Demokratisch, schnell und sicher. Kein Chaos mehr in WhatsApp-Gruppen.', 
+    title: 'Abstimmungen', 
+    desc: 'Demokratisch, schnell und nachvollziehbar. Entscheidungen bleiben dokumentiert.', 
     icon: CheckSquare,
     color: 'text-brand',
     bg: 'bg-brand/10'
@@ -64,7 +64,7 @@ export default function VorteileOverviewPage() {
           Alle <span className="text-brand">Funktionen.</span>
         </h1>
         <p className="text-muted-foreground text-lg md:text-xl max-w-2xl mx-auto leading-relaxed">
-          Der ABI Planer ist mehr als nur ein Tool. Es ist das digitale Zuhause für euren gesamten Jahrgang. Entdecke, was alles möglich ist.
+          ABI Planer verbindet schulische Organisation mit einem aktiven Schuelerbereich. Alle Kernfunktionen sind zentral, transparent und mobil nutzbar.
         </p>
       </div>
 
@@ -77,7 +77,7 @@ export default function VorteileOverviewPage() {
             </h2>
             <p className="text-muted-foreground text-lg leading-relaxed max-w-2xl">
               Die einzelnen Bereiche sind bewusst miteinander verzahnt: Planung schafft Verbindlichkeit,
-              Abstimmungen sorgen für Legitimation und Sammelkarten bringen eine spielerische Ebene hinein.
+              Abstimmungen schaffen Klarheit und Sammelkarten erhoehen die regelmaessige Nutzung.
               So bleibt die Plattform nicht nur ein Verwaltungswerkzeug, sondern wird im Alltag tatsächlich genutzt.
             </p>
           </div>
@@ -94,7 +94,7 @@ export default function VorteileOverviewPage() {
               },
               {
                 title: 'Für Motivation',
-                text: 'Die Sammelkarten-Funktionen geben dem Jahrgang einen spielerischen Anreiz, dranzubleiben.',
+                text: 'Die Sammelkarten-Funktionen geben Schuelern einen klaren Anreiz, regelmaessig aktiv zu bleiben.',
               },
             ].map((item) => (
               <div key={item.title} className="rounded-[2rem] border border-border/60 bg-background/80 p-5 shadow-sm">
@@ -147,7 +147,7 @@ export default function VorteileOverviewPage() {
                   <ArrowRight className="h-7 w-7" />
                 </div>
                 <h3 className="text-2xl font-black uppercase tracking-tight italic">Account-Modelle</h3>
-                <p className="text-brand-foreground/80 leading-relaxed font-medium">Finde heraus, welcher Zugang am besten zu dir passt. Gast oder volles Mitglied?</p>
+                <p className="text-brand-foreground/80 leading-relaxed font-medium">Vergleiche die Zugaenge fuer Interessierte, Schueler und aktive Mitglieder.</p>
               </div>
               
               <div className="pt-6 flex items-center justify-between border-t border-white/20">

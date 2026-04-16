@@ -28,6 +28,7 @@ import { Task } from '@/types/database'
 import Image from 'next/image'
 import { toast } from 'sonner'
 import { uploadTaskProof } from '@/lib/taskMediaUpload'
+import { getTaskStatusMeta } from '@/modules/shared/status'
 
 export default function TaskDetailPage() {
   const { id } = useParams()
@@ -132,13 +133,8 @@ export default function TaskDetailPage() {
   }
 
   const getStatusBadge = (status: Task['status']) => {
-    switch (status) {
-      case 'open': return <Badge variant="secondary">Offen</Badge>
-      case 'claimed': return <Badge className="bg-blue-500">Angenommen</Badge>
-      case 'in_review': return <Badge className="bg-yellow-500">In Prüfung</Badge>
-      case 'rejected': return <Badge variant="destructive">Nachbesserung nötig</Badge>
-      case 'completed': return <Badge className="bg-green-500">Abgeschlossen</Badge>
-    }
+    const meta = getTaskStatusMeta(status)
+    return <Badge variant={meta.variant} className={meta.className}>{meta.label}</Badge>
   }
 
   return (

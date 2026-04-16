@@ -21,6 +21,7 @@ import { Badge } from '@/components/ui/badge'
 import { toDate, cn } from '@/lib/utils'
 import { logAction } from '@/lib/logging'
 import { Feedback, FeedbackType, FeedbackStatus } from '@/types/database'
+import { getFeedbackStatusMeta } from '@/modules/shared/status'
 
 type FeedbackImageCropMode = 'landscape' | 'portrait'
 
@@ -243,13 +244,8 @@ export default function FeedbackPage() {
   }
 
   const getStatusBadge = (status: FeedbackStatus) => {
-    switch (status) {
-      case 'new': return <Badge variant="secondary">Neu</Badge>
-      case 'in_progress': return <Badge variant="outline" className="border-info/40 bg-info/10 text-info">In Arbeit</Badge>
-      case 'implemented': return <Badge variant="outline" className="border-success/40 bg-success/10 text-success">Umgesetzt</Badge>
-      case 'rejected': return <Badge variant="destructive">Abgelehnt</Badge>
-      default: return <Badge variant="outline">Unbekannt</Badge>
-    }
+    const meta = getFeedbackStatusMeta(status)
+    return <Badge variant={meta.variant} className={meta.className}>{meta.label}</Badge>
   }
 
   if (authLoading) {

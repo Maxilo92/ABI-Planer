@@ -34,6 +34,7 @@ const AUTH_ROUTES = ['/login', '/register', '/waiting', '/unauthorized', '/maint
 
 interface SystemMessageContextType {
   activeMessages: SystemMessage[]
+  activeModalMessage: SystemMessage | null
   pushMessage: (msg: Omit<SystemMessage, 'id' | 'createdAt'> & { id?: string }) => string
   dismissMessage: (id: string) => void
   maintenance: Settings['maintenance'] | null
@@ -443,7 +444,8 @@ export const SystemMessageProvider = ({ children }: { children: ReactNode }) => 
       const isDashboardSubdomain = hostname === 'localhost' || 
                                   hostname === '127.0.0.1' || 
                                   hostname.startsWith('dashboard.') || 
-                                  hostname.startsWith('app.')
+                                  hostname.startsWith('app.') ||
+                                  hostname.startsWith('tcg.')
 
       // Maintenance only affects the dashboard/app subdomains
       if (!isDashboardSubdomain) return
@@ -480,6 +482,7 @@ export const SystemMessageProvider = ({ children }: { children: ReactNode }) => 
 
   const contextValue = useMemo(() => ({
     activeMessages,
+    activeModalMessage: activeMessages.find((msg) => msg.type === 'modal') ?? null,
     pushMessage,
     dismissMessage,
     maintenance

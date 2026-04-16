@@ -20,6 +20,7 @@ export interface BaseCard {
   description?: string;
   style?: CardStyle;
   color?: string; // Optional override for set color
+  imageUrl?: string;
 }
 
 export interface TeacherCardConfig extends BaseCard {
@@ -55,6 +56,7 @@ export interface CardData {
   attacks?: TeacherAttack[];
   level?: number;
   count?: number;
+  imageUrl?: string;
 }
 
 export interface RarityWeights {

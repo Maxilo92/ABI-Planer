@@ -16,6 +16,8 @@ import { cn } from '@/lib/utils'
 import { getFunctions, httpsCallable } from 'firebase/functions'
 import { doc, onSnapshot, updateDoc, deleteDoc } from 'firebase/firestore'
 import { useEffect } from 'react'
+import { usePopupManager } from '@/modules/popup/usePopupManager'
+import { getFeedbackStatusMeta } from '@/modules/shared/status'
 
 type SortField = 'created_at' | 'title' | 'status' | 'type' | 'importance'
 
@@ -25,6 +27,7 @@ interface FeedbackListProps {
 
 export function FeedbackList({ feedbackItems }: FeedbackListProps) {
   const { user, profile } = useAuth()
+  const { confirm } = usePopupManager()
   const [loading, setLoading] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<'all' | FeedbackStatus>('all')
@@ -77,13 +80,25 @@ export function FeedbackList({ feedbackItems }: FeedbackListProps) {
     const itemsToAnalyze = feedbackItems.filter(item => !item.importance || !item.category)
     
     if (itemsToAnalyze.length === 0) {
-      if (!window.confirm('Alle Einträge haben bereits KI-Daten. Möchtest du trotzdem eine Neuanalyse für ALLE Einträge erzwingen?')) {
+      const forceReanalyze = await confirm({
+        title: 'Alle Einträge neu analysieren?',
+        content: 'Alle Einträge haben bereits KI-Daten. Möchtest du trotzdem eine Neuanalyse für ALLE Einträge erzwingen?',
+        priority: 'warning',
+        confirmLabel: 'Neuanalyse starten',
+      })
+      if (!forceReanalyze) {
         return
       }
       itemsToAnalyze.push(...feedbackItems)
     }
 
-    if (!window.confirm(`${itemsToAnalyze.length} Einträge werden jetzt im Hintergrund analysiert. Du kannst die App frei weiter nutzen. Fortfahren?`)) {
+    const confirmed = await confirm({
+      title: 'Hintergrund-Analyse starten?',
+      content: `${itemsToAnalyze.length} Einträge werden jetzt im Hintergrund analysiert. Du kannst die App frei weiter nutzen. Fortfahren?`,
+      priority: 'warning',
+      confirmLabel: 'Analyse starten',
+    })
+    if (!confirmed) {
       return
     }
 
@@ -124,13 +139,8 @@ export function FeedbackList({ feedbackItems }: FeedbackListProps) {
   }
 
   const getStatusBadge = (status: FeedbackStatus) => {
-    switch (status) {
-      case 'new': return <Badge variant="secondary">Neu</Badge>
-      case 'in_progress': return <Badge variant="outline" className="border-info/40 bg-info/10 text-info">In Arbeit</Badge>
-      case 'implemented': return <Badge variant="outline" className="border-success/40 bg-success/10 text-success">Umgesetzt</Badge>
-      case 'rejected': return <Badge variant="destructive">Abgelehnt</Badge>
-      default: return <Badge variant="outline">Unbekannt</Badge>
-    }
+    const meta = getFeedbackStatusMeta(status)
+    return <Badge variant={meta.variant} className={meta.className}>{meta.label}</Badge>
   }
 
   const handleStatusChange = async (id: string, newStatus: FeedbackStatus) => {
@@ -159,7 +169,14 @@ export function FeedbackList({ feedbackItems }: FeedbackListProps) {
   }
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('Dieses Feedback wirklich löschen?')) return
+    const confirmed = await confirm({
+      title: 'Feedback löschen?',
+      content: 'Dieses Feedback wirklich löschen?',
+      priority: 'high',
+      confirmLabel: 'Feedback löschen',
+      confirmVariant: 'destructive',
+    })
+    if (!confirmed) return
     setLoading(id)
     const target = feedbackItems.find((entry) => entry.id === id)
 

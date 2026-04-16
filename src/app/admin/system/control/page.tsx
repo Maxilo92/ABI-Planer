@@ -19,6 +19,7 @@ import { cn } from '@/lib/utils'
 import { useAdminSystem } from '@/components/admin/AdminSystemContext'
 import { FeatureStatusToggle } from '@/components/admin/system/SystemComponents'
 import { useAuth } from '@/context/AuthContext'
+import { usePopupManager } from '@/modules/popup/usePopupManager'
 
 /**
  * Formats an ISO string for use in a datetime-local input.
@@ -49,10 +50,28 @@ export default function AdminSystemControl() {
   } = useAdminSystem()
   
   const { profile } = useAuth()
+  const { confirm } = usePopupManager()
   const router = useRouter()
   const [localMaintenance, setLocalMaintenance] = useState(maintenance)
 
   const isMainAdmin = profile?.role === 'admin_main'
+
+  const handleClearMaintenancePlan = async () => {
+    const confirmed = await confirm({
+      title: 'Wartungsplanung löschen?',
+      content: 'Möchtest du die geplante Wartungszeit wirklich löschen?',
+      priority: 'high',
+      confirmLabel: 'Löschen',
+      confirmVariant: 'destructive',
+    })
+    if (!confirmed) return
+
+    handleSaveMaintenance({
+      ...maintenance,
+      start: null,
+      end: null,
+    })
+  }
 
   return (
     <div className="space-y-8">
@@ -134,15 +153,7 @@ export default function AdminSystemControl() {
                     variant="ghost"
                     size="sm"
                     className="h-7 px-2 text-[9px] font-black uppercase tracking-widest text-red-600 hover:text-red-700 hover:bg-red-50"
-                    onClick={() => {
-                      if (confirm('Möchtest du die geplante Wartungszeit wirklich löschen?')) {
-                        handleSaveMaintenance({
-                          ...maintenance,
-                          start: null,
-                          end: null
-                        })
-                      }
-                    }}
+                    onClick={() => void handleClearMaintenancePlan()}
                   >
                     Planung löschen
                   </Button>

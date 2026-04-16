@@ -19,6 +19,7 @@ import { TeacherCard } from '@/components/cards/TeacherCard'
 import { TeacherSpecCard } from '@/components/cards/TeacherSpecCard'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { CardData, CardConfig, TeacherCardConfig } from '@/types/cards'
+import { usePopupManager } from '@/modules/popup/usePopupManager'
 
 const RARITY_COLORS: Record<TeacherRarity, string> = {
   common: '#94a3b8',
@@ -64,6 +65,7 @@ export function TeacherEditDialog({
   onSaveAndRemove,
   onRemoveOnly,
 }: TeacherEditDialogProps) {
+  const { confirm } = usePopupManager()
   const [localTeacher, setLocalTeacher] = useState<CardConfig | null>(null)
   const [previewTab, setPreviewTab] = useState<'art' | 'spec'>('art')
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -130,11 +132,14 @@ export function TeacherEditDialog({
     const teacherToSave = buildTeacherPayload()
     if (!teacherToSave) return
 
-    if (
-      !confirm(
-        `Speichern und danach alle Karten von "${teacherToSave.name}" aus Alben entfernen${compensate ? ' (mit Komp.)' : ''}?\n\nDieser Vorgang kann nicht rückgängig gemacht werden.`
-      )
-    ) {
+    const confirmed = await confirm({
+      title: 'Speichern und Karten entfernen?',
+      content: `Speichern und danach alle Karten von "${teacherToSave.name}" aus Alben entfernen${compensate ? ' (mit Komp.)' : ''}?\n\nDieser Vorgang kann nicht rückgängig gemacht werden.`,
+      priority: 'high',
+      confirmLabel: 'Fortfahren',
+      confirmVariant: 'destructive',
+    })
+    if (!confirmed) {
       return
     }
 
@@ -149,11 +154,14 @@ export function TeacherEditDialog({
   const handleRemoveOnly = async () => {
     if (!localTeacher || !onRemoveOnly) return
 
-    if (
-      !confirm(
-        `Alle Karten von "${localTeacher.name}" nur aus Alben entfernen?\n\nDie Karte bleibt im Pool und kann wieder gezogen werden.\n\nDieser Vorgang kann nicht rückgängig gemacht werden.`
-      )
-    ) {
+    const confirmed = await confirm({
+      title: 'Nur aus Alben entfernen?',
+      content: `Alle Karten von "${localTeacher.name}" nur aus Alben entfernen?\n\nDie Karte bleibt im Pool und kann wieder gezogen werden.\n\nDieser Vorgang kann nicht rückgängig gemacht werden.`,
+      priority: 'high',
+      confirmLabel: 'Entfernen',
+      confirmVariant: 'destructive',
+    })
+    if (!confirmed) {
       return
     }
 

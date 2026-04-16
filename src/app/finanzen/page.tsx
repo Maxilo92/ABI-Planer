@@ -21,9 +21,11 @@ import Link from 'next/link'
 import { toast } from 'sonner'
 import { logAction } from '@/lib/logging'
 import { ProtectedSystemGate } from '@/components/ui/ProtectedSystemGate'
+import { usePopupManager } from '@/modules/popup/usePopupManager'
 
 export default function FinancePage() {
   const { user, profile, loading: authLoading } = useAuth()
+  const { confirm } = usePopupManager()
   const [settings, setSettings] = useState<Settings | null>(null)
   const [finances, setFinances] = useState<FinanceEntry[]>([])
   const [shopEarnings, setShopEarnings] = useState<ShopEarning[]>([])
@@ -167,7 +169,14 @@ export default function FinancePage() {
   }
   
   const handleDelete = async (id: string) => {
-    if (!window.confirm('Möchtest du diesen Eintrag wirklich löschen?')) return
+    const confirmed = await confirm({
+      title: 'Eintrag löschen?',
+      content: 'Möchtest du diesen Eintrag wirklich löschen?',
+      priority: 'high',
+      confirmLabel: 'Eintrag löschen',
+      confirmVariant: 'destructive',
+    })
+    if (!confirmed) return
 
     const entryToDelete = finances.find(f => f.id === id)
 

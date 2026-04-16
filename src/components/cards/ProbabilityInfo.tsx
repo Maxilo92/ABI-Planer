@@ -1,7 +1,8 @@
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Info, Sparkles, Star, Zap, Trophy } from 'lucide-react';
-import { CardVariant, TeacherRarity } from '@/types/database';
+import { TeacherRarity } from '@/types/database';
+import { getRarityBadgeClass } from '@/modules/shared/rarity';
 
 interface ProbabilityInfoProps {
   rarityWeights: Array<{ [key in TeacherRarity]: number }>;
@@ -12,18 +13,6 @@ interface ProbabilityInfoProps {
   };
   godpackChance: number;
 }
-
-const getRarityColor = (rarity: string) => {
-  switch (rarity) {
-    case 'common': return 'bg-slate-500';
-    case 'rare': return 'bg-emerald-500';
-    case 'epic': return 'bg-purple-600';
-    case 'mythic': return 'bg-red-600';
-    case 'legendary': return 'bg-amber-500 text-black';
-    case 'iconic': return 'bg-indigo-950 text-white font-black ring-2 ring-amber-500';
-    default: return 'bg-slate-500';
-  }
-};
 
 const formatPercent = (val: number) => {
   return (val * 100).toLocaleString('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 2 }) + '%';
@@ -72,7 +61,7 @@ export const ProbabilityInfo: React.FC<ProbabilityInfoProps> = ({
           {(Object.entries(avgProbabilities) as [TeacherRarity, number][]).map(([rarity, prob]) => (
             <div key={rarity} className="flex items-center justify-between p-2 rounded-lg hover:bg-accent transition-colors">
               <div className="flex items-center gap-3">
-                <div className={`w-3 h-3 rounded-full shadow-[0_0_8px_rgba(0,0,0,0.5)] ${getRarityColor(rarity)}`} />
+                <div className={`w-3 h-3 rounded-full shadow-[0_0_8px_rgba(0,0,0,0.5)] ${getRarityBadgeClass(rarity)}`} />
                 <span className="capitalize text-foreground font-medium">{rarity}</span>
               </div>
               <span className="font-mono text-info font-bold">{formatPercent(prob)}</span>

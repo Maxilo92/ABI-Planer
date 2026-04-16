@@ -7,18 +7,21 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Trash2, ArrowLeftRight, User, Clock, ShieldAlert } from 'lucide-react'
+import { Trash2, ArrowLeftRight, ShieldAlert } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { useRouter } from 'next/navigation'
 import { format } from 'date-fns'
 import { de } from 'date-fns/locale'
 import { CardTrade } from '@/types/trades'
+import { getTradeStatusMeta } from '@/modules/shared/status'
+import { usePopupManager } from '@/modules/popup/usePopupManager'
 
 export default function AdminTradesPage() {
   const { profile, loading: authLoading } = useAuth()
   const [trades, setTrades] = useState<CardTrade[]>([])
   const [loading, setLoading] = useState(true)
   const router = useRouter()
+  const { confirm } = usePopupManager()
 
   const isAdmin = profile?.role === 'admin' || profile?.role === 'admin_main' || profile?.role === 'admin_co'
 
@@ -44,7 +47,14 @@ export default function AdminTradesPage() {
   }, [isAdmin])
 
   const handleDeleteTrade = async (tradeId: string) => {
-    if (!confirm('Möchtest du diesen Tausch wirklich unwiderruflich löschen? Eventuelle reservierte Karten werden dadurch NICHT automatisch zurückgegeben (nur der Trade-Eintrag verschwindet).')) return
+    const confirmed = await confirm({
+      title: 'Trade unwiderruflich löschen?',
+      content: 'Möchtest du diesen Tausch wirklich unwiderruflich löschen? Eventuelle reservierte Karten werden dadurch NICHT automatisch zurückgegeben (nur der Trade-Eintrag verschwindet).',
+      priority: 'high',
+      confirmLabel: 'Trade löschen',
+      confirmVariant: 'destructive',
+    })
+    if (!confirmed) return
     
     try {
       await deleteDoc(doc(db, 'card_trades', tradeId))
@@ -55,14 +65,8 @@ export default function AdminTradesPage() {
   }
 
   const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'pending': return <Badge variant="secondary" className="bg-blue-100 text-blue-700">Offen</Badge>
-      case 'countered': return <Badge variant="secondary" className="bg-purple-100 text-purple-700">Gegenangebot</Badge>
-      case 'completed': return <Badge variant="secondary" className="bg-green-100 text-green-700">Abgeschlossen</Badge>
-      case 'declined': return <Badge variant="secondary" className="bg-red-100 text-red-700">Abgelehnt</Badge>
-      case 'cancelled': return <Badge variant="secondary" className="bg-gray-100 text-gray-700">Abgebrochen</Badge>
-      default: return <Badge variant="outline">{status}</Badge>
-    }
+    const meta = getTradeStatusMeta(status)
+    return <Badge variant={meta.variant} className={meta.className}>{meta.label}</Badge>
   }
 
   if (loading) return <div className="p-8 text-center">Lade Trades...</div>

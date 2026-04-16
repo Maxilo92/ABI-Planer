@@ -178,7 +178,7 @@ export const TeacherCard = React.memo(({
             isBlckShiny && "shadow-[0_0_8cqw_rgba(147,51,234,0.5)] border-purple-500/50 border-[1cqw]"
           ),
           iconWrapper: cn(
-            "bg-white border-[0.8cqw] border-black rounded-[4cqw] -rotate-2 shadow-[1cqw_1cqw_0px_0px_rgba(0,0,0,1)] flex items-center justify-center w-[35cqw] h-[35cqw]",
+            "bg-white border-[0.8cqw] border-black rounded-[4cqw] -rotate-2 shadow-[1cqw_1cqw_0px_0px_rgba(0,0,0,1)] flex items-center justify-center w-[42cqw] aspect-[2/1]",
             isIconic && "bg-neutral-900 border-amber-500/30 shadow-[0_0_15px_rgba(251,191,36,0.2)]",
             isBlckShiny && "bg-neutral-900 border-purple-500/30 shadow-[0_0_15px_rgba(147,51,234,0.3)]",
             isShiny && "bg-slate-100 border-slate-300 shadow-none",
@@ -208,7 +208,7 @@ export const TeacherCard = React.memo(({
       default:
         return {
           card: "border-white/40 shadow-2xl backdrop-blur-xl border-[2cqw] rounded-xl",
-          iconWrapper: "bg-white/30 rounded-full w-[35cqw] h-[35cqw] flex items-center justify-center",
+          iconWrapper: "bg-white/30 rounded-xl w-[42cqw] aspect-[2/1] flex items-center justify-center",
           headerIcon: "w-[18cqw] h-[18cqw]",
           header: "text-white",
           text: "text-white font-sans font-black text-[11cqw] leading-[0.9]",
@@ -315,8 +315,16 @@ export const TeacherCard = React.memo(({
         </div>
       )}
 
-      <div className={cn("relative z-30 mb-[4%] mt-[4%]", styleClasses.iconWrapper)}>
-        <GraduationCap className={cn(styleClasses.header, styleClasses.headerIcon)} />
+      <div className={cn("relative z-30 mb-[4%] mt-[4%] overflow-hidden", styleClasses.iconWrapper)}>
+        {data.imageUrl ? (
+          <img 
+            src={data.imageUrl} 
+            alt={data.name} 
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <GraduationCap className={cn(styleClasses.header, styleClasses.headerIcon)} />
+        )}
       </div>
 
       <div className="flex-1 flex flex-col items-center justify-center text-center relative z-30 w-full px-[2%]">
@@ -372,7 +380,7 @@ export const TeacherCard = React.memo(({
 
   const wrappedFrontSide = (
     <div
-      className={cn("relative aspect-[2.5/3.5] @container rounded-xl overflow-visible sm:overflow-hidden isolate", className)}
+      className={cn("relative aspect-[2.5/3.5] @container rounded-xl overflow-visible isolate", className)}
       style={{ containerType: 'inline-size' }}
     >
       {frontSide}
@@ -385,7 +393,7 @@ export const TeacherCard = React.memo(({
 
   return (
     <div
-      className={cn("relative aspect-[2.5/3.5] perspective-1000 @container rounded-xl overflow-visible sm:overflow-hidden isolate", className, interactive && "cursor-pointer")}
+      className={cn("relative aspect-[2.5/3.5] perspective-1000 @container rounded-xl overflow-visible isolate", className, interactive && "cursor-pointer")}
       style={{ containerType: 'inline-size' }}
       onClick={() => {
         if (interactive && !isLocked) {
@@ -458,6 +466,7 @@ export const TeacherCard = React.memo(({
     prevProps.data.variant === nextProps.data.variant &&
     prevProps.data.rarity === nextProps.data.rarity &&
     prevProps.data.name === nextProps.data.name &&
+    prevProps.data.imageUrl === nextProps.data.imageUrl &&
     prevProps.isCover === nextProps.isCover &&
     prevProps.showDeckControls === nextProps.showDeckControls &&
     prevProps.frontOnly === nextProps.frontOnly

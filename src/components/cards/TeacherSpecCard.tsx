@@ -129,7 +129,7 @@ export const TeacherSpecCard = React.memo(({
 
   return (
     <div
-      className={cn("relative aspect-[2.5/3.5] @container overflow-hidden isolate", radiusClass, className)}
+      className={cn("relative aspect-[2.5/3.5] @container overflow-visible isolate", radiusClass, className)}
       style={{ containerType: 'inline-size' }}
     >
       <div
@@ -173,8 +173,16 @@ export const TeacherSpecCard = React.memo(({
             )}
           </div>
 
-          <div className="w-full aspect-[2.2/1] bg-black/5 rounded-[2.5%] flex items-center justify-center border-[0.3cqw] border-current/15 shrink-0" style={{ color: useLightText ? 'white' : 'black' }}>
-            <GraduationCap className="w-[10cqw] h-[10cqw] opacity-25" />
+          <div className="w-full aspect-[2/1] bg-black/5 rounded-[2.5%] flex items-center justify-center border-[0.3cqw] border-current/15 shrink-0 overflow-hidden" style={{ color: useLightText ? 'white' : 'black' }}>
+            {data.imageUrl ? (
+              <img 
+                src={data.imageUrl} 
+                alt={data.name} 
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <GraduationCap className="w-[10cqw] h-[10cqw] opacity-25" />
+            )}
           </div>
 
           <div className="min-h-0 flex-1 space-y-[2%] overflow-hidden pt-[0.5%]">
@@ -250,6 +258,7 @@ export const TeacherSpecCard = React.memo(({
     prevProps.data.description === nextProps.data.description &&
     prevProps.data.cardNumber === nextProps.data.cardNumber &&
     prevProps.data.color === nextProps.data.color &&
+    prevProps.data.imageUrl === nextProps.data.imageUrl &&
     prevProps.hideAttacks === nextProps.hideAttacks &&
     prevProps.isCombat === nextProps.isCombat &&
     JSON.stringify(prevProps.data.attacks) === JSON.stringify(nextProps.data.attacks)

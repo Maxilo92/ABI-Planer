@@ -1,15 +1,14 @@
 'use client'
 
-import React, { TouchEvent, useRef } from 'react'
-import { X, AlertCircle, AlertTriangle, Info } from 'lucide-react'
+import React, { TouchEvent, useRef, useState } from 'react'
+import { X, AlertCircle, AlertTriangle, Info, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { SystemMessage, SystemMessagePriority, SystemMessageAction } from '@/types/systemMessages'
-import Link from 'next/link'
 
 interface BannerMessageProps {
   message: SystemMessage
-  onClose: (id: string) => void
+  onClose: () => void
 }
 
 const toneStyles: Record<SystemMessagePriority, { container: string; iconWrap: string; title: string; message: string }> = {
@@ -49,6 +48,8 @@ const priorityIcons: Record<SystemMessagePriority, React.ReactNode> = {
 export function BannerMessage({ message, onClose }: BannerMessageProps) {
   const styles = toneStyles[message.priority]
   const icon = priorityIcons[message.priority]
+  const [pendingActionIndex, setPendingActionIndex] = useState<number | null>(null)
+  const [actionError, setActionError] = useState<string | null>(null)
   const touchStartX = useRef<number | null>(null)
   const touchStartY = useRef<number | null>(null)
 
@@ -72,7 +73,34 @@ export function BannerMessage({ message, onClose }: BannerMessageProps) {
 
     // Swipe horizontal (more than 70px) and not too much vertical (less than 60px) closes the banner.
     if (Math.abs(deltaX) > 70 && deltaY < 60) {
-      onClose(message.id)
+      onClose()
+    }
+  }
+
+  const runAction = async (action: SystemMessageAction, index: number) => {
+    if (pendingActionIndex !== null || action.disabled) return
+
+    setActionError(null)
+
+    if (action.href) {
+      if (action.closeOnClick !== false) {
+        onClose()
+      }
+      window.location.href = action.href
+      return
+    }
+
+    setPendingActionIndex(index)
+    try {
+      await action.onClick?.()
+      if (action.closeOnClick !== false) {
+        onClose()
+      }
+    } catch (error) {
+      console.error('Banner action failed:', error)
+      setActionError(error instanceof Error ? error.message : 'Aktion konnte nicht ausgeführt werden.')
+    } finally {
+      setPendingActionIndex(null)
     }
   }
 
@@ -100,7 +128,8 @@ export function BannerMessage({ message, onClose }: BannerMessageProps) {
                 variant="ghost"
                 size="icon-xs"
                 className="h-7 w-7 -mr-1.5 -mt-1.5 opacity-50 hover:opacity-100 bg-white/10 dark:bg-black/10 rounded-full"
-                onClick={() => onClose(message.id)}
+                onClick={onClose}
+                disabled={pendingActionIndex !== null}
               >
                 <X className="h-4 w-4" />
                 <span className="sr-only">Schließen</span>
@@ -113,9 +142,20 @@ export function BannerMessage({ message, onClose }: BannerMessageProps) {
           {message.actions && message.actions.length > 0 && (
             <div className="flex flex-wrap gap-2 pt-1">
               {message.actions.map((action, idx) => (
-                <ActionComponent key={idx} action={action} priority={message.priority} />
+                <ActionComponent
+                  key={`${message.id}-action-${idx}`}
+                  action={action}
+                  priority={message.priority}
+                  isPending={pendingActionIndex === idx}
+                  hasPendingAction={pendingActionIndex !== null}
+                  onRun={() => void runAction(action, idx)}
+                />
               ))}
             </div>
+          )}
+
+          {actionError && (
+            <p className="text-xs text-destructive font-medium pt-1">{actionError}</p>
           )}
         </div>
       </div>
@@ -123,30 +163,31 @@ export function BannerMessage({ message, onClose }: BannerMessageProps) {
   )
 }
 
-function ActionComponent({ action, priority }: { action: SystemMessageAction; priority: SystemMessagePriority }) {
+function ActionComponent({
+  action,
+  priority,
+  isPending,
+  hasPendingAction,
+  onRun,
+}: {
+  action: SystemMessageAction;
+  priority: SystemMessagePriority;
+  isPending: boolean;
+  hasPendingAction: boolean;
+  onRun: () => void;
+}) {
   const defaultVariant = priority === 'critical' ? 'destructive' : 'outline'
   const variant = action.variant || defaultVariant
-  
-  if (action.href) {
-    return (
-      <Button 
-        variant={variant} 
-        size="xs"
-        className="px-3 py-1 font-bold text-[11px] uppercase tracking-wider"
-        render={<Link href={action.href} />}
-      >
-        {action.label}
-      </Button>
-    )
-  }
 
   return (
     <Button 
       variant={variant} 
       size="xs" 
       className="px-3 py-1 font-bold text-[11px] uppercase tracking-wider"
-      onClick={action.onClick}
+      onClick={onRun}
+      disabled={action.disabled || hasPendingAction}
     >
+      {isPending && <Loader2 className="mr-1 h-3 w-3 animate-spin" />}
       {action.label}
     </Button>
   )

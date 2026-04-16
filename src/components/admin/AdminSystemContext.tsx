@@ -1,6 +1,6 @@
 'use client'
 
-import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react'
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import { db } from '@/lib/firebase'
 import { 
   doc, onSnapshot, updateDoc, collection, getCountFromServer, 
@@ -9,10 +9,10 @@ import {
 } from 'firebase/firestore'
 import { useAuth } from '@/context/AuthContext'
 import { toast } from 'sonner'
+import { usePopupManager } from '@/modules/popup/usePopupManager'
 import type { 
   GlobalStats, SystemAnalytics, SystemFeatures, 
-  FeatureStatus, SystemAnalyticsTimelinePoint, 
-  SystemAnalyticsActionStat 
+  FeatureStatus
 } from '@/types/system'
 
 interface AdminSystemContextType {
@@ -42,6 +42,7 @@ const AdminSystemContext = createContext<AdminSystemContextType | undefined>(und
 
 export function AdminSystemProvider({ children }: { children: React.ReactNode }) {
   const { profile, user } = useAuth()
+  const { confirm } = usePopupManager()
   const [features, setFeatures] = useState<SystemFeatures | null>(null)
   const [maintenance, setMaintenance] = useState<any>(null)
   const [stats, setStats] = useState<GlobalStats | null>(null)
@@ -626,9 +627,13 @@ export function AdminSystemProvider({ children }: { children: React.ReactNode })
       toast.error('Nicht angemeldet.')
       return
     }
-    const confirmed = window.confirm(
-      'Session-Statistiken fuer ALLE Nutzer zuruecksetzen?\n\nDas entfernt gespeicherte Session-Dauern und setzt den Online-Status global zurueck.'
-    )
+    const confirmed = await confirm({
+      title: 'Session-Statistiken zurücksetzen?',
+      content: 'Session-Statistiken fuer ALLE Nutzer zuruecksetzen? Das entfernt gespeicherte Session-Dauern und setzt den Online-Status global zurueck.',
+      priority: 'high',
+      confirmLabel: 'Global zurücksetzen',
+      confirmVariant: 'destructive',
+    })
     if (!confirmed) return
     setResettingSessionStats(true)
     try {

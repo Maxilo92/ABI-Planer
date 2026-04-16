@@ -12,11 +12,12 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
 import { EditEventDialog } from '@/components/modals/EditEventDialog'
 import { db } from '@/lib/firebase'
-import { collection, doc, deleteDoc, onSnapshot } from 'firebase/firestore'
+import { doc, deleteDoc } from 'firebase/firestore'
 import { toast } from 'sonner'
 import { useAuth } from '@/context/AuthContext'
 import { logAction } from '@/lib/logging'
 import { ShareResourceButton } from '@/components/ui/share-resource-button'
+import { usePopupManager } from '@/modules/popup/usePopupManager'
 
 interface CalendarEventsProps {
   events: Event[]
@@ -36,9 +37,17 @@ export function CalendarEvents({
   loading = false,
 }: CalendarEventsProps) {
   const { user, profile } = useAuth()
+  const { confirm } = usePopupManager()
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('Möchtest du diesen Termin wirklich löschen?')) return
+    const confirmed = await confirm({
+      title: 'Termin löschen?',
+      content: 'Möchtest du diesen Termin wirklich löschen?',
+      priority: 'high',
+      confirmLabel: 'Termin löschen',
+      confirmVariant: 'destructive',
+    })
+    if (!confirmed) return
 
     const eventToDelete = events.find((entry) => entry.id === id)
 

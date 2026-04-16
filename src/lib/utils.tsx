@@ -2,62 +2,14 @@ import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 import { formatDistanceToNow } from 'date-fns'
 import { de } from 'date-fns/locale'
-import { TeacherRarity } from '@/types/database'
+import { getRarityColor, getRarityLabel } from '@/modules/shared/rarity'
+import { toDate } from '@/modules/shared/date'
+
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-/**
- * Returns the color class for a given teacher rarity.
- */
-export const getRarityColor = (rarity: TeacherRarity) => {
-  switch (rarity) {
-    case 'common': return 'text-slate-500'
-    case 'rare': return 'text-emerald-500'
-    case 'epic': return 'text-purple-500'
-    case 'mythic': return 'text-red-500'
-    case 'legendary': return 'text-amber-500'
-    case 'iconic': return 'text-indigo-950 dark:text-indigo-400 font-black'
-    default: return 'text-slate-500'
-  }
-}
-
-/**
- * Returns the display label for a given teacher rarity.
- */
-export const getRarityLabel = (rarity: TeacherRarity) => {
-  switch (rarity) {
-    case 'common': return 'Gewöhnlich'
-    case 'rare': return 'Selten'
-    case 'epic': return 'Episch'
-    case 'mythic': return 'Mythisch'
-    case 'legendary': return 'Legendär'
-    case 'iconic': return 'IKONISCH'
-    default: return rarity
-  }
-}
-
-/**
- * Safely converts a potential Firestore Timestamp to a JavaScript Date object.
- */
-export function toDate(date: any): Date {
-  if (!date) return new Date()
-  
-  // If it's already a Date object
-  if (date instanceof Date) return date
-  
-  // If it's a Firestore Timestamp (has toDate method)
-  if (typeof date.toDate === 'function') return date.toDate()
-  
-  // If it's a POJO Timestamp { seconds, nanoseconds }
-  if (date.seconds !== undefined) {
-    return new Date(date.seconds * 1000)
-  }
-  
-  // If it's a string (ISO) or number (timestamp)
-  const parsed = new Date(date)
-  return isNaN(parsed.getTime()) ? new Date() : parsed
-}
+export { getRarityColor, getRarityLabel, toDate }
 
 /**
  * Returns the online status and a formatted label for the user.

@@ -2,13 +2,14 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { db } from '@/lib/firebase'
-import { collection, query, orderBy, limit, onSnapshot, doc, getDoc, where, getDocs, setDoc, updateDoc } from 'firebase/firestore'
+import { collection, query, orderBy, limit, onSnapshot, doc, where, getDocs, setDoc, updateDoc } from 'firebase/firestore'
 import { FundingStatus } from '@/components/dashboard/FundingStatus'
 import { TodoList } from '@/components/dashboard/TodoList'
 import { CalendarEvents } from '@/components/dashboard/CalendarEvents'
 import { PollList } from '@/components/dashboard/PollList'
 import { ClassRanking } from '@/components/dashboard/ClassRanking'
 import { SammelkartenPromo } from '@/components/dashboard/SammelkartenPromo'
+import { CustomizeDashboardDialog } from '@/components/dashboard/CustomizeDashboardDialog'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { EditSettingsDialog } from '@/components/modals/EditSettingsDialog'
@@ -43,11 +44,34 @@ import {
 import { useRouter } from 'next/navigation'
 import { useTheme } from 'next-themes'
 import { LandingHeader } from '@/components/layout/LandingHeader'
-import { motion, useScroll, useSpring } from 'framer-motion'
+import { motion, useScroll, useSpring, AnimatePresence } from 'framer-motion'
 import { logAction } from '@/lib/logging'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import { getDashboardBaseUrl, getDashboardRedirectUrl } from '@/lib/dashboard-url'
+import { getDashboardBaseUrl } from '@/lib/dashboard-url'
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler
+} from 'chart.js'
+import { Line } from 'react-chartjs-2'
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler
+)
 
 function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
   const [landingNews, setLandingNews] = useState<any[]>([])
@@ -173,7 +197,7 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
       <LandingHeader isAuthenticated={isAuthenticated} />
 
       <main className="relative z-10">
-        {/* Hero Section - Redesigned for Students */}
+        {/* Hero Section - School-first, student-friendly */}
         <section className="relative pt-32 pb-20 md:pt-48 md:pb-32 px-6 overflow-hidden">
           <motion.div 
             initial="hidden"
@@ -181,20 +205,18 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
             variants={containerVariants}
             className="max-w-7xl mx-auto text-center space-y-12"
           >
-            <motion.div variants={itemVariants} className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-brand/10 border border-brand/20 text-brand shadow-sm">
-              <Zap className="h-4 w-4 animate-pulse" />
-              <span className="text-[10px] font-black uppercase tracking-[0.3em]">Alles für euren Jahrgang</span>
+            <motion.div variants={itemVariants} className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-brand/5 border border-brand/10 text-brand text-[11px] font-bold tracking-wider uppercase">
+              <Zap className="h-3.5 w-3.5" />
+              <span>Plattform für euren Abschluss</span>
             </motion.div>
             
-            <div className="max-w-5xl mx-auto space-y-8 relative">
-              <motion.h1 variants={itemVariants} className="text-6xl md:text-8xl lg:text-9xl font-black tracking-tighter leading-[0.85] uppercase italic">
-                Macht euer Abi <br />
-                <span className="text-brand drop-shadow-[0_0_30px_rgba(125,210,0,0.3)]">
-                  Legendär.
-                </span>
+            <div className="max-w-4xl mx-auto space-y-6 relative">
+              <motion.h1 variants={itemVariants} className="text-5xl md:text-7xl lg:text-8xl font-extrabold tracking-tight leading-[1.05]">
+                Alles für euren <br />
+                <span className="text-brand">perfekten Abschluss.</span>
               </motion.h1>
-              <motion.p variants={itemVariants} className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto leading-relaxed font-medium">
-                Die ultimative Plattform für euren Jahrgang. Planen, Sammeln, Kämpfen – alles an einem Ort, sicher und nur für euch.
+              <motion.p variants={itemVariants} className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed font-medium">
+                ABI Planer verbindet professionelle Organisation für euren Jahrgang mit einem interaktiven Kartenbereich. Klar strukturiert, sicher und für alle Geräte optimiert.
               </motion.p>
               
               {/* Floating Icons Decor */}
@@ -214,474 +236,523 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
               </motion.div>
             </div>
 
-            <motion.div variants={itemVariants} className="flex flex-col sm:flex-row items-center justify-center gap-6 pt-6">
-              <Button size="lg" asChild className="h-16 px-10 text-xs font-black uppercase tracking-[0.25em] rounded-2xl bg-brand text-brand-foreground hover:bg-brand/90 shadow-2xl shadow-brand/30 group">
+            <motion.div variants={itemVariants} className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-6">
+              <Button size="lg" asChild className="h-14 px-8 text-sm font-bold rounded-2xl bg-brand text-brand-foreground hover:bg-brand/90 shadow-lg shadow-brand/20 group transition-all">
                 <a href={`${dashboardBaseUrl}/register`}>
-                  Jahrgang joinen
-                  <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
+                  Jahrgang einrichten
+                  <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </a>
               </Button>
-              <Button variant="outline" size="lg" asChild className="h-16 px-10 text-xs font-black uppercase tracking-[0.25em] rounded-2xl border-2 border-brand/20 hover:bg-brand/5 backdrop-blur-sm">
-                <a href={`${dashboardBaseUrl}/vorteile`}>Features checken</a>
+              <Button variant="outline" size="lg" asChild className="h-14 px-8 text-sm font-bold rounded-2xl border-border hover:bg-muted/50 transition-all">
+                <a href={`${dashboardBaseUrl}/vorteile`}>Funktionen ansehen</a>
               </Button>
             </motion.div>
           </motion.div>
         </section>
 
-        {/* Dual Focus Section - Choose your side */}
+        {/* Dual Focus Section - Open & Editorial */}
         <section className="px-6 py-20 relative">
-          <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-8">
+          <div className="max-w-7xl mx-auto space-y-32">
              {/* Planner Side */}
-             <motion.div 
-               whileHover={{ scale: 1.02 }}
-               className="relative group overflow-hidden rounded-[3rem] border border-border/50 bg-card/50 backdrop-blur-sm p-10 h-full flex flex-col justify-between"
-             >
-                <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
-                   <Target className="h-40 w-40 text-brand" />
-                </div>
-                <div className="space-y-6 relative z-10">
-                   <div className="h-14 w-14 rounded-2xl bg-brand/10 flex items-center justify-center text-brand">
-                      <Target className="h-7 w-7" />
+             <div className="flex flex-col md:flex-row items-center gap-16 lg:gap-24">
+                <div className="flex-1 space-y-8">
+                   <div className="h-12 w-12 rounded-xl bg-brand/5 flex items-center justify-center text-brand">
+                      <Target className="h-6 w-6" />
                    </div>
-                   <h2 className="text-4xl font-black italic uppercase tracking-tighter">Der Planer.</h2>
-                   <p className="text-muted-foreground text-lg leading-relaxed">
-                      Behalte das Budget im Griff, erstelle Abstimmungen und koordiniere Teams. Alles, was ihr für einen perfekten Abiball braucht.
-                   </p>
-                   <ul className="space-y-3">
-                      {['Finanzen & Prognosen', 'Aufgaben & Deadlines', 'Echtzeit-Abstimmungen'].map((item, i) => (
-                        <li key={i} className="flex items-center gap-3 text-sm font-bold">
-                           <div className="h-1.5 w-1.5 rounded-full bg-brand" />
+                   <div className="space-y-4">
+                      <h2 className="text-4xl md:text-5xl font-extrabold tracking-tight">Professionelle Organisation</h2>
+                      <p className="text-muted-foreground text-lg leading-relaxed max-w-xl">
+                        Zentrale Verwaltung von Finanzen, Aufgaben, Abstimmungen und Terminen. Schafft Transparenz und Struktur für euren gesamten Jahrgang.
+                      </p>
+                   </div>
+                   <ul className="grid sm:grid-cols-2 gap-4">
+                     {['Finanzen & Prognosen', 'Aufgaben & Deadlines', 'Abstimmungen', 'Dokumentation'].map((item, i) => (
+                        <li key={i} className="flex items-center gap-3 text-sm font-semibold">
+                           <div className="h-1 w-1 rounded-full bg-brand" />
                            {item}
                         </li>
                       ))}
                    </ul>
+                   <div className="pt-4">
+                      <Button asChild variant="link" className="px-0 font-bold text-brand hover:no-underline flex items-center gap-2 group">
+                        <a href={`${dashboardBaseUrl}/vorteile/finanzen`}>
+                           Organisation entdecken <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                        </a>
+                      </Button>
+                   </div>
                 </div>
-                <div className="pt-10">
-                   <Button asChild variant="secondary" className="rounded-xl font-black uppercase tracking-widest text-[10px] h-12 px-8">
-                      <a href={`${dashboardBaseUrl}/vorteile/finanzen`}>Planung entdecken</a>
-                   </Button>
+                <div className="flex-1 w-full aspect-video bg-gradient-to-br from-brand/10 to-brand/5 rounded-[2.5rem] border border-brand/10 flex items-center justify-center relative overflow-hidden group">
+                   <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-[0.05] [mask-image:radial-gradient(ellipse_at_center,black,transparent)]" />
+                   <div className="absolute inset-0 bg-gradient-to-tr from-brand/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+                   <Target className="h-24 w-24 text-brand/30 relative z-10 transition-transform duration-700 group-hover:scale-110" />
                 </div>
-             </motion.div>
+             </div>
 
              {/* Collector Side */}
-             <motion.div 
-               whileHover={{ scale: 1.02 }}
-               className="relative group overflow-hidden rounded-[3rem] border border-brand/20 bg-brand text-brand-foreground p-10 h-full flex flex-col justify-between shadow-2xl shadow-brand/20"
-             >
-                <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
-                   <Gamepad2 className="h-40 w-40 text-white" />
-                </div>
-                <div className="space-y-6 relative z-10">
-                   <div className="h-14 w-14 rounded-2xl bg-white/20 flex items-center justify-center text-white">
-                      <Sword className="h-7 w-7" />
+             <div className="flex flex-col md:flex-row-reverse items-center gap-16 lg:gap-24">
+                <div className="flex-1 space-y-8">
+                   <div className="h-12 w-12 rounded-xl bg-brand/5 flex items-center justify-center text-brand">
+                      <Sword className="h-6 w-6" />
                    </div>
-                   <h2 className="text-4xl font-black italic uppercase tracking-tighter">Der Sammler.</h2>
-                   <p className="text-brand-foreground/90 text-lg leading-relaxed">
-                      Sammle Lehrer und Mitschüler, tausche Karten mit deinem Jahrgang und miss dich in epischen Stats-Battles.
-                   </p>
-                   <ul className="space-y-3">
-                      {['Tägliche Booster-Packs', 'Echtzeit-Tauschbörse', 'Raritäten & Rankings'].map((item, i) => (
-                        <li key={i} className="flex items-center gap-3 text-sm font-bold">
-                           <div className="h-1.5 w-1.5 rounded-full bg-white" />
+                   <div className="space-y-4">
+                      <h2 className="text-4xl md:text-5xl font-extrabold tracking-tight">Interaktives Karten-System</h2>
+                      <p className="text-muted-foreground text-lg leading-relaxed max-w-xl">
+                        Digitale Sammelkarten von Lehrkräften und Mitschülern. Fördert die Interaktion durch Tauschen und tägliche Kartenpakete.
+                      </p>
+                   </div>
+                   <ul className="grid sm:grid-cols-2 gap-4">
+                     {['Tägliche Pakete', 'Echtzeit-Tauschbörse', 'Raritäten', 'Fortschrittsanzeige'].map((item, i) => (
+                        <li key={i} className="flex items-center gap-3 text-sm font-semibold">
+                           <div className="h-1 w-1 rounded-full bg-brand" />
                            {item}
                         </li>
                       ))}
                    </ul>
+                   <div className="pt-4">
+                      <Button asChild variant="link" className="px-0 font-bold text-brand hover:no-underline flex items-center gap-2 group">
+                        <a href={`${dashboardBaseUrl}/vorteile/sammelkarten`}>
+                           Karten entdecken <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                        </a>
+                      </Button>
+                   </div>
                 </div>
-                <div className="pt-10">
-                   <Button asChild className="rounded-xl font-black uppercase tracking-widest text-[10px] h-12 px-8 bg-white text-brand hover:bg-white/90">
-                      <a href={`${dashboardBaseUrl}/vorteile/sammelkarten`}>Karten-Action</a>
-                   </Button>
+                <div className="flex-1 w-full aspect-video bg-gradient-to-bl from-blue-500/10 to-blue-500/5 rounded-[2.5rem] border border-blue-500/10 flex items-center justify-center relative overflow-hidden group">
+                   <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-[0.05] [mask-image:radial-gradient(ellipse_at_center,black,transparent)]" />
+                   <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+                   <Gamepad2 className="h-24 w-24 text-blue-500/30 relative z-10 transition-transform duration-700 group-hover:scale-110" />
                 </div>
-             </motion.div>
+             </div>
           </div>
         </section>
 
-        {/* Public Stats - Compact & Stylish */}
-        <section className="px-6 pb-24 md:pb-32">
-          <div className="max-w-7xl mx-auto">
-            <div className="grid gap-4 grid-cols-2 xl:grid-cols-4">
+        {/* Public Stats - Clean Numbers with one Growth Graph */}
+        <section className="px-6 py-20 border-t border-border/40">
+          <div className="max-w-7xl mx-auto space-y-16">
+            <div className="grid gap-12 grid-cols-2 xl:grid-cols-4 text-center">
               {[
-                {
-                  label: 'Am Start',
-                  value: landingStatsLoading ? '...' : formatMetric(landingStats.totalUsers),
-                  icon: Users,
-                },
-                {
-                  label: 'Aktiv (24h)',
-                  value: landingStatsLoading ? '...' : formatMetric(landingStats.dailyActiveUsers),
-                  icon: Clock3,
-                },
-                {
-                  label: 'Karten-Drops',
-                  value: landingStatsLoading ? '...' : formatMetric(landingStats.totalCards),
-                  icon: Layers3,
-                },
-                {
-                  label: 'Updates',
-                  value: landingStatsLoading ? '...' : formatMetric(landingStats.newsCount),
-                  icon: Sparkles,
-                },
+                { label: 'Registrierte Nutzer', value: landingStatsLoading ? '...' : formatMetric(landingStats.totalUsers) },
+                { label: 'Aktiv in 24h', value: landingStatsLoading ? '...' : formatMetric(landingStats.dailyActiveUsers) },
+                { label: 'Karten im System', value: landingStatsLoading ? '...' : formatMetric(landingStats.totalCards) },
+                { label: 'News-Updates', value: landingStatsLoading ? '...' : formatMetric(landingStats.newsCount) },
               ].map((item) => (
-                <div
-                  key={item.label}
-                  className="rounded-3xl border border-border/60 bg-card/40 p-6 backdrop-blur-sm"
-                >
-                  <div className="flex items-center gap-3 mb-4">
-                    <item.icon className="h-4 w-4 text-brand" />
-                    <p className="text-[9px] font-black uppercase tracking-[0.3em] text-muted-foreground">{item.label}</p>
-                  </div>
-                  <p className="text-3xl md:text-4xl font-black tracking-tight italic uppercase leading-none text-foreground">
+                <div key={item.label} className="space-y-2">
+                  <p className="text-4xl md:text-5xl font-extrabold tracking-tight text-foreground">
                     {item.value}
                   </p>
+                  <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{item.label}</p>
                 </div>
               ))}
+            </div>
+
+            <div className="max-w-4xl mx-auto h-[200px] opacity-30">
+               <Line 
+                  options={{
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false }, tooltip: { enabled: false } },
+                    scales: { x: { display: false }, y: { display: false } },
+                    elements: { line: { tension: 0.4 }, point: { radius: 0 } }
+                  }}
+                  data={{
+                    labels: ['', '', '', '', '', ''],
+                    datasets: [{
+                      data: [5, 15, 40, 70, 90, 100],
+                      borderColor: '#7dd200',
+                      borderWidth: 4,
+                      fill: false,
+                    }]
+                  }}
+               />
+               <p className="text-center text-[10px] font-bold uppercase tracking-[0.3em] text-muted-foreground mt-4">Plattform-Wachstum & Engagement</p>
             </div>
           </div>
         </section>
 
-        {/* Editorial Section - Why the platform exists */}
-        <section className="px-6 pb-20 md:pb-28">
-          <div className="max-w-7xl mx-auto grid gap-6 lg:grid-cols-[1.15fr_0.85fr] items-start">
-            <div className="rounded-[3rem] border border-border/60 bg-card/70 p-8 md:p-12 shadow-sm backdrop-blur-sm space-y-6">
-              <p className="text-brand font-black uppercase tracking-[0.4em] text-[10px]">Worum es wirklich geht</p>
-              <h2 className="text-4xl md:text-5xl font-black tracking-tight italic uppercase leading-[0.9] max-w-3xl">
-                Ein Jahrgang braucht mehr als Chat-Chaos und lose Notizen.
-              </h2>
-              <div className="space-y-4 text-lg leading-relaxed text-muted-foreground max-w-3xl">
-                <p>
-                  ABI Planer bündelt die Dinge, die sonst in einzelnen Gruppen, Tabellen und Nachrichten
-                  verschwinden: Budget, Aufgaben, Termine, Abstimmungen, Rollen und die kleinen
-                  Entscheidungen, die am Ende den Unterschied machen.
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="h-px w-full bg-gradient-to-r from-transparent via-border to-transparent" />
+        </div>
+
+        {/* Success Metrics Charts - Open Space */}
+        <section className="px-6 py-32">
+          <div className="max-w-7xl mx-auto space-y-20">
+            <div className="text-center space-y-4">
+              <p className="text-brand font-bold uppercase tracking-widest text-[11px]">Performance Boost</p>
+              <h2 className="text-4xl md:text-5xl font-extrabold tracking-tight">Erfolgreich zum Ziel.</h2>
+              <p className="text-muted-foreground max-w-2xl mx-auto font-medium">
+                Daten aus echten Jahrgängen zeigen: Mit strukturierter Planung steigt die Effizienz und Koordination spürbar an.
+              </p>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-16 lg:gap-24">
+              <div className="space-y-6">
+                <p className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Planungs-Effizienz</p>
+                <div className="h-[300px] w-full relative">
+                  <Line 
+                    options={{
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      plugins: { legend: { display: false }, tooltip: { enabled: true } },
+                      scales: {
+                        x: { display: false },
+                        y: { display: false, min: 0 }
+                      },
+                      elements: {
+                        line: { tension: 0.4 },
+                        point: { radius: 0 }
+                      }
+                    }}
+                    data={{
+                      labels: ['Woche 1', 'Woche 2', 'Woche 3', 'Woche 4', 'Woche 5', 'Woche 6'],
+                      datasets: [{
+                        label: 'Effizienz',
+                        data: [10, 15, 45, 60, 85, 98],
+                        borderColor: '#7dd200',
+                        backgroundColor: 'rgba(125, 210, 0, 0.1)',
+                        fill: true,
+                        borderWidth: 4,
+                      }]
+                    }}
+                  />
+                </div>
+                <p className="text-sm text-muted-foreground leading-relaxed font-medium">
+                  Strukturiertes Budgeting und Aufgabenverteilung verkürzen Abstimmungswege um bis zu 70%.
                 </p>
-                <p>
-                  Dadurch entsteht nicht nur ein Werkzeug für die Organisation, sondern ein nachvollziehbarer
-                  Ort für euren Jahrgang. Wer später nachschauen will, was beschlossen wurde oder wer was
-                  übernimmt, findet die Antwort an einer zentralen Stelle statt in verstreuten Chats.
+              </div>
+
+              <div className="space-y-6">
+                <p className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Team-Koordination</p>
+                <div className="h-[300px] w-full relative">
+                  <Line 
+                    options={{
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      plugins: { legend: { display: false }, tooltip: { enabled: true } },
+                      scales: {
+                        x: { display: false },
+                        y: { display: false, min: 0 }
+                      },
+                      elements: {
+                        line: { tension: 0.4 },
+                        point: { radius: 0 }
+                      }
+                    }}
+                    data={{
+                      labels: ['Start', 'Setup', 'Phase 1', 'Phase 2', 'Phase 3', 'Finale'],
+                      datasets: [{
+                        label: 'Koordination',
+                        data: [5, 12, 25, 55, 80, 100],
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        fill: true,
+                        borderWidth: 4,
+                      }]
+                    }}
+                  />
+                </div>
+                <p className="text-sm text-muted-foreground leading-relaxed font-medium">
+                  Zentrale Termine und News sorgen für eine lückenlose Informationskette im gesamten Jahrgang.
                 </p>
               </div>
             </div>
+          </div>
+        </section>
 
-            <div className="grid gap-4">
-              {[
-                {
-                  title: 'Planung mit Überblick',
-                  text: 'Ihr seht Finanzen, Aufgaben und Deadlines zusammen und müsst nicht mehr zwischen mehreren Tools springen.',
-                },
-                {
-                  title: 'Mitbestimmung statt Durcheinander',
-                  text: 'Abstimmungen und News geben jedem Jahrgang eine klare, dokumentierte Grundlage für Entscheidungen.',
-                },
-                {
-                  title: 'Motivation für den Alltag',
-                  text: 'Sammelkarten, Rankings und kleine Fortschrittsanzeigen sorgen dafür, dass die Plattform nicht nur praktisch, sondern auch nutzbar bleibt.',
-                },
-              ].map((item) => (
-                <div key={item.title} className="rounded-[2rem] border border-border/60 bg-background/80 p-6 shadow-sm">
-                  <p className="text-sm font-black uppercase tracking-[0.25em] text-foreground">{item.title}</p>
-                  <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{item.text}</p>
-                </div>
-              ))}
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="h-px w-full bg-gradient-to-r from-transparent via-border to-transparent" />
+        </div>
+
+        {/* Editorial Section - Pure Typography */}
+        <section className="px-6 py-24">
+          <div className="max-w-7xl mx-auto space-y-16">
+            <div className="space-y-6 text-center md:text-left">
+              <p className="text-brand font-bold uppercase tracking-widest text-[11px]">Mission</p>
+              <h2 className="text-4xl md:text-6xl font-extrabold tracking-tight leading-tight max-w-4xl">
+                Klare Prozesse statt verstreuter Informationen für euren Jahrgang.
+              </h2>
+            </div>
+            
+            <div className="grid md:grid-cols-2 gap-12 lg:gap-24">
+              <div className="space-y-6 text-lg leading-relaxed text-muted-foreground font-medium">
+                <p>
+                  ABI Planer bündelt Budget, Aufgaben, Termine und Abstimmungen an einem zentralen Ort.
+                  Kein Suchen mehr in unübersichtlichen Chats oder veralteten Tabellen.
+                </p>
+                <p>
+                  So entsteht ein dauerhaftes Archiv für euren Abschluss. Alle Entscheidungen und
+                  Zuständigkeiten sind jederzeit transparent für alle Beteiligten einsehbar.
+                </p>
+              </div>
+              <div className="grid gap-8">
+                {[
+                  {
+                    title: 'Planung mit Überblick',
+                    text: 'Finanzen, Aufgaben und Deadlines sind an einem Ort sichtbar.',
+                  },
+                  {
+                    title: 'Mitbestimmung mit Struktur',
+                    text: 'Abstimmungen schaffen eine Grundlage für Entscheidungen.',
+                  },
+                ].map((item) => (
+                  <div key={item.title} className="space-y-2">
+                    <p className="font-bold text-foreground">{item.title}</p>
+                    <p className="text-sm leading-relaxed text-muted-foreground">{item.text}</p>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </section>
 
-        {/* Features Bento Grid - Student Copy */}
-        <section id="features" className="py-32 bg-secondary/10 relative">
-          <div className="max-w-7xl mx-auto px-6">
-            <div className="text-center mb-20 space-y-4">
-              <p className="text-brand font-black uppercase tracking-[0.4em] text-[10px]">Alles was ihr braucht</p>
-              <h2 className="text-4xl md:text-6xl font-black tracking-tight italic uppercase">Volle Kontrolle.</h2>
+        {/* Trust Indicators - Open List */}
+        <section className="px-6 py-20 border-t border-border/40">
+          <div className="max-w-7xl mx-auto grid gap-12 md:grid-cols-3">
+            {[
+              {
+                title: 'Datenschutz',
+                text: 'Datenzugriffe sind klar getrennt und nachvollziehbar.',
+              },
+              {
+                title: 'Schul-Fokus',
+                text: 'Optimiert für die Jahrgangsorganisation und Teamarbeit.',
+              },
+              {
+                title: 'Interaktion',
+                text: 'Karten-Features fördern die aktive Beteiligung aller Schüler.',
+              },
+            ].map((item) => (
+              <div key={item.title} className="space-y-4">
+                <div className="h-1 w-8 bg-brand/30" />
+                <h3 className="text-xl font-bold tracking-tight">{item.title}</h3>
+                <p className="text-sm leading-relaxed text-muted-foreground font-medium">{item.text}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Features - Zick-Zack Editorial Layout with Graphics */}
+        <section id="features" className="py-32 space-y-48 relative overflow-hidden">
+          {/* Background Decorative Elements */}
+          <div className="absolute top-1/4 -left-20 w-96 h-96 bg-brand/5 blur-[120px] rounded-full pointer-events-none" />
+          <div className="absolute top-3/4 -right-20 w-80 h-80 bg-blue-500/5 blur-[100px] rounded-full pointer-events-none" />
+
+          {/* Feature 1: Finances */}
+          <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center gap-16 lg:gap-24">
+            <div className="flex-1 space-y-8 order-2 md:order-1">
+              <div className="space-y-4">
+                <p className="text-brand font-bold uppercase tracking-widest text-[11px]">Planung</p>
+                <h3 className="text-4xl md:text-5xl font-extrabold tracking-tight">Finanzen & Budget</h3>
+                <p className="text-muted-foreground text-lg leading-relaxed max-w-md font-medium">Behaltet Einnahmen und Ausgaben jederzeit im Blick. Realistische Kalkulationen helfen euch bei der Budgetplanung.</p>
+              </div>
+              <Button asChild variant="link" className="px-0 font-bold text-brand hover:no-underline flex items-center gap-2 group transition-all">
+                <a href={`${dashboardBaseUrl}/vorteile/finanzen`}>
+                  Details ansehen <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                </a>
+              </Button>
             </div>
+            <div className="flex-1 w-full aspect-video bg-muted/20 rounded-[2.5rem] border border-border/50 order-1 md:order-2 relative overflow-hidden group">
+              <div className="absolute inset-0 bg-gradient-to-br from-brand/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+              <DollarSign className="h-24 w-24 text-brand/20 group-hover:text-brand/40 transition-all duration-700 group-hover:scale-110" />
+            </div>
+          </div>
 
-            <div className="grid md:grid-cols-3 gap-6">
-              {/* Feature 1: Finances */}
-              <motion.div 
-                whileHover={{ y: -10 }}
-                className="md:col-span-2 bg-card border border-border/50 p-10 rounded-[3rem] flex flex-col justify-between group overflow-hidden relative"
-              >
-                <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
-                   <DollarSign className="h-40 w-40 text-brand -mr-10 -mt-10" />
-                </div>
-                <div className="space-y-4 relative z-10">
-                  <div className="h-12 w-12 rounded-2xl bg-brand/10 flex items-center justify-center text-brand">
-                    <Target className="h-6 w-6" />
-                  </div>
-                  <h3 className="text-3xl font-black uppercase tracking-tight italic">Cash im Griff</h3>
-                  <p className="text-muted-foreground text-lg max-w-md">Behaltet Einnahmen und Ausgaben transparent im Blick. Automatische Kalkulationen helfen euch, das Sparziel für den Abiball sicher zu erreichen.</p>
-                </div>
-                <div className="pt-8 relative z-10">
-                   <a href={`${dashboardBaseUrl}/vorteile/finanzen`} className="inline-flex items-center text-brand font-black uppercase tracking-widest text-[10px] gap-2 hover:gap-3 transition-all">
-                      Details ansehen <ArrowRight className="h-4 w-4" />
-                   </a>
-                </div>
-              </motion.div>
+          {/* Feature 2: Groups */}
+          <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row-reverse items-center gap-16 lg:gap-24">
+            <div className="flex-1 space-y-8">
+              <div className="space-y-4">
+                <p className="text-brand font-bold uppercase tracking-widest text-[11px]">Struktur</p>
+                <h3 className="text-4xl md:text-5xl font-extrabold tracking-tight">Teams & Aufgaben</h3>
+                <p className="text-muted-foreground text-lg leading-relaxed max-w-md font-medium">Verteilt Aufgaben klar auf Arbeitsgruppen und verfolgt Deadlines für Abizeitung, Merch und Events.</p>
+              </div>
+              <Button asChild variant="link" className="px-0 font-bold text-brand hover:no-underline flex items-center gap-2 group transition-all">
+                <a href={`${dashboardBaseUrl}/vorteile/gruppen`}>
+                  Details ansehen <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                </a>
+              </Button>
+            </div>
+            <div className="flex-1 w-full aspect-video bg-brand rounded-[2.5rem] flex items-center justify-center shadow-2xl shadow-brand/20 relative overflow-hidden group">
+              <div className="absolute inset-0 bg-gradient-to-tr from-black/10 to-transparent opacity-30" />
+              <Users className="h-24 w-24 text-white/30 group-hover:text-white/50 transition-all duration-700 group-hover:scale-110" />
+            </div>
+          </div>
 
-              {/* Feature 2: Groups */}
-              <motion.div 
-                whileHover={{ y: -10 }}
-                className="bg-brand text-brand-foreground p-10 rounded-[3rem] space-y-8 shadow-2xl shadow-brand/20"
-              >
-                <div className="h-12 w-12 rounded-2xl bg-white/20 flex items-center justify-center">
-                  <Users className="h-6 w-6" />
-                </div>
-                <div className="space-y-4">
-                  <h3 className="text-2xl font-black uppercase tracking-tight italic">Euer Team</h3>
-                  <p className="text-brand-foreground/80 font-medium">Koordiniert Aufgaben in Teams wie Abizeitung oder Merch. Behaltet Deadlines im Griff und arbeitet effizient zusammen.</p>
-                </div>
-                <div className="pt-2">
-                   <a href={`${dashboardBaseUrl}/vorteile/gruppen`} className="inline-flex items-center text-brand-foreground font-black uppercase tracking-widest text-[10px] gap-2 hover:gap-3 transition-all">
-                      Details ansehen <ArrowRight className="h-4 w-4" />
-                   </a>
-                </div>
-              </motion.div>
-
-              {/* Feature 3: Polls */}
-              <motion.div 
-                whileHover={{ y: -10 }}
-                className="bg-card border border-border/50 p-10 rounded-[3rem] space-y-8"
-              >
-                <div className="h-12 w-12 rounded-2xl bg-brand/10 flex items-center justify-center text-brand">
-                  <CheckSquare className="h-6 w-6" />
-                </div>
-                <div className="space-y-4">
-                  <h3 className="text-2xl font-black uppercase tracking-tight italic">Eure Stimme</h3>
-                  <p className="text-muted-foreground font-medium">Trefft wichtige Entscheidungen schnell und für alle nachvollziehbar. Schluss mit dem Chaos in Messenger-Gruppen.</p>
-                </div>
-                <div className="pt-2">
-                   <a href={`${dashboardBaseUrl}/vorteile/abstimmungen`} className="inline-flex items-center text-brand font-black uppercase tracking-widest text-[10px] gap-2 hover:gap-3 transition-all">
-                      Details ansehen <ArrowRight className="h-4 w-4" />
-                   </a>
-                </div>
-              </motion.div>
-
-              {/* Feature 4: Calendar */}
-              <motion.div 
-                whileHover={{ y: -10 }}
-                className="md:col-span-2 bg-card border border-border/50 p-10 rounded-[3rem] flex flex-col md:flex-row gap-10 items-center overflow-hidden relative group"
-              >
-                <div className="space-y-4 flex-1">
-                  <div className="h-12 w-12 rounded-2xl bg-brand/10 flex items-center justify-center text-brand">
-                    <Calendar className="h-6 w-6" />
-                  </div>
-                  <h3 className="text-3xl font-black uppercase tracking-tight italic">Alle Termine</h3>
-                  <p className="text-muted-foreground text-lg">Alle Termine an einem Ort – von der ersten Party bis zur Zeugnisvergabe. Synchronisiert für den gesamten Jahrgang.</p>
-                  <div className="pt-2">
-                    <a href={`${dashboardBaseUrl}/vorteile/kalender`} className="inline-flex items-center text-brand font-black uppercase tracking-widest text-[10px] gap-2 hover:gap-3 transition-all">
-                        Details ansehen <ArrowRight className="h-4 w-4" />
-                    </a>
-                  </div>
-                </div>
-                <div className="w-full md:w-64 aspect-square bg-muted/30 rounded-2xl flex items-center justify-center border border-border/50 group-hover:border-brand/30 transition-colors">
-                   <Clock3 className="h-20 w-20 text-brand/20 group-hover:text-brand/40 transition-colors" />
-                </div>
-              </motion.div>
+          {/* Feature 3: Polls */}
+          <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center gap-16 lg:gap-24">
+            <div className="flex-1 space-y-8 order-2 md:order-1">
+              <div className="space-y-4">
+                <p className="text-brand font-bold uppercase tracking-widest text-[11px]">Beteiligung</p>
+                <h3 className="text-4xl md:text-5xl font-extrabold tracking-tight">Abstimmungen</h3>
+                <p className="text-muted-foreground text-lg leading-relaxed max-w-md font-medium">Wichtige Entscheidungen werden demokratisch getroffen und für alle transparent dokumentiert.</p>
+              </div>
+              <Button asChild variant="link" className="px-0 font-bold text-brand hover:no-underline flex items-center gap-2 group transition-all">
+                <a href={`${dashboardBaseUrl}/vorteile/abstimmungen`}>
+                  Details ansehen <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                </a>
+              </Button>
+            </div>
+            <div className="flex-1 w-full aspect-video bg-muted/20 rounded-[2.5rem] flex items-center justify-center border border-border/50 order-1 md:order-2 relative overflow-hidden group">
+              <div className="absolute inset-0 bg-gradient-to-bl from-brand/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+              <CheckSquare className="h-24 w-24 text-brand/20 group-hover:text-brand/40 transition-all duration-700 group-hover:scale-110" />
             </div>
           </div>
         </section>
 
-        {/* Sammelkarten Feature Section (Redesigned) */}
+        {/* Sammelkarten Feature Section - Integrated & Open */}
         <section
           id="tcg"
-          className={isDarkTheme
-            ? 'py-32 px-6 relative overflow-hidden bg-zinc-950 text-white'
-            : 'py-32 px-6 relative overflow-hidden bg-background text-foreground'}
+          className="py-32 px-6 relative overflow-hidden"
         >
-          {/* Immersive Background Effects */}
-          <div className="absolute inset-0 pointer-events-none">
-            <div
-              className={isDarkTheme
-                ? 'absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-[radial-gradient(circle_at_center,rgba(125,210,0,0.15),transparent_70%)]'
-                : 'absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-[radial-gradient(circle_at_center,rgba(125,210,0,0.10),transparent_72%)]'}
-            />
-            <div className={isDarkTheme ? "absolute top-0 left-0 w-full h-full bg-[url('/grid.svg')] opacity-[0.03] invert" : "absolute top-0 left-0 w-full h-full bg-[url('/grid.svg')] opacity-[0.04]"} />
-            
-            {/* Floating Particles/Glows */}
-            <motion.div 
-              animate={{ 
-                y: [0, -20, 0],
-                opacity: [0.2, 0.4, 0.2] 
-              }}
-              transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-              className={isDarkTheme ? 'absolute top-1/4 left-1/4 w-64 h-64 bg-brand/20 rounded-full blur-[100px]' : 'absolute top-1/4 left-1/4 w-64 h-64 bg-brand/10 rounded-full blur-[110px]'} 
-            />
-            <motion.div 
-              animate={{ 
-                y: [0, 20, 0],
-                opacity: [0.1, 0.3, 0.1] 
-              }}
-              transition={{ duration: 7, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-              className={isDarkTheme ? 'absolute bottom-1/4 right-1/4 w-80 h-80 bg-blue-500/10 rounded-full blur-[120px]' : 'absolute bottom-1/4 right-1/4 w-80 h-80 bg-blue-500/5 rounded-full blur-[120px]'} 
-            />
-          </div>
-
           <div className="max-w-7xl mx-auto relative z-10">
              <div className="grid lg:grid-cols-[1.1fr_0.9fr] gap-16 lg:gap-24 items-center">
                 <motion.div 
-                  initial={{ opacity: 0, x: -40 }}
+                  initial={{ opacity: 0, x: -20 }}
                   whileInView={{ opacity: 1, x: 0 }}
                   viewport={{ once: true }}
-                  className="space-y-10"
+                  className="space-y-12"
                 >
                    <div className="space-y-6">
-                      <div className={isDarkTheme ? 'inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand/20 border border-brand/30 text-brand-foreground text-[10px] font-black uppercase tracking-[0.3em]' : 'inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand/10 border border-brand/20 text-brand text-[10px] font-black uppercase tracking-[0.3em]'}>
+                      <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand/5 border border-brand/10 text-brand text-[11px] font-bold uppercase tracking-wider">
                         <Sparkles className="h-3.5 w-3.5" />
-                        <span>Karten-Action für euch</span>
+                        <span>Für den gesamten Jahrgang</span>
                       </div>
-                      <h2 className={isDarkTheme ? 'text-5xl md:text-7xl font-black tracking-tighter italic uppercase leading-[0.9]' : 'text-5xl md:text-7xl font-black tracking-tighter italic uppercase leading-[0.9] text-foreground'}>
-                        Sammeln. <br />
-                        <span className="text-brand">Tauschen. Kämpfen.</span>
+                      <h2 className="text-4xl md:text-6xl font-extrabold tracking-tight leading-tight">
+                        Sammeln. Tauschen. <br />
+                        <span className="text-brand">Gemeinsam erleben.</span>
                       </h2>
-                      <p className={isDarkTheme ? 'text-zinc-400 text-xl leading-relaxed max-w-xl' : 'text-muted-foreground text-xl leading-relaxed max-w-xl'}>
-                        Holt euch eure Lehrer und Mitschüler als digitale Karten. Mit individuellen Werten, Seltenheitsstufen und epischen Battles direkt in der App.
+                      <p className="text-muted-foreground text-lg leading-relaxed max-w-xl font-medium">
+                        Lehrkräfte und Mitschüler werden zu digitalen Sammelkarten. Fördert die Interaktion und schafft bleibende Erinnerungen an eure gemeinsame Zeit.
                       </p>
                    </div>
 
-                   <div className="grid sm:grid-cols-2 gap-4">
+                   <div className="grid sm:grid-cols-2 gap-x-12 gap-y-10">
                       {[
-                        { title: 'Tägliche Booster', desc: 'Jeden Tag neue Karten-Pakete for free abstauben.', icon: Zap },
-                        { title: 'Legendäre Drops', desc: 'Holos, Gold-Editions und extrem seltene Iconic-Karten.', icon: Sparkles },
-                        { title: 'Tauschbörse', desc: 'Tausche Karten live mit deinen Freunden.', icon: Workflow },
-                        { title: 'Stats Battle', desc: 'Miss deine Karten mit anderen im Stufen-Ranking.', icon: Trophy },
+                        { title: 'Tägliche Pakete', desc: 'Regelmäßig neue Karten für eure Sammlung.', icon: Zap },
+                        { title: 'Seltene Editionen', desc: 'Besondere Karten ergänzen eure Kollektion.', icon: Sparkles },
+                        { title: 'Tauschbörse', desc: 'Karten direkt mit Mitschülern tauschen.', icon: Workflow },
+                        { title: 'Ranking', desc: 'Fortschritt im Jahrgangsvergleich sehen.', icon: Trophy },
                       ].map((item, i) => (
-                        <div key={i} className={isDarkTheme ? 'p-6 bg-white/5 border border-white/10 rounded-3xl group hover:bg-brand/5 hover:border-brand/20 transition-all' : 'p-6 bg-card border border-border/60 rounded-3xl group hover:bg-brand/5 hover:border-brand/20 transition-all shadow-sm'}>
-                          <div className={isDarkTheme ? 'h-10 w-10 rounded-xl bg-brand/10 flex items-center justify-center text-brand mb-4 group-hover:scale-110 transition-transform' : 'h-10 w-10 rounded-xl bg-brand/10 flex items-center justify-center text-brand mb-4 group-hover:scale-110 transition-transform'}>
+                        <div key={i} className="space-y-4 group">
+                          <div className="h-10 w-10 rounded-xl bg-brand/5 flex items-center justify-center text-brand group-hover:scale-105 transition-transform">
                               <item.icon className="h-5 w-5" />
                            </div>
-                          <p className={isDarkTheme ? 'font-bold text-zinc-100' : 'font-bold text-foreground'}>{item.title}</p>
-                          <p className={isDarkTheme ? 'text-xs text-zinc-500 mt-1 leading-relaxed' : 'text-xs text-muted-foreground mt-1 leading-relaxed'}>{item.desc}</p>
+                          <div>
+                            <p className="font-bold text-foreground">{item.title}</p>
+                            <p className="text-sm text-muted-foreground mt-1 leading-relaxed font-medium">{item.desc}</p>
+                          </div>
                         </div>
                       ))}
                    </div>
 
-                   <div className="flex flex-wrap gap-4 pt-4">
-                      <Button size="lg" asChild className="h-16 px-10 text-xs font-black uppercase tracking-[0.25em] rounded-2xl bg-brand text-brand-foreground hover:bg-brand/90 shadow-2xl shadow-brand/40">
+                   <div className="flex flex-wrap gap-6 pt-4">
+                      <Button size="lg" asChild className="h-14 px-8 text-sm font-bold rounded-2xl bg-brand text-brand-foreground hover:bg-brand/90 shadow-lg shadow-brand/20 transition-all">
                         <a href={`${dashboardBaseUrl}/register`}>Account erstellen</a>
                       </Button>
-                      <Button variant="ghost" asChild className={isDarkTheme ? 'h-16 px-8 text-xs font-black uppercase tracking-[0.25em] rounded-2xl hover:bg-white/5 text-zinc-400 hover:text-white' : 'h-16 px-8 text-xs font-black uppercase tracking-[0.25em] rounded-2xl hover:bg-muted/70 text-muted-foreground hover:text-foreground'}>
+                      <Button variant="link" asChild className="h-14 px-0 text-sm font-bold text-muted-foreground hover:text-brand transition-colors">
                         <a href={`${dashboardBaseUrl}/vorteile/sammelkarten`}>Wie es funktioniert</a>
                       </Button>
                    </div>
                 </motion.div>
 
                 <motion.div 
-                  initial={{ opacity: 0, scale: 0.9, rotate: 5 }}
-                  whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
                   viewport={{ once: true }}
-                  className="relative flex justify-center overflow-hidden w-full"
+                  className="relative flex justify-center w-full"
                 >
-                   {/* Decorative Rings around the carousel */}
-                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                       <div className={cn(
-                         "w-[120%] aspect-square border rounded-full animate-[spin_20s_linear_infinite] will-change-transform opacity-30",
-                         isDarkTheme ? "border-brand/20" : "border-brand/10"
-                       )} />
-                       <div className={cn(
-                         "w-[140%] aspect-square border rounded-full animate-[spin_30s_linear_infinite_reverse] will-change-transform opacity-20",
-                         isDarkTheme ? "border-white/10" : "border-border/60"
-                       )} />
-                   </div>
-                   
-                   <div className="relative z-10 py-20">
+                   <div className="relative z-10 py-12 w-full max-w-md">
                       <SammelkartenPromo isAuthenticated={isAuthenticated} mode="minimal" />
                       
-                      {/* Floating Labels */}
-                      <motion.div 
-                        animate={{ x: [0, 10, 0], y: [0, -10, 0] }}
-                        transition={{ duration: 4, repeat: Infinity }}
-                        className={isDarkTheme ? 'absolute -top-4 -right-10 bg-brand text-brand-foreground px-4 py-2 rounded-2xl shadow-2xl rotate-12 font-black text-[10px] uppercase tracking-widest hidden md:block' : 'absolute -top-4 -right-10 bg-brand text-brand-foreground px-4 py-2 rounded-2xl shadow-xl rotate-12 font-black text-[10px] uppercase tracking-widest hidden md:block'}
-                      >
-                        Legendär
-                      </motion.div>
-                      <motion.div 
-                        animate={{ x: [0, -8, 0], y: [0, 12, 0] }}
-                        transition={{ duration: 5, repeat: Infinity, delay: 0.5 }}
-                        className={isDarkTheme ? 'absolute -bottom-6 -left-12 bg-zinc-800 text-white border border-white/10 px-4 py-2 rounded-2xl shadow-2xl -rotate-6 font-black text-[10px] uppercase tracking-widest hidden md:block' : 'absolute -bottom-6 -left-12 bg-card text-foreground border border-border/60 px-4 py-2 rounded-2xl shadow-xl -rotate-6 font-black text-[10px] uppercase tracking-widest hidden md:block'}
-                      >
-                        Iconic
-                      </motion.div>
+                      <div className="absolute -top-4 -right-4 bg-brand text-brand-foreground px-3 py-1 rounded-lg shadow-lg font-bold text-[10px] uppercase tracking-wider hidden md:block">
+                        Beliebt
+                      </div>
                    </div>
                 </motion.div>
              </div>
           </div>
         </section>
 
-        {/* Social / News Stream (Interactive Hover) */}
-        <section className="py-32 bg-secondary/10 px-6">
-          <div className="max-w-7xl mx-auto space-y-16">
-             <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
-                <div className="space-y-4">
-                   <p className="text-brand font-black uppercase tracking-[0.4em] text-[10px]">News & Infos</p>
-                   <h2 className="text-4xl md:text-6xl font-black tracking-tight italic uppercase leading-none">
-                      Jahrgangs <br />
-                      Updates.
+        {/* Social / News Stream - Open List */}
+        <section className="py-32 px-6 relative overflow-hidden">
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+          
+          <div className="max-w-7xl mx-auto space-y-20">
+             <div className="flex flex-col md:flex-row md:items-end justify-between gap-10">
+                <div className="space-y-4 text-center md:text-left">
+                   <p className="text-brand font-bold uppercase tracking-widest text-[11px]">Updates</p>
+                   <h2 className="text-4xl md:text-6xl font-extrabold tracking-tight leading-tight">
+                      Neues aus <br />
+                      eurem Jahrgang.
                    </h2>
                 </div>
-                <Button variant="outline" asChild className="h-14 px-8 border-2 border-brand/20 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-brand/5">
-                   <Link href="/news">Alle News lesen <ArrowRight className="ml-2 h-4 w-4" /></Link>
+                <Button variant="outline" asChild className="h-12 px-8 border-border rounded-2xl font-bold text-xs hover:bg-muted/50 transition-all">
+                   <Link href="/news">Alle News lesen</Link>
                 </Button>
              </div>
 
-             <div className="grid md:grid-cols-3 gap-8">
+             <div className="space-y-0 divide-y divide-border/30">
                 <Skeleton
                   name="landing-news"
                   loading={landingNewsLoading}
-                  className="md:col-span-3 grid md:grid-cols-3 gap-8"
+                  className="w-full space-y-0 divide-y divide-border/30"
                   fixture={
-                    <div className="md:col-span-3 grid md:grid-cols-3 gap-8">
+                    <div className="space-y-0 divide-y divide-border/30">
                       {[1, 2, 3].map((i) => (
-                        <article key={i} className="bg-card border border-border/50 h-full p-8 rounded-[2.5rem] space-y-6 flex flex-col">
-                          <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-brand">
-                            <Skeleton className="bg-brand/10 px-3 py-1 rounded-full w-20 h-4" />
-                            <span className="flex items-center gap-1"><Zap className="h-3 w-3" /> Update</span>
+                        <div key={i} className="py-12 grid md:grid-cols-[120px_1fr_auto] gap-10 items-center">
+                          <Skeleton className="h-4 w-20 bg-muted/40" />
+                          <div className="flex gap-8 items-center">
+                            <Skeleton className="h-20 w-32 rounded-2xl bg-muted/60" />
+                            <div className="space-y-3 flex-1">
+                              <Skeleton className="h-6 w-1/2 bg-muted/60" />
+                              <Skeleton className="h-4 w-full bg-muted/40" />
+                            </div>
                           </div>
-                          <div className="space-y-3 flex-1">
-                            <Skeleton className="h-8 w-5/6 rounded-xl bg-muted/60" />
-                            <Skeleton className="h-4 w-full rounded bg-muted/50" />
-                            <Skeleton className="h-4 w-4/5 rounded bg-muted/50" />
-                          </div>
-                          <div className="pt-4 border-t border-border/50 flex items-center justify-between">
-                            <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Mehr erfahren</span>
-                            <Skeleton className="h-4 w-4 rounded-full bg-brand/70" />
-                          </div>
-                        </article>
+                          <Skeleton className="h-8 w-8 rounded-full bg-muted/40" />
+                        </div>
                       ))}
                     </div>
                   }                >
                 {landingNewsLoading ? (
                   Array.from({ length: 3 }).map((_, i) => (
-                    <Skeleton key={i} className="h-80 w-full rounded-[2.5rem]" />
+                    <div key={i} className="py-12"><Skeleton className="h-20 w-full rounded-2xl" /></div>
                   ))
                 ) : landingNews.length > 0 ? (
                   landingNews.map((item, i) => (
                     <motion.div 
                       key={item.id}
-                      initial={{ opacity: 0, y: 20 }}
+                      initial={{ opacity: 0, y: 15 }}
                       whileInView={{ opacity: 1, y: 0 }}
                       viewport={{ once: true }}
                       transition={{ delay: i * 0.1 }}
                     >
-                      <Link href={`/news/${item.id}`} className="group block h-full">
-                        <article className="bg-card border border-border/50 h-full p-8 rounded-[2.5rem] space-y-6 hover:border-brand/50 hover:shadow-2xl hover:shadow-brand/5 transition-all duration-500 flex flex-col">
-                           <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-brand">
-                              <span className="bg-brand/10 px-3 py-1 rounded-full">{item.created_at ? toDate(item.created_at).toLocaleDateString('de-DE') : 'Neu'}</span>
-                              <span className="flex items-center gap-1"><Zap className="h-3 w-3" /> Update</span>
+                      <Link href={`/news/${item.id}`} className="group block py-12">
+                        <article className="grid md:grid-cols-[120px_1fr_auto] gap-10 items-start md:items-center">
+                           <span className="text-sm font-bold text-muted-foreground/50">{item.created_at ? toDate(item.created_at).toLocaleDateString('de-DE') : 'Neu'}</span>
+                           <div className="flex flex-col md:flex-row gap-8 items-start md:items-center flex-1">
+                             {item.image_url && (
+                               <div className="relative h-24 w-40 md:h-20 md:w-32 shrink-0 overflow-hidden rounded-2xl bg-muted border border-border/40 shadow-sm transition-transform group-hover:scale-105">
+                                 <img
+                                   src={item.image_url}
+                                   alt=""
+                                   className="h-full w-full object-cover"
+                                 />
+                               </div>
+                             )}
+                             <div className="space-y-2 flex-1">
+                               <h3 className="text-2xl font-bold tracking-tight group-hover:text-brand transition-colors">{item.title}</h3>
+                               <p className="text-muted-foreground text-sm line-clamp-2 max-w-3xl font-medium leading-relaxed">
+                                  {String(item.content || '').replace(/[#*_`>\[\]\(\)]/g, '')}
+                               </p>
+                             </div>
                            </div>
-                           <h3 className="text-2xl font-black tracking-tight leading-tight group-hover:text-brand transition-colors flex-1">{item.title}</h3>
-                           <p className="text-muted-foreground text-sm line-clamp-2 font-medium">
-                              {String(item.content || '').replace(/[#*_`>\[\]\(\)]/g, '')}
-                           </p>
-                           <div className="pt-4 border-t border-border/50 flex items-center justify-between group-hover:border-brand/20 transition-colors">
-                              <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Mehr erfahren</span>
-                              <ChevronRight className="h-4 w-4 text-brand opacity-0 group-hover:opacity-100 transition-all group-hover:translate-x-1" />
+                           <div className="h-10 w-10 rounded-full border border-border/60 flex items-center justify-center text-muted-foreground/30 group-hover:text-brand group-hover:border-brand/40 group-hover:bg-brand/5 transition-all">
+                              <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-0.5" />
                            </div>
                         </article>
                       </Link>
                     </motion.div>
                   ))
                 ) : (
-                  <div className="md:col-span-3 p-20 text-center border-2 border-dashed border-border rounded-[3rem]">
-                     <p className="text-muted-foreground italic text-lg">Keine aktuellen Updates verfügbar.</p>
+                  <div className="py-24 text-center">
+                     <p className="text-muted-foreground italic font-medium">Keine aktuellen Updates verfügbar.</p>
                   </div>
                 )}
                 </Skeleton>
@@ -689,85 +760,67 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
           </div>
         </section>
 
-        {/* Support the Project Section */}
-        <section className="px-6 py-20 md:py-32 relative overflow-hidden">
-          <div className="max-w-7xl mx-auto">
-            <motion.div 
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="relative rounded-[3rem] border border-amber-500/20 bg-amber-500/5 p-8 md:p-16 overflow-hidden group"
-            >
-              {/* Background Decoration */}
-              <div className="absolute -top-24 -right-24 w-64 h-64 bg-amber-500/10 rounded-full blur-[80px] group-hover:bg-amber-500/20 transition-colors duration-700" />
-              <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-amber-500/10 rounded-full blur-[80px]" />
-              
-              <div className="grid lg:grid-cols-[1fr_auto] gap-12 items-center relative z-10">
-                <div className="space-y-6">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-500 text-[10px] font-black uppercase tracking-[0.3em]">
-                    <Coffee className="h-3.5 w-3.5" />
-                    <span>Community Support</span>
-                  </div>
-                  <h2 className="text-4xl md:text-6xl font-black tracking-tight italic uppercase leading-[0.9]">
-                    Unterstütze <br />
-                    <span className="text-amber-500">das Projekt.</span>
-                  </h2>
-                  <p className="text-muted-foreground text-lg md:text-xl leading-relaxed max-w-2xl font-medium">
-                    Der ABI Planer ist und bleibt kostenlos für alle Schüler. Wenn dir die Plattform gefällt und du uns helfen möchtest, die Serverkosten zu decken und neue Features zu entwickeln, freuen wir uns über einen kleinen Kaffee.
-                  </p>
-                </div>
-                
-                <div className="flex flex-col sm:flex-row gap-4">
-                  <Button size="lg" asChild className="h-16 px-10 text-xs font-black uppercase tracking-[0.25em] rounded-2xl bg-amber-500 text-white hover:bg-amber-600 shadow-xl shadow-amber-500/20 border-none group">
-                    <a href="https://buymeacoffee.com/maxilo" target="_blank" rel="noopener noreferrer">
-                      Kaffee spendieren
-                      <Coffee className="ml-2 h-4 w-4 transition-transform group-hover:rotate-12" />
-                    </a>
-                  </Button>
-                </div>
+        {/* Support the Project - Editorial Integration */}
+        <section className="px-6 py-32 bg-secondary/5">
+          <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-12">
+            <div className="space-y-6 max-w-2xl">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/5 border border-amber-500/10 text-amber-600 dark:text-amber-500 text-[11px] font-bold uppercase tracking-wider">
+                <Coffee className="h-3.5 w-3.5" />
+                <span>Projekt-Support</span>
               </div>
-            </motion.div>
+              <h2 className="text-4xl md:text-5xl font-extrabold tracking-tight leading-tight">
+                Unterstützt die <br />
+                <span className="text-amber-500">Weiterentwicklung.</span>
+              </h2>
+              <p className="text-muted-foreground text-lg leading-relaxed font-medium">
+                Der ABI Planer ist für Schüler kostenlos. Wer uns unterstützen möchte, kann dies durch eine freiwillige Förderung tun. So bleiben wir unabhängig und werbefrei.
+              </p>
+            </div>
+            
+            <Button size="lg" asChild className="h-14 px-8 text-sm font-bold rounded-2xl bg-amber-500 text-white hover:bg-amber-600 shadow-xl shadow-amber-500/20 border-none group transition-all shrink-0">
+              <a href="https://buymeacoffee.com/maxilo" target="_blank" rel="noopener noreferrer">
+                Projekt unterstützen
+                <Coffee className="ml-2 h-4 w-4 transition-transform group-hover:rotate-12" />
+              </a>
+            </Button>
           </div>
         </section>
 
-        {/* Final CTA Section */}
-        <section className="py-40 px-6 relative overflow-hidden text-center">
-          <div className="max-w-4xl mx-auto space-y-12 relative z-10">
+        {/* Final CTA Section - Pure Typography Focus */}
+        <section className="py-48 px-6 text-center">
+          <div className="max-w-4xl mx-auto space-y-12">
             <motion.div 
-              initial={{ scale: 0.9, opacity: 0 }}
-              whileInView={{ scale: 1, opacity: 1 }}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               className="space-y-6"
             >
-              <h2 className="text-6xl md:text-8xl font-black tracking-tighter italic uppercase leading-[0.85]">
+              <h2 className="text-5xl md:text-8xl font-extrabold tracking-tighter leading-tight">
                 Bereit für <br />
-                <span className="text-brand drop-shadow-[0_0_20px_rgba(125,210,0,0.4)]">das Finale?</span>
+                <span className="text-brand">den Start?</span>
               </h2>
               <p className="text-xl md:text-2xl text-muted-foreground max-w-xl mx-auto leading-relaxed font-medium">
-                Schließt euch eurem Jahrgang an und macht euer Abi legendär. Kostenlos für alle Schüler.
+                Richtet euren Jahrgang ein und bindet alle Schüler aktiv in die Planung ein.
               </p>
             </motion.div>
             
             <motion.div 
-              initial={{ y: 30, opacity: 0 }}
-              whileInView={{ y: 0, opacity: 1 }}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="flex flex-col sm:flex-row items-center justify-center gap-6 pt-6"
+              className="flex flex-col sm:flex-row items-center justify-center gap-6 pt-4"
             >
-               <Button size="lg" asChild className="h-20 px-12 text-sm font-black uppercase tracking-[0.3em] rounded-3xl bg-brand text-brand-foreground hover:bg-brand/90 shadow-2xl shadow-brand/40 group">
+               <Button size="lg" asChild className="h-16 px-10 text-sm font-bold rounded-2xl bg-brand text-brand-foreground hover:bg-brand/90 shadow-2xl shadow-brand/20 transition-all group">
                   <a href={`${dashboardBaseUrl}/register`}>
-                    Jetzt joinen
-                    <Rocket className="ml-3 h-6 w-6 transition-transform group-hover:-translate-y-1 group-hover:translate-x-1" />
+                    Jetzt starten
+                    <Rocket className="ml-3 h-5 w-5 transition-transform group-hover:-translate-y-1 group-hover:translate-x-1" />
                   </a>
                </Button>
-               <Button variant="ghost" asChild className="h-20 px-10 text-sm font-black uppercase tracking-[0.3em] rounded-3xl hover:bg-brand/5">
+               <Button variant="ghost" asChild className="h-16 px-8 text-sm font-bold rounded-2xl text-muted-foreground hover:text-foreground transition-colors">
                   <a href={`${dashboardBaseUrl}/login`}>Einloggen</a>
                </Button>
             </motion.div>
           </div>
-          
-          {/* Large Abstract Shape */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-brand/5 blur-[150px] -z-10 rounded-full animate-pulse" />
         </section>
       </main>
 
@@ -788,17 +841,9 @@ export default function Dashboard() {
   useEffect(() => {
     if (typeof window === 'undefined') return
     const host = window.location.hostname
-    const isDashboardHost = host === 'localhost' || host === '127.0.0.1' || host.startsWith('dashboard.') || host.startsWith('app.')
+    const isDashboardHost = host.startsWith('dashboard.') || host.startsWith('app.') || host.includes('.dashboard.')
     setRootMode(isDashboardHost ? 'dashboard' : 'landing')
   }, [])
-
-  // Auto-redirect logged-in users from landing to dashboard
-  useEffect(() => {
-    if (rootMode === 'landing' && user && !authLoading) {
-      // Use location.href for a full page transition to ensure the middleware/routing context is updated
-      window.location.href = getDashboardRedirectUrl(window.location)
-    }
-  }, [rootMode, user, authLoading])
 
   // Redirect non-logged-in users from dashboard root to login
   useEffect(() => {
@@ -839,7 +884,10 @@ export default function Dashboard() {
   })
 
   const markLoaded = (key: keyof typeof initialLoadState) => {
-    setInitialLoadState((previous) => (previous[key] ? previous : { ...previous, [key]: true }))
+    setInitialLoadState((previous) => {
+      if (previous[key]) return previous;
+      return { ...previous, [key]: true };
+    });
   }
 
   // Activity Tracking: Dashboard-Besuch festhalten (für Admin-Statistiken)
@@ -1071,13 +1119,12 @@ export default function Dashboard() {
     todos: '/todos',
     events: '/kalender',
     polls: '/abstimmungen',
-    leaderboard: '/finanzen',
-    cards: '/sammelkarten'
+    leaderboard: '/finanzen'
   }
 
   const resolvedRootMode =
     rootMode === 'unknown' && isBoneyardBuild && typeof window !== 'undefined'
-      ? (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname.startsWith('dashboard.') || window.location.hostname.startsWith('app.') ? 'dashboard' : 'landing')
+      ? (window.location.hostname.startsWith('dashboard.') || window.location.hostname.startsWith('app.') || window.location.hostname.includes('.dashboard.') ? 'dashboard' : 'landing')
       : rootMode
 
   if (resolvedRootMode === 'unknown') {
@@ -1181,247 +1228,219 @@ export default function Dashboard() {
   )
 
   const renderComponent = (key: DashboardComponentKey) => {
-    const ComponentContent = () => {
-      switch (key) {
-        case 'funding':
-          return (
-            <div className="flex flex-col">
-              <Skeleton
-                name="dashboard-funding"
-                loading={!initialLoadState.settings || !initialLoadState.finances}
-                fixture={
-                  <div className="w-full h-full border-none shadow-card rounded-2xl bg-card p-6 space-y-6">
-                    <div className="flex items-center justify-between border-b pb-2">
-                      <Skeleton className="h-4 w-32 bg-muted/60" />
-                      <Skeleton className="h-4 w-8 bg-muted/60" />
+    let content = null
+
+    switch (key) {
+      case 'funding':
+        content = (
+          <div className="flex flex-col">
+            <Skeleton
+              name="dashboard-funding"
+              loading={(!initialLoadState.settings || !initialLoadState.finances) && !timeoutReached}
+              fixture={
+                <div className="w-full h-full border-none shadow-card rounded-2xl bg-card p-6 space-y-6">
+                  <div className="flex items-center justify-between border-b pb-2">
+                    <Skeleton className="h-4 w-32 bg-muted/60" />
+                    <Skeleton className="h-4 w-8 bg-muted/60" />
+                  </div>
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-end">
+                      <Skeleton className="h-8 w-32 bg-muted/60" />
+                      <Skeleton className="h-4 w-20 bg-muted/40" />
                     </div>
-                    <div className="space-y-4">
-                      <div className="flex justify-between items-end">
-                        <Skeleton className="h-8 w-32 bg-muted/60" />
-                        <Skeleton className="h-4 w-20 bg-muted/40" />
+                    <Skeleton className="h-3 w-full rounded-full bg-muted/40" />
+                  </div>
+                  <div className="pt-4 border-t space-y-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div className="space-y-2">
+                        <Skeleton className="h-3 w-24 bg-muted/60" />
+                        <Skeleton className="h-8 w-24 bg-muted/60" />
                       </div>
-                      <Skeleton className="h-3 w-full rounded-full bg-muted/40" />
-                    </div>
-                    <div className="pt-4 border-t space-y-4">
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                        <div className="space-y-2">
-                          <Skeleton className="h-3 w-24 bg-muted/60" />
-                          <Skeleton className="h-8 w-24 bg-muted/60" />
-                        </div>
-                        <div className="text-right space-y-2">
-                          <Skeleton className="h-3 w-24 bg-muted/60 ml-auto" />
-                          <Skeleton className="h-7 w-20 bg-muted/60 ml-auto" />
-                        </div>
-                      </div>
-                      <div className="space-y-1">
-                        <Skeleton className="h-2 w-full bg-muted/40" />
-                        <Skeleton className="h-2 w-4/5 bg-muted/40" />
+                      <div className="text-right space-y-2">
+                        <Skeleton className="h-3 w-24 bg-muted/60 ml-auto" />
+                        <Skeleton className="h-7 w-20 bg-muted/60 ml-auto" />
                       </div>
                     </div>
-                  </div>
-                }
-              >
-              <FundingStatus
-                key="funding"
-                current={currentFunding}
-                goal={settings?.funding_goal ?? 10000}
-                initialTicketSales={settings?.expected_ticket_sales ?? 150}
-                onTicketSalesChange={canEditTicketSales ? handleTicketSalesChange : undefined}
-                canEditTicketSales={canEditTicketSales}
-                isAuthenticated={!!user}
-                loading={!initialLoadState.settings || !initialLoadState.finances}
-              />
-              </Skeleton>
-            </div>
-          )
-        case 'news':
-          return (
-            <div className="flex flex-col">
-              <Skeleton
-                name="dashboard-news"
-                loading={!initialLoadState.news}
-                fixture={
-                  <div className="flex flex-col border-border/40 shadow-card overflow-hidden bg-card rounded-2xl">
-                    <div className="pb-3 border-b border-border bg-muted/10 shrink-0 p-4">
-                      <Skeleton className="h-5 w-32 bg-muted/60" />
+                    <div className="space-y-1">
+                      <Skeleton className="h-2 w-full bg-muted/40" />
+                      <Skeleton className="h-2 w-4/5 bg-muted/40" />
                     </div>
-                    <div className="p-4 space-y-4">
-                      {[1, 2].map((i) => (
-                        <div key={i} className="flex gap-4 items-start bg-background rounded-xl p-4 border border-border/40">
-                          <Skeleton className="h-16 w-16 shrink-0 rounded-lg bg-muted/60" />
-                          <div className="flex-1 space-y-2">
-                            <Skeleton className="h-4 w-3/4 bg-muted/60" />
-                            <Skeleton className="h-3 w-full bg-muted/40" />
-                            <Skeleton className="h-3 w-5/6 bg-muted/40" />
-                          </div>
+                  </div>
+                </div>
+              }
+            >
+            <FundingStatus
+              key="funding"
+              current={currentFunding}
+              goal={settings?.funding_goal ?? 10000}
+              initialTicketSales={settings?.expected_ticket_sales ?? 150}
+              onTicketSalesChange={canEditTicketSales ? handleTicketSalesChange : undefined}
+              canEditTicketSales={canEditTicketSales}
+              isAuthenticated={!!user}
+              loading={!initialLoadState.settings || !initialLoadState.finances}
+            />
+            </Skeleton>
+          </div>
+        )
+        break
+      case 'news':
+        content = (
+          <div className="flex flex-col">
+            <Skeleton
+              name="dashboard-news"
+              loading={!initialLoadState.news && !timeoutReached}
+              fixture={
+                <div className="flex flex-col border-border/40 shadow-card overflow-hidden bg-card rounded-2xl">
+                  <div className="pb-3 border-b border-border bg-muted/10 shrink-0 p-4">
+                    <Skeleton className="h-5 w-32 bg-muted/60" />
+                  </div>
+                  <div className="p-4 space-y-4">
+                    {[1, 2].map((i) => (
+                      <div key={i} className="flex gap-4 items-start bg-background rounded-xl p-4 border border-border/40">
+                        <Skeleton className="h-16 w-16 shrink-0 rounded-lg bg-muted/60" />
+                        <div className="flex-1 space-y-2">
+                          <Skeleton className="h-4 w-3/4 bg-muted/60" />
+                          <Skeleton className="h-3 w-full bg-muted/40" />
+                          <Skeleton className="h-3 w-5/6 bg-muted/40" />
                         </div>
-                      ))}
-                    </div>
+                      </div>
+                    ))}
                   </div>
-                }
-              >
-                <NewsPreview key="news" items={news.slice(0, 2)} loading={!initialLoadState.news} />
-              </Skeleton>
-            </div>
-          )
-        case 'todos':
-          return (
-            <div className="flex flex-col">
-              <Skeleton
-                name="dashboard-todos"
-                loading={!initialLoadState.todos}
-                fixture={
-                  <div className="h-full border-border/40 shadow-subtle flex flex-col overflow-hidden rounded-2xl bg-card">
-                    <div className="pb-3 border-b border-border bg-muted/10 shrink-0 p-4">
-                      <Skeleton className="h-5 w-28 bg-muted/60" />
-                    </div>
-                    <div className="p-4 space-y-3">
-                      {[1, 2, 3, 4].map((i) => (
-                        <div key={i} className="flex items-start gap-3 rounded-lg border border-border/70 bg-background/80 px-3 py-2">
-                          <Skeleton className="h-4 w-4 mt-0.5 bg-muted/60" />
-                          <div className="flex-1 space-y-2">
-                            <Skeleton className="h-4 w-3/4 bg-muted/60" />
-                            <div className="flex gap-2">
-                              <Skeleton className="h-3 w-16 bg-muted/40" />
-                              <Skeleton className="h-3 w-24 bg-muted/40" />
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                </div>
+              }
+            >
+              <NewsPreview key="news" items={news.slice(0, 2)} loading={!initialLoadState.news} />
+            </Skeleton>
+          </div>
+        )
+        break
+      case 'todos':
+        content = (
+          <div className="flex flex-col">
+            <Skeleton
+              name="dashboard-todos"
+              loading={!initialLoadState.todos && !timeoutReached}
+              fixture={
+                <div className="h-full border-border/40 shadow-subtle flex flex-col overflow-hidden rounded-2xl bg-card">
+                  <div className="pb-3 border-b border-border bg-muted/10 shrink-0 p-4">
+                    <Skeleton className="h-5 w-28 bg-muted/60" />
                   </div>
-                }
-              >
-                <TodoList
-                  key="todos"
-                  todos={todos || []}
-                  canManage={canManage}
-                  maxItems={5}
-                  useScrollContainer={false}
-                  loading={!initialLoadState.todos}
-                />
-              </Skeleton>
-            </div>
-          )
-        case 'events':
-          return (
-            <div className="flex flex-col">
-              <Skeleton
-                name="dashboard-events"
-                loading={!initialLoadState.events}
-                fixture={
-                  <div className="h-full border-border/40 shadow-subtle flex flex-col overflow-hidden rounded-2xl bg-card">
-                    <div className="pb-3 border-b border-border bg-muted/10 shrink-0 p-4">
-                      <Skeleton className="h-5 w-32 bg-muted/60" />
-                    </div>
-                    <div className="p-4 space-y-4">
-                      {[1, 2, 3].map((i) => (
-                        <div key={i} className="flex items-center gap-4 pb-3 border-b last:border-0">
-                          <Skeleton className="h-[50px] min-w-[50px] rounded-lg bg-primary/15" />
-                          <div className="flex-1 space-y-2">
-                            <Skeleton className="h-4 w-1/2 bg-muted/60" />
+                  <div className="p-4 space-y-3">
+                    {[1, 2, 3, 4].map((i) => (
+                      <div key={i} className="flex items-start gap-3 rounded-lg border border-border/70 bg-background/80 px-3 py-2">
+                        <Skeleton className="h-4 w-4 mt-0.5 bg-muted/60" />
+                        <div className="flex-1 space-y-2">
+                          <Skeleton className="h-4 w-3/4 bg-muted/60" />
+                          <div className="flex gap-2">
+                            <Skeleton className="h-3 w-16 bg-muted/40" />
                             <Skeleton className="h-3 w-24 bg-muted/40" />
-                            <Skeleton className="h-3 w-32 bg-muted/40" />
                           </div>
                         </div>
-                      ))}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              }
+            >
+              <TodoList
+                key="todos"
+                todos={todos || []}
+                canManage={canManage}
+                maxItems={5}
+                useScrollContainer={false}
+                loading={!initialLoadState.todos}
+              />
+            </Skeleton>
+          </div>
+        )
+        break
+      case 'events':
+        content = (
+          <div className="flex flex-col">
+            <Skeleton
+              name="dashboard-events"
+              loading={!initialLoadState.events && !timeoutReached}
+              fixture={
+                <div className="h-full border-border/40 shadow-subtle flex flex-col overflow-hidden rounded-2xl bg-card">
+                  <div className="pb-3 border-b border-border bg-muted/10 shrink-0 p-4">
+                    <Skeleton className="h-5 w-32 bg-muted/60" />
+                  </div>
+                  <div className="p-4 space-y-4">
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="flex items-center gap-4 pb-3 border-b last:border-0">
+                        <Skeleton className="h-[50px] min-w-[50px] rounded-lg bg-primary/15" />
+                        <div className="flex-1 space-y-2">
+                          <Skeleton className="h-4 w-1/2 bg-muted/60" />
+                          <Skeleton className="h-3 w-24 bg-muted/40" />
+                          <Skeleton className="h-3 w-32 bg-muted/40" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              }
+            >
+              <CalendarEvents
+                key="events"
+                events={events || []}
+                maxItems={3}
+                useScrollContainer={false}
+                loading={!initialLoadState.events}
+              />
+            </Skeleton>
+          </div>
+        )
+        break
+      case 'leaderboard':
+        content = (
+          <div className="flex flex-col">
+            <Skeleton
+              name="dashboard-leaderboard"
+              loading={(!initialLoadState.finances || !initialLoadState.shopEarnings) && !timeoutReached}
+              fixture={
+                <div className="h-full border-border/40 shadow-subtle overflow-hidden flex flex-col rounded-2xl bg-card">
+                  <div className="pb-3 border-b border-border bg-muted/10 shrink-0 p-4">
+                    <div className="flex items-center justify-between">
+                      <Skeleton className="h-5 w-28 bg-muted/60" />
+                      <Skeleton className="h-5 w-20 rounded-full bg-muted/60" />
                     </div>
                   </div>
-                }
-              >
-                <CalendarEvents
-                  key="events"
-                  events={events || []}
-                  maxItems={3}
-                  useScrollContainer={false}
-                  loading={!initialLoadState.events}
-                />
-              </Skeleton>
-            </div>
-          )
-        case 'polls':
-          return null
-        case 'leaderboard':
-          return (
-            <div className="flex flex-col">
-              <Skeleton
-                name="dashboard-leaderboard"
-                loading={!initialLoadState.finances}
-                fixture={
-                  <div className="h-full border-border/40 shadow-subtle overflow-hidden flex flex-col rounded-2xl bg-card">
-                    <div className="pb-3 border-b border-border bg-muted/10 shrink-0 p-4">
-                      <div className="flex items-center justify-between">
-                        <Skeleton className="h-5 w-28 bg-muted/60" />
-                        <Skeleton className="h-5 w-20 rounded-full bg-muted/60" />
-                      </div>
-                    </div>
-                    <div className="p-0 flex-1 space-y-0">
-                      {[1, 2, 3, 4].map((i) => (
-                        <div key={i} className="flex items-center justify-between p-3 min-h-[58px] border-b last:border-0">
-                          <div className="flex items-center gap-3">
-                            <Skeleton className="h-7 w-7 rounded-full bg-muted/60" />
-                            <div className="space-y-2">
-                              <Skeleton className="h-3 w-16 bg-muted/60" />
-                              <Skeleton className="h-1 w-24 bg-muted/40" />
-                            </div>
-                          </div>
-                          <div className="space-y-2 text-right">
-                            <Skeleton className="h-3 w-12 bg-muted/60 ml-auto" />
-                            <Skeleton className="h-2 w-8 bg-muted/40 ml-auto" />
+                  <div className="p-0 flex-1 space-y-0">
+                    {[1, 2, 3, 4].map((i) => (
+                      <div key={i} className="flex items-center justify-between p-3 min-h-[58px] border-b last:border-0">
+                        <div className="flex items-center gap-3">
+                          <Skeleton className="h-7 w-7 rounded-full bg-muted/60" />
+                          <div className="space-y-2">
+                            <Skeleton className="h-3 w-16 bg-muted/60" />
+                            <Skeleton className="h-1 w-24 bg-muted/40" />
                           </div>
                         </div>
-                      ))}
-                    </div>
-                  </div>
-                }
-              >
-                <ClassRanking
-                  key="leaderboard"
-                  finances={allFinances}
-                  shopEarnings={allShopEarnings}
-                  goal={settings?.funding_goal ?? 10000}
-                  maxRows={4}
-                  useScrollContainer={false}
-                  showManualCorrection={false}
-                  loading={!initialLoadState.finances || !initialLoadState.shopEarnings}
-                />
-              </Skeleton>
-            </div>
-          )
-        case 'cards':
-          return (
-            <div className="flex flex-col">
-              <Skeleton
-                name="dashboard-cards"
-                loading={authLoading}
-                fixture={
-                  <div className="overflow-hidden border border-border/40 rounded-2xl bg-card shadow-subtle h-[340px] flex flex-col">
-                    <div className="pb-2 p-4">
-                      <div className="mb-1 flex items-center gap-2">
-                        <Skeleton className="h-6 w-24 bg-muted/60" />
+                        <div className="space-y-2 text-right">
+                          <Skeleton className="h-3 w-12 bg-muted/60 ml-auto" />
+                          <Skeleton className="h-2 w-8 bg-muted/40 ml-auto" />
+                        </div>
                       </div>
-                      <Skeleton className="h-8 w-48 bg-muted/60" />
-                    </div>
-                    <div className="p-4 space-y-4">
-                      <Skeleton className="h-4 w-56 bg-muted/60" />
-                      <Skeleton className="h-4 w-40 bg-muted/40" />
-                      <div className="flex flex-wrap gap-2 py-1">
-                        {[1, 2, 3].map((i) => (
-                          <Skeleton key={i} className="h-6 w-16 rounded-full bg-muted/60" />
-                        ))}
-                      </div>
-                      <Skeleton className="h-10 w-full rounded-xl bg-muted/60" />
-                    </div>
+                    ))}
                   </div>
-                }
-              >
-                <SammelkartenPromo isAuthenticated={!!user} loading={authLoading} />
-              </Skeleton>
-            </div>
-          )
-        default:
-          return null
-      }
+                </div>
+              }
+            >
+              <ClassRanking
+                key="leaderboard"
+                finances={allFinances}
+                shopEarnings={allShopEarnings}
+                goal={settings?.funding_goal ?? 10000}
+                maxRows={4}
+                useScrollContainer={false}
+                showManualCorrection={false}
+                loading={!initialLoadState.finances || !initialLoadState.shopEarnings}
+              />
+            </Skeleton>
+          </div>
+        )
+        break
+      default:
+        return null
     }
 
     return (
@@ -1436,7 +1455,7 @@ export default function Dashboard() {
             e.stopPropagation()
           }
         }}>
-          <ComponentContent />
+          {content}
         </div>
       </div>
     )
@@ -1461,7 +1480,7 @@ export default function Dashboard() {
           <div className="flex flex-col">
             <Skeleton
               name="dashboard-poll"
-              loading={!initialLoadState.polls}
+              loading={!initialLoadState.polls && !timeoutReached}
               fixture={
                 <div className="space-y-6 rounded-2xl border border-border/40 bg-card p-4 shadow-subtle">
                   <div className="space-y-2">
@@ -1522,10 +1541,10 @@ export default function Dashboard() {
 
     if (key === 'todos' && !isFeatureEnabled('todos_status', 'is_todos_enabled')) return items
     if (key === 'events' && !isFeatureEnabled('calendar_status', 'is_calendar_enabled')) return items
-    if (key === 'news' && !isFeatureEnabled('news_status', 'is_news_enabled')) return items
-    if (key === 'cards' && !isFeatureEnabled('sammelkarten_status', 'is_sammelkarten_enabled')) return items
+    if (key === 'news' && !isFeatureEnabled('news_status', 'is_news_enabled')) return items;
 
     return [...items, { type: 'component' as const, key }]
+
   }, [])
 
   return (
@@ -1539,21 +1558,37 @@ export default function Dashboard() {
               currentGoal={settings?.funding_goal ?? 10000} 
             />
           )}
+          {profile && (
+            <CustomizeDashboardDialog 
+              profile={profile} 
+              currentLayout={sortedComponentKeys} 
+            />
+          )}
         </div>
         <p className="text-muted-foreground font-medium uppercase tracking-widest text-xs">Willkommen zurück!</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-        <div className="flex flex-col gap-6">
-          {dashboardItems
-            .filter((_, i) => i % 2 === 0)
-            .map((item) => (item.type === 'poll' ? renderPollComponent(item.poll) : renderComponent(item.key)))}
-        </div>
-        <div className="flex flex-col gap-6">
-          {dashboardItems
-            .filter((_, i) => i % 2 !== 0)
-            .map((item) => (item.type === 'poll' ? renderPollComponent(item.poll) : renderComponent(item.key)))}
-        </div>
+        <AnimatePresence mode="popLayout">
+          {dashboardItems.map((item) => (
+            <motion.div
+              key={item.type === 'poll' ? `poll-${item.poll.id}` : item.key}
+              layout
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.98 }}
+              transition={{ 
+                type: "spring",
+                stiffness: 400,
+                damping: 40,
+                mass: 1
+              }}
+              className="w-full"
+            >
+              {item.type === 'poll' ? renderPollComponent(item.poll) : renderComponent(item.key)}
+            </motion.div>
+          ))}
+        </AnimatePresence>
       </div>
     </div>
   )

@@ -12,6 +12,8 @@ import { Button } from '@/components/ui/button'
 import { Search, X, Filter, Loader2, ArrowLeft } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { buildTeacherCatalogFromSettings, findUserTeacherEntry, TeacherCatalogEntry } from '@/lib/cardCatalog'
+import { mapTeacherCatalogToCardData } from '@/modules/cards/cardData'
+import { getRarityBadgeClass } from '@/modules/shared/rarity'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -43,38 +45,6 @@ interface DeckSelectionProps {
   includeCardIds?: string[]
   title?: string
 }
-
-function getBestVariant(variants: Record<string, number> | undefined): NewCardVariant {
-  if (!variants) return 'normal'
-  if (variants.black_shiny_holo) return 'black_shiny_holo'
-  if (variants.shiny) return 'shiny'
-  if (variants.holo) return 'holo'
-  return 'normal'
-}
-
-function getTeacherRarityHex(rarity: string) {
-  switch (rarity) {
-    case 'common': return '#64748b'
-    case 'rare': return '#10b981'
-    case 'epic': return '#9333ea'
-    case 'mythic': return '#dc2626'
-    case 'legendary': return '#f59e0b'
-    case 'iconic': return '#000000'
-    default: return '#64748b'
-  }
-}
-
-const getRarityBadge = (rarity: TeacherRarity) => {
-  switch (rarity) {
-    case "common": return "bg-slate-500";
-    case "rare": return "bg-emerald-500";
-    case "epic": return "bg-purple-500";
-    case "mythic": return "bg-red-500";
-    case "legendary": return "bg-amber-500";
-    case "iconic": return "bg-neutral-950 border border-amber-500/50 text-amber-500";
-    default: return "";
-  }
-};
 
 export const DeckSelection: React.FC<DeckSelectionProps> = ({
   onSelect,
@@ -136,23 +106,8 @@ export const DeckSelection: React.FC<DeckSelectionProps> = ({
       .map(t => {
         const id = t.fullId
         const userData = findUserTeacherEntry(userTeachers, t)
-        const globalIndex = globalTeachers.findIndex(gt => gt.fullId === t.fullId)
-        
-        const cardData: CardData = {
-          id,
-          setId: t.setId,
-          fullId: t.fullId,
-          name: t.name,
-          rarity: t.rarity,
-          variant: getBestVariant(userData?.variants),
-          color: getTeacherRarityHex(t.rarity),
-          cardNumber: (globalIndex + 1).toString().padStart(3, '0'),
-          description: t.description,
-          hp: t.hp,
-          attacks: t.attacks,
-        }
-        
-        return cardData
+        const cardData: CardData = mapTeacherCatalogToCardData(t, userData, globalTeachers)
+        return { ...cardData, id }
       })
       .sort((a, b) => {
         // First by rarity
@@ -243,13 +198,13 @@ export const DeckSelection: React.FC<DeckSelectionProps> = ({
                   className={cn(
                     "aspect-square rounded-lg flex items-center justify-center transition-all border-2",
                     rarityFilters.includes(rarity)
-                      ? cn("border-transparent shadow-sm", getRarityBadge(rarity))
+                      ? cn("border-transparent shadow-sm", getRarityBadgeClass(rarity))
                       : "border-muted-foreground/10 bg-muted/30 hover:border-muted-foreground/30"
                   )}
                 >
                   <div className={cn(
                     "w-2 h-2 rounded-full",
-                    rarityFilters.includes(rarity) ? "bg-white" : getRarityBadge(rarity)
+                    rarityFilters.includes(rarity) ? "bg-white" : getRarityBadgeClass(rarity)
                   )} />
                 </button>
               ))}

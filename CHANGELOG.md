@@ -8,6 +8,162 @@
 
 # Changelog
 
+## [1.13.12] - 2026-04-16
+### Geändert
+- **Ganzheitliche Datenvisualisierung:** Vollständiger Ersatz von statischen Metriken und Icons durch interaktive Chart.js Graphen auf der gesamten Landing Page.
+- **Sparkline Integration:** Die Public Stats und Sammelkarten-Vorteile nutzen nun kleine, dynamische Sparklines mit steilen Erfolgskurven.
+- **Feature-Charts:** Ersatz der SVG-Visuals in der Features-Sektion durch detaillierte Chart.js Linien- und Flächendiagramme zur besseren Funktionsdarstellung.
+- **Konsistente Erfolgskurven:** Alle Graphen wurden einheitlich auf eine steile Aufwärtsentwicklung optimiert, um den Performance-Boost der Plattform zu unterstreichen.
+
+## [1.13.11] - 2026-04-16
+### Hinzugefügt
+- **Erfolgsgraphen:** Integration von dynamischen Chart.js Graphen in die Landing Page, um den Planungsfortschritt und die Effizienzsteigerung zu visualisieren.
+- **Performance-Visualisierung:** Zwei neue Graphen zeigen die steile Erfolgskurve bei der Nutzung der Plattform für Planungs-Effizienz und Team-Koordination.
+
+## [1.13.10] - 2026-04-16
+### Behoben
+- **News-Bilder:** Korrektur der Anzeige von News-Bildern in der Landing-Page-Listenansicht.
+
+### Geändert
+- **Grafische Aufwertung:** Integration von abstrakten SVG-Grafiken, Graphen und Diagrammen in den Feature-Sektionen zur besseren Visualisierung der Funktionen.
+- **Raumtrenner:** Implementierung von hochwertigen Gradient-Dividern zwischen den Hauptsektionen für eine klarere visuelle Struktur.
+- **Interaktive Platzhalter:** Aufwertung der Visuals in der Dual-Focus-Sektion durch dynamische Gradients und Grid-Muster.
+- **Background-Atmosphäre:** Hinzufügen von subtilen Hintergrund-Blobs und Glow-Effekten, um den 'Open Space' lebendiger zu gestalten.
+
+## [1.13.9] - 2026-04-16
+### Geändert
+- **Open Space Redesign:** Vollständige Abkehr vom Kachel-basierten Layout. Trennung von Inhalten erfolgt nun primär durch Whitespace und Typografie statt durch Rahmen und Container.
+- **Editorial Features:** Umstellung der Feature-Präsentation auf ein großzügiges Zick-Zack-Layout mit Fokus auf Text und Visuals.
+- **Metric Highlights:** Darstellung von System-Statistiken als freistehende, prominente Typografie-Elemente ohne umschließende Boxen.
+- **Listen-basierte News:** Umstellung der News-Sektion von Kacheln auf eine saubere, offene Listenansicht mit dezenten Dividern.
+- **Integration Sammelkarten:** Der interaktive Sammelkarten-Bereich wurde nahtloser in das offene Gesamtdesign integriert.
+
+## [1.13.8] - 2026-04-16
+### Hinzugefügt
+- **Kontextsensitive Navigation:** Die Menüleiste erkennt nun die aktuelle Domain und zeigt für externe Nutzer auf der TCG-Domain nur relevante Inhalte an.
+- **Cross-Domain Navigation:** Planer und Admins behalten auf der TCG-Domain Zugriff auf alle Planungsmodule über automatische Cross-Domain-Links (absolut statt relativ).
+- **"Zurück zum Planer":** Neue Navigationssektion für Planer auf der TCG-Domain, um schnell zum Dashboard oder Kalender zurückzukehren.
+
+### Geändert
+- **Landing Page Redesign:** Vollständige Überarbeitung der Landing Page (`/`) in einem minimalistischen und modernen Stil.
+- **Typografie-Update:** Entfernung aggressiver Stilmittel (exzessives Uppercase/Italic/Font-Black) zugunsten einer saubereren, besser lesbaren Schriftgestaltung.
+- **Inhalts-Mix:** Optimierte Balance zwischen Planungs-Features (Organisation) und interaktiven Sammelkarten.
+- **UI-Polishing:** Konsistente Abrundungen (rounded-3xl/2xl) und reduzierte Hover-Effekte für ein ruhigeres Nutzererlebnis.
+- **Kompaktes Design:** Optimierung der Sektionsabstände und Whitespace für eine bessere Darstellung auf mobilen Endgeräten.
+
+## [1.13.7] - 2026-04-16
+### Behoben
+- **Local Dev Redirects:** Redirects im Localhost nutzen nun `http` statt `https` und behalten die Port-Nummer bei, um SSL-Protokollfehler zu vermeiden.
+- **Dashboard-Flackern:** Behebung eines kritischen Render-Bugs, bei dem Widgets bei Datenaktualisierungen unnoetig unmounted und remounted wurden (Fix: Entfernen von internen Komponenten-Definitionen in der Render-Schleife).
+- **Synchronisation der Ladezustaende:** Vereinheitlichung der Skeleton-Logik fuer das Kurs-Ranking, um visuelle Spruenge (Flickering) zwischen verschiedenen Daten-Streams zu vermeiden.
+
+## [1.13.6] - 2026-04-16
+### Hinzugefuegt
+- **Striktes Domain-Routing:** Implementierung von automatischen Redirects (HTTP 307) zwischen `abi-planer-27.de` (Landing), `dashboard.abi-planer-27.de` (Planner) und `tcg.abi-planer-27.de` (Sammelkarten).
+- **Subdomain-Enforcement:** Nutzer werden nun automatisch auf die korrekte Subdomain umgeleitet, wenn sie eine Seite ueber den falschen Host aufrufen, anstatt einen 404-Fehler zu erhalten.
+- **Routenzuweisung:** `/uber`, `/vorteile`, `/agb`, `/datenschutz` und `/impressum` sind jetzt exklusiv auf der Landing-Domain verfügbar; `/sammelkarten`, `/shop` und `/battle-pass` auf der TCG-Domain; alle Planungsmodule inklusive `/aufgaben` auf der Dashboard-Domain.
+
+## [1.13.5] - 2026-04-16
+### Geaendert
+- **Native Browser-Bestaetigungen entfernt:** Alle verbleibenden `confirm`/`prompt`-Bestaetigungen im Frontend wurden auf den zentralen Popup-Manager migriert.
+- **Admin-Flows vereinheitlicht:** Kritische Aktionen in Admin-Bereichen (u. a. Nutzerverwaltung, Sammelkarten-Admin, Danger Zone, Logs, Global Settings, System Control, Einladungen, Teacher Edit, 2FA-Disable) nutzen jetzt konsistente Modal-Bestaetigungen statt Browser-Dialogs.
+- **2FA-Disable modernisiert:** Der Code fuer die Deaktivierung der Zwei-Faktor-Authentisierung wird nun ueber den neuen Prompt-Modal-Flow abgefragt.
+
+## [1.13.4] - 2026-04-16
+### Geaendert
+- **Popup-Manager gehaertet:** Das System unterstuetzt jetzt async-sichere Aktionen mit Pending-State und Fehleranzeige in Modal- und Banner-Nachrichten.
+- **Modal-Queue eingefuehrt:** Es wird immer genau ein Modal gleichzeitig angezeigt (FIFO), wodurch ueberlappende Dialoge vermieden werden.
+- **Prompt-Unterstuetzung ergaenzt:** Der zentrale Popup-Manager bietet nun `prompt()` mit einfacher String-Validierung fuer typed confirmations.
+- **Kontoloeschung migriert:** Die Profil-Loeschbestaetigung in `src/app/profil/page.tsx` nutzt den neuen Popup-Prompt statt nativer Browser-Eingabe.
+
+## [1.13.3] - 2026-04-16
+### Geaendert
+- **TCG-Auslagerung gestartet:** Die App bekommt eine eigene `tcg`-Subdomain, damit Sammelkarten und Spielfunktionen getrennt von der Planung laufen können.
+- **Klassenbasierte Zielzuordnung:** Login und Registrierung leiten künftig anhand von `class_name` bzw. `access_target` auf dashboard oder tcg.
+- **Sammelkarten-Routing:** Kartenrouten werden serverseitig nach tcg umgeleitet; tcg blockt dafür Planungsrouten.
+- **Callable CORS erweitert:** `tcg.abi-planer-27.de` ist jetzt für Cloud Functions freigegeben.
+
+## [1.13.2] - 2026-04-16
+### Geändert
+- **Modularisierung (Status erweitert):** `src/modules/shared/status.ts` um wiederverwendbare Status-Metadaten für Aufgaben (`Task`) und Karten-Tausch (`Trade`) ergänzt.
+- **Aufgaben-Status zentralisiert:** `src/app/aufgaben/page.tsx` und `src/app/aufgaben/[id]/page.tsx` nutzen gemeinsame Task-Status-Helper statt lokaler Switch-Logik.
+- **Trade-Status zentralisiert:** `src/app/sammelkarten/tausch/page.tsx` und `src/app/admin/trades/page.tsx` rendern Status-Badges nun aus derselben Trade-Status-Quelle.
+- **Deck/Card-Mapping vereinheitlicht:** `src/components/cards/DeckEditor.tsx` und `src/components/modals/DeckSelectionModal.tsx` verwenden das zentrale Mapping aus `src/modules/cards/cardData.ts` sowie gemeinsame Rarity-Badge-Helper.
+- **Rarity-Hex global wiederverwendet:** `src/app/sammelkarten/_modules/utils/cardData.ts` bezieht Farbwerte jetzt aus `src/modules/shared/rarity.ts` statt lokaler Duplikate.
+
+## [1.13.1] - 2026-04-16
+### Behoben
+- **Landing/Dashboard Trennung:** Die Host-Erkennung für das App-Layout wurde korrigiert, damit Landingpages auf `*.localhost` nicht mehr im Dashboard-Layout (Sidebar/Navbar) gerendert werden.
+- **Root-Mode Konsistenz:** Die Root-Logik in `src/app/page.tsx` nutzt nun dieselbe strikte Erkennung wie das Layout und behandelt nur echte `dashboard.*`/`app.*` Hosts als Dashboard.
+
+## [1.13.0] - 2026-04-16
+### Hinzugefügt
+- **Dashboard-Personalisierung:** Nutzer können nun die Reihenfolge der Widgets auf dem Dashboard individuell anpassen und einzelne Widgets (z. B. Finanz-Status, Aufgaben, Abstimmungen) ein- oder ausblenden. Die Einstellungen werden im Profil gespeichert.
+- **CustomizeDashboardDialog:** Neues Modal zur intuitiven Verwaltung des Dashboard-Layouts mit Up/Down-Steuerung und Sichtbarkeits-Toggles.
+
+### Behoben
+- **Widget-Flackern:** Das "Glitschen" der Widgets beim Laden der Daten wurde durch eine stabilere Sortierlogik im `useDashboardSorting` Hook und den Einsatz von `AnimatePresence` mit `layout`-Animationen (framer-motion) behoben. Sprünge während der Initialisierung werden nun unterdrückt.
+
+## [1.12.37] - 2026-04-16
+### Geändert
+- **Performance:** Optimierung der Ladevorgänge durch effizientere Firestore-Abfragen.
+- **Modularisierung (Fortsetzung):** Zentrale Status-Mappings für Feedback und Todos in `src/modules/shared/status.ts` eingeführt (Labels, Badge-Varianten, Status-Tones) und in zentrale UI-Flows eingebunden.
+- **Feedback-Status vereinheitlicht:** `src/components/admin/FeedbackList.tsx` und `src/app/feedback/page.tsx` nutzen dieselbe Status-Metadatenquelle statt doppelter lokaler Switch-Logik.
+- **Todo-Status vereinheitlicht:** `src/components/modals/TodoDetailDialog.tsx` und `src/components/dashboard/TodoList.tsx` greifen auf gemeinsame Status-Helper zu, wodurch Anzeige-Logik an einer Stelle gepflegt wird.
+- **Technische Bereinigung:** Ungenutzte Imports in bereits migrierten Komponenten entfernt (u. a. DeckGrid, CalendarEvents, PollList, AdminSystemContext, GameBoard) für bessere Wartbarkeit und weniger Lint-Rauschen.
+
+## [1.12.35] - 2026-04-16
+### Behoben
+- **Landingpage-Zugriff:** Die automatische Weiterleitung von eingeloggten Nutzern von der Landingpage zum Dashboard wurde entfernt. Nutzer können nun die Landingpage jederzeit besuchen, auch wenn sie bereits angemeldet sind. Der Wechsel zum Dashboard erfolgt nun manuell über den Dashboard-Button im Header.
+
+## [1.12.37] - 2026-04-16
+### Geaendert
+- **Landingpage modernisiert:** Die Root-Landing (`src/app/page.tsx`) wurde klarer und minimalistischer strukturiert, mit serioserer Ansprache fuer Schulen und weiterhin sichtbarem, aber reduzierterem Kartenfokus fuer Schueler.
+- **Tonalitaet ueberarbeitet:** Jugendsprachliche Begriffe und starkes Hype-Wording wurden in Hero, CTA, Feature-Bereichen und Karten-Sektion durch modernere, sachlichere Formulierungen ersetzt.
+- **Vertrauenskommunikation ergaenzt:** Neue Trust-Indikator-Sektion auf der Landing mit Fokus auf Datenschutz, Struktur fuer Schulen und Beteiligung fuer Schueler.
+- **Navigation geschliffen:** `LandingHeader` sprachlich aktualisiert (Funktionen/Karten), Support-Link aus der Hauptnavigation entfernt und CTA auf "Zugang starten" angepasst.
+- **Vorteile-Seiten konsistent:** Texte in `src/app/vorteile/page.tsx` und `src/app/vorteile/[feature]/page.tsx` auf denselben modernisierten Stil angepasst.
+
+## [1.12.33] - 2026-04-16
+### Geändert
+- **Modularisierung (Start):** Einführung eines zentralen Popup-Managers als Hook in `src/modules/popup/usePopupManager.ts` (confirm/alert/notify) auf Basis des bestehenden `SystemMessageContext`.
+- **Bestätigungsdialoge vereinheitlicht:** Alle `window.confirm`-Aufrufe im Frontend wurden auf den neuen Popup-Manager migriert (u. a. Decks, Todos, Kalender, Umfragen, News, Finanzen, Feedback, Kampf-Aufgabe, Admin-Session-Reset).
+- **UX/Technik:** Confirm-Dialoge sind damit konsistent gestylt, Promise-basiert und zentral wartbar, statt verteilt über native Browser-Prompts.
+
+## [1.12.32] - 2026-04-15
+### Hinzugefügt
+- **Erweiterte Barrierefreiheit & Themes:** Die Lehrer-Erstellungsseite bietet nun einen "Erleichterte Bedienung"-Modus (standardmäßig aktiv) und einen Theme-Umschalter (Hell/Dunkel).
+  - **Standard-Modus:** Die Seite startet nun standardmäßig im hellen Design für maximale Lesbarkeit.
+  - **Erleichterte Bedienung:** Wenn dieser Modus aktiv ist, werden alle Erklärungen (HP, KP, Seltenheit etc.) direkt inline angezeigt. Wenn deaktiviert, werden sie platzsparend in anklickbare Informations-Symbole (Popovers) umgewandelt.
+
+## [1.12.31] - 2026-04-15
+### Geändert
+- **Design-Anpassung Lehrer-Karten:** Das Porträtfoto wird auf der Vorderseite der Karte nun durch ein neutrales Symbol ersetzt und ist ausschließlich auf der Detailseite ("Details") sichtbar. Dies sorgt für ein einheitlicheres Erscheinungsbild der Kartenvorderseiten.
+
+## [1.12.30] - 2026-04-15
+### Geändert
+- **Barrierefreiheit Lehrer-Erstellung:** Die Seite zur Erstellung von Lehrer-Sammelkarten (`/lehrer/erstellen/`) wurde grundlegend überarbeitet, um sie für alle Altersgruppen (insbesondere ältere Lehrer) zugänglicher zu machen.
+  - Einführung einer Schritt-für-Schritt-Führung ("Schritt 1", "Schritt 2", "Abschluss").
+  - Hinzufügen von direkt sichtbaren Infoboxen für Spielbegriffe wie **HP/KP** (Lebensenergie/Kraftpunkte), **Seltenheit** und **Attacken/Schaden**.
+  - Optimierung der Beschriftungen (Labels) und Hinzufügen von Hilfstexten für Screenreader via `aria-describedby`.
+  - Anpassung der Benutzeroberfläche für bessere Lesbarkeit und Bedienbarkeit (größere Klickflächen, klarere Strukturen).
+
+## [1.12.29] - 2026-04-15
+### Geändert
+- **Bild-Format auf Karten:** Das Seitenverhältnis der Lehrerbilder auf den Sammelkarten wurde von 4:3 auf 2:1 angepasst (ca. 1/3 weniger Höhe), um mehr Platz für Texte und Angriffe zu schaffen und dem Benutzerwunsch nach kleineren Bildern nachzukommen.
+
+## [1.12.28] - 2026-04-15
+### Geändert
+- **Globale Bild-Formate:** Alle Lehrer-Sammelkarten verwenden nun ein einheitliches 4:3-Seitenverhältnis für das Bildfenster (zuvor 1:1 bzw. 2.2:1). Dies sorgt für eine bessere Kompatibilität mit dem Cropper auf der Erstellungsseite (`/lehrer/erstellen`) und eine authentischere Darstellung.
+
+## [1.12.27] - 2026-04-15
+### Behoben
+- **Karten-Vorschau:** Fix für abgeschnittene Ränder und Schatten in der Kartenvorschau (z. B. unter `/lehrer/erstellen`). Durch das Entfernen von `overflow-hidden` an den äußeren Aspect-Ratio-Containern in `TeacherCard`, `TeacherSpecCard` und `CardRenderer` werden harte Schatten und dicke Rahmen nicht mehr fälschlicherweise gekappt.
+
+## [1.12.26] - 2026-04-15
+### Behoben
+- **Umfragen-Exploit:** Nutzer konnten durch wiederholtes Abgeben und Zurückziehen von Stimmen unbegrenzt Booster-Packs farmen. Die Belohnung wird nun pro Umfrage nur noch einmalig gewährt (persistentes Tracking im Nutzerprofil).
+
 ## [1.12.25] - 2026-04-15
 ### Geändert
 - **Sammelkarten Admin System:** Vollständige Umstellung auf das neue `CardConfig` Typ-System zur Unterstützung verschiedener Kartentypen (Lehrer, Support, etc.).

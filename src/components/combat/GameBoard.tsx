@@ -3,14 +3,14 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { TeacherSpecCard } from '../cards/TeacherSpecCard';
-import { CardData } from '@/types/cards';
-import { Swords, Zap, Shield, Heart, Info, X, Loader2, LogOut, Settings, Trophy, ScrollText } from 'lucide-react';
+import { Swords, Zap, X, Loader2, LogOut, Settings, Trophy, ScrollText } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { httpsCallable } from 'firebase/functions';
 import { functions } from '@/lib/firebase';
 import { getCard } from '@/constants/cardRegistry';
 import { InitialCardSelection } from './InitialCardSelection';
+import { usePopupManager } from '@/modules/popup/usePopupManager';
 
 interface GameBoardProps {
   matchData: any;
@@ -74,6 +74,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   currentUserId,
   onExit
 }) => {
+  const { confirm } = usePopupManager();
   const [focusState, setFocusState] = useState<{ card: any, index?: number, isBench: boolean } | null>(null);
   const [attackAnimation, setAttackAnimation] = useState<{ type: 'player' | 'opponent', damage: number, attackName: string } | null>(null);
   const [showMenu, setShowMenu] = useState(false);
@@ -183,7 +184,13 @@ export const GameBoard: React.FC<GameBoardProps> = ({
 
   const handleSurrender = async () => {
     if (isSubmitting || isFinished) return;
-    const confirmed = window.confirm('Möchtest du den Kampf wirklich aufgeben?');
+    const confirmed = await confirm({
+      title: 'Kampf aufgeben?',
+      content: 'Möchtest du den Kampf wirklich aufgeben?',
+      priority: 'high',
+      confirmLabel: 'Aufgeben',
+      confirmVariant: 'destructive',
+    });
     if (!confirmed) return;
 
     setIsSubmitting(true);

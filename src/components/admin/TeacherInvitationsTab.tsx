@@ -39,6 +39,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
+import { usePopupManager } from '@/modules/popup/usePopupManager'
 
 interface Invitation {
   id: string
@@ -61,6 +62,7 @@ interface Submission {
 }
 
 export function TeacherInvitationsTab() {
+  const { confirm } = usePopupManager()
   const [invitations, setInvitations] = useState<Invitation[]>([])
   const [submissions, setSubmissions] = useState<Submission[]>([])
   const [loading, setLoading] = useState(true)
@@ -119,7 +121,14 @@ export function TeacherInvitationsTab() {
   }
 
   const deleteInvitation = async (id: string) => {
-    if (!confirm('Diese Einladung wirklich löschen?')) return
+    const confirmed = await confirm({
+      title: 'Einladung löschen?',
+      content: 'Diese Einladung wirklich löschen?',
+      priority: 'high',
+      confirmLabel: 'Löschen',
+      confirmVariant: 'destructive',
+    })
+    if (!confirmed) return
     try {
       await deleteDoc(doc(db, 'teacher_invitations', id))
       toast.success('Gelöscht')
@@ -205,7 +214,7 @@ export function TeacherInvitationsTab() {
           }),
           new Paragraph({ children: [new TextRun({ text: "1. QR-Code scannen (auf dem gedruckten Brief)", size: 22 })], spacing: { after: 100 } }),
           new Paragraph({ children: [new TextRun({ text: "2. Karte individuell gestalten", size: 22 })], spacing: { after: 100 } }),
-          new Paragraph({ children: [new TextRun({ text: "3. Foto hochladen (Optional, 4:3 Format)", size: 22 })], spacing: { after: 100 } }),
+          new Paragraph({ children: [new TextRun({ text: "3. Foto hochladen (Optional, 2:1 Format)", size: 22 })], spacing: { after: 100 } }),
           new Paragraph({ children: [new TextRun({ text: "4. Absenden", size: 22 })], spacing: { after: 800 } }),
           
           new Paragraph({
@@ -563,7 +572,14 @@ export function TeacherInvitationsTab() {
   }
 
   const deleteSubmission = async (id: string) => {
-    if (!confirm('Diese Einreichung wirklich löschen?')) return
+    const confirmed = await confirm({
+      title: 'Einreichung löschen?',
+      content: 'Diese Einreichung wirklich löschen?',
+      priority: 'high',
+      confirmLabel: 'Löschen',
+      confirmVariant: 'destructive',
+    })
+    if (!confirmed) return
     try {
       await deleteDoc(doc(db, 'teacher_submissions', id))
       toast.success('Gelöscht')
@@ -774,7 +790,7 @@ export function TeacherInvitationsTab() {
               </CardHeader>
               <CardContent className="pt-6 space-y-4">
                 {sub.imageUrl && (
-                  <div className="aspect-[4/3] rounded-lg overflow-hidden border">
+                  <div className="aspect-[2/1] rounded-lg overflow-hidden border">
                     <img src={sub.imageUrl} className="w-full h-full object-cover" alt={sub.cardName} />
                   </div>
                 )}

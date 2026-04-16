@@ -3,7 +3,7 @@ import { Timestamp } from 'firebase/firestore';
 export type UserRole = 'viewer' | 'planner' | 'admin' | 'admin_main' | 'admin_co';
 export type TodoStatus = 'open' | 'in_progress' | 'done';
 export type ClassName = string;
-export type DashboardComponentKey = 'funding' | 'news' | 'todos' | 'events' | 'polls' | 'leaderboard' | 'cards';
+export type DashboardComponentKey = 'funding' | 'news' | 'todos' | 'events' | 'polls' | 'leaderboard';
 
 export interface PlanningGroup {
   name: string;
@@ -19,6 +19,7 @@ export interface Profile {
   photo_url: string | null;
   email: string;
   role: UserRole;
+  access_target?: 'dashboard' | 'tcg' | null;
   planning_groups: string[];
   led_groups: string[];
   class_name?: string | null;
@@ -50,6 +51,7 @@ export interface Profile {
     support_extra_available?: number;
     inventory?: Record<string, number>;
     extra_boosters_claimed?: boolean;
+    claimed_poll_boosters?: string[];
     total_opened?: number;
     total_cards?: number;
   } | null;
@@ -62,6 +64,7 @@ export interface Profile {
   is_referral_claimed?: boolean;
   total_referrals?: number;
   total_referral_boosters?: number;
+  dashboard_layout?: DashboardComponentKey[];
   shop_stats?: {
     month: string;
     counts: Record<string, number>;

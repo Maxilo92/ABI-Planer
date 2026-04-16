@@ -15,6 +15,7 @@ import { toast } from 'sonner'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { DelayedAction } from '@/types/database'
 import { logAction } from '@/lib/logging'
+import { usePopupManager } from '@/modules/popup/usePopupManager'
 
 const DANGER_ACTIONS = [
   {
@@ -56,6 +57,7 @@ const DANGER_ACTIONS = [
 
 export default function DangerZonePage() {
   const { profile, loading: authLoading } = useAuth()
+  const { confirm } = usePopupManager()
   const [pendingActions, setPendingActions] = useState<DelayedAction[]>([])
   const [loading, setLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -170,7 +172,14 @@ export default function DangerZonePage() {
   }
 
   const handleCancelAction = async (action: DelayedAction) => {
-    if (!confirm('Möchtest du diese geplante Aktion wirklich abbrechen?')) return
+    const confirmed = await confirm({
+      title: 'Geplante Aktion abbrechen?',
+      content: 'Möchtest du diese geplante Aktion wirklich abbrechen?',
+      priority: 'high',
+      confirmLabel: 'Abbrechen',
+      confirmVariant: 'destructive',
+    })
+    if (!confirmed) return
 
     try {
       const docRef = doc(db, 'delayed_actions', action.id)

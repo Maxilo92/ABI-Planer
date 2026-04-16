@@ -32,50 +32,50 @@ type FeatureContent = {
 const FEATURE_DATA: Record<string, FeatureContent> = {
   finanzen: {
     title: 'Finanzen & Prognosen',
-    subtitle: 'Behaltet euer Budget im Griff.',
-    description: 'Vom ersten Euro bis zum Abiball-Finale. Unser Finanz-Tracker bietet volle Transparenz und automatisierte Prognosen für euren gesamten Jahrgang.',
+    subtitle: 'Budget transparent steuern.',
+    description: 'Vom ersten Beitrag bis zur Abschlussfeier: Der Finanzbereich bietet Transparenz und nachvollziehbare Prognosen fuer den gesamten Jahrgang.',
     icon: DollarSign,
     color: 'text-emerald-500',
-    cta: 'Jetzt Kassensturz machen',
+    cta: 'Finanzen einrichten',
     details: [
-      { title: 'Echtzeit-Tracking', desc: 'Alle Einnahmen und Ausgaben werden sofort für die ganze Stufe sichtbar.', icon: Zap },
-      { title: 'Sparziele', desc: 'Definiert euer Ziel für den Abiball und seht live, wie nah ihr dran seid.', icon: Target },
-      { title: 'Prognosen', desc: 'Basierend auf Ticketverkäufen berechnet das System eure finalen Möglichkeiten.', icon: Workflow }
+      { title: 'Aktueller Stand', desc: 'Einnahmen und Ausgaben werden direkt in der Stufenuebersicht sichtbar.', icon: Zap },
+      { title: 'Zielplanung', desc: 'Finanzziele fuer Veranstaltungen lassen sich klar definieren und verfolgen.', icon: Target },
+      { title: 'Prognosen', desc: 'Auf Basis der vorhandenen Daten laesst sich der finanzielle Spielraum besser abschaetzen.', icon: Workflow }
     ]
   },
   gruppen: {
     title: 'Planungs-Gruppen',
-    subtitle: 'Teamarbeit ohne WhatsApp-Chaos.',
-    description: 'Verteilt die Verantwortung auf viele Schultern. In spezialisierten Gruppen planen Experten euren Abschluss – vom Catering bis zur Abizeitung.',
+    subtitle: 'Teamarbeit mit klarer Struktur.',
+    description: 'Verantwortung wird auf mehrere Gruppen verteilt. So bleibt die Planung vom Catering bis zur Abizeitung nachvollziehbar organisiert.',
     icon: Users,
     color: 'text-blue-500',
-    cta: 'Team verstärken',
+    cta: 'Gruppen organisieren',
     details: [
       { title: 'Eigene Bereiche', desc: 'Jede Gruppe hat ihre eigenen News, Dateien und Aufgaben.', icon: ShieldCheck },
-      { title: 'Rollensystem', desc: 'Wer macht was? Klare Zuständigkeiten verhindern doppelte Arbeit.', icon: Users },
+      { title: 'Rollensystem', desc: 'Klare Zustaendigkeiten verhindern doppelte Arbeit und offene Aufgaben.', icon: Users },
       { title: 'Zentraler Hub', desc: 'Tauscht euch gruppenübergreifend aus und behaltet den Überblick.', icon: Workflow }
     ]
   },
   abstimmungen: {
-    title: 'Interaktive Polls',
-    subtitle: 'Demokratie für den Jahrgang.',
-    description: 'Entscheidet gemeinsam über wichtige Themen. Schnell, sicher und manipulationsgeschützt. Jeder Account hat genau eine Stimme.',
+    title: 'Abstimmungen',
+    subtitle: 'Klare Entscheidungen im Jahrgang.',
+    description: 'Wichtige Themen werden transparent entschieden. Schnell, sicher und mit klar dokumentiertem Ergebnis pro Account.',
     icon: CheckSquare,
     color: 'text-brand',
-    cta: 'Stimme abgeben',
+    cta: 'Abstimmungen starten',
     details: [
       { title: 'Live-Ergebnisse', desc: 'Seht sofort, wie sich der Jahrgang entscheidet.', icon: Zap },
       { title: 'Anonym & Sicher', desc: 'Keine Beeinflussung durch andere – jeder stimmt für sich.', icon: ShieldCheck },
-      { title: 'Kein Spam', desc: 'Keine endlosen Diskussionen, sondern klare Entscheidungen.', icon: Target }
+      { title: 'Klare Entscheidung', desc: 'Weniger Nebendiskussionen, dafuer ein nachvollziehbares Ergebnis.', icon: Target }
     ]
   },
   kalender: {
     title: 'Zentraler Kalender',
     subtitle: 'Alle Termine an einem Ort.',
-    description: 'Von der Vorfinanzierungsparty bis zur Zeugnisvergabe. Der zentrale Kalender ist die Timeline eures letzten Schuljahres.',
+    description: 'Von der Vorfinanzierung bis zur Zeugnisvergabe: Der Kalender bildet die gemeinsame Zeitleiste des Abschlussjahres.',
     icon: Calendar,
     color: 'text-orange-500',
-    cta: 'Termine checken',
+    cta: 'Kalender aufrufen',
     details: [
       { title: 'Synchronisiert', desc: 'Jeder Eintrag ist sofort für alle Stufenmitglieder verfügbar.', icon: Zap },
       { title: 'Deadlines', desc: 'Wichtige Abgabetermine werden hervorgehoben und getrackt.', icon: Target },
@@ -84,15 +84,15 @@ const FEATURE_DATA: Record<string, FeatureContent> = {
   },
   sammelkarten: {
     title: 'Sammelkarten TCG',
-    subtitle: 'Haltet die Erinnerungen fest.',
-    description: 'Das interaktive Highlight eures Jahrgangs: Sammelt Lehrer und Mitschüler als digitale Karten mit individuellen Werten, Seltenheitsstufen und integrierter Tauschfunktion.',
+    subtitle: 'Erinnerungen digital sammeln.',
+    description: 'Lehrkraefte und Mitschueler werden als digitale Karten gesammelt. Die integrierte Tauschfunktion erhoeht Beteiligung und Aktivitaet in der Stufe.',
     icon: Sparkles,
     color: 'text-purple-500',
-    cta: 'Karten entdecken',
+    cta: 'Kartenbereich ansehen',
     details: [
-      { title: 'Seltene Editionen', desc: 'Holos, Gold-Editions und extrem seltene Iconic-Karten für Sammler.', icon: Sparkles },
-      { title: 'Tauschbörse', desc: 'Tausche deine Karten in Echtzeit mit anderen aus der Stufe.', icon: Workflow },
-      { title: 'Sammelalbum', desc: 'Vervollständige dein Album und steige im Jahrgangs-Ranking auf.', icon: Trophy }
+      { title: 'Seltene Editionen', desc: 'Besondere Kartenvarianten erweitern die Sammlung langfristig.', icon: Sparkles },
+      { title: 'Tauschboerse', desc: 'Karten lassen sich direkt mit anderen aus der Stufe tauschen.', icon: Workflow },
+      { title: 'Sammelalbum', desc: 'Der Fortschritt der Sammlung ist jederzeit sichtbar.', icon: Trophy }
     ]
   }
 }

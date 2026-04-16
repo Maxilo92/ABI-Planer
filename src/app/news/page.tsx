@@ -23,6 +23,7 @@ import { logAction } from '@/lib/logging'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { ShareResourceButton } from '@/components/ui/share-resource-button'
+import { usePopupManager } from '@/modules/popup/usePopupManager'
 
 import { LandingHeader } from '@/components/layout/LandingHeader'
 import { Footer as DashboardFooter } from '@/components/layout/Footer'
@@ -31,6 +32,7 @@ function NewsPageContent() {
   const searchParams = useSearchParams()
   const { profile, user, loading: authLoading } = useAuth()
   const { pushMessage } = useSystemMessage()
+  const { confirm } = usePopupManager()
   const [news, setNews] = useState<NewsEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [rootMode, setRootMode] = useState<'unknown' | 'landing' | 'dashboard'>('unknown')
@@ -106,7 +108,14 @@ function NewsPageContent() {
   ) && profile?.is_approved
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('Möchtest du diesen Beitrag wirklich löschen?')) return
+    const confirmed = await confirm({
+      title: 'Beitrag löschen?',
+      content: 'Möchtest du diesen Beitrag wirklich löschen?',
+      priority: 'high',
+      confirmLabel: 'Beitrag löschen',
+      confirmVariant: 'destructive',
+    })
+    if (!confirmed) return
     try {
       const selectedNews = news.find((item) => item.id === id)
       if (selectedNews?.image_path) {

@@ -1,17 +1,18 @@
 'use client'
 
-import { Poll, PollOption, PollVote } from '@/types/database'
+import { Poll, PollVote } from '@/types/database'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { db } from '@/lib/firebase'
-import { collection, deleteDoc, doc, getDocs, serverTimestamp, writeBatch, runTransaction, increment } from 'firebase/firestore'
+import { collection, deleteDoc, doc, getDocs, serverTimestamp, writeBatch, runTransaction, increment, arrayUnion } from 'firebase/firestore'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { Trash2, Lock } from 'lucide-react'
 import { logAction } from '@/lib/logging'
+import { usePopupManager } from '@/modules/popup/usePopupManager'
 
 interface PollListProps {
   polls: Poll[]
@@ -35,6 +36,7 @@ export function PollList({
   loading = false,
 }: PollListProps) {
   const router = useRouter()
+  const { confirm } = usePopupManager()
   const [isVoting, setIsVoting] = useState<string | null>(null)
   const [votesByPoll, setVotesByPoll] = useState<Record<string, PollVote[]>>({})
 
@@ -100,7 +102,12 @@ export function PollList({
     }
 
     if (!existingVote && poll?.allow_vote_change === false) {
-      const confirmed = window.confirm('Diese Umfrage erlaubt keine spätere Meinungsänderung. Wirklich jetzt abstimmen?')
+      const confirmed = await confirm({
+        title: 'Final abstimmen?',
+        content: 'Diese Umfrage erlaubt keine spätere Meinungsänderung. Wirklich jetzt abstimmen?',
+        priority: 'warning',
+        confirmLabel: 'Jetzt abstimmen',
+      })
       if (!confirmed) return
     }
 
@@ -111,9 +118,16 @@ export function PollList({
       const voteRef = doc(db, 'polls', pollId, 'votes', userId)
       const profileRef = doc(db, 'profiles', userId)
       
+      let isFirstReward = false;
+
       await runTransaction(db, async (transaction) => {
-        const voteSnap = await transaction.get(voteRef)
-        const isFirstVote = !voteSnap.exists()
+        await transaction.get(voteRef)
+        const profileSnap = await transaction.get(profileRef)
+        
+        const profileData = profileSnap.exists() ? profileSnap.data() : null
+        const claimedPolls = profileData?.booster_stats?.claimed_poll_boosters || []
+        
+        isFirstReward = !claimedPolls.includes(pollId)
         
         transaction.set(voteRef, {
           poll_id: pollId,
@@ -122,15 +136,22 @@ export function PollList({
           created_at: serverTimestamp()
         })
 
-        if (isFirstVote) {
+        if (isFirstReward) {
           transaction.update(profileRef, {
-            'booster_stats.extra_available': increment(1)
+            'booster_stats.extra_available': increment(1),
+            'booster_stats.claimed_poll_boosters': arrayUnion(pollId)
           })
         }
       })
 
       await refreshVotesForPoll(pollId)
-      if (!existingVote) toast.success('Deine Stimme wurde gespeichert.' + ' Du hast 1 Booster-Pack als Belohnung erhalten.'); else toast.success('Deine Stimme wurde geändert.')
+      if (isFirstReward) {
+        toast.success('Deine Stimme wurde gespeichert. Du hast 1 Booster-Pack als Belohnung erhalten.')
+      } else if (!existingVote) {
+        toast.success('Deine Stimme wurde gespeichert.')
+      } else {
+        toast.success('Deine Stimme wurde geändert.')
+      }
       
       const optionText = poll?.options?.find(o => o.id === optionId)?.option_text || optionId
       await logAction('VOTE_CAST', userId, userName, { 
@@ -155,7 +176,12 @@ export function PollList({
       return
     }
 
-    const confirmed = window.confirm('Möchtest du deine Stimme wirklich zurückziehen?')
+    const confirmed = await confirm({
+      title: 'Stimme zurückziehen?',
+      content: 'Möchtest du deine Stimme wirklich zurückziehen?',
+      priority: 'warning',
+      confirmLabel: 'Zurückziehen',
+    })
     if (!confirmed) return
 
     setIsVoting('withdraw-' + pollId)
@@ -203,7 +229,13 @@ export function PollList({
 
   const handleDeletePoll = async (pollId: string) => {
     if (!canManage) return
-    const confirmed = window.confirm('Umfrage wirklich löschen? Stimmen und Optionen werden ebenfalls gelöscht.')
+    const confirmed = await confirm({
+      title: 'Umfrage löschen?',
+      content: 'Umfrage wirklich löschen? Stimmen und Optionen werden ebenfalls gelöscht.',
+      priority: 'high',
+      confirmLabel: 'Umfrage löschen',
+      confirmVariant: 'destructive',
+    })
     if (!confirmed) return
 
     try {

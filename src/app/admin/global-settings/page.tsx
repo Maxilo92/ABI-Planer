@@ -18,6 +18,7 @@ import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Profile } from '@/types/database'
+import { usePopupManager } from '@/modules/popup/usePopupManager'
 
 interface CustomPopupMessage {
   id: string
@@ -126,6 +127,7 @@ const DEFAULT_SETTINGS: GlobalSettings = {
 
 export default function GlobalSettingsPage() {
   const { user, profile, loading: authLoading } = useAuth()
+  const { confirm } = usePopupManager()
   const [settings, setSettings] = useState<GlobalSettings>(DEFAULT_SETTINGS)
   const [initialSettings, setInitialSettings] = useState<GlobalSettings>(DEFAULT_SETTINGS)
   const [loading, setLoading] = useState(true)
@@ -485,15 +487,20 @@ export default function GlobalSettingsPage() {
     }
   }
 
-  const handleResetToDefault = () => {
-    if (confirm('Möchtest du wirklich alle Einstellungen auf die Standardwerte zurücksetzen?')) {
-      const old = settings
-      setSettings(DEFAULT_SETTINGS)
-      setTimeout(async () => {
-        const ok = await handleSave(DEFAULT_SETTINGS)
-        if (!ok) setSettings(old)
-      }, 0)
-    }
+  const handleResetToDefault = async () => {
+    const confirmed = await confirm({
+      title: 'Einstellungen zurücksetzen?',
+      content: 'Möchtest du wirklich alle Einstellungen auf die Standardwerte zurücksetzen?',
+      priority: 'high',
+      confirmLabel: 'Zurücksetzen',
+      confirmVariant: 'destructive',
+    })
+    if (!confirmed) return
+
+    const old = settings
+    setSettings(DEFAULT_SETTINGS)
+    const ok = await handleSave(DEFAULT_SETTINGS)
+    if (!ok) setSettings(old)
   }
 
   if (authLoading || loading) {

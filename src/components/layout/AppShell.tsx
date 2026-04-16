@@ -39,8 +39,7 @@ export function AppShell({ children }: AppShellProps) {
   const isDashboardSubdomain = useMemo(() => {
     if (isBoneyardBuild) return false
     if (hostname === null) return null // Initial loading state
-    const isLocalDashboardHost = hostname === 'localhost' || hostname === '127.0.0.1' || hostname.endsWith('.localhost')
-    return isLocalDashboardHost || hostname.startsWith('dashboard.') || hostname.startsWith('app.')
+    return hostname === 'localhost' || hostname === '127.0.0.1' || hostname.startsWith('dashboard.') || hostname.startsWith('app.') || hostname.startsWith('tcg.') || hostname.includes('.dashboard.') || hostname.includes('.tcg.')
   }, [hostname, isBoneyardBuild])
 
   const isNoMenuRoute = useMemo(() => {

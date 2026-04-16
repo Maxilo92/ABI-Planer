@@ -5,40 +5,20 @@ import { useDecks } from '@/hooks/useDecks'
 import { useUserTeachers } from '@/hooks/useUserTeachers'
 import { db } from '@/lib/firebase'
 import { doc, onSnapshot } from 'firebase/firestore'
-import { CardData, CardVariant as NewCardVariant } from '@/types/cards'
+import { CardData } from '@/types/cards'
 import { TeacherCard } from './TeacherCard'
 import { Button } from '@/components/ui/button'
 import { Plus, Save, ArrowLeft, Loader2, Image as ImageIcon, GraduationCap } from 'lucide-react'
 import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import { buildTeacherCatalogFromSettings, findUserTeacherEntry, TeacherCatalogEntry } from '@/lib/cardCatalog'
+import { mapTeacherCatalogToCardData } from '@/modules/cards/cardData'
 
 import { DeckSelection } from './DeckSelection'
 
 interface DeckEditorProps {
   deckId: string
   onBack: () => void
-}
-
-function getBestVariant(variants: Record<string, number> | undefined): NewCardVariant {
-  if (!variants) return 'normal'
-  if (variants.black_shiny_holo) return 'black_shiny_holo'
-  if (variants.shiny) return 'shiny'
-  if (variants.holo) return 'holo'
-  return 'normal'
-}
-
-function getTeacherRarityHex(rarity: string) {
-  switch (rarity) {
-    case 'common': return '#64748b'
-    case 'rare': return '#10b981'
-    case 'epic': return '#9333ea'
-    case 'mythic': return '#dc2626'
-    case 'legendary': return '#f59e0b'
-    case 'iconic': return '#000000'
-    default: return '#64748b'
-  }
 }
 
 export const DeckEditor: React.FC<DeckEditorProps> = ({ deckId, onBack }) => {
@@ -147,21 +127,7 @@ export const DeckEditor: React.FC<DeckEditorProps> = ({ deckId, onBack }) => {
     if (!teacher) return null
 
     const userData = findUserTeacherEntry(userTeachers, teacher)
-    const globalIndex = globalTeachers.findIndex(t => t.fullId === teacher.fullId)
-
-    return {
-      id: teacher.fullId,
-      setId: teacher.setId,
-      fullId: teacher.fullId,
-      name: teacher.name,
-      rarity: teacher.rarity,
-      variant: getBestVariant(userData?.variants),
-      color: getTeacherRarityHex(teacher.rarity),
-      cardNumber: (globalIndex + 1).toString().padStart(3, '0'),
-      description: teacher.description,
-      hp: teacher.hp,
-      attacks: teacher.attacks,
-    } as CardData
+    return mapTeacherCatalogToCardData(teacher, userData, globalTeachers)
   }, [coverCardId, globalTeachers, userTeachers])
 
   const slots = useMemo(() => {
@@ -171,22 +137,7 @@ export const DeckEditor: React.FC<DeckEditorProps> = ({ deckId, onBack }) => {
       if (!teacher) return { id, type: 'empty' as const }
 
       const userData = findUserTeacherEntry(userTeachers, teacher)
-      const globalIndex = globalTeachers.findIndex(t => t.fullId === teacher.fullId)
-
-
-      const cardData: CardData = {
-        id: teacher.fullId,
-        setId: teacher.setId,
-        fullId: teacher.fullId,
-        name: teacher.name,
-        rarity: teacher.rarity,
-        variant: getBestVariant(userData?.variants),
-        color: getTeacherRarityHex(teacher.rarity),
-        cardNumber: (globalIndex + 1).toString().padStart(3, '0'),
-        description: teacher.description,
-        hp: teacher.hp,
-        attacks: teacher.attacks,
-      }
+      const cardData: CardData = mapTeacherCatalogToCardData(teacher, userData, globalTeachers)
 
       return { id, type: 'filled' as const, data: cardData }
     })

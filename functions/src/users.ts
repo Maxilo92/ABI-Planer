@@ -83,6 +83,7 @@ export const bootstrapMissingProfile = onCall({
     full_name: fallbackName,
     email,
     role: "viewer",
+    access_target: "tcg",
     planning_groups: [],
     led_groups: [],
     class_name: null,

@@ -17,12 +17,14 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { ShieldCheck, ShieldAlert, Shield } from 'lucide-react'
 import { Profile } from '@/types/database'
+import { usePopupManager } from '@/modules/popup/usePopupManager'
 
 interface TOTPSetupProps {
   profile: Profile
 }
 
 export function TOTPSetup({ profile }: TOTPSetupProps) {
+  const { confirm, prompt } = usePopupManager()
   const [loading, setLoading] = useState(false)
   const [open, setOpen] = useState(false)
   const [step, setStep] = useState<'initial' | 'setup' | 'verifying'>('initial')
@@ -69,16 +71,27 @@ export function TOTPSetup({ profile }: TOTPSetupProps) {
   }
 
   const handleDisable = async () => {
-    if (!confirm('Möchten Sie die Zwei-Faktor-Authentisierung wirklich deaktivieren?')) return
+    const confirmed = await confirm({
+      title: '2FA deaktivieren?',
+      content: 'Möchten Sie die Zwei-Faktor-Authentisierung wirklich deaktivieren?',
+      priority: 'high',
+      confirmLabel: '2FA deaktivieren',
+      confirmVariant: 'destructive',
+    })
+    if (!confirmed) return
 
     setLoading(true)
     setMessage(null)
     try {
       const disable2FA = httpsCallable<{ code?: string }, { success: boolean }>(functions, 'disable2FA')
-      // For disabling, we might need a code too if we want it extra secure, 
-      // but current implementation doesn't strictly require it or we can prompt.
-      // The backend 'disable2FA' expects a 'code'.
-      const code = prompt('Bitte gib zur Deaktivierung einen aktuellen 2FA-Code ein:')
+      const code = await prompt({
+        title: '2FA-Code eingeben',
+        content: 'Bitte gib zur Deaktivierung einen aktuellen 2FA-Code ein.',
+        priority: 'warning',
+        inputLabel: '2FA-Code',
+        placeholder: '123456',
+        confirmLabel: 'Bestätigen',
+      })
       if (!code) {
         setLoading(false)
         return

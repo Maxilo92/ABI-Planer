@@ -24,6 +24,7 @@ import {
 import Link from 'next/link'
 import { Task } from '@/types/database'
 import Image from 'next/image'
+import { getTaskStatusMeta } from '@/modules/shared/status'
 
 export default function AufgabenPage() {
   const { profile, loading: authLoading } = useAuth()
@@ -84,13 +85,8 @@ export default function AufgabenPage() {
   const myTasks = tasks.filter(t => t.assignee_id === profile.id && t.status !== 'completed')
 
   const getStatusBadge = (status: Task['status']) => {
-    switch (status) {
-      case 'open': return <Badge variant="secondary">Offen</Badge>
-      case 'claimed': return <Badge className="bg-blue-500 hover:bg-blue-600">Angenommen</Badge>
-      case 'in_review': return <Badge className="bg-yellow-500 hover:bg-yellow-600">In Prüfung</Badge>
-      case 'rejected': return <Badge variant="destructive">Nachbesserung nötig</Badge>
-      case 'completed': return <Badge className="bg-green-500 hover:bg-green-600">Erledigt</Badge>
-    }
+    const meta = getTaskStatusMeta(status, { completed: 'Erledigt' })
+    return <Badge variant={meta.variant} className={meta.className}>{meta.label}</Badge>
   }
 
   const TaskCard = ({ task }: { task: Task }) => (

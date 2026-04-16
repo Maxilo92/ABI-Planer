@@ -28,6 +28,7 @@ import {
   UserCircle
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { getTodoStatusLabel, getTodoStatusTone } from '@/modules/shared/status'
 
 interface TodoDetailDialogProps {
   todo: Todo
@@ -39,24 +40,14 @@ export function TodoDetailDialog({ todo, allTodos, trigger }: TodoDetailDialogPr
   const children = allTodos.filter(t => t.parentId === todo.id)
   
   const getStatusIcon = (status: string) => {
-    switch (status) {
+    const tone = getTodoStatusTone(status)
+    switch (tone) {
       case 'done':
         return <CheckCircle2 className="h-4 w-4 text-green-500" />
       case 'in_progress':
         return <Clock className="h-4 w-4 text-blue-500" />
       default:
         return <Circle className="h-4 w-4 text-muted-foreground" />
-    }
-  }
-
-  const getStatusLabel = (status: string) => {
-    switch (status) {
-      case 'done':
-        return 'Erledigt'
-      case 'in_progress':
-        return 'In Arbeit'
-      default:
-        return 'Offen'
     }
   }
 
@@ -68,7 +59,7 @@ export function TodoDetailDialog({ todo, allTodos, trigger }: TodoDetailDialogPr
           <div className="flex items-center gap-2 mb-1">
             <Badge variant={todo.status === 'done' ? 'outline' : 'secondary'} className="flex items-center gap-1">
               {getStatusIcon(todo.status)}
-              {getStatusLabel(todo.status)}
+              {getTodoStatusLabel(todo.status)}
             </Badge>
             {todo.deadline_date && (
               <Badge variant="outline" className="text-orange-500 border-orange-200 bg-orange-50">

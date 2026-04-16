@@ -16,12 +16,27 @@ export function useDashboardSorting(
   news: NewsEntry[]
 ): DashboardComponentKey[] {
   return useMemo(() => {
-    // Guest View: News first, then Funding, then Promotional cards (to keep news/cards in the same column)
+    // Guest View: News first, then Funding, then Polls (stable order)
     if (!profile) {
-      return ['news', 'funding', 'cards', 'polls'];
+      return ['news', 'funding', 'polls'];
     }
 
-    // Authenticated View: Original logic, promo hidden
+    // If the user has a custom layout, use it.
+    if (profile.dashboard_layout && profile.dashboard_layout.length > 0) {
+      return profile.dashboard_layout;
+    }
+
+    // Authenticated View: Original logic with stabilization
+    // Use a fixed baseline to avoid jumping during initial load
+    const componentKeys: DashboardComponentKey[] = [
+      'todos',
+      'events',
+      'polls',
+      'funding',
+      'news',
+      'leaderboard'
+    ];
+
     const scores: Record<DashboardComponentKey, number> = {
       todos: 0,
       events: 0,
@@ -29,8 +44,16 @@ export function useDashboardSorting(
       funding: 0,
       news: 0,
       leaderboard: 40, // Baseline for ranking
-      cards: -100, // Never show for logged in users
     };
+
+    // Only apply dynamic scores if we have data (stabilization)
+    // If all inputs are empty, we might be in initial loading phase.
+    // We use a baseline order instead of jumping around.
+    const isInitialLoad = todos.length === 0 && events.length === 0 && polls.length === 0 && news.length === 0;
+    
+    if (isInitialLoad) {
+      return componentKeys; // Stable baseline during load
+    }
 
     // Todos Score: +100 if user has an open todo assigned to them, their group, or their class.
     const hasOpenTodo = todos.some(todo => 
@@ -76,16 +99,6 @@ export function useDashboardSorting(
       return createdAt >= twentyFourHoursAgo;
     });
     if (hasRecentNews) scores.news = 30;
-
-    // Original component list (no promo for users)
-    const componentKeys: DashboardComponentKey[] = [
-      'todos',
-      'events',
-      'polls',
-      'funding',
-      'news',
-      'leaderboard'
-    ];
 
     return componentKeys.sort((a, b) => scores[b] - scores[a]);
   }, [profile, todos, events, polls, news]);

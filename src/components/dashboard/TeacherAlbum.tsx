@@ -58,6 +58,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { buildTeacherCatalogFromSettings, findUserTeacherEntry, TeacherCatalogEntry } from "@/lib/cardCatalog";
+import { getBestVariant, mapTeacherCatalogToCardData } from '@/modules/cards/cardData'
 
 import { CARD_SETS } from "@/constants/cardRegistry";
 
@@ -65,11 +66,6 @@ const DEFAULT_TEACHERS: TeacherCatalogEntry[] = buildTeacherCatalogFromSettings(
 
 const getNextLevelCount = (level: number): number => {
   return Math.pow(level, 2) + 1;
-};
-
-const calculateLevel = (count: number): number => {
-  if (count <= 1) return 1;
-  return Math.floor(Math.sqrt(count - 1)) + 1;
 };
 
 const getPrevLevelCount = (level: number): number => {
@@ -183,25 +179,6 @@ const getRarityGlow = (rarity: TeacherRarity) => {
   }
 };
 
-function getTeacherRarityHex(rarity: TeacherRarity) {
-  switch (rarity) {
-    case "common":
-      return "#64748b";
-    case "rare":
-      return "#10b981";
-    case "epic":
-      return "#9333ea";
-    case "mythic":
-      return "#dc2626";
-    case "legendary":
-      return "#f59e0b";
-    case "iconic":
-      return "#000000";
-    default:
-      return "#64748b";
-  }
-}
-
 const RARITY_MAP: Record<string, number> = {
   iconic: 0,
   legendary: 1,
@@ -220,52 +197,18 @@ const VARIANT_MAP: Record<string, number> = {
 
 const INFINITE_SCROLL_BATCH_SIZE = 24;
 
-function getBestVariant(
-  variants: Record<string, number> | undefined,
-): NewCardVariant {
-  if (!variants) return "normal";
-  if (variants.black_shiny_holo) return "black_shiny_holo";
-  if (variants.shiny) return "shiny";
-  if (variants.holo) return "holo";
-  return "normal";
-}
-
 function mapTeacherToCardData(
   teacher: TeacherCatalogEntry,
   userData: any,
   globalTeachers: TeacherCatalogEntry[] | Map<string, number> | number,
   forcedVariant?: NewCardVariant,
 ): CardData {
-  const variant = forcedVariant || getBestVariant(userData?.variants);
-
-  let globalIndex: number;
-  if (typeof globalTeachers === "number") {
-    globalIndex = globalTeachers;
-  } else if (globalTeachers instanceof Map) {
-    globalIndex = globalTeachers.get(teacher.fullId) ?? -1;
-  } else {
-    globalIndex = globalTeachers.findIndex(
-      (t) => t.fullId === teacher.fullId,
-    );
-  }
-
-  const level = calculateLevel(userData?.count || 0);
-
-  return {
-    id: teacher.fullId,
-    setId: teacher.setId,
-    fullId: teacher.fullId,
-    name: teacher.name,
-    rarity: teacher.rarity,
-    type: "teacher",
-    variant,
-    color: getTeacherRarityHex(teacher.rarity),
-    cardNumber: (globalIndex + 1).toString().padStart(3, "0"),
-    description: teacher.description,
-    hp: teacher.hp,
-    attacks: teacher.attacks,
-    level,
-  };
+  return mapTeacherCatalogToCardData(
+    teacher,
+    userData,
+    globalTeachers,
+    forcedVariant,
+  )
 }
 
 function TeacherCardDetail({
@@ -1254,7 +1197,7 @@ export function TeacherAlbum({
                   <div
                     onClick={() => isOwned && setSelectedTeacherIndex(idx)}
                     className={cn(
-                      "relative transition-all duration-300 transform group w-full aspect-[2.5/3.5] overflow-hidden rounded-xl",
+                      "relative transition-all duration-300 transform group w-full aspect-[2.5/3.5] overflow-visible rounded-xl",
                       !isOwned && "cursor-not-allowed opacity-80",
                       isOwned &&
                         "cursor-pointer hover:scale-[1.05] hover:-rotate-1 active:scale-95 hover:z-10 active:z-10",

@@ -19,6 +19,8 @@ import { TodoDetailDialog } from '@/components/modals/TodoDetailDialog'
 import { format, isBefore, startOfDay } from 'date-fns'
 import { de } from 'date-fns/locale'
 import { logAction } from '@/lib/logging'
+import { usePopupManager } from '@/modules/popup/usePopupManager'
+import { getTodoStatusLabel } from '@/modules/shared/status'
 
 interface TodoListProps {
   todos: Todo[]
@@ -36,6 +38,7 @@ export function TodoList({
   loading = false,
 }: TodoListProps) {
   const { user, profile } = useAuth()
+  const { confirm } = usePopupManager()
 
   // Flatten the todo tree for rendering with smart sorting
   const displayedTodos = useMemo(() => {
@@ -118,7 +121,7 @@ export function TodoList({
     
     // Finally, apply maxItems slice if necessary
     return typeof maxItems === 'number' ? result.slice(0, maxItems) : result;
-  }, [todos, maxItems, user?.uid, profile?.planning_groups, profile?.class_name])
+  }, [loading, todos, maxItems, user?.uid, profile?.planning_groups, profile?.class_name])
 
   const handleToggle = async (id: string, completed: boolean) => {
     if (!canManage) return
@@ -148,7 +151,14 @@ export function TodoList({
 
   const handleDelete = async (id: string) => {
     if (!canManage) return
-    if (!window.confirm('Diese Aufgabe wirklich löschen? (Alle Unteraufgaben werden ebenfalls gelöscht)')) return
+    const confirmed = await confirm({
+      title: 'Aufgabe löschen?',
+      content: 'Diese Aufgabe wirklich löschen? (Alle Unteraufgaben werden ebenfalls gelöscht)',
+      priority: 'high',
+      confirmLabel: 'Aufgabe löschen',
+      confirmVariant: 'destructive',
+    })
+    if (!confirmed) return
 
     const getDescendantIds = (parentId: string): string[] => {
       const children = todos.filter((t) => (t.parentId || null) === parentId)
@@ -255,7 +265,7 @@ export function TodoList({
                     <div className="flex flex-col gap-1 mt-0.5">
                       <div className="flex items-center gap-2 flex-wrap">
                         <Badge variant={todo.status === 'done' ? 'outline' : 'secondary'} className="text-[10px] px-1.5 py-0">
-                          {todo.status === 'open' ? 'Offen' : todo.status === 'in_progress' ? 'In Arbeit' : 'Erledigt'}
+                          {getTodoStatusLabel(todo.status)}
                         </Badge>
                         {todo.assigned_to_user_name && (
                           <span className="text-[11px] font-medium text-primary">

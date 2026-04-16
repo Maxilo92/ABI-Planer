@@ -78,7 +78,7 @@ const checks = [
     file: 'src/components/layout/Navbar.tsx',
     patterns: [
       /href: '\/konto-root'/,
-      /\{ href: '\/einstellungen', label: 'Einstellungen', icon: Settings \}/,
+      /\{ href: resolveHref\('\/einstellungen'\), label: 'Einstellungen', icon: Settings, isExternalLink: !isDashboardDomain \}/,
       /renderNavSection\('Konto & Hilfe', accountHelpItems, isMobile\)/,
       /if \(href === '\/konto-root'\) return pathname\.startsWith\('\/profil'\) \|\| pathname\.startsWith\('\/einstellungen'\)/,
     ],

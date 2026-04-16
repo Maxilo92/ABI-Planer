@@ -15,7 +15,7 @@ import Logo from '@/components/Logo'
 import { ForgotPasswordDialog } from '@/components/modals/ForgotPasswordDialog'
 import { useAuth } from '@/context/AuthContext'
 import { ShieldCheck, ArrowLeft } from 'lucide-react'
-import { getDashboardRedirectUrl } from '@/lib/dashboard-url'
+import { getAppHomeUrl, getAccessTargetFromProfile } from '@/lib/dashboard-url'
 
 const auth = getFirebaseAuth()
 
@@ -34,13 +34,13 @@ export default function LoginPage() {
   
   const router = useRouter()
 
-  const redirectToDashboard = () => {
+  const redirectToApp = (target: 'dashboard' | 'tcg') => {
     if (typeof window === 'undefined') {
       router.push('/')
       return
     }
 
-    window.location.href = getDashboardRedirectUrl(window.location)
+    window.location.href = getAppHomeUrl(window.location, target)
   }
 
   useEffect(() => {
@@ -81,20 +81,21 @@ export default function LoginPage() {
         console.error('[Login] Profile not found for UID:', uid)
         // If profile doesn't exist, we assume no 2FA
         set2FAVerified(true)
-        redirectToDashboard()
+        redirectToApp('tcg')
         return
       }
 
       const profileData = profileSnap.data()
       console.log('[Login] profile fetched, is_2fa_enabled:', profileData?.is_2fa_enabled)
+      const accessTarget = getAccessTargetFromProfile(profileData)
 
       if (profileData?.is_2fa_enabled) {
         console.log('[Login] switching to 2FA step')
         setStep('2fa')
       } else {
-        console.log('[Login] no 2FA, proceeding to dashboard')
+        console.log('[Login] no 2FA, proceeding to app target:', accessTarget)
         set2FAVerified(true)
-        redirectToDashboard()
+        redirectToApp(accessTarget)
       }
     } catch (err: any) {
       console.error('[Login] Error during sign-in:', err)
@@ -121,7 +122,15 @@ export default function LoginPage() {
 
       if (result.data.success) {
         set2FAVerified(true)
-        redirectToDashboard()
+        const uid = auth.currentUser?.uid
+        if (!uid) {
+          redirectToApp('tcg')
+          return
+        }
+
+        const profileSnap = await getDoc(doc(db, 'profiles', uid))
+        const accessTarget = getAccessTargetFromProfile(profileSnap.exists() ? profileSnap.data() : null)
+        redirectToApp(accessTarget)
       } else {
         throw new Error('Ungültiger Code.')
       }

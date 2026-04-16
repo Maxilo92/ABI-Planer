@@ -22,12 +22,14 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { toDate } from '@/lib/utils'
 import type { LogActionType, LogEntry } from '@/lib/logging'
+import { usePopupManager } from '@/modules/popup/usePopupManager'
 
 type AdminLog = LogEntry & { id: string }
 const LOGS_PAGE_SIZE = 40
 
 export default function AdminLogsPage() {
   const { profile, loading: authLoading } = useAuth()
+  const { confirm } = usePopupManager()
   const [activeTab, setActiveTab] = useState<'logs' | 'danger_logs'>('logs')
   const [logs, setLogs] = useState<AdminLog[]>([])
   const [selectedAction, setSelectedAction] = useState<LogActionType | 'all'>('all')
@@ -43,7 +45,13 @@ export default function AdminLogsPage() {
   const sentinelRef = useRef<HTMLDivElement | null>(null)
 
   const handleFixNames = async () => {
-    if (!confirm('Möchtest du alle "Unbekannt"-Einträge in den Logs jetzt reparieren? Dieser Vorgang kann einige Sekunden dauern.')) return
+    const confirmed = await confirm({
+      title: 'Log-Namen reparieren?',
+      content: 'Möchtest du alle "Unbekannt"-Einträge in den Logs jetzt reparieren? Dieser Vorgang kann einige Sekunden dauern.',
+      priority: 'warning',
+      confirmLabel: 'Reparieren',
+    })
+    if (!confirmed) return
     
     setFixingNames(true)
     try {

@@ -11,6 +11,7 @@ import { TeacherRarity, LootTeacher, CardProposal, TeacherAttack } from '@/types
 import { SammelkartenConfig, CardSet, CardConfig } from '@/types/cards'
 import { CARD_SETS } from '@/constants/cardRegistry'
 import { restoreGermanUmlauts } from '@/lib/utils'
+import { usePopupManager } from '@/modules/popup/usePopupManager'
 
 type ProposalUsageStatus = 'unknown' | 'used' | 'not_used'
 
@@ -226,6 +227,7 @@ function sanitizeDataForFirestore(obj: any): any {
 
 export function SammelkartenAdminProvider({ children }: { children: React.ReactNode }) {
   const { user, profile } = useAuth()
+  const { confirm } = usePopupManager()
   const [, setConfig] = useState<SammelkartenConfig | null>(null)
   const [localConfig, setLocalConfig] = useState<SammelkartenConfig | null>(null)
   const [isDirty, setIsDirty] = useState(false)
@@ -404,7 +406,14 @@ export function SammelkartenAdminProvider({ children }: { children: React.ReactN
   }
 
   const handleMigrate = async () => {
-    if (!confirm('Möchtest du die Lehrer-Daten aus den globalen Einstellungen importieren? Dies überschreibt den aktuellen Lehrer-Pool hier.')) return
+    const confirmed = await confirm({
+      title: 'Lehrer-Daten importieren?',
+      content: 'Möchtest du die Lehrer-Daten aus den globalen Einstellungen importieren? Dies überschreibt den aktuellen Lehrer-Pool hier.',
+      priority: 'high',
+      confirmLabel: 'Importieren',
+      confirmVariant: 'destructive',
+    })
+    if (!confirmed) return
     
     setMigrating(true)
     try {
@@ -457,7 +466,13 @@ export function SammelkartenAdminProvider({ children }: { children: React.ReactN
 
   const handleMigrateToSets = async () => {
     if (!localConfig || !localConfig.loot_teachers || localConfig.loot_teachers.length === 0) return
-    if (!confirm('Möchtest du den aktuellen Lehrer-Pool in das neue Set-System (teacher_vol1) migrieren?')) return
+    const confirmed = await confirm({
+      title: 'In Set-System migrieren?',
+      content: 'Möchtest du den aktuellen Lehrer-Pool in das neue Set-System (teacher_vol1) migrieren?',
+      priority: 'warning',
+      confirmLabel: 'Migrieren',
+    })
+    if (!confirmed) return
 
     const teachersV1Set: CardSet = {
       id: 'teacher_vol1',
@@ -500,9 +515,16 @@ export function SammelkartenAdminProvider({ children }: { children: React.ReactN
     toast.success(`Set "${newSet.name}" erstellt.`)
   }
 
-  const handleRemoveSet = (setId: string) => {
+  const handleRemoveSet = async (setId: string) => {
     if (!localConfig || !localConfig.sets?.[setId]) return
-    if (!confirm(`Möchtest du das Set "${localConfig.sets[setId].name}" wirklich löschen? Alle Karten in diesem Set gehen verloren!`)) return
+    const confirmed = await confirm({
+      title: 'Set löschen?',
+      content: `Möchtest du das Set "${localConfig.sets[setId].name}" wirklich löschen? Alle Karten in diesem Set gehen verloren!`,
+      priority: 'high',
+      confirmLabel: 'Set löschen',
+      confirmVariant: 'destructive',
+    })
+    if (!confirmed) return
 
     const updatedSets = { ...localConfig.sets }
     delete updatedSets[setId]
@@ -544,7 +566,14 @@ export function SammelkartenAdminProvider({ children }: { children: React.ReactN
   }
 
   const handleRemoveTeacher = useCallback(async (teacher: CardConfig) => {
-    if (!confirm(`Möchtest du ${teacher.name} wirklich entfernen?`)) return
+    const confirmed = await confirm({
+      title: 'Lehrkraft entfernen?',
+      content: `Möchtest du ${teacher.name} wirklich entfernen?`,
+      priority: 'high',
+      confirmLabel: 'Entfernen',
+      confirmVariant: 'destructive',
+    })
+    if (!confirmed) return
     
     setLocalConfig(prev => {
       if (!prev || !selectedSetId || !currentSet) return prev
@@ -556,7 +585,7 @@ export function SammelkartenAdminProvider({ children }: { children: React.ReactN
       }
     })
     setIsDirty(true)
-  }, [selectedSetId, currentSet])
+  }, [selectedSetId, currentSet, confirm])
 
   const handleEditTeacher = useCallback((teacher: CardConfig) => {
     setEditingTeacher({ ...teacher })
@@ -574,7 +603,14 @@ export function SammelkartenAdminProvider({ children }: { children: React.ReactN
     const shouldRunRaritySync = Boolean(rarityChanged && !options?.skipRaritySync)
 
     if (shouldRunRaritySync) {
-      if (!confirm(`Du hast die Seltenheit von ${updatedTeacher.name} geändert. \n\nDies wird die Karte aus den Inventaren ALLER Schüler entfernen, aber sie erhalten pro entfernter Karte 1 Booster-Pack als Entschädigung. \n\nFortfahren?`)) {
+      const confirmed = await confirm({
+        title: 'Seltenheitsaenderung bestaetigen?',
+        content: `Du hast die Seltenheit von ${updatedTeacher.name} geändert.\n\nDies wird die Karte aus den Inventaren ALLER Schüler entfernen, aber sie erhalten pro entfernter Karte 1 Booster-Pack als Entschädigung.\n\nFortfahren?`,
+        priority: 'high',
+        confirmLabel: 'Fortfahren',
+        confirmVariant: 'destructive',
+      })
+      if (!confirmed) {
         return
       }
     }
@@ -630,7 +666,7 @@ export function SammelkartenAdminProvider({ children }: { children: React.ReactN
         toast.error('Fehler beim Bereinigen der Inventare: ' + err.message, { id: toastId })
       }
     }
-  }, [selectedSetId, currentSet, user, profile?.full_name])
+  }, [selectedSetId, currentSet, user, profile?.full_name, confirm])
 
   const runRemoveTeacherFromAlbums = useCallback(async (teacher: CardConfig, compensate: boolean) => {
     const removeFn = httpsCallable<
@@ -861,7 +897,13 @@ export function SammelkartenAdminProvider({ children }: { children: React.ReactN
   }, [localConfig, selectedSetId, currentSet, handleSaveConfig, user, profile])
 
   const handleCleanupInventory = async () => {
-    if (!confirm('Möchtest du wirklich alle Inventare von Lehrern bereinigen, die nicht mehr existieren? Dies kann einen Moment dauern.')) return
+    const confirmed = await confirm({
+      title: 'Inventare bereinigen?',
+      content: 'Möchtest du wirklich alle Inventare von Lehrern bereinigen, die nicht mehr existieren? Dies kann einen Moment dauern.',
+      priority: 'warning',
+      confirmLabel: 'Bereinigen',
+    })
+    if (!confirmed) return
     
     setIsCleaningInventory(true)
     const cleanupFn = httpsCallable<void, { success: boolean, usersProcessed: number, usersUpdated: number, cardsRemoved: number }>(functions, 'cleanupNonExistentTeachers')
@@ -880,7 +922,13 @@ export function SammelkartenAdminProvider({ children }: { children: React.ReactN
   }
 
   const handleSyncOpenedPacksToInventory = async () => {
-    if (!confirm('Dies stellt sicher, dass alle geöffneten Packs auch im Inventar der Nutzer reflektiert werden. Dies kann lange dauern. Fortfahren?')) return
+    const confirmed = await confirm({
+      title: 'Packs synchronisieren?',
+      content: 'Dies stellt sicher, dass alle geöffneten Packs auch im Inventar der Nutzer reflektiert werden. Dies kann lange dauern. Fortfahren?',
+      priority: 'warning',
+      confirmLabel: 'Synchronisieren',
+    })
+    if (!confirmed) return
     
     setIsSyncingOpenedPacks(true)
     try {
@@ -898,7 +946,14 @@ export function SammelkartenAdminProvider({ children }: { children: React.ReactN
   }
 
   const handleCleanupLegacyTeachersVoted = async () => {
-    if (!confirm('Möchtest du alle "teachers_voted" Dokumente löschen? Dies ist ein Relikt aus dem alten Abstimmungssystem.')) return
+    const confirmed = await confirm({
+      title: 'Legacy-Daten löschen?',
+      content: 'Möchtest du alle "teachers_voted" Dokumente löschen? Dies ist ein Relikt aus dem alten Abstimmungssystem.',
+      priority: 'warning',
+      confirmLabel: 'Loeschen',
+      confirmVariant: 'destructive',
+    })
+    if (!confirmed) return
     
     setIsCleaningLegacyVotes(true)
     try {
@@ -916,7 +971,13 @@ export function SammelkartenAdminProvider({ children }: { children: React.ReactN
   }
 
   const handleMigrateInventory = async () => {
-    if (!confirm('Dies migriert alle Inventar-Einträge in das neue ID-Format (setId_cardId). Nur einmal ausführen! Fortfahren?')) return
+    const confirmed = await confirm({
+      title: 'Inventar migrieren?',
+      content: 'Dies migriert alle Inventar-Einträge in das neue ID-Format (setId_cardId). Nur einmal ausführen! Fortfahren?',
+      priority: 'warning',
+      confirmLabel: 'Migrieren',
+    })
+    if (!confirmed) return
     
     setIsMigratingInventory(true)
     try {
@@ -934,7 +995,13 @@ export function SammelkartenAdminProvider({ children }: { children: React.ReactN
   }
 
   const handleMigrateTeacherVol1 = async () => {
-    if (!confirm('Dies migriert alle Karten im "teacher_vol1" Set, die noch das alte ID-Format haben. Fortfahren?')) return
+    const confirmed = await confirm({
+      title: 'teacher_vol1 migrieren?',
+      content: 'Dies migriert alle Karten im "teacher_vol1" Set, die noch das alte ID-Format haben. Fortfahren?',
+      priority: 'warning',
+      confirmLabel: 'Migrieren',
+    })
+    if (!confirmed) return
     
     setIsMigratingTeacherVol1(true)
     try {
@@ -1044,7 +1111,14 @@ export function SammelkartenAdminProvider({ children }: { children: React.ReactN
   // Proposal moderation functions
   const handleModerateProposal = async (proposal: CardProposal, action: 'accept' | 'reject') => {
     if (action === 'reject') {
-      if (!confirm(`Möchtest du den Vorschlag "${proposal.teacher_name}" wirklich ablehnen?`)) return
+      const confirmed = await confirm({
+        title: 'Vorschlag ablehnen?',
+        content: `Möchtest du den Vorschlag "${proposal.teacher_name}" wirklich ablehnen?`,
+        priority: 'high',
+        confirmLabel: 'Ablehnen',
+        confirmVariant: 'destructive',
+      })
+      if (!confirmed) return
       setModeratingProposalId(proposal.id)
       try {
         const moderateFn = httpsCallable(functions, 'moderateCardProposal')

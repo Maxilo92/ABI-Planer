@@ -6,12 +6,12 @@ import { BannerMessage } from '@/components/ui/system-messages/BannerMessage'
 import { ModalMessage } from '@/components/ui/system-messages/ModalMessage'
 
 export function SystemMessageHost() {
-  const { activeMessages, dismissMessage } = useSystemMessage()
+  const { activeMessages, activeModalMessage, dismissMessage } = useSystemMessage()
 
   const banners = activeMessages.filter((msg) => msg.type === 'banner')
-  const modals = activeMessages.filter((msg) => msg.type === 'modal')
+  const activeModal = activeModalMessage
 
-  if (banners.length === 0 && modals.length === 0) {
+  if (banners.length === 0 && !activeModal) {
     return null
   }
 
@@ -31,14 +31,14 @@ export function SystemMessageHost() {
         </div>
       )}
 
-      {/* Modals (portaled by Dialog) - Z-index is handled by Radix Dialog */}
-      {modals.map((modal) => (
+      {/* FIFO modal queue: render only the active modal */}
+      {activeModal && (
         <ModalMessage 
-          key={modal.id} 
-          message={modal} 
-          onClose={() => dismissMessage(modal.id)} 
+          key={activeModal.id} 
+          message={activeModal} 
+          onClose={() => dismissMessage(activeModal.id)} 
         />
-      ))}
+      )}
     </>
   )
 }

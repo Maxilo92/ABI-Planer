@@ -1,18 +1,7 @@
 import { CardData, CardVariant as NewCardVariant } from '@/types/cards'
 import { CardVariant, LootTeacher, TeacherRarity } from '@/types/database'
 import { CARD_SETS, getCard } from '@/constants/cardRegistry'
-
-function getTeacherRarityHex(rarity: TeacherRarity) {
-  switch (rarity) {
-    case 'common': return '#64748b'
-    case 'rare': return '#10b981'
-    case 'epic': return '#9333ea'
-    case 'mythic': return '#dc2626'
-    case 'legendary': return '#f59e0b'
-    case 'iconic': return '#000000'
-    default: return '#64748b'
-  }
-}
+import { getRarityHexColor } from '@/modules/shared/rarity'
 
 export function mapToTeacherCardData(
   teacher: LootTeacher,
@@ -28,7 +17,7 @@ export function mapToTeacherCardData(
   }
   
   if (registryCard) {
-    const teacherColor = getTeacherRarityHex(registryCard.rarity as TeacherRarity)
+    const teacherColor = getRarityHexColor(registryCard.rarity as TeacherRarity)
     const albumNumber = resolveAlbumNumber(registryCard.id)
 
     return {
@@ -55,7 +44,7 @@ export function mapToTeacherCardData(
     rarity: teacher.rarity,
     type: 'teacher',
     variant,
-    color: getTeacherRarityHex(teacher.rarity),
+    color: getRarityHexColor(teacher.rarity),
     cardNumber: resolveAlbumNumber(teacher.id || teacher.name),
     description: teacher.description,
     hp: teacher.hp,

@@ -23,9 +23,11 @@ import { logAction } from '@/lib/logging'
 import { TeacherAlbum } from '@/components/dashboard/TeacherAlbum'
 import { TOTPSetup } from '@/components/admin/TOTPSetup'
 import { useFriendSystem } from '@/hooks/useFriendSystem'
+import { usePopupManager } from '@/modules/popup/usePopupManager'
 
 export default function ProfilePage() {
   const { user, profile, loading } = useAuth()
+  const { prompt } = usePopupManager()
   const { friendships, incomingRequests, outgoingRequests } = useFriendSystem()
   const [fullName, setFullName] = useState('')
   const [savingName, setSavingName] = useState(false)
@@ -197,7 +199,19 @@ export default function ProfilePage() {
       return
     }
 
-    const confirmation = window.prompt('Zum Bestätigen bitte KONTO LOESCHEN eingeben:')
+    const confirmation = await prompt({
+      title: 'Konto unwiderruflich löschen?',
+      content: 'Diese Aktion kann nicht rückgängig gemacht werden. Bitte gib KONTO LOESCHEN ein, um dein Konto endgültig zu löschen.',
+      priority: 'high',
+      inputLabel: 'Bestätigungstext',
+      placeholder: 'KONTO LOESCHEN',
+      requiredValue: 'KONTO LOESCHEN',
+      validationMessage: 'Bitte gib den Text KONTO LOESCHEN exakt ein.',
+      confirmLabel: 'Konto löschen',
+      confirmVariant: 'destructive',
+      cancelLabel: 'Abbrechen',
+    })
+
     if (confirmation !== 'KONTO LOESCHEN') {
       toast.error('Kontolöschung abgebrochen.')
       return

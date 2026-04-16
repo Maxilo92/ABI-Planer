@@ -14,7 +14,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import Link from 'next/link'
 import Logo from '@/components/Logo'
 import { logAction } from '@/lib/logging'
-import { getMainBaseUrl } from '@/lib/dashboard-url'
+import { getAppHomeUrl, getAccessTargetFromProfile, getMainBaseUrl } from '@/lib/dashboard-url'
 
 const OPTION_TEACHER = 'Lehrer'
 const OPTION_OTHER_GRADE = 'andere KlassenStufe'
@@ -37,6 +37,10 @@ function RegisterForm() {
   const searchParams = useSearchParams()
   const ref = searchParams.get('ref')
   const mainBaseUrl = getMainBaseUrl()
+  const selectedClassName = selectedCourse === OPTION_OTHER_GRADE ? manualGrade.trim() : selectedCourse
+  const postSignupTarget = selectedCourse === OPTION_TEACHER
+    ? 'dashboard'
+    : getAccessTargetFromProfile({ class_name: selectedClassName })
 
   const isSpecialOption = selectedCourse === OPTION_TEACHER || selectedCourse === OPTION_OTHER_GRADE
 
@@ -190,12 +194,16 @@ function RegisterForm() {
 
       // 5. Create profile document in Firestore
       const classNameToSave = selectedCourse === OPTION_OTHER_GRADE ? manualGrade : selectedCourse
+      const accessTarget = selectedCourse === OPTION_TEACHER
+        ? 'dashboard'
+        : getAccessTargetFromProfile({ class_name: classNameToSave })
 
       await setDoc(doc(db, 'profiles', user.uid), {
         full_name: fullName,
         email: normalizedEmail,
         role: isFirstUser ? 'admin' : 'viewer',
         class_name: classNameToSave,
+        access_target: accessTarget,
         planning_groups: [],
         led_groups: [],
         is_group_leader: false,
@@ -216,6 +224,7 @@ function RegisterForm() {
         email: normalizedEmail,
         role: isFirstUser ? 'admin' : 'viewer',
         class_name: classNameToSave,
+        access_target: accessTarget,
         created_at: new Date().toISOString(),
       })
 
@@ -224,6 +233,7 @@ function RegisterForm() {
         action: 'profile_created',
         role: isFirstUser ? 'admin' : 'viewer',
         class_name: classNameToSave,
+        access_target: accessTarget,
         legal_consents_recorded: true,
       })
 
@@ -281,8 +291,18 @@ function RegisterForm() {
               <div className="p-4 bg-primary/10 rounded-xl text-sm text-primary font-medium leading-relaxed">
                 Bitte klicke auf den Link in der E-Mail (Check auch deinen Spam-Ordner), um deinen Account zu aktivieren und deine Willkommens-Booster zu erhalten!
               </div>
-              <Button onClick={() => router.push('/')} className="w-full h-12">
-                Zum Dashboard
+              <Button
+                onClick={() => {
+                  if (typeof window === 'undefined') {
+                    router.push('/')
+                    return
+                  }
+
+                  window.location.href = getAppHomeUrl(window.location, postSignupTarget)
+                }}
+                className="w-full h-12"
+              >
+                {postSignupTarget === 'tcg' ? 'Zu den Karten' : 'Zum Dashboard'}
               </Button>
             </CardContent>
           ) : (

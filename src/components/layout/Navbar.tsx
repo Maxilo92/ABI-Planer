@@ -18,6 +18,8 @@ import { CountdownHeader } from './CountdownHeader'
 import { useNotifications } from '@/hooks/useNotifications'
 import Logo from '@/components/Logo'
 
+import { getAppBaseUrl, getMainBaseUrl, getDashboardBaseUrl, getTcgBaseUrl } from '@/lib/dashboard-url'
+
 const auth = getFirebaseAuth()
 
 interface NavItem {
@@ -27,6 +29,7 @@ interface NavItem {
   notify?: boolean
   isBeta?: boolean
   subItems?: NavItem[]
+  isExternalLink?: boolean
 }
 
 interface QuickAction {
@@ -53,6 +56,57 @@ export function Navbar() {
   const hasPlanningGroups = profile?.planning_groups && profile.planning_groups.length > 0
 
   const isVerified = user?.emailVerified || false
+
+  // Domain detection
+  const [hostname, setHostname] = useState('')
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setHostname(window.location.hostname)
+    }
+  }, [])
+
+  const isTcgDomain = hostname.startsWith('tcg.') || hostname.includes('.tcg.')
+  const isDashboardDomain = hostname.startsWith('dashboard.') || hostname.startsWith('app.') || hostname.includes('dashboard.')
+  const isMainDomain = !isTcgDomain && !isDashboardDomain
+  
+  const dashboardUrl = getDashboardBaseUrl()
+  const tcgUrl = getTcgBaseUrl()
+  const mainUrl = getMainBaseUrl()
+
+  const isAdmin = profile?.role === 'admin_main' || profile?.role === 'admin_co' || profile?.role === 'admin'
+  const isPlanner = profile?.role === 'planner' || isAdmin
+  
+  // A user is a "Local Stufe" user if they are a planner or have access to dashboard
+  const isLocalPlannerUser = isPlanner || (profile?.class_name && profile.class_name.includes('11'))
+
+  // Helper to resolve URLs across domains
+  const resolveHref = (path: string) => {
+    const landingRoutes = ['/uber', '/vorteile', '/agb', '/datenschutz', '/impressum']
+    const cardRoutes = ['/sammelkarten', '/shop', '/battle-pass']
+    const plannerRoutes = [
+      '/lehrer', '/abstimmungen', '/admin', '/aufgaben', '/einstellungen', '/feedback', 
+      '/finanzen', '/gruppen', '/hilfe', '/kalender', '/r', '/todos', '/unauthorized', 
+      '/zugang', '/maintenance'
+    ]
+
+    // Special case for root
+    if (path === '/') {
+      if (isTcgDomain) return '/' // Keeps them on TCG dashboard
+      return '/'
+    }
+
+    if (landingRoutes.some(r => path === r || path.startsWith(r + '/'))) {
+      return isMainDomain ? path : `${mainUrl}${path}`
+    }
+    if (cardRoutes.some(r => path === r || path.startsWith(r + '/'))) {
+      return isTcgDomain ? path : `${tcgUrl}${path}`
+    }
+    if (plannerRoutes.some(r => path === r || path.startsWith(r + '/'))) {
+      return isDashboardDomain ? path : `${dashboardUrl}${path}`
+    }
+
+    return path
+  }
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -99,8 +153,6 @@ export function Navbar() {
     })
   }
 
-  const isAdmin = profile?.role === 'admin_main' || profile?.role === 'admin_co' || profile?.role === 'admin'
-
   const [isTradingEnabled, setIsTradingEnabled] = useState(false)
 
   useEffect(() => {
@@ -123,63 +175,78 @@ export function Navbar() {
     return () => unsub()
   }, [isAdmin])
 
-  const navItems: NavItem[] = [
-    {
+  const navItems: NavItem[] = []
+
+  // "Zurück zum Planer" only for planners on TCG domain
+  if (isTcgDomain && isLocalPlannerUser) {
+    navItems.push({
+      href: '/planer-back-root',
+      label: 'Planer-Modul',
+      icon: ChevronLeft,
+      subItems: [
+        { href: resolveHref('/'), label: 'Zurück zum Dashboard', icon: LayoutDashboard, isExternalLink: true },
+        { href: resolveHref('/kalender'), label: 'Kalender öffnen', icon: Calendar, isExternalLink: true },
+      ]
+    })
+  }
+
+  // CORE WORKING AREAS (Dashboard, Planung, Finanzen)
+  // Only show if user is a local planner (or we are not on TCG domain)
+  if (!isTcgDomain || isLocalPlannerUser) {
+    navItems.push({
       href: '/uebersicht-root',
       label: 'Übersicht',
       icon: LayoutDashboard,
       subItems: [
-        { href: '/', label: 'Dashboard', icon: LayoutDashboard },
+        { href: resolveHref('/'), label: 'Dashboard', icon: LayoutDashboard, isExternalLink: !isDashboardDomain && !isMainDomain },
         ...(isEnabled('news_status') ? [{ href: '/news', label: 'News', icon: Megaphone, notify: notifications.news }] : []),
         ...(profile && isEnabled('polls_status') ? [
-          { href: '/abstimmungen', label: 'Umfragen', icon: BarChart2, notify: notifications.umfragen }
+          { href: resolveHref('/abstimmungen'), label: 'Umfragen', icon: BarChart2, notify: notifications.umfragen, isExternalLink: !isDashboardDomain }
         ] : []),
       ],
-    },
-    ...(profile ? [
-      {
+    })
+
+    if (profile) {
+      navItems.push({
         href: '/planung-root',
         label: 'Planung',
         icon: Calendar,
         notify: notifications.gruppen,
         subItems: [
-          ...(isEnabled('calendar_status') ? [{ href: '/kalender', label: 'Kalender', icon: Calendar, notify: notifications.kalender }] : []),
-          ...(isEnabled('todos_status') ? [{ href: '/todos', label: 'Todos', icon: CheckSquare, notify: notifications.todos }] : []),
-          { href: '/aufgaben', label: 'Aufgaben', icon: Briefcase },
-          { href: '/gruppen', label: 'Gruppen', icon: Users, notify: notifications.gruppen },
+          ...(isEnabled('calendar_status') ? [{ href: resolveHref('/kalender'), label: 'Kalender', icon: Calendar, notify: notifications.kalender, isExternalLink: !isDashboardDomain }] : []),
+          ...(isEnabled('todos_status') ? [{ href: resolveHref('/todos'), label: 'Todos', icon: CheckSquare, notify: notifications.todos, isExternalLink: !isDashboardDomain }] : []),
+          { href: resolveHref('/aufgaben'), label: 'Aufgaben', icon: Briefcase, isExternalLink: !isDashboardDomain },
+          { href: resolveHref('/gruppen'), label: 'Gruppen', icon: Users, notify: notifications.gruppen, isExternalLink: !isDashboardDomain },
         ],
-      }
-    ] : []),
-    {
+      })
+    }
+
+    navItems.push({
       href: '/finanzen-root',
       label: 'Finanzen',
       icon: Euro,
       subItems: [
-        { href: '/finanzen', label: 'Kassenstand', icon: Euro },
-        ...(isEnabled('shop_status') ? [{ href: '/shop', label: 'Shop', icon: ShoppingBag }] : []),
+        { href: resolveHref('/finanzen'), label: 'Kassenstand', icon: Euro, isExternalLink: !isDashboardDomain },
+        ...(isEnabled('shop_status') ? [{ href: resolveHref('/shop'), label: 'Shop', icon: ShoppingBag, isExternalLink: !isDashboardDomain }] : []),
       ],
-    },
-    /* {
-      href: '/battle-pass',
-      label: 'Battle Pass',
-      icon: Trophy,
-    }, */
-  ]
+    })
+  }
 
+  // TCG AREA
   if (profile && isEnabled('sammelkarten_status')) {
     const sammelkartenSubItems: NavItem[] = [
-      { href: '/sammelkarten?view=sammelkarten', label: 'Booster öffnen', icon: Gift },
-      { href: '/sammelkarten?view=album', label: 'Lehrer-Album', icon: Trophy },
-      { href: '/sammelkarten?view=decks', label: 'Meine Decks', icon: LayoutDashboard },
+      { href: resolveHref('/sammelkarten?view=sammelkarten'), label: 'Booster öffnen', icon: Gift, isExternalLink: !isTcgDomain },
+      { href: resolveHref('/sammelkarten?view=album'), label: 'Lehrer-Album', icon: Trophy, isExternalLink: !isTcgDomain },
+      { href: resolveHref('/sammelkarten?view=decks'), label: 'Meine Decks', icon: LayoutDashboard, isExternalLink: !isTcgDomain },
     ]
 
     if (isEnabled('trading_status')) {
-      sammelkartenSubItems.push({ href: '/sammelkarten/tausch', label: 'Trading-Hub', icon: ArrowLeftRight, notify: notifications.karten })
+      sammelkartenSubItems.push({ href: resolveHref('/sammelkarten/tausch'), label: 'Trading-Hub', icon: ArrowLeftRight, notify: notifications.karten, isExternalLink: !isTcgDomain })
     }
 
     if (isEnabled('combat_status')) {
-      sammelkartenSubItems.push({ href: '/sammelkarten/kaempfe', label: 'Kämpfe', icon: Swords, isBeta: true })
-      sammelkartenSubItems.push({ href: '/sammelkarten/kaempfe/log', label: 'Kampflog', icon: FileText })
+      sammelkartenSubItems.push({ href: resolveHref('/sammelkarten/kaempfe'), label: 'Kämpfe', icon: Swords, isBeta: true, isExternalLink: !isTcgDomain })
+      sammelkartenSubItems.push({ href: resolveHref('/sammelkarten/kaempfe/log'), label: 'Kampflog', icon: FileText, isExternalLink: !isTcgDomain })
     }
 
     navItems.push({
@@ -190,6 +257,7 @@ export function Navbar() {
     })
   }
 
+  // ACCOUNT AREA
   if (profile) {
     navItems.push({
       href: '/konto-root',
@@ -198,38 +266,40 @@ export function Navbar() {
       subItems: [
         { href: '/profil', label: 'Profil', icon: User },
         { href: '/profil/freunde', label: 'Freunde', icon: UserPlus },
-        { href: '/einstellungen', label: 'Einstellungen', icon: Settings },
+        { href: resolveHref('/einstellungen'), label: 'Einstellungen', icon: Settings, isExternalLink: !isDashboardDomain },
       ]
     })
   }
 
+  // HELP AREA
   navItems.push({
     href: '/hilfe-root',
     label: 'Hilfe',
     icon: HelpCircle,
     subItems: [
-      { href: '/hilfe', label: 'Hilfe & Info', icon: HelpCircle },
-      { href: '/feedback', label: 'Feedback geben', icon: MessageSquareHeart },
-      { href: '/hilfe/beschwerden', label: 'Beschwerden', icon: ShieldAlert },
+      { href: resolveHref('/hilfe'), label: 'Hilfe & Info', icon: HelpCircle, isExternalLink: !isDashboardDomain },
+      { href: resolveHref('/feedback'), label: 'Feedback geben', icon: MessageSquareHeart, isExternalLink: !isDashboardDomain },
+      { href: resolveHref('/hilfe/beschwerden'), label: 'Beschwerden', icon: ShieldAlert, isExternalLink: !isDashboardDomain },
     ]
   })
 
+  // ADMIN AREA
   if (isAdmin) {
     const adminSubItems = [
-      { href: '/admin/system', label: 'Control Center', icon: Server },
-      { href: '/admin', label: 'Benutzer', icon: Users },
-      { href: '/admin/changelog', label: 'Changelog', icon: FileText },
-      { href: '/admin/sammelkarten', label: 'Sammelkarten Manager', icon: Sparkles },
-      { href: '/admin/aufgaben', label: 'Aufgaben Prüfung', icon: Briefcase },
-      { href: '/admin/trades', label: 'Trade Moderation', icon: ArrowLeftRight },
-      { href: '/admin/global-settings', label: 'Globale Einstellungen', icon: Settings },
-      { href: '/admin/shop-earnings', label: 'Shop Einnahmen', icon: DollarSign },
-      { href: '/admin/logs', label: 'Logs', icon: BarChart2, isBeta: false },
-      { href: '/admin/feedback', label: 'Feedback Admin', icon: MessageSquareHeart },
+      { href: resolveHref('/admin/system'), label: 'Control Center', icon: Server, isExternalLink: !isDashboardDomain },
+      { href: resolveHref('/admin'), label: 'Benutzer', icon: Users, isExternalLink: !isDashboardDomain },
+      { href: resolveHref('/admin/changelog'), label: 'Changelog', icon: FileText, isExternalLink: !isDashboardDomain },
+      { href: resolveHref('/admin/sammelkarten'), label: 'Sammelkarten Manager', icon: Sparkles, isExternalLink: !isDashboardDomain },
+      { href: resolveHref('/admin/aufgaben'), label: 'Aufgaben Prüfung', icon: Briefcase, isExternalLink: !isDashboardDomain },
+      { href: resolveHref('/admin/trades'), label: 'Trade Moderation', icon: ArrowLeftRight, isExternalLink: !isDashboardDomain },
+      { href: resolveHref('/admin/global-settings'), label: 'Globale Einstellungen', icon: Settings, isExternalLink: !isDashboardDomain },
+      { href: resolveHref('/admin/shop-earnings'), label: 'Shop Einnahmen', icon: DollarSign, isExternalLink: !isDashboardDomain },
+      { href: resolveHref('/admin/logs'), label: 'Logs', icon: BarChart2, isBeta: false, isExternalLink: !isDashboardDomain },
+      { href: resolveHref('/admin/feedback'), label: 'Feedback Admin', icon: MessageSquareHeart, isExternalLink: !isDashboardDomain },
     ]
 
     if (profile?.role === 'admin_main') {
-      adminSubItems.push({ href: '/admin/danger', label: 'Danger Zone', icon: AlertTriangle })
+      adminSubItems.push({ href: resolveHref('/admin/danger'), label: 'Danger Zone', icon: AlertTriangle, isExternalLink: !isDashboardDomain })
     }
 
     navItems.push({ 
