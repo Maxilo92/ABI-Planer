@@ -15,7 +15,7 @@ function splitHostSegments(hostname: string): string[] {
   return hostname.toLowerCase().split('.').filter(Boolean)
 }
 
-function getAppSegmentIndex(segments: string[]): number {
+function getDomainPrefixIndex(segments: string[]): number {
   return segments.findIndex((segment) =>
     segment === 'dashboard' || segment === 'app' || segment === 'tcg' || segment === 'www'
   )
@@ -25,7 +25,7 @@ function buildTargetHost(currentHost: string, target: 'dashboard' | 'tcg' | 'mai
   const segments = splitHostSegments(currentHost)
   if (segments.length === 0) return null
 
-  const appSegmentIndex = getAppSegmentIndex(segments)
+  const appSegmentIndex = getDomainPrefixIndex(segments)
   const targetSegment = target === 'main' ? null : target
 
   if (appSegmentIndex >= 0) {
