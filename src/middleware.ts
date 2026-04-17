@@ -7,9 +7,52 @@ function normalizeRequestHost(hostHeader: string): string {
   return hostHeader.split(':')[0].toLowerCase()
 }
 
+function isLocalHost(hostname: string): boolean {
+  return hostname === 'localhost' || hostname === '127.0.0.1' || hostname.endsWith('.localhost')
+}
+
+function splitHostSegments(hostname: string): string[] {
+  return hostname.toLowerCase().split('.').filter(Boolean)
+}
+
+function getAppSegmentIndex(segments: string[]): number {
+  return segments.findIndex((segment) =>
+    segment === 'dashboard' || segment === 'app' || segment === 'tcg' || segment === 'www'
+  )
+}
+
+function buildTargetHost(currentHost: string, target: 'dashboard' | 'tcg' | 'main'): string | null {
+  const segments = splitHostSegments(currentHost)
+  if (segments.length === 0) return null
+
+  const appSegmentIndex = getAppSegmentIndex(segments)
+  const targetSegment = target === 'main' ? null : target
+
+  if (appSegmentIndex >= 0) {
+    const prefix = segments.slice(0, appSegmentIndex)
+    const suffix = segments.slice(appSegmentIndex + 1)
+    const rebuilt = targetSegment ? [...prefix, targetSegment, ...suffix] : [...prefix, ...suffix]
+    return rebuilt.join('.')
+  }
+
+  if (target === 'main') {
+    return currentHost.replace(/^www\./, '')
+  }
+
+  return `${target}.${currentHost.replace(/^www\./, '')}`
+}
+
+function isDashboardHost(hostname: string): boolean {
+  return /(^|\.)dashboard\./.test(hostname) || /(^|\.)app\./.test(hostname)
+}
+
+function isTcgHost(hostname: string): boolean {
+  return /(^|\.)tcg\./.test(hostname)
+}
+
 function safeRedirect(request: NextRequest, targetUrl: URL) {
   const current = request.nextUrl
-  const currentHost = normalizeRequestHost(request.headers.get('host') || '')
+  const currentHost = normalizeRequestHost(current.host)
   const targetHost = normalizeRequestHost(targetUrl.host)
 
   // Guard against redirect loops (e.g. misconfigured target domains/env vars).
@@ -25,18 +68,23 @@ function safeRedirect(request: NextRequest, targetUrl: URL) {
 }
 
 function getRequestBaseUrl(request: NextRequest, target: 'dashboard' | 'tcg' | 'main'): string {
-  const hostname = normalizeRequestHost(request.headers.get('host') || '')
-  const isLocal = hostname.includes('localhost') || hostname.includes('127.0.0.1')
+  const currentUrl = request.nextUrl
+  const hostname = normalizeRequestHost(currentUrl.hostname)
+  const isLocal = isLocalHost(hostname)
   
   if (isLocal) {
-    const protocol = 'http:' // No SSL on localhost usually
-    // Keep the original port if present in the request
-    const originalHostHeader = request.headers.get('host') || ''
-    const port = originalHostHeader.includes(':') ? `:${originalHostHeader.split(':')[1]}` : ''
-    const baseHost = hostname.replace(/^(dashboard|tcg|app)\./, '')
+    const protocol = currentUrl.protocol || 'http:'
+    const port = currentUrl.port ? `:${currentUrl.port}` : ''
+    const baseHost = buildTargetHost(hostname, 'main') || hostname.replace(/^(dashboard|tcg|app)\./, '')
     
     if (target === 'main') return `${protocol}//${baseHost}${port}`
     return `${protocol}//${target}.${baseHost}${port}`
+  }
+
+  const protocol = currentUrl.protocol || 'https:'
+  const targetHost = buildTargetHost(hostname, target)
+  if (targetHost) {
+    return `${protocol}//${targetHost}`
   }
 
   if (target === 'tcg') return getAppBaseUrl('tcg')
@@ -46,14 +94,13 @@ function getRequestBaseUrl(request: NextRequest, target: 'dashboard' | 'tcg' | '
 
 export function middleware(request: NextRequest) {
   const url = request.nextUrl.clone()
-  const hostname = normalizeRequestHost(request.headers.get('host') || '')
+  const hostname = normalizeRequestHost(url.hostname)
   const pathname = url.pathname
 
   // Local development or production domains
-  const isDashboardSubdomain = hostname === 'dashboard.abi-planer-27.de' || hostname === 'app.abi-planer-27.de' || (hostname.startsWith('dashboard.') && hostname.endsWith('.localhost'))
-  const isTcgSubdomain = hostname === 'tcg.abi-planer-27.de' || (hostname.startsWith('tcg.') && hostname.endsWith('.localhost'))
-  
-  const isLandingDomain = hostname === 'abi-planer-27.de' || hostname === 'www.abi-planer-27.de' || (hostname.endsWith('.localhost') && !hostname.startsWith('dashboard.') && !hostname.startsWith('tcg.')) || (hostname === 'localhost')
+  const isDashboardSubdomain = isDashboardHost(hostname)
+  const isTcgSubdomain = isTcgHost(hostname)
+  const isLandingDomain = !isDashboardSubdomain && !isTcgSubdomain
   
   // Routes categorization
   const landingOnlyRoutes = [
