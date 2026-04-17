@@ -7,6 +7,17 @@ function normalizeRequestHost(hostHeader: string): string {
   return hostHeader.split(':')[0].toLowerCase()
 }
 
+function getEffectiveRequestHost(request: NextRequest): string {
+  const forwardedHost = request.headers.get('x-forwarded-host')
+  const hostHeader = request.headers.get('host')
+  const rawHost = forwardedHost || hostHeader || request.nextUrl.hostname
+  return normalizeRequestHost(rawHost)
+}
+
+function getDefaultPort(protocol: string): string {
+  return protocol === 'https:' ? '443' : '80'
+}
+
 function isLocalHost(hostname: string): boolean {
   return hostname === 'localhost' || hostname === '127.0.0.1' || hostname.endsWith('.localhost')
 }
@@ -60,12 +71,19 @@ function isTcgHost(hostname: string): boolean {
 
 function safeRedirect(request: NextRequest, targetUrl: URL) {
   const current = request.nextUrl
-  const currentHost = normalizeRequestHost(current.host)
-  const targetHost = normalizeRequestHost(targetUrl.host)
+  const forwardedProto = request.headers.get('x-forwarded-proto')
+  const currentProtocol = forwardedProto ? `${forwardedProto}:` : (current.protocol || targetUrl.protocol || 'https:')
+  const targetProtocol = targetUrl.protocol || 'https:'
+  const currentHost = getEffectiveRequestHost(request)
+  const targetHost = normalizeRequestHost(targetUrl.hostname)
+  const currentPort = current.port || getDefaultPort(currentProtocol)
+  const targetPort = targetUrl.port || getDefaultPort(targetProtocol)
 
   // Guard against redirect loops (e.g. misconfigured target domains/env vars).
   if (
+    currentProtocol === targetProtocol &&
     currentHost === targetHost &&
+    currentPort === targetPort &&
     current.pathname === targetUrl.pathname &&
     current.search === targetUrl.search
   ) {
@@ -77,7 +95,7 @@ function safeRedirect(request: NextRequest, targetUrl: URL) {
 
 function getRequestBaseUrl(request: NextRequest, target: 'dashboard' | 'tcg' | 'main'): string {
   const currentUrl = request.nextUrl
-  const hostname = normalizeRequestHost(currentUrl.hostname)
+  const hostname = getEffectiveRequestHost(request)
   const isLocal = isLocalHost(hostname)
   
   if (isLocal) {
@@ -102,7 +120,7 @@ function getRequestBaseUrl(request: NextRequest, target: 'dashboard' | 'tcg' | '
 
 export function middleware(request: NextRequest) {
   const url = request.nextUrl.clone()
-  const hostname = normalizeRequestHost(url.hostname)
+  const hostname = getEffectiveRequestHost(request)
   const pathname = url.pathname
 
   // Local development or production domains
