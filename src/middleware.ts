@@ -25,6 +25,7 @@ function buildTargetHost(currentHost: string, target: 'dashboard' | 'tcg' | 'mai
   const segments = splitHostSegments(currentHost)
   if (segments.length === 0) return null
 
+  const hostWithoutWww = currentHost.replace(/^www\./, '')
   const knownSubdomainIndex = getKnownSubdomainIndex(segments)
   const targetSegment = target === 'main' ? null : target
 
@@ -35,11 +36,18 @@ function buildTargetHost(currentHost: string, target: 'dashboard' | 'tcg' | 'mai
     return rebuilt.join('.')
   }
 
-  if (target === 'main') {
-    return currentHost.replace(/^www\./, '')
+  if (!isLocalHost(currentHost)) {
+    const rootSegments = splitHostSegments(hostWithoutWww)
+    const rootHost = rootSegments.length > 2 ? rootSegments.slice(1).join('.') : hostWithoutWww
+    if (target === 'main') return rootHost
+    return `${target}.${rootHost}`
   }
 
-  return `${target}.${currentHost.replace(/^www\./, '')}`
+  if (target === 'main') {
+    return hostWithoutWww
+  }
+
+  return `${target}.${hostWithoutWww}`
 }
 
 function isDashboardHost(hostname: string): boolean {
@@ -75,7 +83,7 @@ function getRequestBaseUrl(request: NextRequest, target: 'dashboard' | 'tcg' | '
   if (isLocal) {
     const protocol = currentUrl.protocol || 'http:'
     const port = currentUrl.port ? `:${currentUrl.port}` : ''
-    const baseHost = buildTargetHost(hostname, 'main') || hostname.replace(/^(dashboard|tcg|app)\./, '')
+    const baseHost = buildTargetHost(hostname, 'main') || hostname
     
     if (target === 'main') return `${protocol}//${baseHost}${port}`
     return `${protocol}//${target}.${baseHost}${port}`
