@@ -10,9 +10,12 @@ function normalizeRequestHost(hostHeader: string): string {
 function getEffectiveRequestHost(request: NextRequest): string {
   const forwardedHost = request.headers.get('x-forwarded-host')
   const hostHeader = request.headers.get('host')
-  const fallbackHost = request.nextUrl.host
-  const rawHost = forwardedHost || hostHeader || fallbackHost || request.nextUrl.hostname
+  const rawHost = forwardedHost || hostHeader || request.nextUrl.hostname
   return normalizeRequestHost(rawHost)
+}
+
+function getDefaultPort(protocol: string): string {
+  return protocol === 'https:' ? '443' : '80'
 }
 
 function isLocalHost(hostname: string): boolean {
@@ -68,12 +71,13 @@ function isTcgHost(hostname: string): boolean {
 
 function safeRedirect(request: NextRequest, targetUrl: URL) {
   const current = request.nextUrl
-  const currentProtocol = current.protocol || 'https:'
+  const forwardedProto = request.headers.get('x-forwarded-proto')
+  const currentProtocol = forwardedProto ? `${forwardedProto}:` : (current.protocol || targetUrl.protocol || 'https:')
   const targetProtocol = targetUrl.protocol || 'https:'
   const currentHost = getEffectiveRequestHost(request)
-  const targetHost = normalizeRequestHost(targetUrl.host || targetUrl.hostname)
-  const currentPort = current.port || (currentProtocol === 'https:' ? '443' : '80')
-  const targetPort = targetUrl.port || (targetProtocol === 'https:' ? '443' : '80')
+  const targetHost = normalizeRequestHost(targetUrl.hostname)
+  const currentPort = current.port || getDefaultPort(currentProtocol)
+  const targetPort = targetUrl.port || getDefaultPort(targetProtocol)
 
   // Guard against redirect loops (e.g. misconfigured target domains/env vars).
   if (
