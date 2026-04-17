@@ -20,6 +20,13 @@ let storage: FirebaseStorage;
 let functions: Functions;
 
 function initialize() {
+  // Client-only Firebase SDK initialization:
+  // client components may be evaluated during server rendering in Next.js,
+  // so we must not initialize (or throw for missing NEXT_PUBLIC vars) on the server.
+  if (typeof window === 'undefined') {
+    return
+  }
+
   const isConfigValid = !!firebaseConfig.apiKey;
   if (!isConfigValid) {
     throw new Error('Firebase configuration is missing! Check your environment variables.');
