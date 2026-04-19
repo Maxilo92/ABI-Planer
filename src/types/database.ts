@@ -378,6 +378,14 @@ export interface Poll {
   question: string;
   is_active: boolean;
   allow_vote_change?: boolean;
+  is_public?: boolean;
+  multiple_choice?: boolean;
+  max_votes?: number;
+  allow_custom_options?: boolean;
+  custom_options_max_length?: number;
+  max_custom_proposals?: number;
+  target_groups?: string[];
+  target_roles?: UserRole[];
   created_at: string;
   created_by: string;
   options?: PollOption[];
@@ -388,13 +396,19 @@ export interface PollOption {
   id: string;
   poll_id: string;
   option_text: string;
+  created_by?: string;
+  is_custom?: boolean;
 }
 
 export interface PollVote {
   id: string;
   poll_id: string;
   user_id: string;
-  option_id: string;
+  user_name?: string;
+  option_id?: string | null;
+  option_ids?: string[];
+  created_at?: string | Timestamp | Date;
+  updated_at?: string | Timestamp | Date;
 }
 
 export interface CardProposal {

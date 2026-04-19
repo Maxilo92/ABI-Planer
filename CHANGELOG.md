@@ -8,6 +8,62 @@
 
 # Changelog
 
+## [1.18.11] - 2026-04-19
+
+### Behoben
+
+- **Middleware (Stabilität):** Ein Absturz (`TypeError: Invalid URL`) in der Next.js Edge Middleware wurde behoben, indem die Basis-URLs nun automatisch mit einem Protokoll (Standard: `https://`) versehen werden, falls dieses in den Umgebungsvariablen fehlt.
+
+## [1.18.10] - 2026-04-19
+
+### Verbessert
+
+- **Umfragen (Ideen-Limits):** Ersteller können nun die maximale Zeichenlänge für eigene Vorschläge (5-200 Zeichen) sowie ein persönliches Limit an Vorschlägen pro Nutzer (z.B. nur 1 Idee pro Person) festlegen. 
+- **Umfragen (UX):** In der Umfragen-Liste wird nun live angezeigt, wie viele Zeichen noch verfügbar sind und wie viele eigene Ideen bereits eingereicht wurden.
+
+## [1.18.00] - 2026-04-19
+
+### Hinzugefügt
+
+- **Umfragen (Ideen-Sammlung):** Ersteller können nun freie Texteingaben erlauben. Nutzer können eigene Vorschläge (z.B. Motto-Ideen) einreichen, die sofort für alle anderen wählbar werden. Inklusive automatischer Duplikat-Prüfung.
+
+## [1.17.00] - 2026-04-19
+
+### Hinzugefügt
+
+- **Umfragen (Sharing):** Umfragen können nun geteilt werden. Über einen neuen "Share"-Button kann ein Direktlink in die Zwischenablage kopiert werden.
+- **Umfragen (Einzelseite):** Es wurde eine dedizierte Detailseite für Umfragen unter `/abstimmungen/[id]` erstellt.
+
+## [1.16.11] - 2026-04-19
+
+### Sicherheit
+
+- **Firestore Rules:** Zugriff auf Umfragen wird nun strikt auf Datenbankebene geprüft. Private Umfragen sind nur für die definierte Zielgruppe lesbar.
+
+### Behoben
+
+- **Umfragen (UX):** Konsolen-Fehler beim Erreichen des Stimmen-Limits entfernt. Die Validierung erfolgt nun geräuschlos vor der Transaktion.
+
+## [1.16.10] - 2026-04-19
+
+### Verbessert
+
+- **Umfragen (UX):** Die Auswahl der Zielgruppe wurde neu gestaltet. Es gibt nun eine klare Unterscheidung zwischen öffentlichen und eingeschränkten Umfragen mit einer intuitiven Rollen- und Gruppenwahl.
+
+## [1.16.00] - 2026-04-19
+
+### Hinzugefügt
+
+- **Umfragen (Multiple Choice):** Umfragen unterstützen nun Mehrfachauswahl. Ersteller können ein Limit festlegen (z.B. "Wähle 2 von 5 Optionen").
+- **Umfragen (Rollen-Filter):** Die Zielgruppenauswahl wurde verfeinert. Es können nun gezielt spezifische Admin-Rollen (`Haupt-Admins`, `Co-Admins`) oder der gesamte Jahrgang als Zielgruppe für Umfragen ausgewählt werden.
+
+## [1.15.00] - 2026-04-19
+
+### Hinzugefügt
+
+- **Umfragen (Upgrade):** Ersteller können nun Zielgruppen für Umfragen festlegen. Umfragen können auf spezifische Rollen (z.B. Planer) oder Planungsgruppen eingeschränkt werden.
+- **Umfragen (Ergebnisse):** Planer und Administratoren können nun über einen neuen "Details"-Button genau einsehen, welcher Nutzer für welche Option abgestimmt hat. Die Namen der abstimmenden Nutzer werden für eine performante Anzeige direkt beim Votum gespeichert.
+
 ## [1.14.30] - 2026-04-19
 
 ### Behoben

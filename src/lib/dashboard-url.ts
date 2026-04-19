@@ -22,7 +22,14 @@ const APP_HOSTS: Record<AppTarget, string> = {
 }
 
 function normalizeBaseUrl(url: string): string {
-  return url.endsWith('/') ? url.slice(0, -1) : url
+  let normalized = url.trim()
+  if (!normalized) return normalized
+
+  if (!/^https?:\/\//i.test(normalized)) {
+    normalized = `https://${normalized}`
+  }
+
+  return normalized.endsWith('/') ? normalized.slice(0, -1) : normalized
 }
 
 function normalizeHostname(hostname: string): string {

@@ -5,7 +5,7 @@ import { db } from '@/lib/firebase'
 import { collection, query, where, orderBy, onSnapshot, getDocs, doc, updateDoc } from 'firebase/firestore'
 import { useAuth } from '@/context/AuthContext'
 import { Card, CardContent } from '@/components/ui/card'
-import { BarChart2, Loader2, Sparkles } from 'lucide-react'
+import { BarChart2, Sparkles } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { PollList } from '@/components/dashboard/PollList'
 import { CardProposalForm } from '@/components/dashboard/CardProposalForm'
@@ -198,6 +198,8 @@ export default function PollsPage() {
                 polls={sortedPolls} 
                 userId={user?.uid || ''} 
                 userName={profile?.full_name} 
+                userRole={profile?.role}
+                userGroups={profile?.planning_groups}
                 canVote={canVote} 
                 canManage={isPlanner} 
               />

@@ -310,12 +310,22 @@ service cloud.firestore {
     }
 
     match /polls/{pollId} {
-      allow read: if isAuthenticated() && isLernsax();
+      allow read: if isApproved() && (
+        isPlanner() || 
+        resource.data.created_by == request.auth.uid ||
+        resource.data.get('is_public', true) != false ||
+        (resource.data.keys().contains('target_roles') && getProfile().get('role', 'none') in resource.data.target_roles) ||
+        (resource.data.keys().contains('target_groups') && getProfile().get('planning_groups', []).toSet().intersection(resource.data.target_groups.toSet()).size() > 0)
+      );
       allow write: if isPlanner();
 
       match /options/{optionId} {
         allow read: if isAuthenticated() && isLernsax();
-        allow write: if isPlanner();
+        allow create: if isAuthenticated() && (
+          isPlanner() || 
+          get(/databases/$(database)/documents/polls/$(pollId)).data.get('allow_custom_options', false) == true
+        );
+        allow update, delete: if isPlanner();
       }
 
       match /votes/{voteId} {

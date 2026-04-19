@@ -56,7 +56,7 @@ const checks = [
   {
     name: 'Poll voting refresh and feedback stays active',
     file: 'src/components/dashboard/PollList.tsx',
-    patterns: [/refreshVotesForPoll/, /toast\.success\('Deine Stimme wurde gespeichert\.'/, /toast\.error\('Abstimmung fehlgeschlagen/],
+    patterns: [/refreshVotesForPoll/, /toast\.success\('.*Stimme.*(?:gespeichert|hinzugefügt|entfernt|geändert)/, /toast\.error\('Abstimmung fehlgeschlagen/],
   },
   {
     name: 'Finance page keeps goal logic',
