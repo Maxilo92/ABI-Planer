@@ -9,10 +9,12 @@ import { Sun, Moon, ArrowRight, Loader2 } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { getAppHomeUrl, getDashboardBaseUrl, getAccessTargetFromProfile } from '@/lib/dashboard-url'
 import Logo from '@/components/Logo'
+import { doc, updateDoc } from 'firebase/firestore'
+import { db } from '@/lib/firebase'
 
 export function LandingHeader({ isAuthenticated }: { isAuthenticated: boolean }) {
   const { resolvedTheme, setTheme } = useTheme()
-  const { profile } = useAuth()
+  const { profile, user } = useAuth()
   const [isThemeReady, setIsThemeReady] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
   const dashboardBaseUrl = getDashboardBaseUrl()
@@ -29,8 +31,19 @@ export function LandingHeader({ isAuthenticated }: { isAuthenticated: boolean })
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
-  const toggleTheme = () => {
-    setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')
+  const toggleTheme = async () => {
+    const newTheme = resolvedTheme === 'dark' ? 'light' : 'dark'
+    setTheme(newTheme)
+    
+    if (user) {
+      try {
+        await updateDoc(doc(db, 'profiles', user.uid), {
+          theme: newTheme
+        })
+      } catch (error) {
+        console.error('Failed to save theme to profile from landing:', error)
+      }
+    }
   }
 
   const goToDashboard = () => {

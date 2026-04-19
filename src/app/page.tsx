@@ -1491,6 +1491,8 @@ export default function Dashboard() {
                 polls={[poll]}
                 userId={currentUserId}
                 userName={profile?.full_name}
+                userRole={profile?.role}
+                userGroups={profile?.planning_groups}
                 canVote={!!currentUserId}
                 canManage={canManage}
                 useScrollContainer={false}

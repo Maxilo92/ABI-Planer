@@ -8,6 +8,19 @@
 
 # Changelog
 
+## [1.21.02] - 2026-04-19
+
+### Behoben
+
+- **Umfragen (Mobile-Fix):** Ein Fehler wurde behoben, durch den das Eingabefeld für eigene Vorschläge (Briefkasten-Modus) auf Mobilgeräten teilweise nicht angezeigt oder durch Animationen verdeckt wurde.
+- **Umfragen (Dashboard):** Fehlende Benutzer-Berechtigungen in der Dashboard-Ansicht von Umfragen wurden ergänzt, um eine konsistente Anzeige zu gewährleisten.
+
+## [1.21.01] - 2026-04-19
+
+### Hinzugefügt
+
+- **Account-gebundene Themes:** Das gewählte Farbschema (Hell/Dunkel) und die Akzentfarbe werden nun im Benutzerprofil gespeichert und geräteübergreifend synchronisiert.
+
 ## [1.21.00] - 2026-04-19
 
 ### Hinzugefügt

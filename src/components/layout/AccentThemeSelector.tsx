@@ -3,6 +3,9 @@
 import { useMemo } from 'react'
 import { Check, ChevronDown } from 'lucide-react'
 import { useTheme } from 'next-themes'
+import { doc, updateDoc } from 'firebase/firestore'
+import { db } from '@/lib/firebase'
+import { useAuth } from '@/context/AuthContext'
 
 import { useAccentTheme } from '@/context/AccentThemeProvider'
 import { Button } from '@/components/ui/button'
@@ -17,9 +20,23 @@ import { cn } from '@/lib/utils'
 
 export function AccentThemeSelector() {
   const { presetId, activePreset, setPresetId } = useAccentTheme()
+  const { user } = useAuth()
   const { resolvedTheme } = useTheme()
   const themeMode = resolvedTheme === 'dark' ? 'dark' : 'light'
   const availablePresets = useMemo(() => getAccentThemePresetsForMode(themeMode), [themeMode])
+
+  const handleSetPreset = async (id: string) => {
+    setPresetId(id)
+    if (user) {
+      try {
+        await updateDoc(doc(db, 'profiles', user.uid), {
+          accent_theme: id
+        })
+      } catch (error) {
+        console.error('Failed to save accent theme to profile:', error)
+      }
+    }
+  }
 
   return (
     <div className="space-y-2">
@@ -54,7 +71,7 @@ export function AccentThemeSelector() {
             return (
               <DropdownMenuItem
                 key={preset.id}
-                onClick={() => setPresetId(preset.id)}
+                onClick={() => handleSetPreset(preset.id)}
                 className={cn(
                   'flex flex-col gap-1 py-2 px-3 cursor-pointer',
                   isActive && 'bg-brand/10'

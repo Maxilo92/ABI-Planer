@@ -65,6 +65,8 @@ export interface Profile {
   total_referrals?: number;
   total_referral_boosters?: number;
   dashboard_layout?: DashboardComponentKey[];
+  theme?: 'light' | 'dark' | 'system';
+  accent_theme?: string;
   shop_stats?: {
     month: string;
     counts: Record<string, number>;

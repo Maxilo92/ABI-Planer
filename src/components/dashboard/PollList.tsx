@@ -530,7 +530,7 @@ export function PollList({
               })}
               
               {poll.allow_custom_options && userId && (
-                <div className="pt-4 mt-2 border-t border-dashed border-border/60 animate-in fade-in slide-in-from-top-2 duration-500">
+                <div className="pt-4 mt-2 border-t border-dashed border-border/60">
                   {(() => {
                     const maxProposals = poll.max_custom_proposals || 1
                     const currentSubmissionCount = userSubmissionCounts[poll.id] || 0
@@ -560,19 +560,19 @@ export function PollList({
                             {currentLength}/{maxLength}
                           </span>
                         </div>
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 relative z-10">
                           <Input
                             placeholder={poll.custom_placeholder || "z.B. Deine Motto-Idee..."}
                             value={customInputs[poll.id] || ''}
                             onChange={(e) => setCustomInputs(prev => ({ ...prev, [poll.id]: e.target.value }))}
-                            className="h-9 text-xs"
+                            className="h-10 text-sm"
                             maxLength={maxLength}
                             onKeyDown={(e) => e.key === 'Enter' && handleCustomOption(poll.id)}
                             disabled={!!isSubmittingCustom}
                           />
                           <Button 
                             size="icon" 
-                            className="h-9 w-9 shrink-0" 
+                            className="h-10 w-10 shrink-0" 
                             onClick={() => handleCustomOption(poll.id)}
                             disabled={!customInputs[poll.id]?.trim() || !!isSubmittingCustom}
                           >

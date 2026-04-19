@@ -30,6 +30,7 @@ export function AccentThemeProvider({
 }) {
   const { resolvedTheme } = useTheme()
   const [presetId, setPresetIdState] = useState<string>(() => {
+    if (typeof window === 'undefined') return DEFAULT_ACCENT_THEME_ID
     try {
       const storedId = localStorage.getItem(ACCENT_THEME_STORAGE_KEY)
       if (storedId && accentThemePresetMap.has(storedId)) {

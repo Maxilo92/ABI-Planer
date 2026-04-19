@@ -73,6 +73,7 @@ export type LogActionType =
   | 'INVENTORY_RARITY_SYNC'
   | 'PROPOSALS_BACKFILL'
   | 'PROPOSAL_MODERATED'
+  | 'POLL_SUBMISSION_CREATED'
 
 export interface LogEntry {
   action: LogActionType

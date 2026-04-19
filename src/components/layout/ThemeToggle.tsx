@@ -3,6 +3,9 @@
 import * as React from 'react'
 import { Moon, Sun, Check } from 'lucide-react'
 import { useTheme } from 'next-themes'
+import { doc, updateDoc } from 'firebase/firestore'
+import { db } from '@/lib/firebase'
+import { useAuth } from '@/context/AuthContext'
 
 import { Button } from '@/components/ui/button'
 import {
@@ -15,8 +18,22 @@ import { cn } from '@/lib/utils'
 
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme()
+  const { user } = useAuth()
 
   const themeLabel = theme === 'light' ? 'Hell' : theme === 'dark' ? 'Dunkel' : 'System'
+
+  const handleSetTheme = async (newTheme: string) => {
+    setTheme(newTheme)
+    if (user) {
+      try {
+        await updateDoc(doc(db, 'profiles', user.uid), {
+          theme: newTheme
+        })
+      } catch (error) {
+        console.error('Failed to save theme to profile:', error)
+      }
+    }
+  }
 
   return (
     <DropdownMenu>
@@ -34,21 +51,21 @@ export function ThemeToggle() {
       />
       <DropdownMenuContent align="end">
         <DropdownMenuItem 
-          onClick={() => setTheme('light')}
+          onClick={() => handleSetTheme('light')}
           className={cn("flex items-center justify-between", theme === 'light' && "bg-secondary font-bold")}
         >
           Hell
           {theme === 'light' && <Check className="h-4 w-4 ml-2" />}
         </DropdownMenuItem>
         <DropdownMenuItem 
-          onClick={() => setTheme('dark')}
+          onClick={() => handleSetTheme('dark')}
           className={cn("flex items-center justify-between", theme === 'dark' && "bg-secondary font-bold")}
         >
           Dunkel
           {theme === 'dark' && <Check className="h-4 w-4 ml-2" />}
         </DropdownMenuItem>
         <DropdownMenuItem 
-          onClick={() => setTheme('system')}
+          onClick={() => handleSetTheme('system')}
           className={cn("flex items-center justify-between", theme === 'system' && "bg-secondary font-bold")}
         >
           System

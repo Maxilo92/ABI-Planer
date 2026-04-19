@@ -13,6 +13,7 @@ import { useSystemMessage } from '@/context/SystemMessageContext'
 import { TwoFactorGate } from '@/components/auth/TwoFactorGate'
 import { useAuth } from '@/context/AuthContext'
 import { Skeleton } from '@/components/ui/skeleton'
+import { ThemeSync } from '@/components/layout/ThemeSync'
 
 interface AppShellProps {
   children: React.ReactNode
@@ -162,6 +163,7 @@ export function AppShell({ children }: AppShellProps) {
 
   return (
     <TwoFactorGate>
+      <ThemeSync />
       <div className="min-h-[100dvh] bg-background lg:flex pb-safe">
         <Navbar />
         <div className="flex-1 flex flex-col min-h-[100dvh] min-w-0">
