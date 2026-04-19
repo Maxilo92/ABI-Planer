@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { db } from '@/lib/firebase'
 import { doc, setDoc } from 'firebase/firestore'
 import { useRouter } from 'next/navigation'
@@ -30,16 +30,28 @@ interface EditSettingsDialogProps {
 
 export function EditSettingsDialog({ currentDate, currentGoal, currentSupportGoal, currentSupportAmount = 0 }: EditSettingsDialogProps) {
   const { user, profile } = useAuth()
-  // Format the date for the datetime-local input (YYYY-MM-DDTHH:MM)
-  const initialDate = currentDate ? format(new Date(currentDate), "yyyy-MM-dd'T'HH:mm") : ''
   
-  const [date, setDate] = useState(initialDate)
+  const [date, setDate] = useState('')
   const [goal, setGoal] = useState(currentGoal.toString())
   const [supportGoal, setSupportGoal] = useState(currentSupportGoal.toString())
   const [supportAmount, setSupportAmount] = useState(currentSupportAmount.toString())
   const [loading, setLoading] = useState(false)
   const [open, setOpen] = useState(false)
   const router = useRouter()
+
+  // Sync state when props change (e.g. after loading from Firestore)
+  useEffect(() => {
+    if (currentDate) {
+      try {
+        setDate(format(new Date(currentDate), "yyyy-MM-dd'T'HH:mm"))
+      } catch (error) {
+        console.error('Invalid date format:', currentDate, error)
+      }
+    }
+    setGoal(currentGoal.toString())
+    setSupportGoal(currentSupportGoal.toString())
+    setSupportAmount(currentSupportAmount.toString())
+  }, [currentDate, currentGoal, currentSupportGoal, currentSupportAmount])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

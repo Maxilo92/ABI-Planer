@@ -8,6 +8,12 @@
 
 # Changelog
 
+## [1.14.30] - 2026-04-19
+
+### Behoben
+
+- **UX (Dashboard-Einstellungen):** Bestehende Werte werden nun zuverlässig in den Bearbeitungs-Dialogen (Einstellungen, Termine, Aufgaben, Finanzen) vorausgefüllt. Ein neuer Synchronisierungs-Mechanismus stellt sicher, dass die Felder auch dann korrekt befüllt sind, wenn die Daten verzögert laden.
+
 ## [1.14.29] - 2026-04-19
 
 ### Behoben

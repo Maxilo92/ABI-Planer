@@ -11,7 +11,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Pencil, X, Users, Shield, Group, Plus, MapPin } from 'lucide-react'
+import { Pencil, X, Users, Shield, Group, Plus } from 'lucide-react'
 import { Event, Profile, UserRole } from '@/types/database'
 import { format } from 'date-fns'
 import { toDate } from '@/lib/utils'
@@ -51,6 +51,21 @@ export function EditEventDialog({ event }: EditEventDialogProps) {
   const [profiles, setProfiles] = useState<Profile[]>([])
   const [availableGroups, setAvailableGroups] = useState<string[]>([])
   const router = useRouter()
+
+  // Sync state when event prop changes
+  useEffect(() => {
+    setTitle(event.title)
+    setDescription(event.description || '')
+    setLocation(event.location || '')
+    setStartDate(format(toDate(event.start_date), "yyyy-MM-dd'T'HH:mm"))
+    setEndDate(
+      event.end_date ? format(toDate(event.end_date), "yyyy-MM-dd'T'HH:mm") : format(toDate(event.start_date), "yyyy-MM-dd'T'HH:mm")
+    )
+    setAssignedGroup(event.assigned_to_group || '')
+    setMentionedUserIds(event.mentioned_user_ids || [])
+    setMentionedRoles(event.mentioned_roles || [])
+    setMentionedGroups(event.mentioned_groups || [])
+  }, [event])
 
   useEffect(() => {
     if (!open || authLoading || !profile?.is_approved) return

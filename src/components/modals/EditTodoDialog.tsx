@@ -16,7 +16,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Pencil, Users, User as UserIcon, Calendar } from 'lucide-react'
+import { Pencil, Users, Calendar } from 'lucide-react'
 import { Todo, Profile } from '@/types/database'
 import { toast } from 'sonner'
 import { useAuth } from '@/context/AuthContext'
@@ -39,6 +39,15 @@ export function EditTodoDialog({ todo }: EditTodoDialogProps) {
   const [loading, setLoading] = useState(false)
   const [open, setOpen] = useState(false)
   const router = useRouter()
+
+  // Sync state when todo prop changes
+  useEffect(() => {
+    setTitle(todo.title)
+    setAssignedUser(todo.assigned_to_user || '')
+    setAssignedClass(todo.assigned_to_class || '')
+    setAssignedGroup(todo.assigned_to_group || '')
+    setDeadline(todo.deadline_date || '')
+  }, [todo])
 
   useEffect(() => {
     const fetchData = async () => {

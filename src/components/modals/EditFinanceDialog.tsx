@@ -38,6 +38,13 @@ export function EditFinanceDialog({ entry }: EditFinanceDialogProps) {
   const { user, profile, loading: authLoading } = useAuth()
   const router = useRouter()
 
+  // Sync state when entry prop changes
+  useEffect(() => {
+    setAmount(entry.amount.toString())
+    setDescription(entry.description || '')
+    setResponsibleClass(entry.responsible_class || 'Allgemein')
+  }, [entry])
+
   useEffect(() => {
     if (authLoading || !profile?.is_approved) return
     const settingsRef = doc(db, 'settings', 'config')
