@@ -40,6 +40,9 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 import { usePopupManager } from '@/modules/popup/usePopupManager'
+import { TeacherCard } from '@/components/cards/TeacherCard'
+import { TeacherSpecCard } from '@/components/cards/TeacherSpecCard'
+import { Rarity } from '@/types/cards'
 
 interface Invitation {
   id: string
@@ -55,6 +58,8 @@ interface Submission {
   originalTeacherName: string
   cardName: string
   description: string
+  suggestedRarity: Rarity
+  suggestedHp: number
   attacks: any[]
   imageUrl: string
   submittedAt: any
@@ -773,66 +778,145 @@ export function TeacherInvitationsTab() {
         </div>
       </TabsContent>
 
-      <TabsContent value="subs" className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {submissions.map((sub) => (
-            <Card key={sub.id} className="overflow-hidden border-2">
-              <CardHeader className="bg-muted/30">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <CardTitle className="text-lg">{sub.cardName}</CardTitle>
-                    <CardDescription className="text-xs">Original: {sub.originalTeacherName}</CardDescription>
+      <TabsContent value="subs" className="space-y-8">
+        <div className="flex flex-col gap-8">
+          {submissions.map((sub) => {
+            // Map submission to CardData format
+            const cardData = {
+              id: sub.id,
+              name: sub.cardName,
+              rarity: sub.suggestedRarity || 'epic',
+              variant: 'normal' as const,
+              color: RARITY_OPTIONS.find(r => r.value === sub.suggestedRarity)?.color || '#3b82f6',
+              cardNumber: 'T1-???',
+              description: sub.description,
+              attacks: sub.attacks.map(a => ({
+                name: a.name || 'Angriff',
+                description: a.description || 'Keine Beschreibung',
+                damage: a.damage || 0
+              })),
+              hp: sub.suggestedHp || 100,
+              imageUrl: sub.imageUrl
+            }
+
+            return (
+              <div key={sub.id} className="grid grid-cols-1 xl:grid-cols-3 gap-8 p-6 rounded-[2.5rem] border-2 bg-card shadow-sm">
+                {/* Left: Card Preview */}
+                <div className="xl:col-span-1 flex flex-col items-center gap-6">
+                  <div className="w-full flex justify-between items-center px-4">
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Kartenvorschau</span>
+                    <Badge variant={sub.status === 'approved' ? 'default' : 'secondary'} className="uppercase text-[9px] font-black">
+                      {sub.status}
+                    </Badge>
                   </div>
-                  <Badge variant={sub.status === 'approved' ? 'default' : 'secondary'}>
-                    {sub.status}
-                  </Badge>
-                </div>
-              </CardHeader>
-              <CardContent className="pt-6 space-y-4">
-                {sub.imageUrl && (
-                  <div className="aspect-[2/1] rounded-lg overflow-hidden border">
-                    <img src={sub.imageUrl} className="w-full h-full object-cover" alt={sub.cardName} />
-                  </div>
-                )}
-                
-                <div className="space-y-2">
-                  <p className="text-sm italic font-medium">"{sub.description}"</p>
-                  <div className="space-y-1">
-                    {sub.attacks.map((a, i) => (
-                      <div key={i} className="text-xs p-2 bg-muted rounded">
-                        <span className="font-bold">{a.name}</span>: {a.description}
-                      </div>
-                    ))}
+                  
+                  <div className="flex flex-col sm:flex-row xl:flex-col gap-8 items-center">
+                    <div className="w-[240px] h-[340px] shrink-0 shadow-2xl rounded-[2rem] overflow-hidden rotate-[-1deg] hover:rotate-0 transition-transform">
+                      <TeacherCard 
+                        data={{ ...cardData, imageUrl: undefined }} 
+                        interactive={false} 
+                        frontOnly={true} 
+                        className="rounded-[2rem]" 
+                      />
+                    </div>
+                    <div className="w-[240px] h-[340px] shrink-0 shadow-2xl rounded-[2rem] overflow-hidden rotate-[1deg] hover:rotate-0 transition-transform">
+                      <TeacherSpecCard 
+                        data={cardData} 
+                        styleVariant="modern-flat" 
+                        className="rounded-[2rem]" 
+                      />
+                    </div>
                   </div>
                 </div>
 
-                <div className="flex gap-2">
-                  <Button 
-                    variant={sub.status === 'approved' ? 'outline' : 'default'} 
-                    size="sm" 
-                    className="flex-1"
-                    onClick={() => approveSubmission(sub.id)}
-                    disabled={sub.status === 'approved'}
-                  >
-                    Genehmigen
-                  </Button>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="text-destructive"
-                    onClick={() => deleteSubmission(sub.id)}
-                  >
-                    Löschen
-                  </Button>
+                {/* Right: Raw Data & Actions */}
+                <div className="xl:col-span-2 flex flex-col space-y-6">
+                  <div className="space-y-4">
+                    <div className="flex flex-col gap-1">
+                      <h3 className="text-2xl font-black uppercase tracking-tight text-primary">{sub.cardName}</h3>
+                      <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Eingereicht von: {sub.originalTeacherName}</p>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="p-4 rounded-2xl bg-muted/50 border space-y-1">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Beschreibung</span>
+                        <p className="text-sm font-medium leading-relaxed italic">"{sub.description}"</p>
+                      </div>
+                      <div className="p-4 rounded-2xl bg-muted/50 border space-y-3">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Werte</span>
+                        <div className="flex gap-4">
+                          <div className="flex flex-col">
+                            <span className="text-xs font-bold">HP</span>
+                            <span className="text-lg font-black">{sub.suggestedHp}</span>
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="text-xs font-bold">Rarity</span>
+                            <span className="text-lg font-black uppercase tracking-tighter" style={{ color: cardData.color }}>{sub.suggestedRarity}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="p-5 rounded-3xl bg-muted/30 border-2 border-dashed space-y-4">
+                      <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Spezial-Fähigkeiten</span>
+                      <div className="space-y-3">
+                        {sub.attacks.map((a, i) => (
+                          <div key={i} className="flex gap-4 items-start p-3 bg-background rounded-2xl border shadow-sm">
+                            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center font-black text-primary shrink-0">
+                              {a.damage}
+                            </div>
+                            <div className="flex flex-col gap-0.5">
+                              <span className="font-black uppercase text-xs">{a.name}</span>
+                              <p className="text-xs text-muted-foreground leading-relaxed">{a.description}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {sub.imageUrl && (
+                      <div className="p-4 rounded-2xl bg-muted/50 border flex items-center gap-4">
+                        <div className="w-16 h-16 rounded-xl overflow-hidden border shrink-0">
+                          <img src={sub.imageUrl} className="w-full h-full object-cover" alt="Eingereichtes Foto" />
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Hochgeladenes Foto</span>
+                          <p className="text-xs font-medium italic">Das Foto wird nach der Genehmigung manuell in das Set eingefügt.</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="mt-auto pt-6 flex gap-3">
+                    <Button 
+                      variant={sub.status === 'approved' ? 'outline' : 'default'} 
+                      className={cn(
+                        "flex-1 h-14 rounded-2xl font-black uppercase tracking-widest",
+                        sub.status !== 'approved' && "bg-emerald-500 hover:bg-emerald-600 shadow-lg shadow-emerald-500/20"
+                      )}
+                      onClick={() => approveSubmission(sub.id)}
+                      disabled={sub.status === 'approved'}
+                    >
+                      <CheckCircle2 className="w-5 h-5 mr-2" />
+                      {sub.status === 'approved' ? 'Bereits Genehmigt' : 'Genehmigen'}
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      className="h-14 px-6 rounded-2xl text-destructive hover:bg-destructive/10 font-bold"
+                      onClick={() => deleteSubmission(sub.id)}
+                    >
+                      <Trash2 className="w-5 h-5" />
+                    </Button>
+                  </div>
                 </div>
-              </CardContent>
-            </Card>
-          ))}
+              </div>
+            )
+          })}
           
           {!loading && submissions.length === 0 && (
-            <div className="col-span-full py-20 text-center border-2 border-dashed rounded-xl opacity-20">
-              <Sparkles className="w-12 h-12 mx-auto mb-2" />
-              <p>Noch keine Einreichungen eingegangen.</p>
+            <div className="col-span-full py-32 text-center border-4 border-dashed rounded-[3rem] opacity-20">
+              <Sparkles className="w-20 h-20 mx-auto mb-4" />
+              <p className="text-xl font-black uppercase tracking-widest">Keine Einreichungen</p>
             </div>
           )}
         </div>

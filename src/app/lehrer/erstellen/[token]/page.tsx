@@ -70,6 +70,7 @@ export default function TeacherCreateCardPage() {
   const [attacks, setAttacks] = useState<Attack[]>([{ name: '', description: '', damage: 20 }])
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [croppedImage, setCroppedImage] = useState<string | null>(null)
+  const [croppedImageBlob, setCroppedImageBlob] = useState<Blob | null>(null)
   const [legalConfirmed, setLegalConfirmed] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -117,7 +118,11 @@ export default function TeacherCreateCardPage() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0]
+      if (imagePreview) URL.revokeObjectURL(imagePreview)
+      if (croppedImage) URL.revokeObjectURL(croppedImage)
       setImagePreview(URL.createObjectURL(file))
+      setCroppedImage(null)
+      setCroppedImageBlob(null)
       setIsCropping(true)
     }
   }
@@ -125,14 +130,27 @@ export default function TeacherCreateCardPage() {
   const generateCroppedImage = async () => {
     try {
       if (!imagePreview) return
-      const croppedImage = await getCroppedImg(imagePreview, croppedAreaPixels)
-      setCroppedImage(croppedImage as string)
+      const croppedBlob = await getCroppedImgBlob(imagePreview, croppedAreaPixels)
+      if (!croppedBlob) {
+        toast.error('Fehler beim Zuschneiden')
+        return
+      }
+      if (croppedImage) URL.revokeObjectURL(croppedImage)
+      setCroppedImageBlob(croppedBlob)
+      setCroppedImage(URL.createObjectURL(croppedBlob))
       setIsCropping(false)
     } catch (e) {
       console.error(e)
       toast.error('Fehler beim Zuschneiden')
     }
   }
+
+  useEffect(() => {
+    return () => {
+      if (imagePreview) URL.revokeObjectURL(imagePreview)
+      if (croppedImage) URL.revokeObjectURL(croppedImage)
+    }
+  }, [imagePreview, croppedImage])
 
   const addAttack = () => {
     if (attacks.length < 3) {
@@ -154,16 +172,14 @@ export default function TeacherCreateCardPage() {
     setIsSubmitting(true)
     try {
       let imageUrl = ''
-      if (croppedImage) {
-        const response = await fetch(croppedImage)
-        const blob = await response.blob()
+      if (croppedImageBlob) {
         const storageRef = ref(storage, `teacher_submissions/${token}/photo.jpg`)
-        await uploadBytes(storageRef, blob)
-        imageUrl = await getDownloadURL(storageRef)
+        await withTimeout(uploadBytes(storageRef, croppedImageBlob), 20000, 'Foto-Upload dauert zu lange')
+        imageUrl = await withTimeout(getDownloadURL(storageRef), 15000, 'Bild-URL konnte nicht geladen werden')
       }
 
       const submissionRef = doc(collection(db, 'teacher_submissions'))
-      await setDoc(submissionRef, {
+      await withTimeout(setDoc(submissionRef, {
         invitationId: token,
         originalTeacherName: invitation?.teacherName,
         cardName,
@@ -175,11 +191,11 @@ export default function TeacherCreateCardPage() {
         legalConfirmed,
         submittedAt: serverTimestamp(),
         status: 'pending_review'
-      })
+      }), 20000, 'Einreichung dauert zu lange')
 
-      await updateDoc(doc(db, 'teacher_invitations', token as string), {
+      await withTimeout(updateDoc(doc(db, 'teacher_invitations', token as string), {
         status: 'submitted'
-      })
+      }), 15000, 'Einladung konnte nicht abgeschlossen werden')
 
       setInvitation({ ...invitation!, status: 'submitted' })
       toast.success('Erfolgreich eingereicht')
@@ -616,7 +632,7 @@ export default function TeacherCreateCardPage() {
   )
 }
 
-async function getCroppedImg(imageSrc: string, pixelCrop: any): Promise<string | null> {
+async function getCroppedImgBlob(imageSrc: string, pixelCrop: any): Promise<Blob | null> {
   const image = await new Promise<HTMLImageElement>((resolve, reject) => {
     const img = new Image();
     img.addEventListener('load', () => resolve(img));
@@ -632,12 +648,30 @@ async function getCroppedImg(imageSrc: string, pixelCrop: any): Promise<string |
 
   ctx.drawImage(image, pixelCrop.x, pixelCrop.y, pixelCrop.width, pixelCrop.height, 0, 0, pixelCrop.width, pixelCrop.height);
 
-  return new Promise((resolve) => {
+  return new Promise((resolve: (value: Blob | null) => void) => {
     canvas.toBlob((blob) => {
       if (!blob) return resolve(null);
-      resolve(URL.createObjectURL(blob));
+      resolve(blob);
     }, 'image/jpeg', 0.9);
   });
+}
+
+async function withTimeout<T>(promise: Promise<T>, timeoutMs: number, timeoutMessage: string): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => {
+      reject(new Error(timeoutMessage))
+    }, timeoutMs)
+
+    promise
+      .then((result) => {
+        clearTimeout(timer)
+        resolve(result)
+      })
+      .catch((error) => {
+        clearTimeout(timer)
+        reject(error)
+      })
+  })
 }
 
 // Icons

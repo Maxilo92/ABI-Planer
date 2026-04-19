@@ -490,8 +490,32 @@ service cloud.firestore {
     }
 
     match /teacher_submissions/{submissionId} {
-      allow create: if request.resource.data.invitationId != null && 
-                    get(/databases/$(database)/documents/teacher_invitations/$(request.resource.data.invitationId)).data.status == 'pending';
+      // Public teacher flow: submission must work without login.
+      // We validate payload shape here and complete token-state validation in teacher_invitations update.
+      allow create: if request.resource.data.keys().hasOnly([
+                      'invitationId',
+                      'originalTeacherName',
+                      'cardName',
+                      'description',
+                      'suggestedRarity',
+                      'suggestedHp',
+                      'attacks',
+                      'imageUrl',
+                      'legalConfirmed',
+                      'submittedAt',
+                      'status'
+                    ])
+                    && request.resource.data.invitationId is string
+                    && request.resource.data.originalTeacherName is string
+                    && request.resource.data.cardName is string
+                    && request.resource.data.description is string
+                    && request.resource.data.suggestedRarity is string
+                    && request.resource.data.suggestedHp is int
+                    && request.resource.data.attacks is list
+                    && request.resource.data.imageUrl is string
+                    && request.resource.data.legalConfirmed == true
+                    && request.resource.data.submittedAt is timestamp
+                    && request.resource.data.status == 'pending_review';
       allow read, update, delete: if isAdmin();
     }
   }

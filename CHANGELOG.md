@@ -8,6 +8,33 @@
 
 # Changelog
 
+## [1.14.28] - 2026-04-19
+
+### Geändert
+
+- **Lehrer-Submission Admin-Ansicht:** Die Übersicht der eingereichten Lehrerkarten wurde komplett überarbeitet.
+  - **Karten-Vorschau:** Jede Einreichung zeigt nun eine Echtzeit-Vorschau der Vorder- und Rückseite (Details) der Karte an.
+  - **Strukturierte Daten:** Die vom Lehrer eingegebenen Texte (Beschreibung, Werte, Fähigkeiten) werden nun übersichtlich neben der Karte dargestellt, um die Prüfung zu erleichtern.
+  - **Visuelles Feedback:** Neues Layout mit Fokus auf die Ästhetik des Sammelkartenspiels.
+
+## [1.14.27] - 2026-04-19
+
+
+### Behoben
+
+- **Lehrer-Einreichung ohne Login:** Firestore-Regeln für `teacher_submissions` angepasst, damit unangemeldete Lehrkräfte Karten sicher einreichen können, ohne an einem Berechtigungsfehler zu scheitern.
+    - Entfernt die potenzielle Rechte-Blockade durch Cross-Document-Read in der Create-Regel.
+    - Stattdessen strikte Feldvalidierung der Einreichungsdaten direkt in der Rule.
+
+## [1.14.27] - 2026-04-19
+
+### Behoben
+
+- **Lehrer-Submission Stabilität:** Der Einreichungs-Flow auf `/lehrer/erstellen/[token]` wurde gehärtet, damit der Absenden-Button auf frischen/unangemeldeten Geräten nicht mehr im Ladezustand hängen bleibt.
+    - Foto-Upload nutzt jetzt direkt den zugeschnittenen Blob statt `fetch(blob:...)`.
+    - Timeout-Schutz für Upload und Firestore-Schreibvorgänge mit sauberem Fehler-Rückfall.
+    - Object-URL-Handling beim Bildwechsel und Cleanup verbessert.
+
 ## [1.14.27] - 2026-04-19
 
 ### Behoben
