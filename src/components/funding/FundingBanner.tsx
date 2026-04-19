@@ -100,7 +100,7 @@ export function FundingBanner({
               </div>
             </div>
 
-            <p className={cn('text-xs sm:text-sm md:text-base leading-relaxed text-muted-foreground transition-all duration-300', collapsed && 'line-clamp-2 md:line-clamp-none')}>
+            <p className={cn('text-xs sm:text-sm md:text-base leading-relaxed text-muted-foreground transition-all duration-300', collapsed && 'hidden')}>
               {description}
             </p>
           </div>
