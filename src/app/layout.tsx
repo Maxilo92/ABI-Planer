@@ -6,11 +6,11 @@ import { AuthProvider } from '@/context/AuthContext'
 import { SystemMessageProvider } from '@/context/SystemMessageContext'
 import { Toaster } from '@/components/ui/sonner'
 import { ThemeProvider } from '@/context/ThemeProvider'
+import { AccentThemeProvider } from '@/context/AccentThemeProvider'
 import { GoogleAdSense } from '@/components/layout/GoogleAdSense'
 import { AdSenseScript } from '@/components/layout/AdSenseScript'
 
 import { faviconLinks } from '@/components/FaviconLinks'
-import Logo from '@/components/Logo'
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' })
 
@@ -39,14 +39,16 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <AuthProvider>
-            <SystemMessageProvider>
-              <AdSenseScript />
-              <AppShell>{children}</AppShell>
-              <GoogleAdSense />
-              <Toaster />
-            </SystemMessageProvider>
-          </AuthProvider>
+          <AccentThemeProvider>
+            <AuthProvider>
+              <SystemMessageProvider>
+                <AdSenseScript />
+                <AppShell>{children}</AppShell>
+                <GoogleAdSense />
+                <Toaster />
+              </SystemMessageProvider>
+            </AuthProvider>
+          </AccentThemeProvider>
         </ThemeProvider>
       </body>
     </html>

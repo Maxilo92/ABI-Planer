@@ -13,7 +13,7 @@ import {
   DialogTrigger 
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { LayoutGrid, ChevronUp, ChevronDown, Eye, EyeOff } from 'lucide-react'
+import { LayoutGrid, ChevronUp, ChevronDown, Eye, EyeOff, Sparkles } from 'lucide-react'
 import { Profile, DashboardComponentKey } from '@/types/database'
 import { cn } from '@/lib/utils'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -89,6 +89,22 @@ export function CustomizeDashboardDialog({ profile, currentLayout }: CustomizeDa
     setLoading(false)
   }
 
+  const handleReset = async () => {
+    if (!profile.id) return
+    setLoading(true)
+
+    try {
+      const userRef = doc(db, 'profiles', profile.id)
+      await updateDoc(userRef, {
+        dashboard_layout: null
+      })
+      setOpen(false)
+    } catch (error) {
+      console.error('Error resetting dashboard layout:', error)
+    }
+    setLoading(false)
+  }
+
   const allPossibleWidgets: DashboardComponentKey[] = [
     'todos', 'events', 'polls', 'funding', 'news', 'leaderboard'
   ]
@@ -109,7 +125,7 @@ export function CustomizeDashboardDialog({ profile, currentLayout }: CustomizeDa
           </DialogDescription>
         </DialogHeader>
         
-        <div className="py-4 space-y-2">
+        <div className="py-4 space-y-2 max-h-[60vh] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
           <AnimatePresence mode="popLayout">
             {layout.map((key, index) => (
               <motion.div 
@@ -194,11 +210,27 @@ export function CustomizeDashboardDialog({ profile, currentLayout }: CustomizeDa
           </AnimatePresence>
         </div>
 
-        <DialogFooter>
-          <Button variant="ghost" onClick={() => setOpen(false)}>Abbrechen</Button>
-          <Button onClick={handleSave} disabled={loading} className="bg-brand hover:bg-brand/90 text-brand-foreground font-black uppercase tracking-widest text-[10px]">
-            {loading ? 'Speichern...' : 'Layout speichern'}
-          </Button>
+        <DialogFooter className="flex flex-col sm:flex-row items-center justify-between gap-4 border-t pt-4 mt-2">
+          <div className="w-full sm:w-auto flex justify-start">
+            {profile.dashboard_layout && profile.dashboard_layout.length > 0 && (
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={handleReset} 
+                disabled={loading}
+                className="h-8 gap-2 border-brand/20 hover:bg-brand/5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground hover:text-brand transition-all"
+              >
+                <Sparkles className="h-3 w-3 text-brand" />
+                Automatik
+              </Button>
+            )}
+          </div>
+          <div className="w-full sm:w-auto flex items-center justify-end gap-2">
+            <Button variant="ghost" size="sm" onClick={() => setOpen(false)} className="text-xs">Abbrechen</Button>
+            <Button onClick={handleSave} disabled={loading} className="bg-brand hover:bg-brand/90 text-brand-foreground font-black uppercase tracking-widest text-[10px] h-9 px-4">
+              {loading ? 'Speichern...' : 'Speichern'}
+            </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -215,11 +215,13 @@ export const syncTeacherRarities = onSchedule("every 15 minutes", async (event) 
 async function collectLandingStats(db: FirebaseFirestore.Firestore) {
   const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
-  const [profilesSnap, dailyActiveSnap, newsSnap, inventoriesSnap] = await Promise.all([
+  const [profilesSnap, dailyActiveSnap, newsSnap, inventoriesSnap, settingsSnap, financesSnap] = await Promise.all([
     db.collection("profiles").count().get(),
     db.collection("profiles").where("last_visited.dashboard", ">=", twentyFourHoursAgo).count().get(),
     db.collection("news").count().get(),
     db.collection("user_teachers").get(),
+    db.collection("settings").doc("config").get(),
+    db.collection("finances").get(),
   ]);
 
   let totalCards = 0;
@@ -230,11 +232,22 @@ async function collectLandingStats(db: FirebaseFirestore.Firestore) {
     });
   });
 
+
+  const finances = financesSnap.docs.map((doc) => doc.data())
+  const amounts = finances.map((entry: any) => Number(entry.amount) || 0)
+  const incomeTotal = amounts.filter((value) => value > 0).reduce((acc, value) => acc + value, 0)
+  const expenseTotal = amounts.filter((value) => value < 0).reduce((acc, value) => acc + Math.abs(value), 0)
+  const currentFunding = incomeTotal - expenseTotal
+  const fundingGoal = Number(settingsSnap.data()?.funding_goal) || 10000
+  const supportGoal = Number(settingsSnap.data()?.support_goal) || 100
   return {
     total_users: profilesSnap.data().count,
     daily_active_users: dailyActiveSnap.data().count,
     total_cards_count: totalCards,
     news_count: newsSnap.data().count,
+    current_funding: currentFunding,
+    funding_goal: fundingGoal,
+    support_goal: supportGoal,
   };
 }
 

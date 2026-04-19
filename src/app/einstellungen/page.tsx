@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { signOut } from 'firebase/auth'
 import { User, MoonStar, MessageSquarePlus, LogOut, Users, Save, Plus, Trash2, Sparkles, AlertTriangle } from 'lucide-react'
-import { collection, doc, getDocs, onSnapshot, query, setDoc, updateDoc, where, writeBatch } from 'firebase/firestore'
+import { collection, doc, getDocs, onSnapshot, query, setDoc, where, writeBatch } from 'firebase/firestore'
 
 import { auth, db } from '@/lib/firebase'
 import { useAuth } from '@/context/AuthContext'
@@ -20,10 +20,10 @@ import {
   DialogTitle 
 } from '@/components/ui/dialog'
 import { ThemeToggle } from '@/components/layout/ThemeToggle'
+import { AccentThemeSelector } from '@/components/layout/AccentThemeSelector'
 import { AddFeedbackDialog } from '@/components/modals/AddFeedbackDialog'
 import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
-import { Profile } from '@/types/database'
 import { logAction } from '@/lib/logging'
 
 interface CourseRow {
@@ -305,8 +305,9 @@ export default function SettingsPage() {
             </CardTitle>
             <CardDescription>Hell, dunkel oder automatisch nach System.</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
             <ThemeToggle />
+            <AccentThemeSelector />
           </CardContent>
         </Card>
       </section>

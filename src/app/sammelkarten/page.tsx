@@ -2,7 +2,7 @@
 
 import { useAuth } from '@/context/AuthContext'
 import { Sparkles } from 'lucide-react'
-import { Suspense, useCallback, useMemo, useState } from 'react'
+import { Suspense, useCallback, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useUserTeachers } from '@/hooks/useUserTeachers'
@@ -22,6 +22,9 @@ import { SinglePackReveal } from './_modules/components/SinglePackReveal'
 import { MassPackReveal } from './_modules/components/MassPackReveal'
 import { PackOpeningStage } from './_modules/components/PackOpeningStage'
 import { SammelkartenFooterActions } from './_modules/components/SammelkartenFooterActions'
+import { FundingBanner } from '@/components/funding/FundingBanner'
+import { db } from '@/lib/firebase'
+import { doc, onSnapshot } from 'firebase/firestore'
 
 function SammelkartenContent() {
   const searchParams = useSearchParams()
@@ -34,6 +37,19 @@ function SammelkartenContent() {
   const { queueEntries: customPackQueue } = useCustomPackQueue()
   const { config, isTradingEnabled, timeLeft } = useSammelkartenConfig()
   const [activeDeckId, setActiveDeckId] = useState<string | null>(null)
+  const [supportGoal, setSupportGoal] = useState<number | null>(null)
+
+  useEffect(() => {
+    const unsubscribe = onSnapshot(doc(db, 'public', 'landing_stats'), (snapshot) => {
+      const data = snapshot.data() as { support_goal?: number } | undefined
+      setSupportGoal(typeof data?.support_goal === 'number' ? data.support_goal : null)
+    }, (error) => {
+      console.error('Error listening to public support goal:', error)
+      setSupportGoal(null)
+    })
+
+    return () => unsubscribe()
+  }, [])
 
   const availablePacks = useMemo<AvailablePack[]>(() => {
     const totalRemaining = getRemainingBoosters()
@@ -200,6 +216,17 @@ function SammelkartenContent() {
               getRemainingSupportBoosters={getRemainingSupportBoosters}
               timeLeft={timeLeft}
               packSelectionHref={availablePacks.length > 1 && selectedPack ? `/sammelkarten/packs?selected=${encodeURIComponent(selectedPack.id)}` : null}
+            />
+
+            <FundingBanner
+              bannerId="support-banner"
+              current={0}
+              goal={supportGoal ?? 100}
+              title="Server- & Entwicklungskosten"
+              description="Dieser Support-Pool ist strikt von der Abikasse getrennt und dient ausschließlich dazu, Server-, Hosting- und Entwicklungskosten zu decken."
+              ctaHref="/finanzen/spenden"
+              ctaLabel="Support geben"
+              storageKey="tcg-funding-banner-collapsed"
             />
 
             {/* The Pack/Card Container */}

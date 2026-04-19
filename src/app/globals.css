@@ -9,6 +9,8 @@
 
   --color-brand: var(--brand-accent);
   --color-brand-foreground: var(--brand-accent-foreground);
+  --color-contrast: hsl(var(--theme-contrast));
+  --color-contrast-foreground: hsl(var(--theme-contrast-foreground));
 
   --color-primary: hsl(var(--primary));
   --color-primary-foreground: hsl(var(--primary-foreground));
@@ -194,30 +196,40 @@
 
 @layer base {
   :root {
-    --brand-accent: #7DD200;
-    --brand-accent-foreground: #132300;
+    --brand-accent-light: #7DD200;
+    --brand-accent-light-foreground: #132300;
+    --brand-accent-dark: #7DD200;
+    --brand-accent-dark-foreground: #132300;
+    --theme-contrast-light: 222 68% 42%;
+    --theme-contrast-dark: 222 78% 66%;
+    --theme-contrast-light-foreground: 0 0% 100%;
+    --theme-contrast-dark-foreground: 222 47% 11%;
+    --brand-accent: var(--brand-accent-light);
+    --brand-accent-foreground: var(--brand-accent-light-foreground);
+    --theme-contrast: var(--theme-contrast-light);
+    --theme-contrast-foreground: var(--theme-contrast-light-foreground);
 
     /* Slightly off-white background for better contrast with white cards */
-    --background: 210 20% 98%;
-    --foreground: 222.2 84% 4.9%;
+    --background: var(--theme-light-background, 210 20% 98%);
+    --foreground: var(--theme-light-foreground, 222.2 84% 4.9%);
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card: var(--theme-light-card, 0 0% 100%);
+    --card-foreground: var(--theme-light-cardForeground, 222.2 84% 4.9%);
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover: var(--theme-light-popover, 0 0% 100%);
+    --popover-foreground: var(--theme-light-popoverForeground, 222.2 84% 4.9%);
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    --primary: var(--theme-light-primary, 222.2 47.4% 11.2%);
+    --primary-foreground: var(--theme-light-primaryForeground, 210 40% 98%);
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: var(--theme-light-secondary, 210 40% 96.1%);
+    --secondary-foreground: var(--theme-light-secondaryForeground, 222.2 47.4% 11.2%);
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: var(--theme-light-muted, 210 40% 96.1%);
+    --muted-foreground: var(--theme-light-mutedForeground, 215.4 16.3% 46.9%);
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: var(--theme-light-accent, 210 40% 96.1%);
+    --accent-foreground: var(--theme-light-accentForeground, 222.2 47.4% 11.2%);
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
@@ -225,11 +237,13 @@
     --info: 217 91% 60%;
 
     /* Softer borders for white mode */
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --border: var(--theme-light-border, 214.3 31.8% 91.4%);
+    --input: var(--theme-light-input, 214.3 31.8% 91.4%);
+    --ring: var(--theme-light-ring, 222.2 84% 4.9%);
 
     --radius: 0.75rem;
+    --selection-bg: hsl(var(--theme-contrast));
+    --selection-fg: hsl(var(--theme-contrast-foreground));
 
     /* Subtle shadows for depth in white mode */
     --shadow-subtle-var: 0 1px 2px 0 rgb(0 0 0 / 0.05);
@@ -237,38 +251,42 @@
   }
 
   .dark {
-    --brand-accent: #7DD200;
-    --brand-accent-foreground: #132300;
+    --brand-accent: var(--brand-accent-dark);
+    --brand-accent-foreground: var(--brand-accent-dark-foreground);
+    --theme-contrast: var(--theme-contrast-dark);
+    --theme-contrast-foreground: var(--theme-contrast-dark-foreground);
 
-    --background: 222 26% 10%;
-    --foreground: 210 22% 96%;
+    --background: var(--theme-dark-background, 222 26% 10%);
+    --foreground: var(--theme-dark-foreground, 210 22% 96%);
 
-    --card: 223 24% 14%;
-    --card-foreground: 210 22% 96%;
+    --card: var(--theme-dark-card, 223 24% 14%);
+    --card-foreground: var(--theme-dark-cardForeground, 210 22% 96%);
 
-    --popover: 223 24% 14%;
-    --popover-foreground: 210 22% 96%;
+    --popover: var(--theme-dark-popover, 223 24% 14%);
+    --popover-foreground: var(--theme-dark-popoverForeground, 210 22% 96%);
 
-    --primary: 210 32% 92%;
-    --primary-foreground: 222 35% 14%;
+    --primary: var(--theme-dark-primary, 210 32% 92%);
+    --primary-foreground: var(--theme-dark-primaryForeground, 222 35% 14%);
 
-    --secondary: 223 18% 20%;
-    --secondary-foreground: 210 22% 96%;
+    --secondary: var(--theme-dark-secondary, 223 18% 20%);
+    --secondary-foreground: var(--theme-dark-secondaryForeground, 210 22% 96%);
 
-    --muted: 223 18% 20%;
-    --muted-foreground: 214 16% 78%;
+    --muted: var(--theme-dark-muted, 223 18% 20%);
+    --muted-foreground: var(--theme-dark-mutedForeground, 214 16% 78%);
 
-    --accent: 220 22% 24%;
-    --accent-foreground: 210 22% 96%;
+    --accent: var(--theme-dark-accent, 220 22% 24%);
+    --accent-foreground: var(--theme-dark-accentForeground, 210 22% 96%);
 
     --destructive: 0 72% 42%;
     --destructive-foreground: 0 0% 100%;
     --success: 142 70% 55%;
     --info: 213 90% 68%;
 
-    --border: 222 18% 28%;
-    --input: 222 18% 26%;
-    --ring: 212 80% 72%;
+    --border: var(--theme-dark-border, 222 18% 28%);
+    --input: var(--theme-dark-input, 222 18% 26%);
+    --ring: var(--theme-dark-ring, 212 80% 72%);
+    --selection-bg: hsl(var(--theme-contrast));
+    --selection-fg: hsl(var(--theme-contrast-foreground));
 
     /* Near-invisible shadows in dark mode to keep it flat/clean */
     --shadow-subtle-var: none;
@@ -282,8 +300,8 @@
   }
 
   ::selection {
-    background: var(--brand-accent);
-    color: var(--brand-accent-foreground);
+    background: var(--selection-bg);
+    color: var(--selection-fg);
   }
 
   button,
@@ -299,6 +317,34 @@
 
   body {
     @apply bg-background text-foreground antialiased;
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in srgb, hsl(var(--foreground)) 28%, hsl(var(--background))) hsl(var(--background));
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: hsl(var(--background));
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: color-mix(in srgb, hsl(var(--foreground)) 24%, hsl(var(--background)));
+    border-radius: 9999px;
+    border: 2px solid hsl(var(--background));
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: color-mix(in srgb, hsl(var(--foreground)) 36%, hsl(var(--background)));
+  }
+
+  ::-webkit-scrollbar-corner {
+    background: transparent;
   }
 
   /* Global utility for cards/containers that should feel "elevated" */

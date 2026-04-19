@@ -225,6 +225,7 @@ export interface Settings {
   id: number;
   ball_date: string;
   funding_goal: number;
+  support_goal?: number;
   courses?: ClassName[];
   leaderboard_adjustments?: Record<string, number>;
   expected_ticket_sales?: number;

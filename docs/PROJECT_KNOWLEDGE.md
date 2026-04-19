@@ -58,8 +58,10 @@ Dieses Dokument sichert das Wissen über die technische Struktur und die getroff
 
 Das Deployment erfolgt über GitHub-Branches:
 1.  **Entwicklung:** Änderungen werden auf dem `main` Branch gesammelt.
-2.  **Produktion:** Um die Live-Seite zu aktualisieren, muss `main` in den **`release`** Branch gemergt und gepusht werden.
-3.  **CI/CD:** Firebase App Hosting überwacht den `release` Branch und baut die Seite im `standalone` Modus.
+2.  **Sofortregel:** Nach jeder erfolgreich abgeschlossenen Änderung wird, sofern technisch möglich, direkt auf `main` gepusht.
+3.  **Parallelität & Konflikte:** Arbeiten mehrere Agenten gleichzeitig oder asynchron, werden lokale Änderungen zuerst gesichert. Schlägt ein Push fehl, wird niemals halb fertiger Code gelöscht; stattdessen werden Remote-Stand, Diff und Konflikte geprüft und gezielt gemerged oder gerebased.
+4.  **Produktion:** Um die Live-Seite zu aktualisieren, muss `main` in den **`release`** Branch gemergt und gepusht werden.
+5.  **CI/CD:** Firebase App Hosting überwacht den `release` Branch und baut die Seite im `standalone` Modus.
 
 ## 5. Umgebungsvariablen (Environment Variables)
 Die Firebase-Keys (`NEXT_PUBLIC_...`) müssen an zwei Stellen existieren:

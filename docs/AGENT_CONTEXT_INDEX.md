@@ -58,3 +58,5 @@ When adding new markdown docs:
 - Add clear scope in the first section.
 - Mark if active or archive.
 - Link to neighboring docs only when it reduces lookup time.
+- For parallel or async agent work, preserve the current working tree before any push attempt, verify the remote state first, and never resolve a failed push by deleting half-finished local changes.
+- If multiple agents touched overlapping files, prefer merge/rebase with explicit conflict review over blanket resets or reverts.
