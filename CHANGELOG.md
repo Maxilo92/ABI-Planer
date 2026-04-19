@@ -8,6 +8,12 @@
 
 # Changelog
 
+## [1.21.00] - 2026-04-19
+
+### Hinzugefügt
+
+- **Umfragen (KI-Platzhalter):** Der Platzhalter-Text ("Ghosttext") im Eingabefeld für eigene Vorschläge wird nun automatisch von einer KI (Groq) passend zur jeweiligen Umfrage-Frage generiert. Dies sorgt für eine kreativere Nutzeransprache (z.B. "Welcher Song fehlt noch?" bei einer Musik-Umfrage).
+
 ## [1.20.00] - 2026-04-19
 
 ### Geändert

@@ -562,7 +562,7 @@ export function PollList({
                         </div>
                         <div className="flex gap-2">
                           <Input
-                            placeholder="z.B. Deine Motto-Idee..."
+                            placeholder={poll.custom_placeholder || "z.B. Deine Motto-Idee..."}
                             value={customInputs[poll.id] || ''}
                             onChange={(e) => setCustomInputs(prev => ({ ...prev, [poll.id]: e.target.value }))}
                             className="h-9 text-xs"

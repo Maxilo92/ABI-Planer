@@ -113,6 +113,27 @@ export function AddPollDialog() {
         if (!isPublic && targetGroups.length === 0 && targetRoles.length === 0) {
           throw new Error('Bitte wähle mindestens eine Zielgruppe oder Rolle aus, wenn die Umfrage nicht öffentlich ist.')
         }
+
+        let customPlaceholder = null
+        if (allowCustomOptions) {
+          try {
+            const token = await user.getIdToken()
+            const response = await fetch('/api/polls/generate-placeholder', {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ question })
+            })
+            if (response.ok) {
+              const data = await response.json()
+              customPlaceholder = data.placeholder
+            }
+          } catch (error) {
+            console.error('Error generating custom placeholder:', error)
+          }
+        }
         
         const pollRef = await addDoc(collection(db, 'polls'), {
           question,
@@ -127,7 +148,8 @@ export function AddPollDialog() {
           max_custom_proposals: allowCustomOptions ? maxProposals : null,
           max_votes: multipleChoice ? maxVotes : 1,
           target_groups: isPublic ? [] : targetGroups,
-          target_roles: isPublic ? [] : targetRoles
+          target_roles: isPublic ? [] : targetRoles,
+          custom_placeholder: customPlaceholder
         })
 
         const batch = writeBatch(db)

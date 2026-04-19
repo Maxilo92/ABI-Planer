@@ -388,6 +388,7 @@ export interface Poll {
   target_roles?: UserRole[];
   created_at: string;
   created_by: string;
+  custom_placeholder?: string;
   options?: PollOption[];
   votes?: PollVote[];
 }
