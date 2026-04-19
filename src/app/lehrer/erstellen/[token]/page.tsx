@@ -526,20 +526,20 @@ export default function TeacherCreateCardPage() {
             </div>
 
             <div className={cn(
-              "p-6 sm:p-8 rounded-[2.5rem] border-2 flex items-center gap-5 transition-all",
+              "p-6 sm:p-8 rounded-[2.5rem] border-2 flex items-start gap-4 transition-all",
               legalConfirmed ? "bg-emerald-50 border-emerald-100 dark:bg-emerald-950/20" : "bg-muted/30"
             )}>
-              <div className="flex items-center shrink-0">
+              <div className="flex items-center shrink-0 mt-1">
                 <input 
                   id="legal" 
                   type="checkbox" 
                   checked={legalConfirmed} 
                   onChange={(e) => setLegalConfirmed(e.target.checked)}
-                  className="w-6 h-6 rounded-lg border-2 border-primary text-primary focus:ring-primary/20 transition-all cursor-pointer"
+                  className="w-6 h-6 rounded border-2 border-primary text-primary focus:ring-primary/20 transition-all cursor-pointer"
                 />
               </div>
-              <Label htmlFor="legal" className="text-sm sm:text-lg leading-snug cursor-pointer font-medium text-foreground/90">
-                Ich akzeptiere die <a href="/agb/sammelkarten" target="_blank" className="text-primary underline hover:opacity-80 font-bold">Besonderen Bedingungen für Sammelkarten</a> und bestätige die Nutzung meiner Angaben.
+              <Label htmlFor="legal" className="text-sm sm:text-base leading-relaxed cursor-pointer font-medium text-foreground/90 block flex-1">
+                Ich akzeptiere die <a href="/agb/sammelkarten" target="_blank" className="text-primary underline hover:opacity-80 font-bold inline">Besonderen Bedingungen für Sammelkarten</a> und bestätige die Nutzung meiner Angaben.
               </Label>
             </div>
 

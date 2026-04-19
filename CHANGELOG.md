@@ -8,6 +8,12 @@
 
 # Changelog
 
+## [1.14.27] - 2026-04-19
+
+### Behoben
+
+- **UI-Fix Bestätigungstext:** Der Text im Bestätigungsfeld fließt nun korrekt als ein zusammenhängender Absatz und wird nicht mehr durch das Flex-Layout in Spalten zerteilt.
+
 ## [1.14.26] - 2026-04-19
 
 ### Behoben
