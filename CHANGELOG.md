@@ -8,6 +8,12 @@
 
 # Changelog
 
+## [1.21.03] - 2026-04-19
+
+### Behoben
+
+- **Umfragen (Teilnehmerzahl):** Ein Fehler wurde behoben, durch den Teilnehmer, die nur Vorschläge im "Briefkasten" eingereicht (aber nicht bei klassischen Optionen abgestimmt) hatten, nicht in der Gesamt-Teilnehmerzahl gezählt wurden.
+
 ## [1.21.02] - 2026-04-19
 
 ### Behoben

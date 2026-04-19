@@ -1,8 +1,6 @@
 'use client'
 
 import React from 'react'
-import { LandingHeader } from '@/components/layout/LandingHeader'
-import { Footer } from '@/components/layout/Footer'
 import { useAuth } from '@/context/AuthContext'
 import { motion } from 'framer-motion'
 import { ArrowLeft } from 'lucide-react'
@@ -24,8 +22,6 @@ export default function VorteileLayout({
         <div className="absolute bottom-[10%] right-[-5%] w-[40%] h-[40%] rounded-full bg-brand/5 blur-[100px]" />
       </div>
 
-      <LandingHeader isAuthenticated={!!user} />
-
       <main className="relative z-10 pt-32 pb-20 px-6">
         <div className="max-w-7xl mx-auto">
           <motion.div
@@ -44,8 +40,6 @@ export default function VorteileLayout({
           {children}
         </div>
       </main>
-
-      <Footer />
     </div>
   )
 }

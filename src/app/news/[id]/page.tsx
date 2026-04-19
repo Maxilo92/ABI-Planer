@@ -24,9 +24,6 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { getDashboardRedirectUrl } from '@/lib/dashboard-url'
 import { Skeleton } from '@/components/ui/skeleton'
 
-import { LandingHeader } from '@/components/layout/LandingHeader'
-import { Footer as DashboardFooter } from '@/components/layout/Footer'
-
 export default function NewsDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const { user, profile, loading: authLoading } = useAuth()
@@ -306,8 +303,6 @@ export default function NewsDetailPage({ params }: { params: Promise<{ id: strin
   if (rootMode === 'landing') {
     return (
       <div className="relative min-h-screen bg-background text-foreground selection:bg-primary/20">
-        <LandingHeader isAuthenticated={!!user} />
-        
         <main className="relative z-10 pt-28 pb-16 px-4 sm:px-6 md:pt-32 md:pb-20">
           <div className="max-w-4xl mx-auto space-y-10">
             <Button
@@ -396,8 +391,6 @@ export default function NewsDetailPage({ params }: { params: Promise<{ id: strin
             </div>
           </div>
         </main>
-
-        <DashboardFooter />
       </div>
     )
   }

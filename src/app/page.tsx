@@ -17,7 +17,6 @@ import { useAuth } from '@/context/AuthContext'
 import { useDashboardSorting } from '@/hooks/useDashboardSorting'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn, toDate } from '@/lib/utils'
-import { Footer } from '@/components/layout/Footer'
 import { FundingBanner } from '@/components/funding/FundingBanner'
 import { DashboardComponentKey, Poll, PollOption, PollVote, FinanceEntry, ShopEarning } from '@/types/database'
 import type { SystemFeatures } from '@/types/system'
@@ -208,7 +207,7 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
 
       <main className="relative z-10">
         {/* Hero Section - School-first, student-friendly */}
-        <section className="relative pt-16 pb-20 md:pt-24 md:pb-32 px-6 overflow-hidden">
+        <section className="relative pt-24 pb-20 md:pt-32 md:pb-32 px-6 overflow-hidden">
           <motion.div 
             initial="hidden"
             animate="visible"
@@ -787,8 +786,6 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
           </div>
         </section>
       </main>
-
-      <Footer />
     </div>
   )
 }

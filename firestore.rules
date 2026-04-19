@@ -337,6 +337,12 @@ service cloud.firestore {
         allow delete: if isPlanner();
       }
 
+      match /participants/{participantId} {
+        allow read: if isApproved();
+        allow create, update: if isAuthenticated() && request.auth.uid == participantId;
+        allow delete: if isPlanner() || (isAuthenticated() && request.auth.uid == participantId);
+      }
+
       match /votes/{voteId} {
         allow read: if isAuthenticated() && isLernsax();
         allow create: if isAuthenticated() && request.auth.uid == voteId && request.resource.data.user_id == request.auth.uid;

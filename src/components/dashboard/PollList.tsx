@@ -49,6 +49,7 @@ export function PollList({
   const [customInputs, setCustomInputs] = useState<Record<string, string>>({})
   const [isSubmittingCustom, setIsSubmittingCustom] = useState<string | null>(null)
   const [userSubmissionCounts, setUserSubmissionCounts] = useState<Record<string, number>>({})
+  const [participantCounts, setParticipantCounts] = useState<Record<string, number>>({})
 
   const fetchUserSubmissionCount = useCallback(async (pollId: string) => {
     if (!userId) return
@@ -63,6 +64,17 @@ export function PollList({
       }
     }
   }, [userId])
+
+  const fetchParticipantCount = useCallback(async (pollId: string) => {
+    try {
+      const snap = await getDocs(collection(db, 'polls', pollId, 'participants'))
+      setParticipantCounts(prev => ({ ...prev, [pollId]: snap.size }))
+    } catch (e: any) {
+      if (e?.code !== 'permission-denied') {
+        console.error('Error fetching participant count:', e)
+      }
+    }
+  }, [])
 
   useEffect(() => {
     const nextVotes: Record<string, PollVote[]> = {}
@@ -79,13 +91,12 @@ export function PollList({
     visiblePolls.forEach((poll) => {
       nextVotes[poll.id] = poll.votes || []
       
-      // Initial count of user submissions if mailbox mode
-      if (poll.allow_custom_options && userId) {
-        fetchUserSubmissionCount(poll.id)
-      }
+      // Initial counts
+      if (userId) fetchUserSubmissionCount(poll.id)
+      fetchParticipantCount(poll.id)
     })
     setVotesByPoll(nextVotes)
-  }, [polls, userId, canManage, userRole, userGroups, fetchUserSubmissionCount])
+  }, [polls, userId, canManage, userRole, userGroups, fetchUserSubmissionCount, fetchParticipantCount])
 
   if (loading) {
     return (
@@ -226,6 +237,14 @@ export function PollList({
           created_at: voteSnap.exists() ? currentVoteData?.created_at : serverTimestamp()
         }, { merge: true })
 
+        // Track as unique participant
+        const participantRef = doc(db, 'polls', pollId, 'participants', userId)
+        transaction.set(participantRef, {
+          user_id: userId,
+          last_action: 'vote',
+          updated_at: serverTimestamp()
+        }, { merge: true })
+
         if (isFirstReward) {
           transaction.update(profileRef, {
             'booster_stats.extra_available': increment(1),
@@ -235,6 +254,7 @@ export function PollList({
       })
 
       await refreshVotesForPoll(pollId)
+      await fetchParticipantCount(pollId)
       
       if (isFirstReward) {
         toast.success('Stimme gespeichert. Du hast 1 Booster-Pack als Belohnung erhalten.')
@@ -338,10 +358,29 @@ export function PollList({
         created_at: serverTimestamp()
       })
 
-      toast.success('Dein Vorschlag wurde sicher im Briefkasten hinterlegt!')
-      
-      // Update local count
+      // Track as unique participant
+      const participantRef = doc(db, 'polls', pollId, 'participants', userId)
+      await runTransaction(db, async (transaction) => {
+        const pSnap = await transaction.get(participantRef)
+        if (!pSnap.exists()) {
+          transaction.set(participantRef, {
+            user_id: userId,
+            last_action: 'submission',
+            updated_at: serverTimestamp()
+          })
+        } else {
+          transaction.update(participantRef, {
+            last_action: 'submission',
+            updated_at: serverTimestamp()
+          })
+        }
+      })
+
+      // Update local counts
+      await fetchParticipantCount(pollId)
       setUserSubmissionCounts(prev => ({ ...prev, [pollId]: currentCount + 1 }))
+      
+      toast.success('Dein Vorschlag wurde sicher im Briefkasten hinterlegt!')
       
       // Clear input
       setCustomInputs(prev => ({ ...prev, [pollId]: '' }))
@@ -359,7 +398,7 @@ export function PollList({
     }
   }
 
-  const deleteSubcollectionDocs = async (pollId: string, subcollection: 'options' | 'votes') => {
+  const deleteSubcollectionDocs = async (pollId: string, subcollection: 'options' | 'votes' | 'participants') => {
     const snapshot = await getDocs(collection(db, 'polls', pollId, subcollection))
     if (snapshot.empty) return
 
@@ -396,6 +435,7 @@ export function PollList({
     try {
       await deleteSubcollectionDocs(pollId, 'votes')
       await deleteSubcollectionDocs(pollId, 'options')
+      await deleteSubcollectionDocs(pollId, 'participants')
       await deleteDoc(doc(db, 'polls', pollId))
 
       const deletedPoll = polls.find((poll) => poll.id === pollId)
@@ -427,7 +467,12 @@ export function PollList({
 
   const pollCards = displayedPolls.map((poll) => {
         const pollVotes = votesByPoll[poll.id] || poll.votes || []
-        const totalParticipants = pollVotes.length
+        
+        // Use participant tracking subcollection if available, fallback to votes length
+        const totalParticipants = participantCounts[poll.id] !== undefined 
+          ? participantCounts[poll.id] 
+          : Math.max(pollVotes.length, 0)
+
         const userVote = userId ? pollVotes.find(v => v.user_id === userId) : null
         const userSelection = userVote?.option_ids || (userVote?.option_id ? [userVote.option_id] : [])
 

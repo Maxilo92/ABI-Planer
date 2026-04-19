@@ -25,9 +25,6 @@ import remarkGfm from 'remark-gfm'
 import { ShareResourceButton } from '@/components/ui/share-resource-button'
 import { usePopupManager } from '@/modules/popup/usePopupManager'
 
-import { LandingHeader } from '@/components/layout/LandingHeader'
-import { Footer as DashboardFooter } from '@/components/layout/Footer'
-
 function NewsPageContent() {
   const searchParams = useSearchParams()
   const { profile, user, loading: authLoading } = useAuth()
@@ -178,8 +175,6 @@ function NewsPageContent() {
   if (rootMode === 'landing') {
     return (
       <div className="relative min-h-screen bg-background text-foreground selection:bg-primary/20">
-        <LandingHeader isAuthenticated={!!user} />
-        
         <main className="relative z-10 pt-28 pb-16 px-4 sm:px-6 md:pt-32 md:pb-20">
           <div className="max-w-5xl mx-auto space-y-12">
             <div className="space-y-4 text-center">
@@ -251,8 +246,6 @@ function NewsPageContent() {
             </div>
           </div>
         </main>
-
-        <DashboardFooter />
       </div>
     )
   }

@@ -14,12 +14,13 @@ import { TwoFactorGate } from '@/components/auth/TwoFactorGate'
 import { useAuth } from '@/context/AuthContext'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ThemeSync } from '@/components/layout/ThemeSync'
+import { LandingHeader } from '@/components/layout/LandingHeader'
 
 interface AppShellProps {
   children: React.ReactNode
 }
 
-const authRoutes = new Set(['/login', '/register', '/waiting', '/unauthorized', '/zugang', '/vorteile'])
+const authRoutes = new Set(['/login', '/register'])
 const noMenuRoutes = new Set(['/lehrer/erstellen'])
 
 export function AppShell({ children }: AppShellProps) {
@@ -48,12 +49,9 @@ export function AppShell({ children }: AppShellProps) {
     return noMenuRoutes.has(pathname) || pathname.startsWith('/lehrer/erstellen/')
   }, [pathname])
 
-  const isPublicLandingRoute = (isDashboardSubdomain === false || isNoMenuRoute) && !authRoutes.has(pathname) && pathname !== '/maintenance'
-  
   const isAuthRoute = authRoutes.has(pathname) || 
-    pathname?.startsWith('/vorteile/') || 
-    pathname?.startsWith('/lehrer/erstellen/') ||
-    (pathname === '/' && isDashboardSubdomain === false)
+    pathname?.startsWith('/lehrer/erstellen/')
+  const isPublicLandingRoute = isDashboardSubdomain === false && !isAuthRoute && pathname !== '/maintenance'
   const isMaintenancePage = pathname === '/maintenance'
   const isNewsDetail = pathname?.startsWith('/news/')
   const isAdmin = ['admin_main', 'admin', 'admin_co'].includes(profile?.role || '')
@@ -98,7 +96,9 @@ export function AppShell({ children }: AppShellProps) {
   if (isPublicLandingRoute) {
     return (
       <div className="min-h-screen bg-background">
+        <LandingHeader isAuthenticated={!!user} />
         <main className="min-h-screen">{children}</main>
+        <Footer />
       </div>
     )
   }
