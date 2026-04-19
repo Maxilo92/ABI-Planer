@@ -8,6 +8,13 @@
 
 # Changelog
 
+## [1.14.29] - 2026-04-19
+
+### Behoben
+
+- **Lehrer-Einreichung Rules komprimiert:** Die Validierung für `teacher_submissions` wurde in eine zentrale Hilfsfunktion ausgelagert, bei gleicher Sicherheitslogik und besserer Lesbarkeit.
+- **Deployment:** Firestore-Regeln wurden erfolgreich live deployed (`firebase deploy --only firestore:rules`).
+
 ## [1.14.28] - 2026-04-19
 
 ### Geändert

@@ -52,6 +52,33 @@ service cloud.firestore {
       return profileExists() && getProfile().get('role', 'none') == 'admin_co';
     }
 
+    function isValidTeacherSubmission(data) {
+      return data.keys().hasOnly([
+        'invitationId',
+        'originalTeacherName',
+        'cardName',
+        'description',
+        'suggestedRarity',
+        'suggestedHp',
+        'attacks',
+        'imageUrl',
+        'legalConfirmed',
+        'submittedAt',
+        'status'
+      ])
+      && data.invitationId is string
+      && data.originalTeacherName is string
+      && data.cardName is string
+      && data.description is string
+      && data.suggestedRarity is string
+      && data.suggestedHp is int
+      && data.attacks is list
+      && data.imageUrl is string
+      && data.legalConfirmed == true
+      && data.submittedAt is timestamp
+      && data.status == 'pending_review';
+    }
+
     match /profiles/{userId} {
       allow read: if isAuthenticated() || isServiceAccount();
       allow create: if isLernsax() && request.auth.uid == userId;
@@ -492,30 +519,7 @@ service cloud.firestore {
     match /teacher_submissions/{submissionId} {
       // Public teacher flow: submission must work without login.
       // We validate payload shape here and complete token-state validation in teacher_invitations update.
-      allow create: if request.resource.data.keys().hasOnly([
-                      'invitationId',
-                      'originalTeacherName',
-                      'cardName',
-                      'description',
-                      'suggestedRarity',
-                      'suggestedHp',
-                      'attacks',
-                      'imageUrl',
-                      'legalConfirmed',
-                      'submittedAt',
-                      'status'
-                    ])
-                    && request.resource.data.invitationId is string
-                    && request.resource.data.originalTeacherName is string
-                    && request.resource.data.cardName is string
-                    && request.resource.data.description is string
-                    && request.resource.data.suggestedRarity is string
-                    && request.resource.data.suggestedHp is int
-                    && request.resource.data.attacks is list
-                    && request.resource.data.imageUrl is string
-                    && request.resource.data.legalConfirmed == true
-                    && request.resource.data.submittedAt is timestamp
-                    && request.resource.data.status == 'pending_review';
+      allow create: if isValidTeacherSubmission(request.resource.data);
       allow read, update, delete: if isAdmin();
     }
   }
