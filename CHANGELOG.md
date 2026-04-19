@@ -8,6 +8,12 @@
 
 # Changelog
 
+## [1.14.21] - 2026-04-19
+
+### Behoben
+
+- **Lehrer-Einladungslink:** Login-Zwang für die Kartenerstellung entfernt. Lehrer können nun den Link direkt öffnen und ihre Karte erstellen, ohne sich anmelden zu müssen.
+
 ## [1.14.20] - 2026-04-19
 
 ### Geändert

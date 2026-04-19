@@ -51,6 +51,7 @@ export function AppShell({ children }: AppShellProps) {
   
   const isAuthRoute = authRoutes.has(pathname) || 
     pathname?.startsWith('/vorteile/') || 
+    pathname?.startsWith('/lehrer/erstellen/') ||
     (pathname === '/' && isDashboardSubdomain === false)
   const isMaintenancePage = pathname === '/maintenance'
   const isNewsDetail = pathname?.startsWith('/news/')
