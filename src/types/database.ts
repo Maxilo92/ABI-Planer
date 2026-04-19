@@ -226,6 +226,7 @@ export interface Settings {
   ball_date: string;
   funding_goal: number;
   support_goal?: number;
+  current_support_amount?: number;
   courses?: ClassName[];
   leaderboard_adjustments?: Record<string, number>;
   expected_ticket_sales?: number;

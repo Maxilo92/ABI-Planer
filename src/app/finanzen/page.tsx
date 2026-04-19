@@ -14,7 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button'
 import { format } from 'date-fns'
 import { de } from 'date-fns/locale'
-import { Heart, Loader2, Trash2, Wallet } from 'lucide-react'
+import { Heart, Coffee, Loader2, Trash2, Wallet } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { toDate } from '@/lib/utils'
 import Link from 'next/link'
@@ -206,18 +206,23 @@ export default function FinancePage() {
 
   return (
     <div className="space-y-6">
-      <div className="relative overflow-hidden rounded-[2rem] border border-brand/15 bg-gradient-to-r from-brand/10 via-background to-brand/5 px-6 py-5 shadow-card">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(125,210,0,0.18),_transparent_34%),radial-gradient(circle_at_bottom_left,_rgba(125,210,0,0.12),_transparent_28%)]" />
-        <div className="relative flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+      <div className="rounded-[2rem] border border-border bg-card px-6 py-6 shadow-sm">
+        <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
           <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.28em] text-brand">Finanzen</p>
-            <h1 className="text-3xl font-bold tracking-tight">Budgetplanung</h1>
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">Finanzen</p>
+            <h1 className="text-3xl font-extrabold tracking-tight">Budgetplanung</h1>
           </div>
           <div className="flex w-full md:w-auto flex-wrap gap-2">
-            <Link href="/finanzen/spenden">
-              <Button variant="outline" className="gap-2 w-full sm:w-auto border-brand/30 hover:border-brand hover:text-brand">
-                <Heart className="h-4 w-4 text-brand fill-brand/20" />
-                Spenden & Hilfe
+            <Link href="/finanzen/spenden/abi">
+              <Button variant="outline" size="sm" className="gap-2 border-primary/20 hover:border-primary hover:text-primary transition-all">
+                <Heart className="h-4 w-4 fill-primary/10" />
+                Spende Abi
+              </Button>
+            </Link>
+            <Link href="/finanzen/spenden/entwickler">
+              <Button variant="outline" size="sm" className="gap-2 border-brand/20 hover:border-brand hover:text-brand transition-all">
+                <Coffee className="h-4 w-4 fill-brand/10" />
+                Support App
               </Button>
             </Link>
             {isPlanner && <AddFinanceDialog />}
@@ -283,7 +288,7 @@ export default function FinancePage() {
           shopEarnings={shopEarnings}
           goal={fundingGoal} 
           useScrollContainer={false}
-          infoLink="/finanzen/spenden"
+          infoLink="/finanzen/spenden/abi"
           loading={!shopEarningsLoaded}
         />
       </div>

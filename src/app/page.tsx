@@ -1538,12 +1538,12 @@ export default function Dashboard() {
         <div className="flex items-center gap-3">
           <h1 className="text-3xl font-extrabold tracking-tight italic uppercase">ABI Planer 2027</h1>
           {canManage && (
-            <EditSettingsDialog 
-              currentDate={settings?.ball_date} 
-              currentGoal={settings?.funding_goal ?? 10000} 
+            <EditSettingsDialog
+              currentDate={settings?.ball_date}
+              currentGoal={settings?.funding_goal ?? 10000}
               currentSupportGoal={settings?.support_goal ?? 100}
-            />
-          )}
+              currentSupportAmount={settings?.current_support_amount ?? 0}
+            />          )}
           {profile && (
             <div className="flex items-center gap-2">
               <CustomizeDashboardDialog 
@@ -1570,11 +1570,11 @@ export default function Dashboard() {
 
       <FundingBanner
         bannerId="support-banner"
-        current={0}
+        current={settings?.current_support_amount ?? 0}
         goal={settings?.support_goal ?? 100}
-        title="Server- & Entwicklungskosten"
-        description="Dieser Support-Pool ist strikt von der Abikasse getrennt und dient ausschließlich dazu, Server-, Hosting- und Entwicklungskosten zu decken."
-        ctaHref="/finanzen/spenden"
+        title="Helft uns die Seite am Laufen zu halten"
+        description="Damit der ABI Planer werbefrei, stabil und für alle kostenlos bleibt, fallen monatliche Kosten für Server, Datenbanken und Hosting an. Da wir keine Daten verkaufen oder Werbung schalten, deckt dieser Support-Pool ausschließlich diese technischen Ausgaben. Sollte das Ziel nicht erreicht werden, müssten die Kosten privat getragen oder Funktionen eingeschränkt werden – jeder Euro sichert also den Betrieb eurer Plattform!"
+        ctaHref="/finanzen/spenden/entwickler"
         ctaLabel="Support geben"
         storageKey="dashboard-funding-banner-collapsed"
       />

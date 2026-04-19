@@ -44,6 +44,15 @@ import { TeacherCard } from '@/components/cards/TeacherCard'
 import { TeacherSpecCard } from '@/components/cards/TeacherSpecCard'
 import { Rarity } from '@/types/cards'
 
+const RARITY_OPTIONS = [
+  { value: 'common', label: 'Häufig (Standard)', color: '#94a3b8' },
+  { value: 'rare', label: 'Selten', color: '#10b981' },
+  { value: 'epic', label: 'Episch', color: '#a855f7' },
+  { value: 'mythic', label: 'Mythisch', color: '#ef4444' },
+  { value: 'legendary', label: 'Legendär', color: '#f59e0b' },
+  { value: 'iconic', label: 'Ikonisch', color: '#000000' },
+]
+
 interface Invitation {
   id: string
   teacherName: string
@@ -787,7 +796,7 @@ export function TeacherInvitationsTab() {
               name: sub.cardName,
               rarity: sub.suggestedRarity || 'epic',
               variant: 'normal' as const,
-              color: RARITY_OPTIONS.find(r => r.value === sub.suggestedRarity)?.color || '#3b82f6',
+              color: RARITY_OPTIONS.find((r: any) => r.value === sub.suggestedRarity)?.color || '#3b82f6',
               cardNumber: 'T1-???',
               description: sub.description,
               attacks: sub.attacks.map(a => ({

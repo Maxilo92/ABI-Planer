@@ -25,9 +25,10 @@ interface EditSettingsDialogProps {
   currentDate: string
   currentGoal: number
   currentSupportGoal: number
+  currentSupportAmount?: number
 }
 
-export function EditSettingsDialog({ currentDate, currentGoal, currentSupportGoal }: EditSettingsDialogProps) {
+export function EditSettingsDialog({ currentDate, currentGoal, currentSupportGoal, currentSupportAmount = 0 }: EditSettingsDialogProps) {
   const { user, profile } = useAuth()
   // Format the date for the datetime-local input (YYYY-MM-DDTHH:MM)
   const initialDate = currentDate ? format(new Date(currentDate), "yyyy-MM-dd'T'HH:mm") : ''
@@ -35,6 +36,7 @@ export function EditSettingsDialog({ currentDate, currentGoal, currentSupportGoa
   const [date, setDate] = useState(initialDate)
   const [goal, setGoal] = useState(currentGoal.toString())
   const [supportGoal, setSupportGoal] = useState(currentSupportGoal.toString())
+  const [supportAmount, setSupportAmount] = useState(currentSupportAmount.toString())
   const [loading, setLoading] = useState(false)
   const [open, setOpen] = useState(false)
   const router = useRouter()
@@ -48,14 +50,16 @@ export function EditSettingsDialog({ currentDate, currentGoal, currentSupportGoa
         ball_date: new Date(date).toISOString(),
         funding_goal: parseFloat(goal),
         support_goal: parseFloat(supportGoal),
+        current_support_amount: parseFloat(supportAmount),
       }, { merge: true })
 
       if (user) {
         await logAction('SETTINGS_UPDATED', user.uid, profile?.full_name, {
-          fields: ['ball_date', 'funding_goal', 'support_goal'],
+          fields: ['ball_date', 'funding_goal', 'support_goal', 'current_support_amount'],
           ball_date: new Date(date).toISOString(),
           funding_goal: parseFloat(goal),
           support_goal: parseFloat(supportGoal),
+          current_support_amount: parseFloat(supportAmount),
           source: 'edit-settings-dialog',
         })
       }
@@ -115,6 +119,18 @@ export function EditSettingsDialog({ currentDate, currentGoal, currentSupportGoa
                 onChange={(e) => setSupportGoal(e.target.value)}
                 required 
               />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="supportAmount">Aktueller Support-Stand in €</Label>
+              <Input 
+                id="supportAmount" 
+                type="number"
+                step="0.01"
+                value={supportAmount}
+                onChange={(e) => setSupportAmount(e.target.value)}
+                required 
+              />
+              <p className="text-[10px] text-muted-foreground">Manueller Stand (BMAC + Überweisungen).</p>
             </div>
           </div>
           <DialogFooter>

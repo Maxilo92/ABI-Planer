@@ -38,14 +38,18 @@ function SammelkartenContent() {
   const { config, isTradingEnabled, timeLeft } = useSammelkartenConfig()
   const [activeDeckId, setActiveDeckId] = useState<string | null>(null)
   const [supportGoal, setSupportGoal] = useState<number | null>(null)
+  const [supportAmount, setSupportAmount] = useState<number | null>(null)
 
   useEffect(() => {
-    const unsubscribe = onSnapshot(doc(db, 'public', 'landing_stats'), (snapshot) => {
-      const data = snapshot.data() as { support_goal?: number } | undefined
-      setSupportGoal(typeof data?.support_goal === 'number' ? data.support_goal : null)
+    const settingsRef = doc(db, 'settings', 'config')
+    const unsubscribe = onSnapshot(settingsRef, (snapshot) => {
+      const data = snapshot.data() as { support_goal?: number, current_support_amount?: number } | undefined
+      setSupportGoal(typeof data?.support_goal === 'number' ? data.support_goal : 100)
+      setSupportAmount(typeof data?.current_support_amount === 'number' ? data.current_support_amount : 0)
     }, (error) => {
-      console.error('Error listening to public support goal:', error)
-      setSupportGoal(null)
+      console.error('Error listening to support settings:', error)
+      setSupportGoal(100)
+      setSupportAmount(0)
     })
 
     return () => unsubscribe()
@@ -220,11 +224,11 @@ function SammelkartenContent() {
 
             <FundingBanner
               bannerId="support-banner"
-              current={0}
+              current={supportAmount ?? 0}
               goal={supportGoal ?? 100}
-              title="Server- & Entwicklungskosten"
-              description="Dieser Support-Pool ist strikt von der Abikasse getrennt und dient ausschließlich dazu, Server-, Hosting- und Entwicklungskosten zu decken."
-              ctaHref="/finanzen/spenden"
+              title="Helft uns die Seite am Laufen zu halten"
+              description="Damit der ABI Planer werbefrei, stabil und für alle kostenlos bleibt, fallen monatliche Kosten für Server, Datenbanken und Hosting an. Da wir keine Daten verkaufen oder Werbung schalten, deckt dieser Support-Pool ausschließlich diese technischen Ausgaben. Sollte das Ziel nicht erreicht werden, müssten die Kosten privat getragen oder Funktionen eingeschränkt werden – jeder Euro sichert also den Betrieb eurer Plattform!"
+              ctaHref="/finanzen/spenden/entwickler"
               ctaLabel="Support geben"
               storageKey="tcg-funding-banner-collapsed"
             />

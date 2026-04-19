@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { ChevronDown, ChevronUp, DollarSign } from 'lucide-react'
+import { ChevronDown, ChevronUp, DollarSign, Sparkles } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -69,53 +69,50 @@ export function FundingBanner({
   }
 
   return (
-    <Card id={bannerId} className={cn('border-brand/15 bg-card/95 shadow-[0_20px_80px_rgba(0,0,0,0.08)] backdrop-blur-md', className)}>
-      <CardContent className="p-5 md:p-6">
-        <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-          <div className="flex-1 space-y-4">
-            <div className="inline-flex items-center gap-2 rounded-full border border-brand/15 bg-brand/5 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-brand">
-              <DollarSign className="h-3.5 w-3.5" />
-              {title}
-            </div>
+    <Card id={bannerId} className={cn('border-brand/15 bg-card/95 shadow-[0_20px_80px_rgba(0,0,0,0.08)] backdrop-blur-md overflow-hidden', className)}>
+      <CardContent className="p-4 sm:p-6">
+        <div className="flex flex-col gap-4 sm:gap-6 lg:flex-row lg:items-start lg:justify-between">
+          <div className="flex-1 space-y-3 sm:space-y-4">
+            {title && (
+              <div className="text-xs sm:text-sm font-bold text-foreground leading-tight">
+                {title}
+              </div>
+            )}
 
-            <div className="flex flex-wrap items-end gap-x-4 gap-y-2">
-              <div className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground" suppressHydrationWarning>
+            <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <div className="text-2xl sm:text-3xl md:text-4xl font-black tracking-tight text-foreground" suppressHydrationWarning>
                 {formatMoney(current)}
               </div>
-              <div className="pb-1 text-sm text-muted-foreground" suppressHydrationWarning>
+              <div className="text-xs sm:text-sm text-muted-foreground font-medium" suppressHydrationWarning>
                 von {formatMoney(goal)}
               </div>
-              <div className="pb-1 text-xs font-semibold uppercase tracking-[0.2em] text-brand">
-                {progress}% erreicht
+              <div className="ml-auto sm:ml-0 text-[10px] sm:text-xs font-bold uppercase tracking-wider text-brand">
+                {progress}%
               </div>
             </div>
 
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-[0.22em] text-muted-foreground">
-                <span>Fortschritt</span>
-                <span>{progress}%</span>
-              </div>
-              <div className="h-3 overflow-hidden rounded-full bg-muted">
+            <div className="space-y-1.5">
+              <div className="h-2.5 sm:h-3 overflow-hidden rounded-full bg-muted shadow-inner">
                 <div
-                  className="h-full rounded-full bg-gradient-to-r from-brand via-emerald-400 to-emerald-500 transition-all duration-500"
+                  className="h-full rounded-full bg-gradient-to-r from-brand via-emerald-400 to-emerald-500 transition-all duration-1000 ease-out"
                   style={{ width: `${progress}%` }}
                 />
               </div>
             </div>
 
-            <p className={cn('max-w-3xl text-sm md:text-base leading-relaxed text-muted-foreground transition-all duration-300', collapsed && 'hidden md:block md:max-h-0 md:overflow-hidden')}>
+            <p className={cn('text-xs sm:text-sm md:text-base leading-relaxed text-muted-foreground transition-all duration-300', collapsed && 'line-clamp-2 md:line-clamp-none')}>
               {description}
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3 lg:justify-end">
-            <Button asChild className="h-11 rounded-xl px-5 font-bold shadow-sm shadow-brand/20">
+          <div className="flex items-center gap-2 pt-2 sm:pt-0 lg:justify-end">
+            <Button asChild className="flex-1 sm:flex-none h-10 sm:h-11 rounded-xl px-4 sm:px-6 font-bold shadow-lg shadow-brand/20 active:scale-95 transition-transform">
               <Link href={ctaHref}>{ctaLabel}</Link>
             </Button>
             <Button
               variant="outline"
               size="icon"
-              className="h-11 w-11 rounded-xl"
+              className="h-10 w-10 sm:h-11 sm:w-11 rounded-xl shrink-0 border-brand/20 hover:bg-brand/5"
               onClick={toggleCollapsed}
               aria-expanded={!collapsed}
               aria-controls={`${storageKey}-details`}
@@ -127,10 +124,10 @@ export function FundingBanner({
 
         <div
           id={`${storageKey}-details`}
-          className={cn('border-t border-border/60 px-0 pt-4 mt-4', collapsed && 'hidden')}
+          className={cn('border-t border-border/60 pt-4 mt-4 animate-in slide-in-from-top-2 duration-300', collapsed && 'hidden')}
         >
-          <p className="text-sm text-muted-foreground leading-relaxed">
-            Der aktuelle Stand wird regelmäßig aktualisiert. Direkte Überweisungen landen vollständig in der Abikasse.
+          <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed italic">
+            Dieser Pool ist strikt von eurer Abikasse getrennt. Während eure Beiträge hier die technische Infrastruktur (Server, Hosting, Domain) sichern, fließen alle regulären Einnahmen und direkten Spenden zu 100% in euer Budget für Abiball und Events.
           </p>
         </div>
       </CardContent>
