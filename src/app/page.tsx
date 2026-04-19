@@ -18,6 +18,7 @@ import { useDashboardSorting } from '@/hooks/useDashboardSorting'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn, toDate } from '@/lib/utils'
 import { Footer } from '@/components/layout/Footer'
+import { FundingBanner } from '@/components/funding/FundingBanner'
 import { DashboardComponentKey, Poll, PollOption, PollVote, FinanceEntry, ShopEarning } from '@/types/database'
 import type { SystemFeatures } from '@/types/system'
 import Link from 'next/link'
@@ -43,7 +44,6 @@ import {
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useTheme } from 'next-themes'
-import { LandingHeader } from '@/components/layout/LandingHeader'
 import { motion, useScroll, useSpring, AnimatePresence } from 'framer-motion'
 import { logAction } from '@/lib/logging'
 import ReactMarkdown from 'react-markdown'
@@ -82,6 +82,9 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
     dailyActiveUsers: null as number | null,
     totalCards: null as number | null,
     newsCount: null as number | null,
+    currentFunding: null as number | null,
+    fundingGoal: null as number | null,
+    supportGoal: null as number | null,
   })
   const [landingStatsLoading, setLandingStatsLoading] = useState(true)
   const landingStatsSeedRequestedRef = useRef(false)
@@ -116,9 +119,12 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
         daily_active_users?: number
         total_cards_count?: number
         news_count?: number
+        current_funding?: number
+        funding_goal?: number
+        support_goal?: number
       } | undefined
 
-      const hasStats = typeof data?.total_users === 'number' || typeof data?.daily_active_users === 'number' || typeof data?.total_cards_count === 'number' || typeof data?.news_count === 'number'
+      const hasStats = typeof data?.total_users === 'number' || typeof data?.daily_active_users === 'number' || typeof data?.total_cards_count === 'number' || typeof data?.news_count === 'number' || typeof data?.current_funding === 'number' || typeof data?.funding_goal === 'number' || typeof data?.support_goal === 'number'
 
       if (!hasStats && !landingStatsSeedRequestedRef.current) {
         landingStatsSeedRequestedRef.current = true
@@ -134,6 +140,9 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
         dailyActiveUsers: typeof data?.daily_active_users === 'number' ? data.daily_active_users : null,
         totalCards: typeof data?.total_cards_count === 'number' ? data.total_cards_count : null,
         newsCount: typeof data?.news_count === 'number' ? data.news_count : null,
+        currentFunding: typeof data?.current_funding === 'number' ? data.current_funding : null,
+        fundingGoal: typeof data?.funding_goal === 'number' ? data.funding_goal : null,
+        supportGoal: typeof data?.support_goal === 'number' ? data.support_goal : null,
       })
       setLandingStatsLoading(false)
     }, (error) => {
@@ -142,6 +151,9 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
         dailyActiveUsers: null,
         totalCards: null,
         newsCount: null,
+        currentFunding: null,
+        fundingGoal: null,
+        supportGoal: null,
       })
       setLandingStatsLoading(false)
       if (!landingStatsSeedRequestedRef.current) {
@@ -194,11 +206,9 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
         <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))] opacity-[0.05]" />
       </div>
 
-      <LandingHeader isAuthenticated={isAuthenticated} />
-
       <main className="relative z-10">
         {/* Hero Section - School-first, student-friendly */}
-        <section className="relative pt-32 pb-20 md:pt-48 md:pb-32 px-6 overflow-hidden">
+        <section className="relative pt-16 pb-20 md:pt-24 md:pb-32 px-6 overflow-hidden">
           <motion.div 
             initial="hidden"
             animate="visible"
@@ -827,6 +837,7 @@ export default function Dashboard() {
   const [currentFunding, setCurrentFunding] = useState(0)
   const [expenseGoal, setExpenseGoal] = useState(0)
   const [timeoutReached, setTimeoutReached] = useState(false)
+  const [isResetting, setIsResetting] = useState(false)
   const [initialLoadState, setInitialLoadState] = useState({
     settings: false,
     todos: false,
@@ -842,6 +853,26 @@ export default function Dashboard() {
       if (previous[key]) return previous;
       return { ...previous, [key]: true };
     });
+  }
+
+  const handleResetLayout = async () => {
+    if (!profile?.id) return
+    setIsResetting(true)
+    try {
+      const userRef = doc(db, 'profiles', profile.id)
+      await updateDoc(userRef, {
+        dashboard_layout: null
+      })
+      if (user) {
+        await logAction('DASHBOARD_LAYOUT_RESET', user.uid, profile?.full_name || 'Unbekannt', {
+          source: 'dashboard',
+        })
+      }
+    } catch (error) {
+      console.error('Error resetting dashboard layout:', error)
+    } finally {
+      setIsResetting(false)
+    }
   }
 
   // Activity Tracking: Dashboard-Besuch festhalten (für Admin-Statistiken)
@@ -1161,7 +1192,7 @@ export default function Dashboard() {
                         {item.content}
                       </ReactMarkdown>
                     </div>
-                    <div className="mt-2 flex items-center justify-end text-[10px] font-medium text-brand">
+                    <div className="mt-2 flex items-center justify-end text-[10px] font-semibold text-contrast">
                       <span className="inline-flex items-center gap-1">
                         Zum Beitrag <ArrowRight className="h-3 w-3" />
                       </span>
@@ -1510,17 +1541,43 @@ export default function Dashboard() {
             <EditSettingsDialog 
               currentDate={settings?.ball_date} 
               currentGoal={settings?.funding_goal ?? 10000} 
+              currentSupportGoal={settings?.support_goal ?? 100}
             />
           )}
           {profile && (
-            <CustomizeDashboardDialog 
-              profile={profile} 
-              currentLayout={sortedComponentKeys} 
-            />
+            <div className="flex items-center gap-2">
+              <CustomizeDashboardDialog 
+                profile={profile} 
+                currentLayout={sortedComponentKeys} 
+              />
+              {profile.dashboard_layout && profile.dashboard_layout.length > 0 && (
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleResetLayout}
+                  disabled={isResetting}
+                  className="h-8 gap-2 border-brand/20 hover:bg-brand/5 text-xs font-bold uppercase tracking-wider animate-in fade-in zoom-in duration-300"
+                >
+                  {isResetting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5 text-brand" />}
+                  Auto
+                </Button>
+              )}
+            </div>
           )}
         </div>
         <p className="text-muted-foreground font-medium uppercase tracking-widest text-xs">Willkommen zurück!</p>
       </div>
+
+      <FundingBanner
+        bannerId="support-banner"
+        current={0}
+        goal={settings?.support_goal ?? 100}
+        title="Server- & Entwicklungskosten"
+        description="Dieser Support-Pool ist strikt von der Abikasse getrennt und dient ausschließlich dazu, Server-, Hosting- und Entwicklungskosten zu decken."
+        ctaHref="/finanzen/spenden"
+        ctaLabel="Support geben"
+        storageKey="dashboard-funding-banner-collapsed"
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
         <AnimatePresence mode="popLayout">

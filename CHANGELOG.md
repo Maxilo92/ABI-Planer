@@ -8,6 +8,91 @@
 
 # Changelog
 
+## [1.14.20] - 2026-04-19
+
+### Geändert
+
+- **Mobile & Tablet Optimierung:** Der Lehrer-Kartendesigner wurde für Touch-Geräte perfektioniert.
+  - **Full-Screen Foto-Editor:** Optimierter Zuschneide-Dialog für Smartphones mit Touch-Gesten-Unterstützung.
+  - **Responsive Wizard:** Adaptive Navigation und Buttons, die sich an die Bildschirmgröße anpassen (stacked Layout auf Mobile).
+  - **Verbesserte Touch-Flächen:** Vergrößerte Eingabefelder und Schalter für fehlerfreie Bedienung auf kleinen Displays.
+  - **Adaptive Typografie:** Schrifthöhen und Abstände passen sich nun flüssig an das Endgerät an.
+
+## [1.14.19] - 2026-04-19
+
+### Geändert
+
+- **Minimalistischer Lehrer-Kartendesigner:** Komplette Neugestaltung der Oberfläche für maximale Übersichtlichkeit.
+  - **Entfall von Kacheln:** Wechsel zu einer schlichten, zentrierten Wizard-UI.
+  - **Start-Wahl:** Erster Schritt ermöglicht die Wahl zwischen geführtem Modus und Experten-Modus.
+  - **Personalisierung:** Individuelle Begrüßung des Lehrers mit Titel und Nachnamen.
+  - **Sequentieller Workflow:** Mehrstufiger Prozess (Wizard) statt Einseiten-Formular zur Reduzierung der kognitiven Last.
+
+## [1.14.18] - 2026-04-19
+
+### Geändert
+
+- **Lehrer-Kartendesigner Optimierung:** Der Erstellungsprozess für Lehrer wurde grundlegend verbessert.
+  - Neuer **Assistenten-Modus** für detaillierte Erklärungen (aktivierbar via Toggle).
+  - **Beispiel-Vorschläge:** Lehrer können nun per Klick fertige Textbeispiele für Beschreibungen und Fähigkeiten laden, um die Erstellung zu erleichtern.
+  - **Wizard-UI:** Klare visuelle Trennung der Schritte (Basisdaten, Fähigkeiten, Foto) mit Fortschrittsanzeige.
+  - **Verständlichere Terminologie:** Fachbegriffe werden im Hilfe-Modus für weniger technik-affine Nutzer umschrieben (z.B. "KP" als "Widerstand").
+  - **Kompakter Experten-Modus:** Bei deaktivierter Hilfe wird die Oberfläche für erfahrene Nutzer deutlich entschlackt.
+
+## [1.14.17] - 2026-04-19
+
+### Geändert
+
+- **Support-Banner bearbeitbar:** Der Banner hat jetzt eine feste Referenz `support-banner` und sitzt direkt unter dem Seitentitelbereich.
+- **Getrenntes Support-Ziel:** Das Support-Ziel ist als eigene `support_goal`-Einstellung erfasst und kann über die Seiteneinstellungen bearbeitet werden.
+
+## [1.14.16] - 2026-04-19
+
+### Geändert
+
+- **Support-Pool getrennt:** Der Banner für Server- und Entwicklungskosten ist jetzt klar von der Abikasse getrennt.
+- **Startziel 100 €:** Das erste Ziel für den Support-Pool ist auf 100 € gesetzt und wird nur in Dashboard und TCG angezeigt.
+
+## [1.14.15] - 2026-04-19
+
+### Behoben
+
+- **Landingpage ohne Dashboard-Shell:** Auf `localhost` wird die Startseite nicht mehr als Dashboard-Subdomain behandelt, sodass die Landingpage nicht mehr in der Dashboard-Struktur mit Seitenmenü gerendert wird.
+- **Menüleiste auf Landing entfernt:** Die obere Landing-Menüleiste wurde auf der Startseite entfernt (`/`), damit die Seite ohne Menünavigation angezeigt wird.
+
+## [1.14.14] - 2026-04-19
+
+### Geändert
+
+- **Banner-Zielbereiche eingeschränkt:** Der Finanzbanner erscheint jetzt nur noch im Dashboard und in der TCG-Ansicht, nicht mehr auf der öffentlichen Startseite.
+- **Banner wiederverwendet:** Der Banner wurde als gemeinsame Komponente ausgelagert und in Dashboard sowie Sammelkarten-Seite eingebunden.
+
+## [1.14.13] - 2026-04-19
+
+### Geändert
+
+- **Finanzbanner auf der Startseite:** Die Landing Page zeigt jetzt direkt unter dem Header ein einklappbares Banner mit aktueller Summe, Zielsumme, Fortschrittsbalken und kurzem Erklärungstext.
+- **Öffentlicher Finanz-Cache:** Der Cron-Job schreibt den aktuellen Finanzstand und die Zielsumme in den öffentlichen Landing-Cache, damit der Banner ohne Login live anzeigen kann.
+
+## [1.14.12] - 2026-04-19
+
+### Geändert
+
+- **Spendenoptionen erweitert:** Die Spenden-Seite bietet jetzt drei klar getrennte Wege: direkte Kontoüberweisung für die Abikasse, Buy Me a Coffee für die App-Unterstützung und Stripe für schnelle Kartenzahlungen mit dem Hinweis auf verbleibende Gebühren.
+- **Spenden-Übersicht:** Ein prominenter Banner hebt das Finanzziel hervor und führt die drei Unterstützungswege zusammen.
+
+## [1.14.11] - 2026-04-17
+
+### Hinzugefügt
+
+- **Aufgaben-Marktplatz Redesign:** Die `/aufgaben` Seite wurde im "Kleinanzeigen"-Stil umgestaltet, um Aufgaben visuell ansprechender zu präsentieren.
+- **Marktplatz-Karten:** Neue `MarketplaceCard` Komponente mit großen Vorschaubildern und prominenter Booster-Belohnung.
+- **Bilder-Karussell:** Interaktives, wischbares `ImageCarousel` (Swipe-fähig) auf der Aufgaben-Detailseite für die Präsentation von bis zu 3 Erklärbildern.
+- **Detail-Layout:** Überarbeitetes Produkt-Detail-Layout für Aufgaben zur besseren Übersicht von Beschreibung, Belohnung und Status.
+### Behoben
+- **Storage-Berechtigungen:** Fehler `storage/unauthorized` beim Hochladen von Aufgabenbildern behoben, indem die Validierungsregeln für `task-images` optimiert wurden.
+- **Typen-Fix:** Fehlender Typ `DASHBOARD_LAYOUT_RESET` im `LogActionType` ergänzt, um Build-Fehler zu beheben.
+
 ## [1.14.2] - 2026-04-16
 ### Behoben
 - **2FA Login CORS Robustness:** Die CORS-Konfiguration für Cloud Functions wurde auf `cors: true` umgestellt. Dies ist für Callable Functions sicher (da sie durch Firebase Auth geschützt sind) und stellt eine robustere Preflight-Handhabung über alle Subdomains hinweg sicher, was die verbleibenden `ERR_FAILED` Fehler beim 2FA-Login auf `tcg.abi-planer-27.de` behebt.
