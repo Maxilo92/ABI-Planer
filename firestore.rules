@@ -483,7 +483,10 @@ service cloud.firestore {
     // ====== Teacher Invitation System ======
     match /teacher_invitations/{tokenId} {
       allow get: if true; // Public can verify if token exists
-      allow list, create, update, delete: if isAdmin();
+      allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']) &&
+                    request.resource.data.status == 'submitted' &&
+                    resource.data.status == 'pending';
+      allow list, create, delete: if isAdmin();
     }
 
     match /teacher_submissions/{submissionId} {

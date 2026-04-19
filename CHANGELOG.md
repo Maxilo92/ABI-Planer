@@ -8,6 +8,12 @@
 
 # Changelog
 
+## [1.14.25] - 2026-04-19
+
+### Behoben
+
+- **Lehrer-Submission Berechtigungen:** Firestore-Regeln angepasst, damit Lehrer ihre Karte auch ohne eigenen Account erfolgreich einreichen können. Der Berechtigungsfehler beim Abschließen des Prozesses wurde behoben.
+
 ## [1.14.24] - 2026-04-19
 
 ### Geändert
