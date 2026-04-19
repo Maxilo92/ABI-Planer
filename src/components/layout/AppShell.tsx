@@ -78,11 +78,11 @@ export function AppShell({ children }: AppShellProps) {
     if (isBoneyardBuild) return
     if (isDashboardSubdomain !== true) return
     if (authLoading) return
-    if (authRoutes.has(pathname)) return
+    if (isAuthRoute) return
     if (!user) {
       router.replace('/login')
     }
-  }, [authLoading, isBoneyardBuild, isDashboardSubdomain, pathname, router, user])
+  }, [authLoading, isBoneyardBuild, isDashboardSubdomain, isAuthRoute, pathname, router, user])
 
   // While hostname is not determined, show a minimal loading state to prevent flash
   // This return MUST be after all hooks have been declared

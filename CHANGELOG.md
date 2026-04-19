@@ -8,6 +8,12 @@
 
 # Changelog
 
+## [1.14.22] - 2026-04-19
+
+### Behoben
+
+- **Lehrer-Redirect-Fix:** Ein Fehler in der AppShell wurde behoben, der trotz öffentlicher Route fälschlicherweise zum Login umgeleitet hat, wenn man nicht angemeldet war. Lehrer-Einladungslinks funktionieren nun garantiert ohne Login.
+
 ## [1.14.21] - 2026-04-19
 
 ### Behoben
