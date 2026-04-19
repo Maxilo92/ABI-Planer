@@ -526,20 +526,20 @@ export default function TeacherCreateCardPage() {
             </div>
 
             <div className={cn(
-              "p-6 sm:p-8 rounded-[2.5rem] border-2 flex items-start gap-5 transition-all",
+              "p-6 sm:p-8 rounded-[2.5rem] border-2 flex items-center gap-5 transition-all",
               legalConfirmed ? "bg-emerald-50 border-emerald-100 dark:bg-emerald-950/20" : "bg-muted/30"
             )}>
-              <div className="relative flex items-center h-6">
+              <div className="flex items-center shrink-0">
                 <input 
                   id="legal" 
                   type="checkbox" 
                   checked={legalConfirmed} 
                   onChange={(e) => setLegalConfirmed(e.target.checked)}
-                  className="w-7 h-7 rounded-lg border-2 border-primary text-primary focus:ring-primary/20 transition-all cursor-pointer"
+                  className="w-6 h-6 rounded-lg border-2 border-primary text-primary focus:ring-primary/20 transition-all cursor-pointer"
                 />
               </div>
-              <Label htmlFor="legal" className="text-base sm:text-lg leading-snug cursor-pointer font-medium text-foreground/90">
-                Ich akzeptiere die <a href="/agb/sammelkarten" target="_blank" className="text-primary underline hover:opacity-80 font-bold">Besonderen Bedingungen für Sammelkarten</a> und bestätige die Nutzung meiner Angaben für das Projekt.
+              <Label htmlFor="legal" className="text-sm sm:text-lg leading-snug cursor-pointer font-medium text-foreground/90">
+                Ich akzeptiere die <a href="/agb/sammelkarten" target="_blank" className="text-primary underline hover:opacity-80 font-bold">Besonderen Bedingungen für Sammelkarten</a> und bestätige die Nutzung meiner Angaben.
               </Label>
             </div>
 
@@ -550,9 +550,13 @@ export default function TeacherCreateCardPage() {
               <Button 
                 onClick={handleSubmit} 
                 disabled={isSubmitting || !legalConfirmed}
-                className="flex-1 h-16 rounded-3xl text-xl font-black bg-gradient-to-r from-primary to-indigo-600 shadow-xl shadow-primary/20 hover:shadow-primary/40 transition-all border-b-4 border-indigo-900 active:translate-y-1 active:border-b-0 order-1 sm:order-2"
+                className="flex-1 h-16 rounded-2xl text-lg font-black bg-primary text-white shadow-xl shadow-primary/20 hover:shadow-primary/30 transition-all active:scale-95 order-1 sm:order-2"
               >
-                {isSubmitting ? <Loader2 className="animate-spin mr-3 w-6 h-6" /> : <Send className="mr-3 w-6 h-6" />}
+                {isSubmitting ? (
+                  <Loader2 className="animate-spin mr-3 w-6 h-6" />
+                ) : (
+                  <Send className="mr-3 w-6 h-6" />
+                )}
                 JETZT ABSENDEN
               </Button>
             </div>

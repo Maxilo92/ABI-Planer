@@ -8,6 +8,12 @@
 
 # Changelog
 
+## [1.14.26] - 2026-04-19
+
+### Behoben
+
+- **UI-Fix Lehrer-Abschluss:** Layout des Bestätigungsfeldes und Design des Absenden-Buttons korrigiert (Zentrierung, Textfluss und Schattenwurf).
+
 ## [1.14.25] - 2026-04-19
 
 ### Behoben
