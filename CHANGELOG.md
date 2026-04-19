@@ -8,6 +8,12 @@
 
 # Changelog
 
+## [1.14.24] - 2026-04-19
+
+### Geändert
+
+- **Lehrer-Kartendesigner:** Verlinkung der speziellen Bedingungen für Sammelkarten (AGB) im Bestätigungs-Schritt hinzugefügt.
+
 ## [1.14.23] - 2026-04-19
 
 ### Geändert

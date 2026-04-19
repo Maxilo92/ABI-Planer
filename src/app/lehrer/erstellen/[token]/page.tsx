@@ -539,7 +539,7 @@ export default function TeacherCreateCardPage() {
                 />
               </div>
               <Label htmlFor="legal" className="text-base sm:text-lg leading-snug cursor-pointer font-medium text-foreground/90">
-                Hiermit bestätige ich meine Angaben und die Nutzung meines Fotos für das Projekt.
+                Ich akzeptiere die <a href="/agb/sammelkarten" target="_blank" className="text-primary underline hover:opacity-80 font-bold">Besonderen Bedingungen für Sammelkarten</a> und bestätige die Nutzung meiner Angaben für das Projekt.
               </Label>
             </div>
 
