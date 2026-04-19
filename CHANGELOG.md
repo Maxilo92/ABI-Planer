@@ -8,7 +8,22 @@
 
 # Changelog
 
-## [1.18.11] - 2026-04-19
+## [1.20.00] - 2026-04-19
+
+### Geändert
+
+- **Umfragen (Minimalistische Details):** Die Umfrage-Details wurden von einem Modal auf eine dedizierte Detailseite umgestellt. Dies sorgt für eine übersichtlichere Darstellung der Teilnehmerlisten und Briefkasten-Vorschläge ohne Scroll-Containern in Modals.
+- **Umfragen (Sicherheit & UI):** Der Zugriff auf detaillierte Teilnehmerlisten und Briefkasten-Vorschläge ist nun strikt auf Ersteller, Planer und Admins begrenzt. Redundante Hinweistexte wurden entfernt, da die geschützten Bereiche für unbefugte Nutzer ohnehin vollständig ausgeblendet werden.
+- **PollList Komponente:** Die Komponente wurde bereinigt und navigiert nun direkt zur Detailseite, anstatt ein komplexes Modal zu öffnen.
+
+## [1.19.00] - 2026-04-19
+
+### Hinzugefügt
+
+- **Umfragen (Briefkasten-Modus):** Umfragen können nun als vertrauliche Ideensammlung genutzt werden. Eingereichte Vorschläge werden nicht öffentlich zur Wahl gestellt, sondern landen in einem privaten "Briefkasten", der nur für Planer und Admins einsehbar ist. 
+- **Umfragen (Admin-Einsicht):** Planer können eingegangene Briefkasten-Vorschläge über den neuen "Briefkasten"-Reiter im Detail-Dialog einsehen.
+
+## [1.18.10] - 2026-04-19
 
 ### Behoben
 

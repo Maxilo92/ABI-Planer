@@ -328,6 +328,15 @@ service cloud.firestore {
         allow update, delete: if isPlanner();
       }
 
+      match /submissions/{submissionId} {
+        allow read: if isApproved() && (isPlanner() || resource.data.user_id == request.auth.uid);
+        allow create: if isApproved() && (
+          isPlanner() || 
+          get(/databases/$(database)/documents/polls/$(pollId)).data.allow_custom_options == true
+        );
+        allow delete: if isPlanner();
+      }
+
       match /votes/{voteId} {
         allow read: if isAuthenticated() && isLernsax();
         allow create: if isAuthenticated() && request.auth.uid == voteId && request.resource.data.user_id == request.auth.uid;

@@ -389,7 +389,7 @@ export function AddPollDialog() {
                     )}
                   </div>
 
-                  {/* Mode: Custom Options */}
+                  {/* Mode: Custom Options (Briefkasten) */}
                   <div className={`flex flex-col gap-3 p-3 rounded-lg border-2 transition-all ${allowCustomOptions ? 'border-primary bg-primary/5' : 'border-border bg-transparent'}`}>
                     <div className="flex items-start gap-3">
                       <Checkbox
@@ -400,10 +400,10 @@ export function AddPollDialog() {
                       />
                       <div className="space-y-1">
                         <Label htmlFor="allow-custom-options" className="cursor-pointer font-bold text-sm">
-                          Eigene Ideen
+                          Briefkasten-Modus
                         </Label>
                         <p className="text-[10px] text-muted-foreground leading-tight">
-                          Nutzer können eigene Vorschläge hinzufügen.
+                          Nutzer können Vorschläge einreichen (nur für Planer sichtbar).
                         </p>
                       </div>
                     </div>

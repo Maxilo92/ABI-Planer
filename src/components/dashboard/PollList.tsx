@@ -6,20 +6,14 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { db } from '@/lib/firebase'
-import { collection, deleteDoc, doc, getDocs, serverTimestamp, writeBatch, runTransaction, addDoc, increment, arrayUnion } from 'firebase/firestore'
+import { collection, deleteDoc, doc, getDocs, serverTimestamp, writeBatch, runTransaction, increment, arrayUnion, query, where, addDoc } from 'firebase/firestore'
 import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import Link from 'next/link'
+import { useEffect, useState, useCallback } from 'react'
 import { toast } from 'sonner'
 import { Trash2, Lock, Eye, Users, Share2, Send, Lightbulb } from 'lucide-react'
 import { logAction } from '@/lib/logging'
 import { usePopupManager } from '@/modules/popup/usePopupManager'
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogDescription 
-} from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 
 
@@ -52,17 +46,46 @@ export function PollList({
   const { confirm } = usePopupManager()
   const [isVoting, setIsVoting] = useState<string | null>(null)
   const [votesByPoll, setVotesByPoll] = useState<Record<string, PollVote[]>>({})
-  const [detailsPoll, setDetailsPoll] = useState<Poll | null>(null)
   const [customInputs, setCustomInputs] = useState<Record<string, string>>({})
   const [isSubmittingCustom, setIsSubmittingCustom] = useState<string | null>(null)
+  const [userSubmissionCounts, setUserSubmissionCounts] = useState<Record<string, number>>({})
+
+  const fetchUserSubmissionCount = useCallback(async (pollId: string) => {
+    if (!userId) return
+    try {
+      const q = query(collection(db, 'polls', pollId, 'submissions'), where('user_id', '==', userId))
+      const snap = await getDocs(q)
+      setUserSubmissionCounts(prev => ({ ...prev, [pollId]: snap.size }))
+    } catch (e: any) {
+      // Only log if it's not a permission error to keep logs clean
+      if (e?.code !== 'permission-denied') {
+        console.error('Error fetching submission count:', e)
+      }
+    }
+  }, [userId])
 
   useEffect(() => {
     const nextVotes: Record<string, PollVote[]> = {}
-    polls.forEach((poll) => {
+    
+    // Filter polls based on same visibility logic as display
+    const visiblePolls = polls.filter(poll => {
+      if (canManage || poll.created_by === userId) return true;
+      if (poll.is_public !== false) return true;
+      if (poll.target_roles && userRole && poll.target_roles.includes(userRole)) return true;
+      if (poll.target_groups && userGroups.some(g => poll.target_groups?.includes(g))) return true;
+      return false;
+    })
+
+    visiblePolls.forEach((poll) => {
       nextVotes[poll.id] = poll.votes || []
+      
+      // Initial count of user submissions if mailbox mode
+      if (poll.allow_custom_options && userId) {
+        fetchUserSubmissionCount(poll.id)
+      }
     })
     setVotesByPoll(nextVotes)
-  }, [polls])
+  }, [polls, userId, canManage, userRole, userGroups, fetchUserSubmissionCount])
 
   if (loading) {
     return (
@@ -293,57 +316,44 @@ export function PollList({
       return
     }
 
-    // 2. Enforce total vote limit
-    const existingVote = (votesByPoll[pollId] || poll.votes || []).find(v => v.user_id === userId)
-    const userSelection = existingVote?.option_ids || (existingVote?.option_id ? [existingVote.option_id] : [])
-
-    // 2. Enforce total vote limit ONLY for multiple choice. 
-    // For single choice, we allow submission because handleVote will just replace the previous vote.
-    if (poll.multiple_choice && userSelection.length >= (poll.max_votes || 1)) {
-      toast.error(`Du kannst maximal ${poll.max_votes} Stimmen vergeben.`)
-      return
-    }
-
-    // 3. Enforce personal proposal limit
+    // 2. Enforce personal proposal limit (mailbox mode)
     const maxProposals = poll.max_custom_proposals || 1
-    const userCustomOptionsCount = poll.options?.filter(o => (o as any).created_by === userId && (o as any).is_custom).length || 0
+    const currentCount = userSubmissionCounts[pollId] || 0
     
-    if (userCustomOptionsCount >= maxProposals) {
-      toast.error(`Du hast bereits das Limit von ${maxProposals} eigenen Vorschlägen erreicht.`)
+    if (currentCount >= maxProposals) {
+      toast.error(`Du hast bereits das Limit von ${maxProposals} Vorschlägen erreicht.`)
       return
     }
 
     setIsSubmittingCustom(pollId)
     
     try {
-      // Check if option already exists (case-insensitive)
-      const optionsSnap = await getDocs(collection(db, 'polls', pollId, 'options'))
-      const existingOption = optionsSnap.docs.find(d => d.data().option_text.toLowerCase() === input.toLowerCase())
+      // Save to PRIVATE submissions collection instead of public options
+      const submissionsRef = collection(db, 'polls', pollId, 'submissions')
+      await addDoc(submissionsRef, {
+        poll_id: pollId,
+        text: input,
+        user_id: userId,
+        user_name: userName,
+        created_at: serverTimestamp()
+      })
 
-      let optionIdToVote = existingOption?.id
-
-      if (!optionIdToVote) {
-        // Create new option
-        const optionsRef = collection(db, 'polls', pollId, 'options')
-        const newOptionDoc = await addDoc(optionsRef, {
-          poll_id: pollId,
-          option_text: input,
-          created_by: userId,
-          is_custom: true
-        })
-        optionIdToVote = newOptionDoc.id
-      }
-
-      // Cast vote
-      if (optionIdToVote) {
-        await handleVote(pollId, optionIdToVote)
-      }
-
+      toast.success('Dein Vorschlag wurde sicher im Briefkasten hinterlegt!')
+      
+      // Update local count
+      setUserSubmissionCounts(prev => ({ ...prev, [pollId]: currentCount + 1 }))
+      
       // Clear input
       setCustomInputs(prev => ({ ...prev, [pollId]: '' }))
+
+      await logAction('POLL_SUBMISSION_CREATED', userId, userName, { 
+        poll_id: pollId, 
+        poll_question: poll?.question,
+        text_length: input.length
+      })
     } catch (error) {
-      console.error('Error adding custom option:', error)
-      toast.error('Fehler beim Hinzufügen deiner Idee.')
+      console.error('Error adding submission:', error)
+      toast.error('Fehler beim Einreichen deines Vorschlags.')
     } finally {
       setIsSubmittingCustom(null)
     }
@@ -459,10 +469,12 @@ export function PollList({
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8 text-muted-foreground hover:text-primary"
-                        onClick={() => setDetailsPoll(poll)}
+                        asChild
                         title="Ergebnisse im Detail"
                       >
-                        <Eye className="h-4 w-4" />
+                        <Link href={`/abstimmungen/${poll.id}`}>
+                          <Eye className="h-4 w-4" />
+                        </Link>
                       </Button>
                       <Button
                         variant="ghost"
@@ -517,12 +529,12 @@ export function PollList({
                 )
               })}
               
-              {poll.allow_custom_options && userId && (userSelection.length < (poll.max_votes || 1)) && (
+              {poll.allow_custom_options && userId && (
                 <div className="pt-4 mt-2 border-t border-dashed border-border/60 animate-in fade-in slide-in-from-top-2 duration-500">
                   {(() => {
                     const maxProposals = poll.max_custom_proposals || 1
-                    const userCustomOptionsCount = poll.options?.filter(o => (o as any).created_by === userId && (o as any).is_custom).length || 0
-                    const limitReached = userCustomOptionsCount >= maxProposals
+                    const currentSubmissionCount = userSubmissionCounts[poll.id] || 0
+                    const limitReached = currentSubmissionCount >= maxProposals
                     const maxLength = poll.custom_options_max_length || 50
                     const currentLength = (customInputs[poll.id] || '').length
 
@@ -530,8 +542,8 @@ export function PollList({
                       return (
                         <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/30 border border-border/50">
                           <Users className="h-3 w-3 text-muted-foreground" />
-                          <span className="text-[10px] text-muted-foreground font-medium">
-                            Du hast dein Limit von {maxProposals} {maxProposals === 1 ? 'Vorschlag' : 'Vorschlägen'} erreicht.
+                          <span className="text-[10px] text-muted-foreground font-medium text-left">
+                            Limit erreicht: Du hast bereits {currentSubmissionCount} {currentSubmissionCount === 1 ? 'Vorschlag' : 'Vorschläge'} eingereicht.
                           </span>
                         </div>
                       )
@@ -540,17 +552,17 @@ export function PollList({
                     return (
                       <>
                         <div className="flex items-center justify-between mb-2 px-1">
-                          <div className="flex items-center gap-2">
-                            <Lightbulb className="h-3 w-3 text-primary animate-pulse" />
-                            <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Eigene Idee einreichen</span>
+                          <div className="flex items-center gap-2 text-left">
+                            <Lightbulb className="h-3 w-3 text-primary animate-pulse shrink-0" />
+                            <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Vorschlag senden (Briefkasten)</span>
                           </div>
-                          <span className={`text-[9px] font-bold ${currentLength > maxLength * 0.8 ? 'text-amber-500' : 'text-muted-foreground'}`}>
+                          <span className={`text-[9px] font-bold shrink-0 ${currentLength > maxLength * 0.8 ? 'text-amber-500' : 'text-muted-foreground'}`}>
                             {currentLength}/{maxLength}
                           </span>
                         </div>
                         <div className="flex gap-2">
                           <Input
-                            placeholder="z.B. Dein Motto-Vorschlag..."
+                            placeholder="z.B. Deine Motto-Idee..."
                             value={customInputs[poll.id] || ''}
                             onChange={(e) => setCustomInputs(prev => ({ ...prev, [poll.id]: e.target.value }))}
                             className="h-9 text-xs"
@@ -571,8 +583,8 @@ export function PollList({
                             )}
                           </Button>
                         </div>
-                        <p className="text-[9px] text-muted-foreground mt-2 italic pl-1">
-                          Dein Vorschlag wird nach dem Absenden für alle wählbar. ({userCustomOptionsCount}/{maxProposals} eingereicht)
+                        <p className="text-[9px] text-muted-foreground mt-2 italic pl-1 text-left">
+                          Dein Vorschlag landet im Briefkasten der Planer. ({currentSubmissionCount}/{maxProposals} gesendet)
                         </p>
                       </>
                     )
@@ -640,52 +652,6 @@ export function PollList({
   return (
     <div className={useScrollContainer ? "h-full overflow-y-auto pr-2 space-y-6 scrollbar-thin scrollbar-thumb-muted-foreground/20" : "space-y-6"}>
       {pollCards}
-
-      {/* Details Dialog */}
-      <Dialog open={!!detailsPoll} onOpenChange={(open) => !open && setDetailsPoll(null)}>
-        <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-hidden flex flex-col">
-          <DialogHeader>
-            <DialogTitle>Stimmen im Detail</DialogTitle>
-            <DialogDescription>
-              {detailsPoll?.question}
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="flex-1 overflow-y-auto pr-2 space-y-6 py-4">
-            {detailsPoll?.options?.map(option => {
-              const pollVotes = votesByPoll[detailsPoll.id] || detailsPoll.votes || []
-              const optionVotes = pollVotes.filter(v => v.option_ids ? v.option_ids.includes(option.id) : v.option_id === option.id)
-              
-              return (
-                <div key={option.id} className="space-y-3">
-                  <div className="flex items-center justify-between border-b pb-1">
-                    <h4 className="font-bold text-sm">{option.option_text}</h4>
-                    <span className="text-xs bg-muted px-2 py-0.5 rounded-full font-medium">
-                      {optionVotes.length} {optionVotes.length === 1 ? 'Stimme' : 'Stimmen'}
-                    </span>
-                  </div>
-                  
-                  {optionVotes.length === 0 ? (
-                    <p className="text-xs text-muted-foreground italic pl-2">Noch keine Stimmen.</p>
-                  ) : (
-                    <div className="flex flex-wrap gap-2 pl-2">
-                      {optionVotes.map(vote => (
-                        <div key={vote.id} className="text-[10px] bg-primary/10 text-primary px-2 py-1 rounded-md border border-primary/20">
-                          {vote.user_name || 'Unbekannter Nutzer'}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )
-            })}
-          </div>
-
-          <div className="pt-4 border-t text-[10px] text-muted-foreground italic">
-            Hinweis: Namen werden zum Zeitpunkt der Abstimmung gespeichert. Spätere Namensänderungen werden hier ggf. nicht sofort reflektiert.
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }
