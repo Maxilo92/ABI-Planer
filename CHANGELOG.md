@@ -8,6 +8,12 @@
 
 # Changelog
 
+## [1.21.04] - 2026-04-19
+
+### Behoben
+
+- **Layout (Landing Header):** Ein Fehler wurde behoben, durch den der Header auf der Haupt-Landingpage nicht mehr angezeigt wurde. Die Logik wurde in die `AppShell` zentralisiert, sodass nun alle öffentlichen Seiten (Impressum, Datenschutz, Hilfe, Vorteile etc.) auf der Hauptdomain konsistent den Landing-Header und Footer anzeigen. Redundante Header-Imports in Einzelseiten wurden entfernt und das Hero-Padding auf der Startseite optimiert.
+
 ## [1.21.03] - 2026-04-19
 
 ### Behoben
