@@ -8,6 +8,13 @@
 
 # Changelog
 
+## [1.14.23] - 2026-04-19
+
+### Geändert
+
+- **Lehrer-Kartendesigner:** Der Foto-Upload wurde explizit als optional/freiwillig markiert.
+- **Benutzerführung:** Anpassung der Texte und Buttons im Foto-Schritt, um die Freiwilligkeit zu betonen (z.B. "Ohne Foto weiter").
+
 ## [1.14.22] - 2026-04-19
 
 ### Behoben

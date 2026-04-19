@@ -455,8 +455,11 @@ export default function TeacherCreateCardPage() {
         {activeStep === 3 && (
           <div className="space-y-12 animate-in fade-in slide-in-from-right-4 duration-500 text-center">
             <div className="space-y-4">
-              <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Ein Foto für Ihre Karte?</h2>
-              <p className="text-muted-foreground text-lg leading-relaxed max-w-md mx-auto">Ein Bild macht die Karte erst richtig lebendig. Falls Sie keines haben, nutzen wir ein neutrales Symbol.</p>
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-muted text-muted-foreground text-[10px] font-black uppercase tracking-widest mb-2">
+                Schritt 3 von 4
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Ein Foto hinzufügen? <span className="text-muted-foreground font-normal">(Freiwillig)</span></h2>
+              <p className="text-muted-foreground text-lg leading-relaxed max-w-md mx-auto">Ein Bild macht die Karte erst richtig lebendig. Dieser Schritt ist jedoch <strong>absolut optional</strong>. Falls Sie kein Foto nutzen möchten, verwenden wir ein neutrales Platzhalter-Symbol.</p>
             </div>
 
             <div className="flex justify-center py-4">
@@ -481,7 +484,7 @@ export default function TeacherCreateCardPage() {
                     </div>
                     <div>
                       <p className="text-xl font-bold tracking-tight">Foto auswählen</p>
-                      <p className="text-sm text-muted-foreground mt-1">Querformat wird empfohlen.</p>
+                      <p className="text-xs text-muted-foreground mt-1 uppercase font-black tracking-widest">Optional</p>
                     </div>
                   </div>
                 )}
@@ -493,7 +496,7 @@ export default function TeacherCreateCardPage() {
                 <ArrowLeft className="mr-2 w-5 h-5" /> Zurück
               </Button>
               <Button onClick={() => setActiveStep(4)} className="flex-1 h-14 rounded-2xl text-lg font-bold shadow-lg shadow-primary/10 order-1 sm:order-2">
-                Finale Vorschau <ArrowRight className="ml-2 w-5 h-5" />
+                {croppedImage ? 'Weiter zur Vorschau' : 'Ohne Foto weiter'} <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
             </div>
           </div>
