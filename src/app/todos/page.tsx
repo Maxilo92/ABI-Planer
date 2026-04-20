@@ -44,7 +44,7 @@ export default function TodosPage() {
   }, [authLoading, profile])
 
   useEffect(() => {
-    if (!authLoading && profile) {
+    if (!authLoading && profile?.id) {
       const updateLastVisited = async () => {
         try {
           const now = new Date()
@@ -63,7 +63,7 @@ export default function TodosPage() {
       }
       updateLastVisited()
     }
-  }, [profile, authLoading])
+  }, [profile?.id, profile?.last_visited?.todos, authLoading])
 
   if (authLoading || loading) {
     return (

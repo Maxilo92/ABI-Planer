@@ -83,25 +83,27 @@ export default function PollsPage() {
   })
 
   useEffect(() => {
-    if (!authLoading && profile) {
+    if (!authLoading && profile?.id) {
       const updateLastVisited = async () => {
         try {
           const now = new Date()
           const lastVisitedStr = profile.last_visited?.umfragen
           const lastVisited = lastVisitedStr ? new Date(lastVisitedStr) : new Date(0)
           
-          // Update last_visited whenever visiting the page to clear notifications
-          const userRef = doc(db, 'profiles', profile.id)
-          await updateDoc(userRef, {
-            [`last_visited.umfragen`]: now.toISOString()
-          })
+          // Nur alle 5 Minuten aktualisieren, um Schreibzugriffe zu sparen und Loops zu verhindern
+          if (!lastVisitedStr || (now.getTime() - lastVisited.getTime() > 5 * 60 * 1000)) {
+            const userRef = doc(db, 'profiles', profile.id)
+            await updateDoc(userRef, {
+              [`last_visited.umfragen`]: now.toISOString()
+            })
+          }
         } catch (error) {
           console.error('Error updating last_visited for polls:', error)
         }
       }
       updateLastVisited()
     }
-  }, [profile, authLoading])
+  }, [profile?.id, profile?.last_visited?.umfragen, authLoading])
 
   if (authLoading || loading) {
     return (

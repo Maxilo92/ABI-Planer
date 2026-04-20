@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useEffect, useRef, useState } from 'react'
+import React, { createContext, useContext, useEffect, useRef, useState, useMemo } from 'react'
 import { getFirebaseAuth, getFirebaseDb, getFirebaseFunctions } from '@/lib/firebase'
 import { onAuthStateChanged, signOut, User, sendEmailVerification, verifyBeforeUpdateEmail } from 'firebase/auth'
 import { doc, onSnapshot, updateDoc, serverTimestamp } from 'firebase/firestore'
@@ -166,8 +166,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     if (loading || !user || !profile) return
     
-    if (user.emailVerified && !profile.is_approved) {
-      updateDoc(doc(db, 'profiles', user.uid), { 
+    // Explicitly check for false or undefined to avoid looping if value doesn't 'take'
+    const needsApproval = profile.is_approved === false || profile.is_approved === undefined;
+    
+    if (user.emailVerified && needsApproval) {
+      const profileRef = doc(db, 'profiles', user.uid);
+      updateDoc(profileRef, { 
         is_approved: true,
         updated_at: serverTimestamp()
       }).catch(err => {
@@ -416,7 +420,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, [user?.uid, profile?.id, loading])
 
-  const value = React.useMemo(() => ({ 
+  const value = useMemo(() => ({ 
     user, 
     profile, 
     loading, 

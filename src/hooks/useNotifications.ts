@@ -24,15 +24,21 @@ export function useNotifications() {
     gruppen: false,
   })
 
+  const planningGroupsStr = JSON.stringify(profile?.planning_groups || [])
+
   useEffect(() => {
     if (authLoading || !profile?.id) {
-      setNotifications({
-        todos: false,
-        kalender: false,
-        umfragen: false,
-        news: false,
-        karten: false,
-        gruppen: false,
+      setNotifications(prev => {
+        const isAlreadyEmpty = !prev.todos && !prev.kalender && !prev.umfragen && !prev.news && !prev.karten && !prev.gruppen
+        if (isAlreadyEmpty) return prev
+        return {
+          todos: false,
+          kalender: false,
+          umfragen: false,
+          news: false,
+          karten: false,
+          gruppen: false,
+        }
       })
       return
     }
@@ -257,7 +263,7 @@ export function useNotifications() {
     authLoading, 
     profile?.id, 
     profile?.class_name, 
-    JSON.stringify(profile?.planning_groups), 
+    planningGroupsStr, 
     profile?.last_visited?.todos,
     profile?.last_visited?.kalender,
     profile?.last_visited?.umfragen,

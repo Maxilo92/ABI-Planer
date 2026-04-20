@@ -8,6 +8,22 @@
 
 # Changelog
 
+## [1.22.0.3] - 2026-04-20
+
+### Behoben
+
+- **Performance (Infinite Loop):** Ein kritischer unendlicher Re-render-Loop auf der Umfragen-Seite (`src/app/abstimmungen/page.tsx`) wurde behoben. Der Loop wurde durch eine fehlende Zeitprüfung bei der Aktualisierung von `last_visited.umfragen` und instabile Abhängigkeiten im `useEffect` ausgelöst.
+- **Stabilität:** Die Synchronisierung des Genehmigungsstatus (`is_approved`) im `AuthContext` wurde robuster gestaltet, um potenzielle Loops bei fehlenden Feldern zu verhindern.
+- **Zustands-Management:** Optimierung der `last_visited`-Aktualisierungen in den Modulen `todos` und `abstimmungen` durch Verwendung primitiver Abhängigkeiten (`profile.id`, etc.) anstelle des gesamten Profil-Objekts.
+
+## [1.22.0.2] - 2026-04-20
+
+### Behoben
+
+- **Performance (Infinite Loop):** Ein kritischer Fehler wurde behoben, der zu einer "Maximum update depth exceeded" Fehlermeldung und einem unendlichen Re-render-Loop in der `useNotifications` Hook führte. 
+- **Stabilität:** Die `useNotifications` Hook wurde stabilisiert, indem die Abhängigkeiten im `useEffect` (insbesondere Arrays wie `planning_groups`) nun via String-Vergleich (JSON.stringify) überwacht werden und Zustands-Updates nur bei tatsächlichen Wertänderungen ausgelöst werden.
+- **Provider-Optimierung:** Der `AuthContext` Provider wurde memoisiert, um unnötige Re-renders des gesamten Komponentenbaums bei jeder Profilaktualisierung zu verhindern.
+
 ## [1.22.0.1] - 2026-04-20
 
 ### Geändert
