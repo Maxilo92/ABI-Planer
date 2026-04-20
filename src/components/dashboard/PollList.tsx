@@ -30,6 +30,13 @@ interface PollListProps {
   loading?: boolean
 }
 
+type VoteAction = 'added' | 'removed' | 'changed'
+const VOTE_ACTION_MESSAGES: Record<VoteAction, string> = {
+  added: 'Stimme hinzugefügt.',
+  removed: 'Stimme entfernt.',
+  changed: 'Stimme geändert.'
+}
+
 export function PollList({
   polls,
   userId,
@@ -187,14 +194,14 @@ export function PollList({
 
     setIsVoting(optionId)
     
-    try {
-      const voteRef = doc(db, 'polls', pollId, 'votes', userId)
-      const profileRef = doc(db, 'profiles', userId)
-      
-      let isFirstReward = false;
-      let finalOptionIds: string[] = []
-      let action: 'added' | 'removed' | 'changed' | string = 'changed'
+    const voteRef = doc(db, 'polls', pollId, 'votes', userId)
+    const profileRef = doc(db, 'profiles', userId)
+    
+    let isFirstReward = false
+    let finalOptionIds: string[] = []
+    let action: VoteAction = 'changed'
 
+    try {
       await runTransaction(db, async (transaction) => {
         const voteSnap = await transaction.get(voteRef)
         const profileSnap = await transaction.get(profileRef)
@@ -252,28 +259,6 @@ export function PollList({
           })
         }
       })
-
-      await refreshVotesForPoll(pollId)
-      await fetchParticipantCount(pollId)
-      
-      if (isFirstReward) {
-        toast.success('Stimme gespeichert. Du hast 1 Booster-Pack als Belohnung erhalten.')
-      } else if (action === 'added') {
-        toast.success('Stimme hinzugefügt.')
-      } else if (action === 'removed') {
-        toast.success('Stimme entfernt.')
-      } else {
-        toast.success('Stimme geändert.')
-      }
-      
-      const optionText = poll?.options?.find(o => o.id === optionId)?.option_text || optionId
-      await logAction('VOTE_CAST', userId, userName, { 
-        poll_id: pollId, 
-        poll_question: poll?.question,
-        option_id: optionId,
-        option_text: optionText,
-        action: action
-      })
     } catch (err: any) {
       if (err === "LIMIT_REACHED") {
         toast.error(`Du kannst maximal ${poll?.max_votes} Stimmen vergeben.`)
@@ -281,8 +266,39 @@ export function PollList({
         console.error('Error voting:', err)
         toast.error('Abstimmung fehlgeschlagen.')
       }
+      return
     } finally {
       setIsVoting(null)
+    }
+
+    try {
+      await refreshVotesForPoll(pollId)
+    } catch (refreshVotesError) {
+      console.error('Error refreshing poll votes after vote:', refreshVotesError)
+    }
+    try {
+      await fetchParticipantCount(pollId)
+    } catch (refreshParticipantsError) {
+      console.error('Error refreshing participant count after vote:', refreshParticipantsError)
+    }
+
+    if (isFirstReward) {
+      toast.success('Stimme gespeichert. Du hast 1 Booster-Pack als Belohnung erhalten.')
+    } else {
+      toast.success(VOTE_ACTION_MESSAGES[action])
+    }
+    
+    const optionText = poll?.options?.find(o => o.id === optionId)?.option_text || optionId
+    try {
+      await logAction('VOTE_CAST', userId, userName, { 
+        poll_id: pollId, 
+        poll_question: poll?.question,
+        option_id: optionId,
+        option_text: optionText,
+        action: action
+      })
+    } catch (logError) {
+      console.error('Error logging vote action:', logError)
     }
   }
 
