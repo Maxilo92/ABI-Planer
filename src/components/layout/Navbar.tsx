@@ -73,7 +73,7 @@ export function Navbar() {
   }, [])
   
   // Also treat /sammelkarten paths as TCG area even on main/dashboard domains (for local dev or if subdomains aren't used)
-  const isTcgArea = isTcgDomain || pathname.startsWith('/sammelkarten') || pathname.startsWith('/battle-pass') || pathname.startsWith('/home') || pathname.startsWith('/booster') || (pathname === '/shop' && currentSearch.includes('category=sammelkarten'))
+  const isTcgArea = isTcgDomain || pathname.startsWith('/sammelkarten') || pathname.startsWith('/album') || pathname.startsWith('/battle-pass') || pathname.startsWith('/home') || pathname.startsWith('/booster') || (pathname === '/shop' && currentSearch.includes('category=sammelkarten'))
 
   const dashboardUrl = getDashboardBaseUrl()
   const tcgUrl = getTcgBaseUrl()
@@ -88,7 +88,7 @@ export function Navbar() {
   // Helper to resolve URLs across domains
   const resolveHref = (path: string, forceTarget?: 'dashboard' | 'tcg' | 'main') => {
     const landingRoutes = ['/uber', '/vorteile', '/agb', '/datenschutz', '/impressum']
-    const cardRoutes = ['/sammelkarten', '/shop', '/battle-pass', '/home', '/booster']
+    const cardRoutes = ['/sammelkarten', '/album', '/shop', '/battle-pass', '/home', '/booster']
     const plannerRoutes = [
       '/lehrer', '/abstimmungen', '/admin', '/aufgaben', '/einstellungen', '/feedback', 
       '/finanzen', '/gruppen', '/hilfe', '/kalender', '/r', '/todos', '/unauthorized', 
@@ -217,7 +217,7 @@ export function Navbar() {
         icon: Sparkles,
         subItems: [
           { href: resolveHref('/booster', 'tcg'), label: 'Booster öffnen', icon: Gift, isExternalLink: !isTcgDomain },
-          { href: resolveHref('/sammelkarten?view=album', 'tcg'), label: 'Lehrer-Album', icon: Trophy, isExternalLink: !isTcgDomain },
+          { href: resolveHref('/album', 'tcg'), label: 'Lehrer-Album', icon: Trophy, isExternalLink: !isTcgDomain },
           { href: resolveHref('/sammelkarten?view=decks', 'tcg'), label: 'Meine Decks', icon: LayoutDashboard, isExternalLink: !isTcgDomain },
           ...(isEnabled('trading_status') ? [{ href: resolveHref('/sammelkarten/tausch', 'tcg'), label: 'Trading-Hub', icon: ArrowLeftRight, notify: notifications.karten, isExternalLink: !isTcgDomain }] : []),
           ...(isEnabled('combat_status') ? [

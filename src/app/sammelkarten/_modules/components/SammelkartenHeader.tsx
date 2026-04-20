@@ -86,20 +86,16 @@ export function SammelkartenHeader(props: SammelkartenHeaderProps) {
 
           {gameState === 'idle' && (
             <div className="flex items-center gap-2 mt-1">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-muted-foreground/80 hover:text-primary gap-2"
-                onClick={() => {
-                  const url = new URL(window.location.href)
-                  url.searchParams.set('view', 'album')
-                  window.history.pushState({}, '', url)
-                  window.dispatchEvent(new PopStateEvent('popstate'))
-                }}
-              >
-                <Trophy className="h-4 w-4" />
-                Zum Album
-              </Button>
+              <Link href="/album">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-muted-foreground/80 hover:text-primary gap-2"
+                >
+                  <Trophy className="h-4 w-4" />
+                  Zum Album
+                </Button>
+              </Link>
               <Button
                 variant="ghost"
                 size="sm"

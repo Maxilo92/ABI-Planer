@@ -161,7 +161,7 @@ export function TcgDashboard() {
             </h2>
             <div className="space-y-3">
               {[
-                { label: 'Mein Lehrer-Album', href: '/sammelkarten?view=album', icon: Trophy, desc: 'Alle Karten im Überblick' },
+                { label: 'Mein Lehrer-Album', href: '/album', icon: Trophy, desc: 'Alle Karten im Überblick' },
                 { label: 'Deck Editor', href: '/sammelkarten?view=decks', icon: Swords, desc: 'Stelle dein Team zusammen' },
                 { label: 'Trading Hub', href: '/sammelkarten/tausch', icon: ArrowLeftRight, desc: 'Karten mit Freunden tauschen', disabled: !isTradingEnabled },
                 { label: 'Battle Pass', href: '/battle-pass', icon: History, desc: 'Deine Season-Fortschritte' },
@@ -208,7 +208,7 @@ export function TcgDashboard() {
               <History className="h-6 w-6 text-primary" />
               Deine Sammlung
             </h2>
-            <Link href="/sammelkarten?view=album">
+            <Link href="/album">
               <Button variant="ghost" className="font-bold text-xs uppercase tracking-widest hover:bg-primary/10 hover:text-primary">Ganzes Album ansehen →</Button>
             </Link>
           </div>

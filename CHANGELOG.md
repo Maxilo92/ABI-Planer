@@ -8,6 +8,14 @@
 
 # Changelog
 
+## [1.23.2.5] - 2026-04-20
+
+### Hinzugefügt
+- **Navigation:** Das Lehrer-Album hat nun eine eigene dedizierte Route unter `/album`.
+
+### Geändert
+- **Sammelkarten:** Alle internen Links und Navigationspunkte wurden von `/sammelkarten?view=album` auf die neue Route `/album` umgestellt.
+
 ## [1.23.2.4] - 2026-04-20
 
 ### Fixes
