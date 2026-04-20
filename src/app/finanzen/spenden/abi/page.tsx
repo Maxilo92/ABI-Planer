@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { ArrowLeft, ArrowRight, PiggyBank, CreditCard, ShieldCheck, Heart } from 'lucide-react'
 import Link from 'next/link'
+import { getShopBaseUrl } from '@/lib/dashboard-url'
 
 export default function AbiSpendenPage() {
   return (
@@ -105,12 +106,12 @@ export default function AbiSpendenPage() {
               Hinweis: Hier fallen pro Transaktion Zahlungsgebühren (ca. 1,5% - 3%) an, die direkt vom Betrag abgezogen werden.
             </div>
             <div className="pt-2">
-              <Link href="/shop?category=extras">
+              <a href={`${getShopBaseUrl()}/shop?category=extras`}>
                 <Button className="w-full gap-2 h-11" variant="outline">
                   <CreditCard className="h-4 w-4" />
                   Zu den Online-Spenden
                 </Button>
-              </Link>
+              </a>
             </div>
             <p className="text-xs text-muted-foreground">
               Die Zahlung wird automatisch eurer Abikasse gutgeschrieben.

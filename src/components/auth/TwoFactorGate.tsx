@@ -30,14 +30,14 @@ export function TwoFactorGate({ children }: { children: React.ReactNode }) {
   // If we haven't finished checking sessionStorage for 2FA status, don't show gate yet
   if (!is2FAInitialCheckDone) return children
 
-  // Determine if we are in TCG area
+  // Determine if we are in TCG area or Shop area (both exempt from 2FA gate)
   const isTcgArea = pathname?.startsWith('/sammelkarten') || 
-                   pathname?.startsWith('/battle-pass') || 
-                   (pathname === '/shop' && typeof window !== 'undefined' && window.location.search.includes('category=sammelkarten'))
+                   pathname?.startsWith('/battle-pass')
+  const isShopArea = pathname?.startsWith('/shop')
 
-  // If 2FA is not enabled, already verified, or user is in TCG area, show content
-  // TCG is exempt from 2FA gate to allow quick collection/browsing without friction
-  if (!profile.is_2fa_enabled || is2FAVerified || isTcgArea) {
+  // If 2FA is not enabled, already verified, or user is in TCG/Shop area, show content
+  // TCG and Shop are exempt from 2FA gate to allow quick collection/browsing without friction
+  if (!profile.is_2fa_enabled || is2FAVerified || isTcgArea || isShopArea) {
     return children
   }
 

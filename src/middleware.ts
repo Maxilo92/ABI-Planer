@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { getAppBaseUrl, getMainBaseUrl } from '@/lib/dashboard-url'
+import { getAppBaseUrl, getMainBaseUrl, getShopBaseUrl } from '@/lib/dashboard-url'
 
 function normalizeRequestHost(hostHeader: string): string {
   // Strip port and convert to lowercase
@@ -28,11 +28,11 @@ function splitHostSegments(hostname: string): string[] {
 
 function getKnownSubdomainIndex(segments: string[]): number {
   return segments.findIndex((segment) =>
-    segment === 'dashboard' || segment === 'app' || segment === 'tcg' || segment === 'www'
+    segment === 'dashboard' || segment === 'app' || segment === 'tcg' || segment === 'shop' || segment === 'www'
   )
 }
 
-function buildTargetHost(currentHost: string, target: 'dashboard' | 'tcg' | 'main'): string | null {
+function buildTargetHost(currentHost: string, target: 'dashboard' | 'tcg' | 'shop' | 'main'): string | null {
   const segments = splitHostSegments(currentHost)
   if (segments.length === 0) return null
 
@@ -69,6 +69,10 @@ function isTcgHost(hostname: string): boolean {
   return /(^|\.)tcg\./.test(hostname)
 }
 
+function isShopHost(hostname: string): boolean {
+  return /(^|\.)shop\./.test(hostname)
+}
+
 function safeRedirect(request: NextRequest, targetUrl: URL) {
   const current = request.nextUrl
   const forwardedProto = request.headers.get('x-forwarded-proto')
@@ -93,7 +97,7 @@ function safeRedirect(request: NextRequest, targetUrl: URL) {
   return NextResponse.redirect(targetUrl, { status: 307 })
 }
 
-function getRequestBaseUrl(request: NextRequest, target: 'dashboard' | 'tcg' | 'main'): string {
+function getRequestBaseUrl(request: NextRequest, target: 'dashboard' | 'tcg' | 'shop' | 'main'): string {
   const currentUrl = request.nextUrl
   const hostname = getEffectiveRequestHost(request)
   const isLocal = isLocalHost(hostname)
@@ -114,6 +118,7 @@ function getRequestBaseUrl(request: NextRequest, target: 'dashboard' | 'tcg' | '
   }
 
   if (target === 'tcg') return getAppBaseUrl('tcg')
+  if (target === 'shop') return getShopBaseUrl()
   if (target === 'main') return getMainBaseUrl()
   return getAppBaseUrl('dashboard')
 }
@@ -126,7 +131,8 @@ export function middleware(request: NextRequest) {
   // Local development or production domains
   const isDashboardSubdomain = isDashboardHost(hostname)
   const isTcgSubdomain = isTcgHost(hostname)
-  const isLandingDomain = !isDashboardSubdomain && !isTcgSubdomain
+  const isShopSubdomain = isShopHost(hostname)
+  const isLandingDomain = !isDashboardSubdomain && !isTcgSubdomain && !isShopSubdomain
   
   // Routes categorization
   const landingOnlyRoutes = [
@@ -137,9 +143,12 @@ export function middleware(request: NextRequest) {
     '/impressum'
   ]
 
+  const shopRoutes = [
+    '/shop'
+  ]
+
   const cardRoutes = [
     '/sammelkarten',
-    '/shop',
     '/battle-pass',
     '/home',
     '/booster'
@@ -172,7 +181,23 @@ export function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // 1. Check Card Routes -> Redirect to TCG
+  // 1. Check Shop Routes -> Redirect to Shop subdomain
+  if (shopRoutes.some(route => pathname === route || pathname.startsWith(route + '/'))) {
+    if (!isShopSubdomain) {
+      const shopBaseUrl = getRequestBaseUrl(request, 'shop')
+      const redirectUrl = new URL(pathname, shopBaseUrl)
+
+      url.searchParams.forEach((value, key) => {
+        redirectUrl.searchParams.set(key, value)
+      })
+
+      return safeRedirect(request, redirectUrl)
+    }
+
+    return NextResponse.next()
+  }
+
+  // 2. Check Card Routes -> Redirect to TCG
   if (cardRoutes.some(route => pathname === route || pathname.startsWith(route + '/'))) {
     if (!isTcgSubdomain) {
       const tcgBaseUrl = getRequestBaseUrl(request, 'tcg')
@@ -188,7 +213,7 @@ export function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // 2. Check Planner Routes -> Redirect to Dashboard
+  // 3. Check Planner Routes -> Redirect to Dashboard
   if (plannerOnlyRoutes.some(route => pathname === route || pathname.startsWith(route + '/'))) {
     if (!isDashboardSubdomain) {
       const dashboardBaseUrl = getRequestBaseUrl(request, 'dashboard')
@@ -204,7 +229,7 @@ export function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // 3. Check Landing Routes -> Redirect to Main Domain
+  // 4. Check Landing Routes -> Redirect to Main Domain
   if (landingOnlyRoutes.some(route => pathname === route || pathname.startsWith(route + '/'))) {
     if (!isLandingDomain) {
       const mainBaseUrl = getRequestBaseUrl(request, 'main')
@@ -220,10 +245,16 @@ export function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // 4. Special case: Root Path `/` on TCG subdomain
+  // 5. Special case: Root Path `/` on TCG subdomain
   if (isTcgSubdomain && pathname === '/') {
     const tcgBaseUrl = getRequestBaseUrl(request, 'tcg')
     return safeRedirect(request, new URL('/home', tcgBaseUrl))
+  }
+
+  // 6. Special case: Root Path `/` on Shop subdomain -> show /shop
+  if (isShopSubdomain && pathname === '/') {
+    const shopBaseUrl = getRequestBaseUrl(request, 'shop')
+    return safeRedirect(request, new URL('/shop', shopBaseUrl))
   }
 
   return NextResponse.next()

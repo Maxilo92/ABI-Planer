@@ -1,8 +1,9 @@
 export const MAIN_DOMAIN = 'abi-planer-27.de'
 export const DASHBOARD_DOMAIN = 'dashboard.abi-planer-27.de'
 export const TCG_DOMAIN = 'tcg.abi-planer-27.de'
+export const SHOP_DOMAIN = 'shop.abi-planer-27.de'
 
-export type AppTarget = 'dashboard' | 'tcg'
+export type AppTarget = 'dashboard' | 'tcg' | 'shop'
 
 export interface AccessTargetProfile {
   access_target?: AppTarget | null
@@ -13,12 +14,14 @@ export const ALLOWED_PLANNER_GRADES = new Set(['11'])
 
 const DASHBOARD_FALLBACK_URL = `https://${DASHBOARD_DOMAIN}`
 const TCG_FALLBACK_URL = `https://${TCG_DOMAIN}`
+const SHOP_FALLBACK_URL = `https://${SHOP_DOMAIN}`
 const MAIN_FALLBACK_URL = `https://${MAIN_DOMAIN}`
 
 const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1'])
 const APP_HOSTS: Record<AppTarget, string> = {
   dashboard: DASHBOARD_DOMAIN,
   tcg: TCG_DOMAIN,
+  shop: SHOP_DOMAIN,
 }
 
 function normalizeBaseUrl(url: string): string {
@@ -33,7 +36,7 @@ function normalizeBaseUrl(url: string): string {
 }
 
 function normalizeHostname(hostname: string): string {
-  return hostname.replace(/^www\./, '').replace(/^(dashboard|tcg|app)\./, '')
+  return hostname.replace(/^www\./, '').replace(/^(dashboard|tcg|shop|app)\./, '')
 }
 
 function buildLocalAppUrl(location: Location, target: AppTarget): string {
@@ -81,6 +84,15 @@ export function getTcgBaseUrl(): string {
   return TCG_FALLBACK_URL
 }
 
+export function getShopBaseUrl(): string {
+  const configuredUrl = process.env.NEXT_PUBLIC_SHOP_URL?.trim()
+  if (configuredUrl) {
+    return normalizeBaseUrl(configuredUrl)
+  }
+
+  return SHOP_FALLBACK_URL
+}
+
 export function getMainBaseUrl(): string {
   const configuredUrl = process.env.NEXT_PUBLIC_MAIN_URL?.trim()
   if (configuredUrl) {
@@ -93,6 +105,9 @@ export function getMainBaseUrl(): string {
 export function getAppBaseUrl(target: AppTarget = 'dashboard'): string {
   if (target === 'tcg') {
     return getTcgBaseUrl()
+  }
+  if (target === 'shop') {
+    return getShopBaseUrl()
   }
 
   return getDashboardBaseUrl()
@@ -118,10 +133,11 @@ export function getAppRedirectUrl(location: Location, target: AppTarget = 'dashb
     return getAppBaseUrl(target)
   }
 
-  if (host === APP_HOSTS.dashboard || host === APP_HOSTS.tcg || host.startsWith('dashboard.') || host.startsWith('tcg.')) {
+  if (host === APP_HOSTS.dashboard || host === APP_HOSTS.tcg || host === APP_HOSTS.shop || host.startsWith('dashboard.') || host.startsWith('tcg.') || host.startsWith('shop.')) {
     return getAppBaseUrl(target)
   }
 
+  if (target === 'shop') return getShopBaseUrl()
   return target === 'tcg' ? getTcgBaseUrl() : getDashboardBaseUrl()
 }
 

@@ -34,7 +34,7 @@ export default function LoginPage() {
   
   const router = useRouter()
 
-  const redirectToApp = (target: 'dashboard' | 'tcg') => {
+  const redirectToApp = (target: 'dashboard' | 'tcg' | 'shop') => {
     if (typeof window === 'undefined') {
       router.push('/')
       return

@@ -18,7 +18,7 @@ import { CountdownHeader } from './CountdownHeader'
 import { useNotifications } from '@/hooks/useNotifications'
 import Logo from '@/components/Logo'
 
-import { getAppBaseUrl, getMainBaseUrl, getDashboardBaseUrl, getTcgBaseUrl } from '@/lib/dashboard-url'
+import { getAppBaseUrl, getMainBaseUrl, getDashboardBaseUrl, getTcgBaseUrl, getShopBaseUrl } from '@/lib/dashboard-url'
 
 const auth = getFirebaseAuth()
 
@@ -58,25 +58,28 @@ export function Navbar() {
   const isVerified = user?.emailVerified || false
 
   // Domain detection
-  const { isTcgDomain, isDashboardDomain, isMainDomain } = useMemo(() => {
+  const { isTcgDomain, isDashboardDomain, isShopDomain, isMainDomain } = useMemo(() => {
     if (typeof window === 'undefined') {
-      return { isTcgDomain: false, isDashboardDomain: false, isMainDomain: true }
+      return { isTcgDomain: false, isDashboardDomain: false, isShopDomain: false, isMainDomain: true }
     }
     const host = window.location.hostname
     const tcg = host.startsWith('tcg.') || host.includes('.tcg.')
     const dashboard = host.startsWith('dashboard.') || host.startsWith('app.') || host.includes('dashboard.')
+    const shop = host.startsWith('shop.') || host.includes('.shop.')
     return {
       isTcgDomain: tcg,
       isDashboardDomain: dashboard,
-      isMainDomain: !tcg && !dashboard
+      isShopDomain: shop,
+      isMainDomain: !tcg && !dashboard && !shop
     }
   }, [])
   
   // Also treat /sammelkarten paths as TCG area even on main/dashboard domains (for local dev or if subdomains aren't used)
-  const isTcgArea = isTcgDomain || pathname.startsWith('/sammelkarten') || pathname.startsWith('/album') || pathname.startsWith('/battle-pass') || pathname.startsWith('/home') || pathname.startsWith('/booster') || (pathname === '/shop' && currentSearch.includes('category=sammelkarten'))
+  const isTcgArea = isTcgDomain || pathname.startsWith('/sammelkarten') || pathname.startsWith('/album') || pathname.startsWith('/battle-pass') || pathname.startsWith('/home') || pathname.startsWith('/booster')
 
   const dashboardUrl = getDashboardBaseUrl()
   const tcgUrl = getTcgBaseUrl()
+  const shopUrl = getShopBaseUrl()
   const mainUrl = getMainBaseUrl()
 
   const isAdmin = profile?.role === 'admin_main' || profile?.role === 'admin_co' || profile?.role === 'admin'
@@ -86,9 +89,10 @@ export function Navbar() {
   const isLocalPlannerUser = isPlanner || (profile?.class_name && profile.class_name.includes('11'))
 
   // Helper to resolve URLs across domains
-  const resolveHref = (path: string, forceTarget?: 'dashboard' | 'tcg' | 'main') => {
+  const resolveHref = (path: string, forceTarget?: 'dashboard' | 'tcg' | 'shop' | 'main') => {
     const landingRoutes = ['/uber', '/vorteile', '/agb', '/datenschutz', '/impressum']
-    const cardRoutes = ['/sammelkarten', '/album', '/shop', '/battle-pass', '/home', '/booster']
+    const shopRoutes = ['/shop']
+    const cardRoutes = ['/sammelkarten', '/album', '/battle-pass', '/home', '/booster']
     const plannerRoutes = [
       '/lehrer', '/abstimmungen', '/admin', '/aufgaben', '/einstellungen', '/feedback', 
       '/finanzen', '/gruppen', '/hilfe', '/kalender', '/r', '/todos', '/unauthorized', 
@@ -106,6 +110,9 @@ export function Navbar() {
 
     if (forceTarget === 'main' || landingRoutes.some(r => path === r || path.startsWith(r + '/'))) {
       return isMainDomain ? path : `${mainUrl}${path}`
+    }
+    if (forceTarget === 'shop' || shopRoutes.some(r => path === r || path.startsWith(r + '/'))) {
+      return isShopDomain ? path : `${shopUrl}${path}`
     }
     if (forceTarget === 'tcg' || cardRoutes.some(r => path === r || path.startsWith(r + '/'))) {
       return isTcgDomain ? path : `${tcgUrl}${path}`
@@ -232,8 +239,8 @@ export function Navbar() {
         label: 'Shop & Extras',
         icon: ShoppingBag,
         subItems: [
-          { href: resolveHref('/shop?category=sammelkarten', 'tcg'), label: 'Karten-Shop', icon: Sparkles, isExternalLink: !isTcgDomain },
-          { href: resolveHref('/shop?category=merch', 'tcg'), label: 'Merch-Shop', icon: ShoppingBag, isExternalLink: !isTcgDomain },
+          { href: resolveHref('/shop?category=sammelkarten', 'shop'), label: 'Karten-Shop', icon: Sparkles, isExternalLink: !isShopDomain },
+          { href: resolveHref('/shop?category=merch', 'shop'), label: 'Merch-Shop', icon: ShoppingBag, isExternalLink: !isShopDomain },
           ...(isEnabled('battle_pass_status') ? [{ href: resolveHref('/battle-pass', 'tcg'), label: 'Battle Pass', icon: Trophy, isExternalLink: !isTcgDomain }] : []),
         ]
       })
@@ -275,7 +282,7 @@ export function Navbar() {
         icon: Euro,
         subItems: [
           { href: resolveHref('/finanzen', 'dashboard'), label: 'Kassenstand', icon: Euro, isExternalLink: !isDashboardDomain },
-          ...(isEnabled('shop_status') ? [{ href: resolveHref('/shop', 'dashboard'), label: 'Stufen-Shop', icon: ShoppingBag, isExternalLink: !isDashboardDomain }] : []),
+          ...(isEnabled('shop_status') ? [{ href: resolveHref('/shop', 'shop'), label: 'Stufen-Shop', icon: ShoppingBag, isExternalLink: !isShopDomain }] : []),
         ],
       })
     }

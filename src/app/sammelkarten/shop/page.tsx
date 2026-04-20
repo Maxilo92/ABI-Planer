@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
+import { getShopBaseUrl } from '@/lib/dashboard-url'
 
 export default function ShopRedirect() {
-  redirect('/shop?category=sammelkarten')
+  redirect(`${getShopBaseUrl()}/shop?category=sammelkarten`)
 }

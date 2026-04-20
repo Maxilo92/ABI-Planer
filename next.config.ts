@@ -21,7 +21,7 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  allowedDevOrigins: ['dashboard.abi-planer-27.localhost'],
+  allowedDevOrigins: ['dashboard.abi-planer-27.localhost', 'shop.abi-planer-27.localhost'],
   /* config options here */
 };
 

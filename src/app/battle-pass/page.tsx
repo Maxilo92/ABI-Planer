@@ -11,6 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { ProtectedSystemGate } from '@/components/ui/ProtectedSystemGate'
 import { cn } from '@/lib/utils'
 import { ArrowRight, CheckCircle2, Gift, Lock, Sparkles, Trophy } from 'lucide-react'
+import { getShopBaseUrl } from '@/lib/dashboard-url'
 
 const TOTAL_TIERS = 30
 const MOCK_CURRENT_TIER = 7
@@ -234,10 +235,10 @@ export default function BattlePassPage() {
           <div className="flex flex-col items-start justify-between gap-3 border-t border-border/60 pt-4 text-xs text-muted-foreground sm:flex-row sm:items-center">
             <p>Loot, Claim-Logik und Premium-Freischaltung folgen in einem separaten Schritt.</p>
             <Button asChild size="sm" className="font-bold">
-              <Link href="/shop/abo">
+              <a href={`${getShopBaseUrl()}/shop/abo`}>
                 Premium im Shop ansehen
                 <ArrowRight className="h-4 w-4" />
-              </Link>
+              </a>
             </Button>
           </div>
         </div>

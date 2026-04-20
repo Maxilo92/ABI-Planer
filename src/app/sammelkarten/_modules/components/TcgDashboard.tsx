@@ -10,7 +10,7 @@ import { Trophy, Gift, Swords, ArrowLeftRight, ShoppingBag, Sparkles, ChevronRig
 import Link from 'next/link'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { getTcgBaseUrl } from '@/lib/dashboard-url'
+import { getTcgBaseUrl, getShopBaseUrl } from '@/lib/dashboard-url'
 import { useSammelkartenConfig } from '../hooks/useSammelkartenConfig'
 import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
@@ -87,12 +87,12 @@ export function TcgDashboard() {
                 </Button>
               </Link>
               
-              <Link href="/shop?category=sammelkarten">
+              <a href={`${getShopBaseUrl()}/shop?category=sammelkarten`}>
                 <Button size="lg" variant="outline" className="h-16 px-8 rounded-2xl border-white/10 bg-white/5 text-white hover:bg-white/10 font-black text-lg gap-3 backdrop-blur-md">
                   <ShoppingBag className="h-5 w-5" />
                   Karten-Shop
                 </Button>
-              </Link>
+              </a>
             </motion.div>
             
             {totalBoosters === 0 && (

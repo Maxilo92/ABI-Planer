@@ -197,8 +197,8 @@ export const createStripeCheckoutSession = onCall({
     mode: "payment",
     client_reference_id: request.auth?.uid,
     metadata: { itemId, amount: product.amount.toString(), isAppProduct: isAppProduct.toString(), selectedCourse: selectedCourse || "", donorName: donorName || "" },
-    success_url: isAppProduct ? `https://abi-planer-27.de/sammelkarten?success=true` : `https://abi-planer-27.de/shop?success=true`,
-    cancel_url: `https://abi-planer-27.de/shop?canceled=true`,
+    success_url: isAppProduct ? `https://tcg.abi-planer-27.de/sammelkarten?success=true` : `https://shop.abi-planer-27.de/shop?success=true`,
+    cancel_url: `https://shop.abi-planer-27.de/shop?canceled=true`,
   });
   return { url: session.url };
 });
