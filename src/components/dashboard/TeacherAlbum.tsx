@@ -607,7 +607,7 @@ export function TeacherAlbum({
           const data = snapshot.data();
           const catalog = buildTeacherCatalogFromSettings(data);
           if (catalog.length > 0) {
-            setGlobalTeachers(deduplicate(catalog));
+            setGlobalTeachers(deduplicate([...DEFAULT_TEACHERS, ...catalog]));
             setLoadingGlobal(false);
             // If we found data in sammelkarten, we don't need the global listener anymore
             if (unsubscribeGlobal) {
@@ -628,7 +628,7 @@ export function TeacherAlbum({
                 const catalog = buildTeacherCatalogFromSettings(globalData);
                 setGlobalTeachers(
                   catalog.length > 0
-                    ? deduplicate(catalog)
+                    ? deduplicate([...DEFAULT_TEACHERS, ...catalog])
                     : DEFAULT_TEACHERS,
                 );
               } else {

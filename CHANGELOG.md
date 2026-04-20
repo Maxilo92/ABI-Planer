@@ -8,6 +8,11 @@
 
 # Changelog
 
+## [1.23.2.4] - 2026-04-20
+
+### Fixes
+- **Sammelkarten-Album:** Hardkodierte Basis-Sets (wie das Support-Set) werden nun korrekt mit dynamischen Firestore-Daten zusammengeführt, sodass sie nicht mehr verschwinden, wenn Lehrer-Daten in der Datenbank vorhanden sind. Dies stellt sicher, dass der Set-Filter und alle verfügbaren Karten angezeigt werden.
+
 ## [1.23.2.3] - 2026-04-20
 
 ### Hinzugefügt
