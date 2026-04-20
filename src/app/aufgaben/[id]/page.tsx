@@ -373,34 +373,26 @@ export default function TaskDetailPage() {
                   Anmeldung erforderlich zum Annehmen
                 </div>
               )}
+
+              {isPlanner && (
+                <div className="pt-2 border-t border-dashed">
+                  <Button 
+                    variant="ghost" 
+                    className="w-full gap-2 text-destructive hover:text-destructive hover:bg-destructive/5" 
+                    onClick={handleDelete}
+                    disabled={deleting}
+                  >
+                    {deleting ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-4 w-4" />
+                    )}
+                    Aufgabe löschen
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
-
-          {isPlanner && (
-            <Card className="border-destructive/20 bg-destructive/5 overflow-hidden">
-              <CardHeader className="p-4 bg-destructive/10">
-                <CardTitle className="text-sm font-bold flex items-center gap-2 text-destructive">
-                  <ShieldAlert className="h-4 w-4" />
-                  Planner Aktionen
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-4">
-                <Button 
-                  variant="destructive" 
-                  className="w-full gap-2" 
-                  onClick={handleDelete}
-                  disabled={deleting}
-                >
-                  {deleting ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Trash2 className="h-4 w-4" />
-                  )}
-                  Aufgabe löschen
-                </Button>
-              </CardContent>
-            </Card>
-          )}
 
           <Card className="bg-muted/30 border-none shadow-none">
             <CardContent className="p-4 flex items-start gap-3">

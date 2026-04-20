@@ -8,6 +8,11 @@
 
 # Changelog
 
+## [1.23.4.9] - 2026-04-20
+
+### Verbessert
+- **Aufgaben-UI:** Der "Aufgabe löschen" Button wurde für eine kompaktere Darstellung direkt in die Belohnungskarte integriert, statt eine eigene Karte zu beanspruchen.
+
 ## [1.23.4.8] - 2026-04-20
 
 ### Behoben
