@@ -30,6 +30,8 @@ interface PollListProps {
   loading?: boolean
 }
 
+type VoteAction = 'added' | 'removed' | 'changed'
+
 export function PollList({
   polls,
   userId,
@@ -190,9 +192,9 @@ export function PollList({
     const voteRef = doc(db, 'polls', pollId, 'votes', userId)
     const profileRef = doc(db, 'profiles', userId)
     
-    let isFirstReward = false;
+    let isFirstReward = false
     let finalOptionIds: string[] = []
-    let action: string = 'changed'
+    let action: VoteAction = 'changed'
 
     try {
       await runTransaction(db, async (transaction) => {
@@ -265,19 +267,25 @@ export function PollList({
     }
 
     try {
-      await Promise.all([refreshVotesForPoll(pollId), fetchParticipantCount(pollId)])
-    } catch (refreshError) {
-      console.error('Error refreshing poll state after vote:', refreshError)
+      await refreshVotesForPoll(pollId)
+    } catch (refreshVotesError) {
+      console.error('Error refreshing poll votes after vote:', refreshVotesError)
     }
-    
+    try {
+      await fetchParticipantCount(pollId)
+    } catch (refreshParticipantsError) {
+      console.error('Error refreshing participant count after vote:', refreshParticipantsError)
+    }
+
     if (isFirstReward) {
       toast.success('Stimme gespeichert. Du hast 1 Booster-Pack als Belohnung erhalten.')
-    } else if (action === 'added') {
-      toast.success('Stimme hinzugefügt.')
-    } else if (action === 'removed') {
-      toast.success('Stimme entfernt.')
     } else {
-      toast.success('Stimme geändert.')
+      const actionMessage: Record<VoteAction, string> = {
+        added: 'Stimme hinzugefügt.',
+        removed: 'Stimme entfernt.',
+        changed: 'Stimme geändert.'
+      }
+      toast.success(actionMessage[action])
     }
     
     const optionText = poll?.options?.find(o => o.id === optionId)?.option_text || optionId
