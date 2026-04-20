@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { db } from '@/lib/firebase'
-import { doc, onSnapshot, updateDoc, serverTimestamp } from 'firebase/firestore'
+import { doc, onSnapshot, updateDoc, serverTimestamp, deleteDoc } from 'firebase/firestore'
 import { useAuth } from '@/context/AuthContext'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
@@ -21,13 +21,14 @@ import {
   FileVideo,
   ImageIcon,
   Trophy,
-  Trash2
+  Trash2,
+  ShieldAlert
 } from 'lucide-react'
 import Link from 'next/link'
 import { Task } from '@/types/database'
 import Image from 'next/image'
 import { toast } from 'sonner'
-import { uploadTaskProof } from '@/lib/taskMediaUpload'
+import { uploadTaskProof, deleteTaskFile } from '@/lib/taskMediaUpload'
 import { getTaskStatusMeta } from '@/modules/shared/status'
 
 import { ImageCarousel } from '@/components/aufgaben/ImageCarousel'
@@ -40,6 +41,7 @@ export default function TaskDetailPage() {
   const [task, setTask] = useState<Task | null>(null)
   const [loading, setLoading] = useState(true)
   const [uploading, setUploading] = useState(false)
+  const [deleting, setDeleting] = useState(false)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
 
   useEffect(() => {
@@ -49,8 +51,11 @@ export default function TaskDetailPage() {
       if (doc.exists()) {
         setTask({ id: doc.id, ...doc.data() } as Task)
       } else {
-        toast.error('Aufgabe nicht gefunden.')
-        router.push('/aufgaben')
+        // Only redirect if not already deleting
+        if (!deleting) {
+          toast.error('Aufgabe nicht gefunden.')
+          router.push('/aufgaben')
+        }
       }
       setLoading(false)
     }, (error) => {
@@ -59,7 +64,7 @@ export default function TaskDetailPage() {
     })
 
     return () => unsubscribe()
-  }, [id, router])
+  }, [id, router, deleting])
 
   if (authLoading || loading) {
     return (
@@ -75,6 +80,7 @@ export default function TaskDetailPage() {
 
   if (!task) return null
 
+  const isPlanner = (profile?.role === 'planner' || profile?.role === 'admin' || profile?.role === 'admin_main' || profile?.role === 'admin_co') && profile?.is_approved
   const isAssignee = task.assignee_id === profile?.id
   const canClaim = task.status === 'open' && profile?.is_approved
   const canSubmit = (task.status === 'claimed' || task.status === 'rejected') && isAssignee
@@ -92,6 +98,35 @@ export default function TaskDetailPage() {
     } catch (error) {
       console.error('Error claiming task:', error)
       toast.error('Fehler beim Annehmen der Aufgabe.')
+    }
+  }
+
+  const handleDelete = async () => {
+    if (!task || !isPlanner) return
+    
+    if (!window.confirm('Möchtest du diese Aufgabe wirklich unwiderruflich löschen?')) {
+      return
+    }
+
+    setDeleting(true)
+    try {
+      // Delete proof media if exists
+      if (task.proof_storage_path) {
+        try {
+          await deleteTaskFile(task.proof_storage_path)
+        } catch (e) {
+          console.error('Error deleting proof file:', e)
+        }
+      }
+
+      // Delete the task document
+      await deleteDoc(doc(db, 'tasks', task.id))
+      toast.success('Aufgabe wurde gelöscht.')
+      router.push('/aufgaben')
+    } catch (error) {
+      console.error('Error deleting task:', error)
+      toast.error('Fehler beim Löschen der Aufgabe.')
+      setDeleting(false)
     }
   }
 
@@ -333,13 +368,39 @@ export default function TaskDetailPage() {
                 >
                   Aufgabe annehmen
                 </Button>
-              ) : task.status === 'open' && (
+              ) : task.status === 'open' && !profile && (
                 <div className="bg-muted p-4 rounded-xl text-center text-sm font-medium text-muted-foreground">
                   Anmeldung erforderlich zum Annehmen
                 </div>
               )}
             </CardContent>
           </Card>
+
+          {isPlanner && (
+            <Card className="border-destructive/20 bg-destructive/5 overflow-hidden">
+              <CardHeader className="p-4 bg-destructive/10">
+                <CardTitle className="text-sm font-bold flex items-center gap-2 text-destructive">
+                  <ShieldAlert className="h-4 w-4" />
+                  Planner Aktionen
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-4">
+                <Button 
+                  variant="destructive" 
+                  className="w-full gap-2" 
+                  onClick={handleDelete}
+                  disabled={deleting}
+                >
+                  {deleting ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Trash2 className="h-4 w-4" />
+                  )}
+                  Aufgabe löschen
+                </Button>
+              </CardContent>
+            </Card>
+          )}
 
           <Card className="bg-muted/30 border-none shadow-none">
             <CardContent className="p-4 flex items-start gap-3">

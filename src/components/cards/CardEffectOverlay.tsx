@@ -27,10 +27,10 @@ export const CardEffectOverlay: React.FC<{
       return isCombat
         ? cn(
             "bg-[linear-gradient(110deg,rgba(255,255,255,0)_0%,rgba(255,255,255,0.1)_20%,rgba(255,255,255,0.35)_50%,rgba(255,255,255,0.1)_80%,rgba(255,255,255,0)_100%)]",
-            "bg-[length:200%_100%] animate-[shimmer_7s_infinite_linear] mix-blend-screen opacity-70",
+            "bg-[length:200%_100%] bg-no-repeat animate-[shimmer_14s_infinite_linear] mix-blend-screen opacity-70",
             "before:absolute before:inset-0 before:bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.14)_0%,transparent_72%)]"
           )
-        : "bg-[linear-gradient(110deg,rgba(255,255,255,0)_0%,rgba(255,255,255,0.05)_20%,rgba(255,255,255,0.22)_50%,rgba(255,255,255,0.05)_80%,rgba(255,255,255,0)_100%)] bg-[length:200%_100%] animate-[shimmer_9s_infinite_linear] mix-blend-overlay opacity-55";
+        : "bg-[linear-gradient(110deg,rgba(255,255,255,0)_0%,rgba(255,255,255,0.05)_20%,rgba(255,255,255,0.22)_50%,rgba(255,255,255,0.05)_80%,rgba(255,255,255,0)_100%)] bg-[length:200%_100%] bg-no-repeat animate-[shimmer_18s_infinite_linear] mix-blend-overlay opacity-55";
     }
 
     if (isIconic) {
@@ -63,13 +63,13 @@ export const CardEffectOverlay: React.FC<{
         return isCombat
           ? cn(
               "bg-[linear-gradient(110deg,rgba(255,255,255,0)_0%,rgba(255,255,255,0.2)_20%,rgba(255,255,255,0.55)_42%,rgba(255,255,255,0.8)_50%,rgba(255,255,255,0.55)_58%,rgba(255,255,255,0.2)_80%,rgba(255,255,255,0)_100%)]",
-              "bg-[length:200%_100%] animate-[shimmer_5s_infinite_linear] mix-blend-screen opacity-95 shadow-[inset_0_0_110px_rgba(255,255,255,0.35)]",
+              "bg-[length:200%_100%] bg-no-repeat animate-[shimmer_10s_infinite_linear] mix-blend-screen opacity-95 shadow-[inset_0_0_110px_rgba(255,255,255,0.35)]",
               "before:absolute before:inset-0 before:bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.32)_0%,transparent_72%)]",
               "after:absolute after:inset-0 after:bg-[repeating-linear-gradient(45deg,rgba(255,255,255,0.08)_0px,rgba(255,255,255,0.08)_1px,transparent_1px,transparent_3px)] after:opacity-60 after:mix-blend-screen"
             )
           : cn(
               "bg-[linear-gradient(110deg,rgba(255,255,255,0)_0%,rgba(255,255,255,0.1)_20%,rgba(255,255,255,0.4)_40%,rgba(255,255,255,0.7)_50%,rgba(255,255,255,0.4)_60%,rgba(255,255,255,0.1)_80%,rgba(255,255,255,0)_100%)]",
-              "bg-[length:200%_100%] animate-[shimmer_6s_infinite_linear] mix-blend-overlay opacity-100 shadow-[inset_0_0_100px_rgba(255,255,255,0.3)]",
+              "bg-[length:200%_100%] bg-no-repeat animate-[shimmer_12s_infinite_linear] mix-blend-overlay opacity-100 shadow-[inset_0_0_100px_rgba(255,255,255,0.3)]",
               "before:absolute before:inset-0 before:bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.3)_0%,transparent_70%)]",
               "after:absolute after:inset-0 after:bg-[repeating-linear-gradient(45deg,rgba(255,255,255,0.05)_0px,rgba(255,255,255,0.05)_1px,transparent_1px,transparent_3px)] after:opacity-50 after:mix-blend-color-dodge"
             );
@@ -91,7 +91,7 @@ export const CardEffectOverlay: React.FC<{
   return (
     <div 
       className={cn(
-        "absolute -inset-px pointer-events-none z-40 transition-all duration-500 will-change-transform rounded-[inherit] overflow-hidden [&::before]:rounded-[inherit] [&::after]:rounded-[inherit]",
+        "absolute inset-0 pointer-events-none z-25 transition-all duration-500 will-change-transform rounded-[inherit] [&::before]:rounded-[inherit] [&::after]:rounded-[inherit]",
         getOverlayStyles()
       )}
       style={isBlackShiny && tintColor ? { backgroundColor: `${tintColor}${getTintOpacity()}` } : undefined}

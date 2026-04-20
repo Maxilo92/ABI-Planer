@@ -172,10 +172,17 @@ export const TeacherCard = React.memo(({
         return {
           card: cn(
             "transition-all rounded-xl",
-            !isBlckShiny && !isShiny && !isIconic && "border-black shadow-[2cqw_2cqw_0px_0px_rgba(0,0,0,1)] hover:shadow-[3cqw_3cqw_0px_0px_rgba(0,0,0,1)] border-[0.8cqw]",
-            isIconic && "border-amber-500/60 shadow-[0_0_15px_rgba(251,191,36,0.4)] border-[1.2cqw]",
-            isShiny && "shadow-[0_0_10px_rgba(255,255,255,0.4)] border-slate-300 border-[1cqw]",
-            isBlckShiny && "shadow-[0_0_8cqw_rgba(147,51,234,0.5)] border-purple-500/50 border-[1cqw]"
+            !isBlckShiny && !isShiny && !isIconic && "shadow-[2cqw_2cqw_0px_0px_rgba(0,0,0,1)] hover:shadow-[3cqw_3cqw_0px_0px_rgba(0,0,0,1)]",
+            isIconic && "shadow-[0_0_15px_rgba(251,191,36,0.4)]",
+            isShiny && "shadow-[0_0_10px_rgba(255,255,255,0.4)]",
+            isBlckShiny && "shadow-[0_0_8cqw_rgba(147,51,234,0.5)]"
+          ),
+          cardBorder: cn(
+            "absolute inset-0 rounded-xl pointer-events-none z-[45] border-solid",
+            !isBlckShiny && !isShiny && !isIconic && "border-black border-[0.8cqw]",
+            isIconic && "border-amber-500/60 border-[1.2cqw]",
+            isShiny && "border-slate-300 border-[1cqw]",
+            isBlckShiny && "border-purple-500/50 border-[1cqw]"
           ),
           iconWrapper: cn(
             "bg-white border-[0.8cqw] border-black rounded-[4cqw] -rotate-2 shadow-[1cqw_1cqw_0px_0px_rgba(0,0,0,1)] flex items-center justify-center w-[42cqw] aspect-[2/1]",
@@ -193,7 +200,6 @@ export const TeacherCard = React.memo(({
             (isShiny ? "text-slate-800 drop-shadow-[0_2px_2px_rgba(255,255,255,0.8)]" : 
             (isGlass ? "text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.4)]" : "text-black")))
           ),
-          border: "", 
           bgOverlay: (isBlckShiny || isIconic) ? "bg-black/40" : (isShiny ? "bg-white/30" : (isGlass ? "bg-transparent" : "bg-white/5")),
           numberTag: cn(
             "px-[2.4cqw] py-[0.7cqw] text-[3.3cqw] font-black uppercase rounded-[0.7cqw] border-[0.18cqw] border-white/16 text-white",
@@ -207,12 +213,12 @@ export const TeacherCard = React.memo(({
       
       default:
         return {
-          card: "border-white/40 shadow-2xl backdrop-blur-xl border-[2cqw] rounded-xl",
+          card: "shadow-2xl backdrop-blur-xl rounded-xl",
+          cardBorder: "absolute inset-0 border-white/40 border-[2cqw] rounded-xl pointer-events-none z-[45]",
           iconWrapper: "bg-white/30 rounded-xl w-[42cqw] aspect-[2/1] flex items-center justify-center",
           headerIcon: "w-[18cqw] h-[18cqw]",
           header: "text-white",
           text: "text-white font-sans font-black text-[11cqw] leading-[0.9]",
-          border: "border-[2cqw]",
           bgOverlay: "bg-white/10",
           numberTag: "px-[2.4cqw] py-[0.7cqw] text-[3.3cqw] font-black uppercase rounded-[0.7cqw] border-[0.18cqw] border-white/16 text-white shadow-[0.45cqw_0.45cqw_0px_0px_rgba(0,0,0,0.55)] -rotate-[7deg] tracking-[0.06em]",
           numberPos: "bottom-[8cqw] left-[8cqw]",
@@ -271,7 +277,7 @@ export const TeacherCard = React.memo(({
         effectsEnabled={effectsEnabled}
       />
 
-      <div className={cn("absolute inset-0 pointer-events-none", styleClasses.bgOverlay)} />
+      <div className={cn("absolute inset-0 pointer-events-none z-10", styleClasses.bgOverlay)} />
       
       {/* Deck Controls */}
       {showDeckControls && (
@@ -375,6 +381,9 @@ export const TeacherCard = React.memo(({
           color={isBlckShiny ? 'white' : (styleVariant === 'modern-flat' ? 'black' : 'white')} 
         />
       </div>
+
+      {/* Separate border layer for perfect fit */}
+      <div className={styleClasses.cardBorder} />
     </div>
   );
 
@@ -410,15 +419,15 @@ export const TeacherCard = React.memo(({
         <div
           className={cn(
             "absolute inset-0 backface-hidden p-[8%] flex flex-col items-center justify-center overflow-hidden rounded-xl",
-            "border-[2cqw] border-white/20 bg-neutral-950 shadow-2xl",
+            "bg-neutral-950 shadow-2xl",
             isLocked ? "grayscale-[0.5] opacity-90" : ""
           )}
           style={{ transform: "rotateY(180deg) translateZ(1px)" }}
         >
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.05)_0%,transparent_70%)]" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.05)_0%,transparent_70%)] z-10" />
           <CardEffectOverlay variant="normal" tintColor="#000000" />
 
-          <div className="relative z-10 flex flex-col items-center">
+          <div className="relative z-30 flex flex-col items-center">
             <div className={cn(
               "w-[25%] aspect-square rounded-full flex items-center justify-center mb-[4%] border border-white/10",
               isLocked ? "bg-neutral-900" : "bg-white/5"
@@ -448,6 +457,9 @@ export const TeacherCard = React.memo(({
               <div className="text-[2.5cqw] font-bold text-white/20 uppercase tracking-widest">Mystery Card</div>
             </div>
           )}
+
+          {/* Separate border layer for card back */}
+          <div className="absolute inset-0 border-[2cqw] border-white/20 rounded-xl pointer-events-none z-[45]" />
         </div>
 
         {!isLocked && frontSide}

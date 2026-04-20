@@ -8,6 +8,23 @@
 
 # Changelog
 
+## [1.23.4.7] - 2026-04-20
+
+### Fixes
+- **Secret Rare Foil Alignment:** Die "Secret Rare" (Black Shiny) Folien wurden oft als zu klein oder falsch ausgerichtet angezeigt. Durch eine strukturelle Änderung am `TeacherCard`-Layout (Separation des Rahmens in eine eigene Ebene) füllen die Folien-Effekte nun wieder die gesamte Karte bis zum Rand aus.
+- **Card Layering:** Ein Fehler im Z-Index wurde behoben, durch den Folien-Effekte teilweise über dem Karteninhalt (Text/Icons) lagen, anstatt dahinter. Die Hierarchie wurde für alle Karten-Varianten (Iconic, Holo, Shiny, Secret Rare) vereinheitlicht.
+
+## [1.23.4.6] - 2026-04-20
+
+### Hinzugefügt
+- **Aufgaben:** Planner und Admins können nun Aufgaben direkt auf der Detailseite löschen. Dabei werden auch verknüpfte Beweis-Medien automatisch aus dem Storage entfernt.
+
+## [1.23.4.5] - 2026-04-20
+
+### Verbessert
+- **Karten-Effekte:** Die Shimmer-Animationen der Kartenfolien (Shinys) wurden deutlich verlangsamt (bis zu 100% längere Dauer), um einen edleren, subtileren Effekt zu erzielen.
+- **Visuals:** Ein sichtbarer "Cut" beim Übergang der Shimmer-Balken wurde durch die Umstellung auf `bg-no-repeat` und optimierte Animation-Offsets behoben.
+
 ## [1.23.4.4] - 2026-04-20
 
 ### Behoben
