@@ -192,7 +192,7 @@ export function PollList({
     
     let isFirstReward = false;
     let finalOptionIds: string[] = []
-    let action: 'added' | 'removed' | 'changed' | string = 'changed'
+    let action: string = 'changed'
 
     try {
       await runTransaction(db, async (transaction) => {
