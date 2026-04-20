@@ -8,6 +8,22 @@
 
 # Changelog
 
+## [1.23.0.0] - 2026-04-20
+
+### Hinzugefügt
+
+- **TCG-Trennung (Navigation):** Das Sammelkarten-System (TCG) wurde strukturell stärker vom Planer-Modul getrennt. 
+  - In der Haupt-Menüleiste des Planers wird nun nur noch ein einziger Link "Zu den Sammelkarten" angezeigt.
+  - Sobald man sich im TCG-Bereich befindet, wechselt die Menüleiste automatisch und zeigt alle TCG-spezifischen Funktionen (Booster, Album, Decks, Trading, Kämpfe, TCG-Shop).
+  - Für Planer wurde ein Link "Zum Planer-Modul" in der TCG-Menüleiste hinzugefügt, um den schnellen Rückweg zum Dashboard zu ermöglichen.
+  - Die Anmeldung bleibt über alle Bereiche hinweg synchron (Single Sign-On).
+
+## [1.22.1.0] - 2026-04-20
+
+### Geändert
+
+- **Dashboard Layout (Masonry):** Das Dashboard-Grid wurde auf ein CSS-Spalten-Layout (`columns-2`) umgestellt. Dadurch rücken Widgets vertikal auf ("aufrücken"), um ungenutzte Lücken zwischen Elementen mit unterschiedlichen Höhen zu schließen und die Platznutzung auf Desktop-Geräten zu optimieren.
+
 ## [1.22.0.3] - 2026-04-20
 
 ### Behoben

@@ -1578,7 +1578,7 @@ export default function Dashboard() {
         storageKey="dashboard-funding-banner-collapsed"
       />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+      <div className="columns-1 md:columns-2 gap-6">
         <AnimatePresence mode="popLayout">
           {dashboardItems.map((item) => (
             <motion.div
@@ -1593,7 +1593,7 @@ export default function Dashboard() {
                 damping: 40,
                 mass: 1
               }}
-              className="w-full"
+              className="break-inside-avoid mb-6 w-full"
             >
               {item.type === 'poll' ? renderPollComponent(item.poll) : renderComponent(item.key)}
             </motion.div>

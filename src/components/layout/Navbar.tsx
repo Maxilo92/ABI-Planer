@@ -69,6 +69,9 @@ export function Navbar() {
   const isDashboardDomain = hostname.startsWith('dashboard.') || hostname.startsWith('app.') || hostname.includes('dashboard.')
   const isMainDomain = !isTcgDomain && !isDashboardDomain
   
+  // Also treat /sammelkarten paths as TCG area even on main/dashboard domains (for local dev or if subdomains aren't used)
+  const isTcgArea = isTcgDomain || pathname.startsWith('/sammelkarten') || pathname.startsWith('/battle-pass') || (pathname === '/shop' && currentSearch.includes('category=sammelkarten'))
+
   const dashboardUrl = getDashboardBaseUrl()
   const tcgUrl = getTcgBaseUrl()
   const mainUrl = getMainBaseUrl()
@@ -91,7 +94,7 @@ export function Navbar() {
 
     // Special case for root
     if (path === '/') {
-      if (isTcgDomain) return '/' // Keeps them on TCG dashboard
+      if (isTcgArea) return '/' // Keeps them on TCG dashboard
       return '/'
     }
 
@@ -177,22 +180,54 @@ export function Navbar() {
 
   const navItems: NavItem[] = []
 
-  // "Zurück zum Planer" only for planners on TCG domain
-  if (isTcgDomain && isLocalPlannerUser) {
-    navItems.push({
-      href: '/planer-back-root',
-      label: 'Planer-Modul',
-      icon: ChevronLeft,
-      subItems: [
-        { href: resolveHref('/'), label: 'Zurück zum Dashboard', icon: LayoutDashboard, isExternalLink: true },
-        { href: resolveHref('/kalender'), label: 'Kalender öffnen', icon: Calendar, isExternalLink: true },
-      ]
-    })
-  }
+  // --- TCG NAVIGATION ---
+  if (isTcgArea) {
+    // 1. "Zurück zum Planer" only for planners
+    if (isLocalPlannerUser) {
+      navItems.push({
+        href: '/planer-back-root',
+        label: 'Zum Planer-Modul',
+        icon: ChevronLeft,
+        subItems: [
+          { href: resolveHref('/'), label: 'Dashboard öffnen', icon: LayoutDashboard, isExternalLink: true },
+          { href: resolveHref('/kalender'), label: 'Kalender öffnen', icon: Calendar, isExternalLink: true },
+        ]
+      })
+    }
 
-  // CORE WORKING AREAS (Dashboard, Planung, Finanzen)
-  // Only show if user is a local planner (or we are not on TCG domain)
-  if (!isTcgDomain || isLocalPlannerUser) {
+    // 2. TCG CORE LINKS
+    if (profile && isEnabled('sammelkarten_status')) {
+      navItems.push({
+        href: '/sammelkarten-root',
+        label: 'Sammelkarten',
+        icon: Sparkles,
+        subItems: [
+          { href: resolveHref('/sammelkarten?view=sammelkarten'), label: 'Booster öffnen', icon: Gift, isExternalLink: !isTcgDomain },
+          { href: resolveHref('/sammelkarten?view=album'), label: 'Lehrer-Album', icon: Trophy, isExternalLink: !isTcgDomain },
+          { href: resolveHref('/sammelkarten?view=decks'), label: 'Meine Decks', icon: LayoutDashboard, isExternalLink: !isTcgDomain },
+          ...(isEnabled('trading_status') ? [{ href: resolveHref('/sammelkarten/tausch'), label: 'Trading-Hub', icon: ArrowLeftRight, notify: notifications.karten, isExternalLink: !isTcgDomain }] : []),
+          ...(isEnabled('combat_status') ? [
+            { href: resolveHref('/sammelkarten/kaempfe'), label: 'Kämpfe', icon: Swords, isBeta: true, isExternalLink: !isTcgDomain },
+            { href: resolveHref('/sammelkarten/kaempfe/log'), label: 'Kampflog', icon: FileText, isExternalLink: !isTcgDomain }
+          ] : []),
+        ]
+      })
+
+      navItems.push({
+        href: '/tcg-shop-root',
+        label: 'Shop & Extras',
+        icon: ShoppingBag,
+        subItems: [
+          { href: resolveHref('/shop?category=sammelkarten'), label: 'Karten-Shop', icon: Sparkles, isExternalLink: !isTcgDomain },
+          { href: resolveHref('/shop?category=merch'), label: 'Merch-Shop', icon: ShoppingBag, isExternalLink: !isTcgDomain },
+          ...(isEnabled('battle_pass_status') ? [{ href: resolveHref('/battle-pass'), label: 'Battle Pass', icon: Trophy, isExternalLink: !isTcgDomain }] : []),
+        ]
+      })
+    }
+  } 
+  // --- PLANNER NAVIGATION ---
+  else {
+    // CORE WORKING AREAS (Dashboard, Planung, Finanzen)
     navItems.push({
       href: '/uebersicht-root',
       label: 'Übersicht',
@@ -219,45 +254,30 @@ export function Navbar() {
           { href: resolveHref('/gruppen'), label: 'Gruppen', icon: Users, notify: notifications.gruppen, isExternalLink: !isDashboardDomain },
         ],
       })
+
+      navItems.push({
+        href: '/finanzen-root',
+        label: 'Finanzen',
+        icon: Euro,
+        subItems: [
+          { href: resolveHref('/finanzen'), label: 'Kassenstand', icon: Euro, isExternalLink: !isDashboardDomain },
+          ...(isEnabled('shop_status') ? [{ href: resolveHref('/shop'), label: 'Stufen-Shop', icon: ShoppingBag, isExternalLink: !isDashboardDomain }] : []),
+        ],
+      })
     }
 
-    navItems.push({
-      href: '/finanzen-root',
-      label: 'Finanzen',
-      icon: Euro,
-      subItems: [
-        { href: resolveHref('/finanzen'), label: 'Kassenstand', icon: Euro, isExternalLink: !isDashboardDomain },
-        ...(isEnabled('shop_status') ? [{ href: resolveHref('/shop'), label: 'Shop', icon: ShoppingBag, isExternalLink: !isDashboardDomain }] : []),
-      ],
-    })
+    // TCG ENTRY POINT
+    if (profile && isEnabled('sammelkarten_status')) {
+      navItems.push({
+        href: resolveHref('/sammelkarten'),
+        label: 'Zu den Sammelkarten',
+        icon: Sparkles,
+        isExternalLink: !isTcgDomain
+      })
+    }
   }
 
-  // TCG AREA
-  if (profile && isEnabled('sammelkarten_status')) {
-    const sammelkartenSubItems: NavItem[] = [
-      { href: resolveHref('/sammelkarten?view=sammelkarten'), label: 'Booster öffnen', icon: Gift, isExternalLink: !isTcgDomain },
-      { href: resolveHref('/sammelkarten?view=album'), label: 'Lehrer-Album', icon: Trophy, isExternalLink: !isTcgDomain },
-      { href: resolveHref('/sammelkarten?view=decks'), label: 'Meine Decks', icon: LayoutDashboard, isExternalLink: !isTcgDomain },
-    ]
-
-    if (isEnabled('trading_status')) {
-      sammelkartenSubItems.push({ href: resolveHref('/sammelkarten/tausch'), label: 'Trading-Hub', icon: ArrowLeftRight, notify: notifications.karten, isExternalLink: !isTcgDomain })
-    }
-
-    if (isEnabled('combat_status')) {
-      sammelkartenSubItems.push({ href: resolveHref('/sammelkarten/kaempfe'), label: 'Kämpfe', icon: Swords, isBeta: true, isExternalLink: !isTcgDomain })
-      sammelkartenSubItems.push({ href: resolveHref('/sammelkarten/kaempfe/log'), label: 'Kampflog', icon: FileText, isExternalLink: !isTcgDomain })
-    }
-
-    navItems.push({
-      href: '/sammelkarten-root',
-      label: 'Sammelkarten',
-      icon: Sparkles,
-      subItems: sammelkartenSubItems
-    })
-  }
-
-  // ACCOUNT AREA
+  // COMMON AREAS (Account, Hilfe, Admin)
   if (profile) {
     navItems.push({
       href: '/konto-root',
@@ -684,7 +704,7 @@ export function Navbar() {
 
   const renderGroupedNav = (isMobile: boolean = false) => (
     <>
-      {renderNavSection('Arbeitsbereiche', coreNavItems, isMobile)}
+      {renderNavSection(isTcgArea ? 'TCG Bereich' : 'Arbeitsbereiche', coreNavItems, isMobile)}
       {renderNavSection('Konto & Hilfe', accountHelpItems, isMobile)}
       {renderNavSection('Admin', adminNavItems, isMobile)}
     </>
