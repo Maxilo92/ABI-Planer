@@ -286,27 +286,9 @@ function ShopContent() {
     )
   }
 
+
   return (
     <div className="min-h-screen bg-background text-foreground pb-20">
-      {/* Header */}
-      <div className="sticky top-0 z-20 bg-background/80 backdrop-blur-md border-b border-border">
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={() => router.back()}
-            className="text-muted-foreground hover:text-foreground gap-2"
-          >
-            <ChevronLeft className="w-4 h-4" />
-            Zurück
-          </Button>
-          <div className="flex flex-col items-center">
-             <h1 className="font-bold tracking-tight text-sm sm:text-base">Globaler Shop</h1>
-             <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest">ABI Planer 2027</p>
-          </div>
-          <div className="w-20" />
-        </div>
-      </div>
 
       <main className="container mx-auto max-w-6xl px-4 py-8 space-y-12">
         {/* Hero Section */}

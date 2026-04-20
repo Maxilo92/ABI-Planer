@@ -41,7 +41,15 @@ export function AppShell({ children }: AppShellProps) {
   const isDashboardSubdomain = useMemo(() => {
     if (isBoneyardBuild) return false
     if (hostname === null) return null // Initial loading state
-    return hostname.startsWith('dashboard.') || hostname.startsWith('app.') || hostname.startsWith('tcg.') || hostname.includes('.dashboard.') || hostname.includes('.tcg.')
+    return (
+      hostname.startsWith('dashboard.') ||
+      hostname.startsWith('app.') ||
+      hostname.startsWith('tcg.') ||
+      hostname.startsWith('shop.') ||
+      hostname.includes('.dashboard.') ||
+      hostname.includes('.tcg.') ||
+      hostname.includes('.shop.')
+    )
   }, [hostname, isBoneyardBuild])
 
   const isNoMenuRoute = useMemo(() => {

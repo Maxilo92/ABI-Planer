@@ -16,6 +16,13 @@
   - `trackTaskLifecycle`: Neue Trigger-Funktion für alle Aufgaben-Statusübergänge: task_created, task_claimed, task_proof_submitted, task_rejected, task_approved.
   - Alle Logs enthalten eindeutige Event-Namen und strukturierte Daten (UIDs, TaskIDs, Belohnungen, Ablehnungsgründe) für einfache Nachverfolgung und Debugging.
 
+## [1.24.1.16] - 2026-04-20
+
+### Behoben
+- **Shop-Header Überlagerung:** Auf `shop.abi-planer-27.de` wurde der `LandingHeader` der Hauptseite über den eigenen Shop-Header gerendert, was zu einer Überlagerung führte. Behoben durch:
+  - `AppShell`: `isDashboardSubdomain`-Check erkennt jetzt auch `shop.*`-Subdomains → kein `LandingHeader` mehr auf der Shop-Subdomain.
+  - `shop/page.tsx`: Eigenen redundanten sticky Header entfernt, da die App-Navbar die Navigation übernimmt.
+
 ## [1.24.1.15] - 2026-04-20
 
 ### Geändert
