@@ -8,6 +8,11 @@
 
 # Changelog
 
+## [1.23.4.3] - 2026-04-20
+
+### Behoben
+- **UI:** Fehlender Import von `cn` in `DrawerMessage` behoben.
+
 ## [1.23.4.2] - 2026-04-20
 
 ### Hinzugefügt
