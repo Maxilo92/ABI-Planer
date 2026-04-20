@@ -87,7 +87,11 @@ export function AppShell({ children }: AppShellProps) {
     if (authLoading) return
     if (isAuthRoute) return
     if (!user) {
-      router.replace('/login')
+      const targetPath = typeof window !== 'undefined'
+        ? `${window.location.pathname}${window.location.search}${window.location.hash}`
+        : pathname || '/'
+      const redirectTarget = targetPath.startsWith('/') ? targetPath : '/'
+      router.replace(`/login?redirect=${encodeURIComponent(redirectTarget)}`)
     }
   }, [authLoading, isBoneyardBuild, isDashboardSubdomain, isAuthRoute, pathname, router, user])
 
