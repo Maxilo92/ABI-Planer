@@ -2,7 +2,7 @@
 
 import { useAuth } from '@/context/AuthContext'
 import { Sparkles } from 'lucide-react'
-import { Suspense, useCallback, useEffect, useMemo, useState } from 'react'
+import { Suspense, useCallback, useMemo, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useUserTeachers } from '@/hooks/useUserTeachers'
@@ -22,9 +22,6 @@ import { SinglePackReveal } from './_modules/components/SinglePackReveal'
 import { MassPackReveal } from './_modules/components/MassPackReveal'
 import { PackOpeningStage } from './_modules/components/PackOpeningStage'
 import { SammelkartenFooterActions } from './_modules/components/SammelkartenFooterActions'
-import { FundingBanner } from '@/components/funding/FundingBanner'
-import { db } from '@/lib/firebase'
-import { doc, onSnapshot } from 'firebase/firestore'
 
 function SammelkartenContent() {
   const searchParams = useSearchParams()
@@ -37,23 +34,6 @@ function SammelkartenContent() {
   const { queueEntries: customPackQueue } = useCustomPackQueue()
   const { config, isTradingEnabled, timeLeft } = useSammelkartenConfig()
   const [activeDeckId, setActiveDeckId] = useState<string | null>(null)
-  const [supportGoal, setSupportGoal] = useState<number | null>(null)
-  const [supportAmount, setSupportAmount] = useState<number | null>(null)
-
-  useEffect(() => {
-    const settingsRef = doc(db, 'settings', 'config')
-    const unsubscribe = onSnapshot(settingsRef, (snapshot) => {
-      const data = snapshot.data() as { support_goal?: number, current_support_amount?: number } | undefined
-      setSupportGoal(typeof data?.support_goal === 'number' ? data.support_goal : 100)
-      setSupportAmount(typeof data?.current_support_amount === 'number' ? data.current_support_amount : 0)
-    }, (error) => {
-      console.error('Error listening to support settings:', error)
-      setSupportGoal(100)
-      setSupportAmount(0)
-    })
-
-    return () => unsubscribe()
-  }, [])
 
   const availablePacks = useMemo<AvailablePack[]>(() => {
     const totalRemaining = getRemainingBoosters()
@@ -220,17 +200,6 @@ function SammelkartenContent() {
               getRemainingSupportBoosters={getRemainingSupportBoosters}
               timeLeft={timeLeft}
               packSelectionHref={availablePacks.length > 1 && selectedPack ? `/sammelkarten/packs?selected=${encodeURIComponent(selectedPack.id)}` : null}
-            />
-
-            <FundingBanner
-              bannerId="support-banner"
-              current={supportAmount ?? 0}
-              goal={supportGoal ?? 100}
-              title="Helft uns die Seite am Laufen zu halten"
-              description="Damit der ABI Planer werbefrei, stabil und für alle kostenlos bleibt, fallen monatliche Kosten für Server, Datenbanken und Hosting an. Da wir keine Daten verkaufen oder Werbung schalten, deckt dieser Support-Pool ausschließlich diese technischen Ausgaben. Sollte das Ziel nicht erreicht werden, müssten die Kosten privat getragen oder Funktionen eingeschränkt werden – jeder Euro sichert also den Betrieb eurer Plattform!"
-              ctaHref="/finanzen/spenden/entwickler"
-              ctaLabel="Support geben"
-              storageKey="tcg-funding-banner-collapsed"
             />
 
             {/* The Pack/Card Container */}
