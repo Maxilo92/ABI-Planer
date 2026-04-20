@@ -4,11 +4,16 @@ import { getFirestore, initializeFirestore, connectFirestoreEmulator, Firestore 
 import { getStorage, connectStorageEmulator, FirebaseStorage } from 'firebase/storage'
 import { getFunctions, connectFunctionsEmulator, Functions } from 'firebase/functions'
 
+const bucketEnv = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET;
+const resolvedBucket = bucketEnv === 'abi-planer-75319.appspot.com' 
+  ? 'abi-planer-75319.firebasestorage.app' 
+  : bucketEnv;
+
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
   projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  storageBucket: resolvedBucket,
   messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };

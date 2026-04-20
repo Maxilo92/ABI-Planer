@@ -8,6 +8,11 @@
 
 # Changelog
 
+## [1.24.1.18] - 2026-04-20
+
+### Behoben
+- **Storage-Konfiguration:** Der in der Production-Umgebung fälschlicherweise konfigurierte Storage-Bucket (`abi-planer-75319.appspot.com`, welcher in diesem Projekt nicht existiert) wurde durch ein hartcodiertes Fallback in `src/lib/firebase.ts` abgefangen. Alle Upload-Anfragen für diesen Bucket werden nun automatisch an den korrekten Bucket (`abi-planer-75319.firebasestorage.app`) umgeleitet, um den 404/CORS-Fehler beim Bilder-Upload (`/task-images`) zu beheben.
+
 ## [1.24.1.17] - 2026-04-20
 
 ### Behoben
