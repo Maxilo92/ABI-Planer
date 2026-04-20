@@ -8,6 +8,11 @@
 
 # Changelog
 
+## [1.24.1.14] - 2026-04-20
+
+### Behoben
+- **Admin-Aufgaben:** `adminReviewTask` auf die benannte Firestore-Datenbank `abi-data` umgestellt (statt `(default)`), wodurch der Backend-Fehler `Error: 5 NOT_FOUND` und der daraus resultierende `500 / INTERNAL` beim Freigeben/Ablehnen behoben wird.
+
 ## [1.24.1.13] - 2026-04-20
 
 ### Behoben

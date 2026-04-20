@@ -1,9 +1,10 @@
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { CALLABLE_CORS_ORIGINS } from "./constants/cors";
 import * as admin from "firebase-admin";
+import { FieldValue, getFirestore } from "firebase-admin/firestore";
 import { logger } from "firebase-functions";
 
-const db = admin.firestore();
+const db = getFirestore("abi-data");
 
 /**
  * Local interface for Task to avoid shared type issues in Cloud Functions.
@@ -90,15 +91,15 @@ export const adminReviewTask = onCall({
         }
 
         transaction.update(profileRef, {
-          "booster_stats.extra_available": admin.firestore.FieldValue.increment(safeRewardBoosters),
-          "task_stats.completed_count": admin.firestore.FieldValue.increment(1),
-          "task_stats.earned_boosters": admin.firestore.FieldValue.increment(safeRewardBoosters),
+          "booster_stats.extra_available": FieldValue.increment(safeRewardBoosters),
+          "task_stats.completed_count": FieldValue.increment(1),
+          "task_stats.earned_boosters": FieldValue.increment(safeRewardBoosters),
         });
 
         // 2. Update Task Status
         transaction.update(db.collection("tasks").doc(taskId), {
           status: "completed",
-          completed_at: admin.firestore.FieldValue.serverTimestamp(),
+          completed_at: FieldValue.serverTimestamp(),
           reviewed_by: request.auth?.uid,
         });
       });
@@ -125,7 +126,7 @@ export const adminReviewTask = onCall({
     await db.collection("tasks").doc(taskId).update({
       status: "rejected",
       rejected_reason: rejectedReason.trim(),
-      rejected_at: admin.firestore.FieldValue.serverTimestamp(),
+      rejected_at: FieldValue.serverTimestamp(),
       reviewed_by: request.auth.uid,
     });
 
