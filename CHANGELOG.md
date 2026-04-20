@@ -8,6 +8,40 @@
 
 # Changelog
 
+## [1.23.2.2] - 2026-04-20
+
+### Geändert
+
+- **Sammelkarten:** Das Spendenbanner (FundingBanner) wird auf der `/booster`-Seite nun ausgeblendet, um eine sauberere UI beim Öffnen von Packs zu gewährleisten.
+
+## [1.23.2.1] - 2026-04-20
+
+### Fixes
+
+- **Navbar:** Der `ReferenceError: useMemo is not defined` wurde behoben, indem der fehlende Import hinzugefügt wurde.
+
+## [1.23.2.0] - 2026-04-20
+
+### Hinzugefügt
+
+- **TCG Dashboard Redesign:** Das Dashboard wurde komplett überarbeitet und bietet nun eine immersive "Game Hub" Experience mit animierten Hero-Bereich, schnellen Sammlungs-Stats und direktem Fokus auf das Pack-Opening.
+- **Verbesserte Theme-Synchronisation:** Das Farbschema (Dark/Light) und das Akzent-Theme werden nun zuverlässiger zwischen Planer- und TCG-Modul synchronisiert, indem das Benutzerprofil als zentrale Quelle genutzt wird.
+
+### Fixes
+
+- **Navigation:** Der Button "Zum Planer-Modul" funktioniert nun korrekt und leitet zuverlässig auf das Planer-Dashboard zurück.
+- **Domain-Erkennung:** Die Erkennung der aktuellen Subdomain wurde beschleunigt, um Navigationsfehler beim ersten Laden zu vermeiden.
+
+## [1.23.1.0] - 2026-04-20
+
+### Hinzugefügt
+
+- **TCG-Subdomain-Routing:** Die TCG-Infrastruktur wurde für die Nutzung von `tcg.localhost:3000` (lokal) und `tcg.abi-planer-27.de` (Produktion) optimiert.
+  - Das TCG-Dashboard ist nun unter `/home` erreichbar.
+  - Das Öffnen von Boostern hat eine eigene dedizierte Route unter `/booster`.
+  - Die Root-URL `/` auf der TCG-Subdomain leitet automatisch auf das TCG-Dashboard (`/home`) weiter.
+  - Die Navigation (Navbar) wurde auf die neuen Pfade angepasst.
+
 ## [1.23.0.0] - 2026-04-20
 
 ### Hinzugefügt

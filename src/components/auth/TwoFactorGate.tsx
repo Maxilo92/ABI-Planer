@@ -12,6 +12,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { signOut } from 'firebase/auth'
 import { getFirebaseAuth } from '@/lib/firebase'
 import Logo from '@/components/Logo'
+import { usePathname } from 'next/navigation'
 
 const auth = getFirebaseAuth()
 
@@ -21,16 +22,22 @@ export function TwoFactorGate({ children }: { children: React.ReactNode }) {
   const [verifying, setVerifying] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const functions = getFirebaseFunctions()
+  const pathname = usePathname()
 
   // If loading auth or no user, let the AuthProvider/AppShell handle redirection
   if (loading || !user || !profile) return children
 
   // If we haven't finished checking sessionStorage for 2FA status, don't show gate yet
-  // to prevent flickering on page refresh.
   if (!is2FAInitialCheckDone) return children
 
-  // If 2FA is not enabled or already verified in this session, show content
-  if (!profile.is_2fa_enabled || is2FAVerified) {
+  // Determine if we are in TCG area
+  const isTcgArea = pathname?.startsWith('/sammelkarten') || 
+                   pathname?.startsWith('/battle-pass') || 
+                   (pathname === '/shop' && typeof window !== 'undefined' && window.location.search.includes('category=sammelkarten'))
+
+  // If 2FA is not enabled, already verified, or user is in TCG area, show content
+  // TCG is exempt from 2FA gate to allow quick collection/browsing without friction
+  if (!profile.is_2fa_enabled || is2FAVerified || isTcgArea) {
     return children
   }
 

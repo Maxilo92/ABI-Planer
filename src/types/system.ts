@@ -9,6 +9,7 @@ export interface SystemFeatures {
   todos_status: FeatureStatus;
   polls_status: FeatureStatus;
   sammelkarten_status: FeatureStatus;
+  battle_pass_status?: FeatureStatus;
   
   // Legacy support for older builds/components
   is_trading_enabled?: boolean;
@@ -19,6 +20,7 @@ export interface SystemFeatures {
   is_todos_enabled?: boolean;
   is_polls_enabled?: boolean;
   is_sammelkarten_enabled?: boolean;
+  is_battle_pass_enabled?: boolean;
 
   maintenance_mode: boolean;
   maintenance_message?: string;

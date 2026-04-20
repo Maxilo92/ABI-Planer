@@ -140,7 +140,9 @@ export function middleware(request: NextRequest) {
   const cardRoutes = [
     '/sammelkarten',
     '/shop',
-    '/battle-pass'
+    '/battle-pass',
+    '/home',
+    '/booster'
   ]
 
   // Dashboard-specific routes (everything planner-related)
@@ -221,7 +223,7 @@ export function middleware(request: NextRequest) {
   // 4. Special case: Root Path `/` on TCG subdomain
   if (isTcgSubdomain && pathname === '/') {
     const tcgBaseUrl = getRequestBaseUrl(request, 'tcg')
-    return safeRedirect(request, new URL('/sammelkarten', tcgBaseUrl))
+    return safeRedirect(request, new URL('/home', tcgBaseUrl))
   }
 
   return NextResponse.next()

@@ -1,8 +1,8 @@
 import { Suspense } from 'react'
 import { Skeleton } from '@/components/ui/skeleton'
-import { SammelkartenModule } from './_modules/components/SammelkartenModule'
+import { SammelkartenModule } from '../sammelkarten/_modules/components/SammelkartenModule'
 
-export default function LegacySammelkartenPage() {
+export default function BoosterPage() {
   return (
     <Suspense 
       fallback={
@@ -17,7 +17,7 @@ export default function LegacySammelkartenPage() {
         </div>
       }
     >
-      <SammelkartenModule />
+      <SammelkartenModule defaultView="sammelkarten" hideFundingBanner={true} />
     </Suspense>
   )
 }

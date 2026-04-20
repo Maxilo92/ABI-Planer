@@ -1,8 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { LayoutDashboard, CheckSquare, Calendar, Euro, DollarSign, Megaphone, BarChart2, LogOut, Menu, X, ShieldCheck, User, MessageSquareHeart, Settings, Users, ChevronRight, ChevronLeft, Sparkles, HelpCircle, Gift, Trophy, AlertTriangle, ShoppingBag, UserPlus, Server, ArrowLeftRight, Pin, PinOff, Swords, FileText, ShieldAlert, Briefcase } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { LayoutDashboard, CheckSquare, Calendar, Euro, DollarSign, Megaphone, BarChart2, LogOut, Menu, X, ShieldCheck, User, MessageSquareHeart, Settings, Users, ChevronRight, ChevronLeft, Sparkles, HelpCircle, Gift, Trophy, AlertTriangle, ShoppingBag, UserPlus, Server, ArrowLeftRight, Pin, PinOff, Swords, FileText, ShieldAlert, Briefcase, Home } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -58,19 +58,22 @@ export function Navbar() {
   const isVerified = user?.emailVerified || false
 
   // Domain detection
-  const [hostname, setHostname] = useState('')
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      setHostname(window.location.hostname)
+  const { isTcgDomain, isDashboardDomain, isMainDomain } = useMemo(() => {
+    if (typeof window === 'undefined') {
+      return { isTcgDomain: false, isDashboardDomain: false, isMainDomain: true }
+    }
+    const host = window.location.hostname
+    const tcg = host.startsWith('tcg.') || host.includes('.tcg.')
+    const dashboard = host.startsWith('dashboard.') || host.startsWith('app.') || host.includes('dashboard.')
+    return {
+      isTcgDomain: tcg,
+      isDashboardDomain: dashboard,
+      isMainDomain: !tcg && !dashboard
     }
   }, [])
-
-  const isTcgDomain = hostname.startsWith('tcg.') || hostname.includes('.tcg.')
-  const isDashboardDomain = hostname.startsWith('dashboard.') || hostname.startsWith('app.') || hostname.includes('dashboard.')
-  const isMainDomain = !isTcgDomain && !isDashboardDomain
   
   // Also treat /sammelkarten paths as TCG area even on main/dashboard domains (for local dev or if subdomains aren't used)
-  const isTcgArea = isTcgDomain || pathname.startsWith('/sammelkarten') || pathname.startsWith('/battle-pass') || (pathname === '/shop' && currentSearch.includes('category=sammelkarten'))
+  const isTcgArea = isTcgDomain || pathname.startsWith('/sammelkarten') || pathname.startsWith('/battle-pass') || pathname.startsWith('/home') || pathname.startsWith('/booster') || (pathname === '/shop' && currentSearch.includes('category=sammelkarten'))
 
   const dashboardUrl = getDashboardBaseUrl()
   const tcgUrl = getTcgBaseUrl()
@@ -83,9 +86,9 @@ export function Navbar() {
   const isLocalPlannerUser = isPlanner || (profile?.class_name && profile.class_name.includes('11'))
 
   // Helper to resolve URLs across domains
-  const resolveHref = (path: string) => {
+  const resolveHref = (path: string, forceTarget?: 'dashboard' | 'tcg' | 'main') => {
     const landingRoutes = ['/uber', '/vorteile', '/agb', '/datenschutz', '/impressum']
-    const cardRoutes = ['/sammelkarten', '/shop', '/battle-pass']
+    const cardRoutes = ['/sammelkarten', '/shop', '/battle-pass', '/home', '/booster']
     const plannerRoutes = [
       '/lehrer', '/abstimmungen', '/admin', '/aufgaben', '/einstellungen', '/feedback', 
       '/finanzen', '/gruppen', '/hilfe', '/kalender', '/r', '/todos', '/unauthorized', 
@@ -94,17 +97,20 @@ export function Navbar() {
 
     // Special case for root
     if (path === '/') {
-      if (isTcgArea) return '/' // Keeps them on TCG dashboard
+      if (forceTarget === 'dashboard') return isDashboardDomain ? '/' : `${dashboardUrl}/`
+      if (forceTarget === 'tcg') return isTcgDomain ? '/home' : `${tcgUrl}/home`
+      
+      if (isTcgArea) return isTcgDomain ? '/home' : `${tcgUrl}/home`
       return '/'
     }
 
-    if (landingRoutes.some(r => path === r || path.startsWith(r + '/'))) {
+    if (forceTarget === 'main' || landingRoutes.some(r => path === r || path.startsWith(r + '/'))) {
       return isMainDomain ? path : `${mainUrl}${path}`
     }
-    if (cardRoutes.some(r => path === r || path.startsWith(r + '/'))) {
+    if (forceTarget === 'tcg' || cardRoutes.some(r => path === r || path.startsWith(r + '/'))) {
       return isTcgDomain ? path : `${tcgUrl}${path}`
     }
-    if (plannerRoutes.some(r => path === r || path.startsWith(r + '/'))) {
+    if (forceTarget === 'dashboard' || plannerRoutes.some(r => path === r || path.startsWith(r + '/'))) {
       return isDashboardDomain ? path : `${dashboardUrl}${path}`
     }
 
@@ -182,33 +188,41 @@ export function Navbar() {
 
   // --- TCG NAVIGATION ---
   if (isTcgArea) {
-    // 1. "Zurück zum Planer" only for planners
+    // 1. TCG Dashboard
+    navItems.push({
+      href: resolveHref('/home', 'tcg'),
+      label: 'TCG Dashboard',
+      icon: Home,
+      isExternalLink: !isTcgDomain
+    })
+
+    // 2. "Zurück zum Planer" only for planners
     if (isLocalPlannerUser) {
       navItems.push({
         href: '/planer-back-root',
         label: 'Zum Planer-Modul',
         icon: ChevronLeft,
         subItems: [
-          { href: resolveHref('/'), label: 'Dashboard öffnen', icon: LayoutDashboard, isExternalLink: true },
-          { href: resolveHref('/kalender'), label: 'Kalender öffnen', icon: Calendar, isExternalLink: true },
+          { href: resolveHref('/', 'dashboard'), label: 'Dashboard öffnen', icon: LayoutDashboard, isExternalLink: true },
+          { href: resolveHref('/kalender', 'dashboard'), label: 'Kalender öffnen', icon: Calendar, isExternalLink: true },
         ]
       })
     }
 
-    // 2. TCG CORE LINKS
+    // 3. TCG CORE LINKS
     if (profile && isEnabled('sammelkarten_status')) {
       navItems.push({
         href: '/sammelkarten-root',
         label: 'Sammelkarten',
         icon: Sparkles,
         subItems: [
-          { href: resolveHref('/sammelkarten?view=sammelkarten'), label: 'Booster öffnen', icon: Gift, isExternalLink: !isTcgDomain },
-          { href: resolveHref('/sammelkarten?view=album'), label: 'Lehrer-Album', icon: Trophy, isExternalLink: !isTcgDomain },
-          { href: resolveHref('/sammelkarten?view=decks'), label: 'Meine Decks', icon: LayoutDashboard, isExternalLink: !isTcgDomain },
-          ...(isEnabled('trading_status') ? [{ href: resolveHref('/sammelkarten/tausch'), label: 'Trading-Hub', icon: ArrowLeftRight, notify: notifications.karten, isExternalLink: !isTcgDomain }] : []),
+          { href: resolveHref('/booster', 'tcg'), label: 'Booster öffnen', icon: Gift, isExternalLink: !isTcgDomain },
+          { href: resolveHref('/sammelkarten?view=album', 'tcg'), label: 'Lehrer-Album', icon: Trophy, isExternalLink: !isTcgDomain },
+          { href: resolveHref('/sammelkarten?view=decks', 'tcg'), label: 'Meine Decks', icon: LayoutDashboard, isExternalLink: !isTcgDomain },
+          ...(isEnabled('trading_status') ? [{ href: resolveHref('/sammelkarten/tausch', 'tcg'), label: 'Trading-Hub', icon: ArrowLeftRight, notify: notifications.karten, isExternalLink: !isTcgDomain }] : []),
           ...(isEnabled('combat_status') ? [
-            { href: resolveHref('/sammelkarten/kaempfe'), label: 'Kämpfe', icon: Swords, isBeta: true, isExternalLink: !isTcgDomain },
-            { href: resolveHref('/sammelkarten/kaempfe/log'), label: 'Kampflog', icon: FileText, isExternalLink: !isTcgDomain }
+            { href: resolveHref('/sammelkarten/kaempfe', 'tcg'), label: 'Kämpfe', icon: Swords, isBeta: true, isExternalLink: !isTcgDomain },
+            { href: resolveHref('/sammelkarten/kaempfe/log', 'tcg'), label: 'Kampflog', icon: FileText, isExternalLink: !isTcgDomain }
           ] : []),
         ]
       })
@@ -218,9 +232,9 @@ export function Navbar() {
         label: 'Shop & Extras',
         icon: ShoppingBag,
         subItems: [
-          { href: resolveHref('/shop?category=sammelkarten'), label: 'Karten-Shop', icon: Sparkles, isExternalLink: !isTcgDomain },
-          { href: resolveHref('/shop?category=merch'), label: 'Merch-Shop', icon: ShoppingBag, isExternalLink: !isTcgDomain },
-          ...(isEnabled('battle_pass_status') ? [{ href: resolveHref('/battle-pass'), label: 'Battle Pass', icon: Trophy, isExternalLink: !isTcgDomain }] : []),
+          { href: resolveHref('/shop?category=sammelkarten', 'tcg'), label: 'Karten-Shop', icon: Sparkles, isExternalLink: !isTcgDomain },
+          { href: resolveHref('/shop?category=merch', 'tcg'), label: 'Merch-Shop', icon: ShoppingBag, isExternalLink: !isTcgDomain },
+          ...(isEnabled('battle_pass_status') ? [{ href: resolveHref('/battle-pass', 'tcg'), label: 'Battle Pass', icon: Trophy, isExternalLink: !isTcgDomain }] : []),
         ]
       })
     }
@@ -233,10 +247,10 @@ export function Navbar() {
       label: 'Übersicht',
       icon: LayoutDashboard,
       subItems: [
-        { href: resolveHref('/'), label: 'Dashboard', icon: LayoutDashboard, isExternalLink: !isDashboardDomain && !isMainDomain },
+        { href: resolveHref('/', 'dashboard'), label: 'Dashboard', icon: Home, isExternalLink: !isDashboardDomain && !isMainDomain },
         ...(isEnabled('news_status') ? [{ href: '/news', label: 'News', icon: Megaphone, notify: notifications.news }] : []),
         ...(profile && isEnabled('polls_status') ? [
-          { href: resolveHref('/abstimmungen'), label: 'Umfragen', icon: BarChart2, notify: notifications.umfragen, isExternalLink: !isDashboardDomain }
+          { href: resolveHref('/abstimmungen', 'dashboard'), label: 'Umfragen', icon: BarChart2, notify: notifications.umfragen, isExternalLink: !isDashboardDomain }
         ] : []),
       ],
     })
@@ -248,10 +262,10 @@ export function Navbar() {
         icon: Calendar,
         notify: notifications.gruppen,
         subItems: [
-          ...(isEnabled('calendar_status') ? [{ href: resolveHref('/kalender'), label: 'Kalender', icon: Calendar, notify: notifications.kalender, isExternalLink: !isDashboardDomain }] : []),
-          ...(isEnabled('todos_status') ? [{ href: resolveHref('/todos'), label: 'Todos', icon: CheckSquare, notify: notifications.todos, isExternalLink: !isDashboardDomain }] : []),
-          { href: resolveHref('/aufgaben'), label: 'Aufgaben', icon: Briefcase, isExternalLink: !isDashboardDomain },
-          { href: resolveHref('/gruppen'), label: 'Gruppen', icon: Users, notify: notifications.gruppen, isExternalLink: !isDashboardDomain },
+          ...(isEnabled('calendar_status') ? [{ href: resolveHref('/kalender', 'dashboard'), label: 'Kalender', icon: Calendar, notify: notifications.kalender, isExternalLink: !isDashboardDomain }] : []),
+          ...(isEnabled('todos_status') ? [{ href: resolveHref('/todos', 'dashboard'), label: 'Todos', icon: CheckSquare, notify: notifications.todos, isExternalLink: !isDashboardDomain }] : []),
+          { href: resolveHref('/aufgaben', 'dashboard'), label: 'Aufgaben', icon: Briefcase, isExternalLink: !isDashboardDomain },
+          { href: resolveHref('/gruppen', 'dashboard'), label: 'Gruppen', icon: Users, notify: notifications.gruppen, isExternalLink: !isDashboardDomain },
         ],
       })
 
@@ -260,8 +274,8 @@ export function Navbar() {
         label: 'Finanzen',
         icon: Euro,
         subItems: [
-          { href: resolveHref('/finanzen'), label: 'Kassenstand', icon: Euro, isExternalLink: !isDashboardDomain },
-          ...(isEnabled('shop_status') ? [{ href: resolveHref('/shop'), label: 'Stufen-Shop', icon: ShoppingBag, isExternalLink: !isDashboardDomain }] : []),
+          { href: resolveHref('/finanzen', 'dashboard'), label: 'Kassenstand', icon: Euro, isExternalLink: !isDashboardDomain },
+          ...(isEnabled('shop_status') ? [{ href: resolveHref('/shop', 'dashboard'), label: 'Stufen-Shop', icon: ShoppingBag, isExternalLink: !isDashboardDomain }] : []),
         ],
       })
     }
@@ -269,7 +283,7 @@ export function Navbar() {
     // TCG ENTRY POINT
     if (profile && isEnabled('sammelkarten_status')) {
       navItems.push({
-        href: resolveHref('/sammelkarten'),
+        href: resolveHref('/home', 'tcg'),
         label: 'Zu den Sammelkarten',
         icon: Sparkles,
         isExternalLink: !isTcgDomain
@@ -408,7 +422,7 @@ export function Navbar() {
     if (href === '/uebersicht-root') return pathname === '/' || pathname.startsWith('/news') || pathname.startsWith('/abstimmungen')
     if (href === '/planung-root') return pathname.startsWith('/kalender') || pathname.startsWith('/todos') || pathname.startsWith('/gruppen')
     if (href === '/finanzen-root') return pathname.startsWith('/finanzen') || pathname.startsWith('/shop')
-    if (href === '/sammelkarten-root') return pathname.startsWith('/sammelkarten')
+    if (href === '/sammelkarten-root') return pathname.startsWith('/sammelkarten') || pathname.startsWith('/booster')
     if (href === '/konto-root') return pathname.startsWith('/profil') || pathname.startsWith('/einstellungen')
     if (href === '/hilfe-root') return pathname.startsWith('/hilfe') || pathname.startsWith('/feedback')
 

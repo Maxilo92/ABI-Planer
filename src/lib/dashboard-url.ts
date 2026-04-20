@@ -101,7 +101,7 @@ export function getAppBaseUrl(target: AppTarget = 'dashboard'): string {
 export function getAppHomeUrl(location: Location, target: AppTarget = 'dashboard'): string {
   const baseUrl = getAppRedirectUrl(location, target)
   if (target === 'tcg') {
-    return new URL('/sammelkarten', baseUrl).toString()
+    return new URL('/home', baseUrl).toString()
   }
 
   return baseUrl
