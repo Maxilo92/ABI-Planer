@@ -205,10 +205,12 @@ export interface LootTeacher {
   id: string;
   name: string;
   rarity: TeacherRarity;
-  type: 'teacher';
+  type: 'teacher' | 'support' | string;
   description?: string;
-  hp: number;
-  attacks: TeacherAttack[];
+  hp?: number;
+  attacks?: TeacherAttack[];
+  effect?: string;
+  obtainMessage?: string;
 }
 
 export interface CustomPopupMessage {

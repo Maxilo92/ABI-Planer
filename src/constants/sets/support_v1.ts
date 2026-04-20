@@ -11,6 +11,7 @@ export const SUPPORT_V1: SupportCardConfig[] = [
     effectId: 'dice_roll_damage',
     baseMultiplier: 10,
     incrementPerLevel: 1,
-    style: 'modern-flat' // Using an existing style from CardStyle
+    style: 'modern-flat', // Using an existing style from CardStyle
+    obtainMessage: 'Kann nur als Bonus in Supportboostern (durch Bundle-Käufe) gefunden werden.'
   }
 ];

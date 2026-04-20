@@ -389,81 +389,105 @@ function TeacherCardDetail({
       </div>
 
       <div className="w-full max-w-sm space-y-4 px-4">
-        {/* Variant Gallery */}
-        <div className="bg-black/40 backdrop-blur-xl rounded-2xl p-4 border border-white/10 shadow-2xl">
-          <p className="text-[10px] font-black uppercase text-white/40 mb-3 tracking-widest px-1">
-            Deine Varianten
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {(
-              [
-                "normal",
-                "holo",
-                "shiny",
-                "black_shiny_holo",
-              ] as NewCardVariant[]
-            ).map((v) => {
-              const isAvailable = ownedVariants.includes(v);
-              const isActive = displayVariant === v;
-              return (
-                <button
-                  key={v}
-                  disabled={!isAvailable}
-                  onClick={() => setDisplayVariant(v)}
-                  className={cn(
-                    "px-3 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all border-2",
-                    isAvailable
-                      ? isActive
-                        ? "bg-white text-black border-white shadow-[0_0_10px_rgba(255,255,255,0.3)]"
-                        : "bg-white/5 text-white/60 border-white/10 hover:bg-white/10"
-                      : "opacity-20 cursor-not-allowed border-transparent grayscale",
-                  )}
-                >
-                  {getVariantLabel(v as any)}
-                  {isAvailable &&
-                    userData.variants?.[v] &&
-                    userData.variants[v] > 1 && (
-                      <span className="ml-1 text-[8px] opacity-60">
-                        x{userData.variants[v]}
-                      </span>
-                    )}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        <div className="bg-black/40 backdrop-blur-xl rounded-2xl p-6 space-y-4 border border-white/10 shadow-2xl">
-          <div className="flex justify-between items-center">
-            <span className="text-sm font-bold text-white">
-              Sammlungs-Fortschritt
-            </span>
-            <Badge
-              variant="outline"
-              className="text-[10px] text-white/70 border-white/20"
-            >
-              {count}x gesammelt
-            </Badge>
-          </div>
-          <div className="space-y-2">
-            <div className="flex justify-between text-xs font-bold px-1 text-white/80">
-              <span>Level {level}</span>
-              <span>EP</span>
+        {!isOwned ? (
+          <div className="bg-black/40 backdrop-blur-xl rounded-2xl p-6 border border-white/10 shadow-2xl space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 bg-white/5 rounded-xl border border-white/10">
+                <Lock className="h-5 w-5 text-amber-500" />
+              </div>
+              <div>
+                <h4 className="text-sm font-black uppercase tracking-tight text-white">
+                  Karte gesperrt
+                </h4>
+                <p className="text-[10px] text-white/40 font-bold uppercase tracking-widest">
+                  Wie man sie bekommt
+                </p>
+              </div>
             </div>
-            <Progress
-              value={
-                ((count - getPrevLevelCount(level)) /
-                  (getNextLevelCount(level) - getPrevLevelCount(level))) *
-                100
-              }
-              className="h-2 bg-white/10"
-            />
-            <p className="text-[10px] text-center text-white/40 pt-1">
-              Noch {getNextLevelCount(level) - count} Karten bis Level{" "}
-              {level + 1}
+            
+            <p className="text-xs text-white/70 leading-relaxed font-medium bg-white/5 p-4 rounded-xl border border-white/5 italic">
+              {teacher.obtainMessage || 'Sammle Lehrer aus Packs und vervollständige dein Album, um diese Karte freizuschalten.'}
             </p>
           </div>
-        </div>
+        ) : (
+          <>
+            {/* Variant Gallery */}
+            <div className="bg-black/40 backdrop-blur-xl rounded-2xl p-4 border border-white/10 shadow-2xl">
+              <p className="text-[10px] font-black uppercase text-white/40 mb-3 tracking-widest px-1">
+                Deine Varianten
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {(
+                  [
+                    "normal",
+                    "holo",
+                    "shiny",
+                    "black_shiny_holo",
+                  ] as NewCardVariant[]
+                ).map((v) => {
+                  const isAvailable = ownedVariants.includes(v);
+                  const isActive = displayVariant === v;
+                  return (
+                    <button
+                      key={v}
+                      disabled={!isAvailable}
+                      onClick={() => setDisplayVariant(v)}
+                      className={cn(
+                        "px-3 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all border-2",
+                        isAvailable
+                          ? isActive
+                            ? "bg-white text-black border-white shadow-[0_0_10px_rgba(255,255,255,0.3)]"
+                            : "bg-white/5 text-white/60 border-white/10 hover:bg-white/10"
+                          : "opacity-20 cursor-not-allowed border-transparent grayscale",
+                      )}
+                    >
+                      {getVariantLabel(v as any)}
+                      {isAvailable &&
+                        userData.variants?.[v] &&
+                        userData.variants[v] > 1 && (
+                          <span className="ml-1 text-[8px] opacity-60">
+                            x{userData.variants[v]}
+                          </span>
+                        )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="bg-black/40 backdrop-blur-xl rounded-2xl p-6 space-y-4 border border-white/10 shadow-2xl">
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-bold text-white">
+                  Sammlungs-Fortschritt
+                </span>
+                <Badge
+                  variant="outline"
+                  className="text-[10px] text-white/70 border-white/20"
+                >
+                  {count}x gesammelt
+                </Badge>
+              </div>
+              <div className="space-y-2">
+                <div className="flex justify-between text-xs font-bold px-1 text-white/80">
+                  <span>Level {level}</span>
+                  <span>EP</span>
+                </div>
+                <Progress
+                  value={
+                    ((count - getPrevLevelCount(level)) /
+                      (getNextLevelCount(level) - getPrevLevelCount(level))) *
+                    100
+                  }
+                  className="h-2 bg-white/10"
+                />
+                <p className="text-[10px] text-center text-white/40 pt-1">
+                  Noch {getNextLevelCount(level) - count} Karten bis Level{" "}
+                  {level + 1}
+                </p>
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
@@ -1195,12 +1219,12 @@ export function TeacherAlbum({
                   className="flex flex-col items-center w-full mx-auto"
                 >
                   <div
-                    onClick={() => isOwned && setSelectedTeacherIndex(idx)}
+                    onClick={() => setSelectedTeacherIndex(idx)}
                     className={cn(
-                      "relative transition-all duration-300 transform group w-full aspect-[2.5/3.5] overflow-visible rounded-xl",
-                      !isOwned && "cursor-not-allowed opacity-80",
+                      "relative transition-all duration-300 transform group w-full aspect-[2.5/3.5] overflow-visible rounded-xl cursor-pointer",
+                      !isOwned && "opacity-80",
                       isOwned &&
-                        "cursor-pointer hover:scale-[1.05] hover:-rotate-1 active:scale-95 hover:z-10 active:z-10",
+                        "hover:scale-[1.05] hover:-rotate-1 active:scale-95 hover:z-10 active:z-10",
                     )}
                   >
                     <CardRenderer

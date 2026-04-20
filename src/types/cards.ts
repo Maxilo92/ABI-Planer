@@ -21,6 +21,7 @@ export interface BaseCard {
   style?: CardStyle;
   color?: string; // Optional override for set color
   imageUrl?: string;
+  obtainMessage?: string;
 }
 
 export interface TeacherCardConfig extends BaseCard {
@@ -57,6 +58,7 @@ export interface CardData {
   level?: number;
   count?: number;
   imageUrl?: string;
+  obtainMessage?: string;
 }
 
 export interface RarityWeights {

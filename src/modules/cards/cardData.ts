@@ -49,13 +49,14 @@ export function mapTeacherCatalogToCardData(
     fullId: teacher.fullId,
     name: teacher.name,
     rarity: teacher.rarity,
-    type: 'teacher',
+    type: (teacher.type as any) || 'teacher',
     variant: forcedVariant || getBestVariant(userData?.variants),
     color: getRarityHexColor(teacher.rarity),
     cardNumber: globalIndex >= 0 ? (globalIndex + 1).toString().padStart(3, '0') : '???',
     description: teacher.description,
     hp: teacher.hp,
     attacks: teacher.attacks,
+    obtainMessage: teacher.obtainMessage,
     level,
   }
 }

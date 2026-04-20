@@ -8,6 +8,15 @@
 
 # Changelog
 
+## [1.23.2.3] - 2026-04-20
+
+### Hinzugefügt
+- **Sammelkarten-Album:** Support-Karten werden nun im Album angezeigt und können nach Sets gefiltert werden.
+- **Sammelkarten-Album:** Gesperrte (noch nicht entdeckte) Karten sind jetzt anklickbar und zeigen einen Hinweis-Text (`obtainMessage`) an, wie sie freigeschaltet werden können.
+
+### Geändert
+- **Sammelkarten-System:** Das Card-Mapping wurde flexibilisiert, um verschiedene Kartentypen (Lehrer, Support) im Album einheitlich zu unterstützen.
+
 ## [1.23.2.2] - 2026-04-20
 
 ### Geändert

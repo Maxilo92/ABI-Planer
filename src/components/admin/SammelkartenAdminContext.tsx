@@ -479,7 +479,7 @@ export function SammelkartenAdminProvider({ children }: { children: React.ReactN
       name: 'Lehrer Set v1',
       prefix: 'T1',
       color: '#3b82f6',
-      cards: localConfig.loot_teachers
+      cards: localConfig.loot_teachers as CardConfig[]
     }
 
     const updatedConfig: Partial<SammelkartenConfig> = {
@@ -556,12 +556,12 @@ export function SammelkartenAdminProvider({ children }: { children: React.ReactN
       attacks: []
     })
     
-    const updatedCards = [...(currentSet.cards || []), newTeacher]
+    const updatedCards = [...(currentSet.cards || []), newTeacher] as CardConfig[]
     const updatedSets = {
       ...(localConfig.sets || {}),
       [selectedSetId]: { ...currentSet, cards: updatedCards }
     }
-    handleSaveConfig({ sets: updatedSets })
+    handleSaveConfig({ sets: updatedSets as Record<string, CardSet> })
     setNewTeacherName('')
   }
 
@@ -787,7 +787,7 @@ export function SammelkartenAdminProvider({ children }: { children: React.ReactN
         teachers.push(normalizeVisibleTeacherText(teacher))
       }
       
-      setParsedTeachers(teachers)
+      setParsedTeachers(teachers as any)
       setIsImportDialogOpen(true)
     }
     reader.readAsText(file)
