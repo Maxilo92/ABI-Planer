@@ -8,6 +8,26 @@
 
 # Changelog
 
+## [1.24.1.16] - 2026-04-20
+
+### Hinzugefügt
+- **Admin-Aufgaben:** Umfassendes strukturiertes Logging für den kompletten Aufgaben-Workflow:
+  - `adminReviewTask`: Detaillierte Events beim Freigeben (approve) und Ablehnen (reject) von Beweisen mit Nutzer-/Admin-Kontext und Belohnungsdetails.
+  - `trackTaskLifecycle`: Neue Trigger-Funktion für alle Aufgaben-Statusübergänge: task_created, task_claimed, task_proof_submitted, task_rejected, task_approved.
+  - Alle Logs enthalten eindeutige Event-Namen und strukturierte Daten (UIDs, TaskIDs, Belohnungen, Ablehnungsgründe) für einfache Nachverfolgung und Debugging.
+
+## [1.24.1.15] - 2026-04-20
+
+### Geändert
+- **Shop-Subdomain:** Alle Shop-bezogenen Routen (`/shop`, `/shop/abo`) werden ab sofort über die neue Subdomain `shop.abi-planer-27.de` ausgeliefert.
+  - Neue Domain-Registry (`SHOP_DOMAIN`) und URL-Utilities (`getShopBaseUrl()`) analog zu `dashboard.*` und `tcg.*`.
+  - Middleware leitet Zugriffe auf `/shop` automatisch auf die Shop-Subdomain um.
+  - Navbar-Navigation: Shop-Links (Karten-Shop, Merch-Shop, Stufen-Shop) zeigen auf `shop.*`.
+  - Stripe-Callback-URLs (`success_url`, `cancel_url`) auf `shop.abi-planer-27.de` umgestellt.
+  - Interne Links in TCG-Dashboard, Battle-Pass, Finanzen/Spenden und Sammelkarten-Redirect aktualisiert.
+  - 2FA-Gate: Shop-Bereich ist (wie TCG) von der Zwei-Faktor-Authentisierung ausgenommen.
+  - Next.js Dev-Origins um `shop.abi-planer-27.localhost` erweitert.
+
 ## [1.24.1.14] - 2026-04-20
 
 ### Behoben
