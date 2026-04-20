@@ -6,7 +6,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { db } from '@/lib/firebase'
-import { collection, deleteDoc, doc, getDocs, serverTimestamp, writeBatch, runTransaction, increment, arrayUnion, query, where, addDoc } from 'firebase/firestore'
+import { collection, deleteDoc, doc, getDocs, serverTimestamp, writeBatch, runTransaction, increment, arrayUnion, query, where, addDoc, getCountFromServer, updateDoc } from 'firebase/firestore'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useEffect, useState, useCallback } from 'react'
@@ -15,6 +15,8 @@ import { Trash2, Lock, Eye, Users, Share2, Send, Lightbulb } from 'lucide-react'
 import { logAction } from '@/lib/logging'
 import { usePopupManager } from '@/modules/popup/usePopupManager'
 import { Input } from '@/components/ui/input'
+import { motion } from 'framer-motion'
+import { useAuth } from '@/context/AuthContext'
 
 
 interface PollListProps {
@@ -50,6 +52,27 @@ export function PollList({
   const [isSubmittingCustom, setIsSubmittingCustom] = useState<string | null>(null)
   const [userSubmissionCounts, setUserSubmissionCounts] = useState<Record<string, number>>({})
   const [participantCounts, setParticipantCounts] = useState<Record<string, number>>({})
+  const { profile } = useAuth()
+
+  const markAsSeen = useCallback(async (pollCreatedAt: string | Date | undefined) => {
+    if (!userId || !profile?.id || !pollCreatedAt) return
+    
+    try {
+      const pollTime = new Date(pollCreatedAt).getTime()
+      const lastVisitedStr = profile.last_visited?.umfragen
+      const lastVisited = lastVisitedStr ? new Date(lastVisitedStr).getTime() : 0
+
+      // Only update if this poll is newer than what we've 'seen' so far
+      if (pollTime > lastVisited) {
+        const userRef = doc(db, 'profiles', profile.id)
+        await updateDoc(userRef, {
+          [`last_visited.umfragen`]: new Date(pollTime).toISOString()
+        })
+      }
+    } catch (error) {
+      // Fail silently
+    }
+  }, [userId, profile?.id, profile?.last_visited?.umfragen])
 
   const fetchUserSubmissionCount = useCallback(async (pollId: string) => {
     if (!userId) return
@@ -67,8 +90,9 @@ export function PollList({
 
   const fetchParticipantCount = useCallback(async (pollId: string) => {
     try {
-      const snap = await getDocs(collection(db, 'polls', pollId, 'participants'))
-      setParticipantCounts(prev => ({ ...prev, [pollId]: snap.size }))
+      const coll = collection(db, 'polls', pollId, 'participants')
+      const snapshot = await getCountFromServer(coll)
+      setParticipantCounts(prev => ({ ...prev, [pollId]: snapshot.data().count }))
     } catch (e: any) {
       if (e?.code !== 'permission-denied') {
         console.error('Error fetching participant count:', e)
@@ -380,7 +404,7 @@ export function PollList({
       await fetchParticipantCount(pollId)
       setUserSubmissionCounts(prev => ({ ...prev, [pollId]: currentCount + 1 }))
       
-      toast.success('Dein Vorschlag wurde sicher im Briefkasten hinterlegt!')
+      toast.success('Dein Vorschlag wurde erfolgreich eingereicht!')
       
       // Clear input
       setCustomInputs(prev => ({ ...prev, [pollId]: '' }))
@@ -471,13 +495,20 @@ export function PollList({
         // Use participant tracking subcollection if available, fallback to votes length
         const totalParticipants = participantCounts[poll.id] !== undefined 
           ? participantCounts[poll.id] 
-          : Math.max(pollVotes.length, 0)
+          : pollVotes.length
 
         const userVote = userId ? pollVotes.find(v => v.user_id === userId) : null
         const userSelection = userVote?.option_ids || (userVote?.option_id ? [userVote.option_id] : [])
 
         return (
-          <Card key={poll.id} className={poll.is_public === false ? 'border-primary/20 bg-primary/5' : ''}>
+          <motion.div
+            key={poll.id}
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-10% 0px" }}
+            onViewportEnter={() => markAsSeen(poll.created_at)}
+          >
+            <Card className={poll.is_public === false ? 'border-primary/20 bg-primary/5' : ''}>
             <CardHeader>
               <div className="flex items-start justify-between gap-3">
                 <div className="space-y-1">
@@ -599,7 +630,7 @@ export function PollList({
                         <div className="flex items-center justify-between mb-2 px-1">
                           <div className="flex items-center gap-2 text-left">
                             <Lightbulb className="h-3 w-3 text-primary animate-pulse shrink-0" />
-                            <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Vorschlag senden (Briefkasten)</span>
+                            <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Vorschlag senden</span>
                           </div>
                           <span className={`text-[9px] font-bold shrink-0 ${currentLength > maxLength * 0.8 ? 'text-amber-500' : 'text-muted-foreground'}`}>
                             {currentLength}/{maxLength}
@@ -629,7 +660,7 @@ export function PollList({
                           </Button>
                         </div>
                         <p className="text-[9px] text-muted-foreground mt-2 italic pl-1 text-left">
-                          Dein Vorschlag landet im Briefkasten der Planer. ({currentSubmissionCount}/{maxProposals} gesendet)
+                          Dein Vorschlag ist nur für Planer einsehbar. ({currentSubmissionCount}/{maxProposals} gesendet)
                         </p>
                       </>
                     )
@@ -691,6 +722,7 @@ export function PollList({
               )}
             </CardContent>
           </Card>
+          </motion.div>
         )
       })
 

@@ -17,10 +17,12 @@ if (args.includes('patch')) {
   const parts = version.split('.').map(Number)
   if (parts.length === 3) {
     parts[2] += 1
-    version = parts.join('.')
-    writeFileSync(versionPath, `${version}\n`, 'utf8')
-    console.log(`[sync-version] VERSION file auto-incremented to ${version}`)
+  } else if (parts.length === 4) {
+    parts[3] += 1
   }
+  version = parts.join('.')
+  writeFileSync(versionPath, `${version}\n`, 'utf8')
+  console.log(`[sync-version] VERSION file auto-incremented to ${version}`)
 }
 
 const packageJson = JSON.parse(readFileSync(packagePath, 'utf8'))

@@ -192,7 +192,7 @@ export default function SinglePollPage({ params }: { params: Promise<{ id: strin
                 {poll.allow_custom_options && (
                   <TabsTrigger value="submissions" className="gap-2">
                     <Lightbulb className="h-4 w-4" />
-                    Briefkasten
+                    Vorschläge
                   </TabsTrigger>
                 )}
               </TabsList>
@@ -243,7 +243,7 @@ export default function SinglePollPage({ params }: { params: Promise<{ id: strin
                   {Object.values(groupedSubmissions).length === 0 ? (
                     <div className="py-12 text-center text-muted-foreground bg-muted/20 rounded-2xl border border-dashed border-border/60 flex flex-col items-center gap-2">
                       <Lightbulb className="h-8 w-8 opacity-50" />
-                      <p className="text-sm italic">Der Briefkasten ist leer. Es wurden noch keine Vorschläge eingereicht.</p>
+                      <p className="text-sm italic">Es wurden noch keine Vorschläge eingereicht.</p>
                     </div>
                   ) : (
                     Object.values(groupedSubmissions).map((group, idx) => (

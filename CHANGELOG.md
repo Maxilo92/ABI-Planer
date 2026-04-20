@@ -8,6 +8,25 @@
 
 # Changelog
 
+## [1.22.0.1] - 2026-04-20
+
+### Geändert
+
+- **Versionssystem:** Umstellung auf ein vierstelliges Versionierungsschema (`x.x.x.x`). 
+  - 1. Stelle: App-Generation (Quasi neue App)
+  - 2. Stelle: Große Features / Feature-Sammlungen
+  - 3. Stelle: Kleine Features
+  - 4. Stelle: Texte und Bugfixes
+
+## [1.22.0.0] - 2026-04-20
+
+### Behoben
+
+- **Umfragen (Benachrichtigungen):** Ein Fehler wurde behoben, durch den der rote Benachrichtigungspunkt in der Navbar bestehen blieb, auch wenn Umfragen bereits angesehen wurden. Der Punkt verschwindet nun präzise, sobald eine Umfrage auf dem Bildschirm (Viewport) erscheint.
+- **Umfragen (Teilnehmerzahl):** Die Zählung der Teilnehmer bei Umfragen im Vorschlags-Modus wurde korrigiert. Durch den Einsatz von `getCountFromServer` ist die Zählung nun performanter und erfasst auch Nutzer korrekt, die lediglich Vorschläge eingereicht, aber nicht an klassischen Wahlmöglichkeiten teilgenommen haben.
+- **Umfragen (Sicherheit & Berechtigungen):** Firestore-Berechtigungsfehler (403 Forbidden) beim Abstimmen oder Einreichen von Vorschlägen wurden behoben. Die Regeln wurden so angepasst, dass alle authentifizierten Nutzer mit Lernsax-Konto an Umfragen teilnehmen können, auch wenn sie noch nicht manuell vom Admin freigeschaltet wurden (is_approved).
+- **Umfragen (UI):** Die Bezeichnung "Briefkasten" wurde systemweit durch neutralere Begriffe wie "Vorschläge" oder "Vorschlags-Modus" ersetzt.
+
 ## [1.21.04] - 2026-04-19
 
 ### Behoben

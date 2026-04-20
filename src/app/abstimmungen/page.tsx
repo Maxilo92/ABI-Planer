@@ -90,12 +90,11 @@ export default function PollsPage() {
           const lastVisitedStr = profile.last_visited?.umfragen
           const lastVisited = lastVisitedStr ? new Date(lastVisitedStr) : new Date(0)
           
-          if (!lastVisitedStr || (now.getTime() - lastVisited.getTime() > 60 * 60 * 1000)) {
-            const userRef = doc(db, 'profiles', profile.id)
-            await updateDoc(userRef, {
-              [`last_visited.umfragen`]: now.toISOString()
-            })
-          }
+          // Update last_visited whenever visiting the page to clear notifications
+          const userRef = doc(db, 'profiles', profile.id)
+          await updateDoc(userRef, {
+            [`last_visited.umfragen`]: now.toISOString()
+          })
         } catch (error) {
           console.error('Error updating last_visited for polls:', error)
         }

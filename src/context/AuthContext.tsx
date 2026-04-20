@@ -416,18 +416,30 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, [user?.uid, profile?.id, loading])
 
+  const value = React.useMemo(() => ({ 
+    user, 
+    profile, 
+    loading, 
+    is2FAVerified, 
+    is2FAInitialCheckDone,
+    resendVerification, 
+    requestEmailChange,
+    refreshAuth, 
+    set2FAVerified 
+  }), [
+    user, 
+    profile, 
+    loading, 
+    is2FAVerified, 
+    is2FAInitialCheckDone,
+    resendVerification, 
+    requestEmailChange,
+    refreshAuth, 
+    set2FAVerified
+  ])
+
   return (
-    <AuthContext.Provider value={{ 
-      user, 
-      profile, 
-      loading, 
-      is2FAVerified, 
-      is2FAInitialCheckDone,
-      resendVerification, 
-      requestEmailChange,
-      refreshAuth, 
-      set2FAVerified 
-    }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   )

@@ -70,7 +70,10 @@ export function useNotifications() {
         
         return isAssigned && createdAt > lastVisited
       })
-      setNotifications(prev => ({ ...prev, todos: hasActionItem }))
+      setNotifications(prev => {
+        if (prev.todos === hasActionItem) return prev
+        return { ...prev, todos: hasActionItem }
+      })
     }, (error) => {
       handleSnapshotError('todos', error)
     })
@@ -85,7 +88,10 @@ export function useNotifications() {
         const createdAt = data.created_at ? toDate(data.created_at) : new Date(0)
         return createdAt > lastVisited
       })
-      setNotifications(prev => ({ ...prev, kalender: hasNewEvent }))
+      setNotifications(prev => {
+        if (prev.kalender === hasNewEvent) return prev
+        return { ...prev, kalender: hasNewEvent }
+      })
     }, (error) => {
       handleSnapshotError('kalender', error)
     })
@@ -103,7 +109,10 @@ export function useNotifications() {
         // Cleanup all
         voteUnsubscribes.forEach(unsub => unsub())
         voteUnsubscribes.clear()
-        setNotifications(prev => ({ ...prev, umfragen: false }))
+        setNotifications(prev => {
+          if (prev.umfragen === false) return prev
+          return { ...prev, umfragen: false }
+        })
         return
       }
 
@@ -134,8 +143,10 @@ export function useNotifications() {
             // OR if we already know there's a new poll
             const currentActiveIds = Array.from(activePollIds)
             if (currentActiveIds.every(id => Object.prototype.hasOwnProperty.call(pollStatus, id))) {
-              const hasUnvoted = currentActiveIds.some(id => !pollStatus[id])
-              setNotifications(prev => ({ ...prev, umfragen: hasNewPoll || hasUnvoted }))
+              setNotifications(prev => {
+                if (prev.umfragen === hasNewPoll) return prev
+                return { ...prev, umfragen: hasNewPoll }
+              })
             }
           }, (error) => {
             console.error(`useNotifications: poll vote snapshot failed for ${poll.id}:`, error)
@@ -160,7 +171,10 @@ export function useNotifications() {
         
         return !viewedBy.includes(profileId) && createdAt > lastVisited
       })
-      setNotifications(prev => ({ ...prev, news: hasUnviewedNews }))
+      setNotifications(prev => {
+        if (prev.news === hasUnviewedNews) return prev
+        return { ...prev, news: hasUnviewedNews }
+      })
     }, (error) => {
       handleSnapshotError('news', error)
     })
@@ -168,7 +182,11 @@ export function useNotifications() {
     // 5. Sammelkarten: New trade messages.
     const messagesQuery = query(collection(db, 'notifications', profileId, 'messages'), where('read', '==', false))
     const unsubscribeMessages = onSnapshot(messagesQuery, (snapshot) => {
-      setNotifications(prev => ({ ...prev, karten: !snapshot.empty }))
+      const hasNewMessage = !snapshot.empty
+      setNotifications(prev => {
+        if (prev.karten === hasNewMessage) return prev
+        return { ...prev, karten: hasNewMessage }
+      })
     }, (error) => {
       handleSnapshotError('karten', error)
     })
@@ -179,7 +197,10 @@ export function useNotifications() {
 
     const syncGroupNotifications = () => {
       const hasNewGroupMessage = Array.from(groupStates.values()).some(Boolean)
-      setNotifications(prev => ({ ...prev, gruppen: hasNewGroupMessage }))
+      setNotifications(prev => {
+        if (prev.gruppen === hasNewGroupMessage) return prev
+        return { ...prev, gruppen: hasNewGroupMessage }
+      })
     }
 
     const subscribeGroupQuery = (key: string, q: ReturnType<typeof query>) => {
@@ -236,7 +257,7 @@ export function useNotifications() {
     authLoading, 
     profile?.id, 
     profile?.class_name, 
-    profile?.planning_groups, 
+    JSON.stringify(profile?.planning_groups), 
     profile?.last_visited?.todos,
     profile?.last_visited?.kalender,
     profile?.last_visited?.umfragen,
