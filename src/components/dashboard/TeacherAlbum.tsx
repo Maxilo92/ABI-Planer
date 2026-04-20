@@ -524,15 +524,16 @@ export function TeacherAlbum({
           ),
           isDismissible: true,
           onDismiss: () => {
-            // Only update if we're not already null to avoid unnecessary cycles
-            setSelectedTeacherIndex(prev => prev === null ? null : null);
-            // Better: just check if it's the same card or if we should clear
-            // But setSelectedTeacherIndex(null) is safe here as it will just trigger the 'else' in this effect which calls dismiss again, but dismiss is idempotent.
-            // Actually, we need to make sure we don't clear the URL if it was already cleared.
-            if (window.location.pathname.startsWith('/album/karte/')) {
-               window.history.pushState({}, '', '/album');
-            }
-            setSelectedTeacherIndex(null);
+            setSelectedTeacherIndex(prev => {
+              if (prev !== null) {
+                // Only reset URL if we were actually selecting something
+                if (window.location.pathname.includes('/karte/')) {
+                  window.history.pushState({}, '', userId ? `/profil/${userId}` : '/album');
+                }
+                return null;
+              }
+              return prev;
+            });
           }
         }); 
       }

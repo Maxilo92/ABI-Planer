@@ -61,7 +61,8 @@ export const SystemMessageProvider = ({ children }: { children: ReactNode }) => 
     setActiveMessages((prev) => {
       const messageToDismiss = prev.find(m => m.id === id)
       if (messageToDismiss?.onDismiss) {
-        messageToDismiss.onDismiss()
+        const onDismiss = messageToDismiss.onDismiss
+        setTimeout(() => onDismiss(), 0)
       }
       return prev.filter((m) => m.id !== id)
     })

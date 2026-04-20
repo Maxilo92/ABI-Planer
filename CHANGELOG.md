@@ -8,6 +8,12 @@
 
 # Changelog
 
+## [1.23.4.4] - 2026-04-20
+
+### Behoben
+- **Architektur:** Warnung "Cannot update a component while rendering a different component" behoben, indem `onDismiss`-Callbacks im `SystemMessageProvider` asynchron via `setTimeout` ausgeführt werden.
+- **Sammelkarten-Album:** Bereinigung der Drawer-Synchronisationslogik und Korrektur des URL-Handlings beim Schließen des Drawers.
+
 ## [1.23.4.3] - 2026-04-20
 
 ### Behoben
