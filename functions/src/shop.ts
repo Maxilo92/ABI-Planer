@@ -1,3 +1,4 @@
+// shop.ts — Stripe callback URLs updated to shop.abi-planer-27.de (v1.24.1.15)
 import { onCall, HttpsError, onRequest } from "firebase-functions/v2/https";
 import { CALLABLE_CORS_ORIGINS } from "./constants/cors";
 import * as logger from "firebase-functions/logger";
