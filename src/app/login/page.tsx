@@ -25,6 +25,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [reasonMessage, setReasonMessage] = useState<string | null>(null)
+  const [redirectPath, setRedirectPath] = useState<string | null>(null)
   
   // 2FA state
   const [step, setStep] = useState<'login' | '2fa'>('login')
@@ -40,6 +41,11 @@ export default function LoginPage() {
       return
     }
 
+    if (redirectPath && redirectPath.startsWith('/') && !redirectPath.startsWith('//')) {
+      window.location.href = redirectPath
+      return
+    }
+
     window.location.href = getAppHomeUrl(window.location, target)
   }
 
@@ -47,6 +53,10 @@ export default function LoginPage() {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search)
       const reason = params.get('reason')
+      const redirect = params.get('redirect')
+      if (redirect && redirect.startsWith('/') && !redirect.startsWith('//')) {
+        setRedirectPath(redirect)
+      }
       if (reason === 'timeout') {
         setReasonMessage('Deine Sitzung ist abgelaufen. Bitte melde dich erneut an.')
       } else if (reason === 'unauthorized') {
