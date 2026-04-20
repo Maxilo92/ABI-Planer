@@ -134,7 +134,7 @@ export default function AdminTasksPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {tasks.map(task => (
+          {tasks.map((task, index) => (
             <Card key={task.id} className="flex flex-col">
               <CardHeader className="p-4 pb-2">
                 <div className="flex justify-between items-start gap-4">
@@ -184,6 +184,7 @@ export default function AdminTasksPage() {
                           src={task.proof_media_url || ''} 
                           alt="Beweis" 
                           fill 
+                          loading={index === 0 ? 'eager' : 'lazy'}
                           sizes="(max-width: 768px) 100vw, 50vw"
                           className="object-contain" 
                         />

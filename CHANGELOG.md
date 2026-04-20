@@ -8,6 +8,11 @@
 
 # Changelog
 
+## [1.24.1.13] - 2026-04-20
+
+### Behoben
+- **Admin-Aufgaben:** LCP-Hinweis für Beweisbilder reduziert, indem das oberste sichtbare `Image` in der Prüfungsansicht gezielt mit `loading="eager"` geladen wird.
+
 ## [1.24.1.12] - 2026-04-20
 
 ### Behoben
