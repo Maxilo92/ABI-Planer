@@ -8,6 +8,11 @@
 
 # Changelog
 
+## [1.24.1.17] - 2026-04-20
+
+### Behoben
+- **Shop-API CORS:** Die Next.js Konfiguration (`next.config.ts`) wurde um generische CORS-Header für `/api/:path*` erweitert, um Fehler bei API-Aufrufen zwischen Subdomains (z.B. von `tcg.abi-planer-27.de` nach `shop.abi-planer-27.de`) zu verhindern.
+
 ## [1.24.1.16] - 2026-04-20
 
 ### Hinzugefügt
