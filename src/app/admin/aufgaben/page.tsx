@@ -184,6 +184,7 @@ export default function AdminTasksPage() {
                           src={task.proof_media_url || ''} 
                           alt="Beweis" 
                           fill 
+                          sizes="(max-width: 768px) 100vw, 50vw"
                           className="object-contain" 
                         />
                       )}

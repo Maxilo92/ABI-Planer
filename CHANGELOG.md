@@ -8,6 +8,16 @@
 
 # Changelog
 
+## [1.24.1.12] - 2026-04-20
+
+### Behoben
+- **Admin-Aufgaben:** `adminReviewTask` gegen ungefangene Laufzeitfehler gehärtet (strikte Eingabevalidierung, sichere Behandlung von `reward_boosters`, sauberes Error-Mapping auf `HttpsError`). Dadurch wird der `500 / FirebaseError: INTERNAL` beim Freigeben/Ablehnen zuverlässig vermieden.
+
+## [1.24.1.11] - 2026-04-20
+
+### Behoben
+- **Admin-Aufgaben:** Next.js-Warnung für Beweisbilder behoben, indem bei `Image` mit `fill` ein responsiver `sizes`-Wert ergänzt wurde. Dadurch wird die Bildauswahl optimiert und die Konsolenwarnung entfernt.
+
 ## [1.24.1.10] - 2026-04-20
 
 ### Behoben
