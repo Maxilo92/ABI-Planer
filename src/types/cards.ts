@@ -32,8 +32,7 @@ export interface TeacherCardConfig extends BaseCard {
 
 export interface SupportCardConfig extends BaseCard {
   type: 'support';
-  effect: string;
-  effectId?: string; // The ID of the hardcoded effect handler
+  attack: TeacherAttack;
   baseMultiplier?: number;
   incrementPerLevel?: number;
   flavorText?: string;

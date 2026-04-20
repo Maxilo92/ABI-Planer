@@ -30,7 +30,8 @@ function normalizeCardEntry(
     baseId,
     setId,
     setName,
-    fullId: forceLegacyId ? baseId : `${setId}:${baseId}`,
+    // Always use the prefixed ID for fullId to ensure consistency across the system
+    fullId: `${setId}:${baseId}`,
   }
 }
 

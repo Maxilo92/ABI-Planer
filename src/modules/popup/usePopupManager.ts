@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback } from 'react'
+import { ReactNode, useCallback } from 'react'
 import { useSystemMessage } from '@/context/SystemMessageContext'
 import type { SystemMessageAction, SystemMessagePriority, SystemMessageType } from '@/types/systemMessages'
 
@@ -8,7 +8,7 @@ type NotifyOptions = {
   type?: SystemMessageType
   priority?: SystemMessagePriority
   title: string
-  content: string
+  content: string | ReactNode
   duration?: number
   isDismissible?: boolean
   actions?: SystemMessageAction[]
@@ -16,7 +16,7 @@ type NotifyOptions = {
 
 type AlertOptions = {
   title: string
-  content: string
+  content: string | ReactNode
   priority?: SystemMessagePriority
   acknowledgeLabel?: string
   acknowledgeVariant?: SystemMessageAction['variant']
@@ -25,7 +25,7 @@ type AlertOptions = {
 
 type ConfirmOptions = {
   title: string
-  content: string
+  content: string | ReactNode
   priority?: SystemMessagePriority
   confirmLabel?: string
   cancelLabel?: string
@@ -35,7 +35,7 @@ type ConfirmOptions = {
 
 type PromptOptions = {
   title: string
-  content: string
+  content: string | ReactNode
   priority?: SystemMessagePriority
   confirmLabel?: string
   cancelLabel?: string
@@ -49,8 +49,18 @@ type PromptOptions = {
   inputType?: 'text' | 'password'
 }
 
+type DrawerOptions = {
+  title: string
+  content: ReactNode
+  priority?: SystemMessagePriority
+  isDismissible?: boolean
+  actions?: SystemMessageAction[]
+  onDismiss?: () => void
+  id?: string
+}
+
 export function usePopupManager() {
-  const { pushMessage } = useSystemMessage()
+  const { pushMessage, dismissMessage } = useSystemMessage()
 
   const notify = useCallback((options: NotifyOptions) => {
     return pushMessage({
@@ -170,10 +180,25 @@ export function usePopupManager() {
     })
   }, [pushMessage])
 
+  const drawer = useCallback((options: DrawerOptions) => {
+    return pushMessage({
+      id: options.id,
+      type: 'drawer',
+      priority: options.priority ?? 'info',
+      title: options.title,
+      content: options.content,
+      isDismissible: options.isDismissible ?? true,
+      actions: options.actions,
+      onDismiss: options.onDismiss,
+    })
+  }, [pushMessage])
+
   return {
     notify,
     alert,
     confirm,
     prompt,
+    drawer,
+    dismiss: dismissMessage,
   }
 }

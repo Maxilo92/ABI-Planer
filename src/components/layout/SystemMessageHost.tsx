@@ -4,14 +4,16 @@ import React from 'react'
 import { useSystemMessage } from '@/context/SystemMessageContext'
 import { BannerMessage } from '@/components/ui/system-messages/BannerMessage'
 import { ModalMessage } from '@/components/ui/system-messages/ModalMessage'
+import { DrawerMessage } from '@/components/ui/system-messages/DrawerMessage'
 
 export function SystemMessageHost() {
   const { activeMessages, activeModalMessage, dismissMessage } = useSystemMessage()
 
   const banners = activeMessages.filter((msg) => msg.type === 'banner')
   const activeModal = activeModalMessage
+  const activeDrawer = activeMessages.find((msg) => msg.type === 'drawer') ?? null
 
-  if (banners.length === 0 && !activeModal) {
+  if (banners.length === 0 && !activeModal && !activeDrawer) {
     return null
   }
 
@@ -37,6 +39,15 @@ export function SystemMessageHost() {
           key={activeModal.id} 
           message={activeModal} 
           onClose={() => dismissMessage(activeModal.id)} 
+        />
+      )}
+
+      {/* FIFO drawer queue: render only the active drawer */}
+      {activeDrawer && (
+        <DrawerMessage
+          key={activeDrawer.id}
+          message={activeDrawer}
+          onClose={() => dismissMessage(activeDrawer.id)}
         />
       )}
     </>

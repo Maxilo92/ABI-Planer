@@ -8,6 +8,60 @@
 
 # Changelog
 
+## [1.23.4.2] - 2026-04-20
+
+### Hinzugefügt
+- **Popup Manager:** Neue `drawer`-Methode für seitlich ausklappbare Panels (Right Slide-Over).
+- **UI-Komponenten:** Einführung der `Sheet`-Komponente (basierend auf @base-ui/react) für responsive Drawer-Layouts.
+- **DrawerMessage:** Neue System-Nachrichten-Komponente für Drawer-Popups.
+
+### Geändert
+- **Sammelkarten-Album:** Die Detailansicht der Karten wurde vom modalen Dialog auf den neuen seitlichen Drawer umgestellt. Dies ermöglicht eine bessere Übersicht bei gleichzeitigem Zugriff auf den Hintergrund auf großen Bildschirmen und Vollbild-Ansicht auf Mobilgeräten.
+- **System-Nachrichten:** Unterstützung von `ReactNode` als Content in System-Nachrichten für flexiblere UI-Einbindungen.
+
+## [1.23.4.1] - 2026-04-20
+
+### Geändert
+- **Architektur:** Auslagerung der Karten-Detailansicht in eine modulare Komponente (`CardDetailView`).
+- **Deep Linking:** URLs unter `/album/karte/[id]` öffnen nun das Album-Modal direkt, ohne eine separate Seite zu benötigen.
+- **UI/Layout:** Der "Teilen"-Button wurde stabil im Header des Modals positioniert, um Überlappungen zu vermeiden.
+
+## [1.23.4.0] - 2026-04-20
+
+### Hinzugefügt
+- **Karten-Detailansicht (Deep Linking):** Jede Sammelkarte hat nun eine eigene eindeutige URL (`/album/karte/[id]`). Karten können so direkt verlinkt und geteilt werden.
+- **URL-Synchronisierung:** Beim Durchblättern des Albums wird die Browser-URL automatisch aktualisiert.
+
+### Behoben
+- **UI/Layout:** Der "Teilen"-Button wurde im Dialog-Header neu positioniert, um Überlappungen mit dem Kartendesign zu vermeiden.
+
+## [1.23.3.3] - 2026-04-20
+
+### Hinzugefügt
+- **Sharing:** Sammelkarten können nun direkt aus der Detailansicht geteilt werden. Ein neuer Teilen-Button ermöglicht das Versenden eines Direktlinks via Web Share API oder Zwischenablage.
+
+## [1.23.3.2] - 2026-04-20
+
+### Geändert
+- **Support-Spec-Karte:** Design vollständig an die Lehrer-Spec-Karten angepasst (gleiches Layout, Header und Footer), um System-Konsistenz zu gewährleisten.
+
+## [1.23.3.1] - 2026-04-20
+
+### Geändert
+- **Support-Karten:** Einführung des Art/Spec-Modells. Die Hauptansicht (ArtCard) ist nun minimalistischer, während die Detailansicht (SpecCard) alle Angriffs-Informationen liefert.
+- **Album:** Dynamische Unterstützung von Support-Spec-Karten in der Detailansicht.
+
+## [1.23.3.0] - 2026-04-20
+
+### Geändert
+- **Support-Karten:** Vollständiges Redesign des Karten-Layouts. Support-Fähigkeiten sind nun als strukturierte Angriffe konzipiert (Name, Schaden, Beschreibung).
+- **Technik:** Update der `SupportCardConfig` Typdefinition und Erweiterung des `SUPPORT_V1` Sets um neue strategische Angriffs-Karten ("Spickzettel", "Klassenkasse", "ABI Zeitung").
+
+## [1.23.2.6] - 2026-04-20
+
+### Behoben
+- **Lehrer-Album:** Karten werden nicht mehr doppelt angezeigt. Die Deduplizierungs-Logik wurde verbessert, um Überschneidungen zwischen Legacy-IDs und neuen Set-IDs (mit Präfix) korrekt zu handhaben.
+
 ## [1.23.2.5] - 2026-04-20
 
 ### Hinzugefügt

@@ -1,4 +1,6 @@
-export type SystemMessageType = 'toast' | 'banner' | 'modal';
+import { ReactNode } from 'react';
+
+export type SystemMessageType = 'toast' | 'banner' | 'modal' | 'drawer';
 export type SystemMessagePriority = 'critical' | 'high' | 'warning' | 'info';
 
 export interface SystemMessageActionContext {
@@ -29,7 +31,7 @@ export interface SystemMessage {
   type: SystemMessageType;
   priority: SystemMessagePriority;
   title: string;
-  content: string;
+  content: string | ReactNode;
   actions?: SystemMessageAction[];
   duration?: number; // duration in ms, 0 for infinite (only for toasts)
   isDismissible?: boolean;

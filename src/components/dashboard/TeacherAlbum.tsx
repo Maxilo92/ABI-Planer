@@ -41,7 +41,9 @@ import { Skeleton as BoneyardSkeleton } from "boneyard-js/react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { CardRenderer } from "@/components/cards/CardRenderer";
-import { TeacherSpecCard } from "@/components/cards/TeacherSpecCard";
+import { CardDetailView } from "@/components/cards/CardDetailView";
+import { usePopupManager } from "@/modules/popup/usePopupManager";
+import { ShareResourceButton } from "@/components/ui/share-resource-button";
 import { CardData, CardVariant as NewCardVariant } from "@/types/cards";
 import {
   Dialog,
@@ -211,299 +213,20 @@ function mapTeacherToCardData(
   )
 }
 
-function TeacherCardDetail({
-  teacher,
-  userData,
-  onClose,
-  globalTeachers,
-  allTeachers,
-  currentIndex,
-  onNavigate,
-}: {
-  teacher: TeacherCatalogEntry;
-  userData: any;
-  onClose: () => void;
-  globalTeachers: TeacherCatalogEntry[] | Map<string, number>;
-  allTeachers: any[];
-  currentIndex: number;
-  onNavigate: (index: number) => void;
-}) {
-  const isOwned = !!userData;
-  const level = userData?.level || 1;
-  const count = userData?.count || 0;
-  const [displayVariant, setDisplayVariant] = useState<NewCardVariant>(
-    getBestVariant(userData?.variants),
-  );
-  const [activeCard, setActiveCard] = useState<"visual" | "spec">("visual");
-  const [direction, setDirection] = useState(0);
-
-  // Sync state when teacher/userData changes during navigation
-  useEffect(() => {
-    setDisplayVariant(getBestVariant(userData?.variants));
-  }, [teacher.id, teacher.name, userData]);
-
-  const cardData = mapTeacherToCardData(
-    teacher,
-    userData,
-    globalTeachers,
-    displayVariant,
-  );
-
-  const ownedVariants = useMemo(() => {
-    if (!userData?.variants) return ["normal"];
-    return Object.keys(userData.variants).filter(
-      (v) => userData.variants[v] > 0,
-    );
-  }, [userData]);
-
-  const handleNext = () => {
-    if (currentIndex < allTeachers.length - 1) {
-      setDirection(1);
-      onNavigate(currentIndex + 1);
-    }
-  };
-
-  const handlePrev = () => {
-    if (currentIndex > 0) {
-      setDirection(-1);
-      onNavigate(currentIndex - 1);
-    }
-  };
-
-  return (
-    <div className="flex flex-col items-center space-y-6 py-8 px-4 w-full">
-      <div className="relative w-full max-w-[280px] sm:max-w-[320px] aspect-[2.5/3.5] mb-4 group">
-        <AnimatePresence mode="wait" custom={direction}>
-          <motion.div
-            key={teacher.id || teacher.name}
-            custom={direction}
-            initial={{
-              x: direction > 0 ? 120 : direction < 0 ? -120 : 0,
-              opacity: 0,
-              scale: 0.9,
-            }}
-            animate={{ x: 0, opacity: 1, scale: 1 }}
-            exit={{
-              x: direction > 0 ? -120 : direction < 0 ? 120 : 0,
-              opacity: 0,
-              scale: 0.9,
-            }}
-            transition={{ duration: 0.22, ease: "easeOut" }}
-            drag="x"
-            dragConstraints={{ left: 0, right: 0 }}
-            dragElastic={0.2}
-            onDragEnd={(_, info) => {
-              if (info.offset.x < -70) handleNext();
-              else if (info.offset.x > 70) handlePrev();
-            }}
-            className="w-full h-full cursor-pointer touch-none"
-            onClick={() => {
-              if (isOwned) {
-                setActiveCard(activeCard === "visual" ? "spec" : "visual");
-              }
-            }}
-          >
-            <div className="w-full h-full [perspective:1600px]">
-              <motion.div
-                className="relative w-full h-full preserve-3d"
-                initial={false}
-                animate={{ rotateY: activeCard === "spec" ? 180 : 0 }}
-                transition={{ duration: 0.45, ease: "easeInOut" }}
-              >
-                <div className="absolute inset-0 backface-hidden">
-                  <CardRenderer
-                    data={cardData}
-                    className="w-full h-auto"
-                    isFlippedExternally={isOwned}
-                    isLocked={!isOwned}
-                    interactive={false}
-                  />
-                </div>
-
-                <div
-                  className="absolute inset-0 backface-hidden"
-                  style={{ transform: "rotateY(180deg)" }}
-                >
-                  <TeacherSpecCard
-                    data={cardData}
-                    className="w-full h-auto"
-                    styleVariant="modern-flat"
-                  />
-                </div>
-              </motion.div>
-            </div>
-          </motion.div>
-        </AnimatePresence>
-
-        {/* Navigation Arrows */}
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            handlePrev();
-          }}
-          disabled={currentIndex === 0}
-          className="absolute left-[-20%] top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/5 hover:bg-white/10 text-white/40 transition-all opacity-0 group-hover:opacity-100 max-sm:hidden disabled:opacity-0"
-        >
-          <ChevronLeft className="h-6 w-6" />
-        </button>
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            handleNext();
-          }}
-          disabled={currentIndex === allTeachers.length - 1}
-          className="absolute right-[-20%] top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/5 hover:bg-white/10 text-white/40 transition-all opacity-0 group-hover:opacity-100 max-sm:hidden disabled:opacity-0"
-        >
-          <ChevronRight className="h-6 w-6" />
-        </button>
-      </div>
-
-      <div className="flex flex-col items-center gap-3">
-        <div className="text-center animate-pulse flex items-center gap-2 text-white/50 text-xs font-medium bg-white/5 px-3 py-1.5 rounded-full border border-white/5">
-          <Sparkles className="h-3.5 w-3.5 text-blue-400" />
-          Wischen für andere Lehrer
-        </div>
-
-        {/* Pagination Dots */}
-        <div className="flex gap-1.5 items-center">
-          <div className="text-[10px] font-black text-white/20 mr-1">
-            {currentIndex + 1} / {allTeachers.length}
-          </div>
-          <button
-            onClick={() => setActiveCard("visual")}
-            className={cn(
-              "h-1 rounded-full transition-all",
-              activeCard === "visual" ? "bg-white w-6" : "bg-white/20 w-3",
-            )}
-          />
-          {isOwned && (
-            <button
-              onClick={() => setActiveCard("spec")}
-              className={cn(
-                "h-1 rounded-full transition-all",
-                activeCard === "spec" ? "bg-white w-6" : "bg-white/20 w-3",
-              )}
-            />
-          )}
-        </div>
-      </div>
-
-      <div className="w-full max-w-sm space-y-4 px-4">
-        {!isOwned ? (
-          <div className="bg-black/40 backdrop-blur-xl rounded-2xl p-6 border border-white/10 shadow-2xl space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 bg-white/5 rounded-xl border border-white/10">
-                <Lock className="h-5 w-5 text-amber-500" />
-              </div>
-              <div>
-                <h4 className="text-sm font-black uppercase tracking-tight text-white">
-                  Karte gesperrt
-                </h4>
-                <p className="text-[10px] text-white/40 font-bold uppercase tracking-widest">
-                  Wie man sie bekommt
-                </p>
-              </div>
-            </div>
-            
-            <p className="text-xs text-white/70 leading-relaxed font-medium bg-white/5 p-4 rounded-xl border border-white/5 italic">
-              {teacher.obtainMessage || 'Sammle Lehrer aus Packs und vervollständige dein Album, um diese Karte freizuschalten.'}
-            </p>
-          </div>
-        ) : (
-          <>
-            {/* Variant Gallery */}
-            <div className="bg-black/40 backdrop-blur-xl rounded-2xl p-4 border border-white/10 shadow-2xl">
-              <p className="text-[10px] font-black uppercase text-white/40 mb-3 tracking-widest px-1">
-                Deine Varianten
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {(
-                  [
-                    "normal",
-                    "holo",
-                    "shiny",
-                    "black_shiny_holo",
-                  ] as NewCardVariant[]
-                ).map((v) => {
-                  const isAvailable = ownedVariants.includes(v);
-                  const isActive = displayVariant === v;
-                  return (
-                    <button
-                      key={v}
-                      disabled={!isAvailable}
-                      onClick={() => setDisplayVariant(v)}
-                      className={cn(
-                        "px-3 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all border-2",
-                        isAvailable
-                          ? isActive
-                            ? "bg-white text-black border-white shadow-[0_0_10px_rgba(255,255,255,0.3)]"
-                            : "bg-white/5 text-white/60 border-white/10 hover:bg-white/10"
-                          : "opacity-20 cursor-not-allowed border-transparent grayscale",
-                      )}
-                    >
-                      {getVariantLabel(v as any)}
-                      {isAvailable &&
-                        userData.variants?.[v] &&
-                        userData.variants[v] > 1 && (
-                          <span className="ml-1 text-[8px] opacity-60">
-                            x{userData.variants[v]}
-                          </span>
-                        )}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="bg-black/40 backdrop-blur-xl rounded-2xl p-6 space-y-4 border border-white/10 shadow-2xl">
-              <div className="flex justify-between items-center">
-                <span className="text-sm font-bold text-white">
-                  Sammlungs-Fortschritt
-                </span>
-                <Badge
-                  variant="outline"
-                  className="text-[10px] text-white/70 border-white/20"
-                >
-                  {count}x gesammelt
-                </Badge>
-              </div>
-              <div className="space-y-2">
-                <div className="flex justify-between text-xs font-bold px-1 text-white/80">
-                  <span>Level {level}</span>
-                  <span>EP</span>
-                </div>
-                <Progress
-                  value={
-                    ((count - getPrevLevelCount(level)) /
-                      (getNextLevelCount(level) - getPrevLevelCount(level))) *
-                    100
-                  }
-                  className="h-2 bg-white/10"
-                />
-                <p className="text-[10px] text-center text-white/40 pt-1">
-                  Noch {getNextLevelCount(level) - count} Karten bis Level{" "}
-                  {level + 1}
-                </p>
-              </div>
-            </div>
-          </>
-        )}
-      </div>
-    </div>
-  );
-}
-
 export function TeacherAlbum({
   userId,
   targetProfile,
   initialLimit,
+  initialSelectedCardId,
 }: {
   userId?: string;
   targetProfile?: Profile | null;
   initialLimit?: number;
+  initialSelectedCardId?: string;
 }) {
   const router = useRouter();
   const { profile: currentProfile, loading } = useAuth();
+  const { drawer, dismiss } = usePopupManager();
   const activeProfile =
     targetProfile !== undefined ? targetProfile : currentProfile;
   const { teachers: userTeachers, loading: loadingUserTeachers } =
@@ -590,13 +313,19 @@ export function TeacherAlbum({
     let unsubscribeGlobal: (() => void) | null = null;
 
     const deduplicate = (teachers: TeacherCatalogEntry[]) => {
-      const seen = new Set();
-      return teachers.filter((t) => {
-        const id = t.fullId;
-        if (seen.has(id)) return false;
-        seen.add(id);
-        return true;
+      const map = new Map<string, TeacherCatalogEntry>();
+      teachers.forEach((t) => {
+        // Use a composite key of setId and baseId to catch duplicates across legacy/new ID formats
+        const baseKey = `${t.setId}:${t.baseId}`;
+        const existing = map.get(baseKey);
+        
+        // We prefer the entry that already has the setId prefix in its fullId
+        // or if we don't have an entry for this teacher yet.
+        if (!existing || t.fullId === baseKey) {
+          map.set(baseKey, t);
+        }
       });
+      return Array.from(map.values());
     };
 
     // Listen to sammelkarten settings as primary source
@@ -762,6 +491,56 @@ export function TeacherAlbum({
     initialLimit,
   ]);
 
+  // Sync drawer with selection state
+  useEffect(() => {
+    if (selectedTeacherIndex !== null) {
+      const selectedTeacher = filteredTeachers[selectedTeacherIndex];
+      if (selectedTeacher) {
+        drawer({
+          id: 'card-detail-drawer',
+          title: '', 
+          content: (
+            <div className="relative w-full bg-neutral-950 min-h-screen">
+               {/* Fixed Share Button in Corner */}
+               <div className="absolute top-4 right-12 z-[110]">
+                  <ShareResourceButton 
+                    resourcePath={`/album/karte/${selectedTeacher.teacher.fullId.includes(':') ? selectedTeacher.teacher.fullId.split(':')[1] : selectedTeacher.teacher.id}`}
+                    title={`${selectedTeacher.teacher.name} - Sammelkarte`}
+                    variant="outline"
+                    size="icon"
+                    className="rounded-full bg-white/5 border-white/10 text-white hover:bg-white/10"
+                  />
+               </div>
+               
+               <CardDetailView
+                  teacher={selectedTeacher.teacher}
+                  userData={selectedTeacher.userData}
+                  onClose={() => handleSelectCard(null)}
+                  allCards={filteredTeachers}
+                  currentIndex={selectedTeacherIndex}
+                  onNavigate={(index) => handleSelectCard(index)}
+                />
+            </div>
+          ),
+          isDismissible: true,
+          onDismiss: () => {
+            // Only update if we're not already null to avoid unnecessary cycles
+            setSelectedTeacherIndex(prev => prev === null ? null : null);
+            // Better: just check if it's the same card or if we should clear
+            // But setSelectedTeacherIndex(null) is safe here as it will just trigger the 'else' in this effect which calls dismiss again, but dismiss is idempotent.
+            // Actually, we need to make sure we don't clear the URL if it was already cleared.
+            if (window.location.pathname.startsWith('/album/karte/')) {
+               window.history.pushState({}, '', '/album');
+            }
+            setSelectedTeacherIndex(null);
+          }
+        }); 
+      }
+    } else {
+      dismiss('card-detail-drawer');
+    }
+  }, [selectedTeacherIndex, filteredTeachers]);
+
 
   const totalTeachers = globalTeachers.length;
   const ownedCount = globalTeachers.reduce(
@@ -777,6 +556,35 @@ export function TeacherAlbum({
   // Infinite scroll window on top of the filtered result list.
   const displayedTeachers = filteredTeachers.slice(0, visibleCount);
   const hasMoreTeachers = displayedTeachers.length < filteredTeachers.length;
+
+  // Sync initial card selection
+  useEffect(() => {
+    if (initialSelectedCardId && filteredTeachers.length > 0 && selectedTeacherIndex === null) {
+      const idx = filteredTeachers.findIndex(m => {
+        const id = m.teacher.fullId.includes(':') ? m.teacher.fullId.split(':')[1] : m.teacher.id;
+        return id === initialSelectedCardId || m.teacher.fullId === initialSelectedCardId;
+      });
+      if (idx !== -1) {
+        // Ensure the card is within the visible batch
+        if (idx >= visibleCount) {
+           setVisibleCount(idx + 1);
+        }
+        setSelectedTeacherIndex(idx);
+      }
+    }
+  }, [initialSelectedCardId, filteredTeachers, visibleCount, selectedTeacherIndex]);
+
+  // Update URL when card is selected
+  const handleSelectCard = (index: number | null) => {
+    setSelectedTeacherIndex(index);
+    if (index !== null) {
+      const teacher = filteredTeachers[index].teacher;
+      const cardId = teacher.fullId.includes(':') ? teacher.fullId.split(':')[1] : teacher.id;
+      window.history.pushState({}, '', `/album/karte/${cardId}`);
+    } else {
+      window.history.pushState({}, '', '/album');
+    }
+  };
 
   const selectedTeacher =
     selectedTeacherIndex !== null
@@ -1219,7 +1027,7 @@ export function TeacherAlbum({
                   className="flex flex-col items-center w-full mx-auto"
                 >
                   <div
-                    onClick={() => setSelectedTeacherIndex(idx)}
+                    onClick={() => handleSelectCard(idx)}
                     className={cn(
                       "relative transition-all duration-300 transform group w-full aspect-[2.5/3.5] overflow-visible rounded-xl cursor-pointer",
                       !isOwned && "opacity-80",
@@ -1265,27 +1073,6 @@ export function TeacherAlbum({
           )}
         </>
       )}
-
-      <Dialog
-        open={selectedTeacherIndex !== null}
-        onOpenChange={(open) => !open && setSelectedTeacherIndex(null)}
-      >
-        <DialogContent className="max-w-[95vw] sm:max-w-md p-0 overflow-y-auto max-h-[90vh] bg-neutral-950/90 backdrop-blur-2xl border-white/10 shadow-2xl rounded-3xl ring-0">
-          <div className="relative w-full">
-            {selectedTeacher && selectedTeacherIndex !== null && (
-              <TeacherCardDetail
-                teacher={selectedTeacher.teacher}
-                userData={selectedTeacher.userData}
-                onClose={() => setSelectedTeacherIndex(null)}
-                globalTeachers={globalIndexMap}
-                allTeachers={displayedTeachers}
-                currentIndex={selectedTeacherIndex}
-                onNavigate={(index) => setSelectedTeacherIndex(index)}
-              />
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
     </BoneyardSkeleton>
   );
