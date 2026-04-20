@@ -31,6 +31,11 @@ interface PollListProps {
 }
 
 type VoteAction = 'added' | 'removed' | 'changed'
+const VOTE_ACTION_MESSAGES: Record<VoteAction, string> = {
+  added: 'Stimme hinzugefügt.',
+  removed: 'Stimme entfernt.',
+  changed: 'Stimme geändert.'
+}
 
 export function PollList({
   polls,
@@ -280,12 +285,7 @@ export function PollList({
     if (isFirstReward) {
       toast.success('Stimme gespeichert. Du hast 1 Booster-Pack als Belohnung erhalten.')
     } else {
-      const actionMessage: Record<VoteAction, string> = {
-        added: 'Stimme hinzugefügt.',
-        removed: 'Stimme entfernt.',
-        changed: 'Stimme geändert.'
-      }
-      toast.success(actionMessage[action])
+      toast.success(VOTE_ACTION_MESSAGES[action])
     }
     
     const optionText = poll?.options?.find(o => o.id === optionId)?.option_text || optionId
