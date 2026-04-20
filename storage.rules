@@ -7,7 +7,7 @@ service firebase.storage {
 
     function isAdmin() {
       return isAuthenticated() && 
-        firestore.get(/databases/(default)/documents/profiles/$(request.auth.uid)).data.role in ['admin', 'admin_main', 'admin_co'];
+        firestore.get(/databases/abi-data/documents/profiles/$(request.auth.uid)).data.role in ['admin', 'admin_main', 'admin_co'];
     }
 
     match /news-images/{userId}/{allPaths=**} {
@@ -28,21 +28,22 @@ service firebase.storage {
       allow read: if true;
       allow write: if isAuthenticated() 
         && request.resource.size < 5 * 1024 * 1024 
-        && request.resource.contentType.startsWith('image/');
+        && request.resource.contentType.matches('image/.*');
     }
 
     match /task-proofs/{taskId}/{fileName} {
       allow read: if isAuthenticated() && (
-        request.auth.uid == firestore.get(/databases/(default)/documents/tasks/$(taskId)).data.assignee_id ||
-        isAdmin()
+        fileName.size() >= request.auth.uid.size() && fileName[0:request.auth.uid.size()] == request.auth.uid ||
+        isAdmin() ||
+        request.auth.uid == firestore.get(/databases/abi-data/documents/tasks/$(taskId)).data.assignee_id
       );
       // Fallback: If firestore.get fails or is slow, check if the fileName starts with the user's UID
       // This is safe because uploadTaskProof prefixes the file with the userId.
       allow write: if isAuthenticated() && (
-        request.auth.uid == firestore.get(/databases/(default)/documents/tasks/$(taskId)).data.assignee_id ||
-        fileName.startsWith(request.auth.uid) ||
-        isAdmin()
-      ) && request.resource.size < 30 * 1024 * 1024 && (request.resource.contentType.startsWith('image/') || request.resource.contentType.startsWith('video/'));
+        fileName.size() >= request.auth.uid.size() && fileName[0:request.auth.uid.size()] == request.auth.uid ||
+        isAdmin() ||
+        request.auth.uid == firestore.get(/databases/abi-data/documents/tasks/$(taskId)).data.assignee_id
+      ) && request.resource.size < 30 * 1024 * 1024 && (request.resource.contentType.matches('image/.*') || request.resource.contentType.matches('video/.*'));
     }
 
     match /teacher_submissions/{tokenId}/{allPaths=**} {

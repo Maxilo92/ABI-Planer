@@ -8,6 +8,72 @@
 
 # Changelog
 
+## [1.24.1.10] - 2026-04-20
+
+### Behoben
+- **Storage:** Kompatibilität der Storage-Rules verbessert. Ersetzung der ungültigen `startsWith`-Funktion durch `matches` und String-Slicing, was die korrekte Prüfung von Dateinamen und Content-Types sicherstellt.
+
+## [1.24.1.9] - 2026-04-20
+
+### Behoben
+- **Storage:** Kritischer Fehler in den Storage-Rules behoben, bei dem die Firestore-Abfragen auf die `(default)` Datenbank verwiesen, während das Projekt die benannte Datenbank `abi-data` verwendet. Dies behebt den `storage/unauthorized` Fehler beim Hochladen von Aufgaben-Beweisen.
+
+## [1.24.1.8] - 2026-04-20
+
+### Behoben
+- **Storage:** Optimierung der Berechtigungsprüfung für Aufgaben-Beweise. Durch die Neuanordnung der Regeln (Short-Circuiting) wird nun zuverlässig auch dann der Upload erlaubt, wenn die Firestore-Abfrage in den Storage-Rules aufgrund fehlender Leseberechtigungen für die Aufgabe fehlschlägt.
+
+## [1.24.1.7] - 2026-04-20
+
+### Hinzugefügt
+- **Aufgaben:** Unterstützung für Text-Beweise bei der Aufgabeneinreichung implementiert. Nutzer können nun eine Beschreibung ihrer Erledigung eingeben, optional ergänzt durch ein Foto oder Video.
+- **Admin:** Erweiterung der Aufgabenprüfung um die Anzeige eingereichter Text-Beweise.
+
+## [1.24.1.6] - 2026-04-18
+
+### Verbessert
+- **Aufgaben-Detailseite:** Die Sidebar-Karte wurde strukturell optimiert. Durch den Verzicht auf Standard-Paddings (`py-0`, `gap-0`) und explizite Steuerung wird ein perfekt balancierter Abstand erreicht. Der Bereich "Aufgabe löschen" wurde extrem kompakt gestaltet und hinterlässt bei Nicht-Plannern keine Lücken.
+
+## [1.24.1.5] - 2026-04-20
+
+### Verbessert
+- **Aufgaben-Detailseite:** Farbschema neutralisiert. Die grüne Markenfarbe (`brand`) wurde in der Sidebar, dem Bestätigungsmodal und der Erfolgsmeldung durch neutrale Primärtöne ersetzt, um ein seriöseres und weniger "grünes" Erscheinungsbild zu erzielen.
+
+## [1.24.1.4] - 2026-04-20
+
+### Verbessert
+- **Aufgaben-Detailseite:** Ersetzung des Zap-Icons durch den Text "Booster" in der Belohnungsanzeige (Sidebar und Erfolgsmeldung) für eine klarere Kommunikation der Belohnung.
+
+## [1.24.1.3] - 2026-04-20
+
+### Verbessert
+- **Aufgaben-Detailseite:** Die Sidebar-Karte wurde weiter vereinfacht und nutzt nun eine einheitliche Hintergrundfarbe für den gesamten Block. Der separate Header-Hintergrund und die Trennlinie wurden entfernt, um ein ruhigeres, monolithisches Design zu schaffen.
+
+## [1.24.1.2] - 2026-04-20
+
+### Verbessert
+- **Aufgaben-Detailseite:** Signifikante Reduzierung des vertikalen Paddings in der Sidebar-Karte. Das Layout wurde kompakter gestaltet und die Abstände zwischen den Elementen symmetrisch harmonisiert, um ein effizienteres und übersichtlicheres Erscheinungsbild zu erzielen.
+
+## [1.24.1.1] - 2026-04-20
+
+### Verbessert
+- **Aufgaben-Detailseite:** Design-Refinement der Sidebar-Karte für ein hochwertigeres, aber minimalistisches Erscheinungsbild. Nutzung von subtilen Markenfarben und verbesserten Typografie-Hierarchien.
+- **Aufgaben-Flow:** Ein Bestätigungsmodal ("Bist du würdig?") wurde beim Annehmen von Aufgaben hinzugefügt, um die Verbindlichkeit und das Spielerlebnis (Gamification) zu steigern.
+
+## [1.24.1.0] - 2026-04-20
+
+### Verbessert
+- **Aufgaben-Detailseite:** Harmonisierung der Abstände und Schriftgrößen. Statt einer extremen Vergrößerung wurde ein konsistentes Padding-Schema (`p-6` für Karten) eingeführt, das für ein aufgeräumtes und professionelles Erscheinungsbild sorgt, ohne die Elemente zu überdimensionieren.
+
+## [1.24.0.0] - 2026-04-20
+
+### Verbessert
+- **Aufgaben-Detailseite:** Vollständige Überarbeitung der Layout-Struktur für ein luxuriöseres, großzügigeres Nutzererlebnis ("High-End Feel"). 
+  - Konsistentes, deutlich vergrößertes Padding (`p-8` bis `p-16`) für alle Karten und Sektionen.
+  - Optimierung der Typografie: Größere Titel (`text-3xl font-black`), vergrößerte Fließtexte (`text-xl`) und skalierte Icons für bessere Lesbarkeit und visuelle Präsenz.
+  - Die Sidebar nutzt nun `shadow-2xl` und ein `p-8` Layout für maximale Übersichtlichkeit.
+  - Buttons wurden für eine bessere Haptik vergrößert (`h-16`, `text-2xl`).
+
 ## [1.23.4.9] - 2026-04-20
 
 ### Verbessert

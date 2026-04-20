@@ -153,44 +153,55 @@ export default function AdminTasksPage() {
                   "{task.description.slice(0, 150)}{task.description.length > 150 ? '...' : ''}"
                 </div>
                 
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                    <span>Beweismaterial</span>
-                    <span className="flex items-center gap-1">
-                      {task.proof_media_type === 'video' ? <FileVideo className="h-3 w-3" /> : <ImageIcon className="h-3 w-3" />}
-                      {task.proof_media_type === 'video' ? 'Video' : 'Bild'}
-                    </span>
-                  </div>
-                  
-                  <div className="relative aspect-video rounded-lg overflow-hidden bg-black border group">
-                    {task.proof_media_type === 'video' ? (
-                      <video 
-                        src={task.proof_media_url || undefined} 
-                        className="w-full h-full object-contain"
-                        controls
-                      />
-                    ) : (
-                      <Image 
-                        src={task.proof_media_url || ''} 
-                        alt="Beweis" 
-                        fill 
-                        className="object-contain" 
-                      />
-                    )}
-                    <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <a 
-                        href={task.proof_media_url || ''} 
-                        download 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                      >
-                        <Button size="icon" variant="secondary" className="h-8 w-8 bg-black/50 hover:bg-black/70 text-white border-none">
-                          <Download className="h-4 w-4" />
-                        </Button>
-                      </a>
+                {task.proof_text && (
+                  <div className="space-y-1.5">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Text-Beweis</span>
+                    <div className="bg-primary/5 border border-primary/10 rounded-lg p-3 text-sm whitespace-pre-wrap">
+                      {task.proof_text}
                     </div>
                   </div>
-                </div>
+                )}
+
+                {task.proof_media_url && (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                      <span>Beweismaterial</span>
+                      <span className="flex items-center gap-1">
+                        {task.proof_media_type === 'video' ? <FileVideo className="h-3 w-3" /> : <ImageIcon className="h-3 w-3" />}
+                        {task.proof_media_type === 'video' ? 'Video' : 'Bild'}
+                      </span>
+                    </div>
+                    
+                    <div className="relative aspect-video rounded-lg overflow-hidden bg-black border group">
+                      {task.proof_media_type === 'video' ? (
+                        <video 
+                          src={task.proof_media_url || undefined} 
+                          className="w-full h-full object-contain"
+                          controls
+                        />
+                      ) : (
+                        <Image 
+                          src={task.proof_media_url || ''} 
+                          alt="Beweis" 
+                          fill 
+                          className="object-contain" 
+                        />
+                      )}
+                      <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <a 
+                          href={task.proof_media_url || ''} 
+                          download 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                        >
+                          <Button size="icon" variant="secondary" className="h-8 w-8 bg-black/50 hover:bg-black/70 text-white border-none">
+                            <Download className="h-4 w-4" />
+                          </Button>
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </CardContent>
               <CardFooter className="p-4 pt-0 grid grid-cols-2 gap-3">
                 <Button 

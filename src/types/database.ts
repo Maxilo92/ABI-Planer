@@ -512,6 +512,7 @@ export interface Task {
   proof_media_url?: string | null;
   proof_media_type?: 'image' | 'video' | null;
   proof_storage_path?: string | null; // Pfad für gezieltes Löschen
+  proof_text?: string | null;
   submitted_at?: string | Timestamp | Date | null;
   
   // Review
