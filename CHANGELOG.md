@@ -8,6 +8,11 @@
 
 # Changelog
 
+## [1.23.4.8] - 2026-04-20
+
+### Behoben
+- **Storage:** "Unauthorized" Fehler beim Hochladen von Aufgaben-Beweisen behoben. Die Regeln wurden optimiert und ein Fallback-Mechanismus via UID-Präfix hinzugefügt, falls die Firestore-Abfrage in den Storage-Rules verzögert oder blockiert ist.
+
 ## [1.23.4.7] - 2026-04-20
 
 ### Fixes
