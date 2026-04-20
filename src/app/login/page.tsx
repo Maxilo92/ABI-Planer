@@ -42,7 +42,7 @@ export default function LoginPage() {
     }
 
     if (redirectPath && redirectPath.startsWith('/') && !redirectPath.startsWith('//')) {
-      window.location.href = redirectPath
+      router.replace(redirectPath)
       return
     }
 
