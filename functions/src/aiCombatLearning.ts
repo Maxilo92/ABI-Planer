@@ -56,10 +56,13 @@ export function getDifficultyProfile(elo: number): AiDifficultyProfile {
 
   return {
     normalizedElo,
-    randomness: 0.36 - normalizedElo * 0.22,
+    // High randomness at low ELO → AI makes more mistakes
+    randomness: clamp(0.45 - normalizedElo * 0.38, 0.02, 0.5),
     deckBreadth: 6 + Math.round(normalizedElo * 8),
-    switchBias: 0.18 + normalizedElo * 0.52,
-    attackBias: 0.42 + normalizedElo * 0.5,
+    // Reduced switch bias so AI doesn't constantly swap cards
+    switchBias: clamp(0.08 + normalizedElo * 0.22, 0.05, 0.35),
+    // Attack bias scales with ELO – smarter AI picks better attacks
+    attackBias: clamp(0.5 + normalizedElo * 0.45, 0.4, 1.0),
   };
 }
 
@@ -100,8 +103,13 @@ export function getAttackScore(
   const lossRate = matches > 0 ? attackStat!.losses / matches : 0.5;
   const drawRate = matches > 0 ? attackStat!.draws / matches : 0;
   const confidence = clamp(matches / 15, 0, 1);
-  const lethalBonus = typeof targetHp === "number" && damage >= targetHp ? 14 : 0;
+  // Massive lethal bonus — AI should always go for the kill when possible
+  const lethalBonus = typeof targetHp === "number" && targetHp > 0 && damage >= targetHp ? 30 : 0;
+  // Smaller bonus for near-lethal (within 10 HP)
+  const nearLethalBonus = typeof targetHp === "number" && targetHp > 0 && damage < targetHp && damage >= targetHp - 10 ? 8 : 0;
   const effectBonus = attack?.effect && attack.effect !== "none" ? 3 : 0;
+  // Overkill penalty — don't waste a massive attack on a low-HP target
+  const overkillPenalty = typeof targetHp === "number" && targetHp > 0 && damage > targetHp * 2.5 ? -4 : 0;
 
   return (
     damage * (0.7 + difficultyProfile.attackBias * 0.7)
@@ -110,6 +118,8 @@ export function getAttackScore(
     + drawRate * 4
     + confidence * 6
     + lethalBonus
+    + nearLethalBonus
+    + overkillPenalty
     + effectBonus
   );
 }
@@ -214,15 +224,28 @@ export function chooseAttackIndex(
     return getAttackScore(attack, attackStats[attackKey], difficultyProfile, targetHp);
   });
 
+  // At low ELO, AI sometimes picks suboptimal attacks
   const shouldRandomize = randomFn() < difficultyProfile.randomness;
   if (!shouldRandomize) {
+    // Smart mode: pick the highest-scoring attack
     return scores.indexOf(Math.max(...scores));
   }
 
-  const shiftedScores = scores.map((score: number) => Math.max(0.05, score - Math.min(...scores) + 0.2));
+  // Random mode: weighted random, but still biased toward good attacks
+  const minScore = Math.min(...scores);
+  const shiftedScores = scores.map((score: number) => Math.max(0.05, score - minScore + 0.2));
   return pickWeightedIndex(shiftedScores, randomFn);
 }
 
+/**
+ * Decides whether the AI should switch its active card, and if so, which bench card to use.
+ * Returns -1 if the AI should NOT switch (i.e., keep attacking).
+ *
+ * The AI only switches when:
+ * 1. Active card is forced replacement (no active card) — always switch.
+ * 2. Active card HP is critically low (<25%) AND a meaningfully better bench card exists.
+ * 3. Never switches if it would cost a point the AI can't afford.
+ */
 export function chooseSwitchIndex(
   activeCard: any,
   benchCards: any[],
@@ -232,22 +255,55 @@ export function chooseSwitchIndex(
 ): number {
   if (!Array.isArray(benchCards) || benchCards.length === 0) return -1;
 
-  const activeHp = safeNumber(activeCard?.hp, safeNumber(activeCard?.maxHp, 0));
+  // If no active card (forced replacement), pick the best bench card
+  if (!activeCard) {
+    const scores = benchCards.map((card) => {
+      const cardId = card?.fullId || card?.cardId || "";
+      const cardStat = cardStats[cardId];
+      const score = getCardScore(card, cardStat, difficultyProfile, attackStats);
+      const hpBonus = safeNumber(card?.hp, safeNumber(card?.maxHp, 0)) / 10;
+      return score + hpBonus;
+    });
+    return scores.indexOf(Math.max(...scores));
+  }
+
+  // Calculate active card health ratio
+  const activeHp = safeNumber(activeCard?.hp, 0);
   const activeMaxHp = Math.max(1, safeNumber(activeCard?.maxHp, activeHp || 1));
   const activeRatio = activeHp / activeMaxHp;
-  const shouldSwitch = activeRatio <= (0.42 - difficultyProfile.normalizedElo * 0.14) || difficultyProfile.switchBias > 0.5;
 
-  if (!shouldSwitch) return -1;
+  // Only consider switching if HP is critically low
+  // Smarter AI (higher ELO) has a slightly lower threshold — hangs on longer
+  const criticalThreshold = 0.25 - difficultyProfile.normalizedElo * 0.08;
+  if (activeRatio > criticalThreshold) return -1;
 
-  const scores = benchCards.map((card) => {
+  // Calculate active card's combat effectiveness
+  const activeCardId = activeCard?.fullId || activeCard?.cardId || "";
+  const activeScore = getCardScore(activeCard, cardStats[activeCardId], difficultyProfile, attackStats);
+  // Scale score by remaining HP ratio — a nearly dead card is less valuable
+  const activeEffectiveness = activeScore * activeRatio;
+
+  // Score each bench card
+  const benchScores = benchCards.map((card) => {
     const cardId = card?.fullId || card?.cardId || "";
     const cardStat = cardStats[cardId];
     const score = getCardScore(card, cardStat, difficultyProfile, attackStats);
-    const hpScore = safeNumber(card?.hp, safeNumber(card?.maxHp, 0)) / 10;
-    return score + hpScore;
+    const cardHp = safeNumber(card?.hp, safeNumber(card?.maxHp, 0));
+    const cardMaxHp = Math.max(1, safeNumber(card?.maxHp, cardHp || 1));
+    const hpRatio = cardHp / cardMaxHp;
+    return score * hpRatio;
   });
 
-  return scores.indexOf(Math.max(...scores));
+  const bestBenchScore = Math.max(...benchScores);
+  const bestBenchIndex = benchScores.indexOf(bestBenchScore);
+
+  // Only switch if bench card is meaningfully better (>30% improvement)
+  const improvementThreshold = 1.3;
+  if (bestBenchScore > activeEffectiveness * improvementThreshold) {
+    return bestBenchIndex;
+  }
+
+  return -1;
 }
 
 function mergeStat(current: any, outcome: LearningOutcome, damage = 0, knockouts = 0): LearningStatDoc {

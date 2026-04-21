@@ -653,6 +653,12 @@ export const checkMatchTimeouts = onSchedule({
 
 /**
  * AI Turn Trigger: Logic for the AI bot to make moves.
+ * 
+ * Key behaviors:
+ * - Handles pendingReplacement as FIRST priority (forced card switch)
+ * - Dynamic delay (1-3s) based on ELO for natural feel
+ * - Falls back to attack if switch would cost a point the AI can't afford
+ * - Properly handles missing activeCard scenario
  */
 export const onMatchUpdated = onDocumentUpdated({
   document: "matches/{matchId}",
@@ -670,8 +676,11 @@ export const onMatchUpdated = onDocumentUpdated({
   const db = getDb();
   const matchRef = event.data.after.ref;
 
-  // Small delay to make it feel more natural
-  await new Promise(resolve => setTimeout(resolve, 1000));
+  // Dynamic delay based on AI ELO — lower ELO = faster (less "thinking"), higher = more deliberate
+  const aiElo = matchData.playerB?.elo || 1000;
+  const normalizedElo = Math.min(1, Math.max(0, (aiElo - 500) / 2000));
+  const delayMs = Math.round(1000 + normalizedElo * 2000 + Math.random() * 500);
+  await new Promise(resolve => setTimeout(resolve, delayMs));
 
   try {
     await db.runTransaction(async (transaction) => {
@@ -683,10 +692,75 @@ export const onMatchUpdated = onDocumentUpdated({
       const bot = data.playerB;
       const player = data.playerA;
 
-      if (!bot.activeCard) return;
-
       const playerElo = player.elo || 1000;
       const difficultyProfile = getDifficultyProfile(playerElo);
+
+      // ── PRIORITY 1: Handle pendingReplacement (forced card switch) ──
+      if (bot.pendingReplacement || !bot.activeCard) {
+        if (!bot.bench || bot.bench.length === 0) {
+          // No bench cards left — match should end
+          const nextWinner = resolveWinnerByPoints({ playerA: player, playerB: bot });
+          const logEntry = {
+            type: 'forced_end',
+            actor: AI_BOT_ID,
+            timestamp: new Date().toISOString(),
+            matchEnded: true,
+            reason: 'ai_no_bench_cards',
+          };
+          transaction.update(matchRef, {
+            playerA: player,
+            playerB: bot,
+            currentTurn: null,
+            status: 'finished',
+            winner: nextWinner,
+            actionLog: FieldValue.arrayUnion(logEntry),
+          });
+          return;
+        }
+
+        // Collect card IDs for learning (include bench since active may be null)
+        const replacementCardIds = [...(bot.bench || []), ...(bot.reserve || [])]
+          .map((card: any) => card?.cardId || card?.fullId)
+          .filter((cardId: unknown): cardId is string => typeof cardId === 'string' && cardId.length > 0);
+        const learningSnapshot = await loadAiLearningSnapshot(db, replacementCardIds);
+
+        // Use chooseSwitchIndex with null activeCard for forced replacement
+        const replacementIndex = chooseSwitchIndex(null, bot.bench, difficultyProfile, learningSnapshot.cardStats);
+        const idx = replacementIndex >= 0 ? replacementIndex : 0;
+
+        const selected = bot.bench.splice(idx, 1)[0];
+        bot.activeCard = selected;
+        bot.pendingReplacement = false;
+
+        const logEntry: any = {
+          type: 'switch',
+          actor: AI_BOT_ID,
+          timestamp: new Date().toISOString(),
+          replacementResolved: true,
+          newActiveCard: bot.activeCard?.instanceId || null,
+        };
+
+        // Draw from reserve to refill bench
+        if (bot.reserve && bot.reserve.length > 0) {
+          const drawnCard = bot.reserve.shift();
+          bot.bench.push(drawnCard);
+          logEntry.drawnToBench = drawnCard?.instanceId || null;
+        }
+
+        // Replacement keeps turn — AI can then attack on the next trigger
+        transaction.update(matchRef, {
+          playerA: player,
+          playerB: bot,
+          currentTurn: AI_BOT_ID,
+          turnStartTime: FieldValue.serverTimestamp(),
+          actionLog: FieldValue.arrayUnion(logEntry),
+          status: data.status,
+          winner: data.winner || null,
+        });
+        return;
+      }
+
+      // ── PRIORITY 2: Normal AI turn (attack or strategic switch) ──
       const cardIdsForLearning = [bot.activeCard, ...(bot.bench || []), ...(bot.reserve || [])]
         .map((card: any) => card?.cardId || card?.fullId)
         .filter((cardId: unknown): cardId is string => typeof cardId === 'string' && cardId.length > 0);
@@ -701,20 +775,35 @@ export const onMatchUpdated = onDocumentUpdated({
       ]);
 
       let action: any;
+
+      // Check if AI should strategically switch (only if it can afford it)
+      const botPoints = getPoints(bot);
       const switchIndex = chooseSwitchIndex(bot.activeCard, bot.bench, difficultyProfile, learningSnapshot.cardStats);
 
-      if (switchIndex >= 0 && bot.bench[switchIndex]) {
+      if (switchIndex >= 0 && bot.bench[switchIndex] && botPoints > 0) {
         action = { type: 'switch', benchIndex: switchIndex };
       }
 
+      // If no switch, pick the best attack
       if (!action) {
         const attackIndex = chooseAttackIndex(bot.activeCard, player.activeCard, difficultyProfile, attackStats);
 
         if (attackIndex >= 0) {
           action = { type: 'attack', attackIndex };
-        } else if (bot.bench.length > 0) {
+        } else if (bot.activeCard.attacks && bot.activeCard.attacks.length > 0) {
+          // Fallback: use first available attack
+          action = { type: 'attack', attackIndex: 0 };
+        } else if (bot.bench.length > 0 && botPoints > 0) {
+          // No attacks available — try switching
           action = { type: 'switch', benchIndex: 0 };
         } else {
+          // No valid actions — this shouldn't happen, but log and skip
+          logger.warn(`[Combat] AI has no valid actions in match ${event.params.matchId}. Skipping turn.`);
+          // Pass turn to player to avoid deadlock
+          transaction.update(matchRef, {
+            currentTurn: player.uid,
+            turnStartTime: FieldValue.serverTimestamp(),
+          });
           return;
         }
       }
@@ -731,6 +820,10 @@ export const onMatchUpdated = onDocumentUpdated({
 
       if (action.type === 'attack') {
         const attack = bot.activeCard.attacks[action.attackIndex];
+        if (!attack) {
+          logger.error(`[Combat] AI tried to use invalid attack index ${action.attackIndex} in match ${event.params.matchId}`);
+          return;
+        }
         const damage = attack.damage || 0;
         logEntry.attackerCardId = bot.activeCard.cardId || bot.activeCard.fullId || null;
         logEntry.attackKey = buildAttackKey(logEntry.attackerCardId || '', attack.name || '');
@@ -774,45 +867,33 @@ export const onMatchUpdated = onDocumentUpdated({
         }
       } else if (action.type === 'switch') {
         if (typeof action.benchIndex !== 'number' || action.benchIndex < 0 || action.benchIndex >= bot.bench.length) {
+          logger.warn(`[Combat] AI has invalid bench index ${action.benchIndex} in match ${event.params.matchId}`);
           return;
         }
 
-        if (bot.pendingReplacement) {
-          const selected = bot.bench.splice(action.benchIndex, 1)[0];
-          bot.activeCard = selected;
-          bot.pendingReplacement = false;
-          switchKeepsTurn = true;
-          logEntry.replacementResolved = true;
-          logEntry.newActiveCard = bot.activeCard?.instanceId || null;
+        const oldActive = bot.activeCard;
+        bot.activeCard = bot.bench[action.benchIndex];
+        bot.bench[action.benchIndex] = oldActive;
+        logEntry.newActiveCard = bot.activeCard.instanceId;
+        switchKeepsTurn = false;
 
-          if (bot.reserve.length > 0) {
-            const drawnCard = bot.reserve.shift();
-            bot.bench.push(drawnCard);
-            logEntry.drawnToBench = drawnCard?.instanceId || null;
-          }
+        // Deduct switch cost
+        const currentPoints = getPoints(bot);
+        if (currentPoints > 0) {
+          bot.points = currentPoints - 1;
+          logEntry.switchCostPaidBy = AI_BOT_ID;
+          logEntry.newPoints = bot.points;
         } else {
-          const oldActive = bot.activeCard;
-          bot.activeCard = bot.bench[action.benchIndex];
-          bot.bench[action.benchIndex] = oldActive;
-          logEntry.newActiveCard = bot.activeCard.instanceId;
-          switchKeepsTurn = Boolean(action.freeSwitch);
-
-          if (!switchKeepsTurn) {
-            const currentPoints = getPoints(bot);
-            if (currentPoints <= 0) {
-              return;
-            }
-            bot.points = currentPoints - 1;
-            logEntry.switchCostPaidBy = AI_BOT_ID;
-            logEntry.newPoints = bot.points;
-          }
+          // Can't afford switch — this shouldn't happen because we check above,
+          // but handle gracefully by making it free
+          logger.warn(`[Combat] AI switch with 0 points in match ${event.params.matchId} — treating as free`);
         }
       }
 
       transaction.update(matchRef, {
         playerA: player,
         playerB: bot,
-        currentTurn: nextMatchStatus === 'finished' ? null : (action.type === 'switch' ? (switchKeepsTurn ? AI_BOT_ID : player.uid) : player.uid),
+        currentTurn: nextMatchStatus === 'finished' ? null : (switchKeepsTurn ? AI_BOT_ID : player.uid),
         turnStartTime: FieldValue.serverTimestamp(),
         actionLog: FieldValue.arrayUnion(logEntry),
         status: nextMatchStatus,

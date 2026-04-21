@@ -77,6 +77,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   const { confirm } = usePopupManager();
   const [focusState, setFocusState] = useState<{ card: any, index?: number, isBench: boolean } | null>(null);
   const [attackAnimation, setAttackAnimation] = useState<{ type: 'player' | 'opponent', damage: number, attackName: string } | null>(null);
+  const [floatingDamage, setFloatingDamage] = useState<{ type: 'player' | 'opponent', value: number } | null>(null);
   const [showMenu, setShowMenu] = useState(false);
   const [showLog, setShowLog] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -87,6 +88,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   const AI_BOT_ID = 'ai_bot';
   const AI_FIRST_NAMES = ['tom', 'mike', 'alex', 'leo', 'noah', 'luca', 'ben', 'jonas', 'felix', 'max', 'nico', 'david', 'sami', 'finn', 'timo'];
 
+  // ── Perspective Guard: don't render if userId is empty (auth refresh) ──
   // Derive player/opponent robustly so transient auth states cannot swap perspectives.
   const isCurrentUserA = Boolean(currentUserId) && matchData.playerA_uid === currentUserId;
   const isCurrentUserB = Boolean(currentUserId) && matchData.playerB_uid === currentUserId;
@@ -133,16 +135,31 @@ export const GameBoard: React.FC<GameBoardProps> = ({
 
     if (latestAction.type === 'attack') {
       const isActorMe = latestAction.actor === currentUserId;
+      const animType = isActorMe ? 'player' : 'opponent';
       setAttackAnimation({
-        type: isActorMe ? 'player' : 'opponent',
+        type: animType,
         damage: latestAction.value || 0,
         attackName: latestAction.attackName || 'Angriff'
       });
+
+      // Show floating damage number on the target
+      setFloatingDamage({
+        type: isActorMe ? 'opponent' : 'player',
+        value: latestAction.value || 0,
+      });
       
-      // Auto-hide animation after some time
-      setTimeout(() => setAttackAnimation(null), 1000);
+      // Auto-hide animations
+      setTimeout(() => setAttackAnimation(null), 1500);
+      setTimeout(() => setFloatingDamage(null), 2000);
     }
   }, [matchData.actionLog, currentUserId]);
+
+  // Auto-close focus overlay when it's no longer our turn (prevent blocking AI response view)
+  useEffect(() => {
+    if (!isMyTurn && focusState && !focusState.isBench) {
+      setFocusState(null);
+    }
+  }, [isMyTurn, focusState]);
 
   // Show initial card selection on first turn
   useEffect(() => {
@@ -250,6 +267,18 @@ export const GameBoard: React.FC<GameBoardProps> = ({
     }
   }, [iNeedReplacement, isMyTurn, isFinished, isSubmitting, focusState, player?.bench]);
 
+  // Perspective guard: show loading state if auth is refreshing
+  if (!currentUserId) {
+    return (
+      <div className="relative w-full h-full bg-neutral-950 overflow-hidden flex items-center justify-center rounded-[2rem] xl:rounded-[2.5rem] 2xl:rounded-[3rem] border border-white/5 shadow-2xl">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-10 h-10 text-primary animate-spin" />
+          <span className="text-[10px] font-black uppercase tracking-widest text-white/40">Synchronisierung...</span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="relative w-full h-full bg-neutral-950 overflow-hidden flex flex-col p-2 sm:p-4 lg:p-5 xl:p-6 2xl:p-8 font-sans select-none rounded-[2rem] xl:rounded-[2.5rem] 2xl:rounded-[3rem] border border-white/5 shadow-2xl">
       {/* Initial Card Selection Modal */}
@@ -327,7 +356,14 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                       {attackAnimation.attackName} · {attackAnimation.damage} Schaden
                     </span>
                   </>
-                ) : (isMyTurn ? 'Deine Runde' : 'Warten...')
+                ) : isMyTurn ? 'Deine Runde' : (
+                  <>
+                    <span className="animate-pulse text-red-400">KI denkt nach...</span>
+                    <span className="mt-0.5 text-[8px] sm:text-[9px] xl:text-[10px] font-bold uppercase tracking-[0.18em] text-white/30">
+                      Gegner am Zug
+                    </span>
+                  </>
+                )
               )}
             </div>
           </div>
@@ -380,7 +416,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
             <span className="text-sm font-black italic tracking-tighter text-white tabular-nums">{opponent.activeCard?.hp || 0} HP</span>
           </div>
           <div className="h-2 bg-neutral-900 border border-white/5 rounded-full overflow-hidden">
-            <motion.div animate={{ width: `${opponent.activeCard?.maxHp > 0 ? (opponent.activeCard.hp / opponent.activeCard.maxHp) * 100 : 0}%` }} className="h-full bg-red-600" />
+            <motion.div animate={{ width: `${(opponent.activeCard?.maxHp || opponent.activeCard?.hp || 1) > 0 ? ((opponent.activeCard?.hp ?? 0) / (opponent.activeCard?.maxHp || opponent.activeCard?.hp || 1)) * 100 : 0}%` }} className="h-full bg-red-600" />
           </div>
         </div>
 
@@ -401,8 +437,22 @@ export const GameBoard: React.FC<GameBoardProps> = ({
           </div>
         </div>
 
-        <motion.div animate={attackAnimation?.type === 'opponent' ? { y: 20, scale: 1.05 } : {}} className={cn("w-32 sm:w-40 xl:w-44 2xl:w-52 transition-all", attackAnimation?.type === 'player' && "animate-shake")}>
+        <motion.div animate={attackAnimation?.type === 'opponent' ? { y: 20, scale: 1.05 } : {}} className={cn("w-32 sm:w-40 xl:w-44 2xl:w-52 transition-all relative", attackAnimation?.type === 'player' && "animate-shake")}>
           {opponentActive && <TeacherSpecCard data={opponentActive} isCombat />}
+          {/* Floating damage number on opponent */}
+          <AnimatePresence>
+            {floatingDamage?.type === 'opponent' && (
+              <motion.div
+                initial={{ opacity: 1, y: 0, scale: 1 }}
+                animate={{ opacity: 0, y: -40, scale: 1.5 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 1.5, ease: 'easeOut' }}
+                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-3xl sm:text-4xl font-black italic text-red-500 drop-shadow-[0_2px_8px_rgba(239,68,68,0.7)] pointer-events-none z-50"
+              >
+                -{floatingDamage.value}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </motion.div>
       </div>
 
@@ -424,6 +474,20 @@ export const GameBoard: React.FC<GameBoardProps> = ({
               <Zap className="w-3 h-3 text-white" />
             </div>
           )}
+          {/* Floating damage number on player */}
+          <AnimatePresence>
+            {floatingDamage?.type === 'player' && (
+              <motion.div
+                initial={{ opacity: 1, y: 0, scale: 1 }}
+                animate={{ opacity: 0, y: -40, scale: 1.5 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 1.5, ease: 'easeOut' }}
+                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-3xl sm:text-4xl font-black italic text-red-500 drop-shadow-[0_2px_8px_rgba(239,68,68,0.7)] pointer-events-none z-50"
+              >
+                -{floatingDamage.value}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </motion.div>
 
         <div className="flex gap-2 sm:gap-4 xl:gap-5 items-end">
@@ -461,7 +525,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
             <span className="text-sm font-black italic tracking-tighter text-white tabular-nums">{player.activeCard?.hp || 0} HP</span>
           </div>
           <div className="h-2 bg-neutral-900 border border-white/5 rounded-full overflow-hidden">
-            <motion.div animate={{ width: `${player.activeCard?.maxHp > 0 ? (player.activeCard.hp / player.activeCard.maxHp) * 100 : 0}%` }} className="h-full bg-blue-600" />
+            <motion.div animate={{ width: `${(player.activeCard?.maxHp || player.activeCard?.hp || 1) > 0 ? ((player.activeCard?.hp ?? 0) / (player.activeCard?.maxHp || player.activeCard?.hp || 1)) * 100 : 0}%` }} className="h-full bg-blue-600" />
           </div>
         </div>
       </div>

@@ -6,7 +6,26 @@
 <!-- default_action: read newest entries only unless a regression requires older history -->
 <!-- index: docs/AGENT_CONTEXT_INDEX.md -->
 
-# Changelog
+## [1.24.1.19] - 2026-04-21
+
+### Verbessert
+- **Kampfsystem (KI-Overhaul):** Die KI-Gegner-Logik wurde von Grund auf überarbeitet für strategischere und zuverlässigere Züge:
+  - **Sofortige Ersatzkarten-Wahl:** Wenn die aktive Karte der KI besiegt wird, wählt sie sofort die beste verfügbare Bankkarte als Ersatz, statt auf den nächsten Trigger zu warten.
+  - **Strategisches Wechseln:** KI wechselt Karten nur noch bei kritisch niedrigen HP (<25%) UND wenn eine deutlich bessere Alternative vorhanden ist (>30% Verbesserung), statt wie zuvor fast bei jeder Gelegenheit.
+  - **Kill-Priorisierung:** Lethal-Bonus für Angriffe massiv erhöht (14→30), Near-Lethal-Bonus (+8) und Overkill-Penalty eingeführt. Die KI priorisiert nun konsequent Kills.
+  - **ELO-basierte Fehler:** Niedrige ELO = mehr zufällige (suboptimale) Entscheidungen. Hohe ELO = fast optimales Spiel.
+  - **0-Punkte-Bug behoben:** KI bleibt nicht mehr hängen wenn sie keine Punkte für einen Wechsel hat – sie fällt jetzt auf Angriff zurück.
+  - **Deadlock-Prävention:** KI übergibt den Zug an den Spieler wenn keine gültige Aktion möglich ist.
+  - **Dynamische Verzögerung:** KI-Züge haben nun eine ELO-abhängige Verzögerung (1-3.5s) statt fester 1s für ein natürlicheres Spielgefühl.
+
+### Behoben
+- **HP-Bar:** Beide HP-Balken (Spieler und Gegner) zeigen nun korrekte Prozentwerte, auch wenn `maxHp` undefiniert ist.
+- **Perspektiv-Guard:** Das GameBoard zeigt eine Ladeanzeige statt einer falschen Perspektive wenn die Auth-Session kurzzeitig leer ist.
+- **Focus-Overlay:** Das Angriffs-Overlay schließt sich automatisch wenn der Gegner am Zug ist, damit KI-Züge sichtbar bleiben.
+
+### Hinzugefügt
+- **Floating Damage Numbers:** Schadenszahlen erscheinen als animierte, aufsteigende Zahlen über der getroffenen Karte (rot, verblassend).
+- **KI-Zug-Indikator:** Der Turn-Indicator zeigt "KI denkt nach..." mit pulsierender Animation wenn die KI am Zug ist, statt des uninformativen "Warten...".
 
 ## [1.24.1.18] - 2026-04-20
 
