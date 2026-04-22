@@ -2,7 +2,7 @@
 
 import { usePathname } from 'next/navigation'
 import { getMainBaseUrl } from '@/lib/dashboard-url'
-import { Logo } from '@/components/Logo'
+import Logo from '@/components/Logo'
 import Link from 'next/link'
 import { Locale } from '@/lib/helpFaqs'
 

@@ -61,7 +61,7 @@ import {
 } from 'chart.js'
 import { Line } from 'react-chartjs-2'
 
-import { useLanguage } from '@/lib/i18n/useLanguage'
+import { useLanguage } from '@/context/LanguageContext'
 import { LanguageToggle } from '@/components/ui/LanguageToggle'
 
 ChartJS.register(
@@ -76,7 +76,7 @@ ChartJS.register(
 )
 
 function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
-  const { t, locale } = useLanguage()
+  const { t, language } = useLanguage()
   const [landingNews, setLandingNews] = useState<any[]>([])
   const [landingNewsLoading, setLandingNewsLoading] = useState(true)
   const dashboardBaseUrl = getDashboardBaseUrl()
@@ -192,7 +192,7 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
     }
   } satisfies Parameters<typeof motion.div>[0]['variants']
 
-  const formatMetric = (value: number | null) => value === null ? '—' : new Intl.NumberFormat(locale).format(value)
+  const formatMetric = (value: number | null) => value === null ? '—' : new Intl.NumberFormat(language).format(value)
 
   return (
     <div className="relative min-h-screen bg-background text-foreground selection:bg-brand/30 overflow-hidden">
@@ -624,14 +624,14 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
           <div className="max-w-7xl mx-auto space-y-20">
              <div className="flex flex-col md:flex-row md:items-end justify-between gap-10">
                 <div className="space-y-4 text-center md:text-left">
-                   <p className="text-brand font-bold uppercase tracking-widest text-[11px]">Updates</p>
+                   <p className="text-brand font-bold uppercase tracking-widest text-[11px]">{t('landing.news.badge')}</p>
                    <h2 className="text-4xl md:text-6xl font-extrabold tracking-tight leading-tight">
-                      Neues aus <br />
-                      eurem Jahrgang.
+                      {t('landing.news.title1')} <br />
+                      {t('landing.news.title2')}
                    </h2>
                 </div>
                 <Button variant="outline" asChild className="h-12 px-8 border-border rounded-2xl font-bold text-xs hover:bg-muted/50 transition-all">
-                   <Link href="/news">Alle News lesen</Link>
+                   <Link href="/news">{t('landing.news.cta')}</Link>
                 </Button>
              </div>
 
@@ -672,7 +672,7 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
                     >
                       <Link href={`/news/${item.id}`} className="group block py-12">
                         <article className="grid md:grid-cols-[120px_1fr_auto] gap-10 items-start md:items-center">
-                           <span className="text-sm font-bold text-muted-foreground/50">{item.created_at ? toDate(item.created_at).toLocaleDateString('de-DE') : 'Neu'}</span>
+                           <span className="text-sm font-bold text-muted-foreground/50">{item.created_at ? toDate(item.created_at).toLocaleDateString(language) : t('landing.news.new')}</span>
                            <div className="flex flex-col md:flex-row gap-8 items-start md:items-center flex-1">
                              {item.image_url && (
                                <div className="relative h-24 w-40 md:h-20 md:w-32 shrink-0 overflow-hidden rounded-2xl bg-muted border border-border/40 shadow-sm transition-transform group-hover:scale-105">
@@ -699,7 +699,7 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
                   ))
                 ) : (
                   <div className="py-24 text-center">
-                     <p className="text-muted-foreground italic font-medium">Keine aktuellen Updates verfügbar.</p>
+                     <p className="text-muted-foreground italic font-medium">{t('landing.news.empty')}</p>
                   </div>
                 )}
                 </Skeleton>
@@ -713,20 +713,20 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
             <div className="space-y-6 max-w-2xl">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/5 border border-amber-500/10 text-amber-600 dark:text-amber-500 text-[11px] font-bold uppercase tracking-wider">
                 <Coffee className="h-3.5 w-3.5" />
-                <span>Projekt-Support</span>
+                <span>{t('landing.support.badge')}</span>
               </div>
               <h2 className="text-4xl md:text-5xl font-extrabold tracking-tight leading-tight">
-                Unterstützt die <br />
-                <span className="text-amber-500">Weiterentwicklung.</span>
+                {t('landing.support.title1')} <br />
+                <span className="text-amber-500">{t('landing.support.title2')}</span>
               </h2>
               <p className="text-muted-foreground text-lg leading-relaxed font-medium">
-                Der ABI Planer ist für Schüler kostenlos. Wer uns unterstützen möchte, kann dies durch eine freiwillige Förderung tun. So bleiben wir unabhängig und werbefrei.
+                {t('landing.support.desc')}
               </p>
             </div>
             
             <Button size="lg" asChild className="h-14 px-8 text-sm font-bold rounded-2xl bg-amber-500 text-white hover:bg-amber-600 shadow-xl shadow-amber-500/20 border-none group transition-all shrink-0">
               <a href="https://buymeacoffee.com/maxilo" target="_blank" rel="noopener noreferrer">
-                Projekt unterstützen
+                {t('landing.support.cta')}
                 <Coffee className="ml-2 h-4 w-4 transition-transform group-hover:rotate-12" />
               </a>
             </Button>
@@ -743,11 +743,11 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
               className="space-y-6"
             >
               <h2 className="text-5xl md:text-8xl font-extrabold tracking-tighter leading-tight">
-                Bereit für <br />
-                <span className="text-brand">den Start?</span>
+                {t('landing.finalCta.title1')} <br />
+                <span className="text-brand">{t('landing.finalCta.title2')}</span>
               </h2>
               <p className="text-xl md:text-2xl text-muted-foreground max-w-xl mx-auto leading-relaxed font-medium">
-                Richtet euren Jahrgang ein und bindet alle Schüler aktiv in die Planung ein.
+                {t('landing.finalCta.desc')}
               </p>
             </motion.div>
             
@@ -759,12 +759,12 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
             >
                <Button size="lg" asChild className="h-16 px-10 text-sm font-bold rounded-2xl bg-brand text-brand-foreground hover:bg-brand/90 shadow-2xl shadow-brand/20 transition-all group">
                   <a href={`${dashboardBaseUrl}/register`}>
-                    Jetzt starten
+                    {t('landing.finalCta.ctaPrimary')}
                     <Rocket className="ml-3 h-5 w-5 transition-transform group-hover:-translate-y-1 group-hover:translate-x-1" />
                   </a>
                </Button>
                <Button variant="ghost" asChild className="h-16 px-8 text-sm font-bold rounded-2xl text-muted-foreground hover:text-foreground transition-colors">
-                  <a href={`${dashboardBaseUrl}/login`}>Einloggen</a>
+                  <a href={`${dashboardBaseUrl}/login`}>{t('landing.finalCta.ctaSecondary')}</a>
                </Button>
             </motion.div>
           </div>
@@ -775,6 +775,7 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
 }
 
 export default function Dashboard() {
+  const { t, language } = useLanguage()
   const router = useRouter()
   const { user, profile, loading: authLoading } = useAuth()
   const [rootMode, setRootMode] = useState<'unknown' | 'landing' | 'dashboard'>('unknown')
@@ -1097,7 +1098,7 @@ export default function Dashboard() {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center p-8 text-center">
         <Loader2 className="h-10 w-10 animate-spin text-primary mb-4" />
-        <p className="text-sm text-muted-foreground animate-pulse">Initialisiere Plattform...</p>
+        <p className="text-sm text-muted-foreground animate-pulse">{t('dashboard.loading')}</p>
       </div>
     )
   }
@@ -1110,7 +1111,7 @@ export default function Dashboard() {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center p-8 text-center">
         <Loader2 className="h-10 w-10 animate-spin text-primary mb-4" />
-        <p className="text-sm text-muted-foreground animate-pulse">Sichere Verbindung wird hergestellt...</p>
+        <p className="text-sm text-muted-foreground animate-pulse">{t('dashboard.secureConnection')}</p>
       </div>
     )
   }
@@ -1118,7 +1119,7 @@ export default function Dashboard() {
   const NewsPreview = ({ items, loading }: { items: any[], loading?: boolean }) => (
     <Card className="flex flex-col border-border/40 shadow-card overflow-hidden bg-card">
       <CardHeader className="pb-3 border-b border-border bg-muted/10 shrink-0">
-        <CardTitle className="text-lg font-bold">Letzte Updates</CardTitle>
+        <CardTitle className="text-lg font-bold">{t('dashboard.lastUpdates')}</CardTitle>
       </CardHeader>
       <CardContent className="p-0">
         <div className="p-4 space-y-4">
@@ -1155,7 +1156,7 @@ export default function Dashboard() {
                     <div className="flex justify-between items-start mb-1 gap-2">
                       <h4 className="font-semibold text-sm truncate leading-tight group-hover:text-brand transition-colors">{item.title}</h4>
                       <span className="text-[10px] text-muted-foreground bg-secondary px-2 py-0.5 rounded shrink-0">
-                        {item.created_at ? toDate(item.created_at).toLocaleDateString('de-DE') : 'Neu'}
+                        {item.created_at ? toDate(item.created_at).toLocaleDateString(language) : t('landing.news.new')}
                       </span>
                     </div>
                     <div className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
@@ -1175,7 +1176,7 @@ export default function Dashboard() {
                     </div>
                     <div className="mt-2 flex items-center justify-end text-[10px] font-semibold text-contrast">
                       <span className="inline-flex items-center gap-1">
-                        Zum Beitrag <ArrowRight className="h-3 w-3" />
+                        {t('dashboard.viewPost')} <ArrowRight className="h-3 w-3" />
                       </span>
                     </div>
                   </div>
@@ -1183,10 +1184,10 @@ export default function Dashboard() {
               </Link>
             ))
           ) : (
-            <p className="text-sm text-muted-foreground italic text-center py-8">Noch keine Neuigkeiten vorhanden.</p>
+            <p className="text-sm text-muted-foreground italic text-center py-8">{t('dashboard.noNews')}</p>
           )}
           <Link href="/news" onClick={(e) => e.stopPropagation()} className="block py-4 text-xs font-semibold text-center hover:underline text-muted-foreground">
-            Alle News ansehen
+            {t('dashboard.viewAllNews')}
           </Link>
         </div>
       </CardContent>
@@ -1542,23 +1543,23 @@ export default function Dashboard() {
                   className="h-8 gap-2 border-brand/20 hover:bg-brand/5 text-xs font-bold uppercase tracking-wider animate-in fade-in zoom-in duration-300"
                 >
                   {isResetting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5 text-brand" />}
-                  Auto
+                  {t('dashboard.autoLayout')}
                 </Button>
               )}
             </div>
           )}
         </div>
-        <p className="text-muted-foreground font-medium uppercase tracking-widest text-xs">Willkommen zurück!</p>
+        <p className="text-muted-foreground font-medium uppercase tracking-widest text-xs">{t('dashboard.welcome')}</p>
       </div>
 
       <FundingBanner
         bannerId="support-banner"
         current={settings?.current_support_amount ?? 0}
         goal={settings?.support_goal ?? 100}
-        title="Helft uns die Seite am Laufen zu halten"
-        description="Damit der ABI Planer werbefrei, stabil und für alle kostenlos bleibt, fallen monatliche Kosten für Server, Datenbanken und Hosting an. Da wir keine Daten verkaufen oder Werbung schalten, deckt dieser Support-Pool ausschließlich diese technischen Ausgaben. Sollte das Ziel nicht erreicht werden, müssten die Kosten privat getragen oder Funktionen eingeschränkt werden – jeder Euro sichert also den Betrieb eurer Plattform!"
+        title={t('dashboard.supportBanner.title')}
+        description={t('dashboard.supportBanner.description')}
         ctaHref="/finanzen/spenden/entwickler"
-        ctaLabel="Support geben"
+        ctaLabel={t('dashboard.supportBanner.cta')}
         storageKey="dashboard-funding-banner-collapsed"
       />
 

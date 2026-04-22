@@ -103,30 +103,171 @@ export const translations = {
         desc: 'Richtet euren Jahrgang ein und bindet alle Schüler aktiv in die Planung ein.',
         ctaPrimary: 'Jetzt starten',
         ctaSecondary: 'Einloggen'
+      },
+      dashboard: {
+        loading: 'Initialisiere Plattform...',
+        secureConnection: 'Sichere Verbindung wird hergestellt...',
+        welcome: 'Willkommen zurück!',
+        autoLayout: 'Auto',
+        lastUpdates: 'Letzte Updates',
+        viewPost: 'Zum Beitrag',
+        noNews: 'Noch keine Neuigkeiten vorhanden.',
+        viewAllNews: 'Alle News ansehen',
+        supportBanner: {
+          title: 'Helft uns die Seite am Laufen zu halten',
+          description: 'Damit der ABI Planer werbefrei, stabil und für alle kostenlos bleibt, fallen monatliche Kosten für Server, Datenbanken und Hosting an. Da wir keine Daten verkaufen oder Werbung schalten, deckt dieser Support-Pool ausschließlich diese technischen Ausgaben. Sollte das Ziel nicht erreicht werden, müssten die Kosten privat getragen oder Funktionen eingeschränkt werden – jeder Euro sichert also den Betrieb eurer Plattform!',
+          cta: 'Support geben'
+        }
       }
     },
     auth: {
       register: {
         title: 'Registrierung',
-        fullName: 'Vollständiger Name',
-        email: 'E-Mail Adresse',
-        password: 'Passwort',
-        course: 'Kurs / Klasse',
+        titleSuccess: 'Fast fertig!',
+        desc: 'Erstelle einen Account, um mitzugestalten oder abzustimmen.',
+        descSuccess: 'Wir haben dir eine Verifizierungs-E-Mail gesendet.',
+        backToHome: 'Zurück zur Startseite',
+        step: 'Schritt',
         steps: {
-          account: 'Konto',
-          profile: 'Profil',
-          finish: 'Fertig'
+          name: 'Name',
+          emailPassword: 'E-Mail & Passwort',
+          course: 'Kurs',
+          teacherInfo: 'Lehrer Info',
+          grade: 'Klassenstufe'
         },
-        submit: 'Konto erstellen'
+        labels: {
+          fullName: 'Vollständiger Name',
+          email: 'E-Mail',
+          password: 'Passwort',
+          course: 'Kurs',
+          manualGrade: 'Klassenstufe / Bezeichnung'
+        },
+        placeholders: {
+          fullName: 'Max Mustermann',
+          email: 'nachname.vorname@hgr-web.lernsax.de',
+          manualGrade: 'z.B. 10L2, 7b, ...',
+          loadingCourses: 'Lade Kurse...'
+        },
+        hints: {
+          password: 'Du kannst hier ein neues Passwort festlegen, es muss nicht dein LernSax-Passwort sein.'
+        },
+        checkboxes: {
+          age16: 'Ich bestätige, dass ich mindestens 16 Jahre alt bin.',
+          terms: 'Ich akzeptiere die'
+        },
+        teacherInfo: {
+          title: 'Lehrer-Account',
+          text: 'Als Lehrer hast du vollen Zugriff auf alle Inhalte der App, um den Abiturjahrgang zu unterstützen. Bitte beachte, dass du an schüler-spezifischen Abstimmungen (z.B. Abimotto) nicht teilnehmen kannst.'
+        },
+        otherGradeInfo: {
+          title: 'Andere Klassenstufe',
+          text: 'Diese App ist primär auf die Organisation der aktuellen Abitur-Stufe ausgelegt. Du kannst sie dennoch nutzen, um über Veranstaltungen informiert zu bleiben.'
+        },
+        success: {
+          message: 'Bitte klicke auf den Link in der E-Mail (Check auch deinen Spam-Ordner), um deinen Account zu aktivieren und deine Willkommens-Booster zu erhalten!',
+          toCards: 'Zu den Karten',
+          toDashboard: 'Zum Dashboard'
+        },
+        buttons: {
+          back: 'Zurück',
+          next: 'Weiter',
+          creating: 'Erstellung...',
+          submit: 'Account erstellen'
+        },
+        footer: {
+          alreadyHaveAccount: 'Bereits einen Account?',
+          login: 'Anmelden',
+          privacy: 'Datenschutzerklärung'
+        },
+        errors: {
+          nameRequired: 'Bitte gib zuerst deinen vollständigen Namen ein.',
+          credentialsRequired: 'Bitte gib E-Mail und Passwort ein.',
+          invalidEmail: 'Bitte gib eine gültige E-Mail-Adresse ein.',
+          domainRestricted: 'Nur E-Mail Adressen von @hgr-web.lernsax.de sind erlaubt.',
+          passwordTooShort: 'Das Passwort muss mindestens 6 Zeichen lang sein.',
+          coursesLoading: 'Kurse werden noch geladen. Bitte warte einen Moment.',
+          courseRequired: 'Bitte wähle einen Kurs aus.',
+          ageRequired: 'Du musst bestätigen, dass du mindestens 16 Jahre alt bist.',
+          termsRequired: 'Bitte akzeptiere die AGB.',
+          gradeRequired: 'Bitte gib deine Klassenstufe ein.',
+          failed: 'Registrierung fehlgeschlagen: '
+        },
+        options: {
+          teacher: 'Lehrer',
+          otherGrade: 'andere KlassenStufe'
+        }
       }
     },
     settings: {
+      title: 'Einstellungen',
+      quickAccess: 'Schnellzugriff',
+      sections: {
+        personal: 'Persönlich',
+        appearance: 'Darstellung',
+        feedback: 'Feedback',
+        bonuses: 'Boni',
+        account: 'Konto',
+        administration: 'Verwaltung',
+        language: 'Sprache'
+      },
+      profile: {
+        title: 'Profil',
+        desc: 'Dein öffentliches Profil ansehen und bearbeiten.',
+        button: 'Profil öffnen'
+      },
+      appearance: {
+        title: 'Darstellung',
+        desc: 'Hell, dunkel oder automatisch nach System.'
+      },
       language: {
         title: 'Sprache',
+        desc: 'Wähle deine bevorzugte Sprache für die App.',
         select: 'Sprache auswählen',
         de: 'Deutsch',
         en: 'Englisch',
         es: 'Spanisch'
+      },
+      feedback: {
+        title: 'Feedback',
+        desc: 'Teile Bugs, Ideen und Feature-Wünsche.'
+      },
+      bonuses: {
+        title: 'Freunde einladen',
+        desc: 'Sammle Bonus-Booster für dich und deine Freunde.',
+        button: 'Einladungs-Dashboard öffnen'
+      },
+      account: {
+        title: 'Abmelden',
+        desc: 'Beende deine aktuelle Sitzung auf diesem Gerät.',
+        button: 'Abmelden'
+      },
+      courseSystem: {
+        title: 'Kurssystem',
+        desc: 'Kurse umbenennen, hinzufügen oder entfernen. Umbenennungen werden auf bestehende Zuordnungen angewendet.',
+        placeholder: 'z.B. Kurs 1',
+        remove: 'Kurs entfernen',
+        add: 'Kurs hinzufügen',
+        adminHint: 'Als Admin werden Umbenennungen automatisch in Profilen, Todos und Finanzen übernommen.',
+        plannerHint: 'Du kannst Kurse ändern, aber Datenmigration bei Umbenennungen erfordert Admin-Rechte.',
+        restrictedHint: 'Nur Planer/Admins können das Kurssystem bearbeiten.',
+        save: 'Kurse speichern',
+        saving: 'Speichern...'
+      },
+      guard: {
+        title: 'Ungespeicherte Änderungen',
+        desc: 'Du hast Änderungen vorgenommen, die noch nicht gespeichert wurden. Möchtest du diese jetzt speichern oder die Seite verlassen?',
+        discard: 'Verwerfen & Verlassen',
+        cancel: 'Abbrechen',
+        save: 'Speichern & Fortfahren'
+      },
+      messages: {
+        loading: 'Lade Einstellungen...',
+        saved: 'Alles gespeichert.',
+        minOneCourse: 'Bitte mindestens einen Kurs eintragen.',
+        migrationAdmin: 'Kurse aktualisiert und bestehende Zuweisungen umbenannt.',
+        migrationWarning: 'Kursnamen wurden gespeichert. Datenmigration ist nur für Admins möglich.',
+        updated: 'Kurssystem aktualisiert.',
+        error: 'Kurse konnten nicht gespeichert werden.'
       }
     }
   },
@@ -234,30 +375,171 @@ export const translations = {
         desc: 'Set up your class and actively involve all students in the planning.',
         ctaPrimary: 'Start now',
         ctaSecondary: 'Login'
+      },
+      dashboard: {
+        loading: 'Initializing platform...',
+        secureConnection: 'Establishing secure connection...',
+        welcome: 'Welcome back!',
+        autoLayout: 'Auto',
+        lastUpdates: 'Last Updates',
+        viewPost: 'To Post',
+        noNews: 'No news available yet.',
+        viewAllNews: 'View all news',
+        supportBanner: {
+          title: 'Help us keep the site running',
+          description: 'To keep ABI Planer ad-free, stable, and free for everyone, monthly costs for servers, databases, and hosting are incurred. Since we do not sell data or run ads, this support pool exclusively covers these technical expenses. If the goal is not reached, the costs would have to be borne privately or functions restricted – so every euro secures the operation of your platform!',
+          cta: 'Give support'
+        }
       }
     },
     auth: {
       register: {
         title: 'Registration',
-        fullName: 'Full Name',
-        email: 'Email Address',
-        password: 'Password',
-        course: 'Course / Class',
+        titleSuccess: 'Almost done!',
+        desc: 'Create an account to participate or vote.',
+        descSuccess: 'We have sent you a verification email.',
+        backToHome: 'Back to home',
+        step: 'Step',
         steps: {
-          account: 'Account',
-          profile: 'Profile',
-          finish: 'Finish'
+          name: 'Name',
+          emailPassword: 'Email & Password',
+          course: 'Course',
+          teacherInfo: 'Teacher Info',
+          grade: 'Grade'
         },
-        submit: 'Create Account'
+        labels: {
+          fullName: 'Full Name',
+          email: 'Email',
+          password: 'Password',
+          course: 'Course',
+          manualGrade: 'Grade / Designation'
+        },
+        placeholders: {
+          fullName: 'John Doe',
+          email: 'lastname.firstname@hgr-web.lernsax.de',
+          manualGrade: 'e.g. 10L2, 7b, ...',
+          loadingCourses: 'Loading courses...'
+        },
+        hints: {
+          password: 'You can set a new password here, it does not have to be your LernSax password.'
+        },
+        checkboxes: {
+          age16: 'I confirm that I am at least 16 years old.',
+          terms: 'I accept the'
+        },
+        teacherInfo: {
+          title: 'Teacher Account',
+          text: 'As a teacher, you have full access to all content of the app to support the graduation class. Please note that you cannot participate in student-specific polls (e.g. graduation motto).'
+        },
+        otherGradeInfo: {
+          title: 'Other Grade',
+          text: 'This app is primarily designed for the organization of the current graduation class. You can still use it to stay informed about events.'
+        },
+        success: {
+          message: 'Please click on the link in the email (also check your spam folder) to activate your account and receive your welcome boosters!',
+          toCards: 'To the cards',
+          toDashboard: 'To the dashboard'
+        },
+        buttons: {
+          back: 'Back',
+          next: 'Next',
+          creating: 'Creating...',
+          submit: 'Create account'
+        },
+        footer: {
+          alreadyHaveAccount: 'Already have an account?',
+          login: 'Login',
+          privacy: 'Privacy Policy'
+        },
+        errors: {
+          nameRequired: 'Please enter your full name first.',
+          credentialsRequired: 'Please enter email and password.',
+          invalidEmail: 'Please enter a valid email address.',
+          domainRestricted: 'Only email addresses from @hgr-web.lernsax.de are allowed.',
+          passwordTooShort: 'The password must be at least 6 characters long.',
+          coursesLoading: 'Courses are still loading. Please wait a moment.',
+          courseRequired: 'Please select a course.',
+          ageRequired: 'You must confirm that you are at least 16 years old.',
+          termsRequired: 'Please accept the terms and conditions.',
+          gradeRequired: 'Please enter your grade.',
+          failed: 'Registration failed: '
+        },
+        options: {
+          teacher: 'Teacher',
+          otherGrade: 'other Grade'
+        }
       }
     },
     settings: {
+      title: 'Settings',
+      quickAccess: 'Quick Access',
+      sections: {
+        personal: 'Personal',
+        appearance: 'Appearance',
+        feedback: 'Feedback',
+        bonuses: 'Bonuses',
+        account: 'Account',
+        administration: 'Administration',
+        language: 'Language'
+      },
+      profile: {
+        title: 'Profile',
+        desc: 'View and edit your public profile.',
+        button: 'Open Profile'
+      },
+      appearance: {
+        title: 'Appearance',
+        desc: 'Light, dark, or automatic according to system.'
+      },
       language: {
         title: 'Language',
+        desc: 'Choose your preferred language for the app.',
         select: 'Select Language',
         de: 'German',
         en: 'English',
         es: 'Spanish'
+      },
+      feedback: {
+        title: 'Feedback',
+        desc: 'Share bugs, ideas, and feature requests.'
+      },
+      bonuses: {
+        title: 'Invite Friends',
+        desc: 'Collect bonus boosters for you and your friends.',
+        button: 'Open Invitation Dashboard'
+      },
+      account: {
+        title: 'Logout',
+        desc: 'End your current session on this device.',
+        button: 'Logout'
+      },
+      courseSystem: {
+        title: 'Course System',
+        desc: 'Rename, add, or remove courses. Renames are applied to existing assignments.',
+        placeholder: 'e.g. Course 1',
+        remove: 'Remove course',
+        add: 'Add course',
+        adminHint: 'As an admin, renames are automatically applied to profiles, todos, and finances.',
+        plannerHint: 'You can change courses, but data migration for renames requires admin rights.',
+        restrictedHint: 'Only planners/admins can edit the course system.',
+        save: 'Save courses',
+        saving: 'Saving...'
+      },
+      guard: {
+        title: 'Unsaved Changes',
+        desc: 'You have made changes that have not been saved yet. Do you want to save them now or leave the page?',
+        discard: 'Discard & Leave',
+        cancel: 'Cancel',
+        save: 'Save & Continue'
+      },
+      messages: {
+        loading: 'Loading settings...',
+        saved: 'Everything saved.',
+        minOneCourse: 'Please enter at least one course.',
+        migrationAdmin: 'Courses updated and existing assignments renamed.',
+        migrationWarning: 'Course names saved. Data migration is only possible for admins.',
+        updated: 'Course system updated.',
+        error: 'Courses could not be saved.'
       }
     }
   },
@@ -365,30 +647,171 @@ export const translations = {
         desc: 'Configura tu curso e involucra activamente a todos los estudiantes en la planificación.',
         ctaPrimary: 'Empezar ahora',
         ctaSecondary: 'Iniciar sesión'
+      },
+      dashboard: {
+        loading: 'Inicializando plataforma...',
+        secureConnection: 'Estableciendo conexión segura...',
+        welcome: '¡Bienvenido de nuevo!',
+        autoLayout: 'Auto',
+        lastUpdates: 'Últimas Actualizaciones',
+        viewPost: 'Ver Publicación',
+        noNews: 'Aún no hay noticias disponibles.',
+        viewAllNews: 'Ver todas las noticias',
+        supportBanner: {
+          title: 'Ayúdanos a mantener el sitio en funcionamiento',
+          description: 'Para que ABI Planer siga siendo libre de publicidad, estable y gratuito para todos, se incurre en costes mensuales de servidores, bases de datos y alojamiento. Como no vendemos datos ni publicamos anuncios, este fondo de apoyo cubre exclusivamente estos gastos técnicos. Si no se alcanza el objetivo, los costes tendrían que ser asumidos de forma privada o se restringirían las funciones, ¡así que cada euro asegura el funcionamiento de tu plataforma!',
+          cta: 'Dar apoyo'
+        }
       }
     },
     auth: {
       register: {
         title: 'Registro',
-        fullName: 'Nombre Completo',
-        email: 'Correo Electrónico',
-        password: 'Contraseña',
-        course: 'Curso / Clase',
+        titleSuccess: '¡Casi listo!',
+        desc: 'Crea una cuenta para participar o votar.',
+        descSuccess: 'Te hemos enviado un correo electrónico de verificación.',
+        backToHome: 'Volver al inicio',
+        step: 'Paso',
         steps: {
-          account: 'Cuenta',
-          profile: 'Perfil',
-          finish: 'Finalizar'
+          name: 'Nombre',
+          emailPassword: 'Correo y Contraseña',
+          course: 'Curso',
+          teacherInfo: 'Información del Profesor',
+          grade: 'Grado'
         },
-        submit: 'Crear Cuenta'
+        labels: {
+          fullName: 'Nombre completo',
+          email: 'Correo electrónico',
+          password: 'Contraseña',
+          course: 'Curso',
+          manualGrade: 'Grado / Designación'
+        },
+        placeholders: {
+          fullName: 'Juan Pérez',
+          email: 'apellido.nombre@hgr-web.lernsax.de',
+          manualGrade: 'p. ej. 10L2, 7b, ...',
+          loadingCourses: 'Cargando cursos...'
+        },
+        hints: {
+          password: 'Puedes establecer una nueva contraseña aquí, no tiene que ser tu contraseña de LernSax.'
+        },
+        checkboxes: {
+          age16: 'Confirmo que tengo al menos 16 años.',
+          terms: 'Acepto los'
+        },
+        teacherInfo: {
+          title: 'Cuenta de Profesor',
+          text: 'Como profesor, tienes acceso total a todo el contenido de la aplicación para apoyar a la clase de graduación. Ten en cuenta que no puedes participar en votaciones específicas de los estudiantes (p. ej., lema de graduación).'
+        },
+        otherGradeInfo: {
+          title: 'Otro Grado',
+          text: 'Esta aplicación está diseñada principalmente para la organización de la clase de graduación actual. Aún puedes usarla para mantenerte informado sobre los eventos.'
+        },
+        success: {
+          message: '¡Haz clic en el enlace del correo electrónico (revisa también tu carpeta de spam) para activar tu cuenta y recibir tus boosters de bienvenida!',
+          toCards: 'A las cartas',
+          toDashboard: 'Al panel'
+        },
+        buttons: {
+          back: 'Atrás',
+          next: 'Siguiente',
+          creating: 'Creando...',
+          submit: 'Crear cuenta'
+        },
+        footer: {
+          alreadyHaveAccount: '¿Ya tienes una cuenta?',
+          login: 'Iniciar sesión',
+          privacy: 'Política de privacidad'
+        },
+        errors: {
+          nameRequired: 'Por favor, introduce primero tu nombre completo.',
+          credentialsRequired: 'Por favor, introduce correo y contraseña.',
+          invalidEmail: 'Por favor, introduce una dirección de correo válida.',
+          domainRestricted: 'Solo se permiten direcciones de correo de @hgr-web.lernsax.de.',
+          passwordTooShort: 'La contraseña debe tener al menos 6 caracteres.',
+          coursesLoading: 'Los cursos aún se están cargando. Por favor, espera un momento.',
+          courseRequired: 'Por favor, selecciona un curso.',
+          ageRequired: 'Debes confirmar que tienes al menos 16 años.',
+          termsRequired: 'Por favor, acepta los términos y condiciones.',
+          gradeRequired: 'Por favor, introduce tu grado.',
+          failed: 'Registro fallido: '
+        },
+        options: {
+          teacher: 'Profesor',
+          otherGrade: 'otro Grado'
+        }
       }
     },
     settings: {
+      title: 'Ajustes',
+      quickAccess: 'Acceso Rápido',
+      sections: {
+        personal: 'Personal',
+        appearance: 'Apariencia',
+        feedback: 'Comentarios',
+        bonuses: 'Bonos',
+        account: 'Cuenta',
+        administration: 'Administración',
+        language: 'Idioma'
+      },
+      profile: {
+        title: 'Perfil',
+        desc: 'Ver y editar tu perfil público.',
+        button: 'Abrir Perfil'
+      },
+      appearance: {
+        title: 'Apariencia',
+        desc: 'Claro, oscuro o automático según el sistema.'
+      },
       language: {
         title: 'Idioma',
+        desc: 'Elige tu idioma preferido para la aplicación.',
         select: 'Seleccionar Idioma',
         de: 'Alemán',
         en: 'Inglés',
         es: 'Español'
+      },
+      feedback: {
+        title: 'Comentarios',
+        desc: 'Comparte errores, ideas y solicitudes de funciones.'
+      },
+      bonuses: {
+        title: 'Invitar Amigos',
+        desc: 'Colecciona potenciadores de bonificación para ti y tus amigos.',
+        button: 'Abrir Panel de Invitaciones'
+      },
+      account: {
+        title: 'Cerrar Sesión',
+        desc: 'Finaliza tu sesión actual en este dispositivo.',
+        button: 'Cerrar Sesión'
+      },
+      courseSystem: {
+        title: 'Sistema de Cursos',
+        desc: 'Cambiar el nombre, añadir o eliminar cursos. Los cambios de nombre se aplican a las asignaciones existentes.',
+        placeholder: 'p. ej. Curso 1',
+        remove: 'Eliminar curso',
+        add: 'Añadir curso',
+        adminHint: 'Como administrador, los cambios de nombre se aplican automáticamente a los perfiles, tareas y finanzas.',
+        plannerHint: 'Puedes cambiar los cursos, pero la migración de datos para los cambios de nombre requiere derechos de administrador.',
+        restrictedHint: 'Solo los planificadores/administradores pueden editar el sistema de cursos.',
+        save: 'Guardar cursos',
+        saving: 'Guardando...'
+      },
+      guard: {
+        title: 'Cambios sin Guardar',
+        desc: 'Has realizado cambios que aún no se han guardado. ¿Quieres guardarlos ahora o salir de la página?',
+        discard: 'Descartar y Salir',
+        cancel: 'Cancelar',
+        save: 'Guardar y Continuar'
+      },
+      messages: {
+        loading: 'Cargando ajustes...',
+        saved: 'Todo guardado.',
+        minOneCourse: 'Por favor, introduce al menos un curso.',
+        migrationAdmin: 'Cursos actualizados y asignaciones existentes renombradas.',
+        migrationWarning: 'Nombres de cursos guardados. La migración de datos solo es posible para administradores.',
+        updated: 'Sistema de cursos actualizado.',
+        error: 'No se pudieron guardar los cursos.'
       }
     }
   }

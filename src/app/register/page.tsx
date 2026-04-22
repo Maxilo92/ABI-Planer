@@ -15,11 +15,14 @@ import Link from 'next/link'
 import Logo from '@/components/Logo'
 import { logAction } from '@/lib/logging'
 import { getAppHomeUrl, getAccessTargetFromProfile, getMainBaseUrl } from '@/lib/dashboard-url'
+import { useLanguage } from '@/context/LanguageContext'
+import { LanguageToggle } from '@/components/ui/LanguageToggle'
 
 const OPTION_TEACHER = 'Lehrer'
 const OPTION_OTHER_GRADE = 'andere KlassenStufe'
 
 function RegisterForm() {
+  const { t } = useLanguage()
   const [step, setStep] = useState<1 | 2 | 3 | 4 | 5>(1)
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
@@ -76,7 +79,7 @@ function RegisterForm() {
   const validateCurrentStep = () => {
     if (step === 1) {
       if (!fullName.trim()) {
-        setError('Bitte gib zuerst deinen vollständigen Namen ein.')
+        setError(t('auth.register.errors.nameRequired'))
         return false
       }
       return true
@@ -85,22 +88,22 @@ function RegisterForm() {
     if (step === 2) {
       const normalizedEmail = email.trim().toLowerCase()
       if (!normalizedEmail || !password.trim()) {
-        setError('Bitte gib E-Mail und Passwort ein.')
+        setError(t('auth.register.errors.credentialsRequired'))
         return false
       }
 
       if (!normalizedEmail.includes('@')) {
-        setError('Bitte gib eine gültige E-Mail-Adresse ein.')
+        setError(t('auth.register.errors.invalidEmail'))
         return false
       }
 
       if (!normalizedEmail.endsWith('@hgr-web.lernsax.de')) {
-        setError('Nur E-Mail Adressen von @hgr-web.lernsax.de sind erlaubt.')
+        setError(t('auth.register.errors.domainRestricted'))
         return false
       }
 
       if (password.length < 6) {
-        setError('Das Passwort muss mindestens 6 Zeichen lang sein.')
+        setError(t('auth.register.errors.passwordTooShort'))
         return false
       }
 
@@ -109,21 +112,21 @@ function RegisterForm() {
 
     if (step === 3) {
       if (isCoursesLoading) {
-        setError('Kurse werden noch geladen. Bitte warte einen Moment.')
+        setError(t('auth.register.errors.coursesLoading'))
         return false
       }
       if (!selectedCourse) {
-        setError('Bitte wähle einen Kurs aus.')
+        setError(t('auth.register.errors.courseRequired'))
         return false
       }
 
       if (!isAtLeast16) {
-        setError('Du musst bestätigen, dass du mindestens 16 Jahre alt bist.')
+        setError(t('auth.register.errors.ageRequired'))
         return false
       }
 
       if (!acceptsTerms) {
-        setError('Bitte akzeptiere die AGB.')
+        setError(t('auth.register.errors.termsRequired'))
         return false
       }
 
@@ -132,7 +135,7 @@ function RegisterForm() {
 
     if (step === 4) {
       if (selectedCourse === OPTION_OTHER_GRADE && !manualGrade.trim()) {
-        setError('Bitte gib deine Klassenstufe ein.')
+        setError(t('auth.register.errors.gradeRequired'))
         return false
       }
       return true
@@ -168,7 +171,7 @@ function RegisterForm() {
       const normalizedEmail = email.trim().toLowerCase()
       // 0. Domain validation
       if (!normalizedEmail.endsWith('@hgr-web.lernsax.de')) {
-        throw new Error('Nur E-Mail Adressen von @hgr-web.lernsax.de sind erlaubt.')
+        throw new Error(t('auth.register.errors.domainRestricted'))
       }
 
       // 1. Create user in Firebase Auth
@@ -239,7 +242,7 @@ function RegisterForm() {
 
       setStep(5) // Success/Verification step
     } catch (err: any) {
-      setError('Registrierung fehlgeschlagen: ' + err.message)
+      setError(t('auth.register.errors.failed') + err.message)
     } finally {
       setLoading(false)
     }
@@ -250,22 +253,23 @@ function RegisterForm() {
       <div className="mx-auto w-full max-w-md flex flex-col items-center gap-8">
         <Logo width={120} height={120} />
         <Card className="w-full rounded-2xl border border-border/70 bg-card shadow-sm">
-          <div className="px-5 pt-4 sm:px-7 sm:pt-5">
+          <div className="px-5 pt-4 sm:px-7 sm:pt-5 flex justify-between items-center">
             <Button
               variant="ghost"
               size="sm"
               className="-ml-2 text-muted-foreground hover:text-foreground"
-              render={<Link href="/">Zurück zur Startseite</Link>}
+              render={<Link href="/">{t('auth.register.backToHome')}</Link>}
             />
+            <LanguageToggle />
           </div>
           <CardHeader className="space-y-3 px-5 pb-7 pt-3 sm:px-7 sm:pb-8 sm:pt-5">
             <CardTitle className="text-4xl font-black text-center tracking-tight">
-              {step === 5 ? 'Fast fertig!' : 'Registrieren'}
+              {step === 5 ? t('auth.register.titleSuccess') : t('auth.register.title')}
             </CardTitle>
             <CardDescription className="text-center">
               {step === 5 
-                ? 'Wir haben dir eine Verifizierungs-E-Mail gesendet.' 
-                : 'Erstelle einen Account, um mitzugestalten oder abzustimmen.'}
+                ? t('auth.register.descSuccess') 
+                : t('auth.register.desc')}
             </CardDescription>
             {step < 5 && (
               <div className="pt-3 space-y-2.5">
@@ -278,10 +282,10 @@ function RegisterForm() {
                   )}
                 </div>
                 <p className="text-xs text-muted-foreground text-center">
-                  {step === 1 ? `Schritt 1/${isSpecialOption ? '4' : '3'}: Name` : 
-                   step === 2 ? `Schritt 2/${isSpecialOption ? '4' : '3'}: E-Mail & Passwort` : 
-                   step === 3 ? `Schritt 3/${isSpecialOption ? '4' : '3'}: Kurs` : 
-                   `Schritt 4/4: ${selectedCourse === OPTION_TEACHER ? 'Lehrer Info' : 'Klassenstufe'}`}
+                  {step === 1 ? `${t('auth.register.step')} 1/${isSpecialOption ? '4' : '3'}: ${t('auth.register.steps.name')}` : 
+                   step === 2 ? `${t('auth.register.step')} 2/${isSpecialOption ? '4' : '3'}: ${t('auth.register.steps.emailPassword')}` : 
+                   step === 3 ? `${t('auth.register.step')} 3/${isSpecialOption ? '4' : '3'}: ${t('auth.register.steps.course')}` : 
+                   `${t('auth.register.step')} 4/4: ${selectedCourse === OPTION_TEACHER ? t('auth.register.steps.teacherInfo') : t('auth.register.steps.grade')}`}
                 </p>
               </div>
             )}
@@ -289,7 +293,7 @@ function RegisterForm() {
           {step === 5 ? (
             <CardContent className="space-y-6 px-5 pb-7 sm:px-7 sm:pb-8 text-center">
               <div className="p-4 bg-primary/10 rounded-xl text-sm text-primary font-medium leading-relaxed">
-                Bitte klicke auf den Link in der E-Mail (Check auch deinen Spam-Ordner), um deinen Account zu aktivieren und deine Willkommens-Booster zu erhalten!
+                {t('auth.register.success.message')}
               </div>
               <Button
                 onClick={() => {
@@ -302,7 +306,7 @@ function RegisterForm() {
                 }}
                 className="w-full h-12"
               >
-                {postSignupTarget === 'tcg' ? 'Zu den Karten' : 'Zum Dashboard'}
+                {postSignupTarget === 'tcg' ? t('auth.register.success.toCards') : t('auth.register.success.toDashboard')}
               </Button>
             </CardContent>
           ) : (
@@ -315,10 +319,10 @@ function RegisterForm() {
                 )}
                 {step === 1 && (
                   <div className="space-y-2">
-                    <Label htmlFor="fullName" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Vollständiger Name</Label>
+                    <Label htmlFor="fullName" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">{t('auth.register.labels.fullName')}</Label>
                     <Input 
                       id="fullName" 
-                      placeholder="Max Mustermann" 
+                      placeholder={t('auth.register.placeholders.fullName')} 
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
                       className="h-12 text-base bg-background/70 border-border"
@@ -331,11 +335,11 @@ function RegisterForm() {
                 {step === 2 && (
                   <>
                     <div className="space-y-2">
-                      <Label htmlFor="email" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">E-Mail</Label>
+                      <Label htmlFor="email" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">{t('auth.register.labels.email')}</Label>
                       <Input 
                         id="email" 
                         type="email" 
-                        placeholder="nachname.vorname@hgr-web.lernsax.de" 
+                        placeholder={t('auth.register.placeholders.email')} 
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         className="h-12 text-base bg-background/70 border-border"
@@ -344,7 +348,7 @@ function RegisterForm() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="password" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Passwort</Label>
+                      <Label htmlFor="password" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">{t('auth.register.labels.password')}</Label>
                       <Input 
                         id="password" 
                         type="password" 
@@ -355,7 +359,7 @@ function RegisterForm() {
                         required 
                       />
                       <p className="text-xs text-muted-foreground">
-                        Du kannst hier ein neues Passwort festlegen, es muss nicht dein LernSax-Passwort sein.
+                        {t('auth.register.hints.password')}
                       </p>
                     </div>
                   </>
@@ -364,7 +368,7 @@ function RegisterForm() {
                 {step === 3 && (
                   <div className="space-y-5 mb-1 sm:mb-2">
                     <div className="space-y-2">
-                      <Label htmlFor="course" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Kurs</Label>
+                      <Label htmlFor="course" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">{t('auth.register.labels.course')}</Label>
                       <div className="relative">
                         <select
                           id="course"
@@ -375,11 +379,13 @@ function RegisterForm() {
                           disabled={isCoursesLoading}
                         >
                           {isCoursesLoading ? (
-                            <option value="">Lade Kurse...</option>
+                            <option value="">{t('auth.register.placeholders.loadingCourses')}</option>
                           ) : (
                             courses.map((course) => (
                               <option key={course} value={course}>
-                                {course}
+                                {course === OPTION_TEACHER ? t('auth.register.options.teacher') : 
+                                 course === OPTION_OTHER_GRADE ? t('auth.register.options.otherGrade') : 
+                                 course}
                               </option>
                             ))
                           )}
@@ -401,7 +407,7 @@ function RegisterForm() {
                           className="mt-0.5 shrink-0"
                         />
                         <Label htmlFor="age16" className="!block text-xs leading-relaxed text-muted-foreground font-medium cursor-pointer">
-                          Ich bestätige, dass ich mindestens 16 Jahre alt bin.
+                          {t('auth.register.checkboxes.age16')}
                         </Label>
                       </div>
 
@@ -413,7 +419,7 @@ function RegisterForm() {
                           className="mt-0.5 shrink-0"
                         />
                         <Label htmlFor="termsAccepted" className="!block text-xs leading-relaxed text-muted-foreground font-medium cursor-pointer">
-                          Ich akzeptiere die{' '}
+                          {t('auth.register.checkboxes.terms')}{' '}
                           <a
                             href={`${mainBaseUrl}/agb`}
                             target="_blank"
@@ -434,27 +440,25 @@ function RegisterForm() {
                   <div className="space-y-6">
                     {selectedCourse === OPTION_TEACHER ? (
                       <div className="p-4 bg-muted/30 rounded-xl space-y-3 border border-border/50">
-                        <p className="text-sm font-bold text-foreground">Lehrer-Account</p>
+                        <p className="text-sm font-bold text-foreground">{t('auth.register.teacherInfo.title')}</p>
                         <p className="text-xs leading-relaxed text-muted-foreground">
-                          Als Lehrer hast du vollen Zugriff auf alle Inhalte der App, um den Abiturjahrgang zu unterstützen. 
-                          Bitte beachte, dass du an schüler-spezifischen Abstimmungen (z.B. Abimotto) nicht teilnehmen kannst.
+                          {t('auth.register.teacherInfo.text')}
                         </p>
                       </div>
                     ) : (
                       <div className="space-y-5">
                         <div className="p-4 bg-muted/30 rounded-xl space-y-3 border border-border/50">
-                          <p className="text-sm font-bold text-foreground">Andere Klassenstufe</p>
+                          <p className="text-sm font-bold text-foreground">{t('auth.register.otherGradeInfo.title')}</p>
                           <p className="text-xs leading-relaxed text-muted-foreground">
-                            Diese App ist primär auf die Organisation der aktuellen Abitur-Stufe ausgelegt. 
-                            Du kannst sie dennoch nutzen, um über Veranstaltungen informiert zu bleiben.
+                            {t('auth.register.otherGradeInfo.text')}
                           </p>
                         </div>
                         
                         <div className="space-y-2">
-                          <Label htmlFor="manualGrade" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Klassenstufe / Bezeichnung</Label>
+                          <Label htmlFor="manualGrade" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">{t('auth.register.labels.manualGrade')}</Label>
                           <Input 
                             id="manualGrade" 
-                            placeholder="z.B. 10L2, 7b, ..." 
+                            placeholder={t('auth.register.placeholders.manualGrade')} 
                             value={manualGrade}
                             onChange={(e) => setManualGrade(e.target.value)}
                             className="h-12 text-base bg-background/70 border-border"
@@ -476,23 +480,23 @@ function RegisterForm() {
                       onClick={() => setStep((prev) => (prev - 1) as 1 | 2 | 3 | 4 | 5)}
                       disabled={loading}
                     >
-                      Zurück
+                      {t('auth.register.buttons.back')}
                     </Button>
                   )}
 
                   <Button type="submit" className="flex-1 h-12" disabled={loading}>
-                    {step < 3 || (step === 3 && isSpecialOption) ? 'Weiter' : (loading ? 'Erstellung...' : 'Account erstellen')}
+                    {step < 3 || (step === 3 && isSpecialOption) ? t('auth.register.buttons.next') : (loading ? t('auth.register.buttons.creating') : t('auth.register.buttons.submit'))}
                   </Button>
                 </div>
                 <p className="text-sm text-center text-muted-foreground">
-                  Bereits einen Account?{' '}
+                  {t('auth.register.footer.alreadyHaveAccount')}{' '}
                   <Link href="/login" className="text-primary hover:underline font-medium">
-                    Anmelden
+                    {t('auth.register.footer.login')}
                   </Link>
                   <br />
                   <span className="text-xs">
                     <a href={`${mainBaseUrl}/datenschutz`} className="underline hover:text-primary" target="_blank" rel="noopener noreferrer">
-                      Datenschutzerklärung
+                      {t('auth.register.footer.privacy')}
                     </a>
                   </span>
                 </p>

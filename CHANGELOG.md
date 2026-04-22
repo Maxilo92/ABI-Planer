@@ -6,7 +6,22 @@
 <!-- default_action: read newest entries only unless a regression requires older history -->
 <!-- index: docs/AGENT_CONTEXT_INDEX.md -->
 
-## [1.27.1.00] - 2026-04-22
+## [1.28.1.00] - 2026-04-22
+
+### Behoben
+- **Internationalisierung (i18n):**
+  - **Import-Fehler:** Korrektur fehlerhafter Import-Pfade für `useLanguage` in `src/app/page.tsx` (von `@/lib/i18n/useLanguage` zu `@/context/LanguageContext`).
+  - **Typ-Sicherheit:** Ersetzung der undefinierten Variable `locale` durch `language` in `src/app/page.tsx`, um Kompatibilität mit dem `LanguageContext` herzustellen.
+  - **Komponenten-Import:** Fix des `LanguageToggle` Imports in `src/app/register/page.tsx` (Umstellung auf Named Import).
+  - **Syntax-Fehler:** Behebung von JSX-Syntaxfehlern in `src/app/page.tsx`, die durch fehlerhafte Code-Ersetzungen entstanden waren.
+
+### Validiert
+- **Übersetzungssystem:** Erfolgreiche Validierung der `translations.ts` mit vollständigen Objekten für Deutsch, Englisch und Spanisch.
+- **Integration:** Bestätigung der korrekten Einbindung des `LanguageProvider` in das Root-Layout und der funktionalen Nutzung in den Kern-Seiten (Landing, Registrierung, Einstellungen).
+- **UI-Elemente:** Verifizierung der korrekten Platzierung und Funktionalität des `LanguageToggle` auf der Landingpage.
+
+## [1.28.0.00] - 2026-04-22
+
 
 ### Hinzugefügt
 - **Internationalisierung (i18n):**

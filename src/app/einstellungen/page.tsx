@@ -4,11 +4,12 @@ import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { signOut } from 'firebase/auth'
-import { User, MoonStar, MessageSquarePlus, LogOut, Users, Save, Plus, Trash2, Sparkles, AlertTriangle } from 'lucide-react'
+import { User, MoonStar, MessageSquarePlus, LogOut, Users, Save, Plus, Trash2, Sparkles, AlertTriangle, Globe } from 'lucide-react'
 import { collection, doc, getDocs, onSnapshot, query, setDoc, where, writeBatch } from 'firebase/firestore'
 
 import { auth, db } from '@/lib/firebase'
 import { useAuth } from '@/context/AuthContext'
+import { useLanguage } from '@/context/LanguageContext'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { 
@@ -34,6 +35,7 @@ interface CourseRow {
 
 export default function SettingsPage() {
   const { user, profile, loading } = useAuth()
+  const { t, language, setLanguage } = useLanguage()
   const [courseRows, setCourseRows] = useState<CourseRow[]>([])
   const [originalCourses, setOriginalCourses] = useState<string[]>([])
   const [savingCourses, setSavingCourses] = useState(false)
@@ -80,7 +82,7 @@ export default function SettingsPage() {
     setSavingCourses(true)
     try {
       await handleSaveCourses()
-      toast.success('Alles gespeichert.')
+      toast.success(t('settings.messages.saved'))
       if (nextPath) {
         router.push(nextPath)
       }
@@ -208,7 +210,7 @@ export default function SettingsPage() {
     )
 
     if (courses.length === 0) {
-      toast.error('Bitte mindestens einen Kurs eintragen.')
+      toast.error(t('settings.messages.minOneCourse'))
       return
     }
 
@@ -218,15 +220,15 @@ export default function SettingsPage() {
 
       if (renamedCourses.length > 0) {
         if (!canMigrateCourses) {
-          toast.warning('Kursnamen wurden gespeichert. Datenmigration ist nur für Admins möglich.')
+          toast.warning(t('settings.messages.migrationWarning'))
         } else {
           for (const row of renamedCourses) {
             await migrateCourseName(row.before, row.after)
           }
-          toast.success('Kurse aktualisiert und bestehende Zuweisungen umbenannt.')
+          toast.success(t('settings.messages.migrationAdmin'))
         }
       } else {
-        toast.success('Kurssystem aktualisiert.')
+        toast.success(t('settings.messages.updated'))
       }
 
       if (user) {
@@ -238,14 +240,14 @@ export default function SettingsPage() {
       }
     } catch (error) {
       console.error('Error saving courses:', error)
-      toast.error('Kurse konnten nicht gespeichert werden.')
+      toast.error(t('settings.messages.error'))
     } finally {
       setSavingCourses(false)
     }
   }
 
   if (loading) {
-    return <div className="py-8 text-center text-muted-foreground">Lade Einstellungen...</div>
+    return <div className="py-8 text-center text-muted-foreground">{t('settings.messages.loading')}</div>
   }
 
   if (!profile) {
@@ -255,33 +257,34 @@ export default function SettingsPage() {
   return (
     <div className="max-w-3xl mx-auto space-y-6">
       <div>
-        <h1 className="text-3xl font-extrabold tracking-tight">Einstellungen</h1>
+        <h1 className="text-3xl font-extrabold tracking-tight">{t('settings.title')}</h1>
       </div>
 
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-base">Schnellzugriff</CardTitle>
+          <CardTitle className="text-base">{t('settings.quickAccess')}</CardTitle>
         </CardHeader>
         <CardContent className="pt-0 flex flex-wrap gap-2">
-          <a href="#profil" className="inline-flex"><Button variant="outline" size="sm">Profil</Button></a>
-          <a href="#darstellung" className="inline-flex"><Button variant="outline" size="sm">Darstellung</Button></a>
-          <a href="#feedback" className="inline-flex"><Button variant="outline" size="sm">Feedback</Button></a>
-          <a href="#boni" className="inline-flex"><Button variant="outline" size="sm">Boni</Button></a>
-          <a href="#konto" className="inline-flex"><Button variant="outline" size="sm">Konto</Button></a>
+          <a href="#profil" className="inline-flex"><Button variant="outline" size="sm">{t('settings.sections.personal')}</Button></a>
+          <a href="#darstellung" className="inline-flex"><Button variant="outline" size="sm">{t('settings.sections.appearance')}</Button></a>
+          <a href="#sprache" className="inline-flex"><Button variant="outline" size="sm">{t('settings.sections.language')}</Button></a>
+          <a href="#feedback" className="inline-flex"><Button variant="outline" size="sm">{t('settings.sections.feedback')}</Button></a>
+          <a href="#boni" className="inline-flex"><Button variant="outline" size="sm">{t('settings.sections.bonuses')}</Button></a>
+          <a href="#konto" className="inline-flex"><Button variant="outline" size="sm">{t('settings.sections.account')}</Button></a>
           {canManageCourses && (
-            <a href="#kurssystem" className="inline-flex"><Button variant="outline" size="sm">Kurssystem</Button></a>
+            <a href="#kurssystem" className="inline-flex"><Button variant="outline" size="sm">{t('settings.courseSystem.title')}</Button></a>
           )}
         </CardContent>
       </Card>
 
       <section className="space-y-3" id="profil">
-        <h2 className="text-lg font-bold tracking-tight">Persönlich</h2>
+        <h2 className="text-lg font-bold tracking-tight">{t('settings.sections.personal')}</h2>
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-xl">
-              <User className="h-5 w-5" /> Profil
+              <User className="h-5 w-5" /> {t('settings.profile.title')}
             </CardTitle>
-            <CardDescription>Dein öffentliches Profil ansehen und bearbeiten.</CardDescription>
+            <CardDescription>{t('settings.profile.desc')}</CardDescription>
           </CardHeader>
           <CardContent>
             <Button
@@ -289,7 +292,7 @@ export default function SettingsPage() {
               className="w-full sm:w-auto"
               render={
                 <Link href="/profil">
-                  Profil öffnen
+                  {t('settings.profile.button')}
                 </Link>
               }
             />
@@ -301,9 +304,9 @@ export default function SettingsPage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-xl">
-              <MoonStar className="h-5 w-5" /> Darstellung
+              <MoonStar className="h-5 w-5" /> {t('settings.appearance.title')}
             </CardTitle>
-            <CardDescription>Hell, dunkel oder automatisch nach System.</CardDescription>
+            <CardDescription>{t('settings.appearance.desc')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <ThemeToggle />
@@ -312,13 +315,55 @@ export default function SettingsPage() {
         </Card>
       </section>
 
+      <section className="space-y-3" id="sprache">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-xl">
+              <Globe className="h-5 w-5" /> {t('settings.language.title')}
+            </CardTitle>
+            <CardDescription>{t('settings.language.desc')}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex flex-wrap gap-2">
+              <Button 
+                variant={language === 'de-DE' ? 'default' : 'outline'} 
+                size="sm" 
+                onClick={() => setLanguage('de-DE')}
+                className="gap-2"
+              >
+                <span className="text-[10px] font-bold bg-muted px-1 rounded text-muted-foreground">DE</span>
+                {t('settings.language.de')}
+              </Button>
+              <Button 
+                variant={language === 'en-US' ? 'default' : 'outline'} 
+                size="sm" 
+                onClick={() => setLanguage('en-US')}
+                className="gap-2"
+              >
+                <span className="text-[10px] font-bold bg-muted px-1 rounded text-muted-foreground">EN</span>
+                {t('settings.language.en')}
+              </Button>
+              <Button 
+                variant={language === 'es-ES' ? 'default' : 'outline'} 
+                size="sm" 
+                onClick={() => setLanguage('es-ES')}
+                className="gap-2"
+              >
+                <span className="text-[10px] font-bold bg-muted px-1 rounded text-muted-foreground">ES</span>
+                {t('settings.language.es')}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </section>
+
       <section className="space-y-3" id="feedback">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-xl">
-              <MessageSquarePlus className="h-5 w-5" /> Feedback
+              <MessageSquarePlus className="h-5 w-5" /> {t('settings.feedback.title')}
             </CardTitle>
-            <CardDescription>Teile Bugs, Ideen und Feature-Wünsche.</CardDescription>
+            <CardDescription>{t('settings.feedback.desc')}</CardDescription>
           </CardHeader>
           <CardContent>
             <AddFeedbackDialog />
@@ -327,13 +372,13 @@ export default function SettingsPage() {
       </section>
 
       <section className="space-y-3" id="boni">
-        <h2 className="text-lg font-bold tracking-tight">Boni</h2>
+        <h2 className="text-lg font-bold tracking-tight">{t('settings.sections.bonuses')}</h2>
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-xl">
-              <Sparkles className="h-5 w-5 text-primary" /> Freunde einladen
+              <Sparkles className="h-5 w-5 text-primary" /> {t('settings.bonuses.title')}
             </CardTitle>
-            <CardDescription>Sammle Bonus-Booster für dich und deine Freunde.</CardDescription>
+            <CardDescription>{t('settings.bonuses.desc')}</CardDescription>
           </CardHeader>
           <CardContent>
             <Button 
@@ -341,7 +386,7 @@ export default function SettingsPage() {
               className="w-full sm:w-auto gap-2"
               render={
                 <Link href="/einstellungen/referrals">
-                  <Users className="h-4 w-4" /> Einladungs-Dashboard öffnen
+                  <Users className="h-4 w-4" /> {t('settings.bonuses.button')}
                 </Link>
               }
             />
@@ -350,17 +395,17 @@ export default function SettingsPage() {
       </section>
 
       <section className="space-y-3" id="konto">
-        <h2 className="text-lg font-bold tracking-tight">Konto</h2>
+        <h2 className="text-lg font-bold tracking-tight">{t('settings.sections.account')}</h2>
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-xl">
-              <LogOut className="h-5 w-5 text-destructive" /> Abmelden
+              <LogOut className="h-5 w-5 text-destructive" /> {t('settings.account.title')}
             </CardTitle>
-            <CardDescription>Beende deine aktuelle Sitzung auf diesem Gerät.</CardDescription>
+            <CardDescription>{t('settings.account.desc')}</CardDescription>
           </CardHeader>
           <CardContent>
             <Button variant="destructive" onClick={handleSignOut} className="w-full sm:w-auto gap-2">
-              <LogOut className="h-4 w-4" /> Abmelden
+              <LogOut className="h-4 w-4" /> {t('settings.account.button')}
             </Button>
           </CardContent>
         </Card>
@@ -368,14 +413,14 @@ export default function SettingsPage() {
 
       {canManageCourses && (
         <section className="space-y-6" id="verwaltung">
-          <h2 className="text-lg font-bold tracking-tight">Verwaltung</h2>
+          <h2 className="text-lg font-bold tracking-tight">{t('settings.sections.administration')}</h2>
           <Card id="kurssystem">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-xl">
-                <Users className="h-5 w-5" /> Kurssystem
+                <Users className="h-5 w-5" /> {t('settings.courseSystem.title')}
               </CardTitle>
               <CardDescription>
-                Kurse umbenennen, hinzufügen oder entfernen. Umbenennungen werden auf bestehende Zuordnungen angewendet.
+                {t('settings.courseSystem.desc')}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -385,7 +430,7 @@ export default function SettingsPage() {
                     <Input
                       value={row.after}
                       onChange={(e) => updateCourseRow(row.id, e.target.value)}
-                      placeholder="z.B. Kurs 1"
+                      placeholder={t('settings.courseSystem.placeholder')}
                       disabled={!canManageCourses}
                     />
                     <Button
@@ -393,7 +438,7 @@ export default function SettingsPage() {
                       size="icon"
                       onClick={() => removeCourseRow(row.id)}
                       disabled={!canManageCourses || courseRows.length <= 1}
-                      title="Kurs entfernen"
+                      title={t('settings.courseSystem.remove')}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -401,18 +446,18 @@ export default function SettingsPage() {
                 ))}
               </div>
               <Button variant="outline" onClick={addCourseRow} disabled={!canManageCourses} className="gap-2">
-                <Plus className="h-4 w-4" /> Kurs hinzufügen
+                <Plus className="h-4 w-4" /> {t('settings.courseSystem.add')}
               </Button>
               <div className="flex items-center justify-between gap-3">
                 <p className="text-xs text-muted-foreground">
                   {canManageCourses
                     ? canMigrateCourses
-                      ? 'Als Admin werden Umbenennungen automatisch in Profilen, Todos und Finanzen übernommen.'
-                      : 'Du kannst Kurse ändern, aber Datenmigration bei Umbenennungen erfordert Admin-Rechte.'
-                    : 'Nur Planer/Admins können das Kurssystem bearbeiten.'}
+                      ? t('settings.courseSystem.adminHint')
+                      : t('settings.courseSystem.plannerHint')
+                    : t('settings.courseSystem.restrictedHint')}
                 </p>
                 <Button onClick={handleSaveCourses} disabled={!canManageCourses || savingCourses} className="gap-2">
-                  <Save className="h-4 w-4" /> {savingCourses ? 'Speichern...' : 'Kurse speichern'}
+                  <Save className="h-4 w-4" /> {savingCourses ? t('settings.courseSystem.saving') : t('settings.courseSystem.save')}
                 </Button>
               </div>
             </CardContent>
@@ -426,21 +471,21 @@ export default function SettingsPage() {
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-destructive">
-              <AlertTriangle className="h-5 w-5" /> Ungespeicherte Änderungen
+              <AlertTriangle className="h-5 w-5" /> {t('settings.guard.title')}
             </DialogTitle>
             <DialogDescription>
-              Du hast Änderungen vorgenommen, die noch nicht gespeichert wurden. Möchtest du diese jetzt speichern oder die Seite verlassen?
+              {t('settings.guard.desc')}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="flex flex-col gap-2 sm:flex-col">
             <Button variant="ghost" className="w-full" onClick={handleConfirmNavigation}>
-              Verwerfen & Verlassen
+              {t('settings.guard.discard')}
             </Button>
             <Button variant="outline" className="w-full" onClick={() => setIsGuardOpen(false)}>
-              Abbrechen
+              {t('settings.guard.cancel')}
             </Button>
             <Button className="w-full" onClick={handleSaveAll} disabled={savingCourses}>
-              Speichern & Fortfahren
+              {t('settings.guard.save')}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -5,7 +5,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { Search, X, HelpCircle, ArrowRight, Languages } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { Logo } from '@/components/Logo'
+import Logo from '@/components/Logo'
 import { getMainBaseUrl } from '@/lib/dashboard-url'
 import { searchHelpFaqs, HelpFaqItem, Locale } from '@/lib/helpFaqs'
 import {
