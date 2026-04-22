@@ -280,17 +280,24 @@ export default function UberPage() {
           <div className="absolute top-0 left-0 w-64 h-64 bg-white/10 rounded-full -translate-x-1/2 -translate-y-1/2 blur-3xl" />
           <div className="absolute bottom-0 right-0 w-64 h-64 bg-black/10 rounded-full translate-x-1/2 translate-y-1/2 blur-3xl" />
           
-          <h2 className="text-3xl md:text-4xl font-bold relative">Willst du mithelfen?</h2>
-          <p className="text-primary-foreground/80 max-w-xl mx-auto relative leading-relaxed">
-            Der ABI Planer ist ein Open-Source-Projekt. Du hast Ideen, hast einen Bug gefunden oder willst selbst coden? 
-            Nutze das Feedback-Feature oder schau auf GitHub vorbei.
-          </p>
+          <div className="relative space-y-4">
+            <Badge variant="outline" className="bg-white/10 border-white/20 text-white hover:bg-white/20 transition-colors px-4 py-1">
+              Verstärkung gesucht
+            </Badge>
+            <h2 className="text-3xl md:text-5xl font-bold">Werde Teil des Teams</h2>
+            <p className="text-primary-foreground/90 max-w-2xl mx-auto leading-relaxed text-lg">
+              Der ABI Planer wächst – und wir brauchen dringend Unterstützung! Die Weiterentwicklung alleine zu stemmen ist eine riesige Aufgabe. 
+              <strong> Wenn du Lust auf React, TypeScript oder Firebase hast, melde dich.</strong> 
+              Jede helfende Hand macht die App für uns alle besser!
+            </p>
+          </div>
+
           <div className="flex flex-col sm:flex-row gap-4 justify-center relative pt-4">
-            <Button variant="secondary" size="lg" className="gap-2" onClick={() => router.push('/feedback')}>
-              <MessageCircle className="h-5 w-5" /> Feedback geben
+            <Button variant="secondary" size="lg" className="gap-2 px-8" onClick={() => router.push('/feedback')}>
+              <MessageCircle className="h-5 w-5" /> Jetzt Kontakt aufnehmen
             </Button>
-            <Button variant="outline" size="lg" className="bg-transparent border-primary-foreground/20 hover:bg-primary-foreground/10 gap-2" asChild>
-              <a href="https://github.com" target="_blank"><Github className="h-5 w-5" /> Quellcode ansehen</a>
+            <Button variant="outline" size="lg" className="bg-transparent border-primary-foreground/30 hover:bg-primary-foreground/10 gap-2 px-8" asChild>
+              <a href="https://github.com" target="_blank"><Github className="h-5 w-5" /> Mitentwickeln auf GitHub</a>
             </Button>
           </div>
         </section>

@@ -6,6 +6,11 @@
 <!-- default_action: read newest entries only unless a regression requires older history -->
 <!-- index: docs/AGENT_CONTEXT_INDEX.md -->
 
+## [1.28.3.00] - 2026-04-22
+
+### Geändert
+- **Über-Seite (/uber):** Call-to-Action Bereich überarbeitet, um den dringenden Bedarf an neuen Entwicklern hervorzuheben ("Verstärkung gesucht").
+
 ## [1.28.2.00] - 2026-04-22
 
 ### Hinzugefügt
