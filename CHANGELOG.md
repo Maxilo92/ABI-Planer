@@ -6,7 +6,39 @@
 <!-- default_action: read newest entries only unless a regression requires older history -->
 <!-- index: docs/AGENT_CONTEXT_INDEX.md -->
 
-## [1.26.0.00] - 2026-04-22
+## [1.27.1.00] - 2026-04-22
+
+### Hinzugefügt
+- **Internationalisierung (i18n):**
+  - **LanguageToggle Komponente:** Einführung einer kompakten und modernen Sprachumschalter-Komponente (`LanguageToggle`) in der UI-Library.
+  - **Kompaktes Design:** Nutzt ein Globe-Icon und ein Dropdown-Menü mit Kurzcodes (DE, EN, ES) für eine platzsparende Integration in Navigationsleisten.
+  - **Shadcn/UI Integration:** Basierend auf `DropdownMenu` und `Button` Komponenten für konsistentes Styling.
+
+## [1.27.0.00] - 2026-04-22
+
+### Hinzugefügt
+- **Internationalisierung (i18n):**
+  - **Core i18n System:** Implementierung eines robusten Übersetzungssystems mit Unterstützung für Deutsch (de-DE), Englisch (en-US) und Spanisch (es-ES).
+  - **LanguageContext:** Zentraler React Context zur Verwaltung der Sprache, mit automatischer Erkennung (Browser-Sprache, LocalStorage, Nutzerprofil).
+  - **Profil-Synchronisierung:** Die gewählte Sprache wird automatisch im Benutzerprofil in Firestore gespeichert und geräteübergreifend synchronisiert.
+  - **Dot-Notation Support:** Die `t()` Funktion unterstützt verschachtelte Übersetzungsschlüssel (z.B. `landing.hero.title`).
+  - **Übersetzungen:** Basis-Übersetzungen für die Landingpage, Registrierung und Einstellungen wurden hinzugefügt.
+
+## [1.28.0.00] - 2026-04-22
+
+### Hinzugefügt
+- **Internationalisierung des Support-Centers:**
+  - **Mehrsprachiges Routing:** Unterstützung für `/de/` und `/en/` Prefixe auf der `support` Subdomain.
+  - **Sprachumschalter:** Neue Sprachwahl im Support-Header zur nahtlosen Navigation zwischen Deutsch und Englisch.
+  - **Lokalisierte Inhalte:** Umstellung der FAQ-Datenstruktur auf ein mehrsprachiges Modell (`src/lib/helpFaqs.ts`).
+  - **Deskriptive Routen:** Umbenennung der technischen Routen für bessere SEO und Lesbarkeit (`/a/` -> `/artikel/`, `/c/` -> `/kategorie/`).
+
+### Geändert
+- **Middleware-Intelligenz:** Automatische Locale-Erkennung und Redirects (Fallback auf `/de/`).
+- **Middleware-Legacy-Support:** Transparente Weiterleitung alter FAQ-Shortcuts auf die neuen, lokalisierten Pfade.
+- **Lokalisierte UI:** Vollständige Übersetzung aller UI-Elemente im Support-Center (Footer, Suche, Feedback-System, Beschwerdeformular).
+
+## [1.27.0.00] - 2026-04-22
 
 ### Hinzugefügt
 - **Dediziertes Support-Center (support.abi-planer-27.de):**

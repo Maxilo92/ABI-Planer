@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, use } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/AuthContext'
 import { getAllCards } from '@/constants/cardRegistry'
@@ -26,15 +26,100 @@ import { collection, addDoc, serverTimestamp } from 'firebase/firestore'
 import { toast } from 'sonner'
 import { logAction } from '@/lib/logging'
 import Link from 'next/link'
+import { Locale } from '@/lib/helpFaqs'
 
-export default function SupportBeschwerdenPage() {
+export default function SupportBeschwerdenPage({ params }: { params: Promise<{ locale: string }> }) {
   const router = useRouter()
+  const { locale: localeRaw } = use(params)
+  const locale = localeRaw as Locale
   const { user, profile, resendVerification, refreshAuth } = useAuth()
   const [search, setSearch] = useState('')
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null)
   const [reason, setReason] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isEmailSending, setIsEmailSending] = useState(false)
+
+  const t = {
+    de: {
+      authRequired: 'Anmeldung erforderlich',
+      authRequiredSub: 'Du musst mit deinem verifizierten Lehrer-Account angemeldet sein, um eine Beschwerde einzureichen.',
+      backSupport: 'Zurück zum Support',
+      toLogin: 'Zum Login',
+      title: 'Lehrer-Beschwerden',
+      description: 'Wir nehmen den Schutz deiner Persönlichkeitsrechte ernst. Hier kannst du Korrekturwünsche oder Löschanträge für deine Sammelkarte einreichen.',
+      verifyTitle: 'Identität bestätigen',
+      verifyDesc: 'E-Mail-Verifizierung erforderlich',
+      verifyText: 'Um sicherzustellen, dass Beschwerden nur von den betroffenen Personen eingereicht werden, musst du deine E-Mail-Adresse bestätigen.',
+      sendVerify: 'Bestätigungs-E-Mail senden',
+      checkStatus: 'Status prüfen',
+      verifiedTitle: 'Identität verifiziert',
+      verifiedDesc: 'Du kannst jetzt eine Beschwerde einreichen.',
+      step1: 'Betroffene Karte auswählen',
+      suggestions: 'Vorschläge für dich',
+      searchCard: 'Karte suchen',
+      searchPlaceholder: 'Name des Lehrers...',
+      noCards: 'Keine weiteren Karten gefunden.',
+      step2: 'Grund der Beschwerde',
+      reasonLabel: 'Was möchtest du ändern oder löschen lassen? Warum?',
+      reasonPlaceholder: 'Bitte beschreibe dein Anliegen so detailliert wie möglich...',
+      hint: 'Deine Beschwerde wird direkt an die Administratoren mit höchster Priorität weitergeleitet. Wir bearbeiten Anfragen von verifizierten Lehrern bevorzugt.',
+      submitting: 'Wird gesendet...',
+      submit: 'Beschwerde mit Prio absenden'
+    },
+    en: {
+      authRequired: 'Login required',
+      authRequiredSub: 'You must be logged in with your verified teacher account to submit a complaint.',
+      backSupport: 'Back to Support',
+      toLogin: 'To Login',
+      title: 'Teacher Complaints',
+      description: 'We take the protection of your privacy rights seriously. Here you can submit correction requests or deletion requests for your trading card.',
+      verifyTitle: 'Confirm Identity',
+      verifyDesc: 'Email verification required',
+      verifyText: 'To ensure that complaints are only submitted by the affected persons, you must confirm your email address.',
+      sendVerify: 'Send verification email',
+      checkStatus: 'Check status',
+      verifiedTitle: 'Identity verified',
+      verifiedDesc: 'You can now submit a complaint.',
+      step1: 'Select affected card',
+      suggestions: 'Suggestions for you',
+      searchCard: 'Search card',
+      searchPlaceholder: 'Teacher\'s name...',
+      noCards: 'No other cards found.',
+      step2: 'Reason for complaint',
+      reasonLabel: 'What do you want to change or delete? Why?',
+      reasonPlaceholder: 'Please describe your concern as detailed as possible...',
+      hint: 'Your complaint will be forwarded directly to the administrators with the highest priority. We process requests from verified teachers preferentially.',
+      submitting: 'Sending...',
+      submit: 'Submit complaint with priority'
+    }
+  }[locale] || {
+    de: {
+      authRequired: 'Anmeldung erforderlich',
+      authRequiredSub: 'Du musst mit deinem verifizierten Lehrer-Account angemeldet sein, um eine Beschwerde einzureichen.',
+      backSupport: 'Zurück zum Support',
+      toLogin: 'Zum Login',
+      title: 'Lehrer-Beschwerden',
+      description: 'Wir nehmen den Schutz deiner Persönlichkeitsrechte ernst. Hier kannst du Korrekturwünsche oder Löschanträge für deine Sammelkarte einreichen.',
+      verifyTitle: 'Identität bestätigen',
+      verifyDesc: 'E-Mail-Verifizierung erforderlich',
+      verifyText: 'Um sicherzustellen, dass Beschwerden nur von den betroffenen Personen eingereicht werden, musst du deine E-Mail-Adresse bestätigen.',
+      sendVerify: 'Bestätigungs-E-Mail senden',
+      checkStatus: 'Status prüfen',
+      verifiedTitle: 'Identität verifiziert',
+      verifiedDesc: 'Du kannst jetzt eine Beschwerde einreichen.',
+      step1: 'Betroffene Karte auswählen',
+      suggestions: 'Vorschläge für dich',
+      searchCard: 'Karte suchen',
+      searchPlaceholder: 'Name des Lehrers...',
+      noCards: 'Keine weiteren Karten gefunden.',
+      step2: 'Grund der Beschwerde',
+      reasonLabel: 'Was möchtest du ändern oder löschen lassen? Warum?',
+      reasonPlaceholder: 'Bitte beschreibe dein Anliegen so detailliert wie möglich...',
+      hint: 'Deine Beschwerde wird direkt an die Administratoren mit höchster Priorität weitergeleitet. Wir bearbeiten Anfragen von verifizierten Lehrern bevorzugt.',
+      submitting: 'Wird gesendet...',
+      submit: 'Beschwerde mit Prio absenden'
+    }
+  }.de
 
   const cards = useMemo(() => getAllCards().filter(c => c.type === 'teacher'), [])
 
@@ -88,9 +173,9 @@ export default function SupportBeschwerdenPage() {
     setIsEmailSending(true)
     try {
       await resendVerification()
-      toast.success('Bestätigungs-E-Mail wurde gesendet.')
+      toast.success(locale === 'en' ? 'Verification email sent.' : 'Bestätigungs-E-Mail wurde gesendet.')
     } catch (error: any) {
-      toast.error('Fehler: ' + error.message)
+      toast.error('Error: ' + error.message)
     } finally {
       setIsEmailSending(false)
     }
@@ -99,9 +184,9 @@ export default function SupportBeschwerdenPage() {
   const handleRefresh = async () => {
     try {
       await refreshAuth()
-      toast.success('Status aktualisiert.')
+      toast.success(locale === 'en' ? 'Status updated.' : 'Status aktualisiert.')
     } catch (error: any) {
-      toast.error('Fehler: ' + error.message)
+      toast.error('Error: ' + error.message)
     }
   }
 
@@ -132,10 +217,10 @@ export default function SupportBeschwerdenPage() {
         is_teacher_request: true,
         teacher_card_id: selectedCardId
       })
-      toast.success('Deine Beschwerde wurde eingereicht.')
-      router.push('/')
+      toast.success(locale === 'en' ? 'Your complaint has been submitted.' : 'Deine Beschwerde wurde eingereicht.')
+      router.push(`/${locale}`)
     } catch (error: any) {
-      toast.error('Fehler: ' + error.message)
+      toast.error('Error: ' + error.message)
     } finally {
       setIsSubmitting(false)
     }
@@ -146,12 +231,12 @@ export default function SupportBeschwerdenPage() {
       <div className="max-w-2xl mx-auto py-20 px-4 text-center space-y-6 animate-in fade-in duration-500">
         <AlertCircle className="h-16 w-16 text-muted-foreground mx-auto" />
         <div className="space-y-2">
-          <h1 className="text-3xl font-bold">Anmeldung erforderlich</h1>
-          <p className="text-muted-foreground text-lg">Du musst mit deinem verifizierten Lehrer-Account angemeldet sein, um eine Beschwerde einzureichen.</p>
+          <h1 className="text-3xl font-bold">{t.authRequired}</h1>
+          <p className="text-muted-foreground text-lg">{t.authRequiredSub}</p>
         </div>
         <div className="flex justify-center gap-4">
-          <Button variant="outline" asChild><Link href="/">Zurück zum Support</Link></Button>
-          <Button asChild><a href="/login">Zum Login</a></Button>
+          <Button variant="outline" asChild><Link href={`/${locale}`}>{t.backSupport}</Link></Button>
+          <Button asChild><a href="/login">{t.toLogin}</a></Button>
         </div>
       </div>
     )
@@ -161,17 +246,17 @@ export default function SupportBeschwerdenPage() {
     <div className="max-w-3xl mx-auto space-y-12 py-12 px-4 animate-in fade-in duration-500">
       <div className="space-y-4">
         <button 
-          onClick={() => router.push('/')}
+          onClick={() => router.push(`/${locale}`)}
           className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors group"
         >
           <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />
-          Zurück zum Support
+          {t.backSupport}
         </button>
 
         <div className="space-y-2">
-          <h1 className="text-4xl font-extrabold tracking-tight">Lehrer-Beschwerden</h1>
+          <h1 className="text-4xl font-extrabold tracking-tight">{t.title}</h1>
           <p className="text-xl text-muted-foreground leading-relaxed">
-            Wir nehmen den Schutz deiner Persönlichkeitsrechte ernst. Hier kannst du Korrekturwünsche oder Löschanträge für deine Sammelkarte einreichen.
+            {t.description}
           </p>
         </div>
       </div>
@@ -184,23 +269,23 @@ export default function SupportBeschwerdenPage() {
                 <ShieldAlert className="h-6 w-6 text-destructive" />
               </div>
               <div>
-                <CardTitle className="text-destructive">Identität bestätigen</CardTitle>
-                <CardDescription>E-Mail-Verifizierung erforderlich</CardDescription>
+                <CardTitle className="text-destructive">{t.verifyTitle}</CardTitle>
+                <CardDescription>{t.verifyDesc}</CardDescription>
               </div>
             </div>
           </CardHeader>
           <CardContent className="p-6 space-y-4">
             <p className="leading-relaxed">
-              Um sicherzustellen, dass Beschwerden nur von den betroffenen Personen eingereicht werden, musst du deine E-Mail-Adresse (<strong>{user.email}</strong>) bestätigen.
+              {t.verifyText} (<strong>{user.email}</strong>).
             </p>
             <div className="flex flex-col sm:flex-row gap-3">
               <Button onClick={handleSendVerification} disabled={isEmailSending} className="gap-2 rounded-xl">
                 <Mail className="h-4 w-4" />
-                {isEmailSending ? 'Wird gesendet...' : 'Bestätigungs-E-Mail senden'}
+                {isEmailSending ? t.submitting : t.sendVerify}
               </Button>
               <Button variant="outline" onClick={handleRefresh} className="gap-2 rounded-xl">
                 <RotateCcw className="h-4 w-4" />
-                Status prüfen
+                {t.checkStatus}
               </Button>
             </div>
           </CardContent>
@@ -213,8 +298,8 @@ export default function SupportBeschwerdenPage() {
                 <ShieldCheck className="h-6 w-6" />
               </div>
               <div>
-                <CardTitle className="text-green-700 dark:text-green-400">Identität verifiziert</CardTitle>
-                <CardDescription>Du kannst jetzt eine Beschwerde einreichen.</CardDescription>
+                <CardTitle className="text-green-700 dark:text-green-400">{t.verifiedTitle}</CardTitle>
+                <CardDescription>{t.verifiedDesc}</CardDescription>
               </div>
             </div>
           </CardHeader>
@@ -225,13 +310,13 @@ export default function SupportBeschwerdenPage() {
         <section className="space-y-6">
           <div className="flex items-center gap-3 text-2xl font-bold">
             <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary text-sm">1</div>
-            <span>Betroffene Karte auswählen</span>
+            <span>{t.step1}</span>
           </div>
 
           <div className="space-y-6">
             {suggestions.length > 0 && (
               <div className="space-y-3">
-                <Label className="text-xs uppercase tracking-wider text-muted-foreground font-bold">Vorschläge für dich</Label>
+                <Label className="text-xs uppercase tracking-wider text-muted-foreground font-bold">{t.suggestions}</Label>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {suggestions.map(card => (
                     <div 
@@ -261,12 +346,12 @@ export default function SupportBeschwerdenPage() {
             )}
 
             <div className="space-y-3 pt-4">
-              <Label htmlFor="search" className="font-bold">Karte suchen</Label>
+              <Label htmlFor="search" className="font-bold">{t.searchCard}</Label>
               <div className="relative">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                 <Input 
                   id="search"
-                  placeholder="Name des Lehrers..." 
+                  placeholder={t.searchPlaceholder} 
                   className="h-12 pl-12 rounded-xl bg-muted/20 border-none focus-visible:ring-2 focus-visible:ring-primary"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
@@ -291,7 +376,7 @@ export default function SupportBeschwerdenPage() {
                     </div>
                   ))
                 ) : (
-                  <p className="text-sm text-muted-foreground text-center py-8">Keine weiteren Karten gefunden.</p>
+                  <p className="text-sm text-muted-foreground text-center py-8">{t.noCards}</p>
                 )}
               </div>
             </div>
@@ -301,14 +386,14 @@ export default function SupportBeschwerdenPage() {
         <section className="space-y-6 border-t pt-12">
           <div className="flex items-center gap-3 text-2xl font-bold">
             <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary text-sm">2</div>
-            <span>Grund der Beschwerde</span>
+            <span>{t.step2}</span>
           </div>
           
           <div className="space-y-3">
-            <Label htmlFor="reason" className="font-bold text-lg text-muted-foreground">Was möchtest du ändern oder löschen lassen? Warum?</Label>
+            <Label htmlFor="reason" className="font-bold text-lg text-muted-foreground">{t.reasonLabel}</Label>
             <Textarea 
               id="reason"
-              placeholder="Bitte beschreibe dein Anliegen so detailliert wie möglich..."
+              placeholder={t.reasonPlaceholder}
               className="min-h-[200px] rounded-2xl bg-muted/20 border-none focus-visible:ring-2 focus-visible:ring-primary p-6 text-lg leading-relaxed"
               value={reason}
               onChange={(e) => setReason(e.target.value)}
@@ -316,7 +401,7 @@ export default function SupportBeschwerdenPage() {
             <div className="bg-amber-500/10 border border-amber-500/20 p-4 rounded-xl flex gap-3">
               <Clock className="h-5 w-5 text-amber-600 flex-shrink-0" />
               <p className="text-xs text-amber-800 dark:text-amber-200 leading-relaxed font-medium">
-                <strong>Hinweis:</strong> Deine Beschwerde wird direkt an die Administratoren mit höchster Priorität weitergeleitet. Wir bearbeiten Anfragen von verifizierten Lehrern bevorzugt.
+                <strong>{locale === 'en' ? 'Note:' : 'Hinweis:'}</strong> {t.hint}
               </p>
             </div>
           </div>
@@ -327,14 +412,7 @@ export default function SupportBeschwerdenPage() {
           disabled={isSubmitting || !user.emailVerified || !selectedCardId || reason.trim().length < 10}
           className="w-full h-16 text-xl font-extrabold gap-3 rounded-2xl shadow-2xl shadow-primary/20 transition-all hover:scale-[1.01] active:scale-[0.99]"
         >
-          {isSubmitting ? (
-            'Wird gesendet...'
-          ) : (
-            <>
-              <Send className="h-6 w-6" />
-              Beschwerde mit Prio absenden
-            </>
-          )}
+          {isSubmitting ? t.submitting : t.submit}
         </Button>
       </form>
     </div>

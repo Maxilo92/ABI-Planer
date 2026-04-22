@@ -139,17 +139,39 @@ export function middleware(request: NextRequest) {
   const isSupportSubdomain = isSupportHost(hostname)
   const isLandingDomain = !isDashboardSubdomain && !isTcgSubdomain && !isShopSubdomain && !isSupportSubdomain
 
-  // Support logic: Rewrite subdomain calls to /support route
+  // Support logic: Rewrite subdomain calls to /support route with locale
   if (isSupportSubdomain) {
+    const segments = pathname.split('/').filter(Boolean)
+    const firstSegment = segments[0]
+    const hasLocale = firstSegment === 'de' || firstSegment === 'en'
+    
+    // If no locale, redirect to /de/[path]
+    if (!hasLocale) {
+      const supportBaseUrl = getRequestBaseUrl(request, 'support')
+      const redirectUrl = new URL(`/de${pathname}`, supportBaseUrl)
+      url.searchParams.forEach((value, key) => {
+        redirectUrl.searchParams.set(key, value)
+      })
+      return safeRedirect(request, redirectUrl)
+    }
+
+    // Handle legacy path rewrites on support subdomain (a -> artikel, c -> kategorie)
+    let finalPath = pathname
+    if (segments[1] === 'a') {
+      finalPath = pathname.replace(`/${firstSegment}/a/`, `/${firstSegment}/artikel/`)
+    } else if (segments[1] === 'c') {
+      finalPath = pathname.replace(`/${firstSegment}/c/`, `/${firstSegment}/kategorie/`)
+    }
+
     // If user tries to access /support directly on the support subdomain, strip it to avoid /support/support
-    if (pathname.startsWith('/support')) {
-      const strippedPath = pathname.replace(/^\/support/, '') || '/'
+    if (finalPath.startsWith('/support')) {
+      const strippedPath = finalPath.replace(/^\/support/, '') || '/'
       const supportBaseUrl = getRequestBaseUrl(request, 'support')
       return NextResponse.redirect(new URL(strippedPath, supportBaseUrl))
     }
     
-    // Rewrite internal URL to /support/[path]
-    return NextResponse.rewrite(new URL(`/support${pathname}`, request.url))
+    // Rewrite internal URL to /support/[locale]/[path]
+    return NextResponse.rewrite(new URL(`/support${finalPath}`, request.url))
   }
   
   // Routes categorization
@@ -198,11 +220,16 @@ export function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // Redirect old /hilfe to the support subdomain
+  // Redirect old /hilfe to the support subdomain (now with /de/ prefix)
   if (pathname === '/hilfe' || pathname.startsWith('/hilfe/')) {
     const supportBaseUrl = getRequestBaseUrl(request, 'support')
-    const strippedPath = pathname.replace(/^\/hilfe/, '') || '/'
-    const redirectUrl = new URL(strippedPath, supportBaseUrl)
+    let strippedPath = pathname.replace(/^\/hilfe/, '') || '/'
+    
+    // Rewrite old article/category shortcuts to new long names
+    if (strippedPath.startsWith('/a/')) strippedPath = strippedPath.replace('/a/', '/artikel/')
+    if (strippedPath.startsWith('/c/')) strippedPath = strippedPath.replace('/c/', '/kategorie/')
+    
+    const redirectUrl = new URL(`/de${strippedPath}`, supportBaseUrl)
     
     url.searchParams.forEach((value, key) => {
       redirectUrl.searchParams.set(key, value)

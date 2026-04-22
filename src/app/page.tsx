@@ -61,6 +61,9 @@ import {
 } from 'chart.js'
 import { Line } from 'react-chartjs-2'
 
+import { useLanguage } from '@/lib/i18n/useLanguage'
+import { LanguageToggle } from '@/components/ui/LanguageToggle'
+
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -73,6 +76,7 @@ ChartJS.register(
 )
 
 function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
+  const { t, locale } = useLanguage()
   const [landingNews, setLandingNews] = useState<any[]>([])
   const [landingNewsLoading, setLandingNewsLoading] = useState(true)
   const dashboardBaseUrl = getDashboardBaseUrl()
@@ -188,7 +192,7 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
     }
   } satisfies Parameters<typeof motion.div>[0]['variants']
 
-  const formatMetric = (value: number | null) => value === null ? '—' : new Intl.NumberFormat('de-DE').format(value)
+  const formatMetric = (value: number | null) => value === null ? '—' : new Intl.NumberFormat(locale).format(value)
 
   return (
     <div className="relative min-h-screen bg-background text-foreground selection:bg-brand/30 overflow-hidden">
@@ -197,6 +201,11 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
         className="fixed top-0 left-0 right-0 h-1 bg-brand z-[60] origin-left"
         style={{ scaleX }}
       />
+
+      {/* Language Toggle - Top Right */}
+      <div className="fixed top-6 right-6 z-[70]">
+        <LanguageToggle />
+      </div>
 
       {/* Background Effects - Branding Colors */}
       <div className="fixed inset-0 pointer-events-none z-0">
@@ -216,16 +225,16 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
           >
             <motion.div variants={itemVariants} className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-brand/5 border border-brand/10 text-brand text-[11px] font-bold tracking-wider uppercase">
               <Zap className="h-3.5 w-3.5" />
-              <span>Plattform für euren Abschluss</span>
+              <span>{t('landing.hero.badge')}</span>
             </motion.div>
             
             <div className="max-w-4xl mx-auto space-y-6 relative">
               <motion.h1 variants={itemVariants} className="text-5xl md:text-7xl lg:text-8xl font-extrabold tracking-tight leading-[1.05]">
-                Alles für euren <br />
-                <span className="text-brand">perfekten Abschluss.</span>
+                {t('landing.hero.title1')} <br />
+                <span className="text-brand">{t('landing.hero.title2')}</span>
               </motion.h1>
               <motion.p variants={itemVariants} className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed font-medium">
-                ABI Planer verbindet professionelle Organisation für euren Jahrgang mit einem interaktiven Kartenbereich. Klar strukturiert, sicher und für alle Geräte optimiert.
+                {t('landing.hero.desc')}
               </motion.p>
               
               {/* Floating Icons Decor */}
@@ -248,12 +257,12 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
             <motion.div variants={itemVariants} className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-6">
               <Button size="lg" asChild className="h-14 px-8 text-sm font-bold rounded-2xl bg-brand text-brand-foreground hover:bg-brand/90 shadow-lg shadow-brand/20 group transition-all">
                 <a href={`${dashboardBaseUrl}/register`}>
-                  Jahrgang einrichten
+                  {t('landing.hero.ctaPrimary')}
                   <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </a>
               </Button>
               <Button variant="outline" size="lg" asChild className="h-14 px-8 text-sm font-bold rounded-2xl border-border hover:bg-muted/50 transition-all">
-                <a href={`${dashboardBaseUrl}/vorteile`}>Funktionen ansehen</a>
+                <a href={`${dashboardBaseUrl}/vorteile`}>{t('landing.hero.ctaSecondary')}</a>
               </Button>
             </motion.div>
           </motion.div>
@@ -269,13 +278,13 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
                       <Target className="h-6 w-6" />
                    </div>
                    <div className="space-y-4">
-                      <h2 className="text-4xl md:text-5xl font-extrabold tracking-tight">Professionelle Organisation</h2>
+                      <h2 className="text-4xl md:text-5xl font-extrabold tracking-tight">{t('landing.dualFocus.planner.title')}</h2>
                       <p className="text-muted-foreground text-lg leading-relaxed max-w-xl">
-                        Zentrale Verwaltung von Finanzen, Aufgaben, Abstimmungen und Terminen. Schafft Transparenz und Struktur für euren gesamten Jahrgang.
+                        {t('landing.dualFocus.planner.desc')}
                       </p>
                    </div>
                    <ul className="grid sm:grid-cols-2 gap-4">
-                     {['Finanzen & Prognosen', 'Aufgaben & Deadlines', 'Abstimmungen', 'Dokumentation'].map((item, i) => (
+                     {(t('landing.dualFocus.planner.features') as unknown as string[]).map((item, i) => (
                         <li key={i} className="flex items-center gap-3 text-sm font-semibold">
                            <div className="h-1 w-1 rounded-full bg-brand" />
                            {item}
@@ -285,7 +294,7 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
                    <div className="pt-4">
                       <Button asChild variant="link" className="px-0 font-bold text-brand hover:no-underline flex items-center gap-2 group">
                         <a href={`${dashboardBaseUrl}/vorteile/finanzen`}>
-                           Organisation entdecken <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                           {t('landing.dualFocus.planner.cta')} <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                         </a>
                       </Button>
                    </div>
@@ -304,13 +313,13 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
                       <Sword className="h-6 w-6" />
                    </div>
                    <div className="space-y-4">
-                      <h2 className="text-4xl md:text-5xl font-extrabold tracking-tight">Interaktives Karten-System</h2>
+                      <h2 className="text-4xl md:text-5xl font-extrabold tracking-tight">{t('landing.dualFocus.collector.title')}</h2>
                       <p className="text-muted-foreground text-lg leading-relaxed max-w-xl">
-                        Digitale Sammelkarten von Lehrkräften und Mitschülern. Fördert die Interaktion durch Tauschen und tägliche Kartenpakete.
+                        {t('landing.dualFocus.collector.desc')}
                       </p>
                    </div>
                    <ul className="grid sm:grid-cols-2 gap-4">
-                     {['Tägliche Pakete', 'Echtzeit-Tauschbörse', 'Raritäten', 'Fortschrittsanzeige'].map((item, i) => (
+                     {(t('landing.dualFocus.collector.features') as unknown as string[]).map((item, i) => (
                         <li key={i} className="flex items-center gap-3 text-sm font-semibold">
                            <div className="h-1 w-1 rounded-full bg-brand" />
                            {item}
@@ -320,7 +329,7 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
                    <div className="pt-4">
                       <Button asChild variant="link" className="px-0 font-bold text-brand hover:no-underline flex items-center gap-2 group">
                         <a href={`${dashboardBaseUrl}/vorteile/sammelkarten`}>
-                           Karten entdecken <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                           {t('landing.dualFocus.collector.cta')} <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                         </a>
                       </Button>
                    </div>
@@ -339,10 +348,10 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
           <div className="max-w-7xl mx-auto">
             <div className="grid gap-12 grid-cols-2 xl:grid-cols-4 text-center">
               {[
-                { label: 'Registrierte Nutzer', value: landingStatsLoading ? '...' : formatMetric(landingStats.totalUsers) },
-                { label: 'Aktiv in 24h', value: landingStatsLoading ? '...' : formatMetric(landingStats.dailyActiveUsers) },
-                { label: 'Karten im System', value: landingStatsLoading ? '...' : formatMetric(landingStats.totalCards) },
-                { label: 'News-Updates', value: landingStatsLoading ? '...' : formatMetric(landingStats.newsCount) },
+                { label: t('landing.stats.users'), value: landingStatsLoading ? '...' : formatMetric(landingStats.totalUsers) },
+                { label: t('landing.stats.active'), value: landingStatsLoading ? '...' : formatMetric(landingStats.dailyActiveUsers) },
+                { label: t('landing.stats.cards'), value: landingStatsLoading ? '...' : formatMetric(landingStats.totalCards) },
+                { label: t('landing.stats.news'), value: landingStatsLoading ? '...' : formatMetric(landingStats.newsCount) },
               ].map((item) => (
                 <div key={item.label} className="space-y-2">
                   <p className="text-4xl md:text-5xl font-extrabold tracking-tight text-foreground">
@@ -363,9 +372,9 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
         <section className="px-6 py-24">
           <div className="max-w-7xl mx-auto space-y-16">
             <div className="space-y-6 text-center md:text-left">
-              <p className="text-brand font-bold uppercase tracking-widest text-[11px]">Mission</p>
+              <p className="text-brand font-bold uppercase tracking-widest text-[11px]">{t('landing.mission.badge')}</p>
               <h2 className="text-4xl md:text-6xl font-extrabold tracking-tight leading-tight max-w-4xl">
-                Klare Prozesse statt verstreuter Informationen für euren Jahrgang.
+                {t('landing.mission.title')}
               </h2>
             </div>
             
@@ -373,12 +382,10 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
               <div className="space-y-8">
                 <div className="space-y-6 text-lg leading-relaxed text-muted-foreground font-medium">
                   <p>
-                    ABI Planer bündelt Budget, Aufgaben, Termine und Abstimmungen an einem zentralen Ort.
-                    Kein Suchen mehr in unübersichtlichen Chats oder veralteten Tabellen.
+                    {t('landing.mission.desc1')}
                   </p>
                   <p>
-                    So entsteht ein dauerhaftes Archiv für euren Abschluss. Alle Entscheidungen und
-                    Zuständigkeiten sind jederzeit transparent für alle Beteiligten einsehbar.
+                    {t('landing.mission.desc2')}
                   </p>
                 </div>
                 <div className="h-[120px] w-full opacity-20">
@@ -400,20 +407,11 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
                         }]
                       }}
                    />
-                   <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-muted-foreground mt-2">Plattform-Momentum & Wachstum</p>
+                   <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-muted-foreground mt-2">{t('landing.mission.momentum')}</p>
                 </div>
               </div>
               <div className="grid gap-8">
-                {[
-                  {
-                    title: 'Planung mit Überblick',
-                    text: 'Finanzen, Aufgaben und Deadlines sind an einem Ort sichtbar.',
-                  },
-                  {
-                    title: 'Mitbestimmung mit Struktur',
-                    text: 'Abstimmungen schaffen eine Grundlage für Entscheidungen.',
-                  },
-                ].map((item) => (
+                {(t('landing.mission.items') as unknown as { title: string, text: string }[]).map((item) => (
                   <div key={item.title} className="space-y-2">
                     <p className="font-bold text-foreground">{item.title}</p>
                     <p className="text-sm leading-relaxed text-muted-foreground">{item.text}</p>
@@ -427,20 +425,7 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
         {/* Trust Indicators - Open List */}
         <section className="px-6 py-20 border-t border-border/40">
           <div className="max-w-7xl mx-auto grid gap-12 md:grid-cols-3">
-            {[
-              {
-                title: 'Datenschutz',
-                text: 'Datenzugriffe sind klar getrennt und nachvollziehbar.',
-              },
-              {
-                title: 'Schul-Fokus',
-                text: 'Optimiert für die Jahrgangsorganisation und Teamarbeit.',
-              },
-              {
-                title: 'Interaktion',
-                text: 'Karten-Features fördern die aktive Beteiligung aller Schüler.',
-              },
-            ].map((item) => (
+            {(t('landing.trust') as unknown as { title: string, text: string }[]).map((item) => (
               <div key={item.title} className="space-y-4">
                 <div className="h-1 w-8 bg-brand/30" />
                 <h3 className="text-xl font-bold tracking-tight">{item.title}</h3>
@@ -460,13 +445,13 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
           <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center gap-16 lg:gap-24">
             <div className="flex-1 space-y-8 order-2 md:order-1">
               <div className="space-y-4">
-                <p className="text-brand font-bold uppercase tracking-widest text-[11px]">Planung</p>
-                <h3 className="text-4xl md:text-5xl font-extrabold tracking-tight">Finanzen & Budget</h3>
-                <p className="text-muted-foreground text-lg leading-relaxed max-w-md font-medium">Behaltet Einnahmen und Ausgaben jederzeit im Blick. Realistische Kalkulationen helfen euch bei der Budgetplanung.</p>
+                <p className="text-brand font-bold uppercase tracking-widest text-[11px]">{t('landing.features.finances.badge')}</p>
+                <h3 className="text-4xl md:text-5xl font-extrabold tracking-tight">{t('landing.features.finances.title')}</h3>
+                <p className="text-muted-foreground text-lg leading-relaxed max-w-md font-medium">{t('landing.features.finances.desc')}</p>
               </div>
               <Button asChild variant="link" className="px-0 font-bold text-brand hover:no-underline flex items-center gap-2 group transition-all">
                 <a href={`${dashboardBaseUrl}/vorteile/finanzen`}>
-                  Details ansehen <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                  {t('landing.features.finances.cta')} <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </a>
               </Button>
             </div>
@@ -491,7 +476,7 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
                     }]
                   }}
                 />
-                <p className="absolute bottom-0 left-0 text-[10px] font-bold uppercase tracking-widest text-brand/60">Planungs-Effizienz</p>
+                <p className="absolute bottom-0 left-0 text-[10px] font-bold uppercase tracking-widest text-brand/60">{t('landing.features.finances.label')}</p>
               </div>
               <DollarSign className="absolute top-8 right-8 h-12 w-12 text-brand/10 group-hover:text-brand/20 transition-all duration-700" />
             </div>
@@ -501,13 +486,13 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
           <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row-reverse items-center gap-16 lg:gap-24">
             <div className="flex-1 space-y-8">
               <div className="space-y-4">
-                <p className="text-brand font-bold uppercase tracking-widest text-[11px]">Struktur</p>
-                <h3 className="text-4xl md:text-5xl font-extrabold tracking-tight">Teams & Aufgaben</h3>
-                <p className="text-muted-foreground text-lg leading-relaxed max-w-md font-medium">Verteilt Aufgaben klar auf Arbeitsgruppen und verfolgt Deadlines für Abizeitung, Merch und Events.</p>
+                <p className="text-brand font-bold uppercase tracking-widest text-[11px]">{t('landing.features.teams.badge')}</p>
+                <h3 className="text-4xl md:text-5xl font-extrabold tracking-tight">{t('landing.features.teams.title')}</h3>
+                <p className="text-muted-foreground text-lg leading-relaxed max-w-md font-medium">{t('landing.features.teams.desc')}</p>
               </div>
               <Button asChild variant="link" className="px-0 font-bold text-brand hover:no-underline flex items-center gap-2 group transition-all">
                 <a href={`${dashboardBaseUrl}/vorteile/gruppen`}>
-                  Details ansehen <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                  {t('landing.features.teams.cta')} <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </a>
               </Button>
             </div>
@@ -532,7 +517,7 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
                     }]
                   }}
                 />
-                <p className="absolute bottom-0 left-0 text-[10px] font-bold uppercase tracking-widest text-white/60">Team-Koordination</p>
+                <p className="absolute bottom-0 left-0 text-[10px] font-bold uppercase tracking-widest text-white/60">{t('landing.features.teams.label')}</p>
               </div>
               <Users className="absolute top-8 left-8 h-12 w-12 text-white/10 group-hover:text-white/30 transition-all duration-700" />
             </div>
@@ -542,13 +527,13 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
           <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center gap-16 lg:gap-24">
             <div className="flex-1 space-y-8 order-2 md:order-1">
               <div className="space-y-4">
-                <p className="text-brand font-bold uppercase tracking-widest text-[11px]">Beteiligung</p>
-                <h3 className="text-4xl md:text-5xl font-extrabold tracking-tight">Abstimmungen</h3>
-                <p className="text-muted-foreground text-lg leading-relaxed max-w-md font-medium">Wichtige Entscheidungen werden demokratisch getroffen und für alle transparent dokumentiert.</p>
+                <p className="text-brand font-bold uppercase tracking-widest text-[11px]">{t('landing.features.polls.badge')}</p>
+                <h3 className="text-4xl md:text-5xl font-extrabold tracking-tight">{t('landing.features.polls.title')}</h3>
+                <p className="text-muted-foreground text-lg leading-relaxed max-w-md font-medium">{t('landing.features.polls.desc')}</p>
               </div>
               <Button asChild variant="link" className="px-0 font-bold text-brand hover:no-underline flex items-center gap-2 group transition-all">
                 <a href={`${dashboardBaseUrl}/vorteile/abstimmungen`}>
-                  Details ansehen <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                  {t('landing.features.polls.cta')} <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </a>
               </Button>
             </div>
@@ -575,42 +560,41 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
                    <div className="space-y-6">
                       <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand/5 border border-brand/10 text-brand text-[11px] font-bold uppercase tracking-wider">
                         <Sparkles className="h-3.5 w-3.5" />
-                        <span>Für den gesamten Jahrgang</span>
+                        <span>{t('landing.tcg.badge')}</span>
                       </div>
                       <h2 className="text-4xl md:text-6xl font-extrabold tracking-tight leading-tight">
-                        Sammeln. Tauschen. <br />
-                        <span className="text-brand">Gemeinsam erleben.</span>
+                        {t('landing.tcg.title1')} <br />
+                        <span className="text-brand">{t('landing.tcg.title2')}</span>
                       </h2>
                       <p className="text-muted-foreground text-lg leading-relaxed max-w-xl font-medium">
-                        Lehrkräfte und Mitschüler werden zu digitalen Sammelkarten. Fördert die Interaktion und schafft bleibende Erinnerungen an eure gemeinsame Zeit.
+                        {t('landing.tcg.desc')}
                       </p>
                    </div>
 
                    <div className="grid sm:grid-cols-2 gap-x-12 gap-y-10">
-                      {[
-                        { title: 'Tägliche Pakete', desc: 'Regelmäßig neue Karten für eure Sammlung.', icon: Zap },
-                        { title: 'Seltene Editionen', desc: 'Besondere Karten ergänzen eure Kollektion.', icon: Sparkles },
-                        { title: 'Tauschbörse', desc: 'Karten direkt mit Mitschülern tauschen.', icon: Workflow },
-                        { title: 'Ranking', desc: 'Fortschritt im Jahrgangsvergleich sehen.', icon: Trophy },
-                      ].map((item, i) => (
-                        <div key={i} className="space-y-4 group">
-                          <div className="h-10 w-10 rounded-xl bg-brand/5 flex items-center justify-center text-brand group-hover:scale-105 transition-transform">
-                              <item.icon className="h-5 w-5" />
-                           </div>
-                          <div>
-                            <p className="font-bold text-foreground">{item.title}</p>
-                            <p className="text-sm text-muted-foreground mt-1 leading-relaxed font-medium">{item.desc}</p>
+                      {(t('landing.tcg.items') as unknown as { title: string, desc: string }[]).map((item, i) => {
+                        const icons = [Zap, Sparkles, Workflow, Trophy]
+                        const Icon = icons[i] || Zap
+                        return (
+                          <div key={i} className="space-y-4 group">
+                            <div className="h-10 w-10 rounded-xl bg-brand/5 flex items-center justify-center text-brand group-hover:scale-105 transition-transform">
+                                <Icon className="h-5 w-5" />
+                             </div>
+                            <div>
+                              <p className="font-bold text-foreground">{item.title}</p>
+                              <p className="text-sm text-muted-foreground mt-1 leading-relaxed font-medium">{item.desc}</p>
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        )
+                      })}
                    </div>
 
                    <div className="flex flex-wrap gap-6 pt-4">
                       <Button size="lg" asChild className="h-14 px-8 text-sm font-bold rounded-2xl bg-brand text-brand-foreground hover:bg-brand/90 shadow-lg shadow-brand/20 transition-all">
-                        <a href={`${dashboardBaseUrl}/register`}>Account erstellen</a>
+                        <a href={`${dashboardBaseUrl}/register`}>{t('landing.tcg.ctaPrimary')}</a>
                       </Button>
                       <Button variant="link" asChild className="h-14 px-0 text-sm font-bold text-muted-foreground hover:text-brand transition-colors">
-                        <a href={`${dashboardBaseUrl}/vorteile/sammelkarten`}>Wie es funktioniert</a>
+                        <a href={`${dashboardBaseUrl}/vorteile/sammelkarten`}>{t('landing.tcg.ctaSecondary')}</a>
                       </Button>
                    </div>
                 </motion.div>
@@ -625,7 +609,7 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
                       <SammelkartenPromo isAuthenticated={isAuthenticated} mode="minimal" />
                       
                       <div className="absolute -top-4 -right-4 bg-brand text-brand-foreground px-3 py-1 rounded-lg shadow-lg font-bold text-[10px] uppercase tracking-wider hidden md:block">
-                        Beliebt
+                        {t('landing.tcg.popular')}
                       </div>
                    </div>
                 </motion.div>

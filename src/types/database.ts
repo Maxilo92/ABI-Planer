@@ -67,6 +67,7 @@ export interface Profile {
   dashboard_layout?: DashboardComponentKey[];
   theme?: 'light' | 'dark' | 'system';
   accent_theme?: string;
+  language?: 'de-DE' | 'en-US' | 'es-ES';
   shop_stats?: {
     month: string;
     counts: Record<string, number>;

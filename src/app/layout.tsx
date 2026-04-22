@@ -7,6 +7,7 @@ import { SystemMessageProvider } from '@/context/SystemMessageContext'
 import { Toaster } from '@/components/ui/sonner'
 import { ThemeProvider } from '@/context/ThemeProvider'
 import { AccentThemeProvider } from '@/context/AccentThemeProvider'
+import { LanguageProvider } from '@/context/LanguageContext'
 import { GoogleAdSense } from '@/components/layout/GoogleAdSense'
 import { AdSenseScript } from '@/components/layout/AdSenseScript'
 
@@ -41,12 +42,14 @@ export default function RootLayout({
         >
           <AccentThemeProvider>
             <AuthProvider>
-              <SystemMessageProvider>
-                <AdSenseScript />
-                <AppShell>{children}</AppShell>
-                <GoogleAdSense />
-                <Toaster />
-              </SystemMessageProvider>
+              <LanguageProvider>
+                <SystemMessageProvider>
+                  <AdSenseScript />
+                  <AppShell>{children}</AppShell>
+                  <GoogleAdSense />
+                  <Toaster />
+                </SystemMessageProvider>
+              </LanguageProvider>
             </AuthProvider>
           </AccentThemeProvider>
         </ThemeProvider>
