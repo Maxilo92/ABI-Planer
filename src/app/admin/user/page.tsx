@@ -3,7 +3,7 @@
 import { Profile } from '@/types/database'
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { db, getFirebaseFunctions } from '@/lib/firebase'
-import { collection, query, orderBy, onSnapshot, doc, updateDoc, deleteDoc, arrayUnion, arrayRemove, limit, getDocs, startAfter, type QueryDocumentSnapshot, type DocumentData } from 'firebase/firestore'
+import { collection, query, orderBy, onSnapshot, doc, updateDoc, deleteDoc, arrayUnion, arrayRemove, limit, getDocs, startAfter, getDoc, type QueryDocumentSnapshot, type DocumentData } from 'firebase/firestore'
 import { httpsCallable } from 'firebase/functions'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
@@ -284,6 +284,14 @@ export default function AdminUserPage() {
   const [profiles, setProfiles] = useState<Profile[]>([])
   const [userSearch, setUserSearch] = useState('')
   const [selectedGiftRecipients, setSelectedGiftRecipients] = useState<string[]>([])
+  
+  // Cross-page selection states
+  const [allSelectedMode, setAllSelectedMode] = useState(false)
+  const [excludedIds, setExcludedIds] = useState<string[]>([])
+  const [totalUserCount, setTotalUserCount] = useState<number | null>(null)
+  const [allUserIds, setAllUserIds] = useState<string[]>([])
+  const [loadingAllIds, setLoadingAllIds] = useState(false)
+
   const [isBulkDialogOpen, setIsBulkDialogOpen] = useState(false)
   const [isTimeoutDialogOpen, setIsTimeoutDialogOpen] = useState(false)
   const [timeoutTarget, setTimeoutTarget] = useState<{ id: string, name: string } | null>(null)
@@ -347,7 +355,11 @@ export default function AdminUserPage() {
     setLoadingMore(true)
     try {
       const { newProfiles, lastDoc, hasNext } = await fetchProfiles(lastVisible)
-      setProfiles(prev => [...prev, ...newProfiles])
+      setProfiles(prev => {
+        const seen = new Set(prev.map(p => p.id))
+        const filtered = newProfiles.filter(p => !seen.has(p.id))
+        return [...prev, ...filtered]
+      })
       setLastVisible(lastDoc)
       setHasMore(hasNext)
     } catch (error) {
@@ -363,7 +375,6 @@ export default function AdminUserPage() {
     }
   }, [authLoading, canManageUsers, loadInitial])
 
-  // Intersection Observer for infinite scroll
   useEffect(() => {
     if (loading || !hasMore) return
     const sentinel = sentinelRef.current
@@ -381,6 +392,22 @@ export default function AdminUserPage() {
     observer.observe(sentinel)
     return () => observer.disconnect()
   }, [loading, hasMore, loadingMore, loadMore])
+
+  const fetchAllUserIds = async () => {
+    if (allUserIds.length > 0 || loadingAllIds) return
+    setLoadingAllIds(true)
+    try {
+      const q = query(collection(db, 'profiles'), orderBy('created_at', 'desc'))
+      const snapshot = await getDocs(q)
+      const ids = snapshot.docs.map(d => d.id)
+      setAllUserIds(ids)
+      setTotalUserCount(ids.length)
+    } catch (error) {
+      console.error("Failed to fetch all user IDs:", error)
+    } finally {
+      setLoadingAllIds(false)
+    }
+  }
 
   useEffect(() => {
     const unsubscribe = onSnapshot(doc(db, 'settings', 'config'), (snapshot) => {
@@ -424,7 +451,21 @@ export default function AdminUserPage() {
 
   const handleUpdateProfile = async (id: string, updates: any) => {
     const target = profiles.find((entry) => entry.id === id)
-    if (!target) return
+    if (!target) {
+      try {
+        const docRef = doc(db, 'profiles', id)
+        await updateDoc(docRef, updates)
+        if (user) {
+          await logAction('PROFILE_UPDATED', user.uid, profile?.full_name, {
+            target_user_id: id,
+            updates,
+          })
+        }
+      } catch (err) {
+        console.error('Error updating profile (paginated):', err)
+      }
+      return
+    }
 
     const updateKeys = Object.keys(updates)
     const isAssignmentOnlyUpdate = updateKeys.every((key) => key === 'class_name' || key === 'planning_groups')
@@ -440,8 +481,6 @@ export default function AdminUserPage() {
     try {
       const docRef = doc(db, 'profiles', id)
       await updateDoc(docRef, updates)
-      
-      // Update local state to reflect change without full reload
       setProfiles(prev => prev.map(p => p.id === id ? { ...p, ...updates } : p))
 
       if (user) {
@@ -461,28 +500,19 @@ export default function AdminUserPage() {
 
     const timeoutUntil = hours > 0 
       ? new Date(Date.now() + hours * 60 * 60 * 1000).toISOString()
-      : new Date(Date.now() - 1000).toISOString() // Past date means warning only
+      : new Date(Date.now() - 1000).toISOString()
 
     await handleUpdateProfile(timeoutTarget.id, {
       timeout_until: timeoutUntil,
       timeout_reason: reason,
     })
 
-    if (hours > 0) {
-      pushMessage({
-        type: 'toast',
-        priority: 'info',
-        title: 'Erfolg',
-        content: `Nutzer ${timeoutTarget.name} wurde für ${hours} Stunden gesperrt.`
-      })
-    } else {
-      pushMessage({
-        type: 'toast',
-        priority: 'info',
-        title: 'Erfolg',
-        content: `Nutzer ${timeoutTarget.name} wurde verwarnt.`
-      })
-    }
+    pushMessage({
+      type: 'toast',
+      priority: 'info',
+      title: 'Erfolg',
+      content: hours > 0 ? `Nutzer ${timeoutTarget.name} wurde gesperrt.` : `Nutzer ${timeoutTarget.name} wurde verwarnt.`
+    })
     setTimeoutTarget(null)
   }
 
@@ -510,7 +540,7 @@ export default function AdminUserPage() {
 
     const confirmed = await confirm({
       title: 'Nutzer löschen?',
-      content: 'Bist du sicher, dass du diesen Nutzer löschen möchtest? (Löscht das Profil-Dokument, das Auth-Konto und alle zugehörigen Daten permanent)',
+      content: 'Bist du sicher, dass du diesen Nutzer löschen möchtest?',
       priority: 'high',
       confirmLabel: 'Nutzer löschen',
       confirmVariant: 'destructive',
@@ -520,6 +550,10 @@ export default function AdminUserPage() {
     try {
       await deleteDoc(doc(db, 'profiles', id))
       setProfiles(prev => prev.filter(p => p.id !== id))
+      if (allUserIds.includes(id)) {
+        setAllUserIds(prev => prev.filter(uid => uid !== id))
+        setTotalUserCount(prev => prev !== null ? prev - 1 : null)
+      }
 
       if (user) {
         await logAction('PROFILE_DELETED', user.uid, profile?.full_name, {
@@ -537,34 +571,72 @@ export default function AdminUserPage() {
     p.email?.toLowerCase().includes(userSearch.toLowerCase())
   )
 
-  const selectableProfiles = filteredProfiles
-  const allVisibleSelected = selectableProfiles.length > 0 && selectableProfiles.every((entry) => selectedGiftRecipients.includes(entry.id))
-
-  const toggleRecipient = (userId: string, checked: boolean) => {
-    setSelectedGiftRecipients((prev) => {
-      if (checked) {
-        if (prev.includes(userId)) return prev
-        return [...prev, userId]
-      }
-      return prev.filter((id) => id !== userId)
-    })
+  const isSelected = (id: string) => {
+    if (allSelectedMode) {
+      return !excludedIds.includes(id)
+    }
+    return selectedGiftRecipients.includes(id)
   }
 
-  const toggleSelectAllVisible = (checked: boolean) => {
-    if (checked) {
-      setSelectedGiftRecipients((prev) => Array.from(new Set([...prev, ...selectableProfiles.map((entry) => entry.id)])))
-      return
+  const toggleRecipient = (userId: string, checked: boolean) => {
+    if (allSelectedMode) {
+      if (checked) {
+        setExcludedIds(prev => prev.filter(id => id !== userId))
+      } else {
+        setExcludedIds(prev => [...prev, userId])
+      }
+    } else {
+      setSelectedGiftRecipients((prev) => {
+        if (checked) {
+          if (prev.includes(userId)) return prev
+          return [...prev, userId]
+        }
+        return prev.filter((id) => id !== userId)
+      })
     }
+  }
 
-    const visibleIds = new Set(selectableProfiles.map((entry) => entry.id))
-    setSelectedGiftRecipients((prev) => prev.filter((id) => !visibleIds.has(id)))
+  const toggleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setAllSelectedMode(true)
+      setExcludedIds([])
+      setSelectedGiftRecipients([])
+      fetchAllUserIds()
+    } else {
+      setAllSelectedMode(false)
+      setExcludedIds([])
+      setSelectedGiftRecipients([])
+    }
+  }
+
+  const getEffectiveSelectedIds = async (): Promise<string[]> => {
+    if (!allSelectedMode) return selectedGiftRecipients
+    
+    let ids = allUserIds
+    if (ids.length === 0) {
+      setLoadingAllIds(true)
+      try {
+        const q = query(collection(db, 'profiles'), orderBy('created_at', 'desc'))
+        const snapshot = await getDocs(q)
+        ids = snapshot.docs.map(d => d.id)
+        setAllUserIds(ids)
+        setTotalUserCount(ids.length)
+      } catch (error) {
+        console.error("Failed to fetch all IDs for bulk action:", error)
+        return []
+      } finally {
+        setLoadingAllIds(false)
+      }
+    }
+    
+    return ids.filter(id => !excludedIds.includes(id))
   }
 
   const handleBulkAction = async () => {
-    if (!user || selectedGiftRecipients.length === 0) return
+    if (!user) return
 
-    const selectedProfiles = profiles.filter((entry) => selectedGiftRecipients.includes(entry.id) && entry.id !== profile.id)
-    if (selectedProfiles.length === 0) {
+    const targetIds = await getEffectiveSelectedIds()
+    if (targetIds.length === 0) {
       pushMessage({
         type: 'toast',
         priority: 'critical',
@@ -603,53 +675,63 @@ export default function AdminUserPage() {
 
       const toggleEmailVerif = httpsCallable(functions, 'toggleUserEmailVerification')
 
-      for (const target of selectedProfiles) {
-        const targetIsMainAdmin = target.role === 'admin' || target.role === 'admin_main'
-        const isAssignmentAction = bulkAction === 'set_course' || bulkAction === 'set_group' || bulkAction === 'clear_group'
+      const chunkArray = <T>(arr: T[], size: number): T[][] => 
+        Array.from({ length: Math.ceil(arr.length / size) }, (_, i) => arr.slice(i * size, i * size + size))
 
-        if (!isMainAdminActor && targetIsMainAdmin && !isAssignmentAction) {
-          skippedIds.push(target.id)
-          continue
-        }
+      const chunks = chunkArray(targetIds, 15)
 
-        const targetRef = doc(db, 'profiles', target.id)
-        try {
-          if (bulkAction === 'approve') {
-            await updateDoc(targetRef, { is_approved: true })
-          } else if (bulkAction === 'unapprove') {
-            await updateDoc(targetRef, { is_approved: false })
-          } else if (bulkAction === 'verify_email') {
-            await toggleEmailVerif({ targetUid: target.id, emailVerified: true })
-          } else if (bulkAction === 'unverify_email') {
-            await toggleEmailVerif({ targetUid: target.id, emailVerified: false })
-          } else if (bulkAction === 'reset_2fa') {
-            await updateDoc(targetRef, { is_2fa_enabled: false, two_factor_secret_id: null })
-          } else if (bulkAction === 'set_course') {
-            await updateDoc(targetRef, { class_name: bulkCourse })
-          } else if (bulkAction === 'set_group') {
-            await updateDoc(targetRef, { planning_groups: arrayUnion(bulkGroup) })
-          } else if (bulkAction === 'clear_group') {
-            await updateDoc(targetRef, { planning_groups: [] })
-          } else if (bulkAction === 'timeout_24h') {
-            await updateDoc(targetRef, {
-              timeout_until: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-              timeout_reason: 'Admin-Timeout (24h)',
-            })
-          } else if (bulkAction === 'timeout_7d') {
-            await updateDoc(targetRef, {
-              timeout_until: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-              timeout_reason: 'Admin-Timeout (7 Tage)',
-            })
-          } else if (bulkAction === 'clear_timeout') {
-            await updateDoc(targetRef, {
-              timeout_until: null,
-              timeout_reason: null,
-            })
+      for (const chunk of chunks) {
+        const profileSnaps = await Promise.all(chunk.map(id => getDoc(doc(db, 'profiles', id))))
+        
+        for (const snap of profileSnaps) {
+          if (!snap.exists()) continue
+          const target = { id: snap.id, ...snap.data() } as Profile
+          const targetIsMainAdmin = target.role === 'admin' || target.role === 'admin_main'
+          const isAssignmentAction = bulkAction === 'set_course' || bulkAction === 'set_group' || bulkAction === 'clear_group'
+
+          if (!isMainAdminActor && targetIsMainAdmin && !isAssignmentAction) {
+            skippedIds.push(target.id)
+            continue
           }
 
-          successIds.push(target.id)
-        } catch {
-          failedIds.push(target.id)
+          const targetRef = doc(db, 'profiles', target.id)
+          try {
+            if (bulkAction === 'approve') {
+              await updateDoc(targetRef, { is_approved: true })
+            } else if (bulkAction === 'unapprove') {
+              await updateDoc(targetRef, { is_approved: false })
+            } else if (bulkAction === 'verify_email') {
+              await toggleEmailVerif({ targetUid: target.id, emailVerified: true })
+            } else if (bulkAction === 'unverify_email') {
+              await toggleEmailVerif({ targetUid: target.id, emailVerified: false })
+            } else if (bulkAction === 'reset_2fa') {
+              await updateDoc(targetRef, { is_2fa_enabled: false, two_factor_secret_id: null })
+            } else if (bulkAction === 'set_course') {
+              await updateDoc(targetRef, { class_name: bulkCourse })
+            } else if (bulkAction === 'set_group') {
+              await updateDoc(targetRef, { planning_groups: arrayUnion(bulkGroup) })
+            } else if (bulkAction === 'clear_group') {
+              await updateDoc(targetRef, { planning_groups: [] })
+            } else if (bulkAction === 'timeout_24h') {
+              await updateDoc(targetRef, {
+                timeout_until: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+                timeout_reason: 'Admin-Timeout (24h)',
+              })
+            } else if (bulkAction === 'timeout_7d') {
+              await updateDoc(targetRef, {
+                timeout_until: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+                timeout_reason: 'Admin-Timeout (7 Tage)',
+              })
+            } else if (bulkAction === 'clear_timeout') {
+              await updateDoc(targetRef, {
+                timeout_until: null,
+                timeout_reason: null,
+              })
+            }
+            successIds.push(target.id)
+          } catch {
+            failedIds.push(target.id)
+          }
         }
       }
 
@@ -657,9 +739,9 @@ export default function AdminUserPage() {
         bulk_action: bulkAction,
         course: bulkCourse || null,
         group: bulkGroup || null,
-        success_ids: successIds,
-        skipped_ids: skippedIds,
-        failed_ids: failedIds,
+        success_count: successIds.length,
+        skipped_count: skippedIds.length,
+        failed_count: failedIds.length,
       })
 
       if (successIds.length > 0) {
@@ -669,64 +751,45 @@ export default function AdminUserPage() {
           title: 'Erfolg',
           content: `Massenaktion abgeschlossen: ${successIds.length} erfolgreich.`
         })
-        // Partial state update for bulk changes could be complex, 
-        // for now just reloading initial is safer or updating what we have.
         loadInitial()
       }
       if (skippedIds.length > 0) {
-        pushMessage({
-          type: 'toast',
-          priority: 'warning',
-          title: 'Warnung',
-          content: `${skippedIds.length} Nutzer übersprungen (Berechtigungsschutz).`
-        })
+        pushMessage({ type: 'toast', priority: 'warning', title: 'Warnung', content: `${skippedIds.length} Nutzer übersprungen.` })
       }
       if (failedIds.length > 0) {
-        pushMessage({
-          type: 'toast',
-          priority: 'critical',
-          title: 'Fehler',
-          content: `${failedIds.length} Nutzer konnten nicht aktualisiert werden.`
-        })
+        pushMessage({ type: 'toast', priority: 'critical', title: 'Fehler', content: `${failedIds.length} Nutzer fehlgeschlagen.` })
       }
 
       setIsBulkDialogOpen(false)
+      setAllSelectedMode(false)
+      setExcludedIds([])
+      setSelectedGiftRecipients([])
     } finally {
       setBulkProcessing(false)
     }
   }
 
-  const openSinglePopup = (userId: string) => {
-    router.push("/admin/send?u=" + userId)
+  const selectedCount = allSelectedMode 
+    ? (totalUserCount !== null ? totalUserCount - excludedIds.length : 'Alle') 
+    : selectedGiftRecipients.length
+
+  const allVisibleSelected = filteredProfiles.length > 0 && filteredProfiles.every(p => isSelected(p.id))
+
+  const handleSendPopupRedirect = async () => {
+    const targetIds = await getEffectiveSelectedIds()
+    if (targetIds.length === 0) return
+    sessionStorage.setItem('admin_send_recipients', JSON.stringify(targetIds))
+    router.push('/admin/send')
   }
 
   const copyUserValue = async (value: string | null | undefined, label: string) => {
     const normalized = (value || '').trim()
-    if (!normalized) {
-      pushMessage({
-        type: 'toast',
-        priority: 'warning',
-        title: 'Hinweis',
-        content: `${label} ist nicht vorhanden.`,
-      })
-      return
-    }
-
+    if (!normalized) return
     try {
       await navigator.clipboard.writeText(normalized)
-      pushMessage({
-        type: 'toast',
-        priority: 'info',
-        title: 'Kopiert',
-        content: `${label} wurde kopiert.`,
-      })
+      pushMessage({ type: 'toast', priority: 'info', title: 'Kopiert', content: `${label} wurde kopiert.` })
     } catch {
-      pushMessage({
-        type: 'toast',
-        priority: 'critical',
-        title: 'Fehler',
-        content: `${label} konnte nicht kopiert werden.`,
-      })
+      pushMessage({ type: 'toast', priority: 'critical', title: 'Fehler', content: `${label} nicht kopiert.` })
     }
   }
 
@@ -743,7 +806,7 @@ export default function AdminUserPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-foreground">Benutzerverwaltung</h1>
-          <p className="text-muted-foreground text-sm">Verwalte Profile, Rollen und Berechtigungen ({profiles.length} geladen).</p>
+          <p className="text-muted-foreground text-sm">Verwalte Profile und Rollen ({profiles.length} geladen).</p>
         </div>
         <div className="relative w-full max-sm:max-w-none max-w-sm">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -760,21 +823,30 @@ export default function AdminUserPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Gift className="h-5 w-5 text-primary" />
-            Mehrfachauswahl & Massenaktionen
+            Massenaktionen
           </CardTitle>
           <CardDescription>
-            Die Auswahl kann für Schenkungen und Massenänderungen genutzt werden.
+            Die Auswahl gilt für Schenkungen und Massenänderungen (auch seitenübergreifend).
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-          <p className="text-sm text-muted-foreground">
-            Ausgewählt: <span className="font-semibold text-foreground">{selectedGiftRecipients.length}</span>
-          </p>
+          <div className="space-y-1">
+            <p className="text-sm text-muted-foreground">
+              Ausgewählt: <span className="font-semibold text-foreground">{selectedCount}</span>
+            </p>
+            {allSelectedMode && loadingAllIds && (
+              <p className="text-[10px] text-primary animate-pulse">Lade alle Nutzer-IDs...</p>
+            )}
+          </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 w-full md:w-auto">
             <Button
               variant="outline"
-              onClick={() => setSelectedGiftRecipients([])}
-              disabled={selectedGiftRecipients.length === 0}
+              onClick={() => {
+                setAllSelectedMode(false)
+                setExcludedIds([])
+                setSelectedGiftRecipients([])
+              }}
+              disabled={selectedCount === 0}
               className="w-full"
             >
               Auswahl leeren
@@ -782,17 +854,14 @@ export default function AdminUserPage() {
             <Button
               variant="outline"
               onClick={() => setIsBulkDialogOpen(true)}
-              disabled={selectedGiftRecipients.length === 0}
+              disabled={selectedCount === 0 || bulkProcessing}
               className="w-full"
             >
               Massenaktion
             </Button>
             <Button
-              onClick={() => {
-                sessionStorage.setItem('admin_send_recipients', JSON.stringify(selectedGiftRecipients))
-                router.push('/admin/send')
-              }}
-              disabled={selectedGiftRecipients.length === 0}
+              onClick={handleSendPopupRedirect}
+              disabled={selectedCount === 0 || loadingAllIds}
               className="gap-2 w-full"
             >
               <Gift className="h-4 w-4" />
@@ -805,19 +874,17 @@ export default function AdminUserPage() {
       <Card>
         <CardHeader>
           <CardTitle>Registrierte Profile</CardTitle>
-          <CardDescription>Kurs- und Gruppenzuweisungen sowie Systemrollen konfigurieren.</CardDescription>
+          <CardDescription>Kurs- und Gruppenzuweisungen sowie Systemrollen.</CardDescription>
         </CardHeader>
         <CardContent className="min-w-0">
-          {/* Desktop Table */}
           <div className="hidden xl:block overflow-x-auto w-full max-w-full">
             <Table className="min-w-[860px] w-full">
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-12">
                     <Checkbox
-                      checked={allVisibleSelected}
-                      onCheckedChange={(checked) => toggleSelectAllVisible(checked === true)}
-                      aria-label="Alle sichtbaren Nutzer auswählen"
+                      checked={allSelectedMode ? (excludedIds.length === 0) : (filteredProfiles.length > 0 && filteredProfiles.every(p => isSelected(p.id)))}
+                      onCheckedChange={(checked) => toggleSelectAll(checked === true)}
                     />
                   </TableHead>
                   <TableHead>Name</TableHead>
@@ -833,17 +900,16 @@ export default function AdminUserPage() {
                   const isMainAdminAccount = p.role === 'admin_main' || p.role === 'admin'
                   const isSelf = p.id === profile.id
                   const canManageRoleActions = !isMainAdminAccount && !isSelf
-                  const isSelected = selectedGiftRecipients.includes(p.id)
+                  const selected = isSelected(p.id)
 
                   return (
                     <ContextMenu key={p.id}>
                       <ContextMenuTrigger asChild>
-                        <TableRow>
+                        <TableRow className={cn(selected && "bg-primary/5")}>
                           <TableCell>
                             <Checkbox
-                              checked={isSelected}
+                              checked={selected}
                               onCheckedChange={(checked) => toggleRecipient(p.id, checked === true)}
-                              aria-label={`Nutzer ${p.full_name || p.email} auswählen`}
                             />
                           </TableCell>
                           <TableCell className="font-medium">
@@ -851,26 +917,11 @@ export default function AdminUserPage() {
                               {p.full_name || 'Unbekannt'}
                             </Link>
                           </TableCell>
-                          <TableCell className="text-muted-foreground break-all">
-                            {p.email}
-                          </TableCell>
+                          <TableCell className="text-muted-foreground break-all">{p.email}</TableCell>
                           <TableCell>
-                            <Badge variant="outline" className="capitalize">
-                              {p.role}
-                            </Badge>
+                            <Badge variant="outline" className="capitalize">{p.role}</Badge>
                             {p.timeout_until && new Date(p.timeout_until).getTime() > Date.now() && (
-                              <Badge
-                                variant="destructive"
-                                className="ml-2"
-                                title={p.timeout_reason || 'Kein Grund angegeben'}
-                              >
-                                Sperre
-                              </Badge>
-                            )}
-                            {p.is_2fa_enabled && (
-                              <Badge variant="secondary" className="ml-2 bg-green-500/10 text-green-600 border-green-500/20">
-                                2FA
-                              </Badge>
+                              <Badge variant="destructive" className="ml-2">Sperre</Badge>
                             )}
                           </TableCell>
                           <TableCell>
@@ -879,7 +930,6 @@ export default function AdminUserPage() {
                               options={courses}
                               emptyLabel="Kein Kurs"
                               searchPlaceholder="Kurs suchen..."
-                              clearLabel="Kein Kurs"
                               onSelect={(value) => handleUpdateProfile(p.id, { class_name: value || null })}
                             />
                           </TableCell>
@@ -894,45 +944,17 @@ export default function AdminUserPage() {
                           </TableCell>
                           <TableCell className="text-right">
                             <DropdownMenu>
-                              <DropdownMenuTrigger
-                                render={
-                                  <Button variant="ghost" size="icon">
-                                    <MoreVertical className="h-4 w-4" />
-                                  </Button>
-                                }
-                              />
+                              <DropdownMenuTrigger render={<Button variant="ghost" size="icon"><MoreVertical className="h-4 w-4" /></Button>} />
                               <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => openSinglePopup(p.id)}>
-                                  <MessageSquare className="mr-2 h-4 w-4" /> Popup senden
-                                </DropdownMenuItem>
-                                <DropdownMenuItem disabled={!canManageRoleActions} onClick={() => handleUpdateProfile(p.id, { role: 'admin' })}>
-                                  <Shield className="mr-2 h-4 w-4" /> Zum Admin
-                                </DropdownMenuItem>
-                                <DropdownMenuItem disabled={!canManageRoleActions} onClick={() => handleUpdateProfile(p.id, { role: 'admin_co' })}>
-                                  <Shield className="mr-2 h-4 w-4" /> Zum Co-Admin
-                                </DropdownMenuItem>
-                                <DropdownMenuItem disabled={!canManageRoleActions} onClick={() => handleUpdateProfile(p.id, { role: 'planner' })}>
-                                  <Shield className="mr-2 h-4 w-4" /> Zum Planer
-                                </DropdownMenuItem>
-                                <DropdownMenuItem disabled={!canManageRoleActions} onClick={() => handleUpdateProfile(p.id, { role: 'viewer' })}>
-                                  <User className="mr-2 h-4 w-4" /> Zum Zuschauer
-                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => router.push(`/admin/send?u=${p.id}`)}><MessageSquare className="mr-2 h-4 w-4" /> Popup senden</DropdownMenuItem>
+                                <DropdownMenuItem disabled={!canManageRoleActions} onClick={() => handleUpdateProfile(p.id, { role: 'admin' })}><Shield className="mr-2 h-4 w-4" /> Zum Admin</DropdownMenuItem>
+                                <DropdownMenuItem disabled={!canManageRoleActions} onClick={() => handleUpdateProfile(p.id, { role: 'admin_co' })}><Shield className="mr-2 h-4 w-4" /> Zum Co-Admin</DropdownMenuItem>
                                 <DropdownMenuItem disabled={!canManageRoleActions} onClick={() => {
                                   setTimeoutTarget({ id: p.id, name: p.full_name || p.email })
                                   setIsTimeoutDialogOpen(true)
-                                }}>
-                                  <AlertTriangle className="mr-2 h-4 w-4 text-destructive" /> Warnen / Sperren
-                                </DropdownMenuItem>
-                                <DropdownMenuItem disabled={!canManageRoleActions} onClick={() => handleClearTimeout(p.id)}>
-                                  <Undo2 className="mr-2 h-4 w-4" /> Timeout aufheben
-                                </DropdownMenuItem>
-                                <DropdownMenuItem disabled={!canManageRoleActions || !p.is_2fa_enabled} onClick={() => handleUpdateProfile(p.id, { is_2fa_enabled: false, two_factor_secret_id: null })}>
-                                  <ShieldOff className="mr-2 h-4 w-4" /> 2FA zurücksetzen
-                                </DropdownMenuItem>
+                                }}><AlertTriangle className="mr-2 h-4 w-4 text-destructive" /> Warnen / Sperren</DropdownMenuItem>
                                 <ResetPasswordDialog userEmail={p.email} userName={p.full_name || 'User'} />
-                                <DropdownMenuItem className="text-destructive" disabled={!canManageRoleActions} onClick={() => handleDeleteProfile(p.id)}>
-                                  <Trash2 className="mr-2 h-4 w-4" /> Löschen
-                                </DropdownMenuItem>
+                                <DropdownMenuItem className="text-destructive" disabled={!canManageRoleActions} onClick={() => handleDeleteProfile(p.id)}><Trash2 className="mr-2 h-4 w-4" /> Löschen</DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
                           </TableCell>
@@ -941,25 +963,11 @@ export default function AdminUserPage() {
                       <ContextMenuContent className="w-56">
                         <ContextMenuLabel>{p.full_name || p.email || p.id}</ContextMenuLabel>
                         <ContextMenuSeparator />
-                        <ContextMenuItem onClick={() => router.push(`/profil/${p.id}`)}>
-                          <User className="h-4 w-4" /> Profil öffnen
-                        </ContextMenuItem>
-                        <ContextMenuItem onClick={() => openSinglePopup(p.id)}>
-                          <MessageSquare className="h-4 w-4" /> Popup senden
-                        </ContextMenuItem>
-                        <ContextMenuItem onClick={() => toggleRecipient(p.id, !isSelected)}>
-                          <Gift className="h-4 w-4" /> {isSelected ? 'Aus Auswahl entfernen' : 'Zur Auswahl hinzufügen'}
-                        </ContextMenuItem>
+                        <ContextMenuItem onClick={() => router.push(`/profil/${p.id}`)}><User className="h-4 w-4 mr-2" /> Profil öffnen</ContextMenuItem>
+                        <ContextMenuItem onClick={() => toggleRecipient(p.id, !selected)}><Gift className="h-4 w-4 mr-2" /> {selected ? 'Deselektieren' : 'Auswählen'}</ContextMenuItem>
                         <ContextMenuSeparator />
-                        <ContextMenuItem onClick={() => copyUserValue(p.full_name, 'Name')}>
-                          <User className="h-4 w-4" /> Name kopieren
-                        </ContextMenuItem>
-                        <ContextMenuItem onClick={() => copyUserValue(p.email, 'E-Mail')}>
-                          <MessageSquare className="h-4 w-4" /> E-Mail kopieren
-                        </ContextMenuItem>
-                        <ContextMenuItem onClick={() => copyUserValue(p.id, 'User-ID')}>
-                          <Shield className="h-4 w-4" /> User-ID kopieren
-                        </ContextMenuItem>
+                        <ContextMenuItem onClick={() => copyUserValue(p.full_name, 'Name')}><User className="h-4 w-4 mr-2" /> Name kopieren</ContextMenuItem>
+                        <ContextMenuItem onClick={() => copyUserValue(p.email, 'E-Mail')}><MessageSquare className="h-4 w-4 mr-2" /> E-Mail kopieren</ContextMenuItem>
                       </ContextMenuContent>
                     </ContextMenu>
                   )
@@ -968,116 +976,21 @@ export default function AdminUserPage() {
             </Table>
           </div>
 
-          {/* Mobile List View (Functional) */}
+          {/* Mobile List */}
           <div className="xl:hidden space-y-4">
             {filteredProfiles.map((p) => {
-              const isMainAdminAccount = p.role === 'admin_main' || p.role === 'admin'
-              const isSelf = p.id === profile.id
-              const canManageRoleActions = !isMainAdminAccount && !isSelf
-
+              const selected = isSelected(p.id)
               return (
-                <div key={p.id} className="border rounded-xl p-4 space-y-4 bg-card/50">
+                <div key={p.id} className={cn("border rounded-xl p-4 space-y-4 transition-colors", selected ? "bg-primary/5 border-primary/20" : "bg-card/50")}>
                   <div className="flex justify-between items-start gap-2">
                     <div className="min-w-0 flex items-start gap-3">
-                      <Checkbox
-                        checked={selectedGiftRecipients.includes(p.id)}
-                        onCheckedChange={(checked) => toggleRecipient(p.id, checked === true)}
-                        aria-label={`Nutzer ${p.full_name || p.email} auswählen`}
-                        className="mt-1"
-                      />
+                      <Checkbox checked={selected} onCheckedChange={(checked) => toggleRecipient(p.id, checked === true)} />
                       <div>
-                      <Link href={`/profil/${p.id}`} className="font-bold hover:underline truncate block text-foreground">
-                        {p.full_name || 'Unbekannt'}
-                      </Link>
-                      <p className="text-xs text-muted-foreground break-all">{p.email}</p>
+                        <Link href={`/profil/${p.id}`} className="font-bold hover:underline truncate block text-foreground">{p.full_name || 'Unbekannt'}</Link>
+                        <p className="text-xs text-muted-foreground break-all">{p.email}</p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <Badge variant="outline" className="capitalize">
-                        {p.role}
-                      </Badge>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger
-                          render={
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                              <MoreVertical className="h-4 w-4" />
-                            </Button>
-                          }
-                        />
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => openSinglePopup(p.id)}>
-                            <MessageSquare className="mr-2 h-4 w-4" /> Popup senden
-                          </DropdownMenuItem>
-                          <DropdownMenuItem disabled={!canManageRoleActions} onClick={() => handleUpdateProfile(p.id, { role: 'admin' })}>
-                            <Shield className="mr-2 h-4 w-4" /> Zum Admin
-                          </DropdownMenuItem>
-                          <DropdownMenuItem disabled={!canManageRoleActions} onClick={() => handleUpdateProfile(p.id, { role: 'admin_co' })}>
-                            <Shield className="mr-2 h-4 w-4" /> Zum Co-Admin
-                          </DropdownMenuItem>
-                          <DropdownMenuItem disabled={!canManageRoleActions} onClick={() => handleUpdateProfile(p.id, { role: 'planner' })}>
-                            <Shield className="mr-2 h-4 w-4" /> Zum Planer
-                          </DropdownMenuItem>
-                          <DropdownMenuItem disabled={!canManageRoleActions} onClick={() => handleUpdateProfile(p.id, { role: 'viewer' })}>
-                            <User className="mr-2 h-4 w-4" /> Zum Zuschauer
-                          </DropdownMenuItem>
-                          <DropdownMenuItem disabled={!canManageRoleActions} onClick={() => {
-                            setTimeoutTarget({ id: p.id, name: p.full_name || p.email })
-                            setIsTimeoutDialogOpen(true)
-                          }}>
-                            <AlertTriangle className="mr-2 h-4 w-4 text-destructive" /> Warnen / Sperren
-                          </DropdownMenuItem>
-                          <DropdownMenuItem disabled={!canManageRoleActions} onClick={() => handleClearTimeout(p.id)}>
-                            <Undo2 className="mr-2 h-4 w-4" /> Timeout aufheben
-                          </DropdownMenuItem>
-                          <DropdownMenuItem disabled={!canManageRoleActions || !p.is_2fa_enabled} onClick={() => handleUpdateProfile(p.id, { is_2fa_enabled: false, two_factor_secret_id: null })}>
-                            <ShieldOff className="mr-2 h-4 w-4" /> 2FA zurücksetzen
-                          </DropdownMenuItem>
-                          <ResetPasswordDialog userEmail={p.email} userName={p.full_name || 'User'} />
-                          <DropdownMenuItem className="text-destructive" disabled={!canManageRoleActions} onClick={() => handleDeleteProfile(p.id)}>
-                            <Trash2 className="mr-2 h-4 w-4" /> Löschen
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </div>
-
-                  {p.timeout_until && new Date(p.timeout_until).getTime() > Date.now() && (
-                    <div className="space-y-2">
-                      <Badge variant="destructive" className="w-full justify-center py-1">
-                        Nutzer ist gesperrt
-                      </Badge>
-                      {p.timeout_reason && (
-                        <p className="text-[10px] text-center text-muted-foreground italic px-2">
-                          Grund: {p.timeout_reason}
-                        </p>
-                      )}
-                    </div>
-                  )}
-
-                  <div className="grid grid-cols-2 gap-3 pt-2 border-t">
-                    <div className="space-y-1.5">
-                      <label className="text-[10px] font-bold uppercase text-muted-foreground ml-1">Kurs</label>
-                      <SearchableValuePicker
-                        value={p.class_name || ''}
-                        options={courses}
-                        emptyLabel="Kein Kurs"
-                        searchPlaceholder="Kurs suchen..."
-                        clearLabel="Kein Kurs"
-                        className="h-9 text-xs"
-                        contentClassName="w-[260px]"
-                        onSelect={(value) => handleUpdateProfile(p.id, { class_name: value || null })}
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <label className="text-[10px] font-bold uppercase text-muted-foreground ml-1">Gruppen</label>
-                      <PlanningGroupsPopover
-                        profileId={p.id}
-                        groups={p.planning_groups || []}
-                        availableGroups={planningGroups}
-                        onAddGroup={(profileId, groupName) => handleUpdateProfile(profileId, { planning_groups: arrayUnion(groupName) })}
-                        onRemoveGroup={(profileId, groupName) => handleUpdateProfile(profileId, { planning_groups: arrayRemove(groupName) })}
-                      />
-                    </div>
+                    <Badge variant="outline" className="capitalize">{p.role}</Badge>
                   </div>
                 </div>
               )
@@ -1086,14 +999,9 @@ export default function AdminUserPage() {
 
           <div className="flex flex-col items-center gap-4 py-8">
             {loadingMore ? (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Lade weitere Nutzer...
-              </div>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Lade weitere Nutzer...</div>
             ) : hasMore ? (
-              <Button variant="outline" onClick={loadMore}>
-                Mehr Nutzer laden
-              </Button>
+              <Button variant="outline" onClick={loadMore}>Mehr Nutzer laden</Button>
             ) : profiles.length > 0 ? (
               <p className="text-sm text-muted-foreground">Alle Nutzer geladen.</p>
             ) : null}
@@ -1106,75 +1014,37 @@ export default function AdminUserPage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Massenaktion ausführen</DialogTitle>
-            <DialogDescription>
-              Führt dieselbe Änderung für alle ausgewählten Nutzer aus.
-            </DialogDescription>
+            <DialogDescription>Diese Änderung wird für alle {selectedCount} ausgewählten Nutzer ausgeführt.</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-2">
               <Label htmlFor="bulk-action">Aktion</Label>
-              <select
-                id="bulk-action"
-                className="h-10 w-full rounded-md border bg-background px-3 text-sm"
-                value={bulkAction}
-                onChange={(e) => setBulkAction(e.target.value as BulkActionType)}
-              >
+              <select id="bulk-action" className="h-10 w-full rounded-md border bg-background px-3 text-sm" value={bulkAction} onChange={(e) => setBulkAction(e.target.value as BulkActionType)}>
                 <option value="approve">Accounts freischalten</option>
                 <option value="unapprove">Freischaltung entfernen</option>
                 <option value="verify_email">E-Mails verifizieren</option>
-                <option value="unverify_email">Verifizierung entfernen</option>
                 <option value="reset_2fa">2FA zurücksetzen</option>
                 <option value="set_course">Kurs setzen</option>
                 <option value="set_group">Planungsgruppe setzen</option>
                 <option value="clear_group">Planungsgruppe entfernen</option>
                 <option value="timeout_24h">Timeout 24h setzen</option>
-                <option value="timeout_7d">Timeout 7 Tage setzen</option>
                 <option value="clear_timeout">Timeout aufheben</option>
               </select>
             </div>
-
             {bulkAction === 'set_course' && (
-              <div className="space-y-2">
-                <Label htmlFor="bulk-course">Kurs</Label>
-                <SearchableValuePicker
-                  value={bulkCourse}
-                  options={courses}
-                  emptyLabel="Kurs auswaehlen"
-                  searchPlaceholder="Kurs suchen..."
-                  className="h-10"
-                  clearLabel="Kurs auswaehlen"
-                  onSelect={(value) => setBulkCourse(value || '')}
-                />
-              </div>
+              <SearchableValuePicker value={bulkCourse} options={courses} emptyLabel="Kurs auswaehlen" searchPlaceholder="Kurs suchen..." onSelect={(v) => setBulkCourse(v || '')} />
             )}
-
             {bulkAction === 'set_group' && (
-              <div className="space-y-2">
-                <Label htmlFor="bulk-group">Planungsgruppe</Label>
-                <SearchableValuePicker
-                  value={bulkGroup}
-                  options={planningGroups}
-                  emptyLabel="Gruppe auswaehlen"
-                  searchPlaceholder="Gruppe suchen..."
-                  className="h-10"
-                  clearLabel="Gruppe auswaehlen"
-                  onSelect={(value) => setBulkGroup(value || '')}
-                />
-              </div>
+              <SearchableValuePicker value={bulkGroup} options={planningGroups} emptyLabel="Gruppe auswaehlen" searchPlaceholder="Gruppe suchen..." onSelect={(v) => setBulkGroup(v || '')} />
             )}
-
-            <p className="text-xs text-muted-foreground">Betroffene Nutzer: {selectedGiftRecipients.length}</p>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsBulkDialogOpen(false)} disabled={bulkProcessing}>
-              Abbrechen
-            </Button>
-            <Button onClick={handleBulkAction} disabled={bulkProcessing || selectedGiftRecipients.length === 0}>
-              {bulkProcessing ? 'Wird ausgeführt...' : 'Massenaktion starten'}
-            </Button>
+            <Button variant="outline" onClick={() => setIsBulkDialogOpen(false)} disabled={bulkProcessing}>Abbrechen</Button>
+            <Button onClick={handleBulkAction} disabled={bulkProcessing}>{bulkProcessing ? 'Wird ausgeführt...' : 'Massenaktion starten'}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
       <SetTimeoutDialog 
         isOpen={isTimeoutDialogOpen}
         onOpenChange={setIsTimeoutDialogOpen}

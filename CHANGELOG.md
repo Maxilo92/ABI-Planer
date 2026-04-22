@@ -6,6 +6,39 @@
 <!-- default_action: read newest entries only unless a regression requires older history -->
 <!-- index: docs/AGENT_CONTEXT_INDEX.md -->
 
+## [1.29.4.00] - 2026-04-22
+
+### Hinzugefügt
+- **Security (Feature Gate):** Implementierung eines neuen `FeatureGate` Systems.
+  - Automatisches Blockieren von Zugriffen auf deaktivierte Module (News, Umfragen, Kalender, Todos, Finanzen, Sammelkarten).
+  - Anzeige eines informativen "Modul gesperrt"-Screens für Nutzer, statt einfacher Fehler oder leerer Seiten.
+  - Integration in die `AppShell` für eine konsistente Durchsetzung über alle Subdomains hinweg.
+
+### Geändert
+- **Admin System Overview:** Überarbeitung der **Emergency Feature Toggles**.
+  - Logische Gruppierung der Toggles in "Sammelkarten-Ökosystem" und "Planungs-Tools".
+  - Verbesserte Labels und Beschreibungen für eine intuitivere Administration.
+  - Responsives Grid-Layout für die Toggles (bis zu 3 Spalten auf Desktop).
+- **Bugfix (System Features):** Korrektur eines hartcodierten Zustands im `useSystemFeatures` Hook, durch den das Kampf-System fälschlicherweise immer als aktiv markiert wurde.
+
+## [1.29.3.00] - 2026-04-22
+
+### Geändert
+- **Admin System Overview:** Bereinigung und Modernisierung des Control-Panels.
+  - Die technisch und optisch veraltete Sektion **"Admin Quick Actions"** wurde entfernt.
+  - Die statischen (gefakten) **"Live Indicators"** wurden ersatzlos gestrichen.
+  - Die Funktion **"Session-Statistiken zurücksetzen"** wurde in die Hauptkarte unter den Wartungsbereich integriert.
+  - Die Hauptkarte für Emergency Feature Toggles nutzt nun die volle Breite (**xl:col-span-3**) für eine bessere Übersicht auf Desktop-Systemen.
+
+## [1.29.3.00] - 2026-04-22
+
+### Hinzugefügt
+- **Benutzerverwaltung:** Seitenübergreifende Massenauswahl ("Alle auswählen") implementiert.
+  - Ermöglicht die Auswahl tausender Nutzer mit einem Klick, auch wenn diese noch nicht geladen sind.
+  - Implementierung eines "All Selected Modes" mit Unterstützung für gezielte Deselektierungen (Ausnahmen).
+  - Hintergrund-Laden von IDs zur Sicherstellung einer schnellen UI-Reaktion.
+  - Optimierte Massenverarbeitung in Batches zur Vermeidung von Timeouts und Client-Blockaden.
+
 ## [1.29.2.00] - 2026-04-22
 
 ### Geändert

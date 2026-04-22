@@ -16,6 +16,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { ThemeSync } from '@/components/layout/ThemeSync'
 import { LandingHeader } from '@/components/layout/LandingHeader'
 import { getTcgBaseUrl, extractGradeFromClassName, ALLOWED_PLANNER_GRADES } from '@/lib/dashboard-url'
+import { FeatureGate } from '@/components/auth/FeatureGate'
 
 import { SupportHeader } from '@/components/support/SupportHeader'
 
@@ -232,7 +233,9 @@ export function AppShell({ children }: AppShellProps) {
           <SystemMessageHost />
           <main className="flex-1 px-4 py-8 sm:px-6 lg:px-8 min-w-0">
             <div className="mx-auto max-w-7xl w-full">
-              {children}
+              <FeatureGate>
+                {children}
+              </FeatureGate>
             </div>
           </main>
           <Footer />

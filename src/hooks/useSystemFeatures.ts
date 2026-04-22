@@ -39,12 +39,11 @@ export function useSystemFeatures() {
   }, [])
 
   const isEnabled = (key: keyof SystemFeatures) => {
-    if (key === 'combat_status' || key === 'is_combat_enabled' as any) return true
     if (!features) return true
     
     // Status keys are preferred
-    const statusKey = key.toString().replace('_enabled', '_status')
-    const status = (features as any)[statusKey] || (features as any)[key]
+    const statusKey = (key.toString().replace('_enabled', '_status')) as keyof SystemFeatures
+    const status = features[statusKey] ?? features[key]
 
     if (status === 'enabled') return true
     if (status === 'admins_only') return isAdmin
