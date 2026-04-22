@@ -45,12 +45,15 @@ import {
   Search, 
   RefreshCw,
   ExternalLink,
-  AlertOctagon
+  AlertOctagon,
+  Globe,
+  Shield,
+  Gamepad2,
+  Code2
 } from 'lucide-react'
 import { SystemCheck, SystemCheckStatus } from '@/types/database'
 import { cn } from '@/lib/utils'
 import { format } from 'date-fns'
-import { de } from 'date-fns/locale'
 import { Timestamp } from 'firebase/firestore'
 
 const STATUS_CONFIG: Record<SystemCheckStatus, { label: string, color: string, icon: React.ReactNode }> = {
@@ -86,45 +89,71 @@ const STATUS_CONFIG: Record<SystemCheckStatus, { label: string, color: string, i
   }
 }
 
-// Initial list of routes generated from src/app
+const DOMAIN_CONFIG: Record<string, { label: string, icon: React.ReactNode, color: string }> = {
+  main: { label: 'Hauptseite', icon: <Globe className="w-3 h-3" />, color: 'bg-slate-100 text-slate-700' },
+  tcg: { label: 'Sammelkarten', icon: <Gamepad2 className="w-3 h-3" />, color: 'bg-purple-100 text-purple-700' },
+  admin: { label: 'Admin', icon: <Shield className="w-3 h-3" />, color: 'bg-red-100 text-red-700' },
+  api: { label: 'API', icon: <Code2 className="w-3 h-3" />, color: 'bg-blue-100 text-blue-700' },
+}
+
 const KNOWN_ROUTES = [
-  { id: '/', name: 'Landing Page' },
-  { id: '/home', name: 'Dashboard Home' },
-  { id: '/login', name: 'Login' },
-  { id: '/register', name: 'Registrierung' },
-  { id: '/profil', name: 'Eigenes Profil' },
-  { id: '/profil/freunde', name: 'Freunde & Kontakte' },
-  { id: '/einstellungen', name: 'Einstellungen' },
-  { id: '/einstellungen/referrals', name: 'Einladungs-System' },
-  { id: '/finanzen', name: 'Finanz-Übersicht' },
-  { id: '/finanzen/spenden', name: 'Spenden-Zentrum' },
-  { id: '/kalender', name: 'Kalender / Events' },
-  { id: '/aufgaben', name: 'Aufgaben-Modul' },
-  { id: '/news', name: 'News-Feed' },
-  { id: '/sammelkarten', name: 'Sammelkarten Hub' },
-  { id: '/album', name: 'Karten-Album' },
-  { id: '/shop', name: 'NP Shop' },
-  { id: '/booster', name: 'Booster-Öffnen' },
-  { id: '/battle-pass', name: 'Battle Pass' },
-  { id: '/sammelkarten/kaempfe', name: 'Karten-Kämpfe' },
-  { id: '/sammelkarten/tausch', name: 'Karten-Tausch' },
-  { id: '/gruppen', name: 'Planungs-Gruppen' },
-  { id: '/todos', name: 'Persönliche Todos' },
-  { id: '/feedback', name: 'Feedback-Formular' },
-  { id: '/support', name: 'Support / FAQ' },
-  { id: '/agb', name: 'AGB' },
-  { id: '/datenschutz', name: 'Datenschutz' },
-  { id: '/impressum', name: 'Impressum' },
-  { id: '/admin', name: 'Admin Dashboard' },
-  { id: '/admin/system', name: 'System Übersicht' },
-  { id: '/admin/system/control', name: 'System Steuerung' },
-  { id: '/admin/system/analytics', name: 'Analytics' },
-  { id: '/admin/logs', name: 'Action Logs' },
-  { id: '/admin/feedback', name: 'Feedback Moderation' },
-  { id: '/admin/aufgaben', name: 'Aufgaben Verwaltung' },
-  { id: '/admin/sammelkarten', name: 'TCG Manager' },
-  { id: '/admin/send', name: 'Push-Benachrichtigungen' },
-  { id: '/maintenance', name: 'Wartungs-Seite' }
+  // MAIN
+  { id: '/', name: 'Landing Page', domain: 'main' },
+  { id: '/home', name: 'Dashboard Home', domain: 'main' },
+  { id: '/login', name: 'Login', domain: 'main' },
+  { id: '/register', name: 'Registrierung', domain: 'main' },
+  { id: '/profil', name: 'Eigenes Profil', domain: 'main' },
+  { id: '/profil/freunde', name: 'Freunde & Kontakte', domain: 'main' },
+  { id: '/einstellungen', name: 'Einstellungen', domain: 'main' },
+  { id: '/einstellungen/referrals', name: 'Referral-System', domain: 'main' },
+  { id: '/finanzen', name: 'Finanz-Übersicht', domain: 'main' },
+  { id: '/finanzen/spenden', name: 'Spenden Hub', domain: 'main' },
+  { id: '/kalender', name: 'Event-Kalender', domain: 'main' },
+  { id: '/aufgaben', name: 'Aufgaben-Modul', domain: 'main' },
+  { id: '/news', name: 'News-Feed', domain: 'main' },
+  { id: '/gruppen', name: 'Planungs-Gruppen', domain: 'main' },
+  { id: '/todos', name: 'To-Dos', domain: 'main' },
+  { id: '/abstimmungen', name: 'Abstimmungen', domain: 'main' },
+  { id: '/feedback', name: 'Feedback', domain: 'main' },
+  { id: '/support', name: 'Support / FAQ', domain: 'main' },
+  { id: '/agb', name: 'AGB', domain: 'main' },
+  { id: '/datenschutz', name: 'Datenschutz', domain: 'main' },
+  { id: '/impressum', name: 'Impressum', domain: 'main' },
+  { id: '/maintenance', name: 'Wartung', domain: 'main' },
+
+  // TCG
+  { id: '/sammelkarten', name: 'TCG Hub', domain: 'tcg' },
+  { id: '/album', name: 'Karten-Album', domain: 'tcg' },
+  { id: '/shop', name: 'TCG Shop', domain: 'tcg' },
+  { id: '/booster', name: 'Booster-Store', domain: 'tcg' },
+  { id: '/battle-pass', name: 'Battle Pass', domain: 'tcg' },
+  { id: '/sammelkarten/kaempfe', name: 'Combat Arena', domain: 'tcg' },
+  { id: '/sammelkarten/tausch', name: 'Trading System', domain: 'tcg' },
+  { id: '/sammelkarten/info', name: 'Karten-Info', domain: 'tcg' },
+  { id: '/sammelkarten/packs', name: 'Meine Packs', domain: 'tcg' },
+
+  // ADMIN
+  { id: '/admin', name: 'Admin Dashboard', domain: 'admin' },
+  { id: '/admin/system', name: 'System Info', domain: 'admin' },
+  { id: '/admin/system/control', name: 'System Control', domain: 'admin' },
+  { id: '/admin/system/analytics', name: 'Analytics', domain: 'admin' },
+  { id: '/admin/logs', name: 'Audit Logs', domain: 'admin' },
+  { id: '/admin/feedback', name: 'Feedback Mod', domain: 'admin' },
+  { id: '/admin/aufgaben', name: 'Task Manager', domain: 'admin' },
+  { id: '/admin/sammelkarten', name: 'TCG Admin', domain: 'admin' },
+  { id: '/admin/sammelkarten/ideen-labor', name: 'Ideen-Labor', domain: 'admin' },
+  { id: '/admin/sammelkarten/pool', name: 'Card Pool', domain: 'admin' },
+  { id: '/admin/sammelkarten/trading', name: 'Trade Monitoring', domain: 'admin' },
+  { id: '/admin/send', name: 'Push/Broadcast', domain: 'admin' },
+  { id: '/admin/global-settings', name: 'Global Settings', domain: 'admin' },
+  { id: '/admin/danger', name: 'Danger Zone', domain: 'admin' },
+  { id: '/admin/shop-earnings', name: 'Finanz-Tracking', domain: 'admin' },
+
+  // API
+  { id: '/api/combat', name: 'Combat API', domain: 'api' },
+  { id: '/api/auth', name: 'Auth Bridge', domain: 'api' },
+  { id: '/api/news', name: 'News API', domain: 'api' },
+  { id: '/api/chats/abi-bot', name: 'AI Chat API', domain: 'api' },
 ]
 
 export default function FunctionalChecklistPage() {
@@ -147,7 +176,8 @@ export default function FunctionalChecklistPage() {
   const filteredChecks = useMemo(() => {
     return checks.filter(check => 
       check.id.toLowerCase().includes(search.toLowerCase()) || 
-      check.name.toLowerCase().includes(search.toLowerCase())
+      check.name.toLowerCase().includes(search.toLowerCase()) ||
+      check.domain?.toLowerCase().includes(search.toLowerCase())
     )
   }, [checks, search])
 
@@ -184,21 +214,26 @@ export default function FunctionalChecklistPage() {
     try {
       for (const route of KNOWN_ROUTES) {
         const docId = route.id.replace(/\//g, '_')
-        const checkRef = doc(db, 'system_checks', docId)
+        if (docId === '_') continue; // Skip root id as it can cause issues
+
+        const checkRef = doc(db, 'system_checks', docId === '' ? 'root' : docId)
         
-        // Only set if not exists to avoid overwriting existing status
-        const existing = checks.find(c => c.id === docId)
+        const existing = checks.find(c => c.id === (docId === '' ? 'root' : docId))
         if (!existing) {
           await setDoc(checkRef, {
-            id: docId,
+            id: docId === '' ? 'root' : docId,
             path: route.id,
             name: route.name,
+            domain: route.domain,
             status: 'untested',
             last_checked: null,
             checked_by: null,
             checked_by_name: null,
             notes: ''
           })
+        } else if (!existing.domain) {
+            // Update domain if missing
+            await updateDoc(checkRef, { domain: route.domain })
         }
       }
     } catch (error) {
@@ -209,65 +244,158 @@ export default function FunctionalChecklistPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-20">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="relative flex-1 max-w-sm">
+        <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input 
-            placeholder="Seite suchen..." 
+            placeholder="Seite, Bereich oder Pfad suchen..." 
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
+            className="pl-9 h-11 bg-white"
           />
         </div>
-        <Button onClick={syncRoutes} variant="outline" className="font-black uppercase tracking-widest text-[10px] gap-2">
-          <RefreshCw className="w-3.5 h-3.5" />
-          Routen synchronisieren
+        <Button onClick={syncRoutes} variant="outline" className="h-11 font-black uppercase tracking-widest text-[10px] gap-2 px-6">
+          <RefreshCw className="w-4 h-4" />
+          Routes Sync
         </Button>
       </div>
 
-      <Card className="border-2 shadow-xl overflow-hidden">
-        <CardHeader className="bg-muted/30 border-b">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+        <Card className="border-2 border-emerald-200 bg-emerald-50/50 p-4">
+            <div className="text-2xl font-black text-emerald-800 leading-none">
+              {checks.filter(c => c.status === 'perfect').length}
+            </div>
+            <p className="text-[10px] text-emerald-600 uppercase font-black tracking-widest mt-1">Stabil</p>
+        </Card>
+        <Card className="border-2 border-amber-200 bg-amber-50/50 p-4">
+            <div className="text-2xl font-black text-amber-800 leading-none">
+              {checks.filter(c => c.status === 'minor_bugs' || c.status === 'major_bugs').length}
+            </div>
+            <p className="text-[10px] text-amber-600 uppercase font-black tracking-widest mt-1">Bugs</p>
+        </Card>
+        <Card className="border-2 border-red-200 bg-red-50/50 p-4 col-span-2 md:col-span-1">
+            <div className="text-2xl font-black text-red-800 leading-none">
+              {checks.filter(c => c.status === 'catastrophic' || c.status === 'down').length}
+            </div>
+            <p className="text-[10px] text-red-600 uppercase font-black tracking-widest mt-1">Kritisch</p>
+        </Card>
+      </div>
+
+      <Card className="border-2 shadow-2xl overflow-hidden">
+        <CardHeader className="bg-muted/30 border-b p-4 sm:p-6">
           <CardTitle className="uppercase tracking-tighter font-black text-xl flex items-center gap-2">
             <CheckCircle2 className="w-6 h-6 text-primary" />
-            Funktions-Checkliste
+            System Funktions-Check
           </CardTitle>
           <CardDescription>
-            Übersicht aller System-Module und deren aktueller Betriebszustand.
+            Zentrale Übersicht aller Plattform-Komponenten.
           </CardDescription>
         </CardHeader>
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
+          <div className="block md:hidden">
+            {/* Mobile List View */}
+            <div className="divide-y">
+                {loading ? (
+                    <div className="p-8 text-center text-muted-foreground animate-pulse font-black uppercase tracking-widest text-xs">Loading...</div>
+                ) : filteredChecks.length === 0 ? (
+                    <div className="p-8 text-center text-muted-foreground font-bold italic">Keine Treffer</div>
+                ) : filteredChecks.map(check => (
+                    <div key={check.id} className="p-4 space-y-3">
+                        <div className="flex justify-between items-start">
+                            <div>
+                                <div className="font-black text-sm uppercase tracking-tight">{check.name}</div>
+                                <div className="text-[10px] font-mono text-muted-foreground flex items-center gap-1.5 mt-0.5">
+                                    <Badge className={cn("px-1.5 py-0 text-[8px] h-4", (DOMAIN_CONFIG[check.domain || 'main']).color)}>
+                                        {(DOMAIN_CONFIG[check.domain || 'main']).label}
+                                    </Badge>
+                                    {check.path || '/'+check.id.replace(/_/g, '/')}
+                                </div>
+                            </div>
+                            <a href={check.path || '/'+check.id.replace(/_/g, '/')} target="_blank" rel="noopener noreferrer">
+                                <ExternalLink className="w-4 h-4 text-primary" />
+                            </a>
+                        </div>
+                        
+                        <Select 
+                          value={check.status} 
+                          onValueChange={(val) => handleUpdateStatus(check.id, val as SystemCheckStatus)}
+                          disabled={updatingId === check.id}
+                        >
+                          <SelectTrigger className={cn(
+                            "w-full h-10 text-xs font-black uppercase tracking-widest",
+                            STATUS_CONFIG[check.status].color
+                          )}>
+                            <div className="flex items-center gap-2">
+                              {STATUS_CONFIG[check.status].icon}
+                              <SelectValue />
+                            </div>
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Object.entries(STATUS_CONFIG).map(([key, config]) => (
+                              <SelectItem key={key} value={key} className="text-[10px] uppercase font-black tracking-widest py-3">
+                                <div className="flex items-center gap-2">
+                                  {config.icon}
+                                  {config.label}
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+
+                        <div className="grid grid-cols-2 gap-2 text-[10px]">
+                            <div className="bg-muted/50 p-2 rounded border">
+                                <div className="text-muted-foreground uppercase font-black mb-0.5">Prüfer</div>
+                                <div className="font-bold truncate">{check.checked_by_name || 'N/A'}</div>
+                            </div>
+                            <div className="bg-muted/50 p-2 rounded border">
+                                <div className="text-muted-foreground uppercase font-black mb-0.5">Datum</div>
+                                <div className="font-bold">{check.last_checked ? format((check.last_checked as Timestamp).toDate(), 'dd.MM HH:mm') : '-'}</div>
+                            </div>
+                        </div>
+
+                        <Input 
+                            defaultValue={check.notes || ''} 
+                            placeholder="Notizen..."
+                            className="h-10 text-xs bg-muted/20"
+                            onBlur={(e) => handleUpdateNotes(check.id, e.target.value)}
+                        />
+                    </div>
+                ))}
+            </div>
+          </div>
+
+          <div className="hidden md:block overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow className="bg-muted/10 hover:bg-muted/10">
-                  <TableHead className="w-[250px] uppercase font-black tracking-widest text-[10px]">Seite / Modul</TableHead>
-                  <TableHead className="w-[250px] uppercase font-black tracking-widest text-[10px]">Status</TableHead>
-                  <TableHead className="w-[200px] uppercase font-black tracking-widest text-[10px]">Zuletzt geprüft</TableHead>
-                  <TableHead className="min-w-[200px] uppercase font-black tracking-widest text-[10px]">Anmerkungen</TableHead>
-                  <TableHead className="w-[50px]"></TableHead>
+                <TableRow className="bg-muted/10">
+                  <TableHead className="w-[30%] uppercase font-black tracking-widest text-[10px]">Bereich / Pfad</TableHead>
+                  <TableHead className="w-[20%] uppercase font-black tracking-widest text-[10px]">Status</TableHead>
+                  <TableHead className="w-[15%] uppercase font-black tracking-widest text-[10px]">Prüfung</TableHead>
+                  <TableHead className="w-[30%] uppercase font-black tracking-widest text-[10px]">Anmerkungen</TableHead>
+                  <TableHead className="w-[5%]"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="h-32 text-center text-muted-foreground animate-pulse">
-                      Lade Checkliste...
+                    <TableCell colSpan={5} className="h-64 text-center animate-pulse font-black uppercase tracking-widest">
+                      Lade System-Daten...
                     </TableCell>
                   </TableRow>
-                ) : filteredChecks.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={5} className="h-32 text-center text-muted-foreground">
-                      Keine Einträge gefunden. Nutze &quot;Routen synchronisieren&quot;.
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filteredChecks.map((check) => (
+                ) : filteredChecks.map((check) => (
                     <TableRow key={check.id} className="group hover:bg-muted/30 transition-colors">
                       <TableCell>
-                        <div className="flex flex-col gap-0.5">
-                          <span className="font-bold text-sm leading-tight">{check.name}</span>
-                          <span className="text-[10px] text-muted-foreground font-mono">{check.path || '/'+check.id.replace(/_/g, '/')}</span>
+                        <div className="flex items-start gap-3">
+                            <div className={cn("p-2 rounded-lg mt-0.5", (DOMAIN_CONFIG[check.domain || 'main']).color)}>
+                                {(DOMAIN_CONFIG[check.domain || 'main']).icon}
+                            </div>
+                            <div className="flex flex-col">
+                                <span className="font-black text-sm uppercase tracking-tight">{check.name}</span>
+                                <span className="text-[10px] text-muted-foreground font-mono">
+                                    {check.path || '/'+check.id.replace(/_/g, '/')}
+                                </span>
+                            </div>
                         </div>
                       </TableCell>
                       <TableCell>
@@ -277,17 +405,17 @@ export default function FunctionalChecklistPage() {
                           disabled={updatingId === check.id}
                         >
                           <SelectTrigger className={cn(
-                            "w-full h-9 text-xs font-bold uppercase tracking-tight",
+                            "w-full h-9 text-[10px] font-black uppercase tracking-widest",
                             STATUS_CONFIG[check.status].color
                           )}>
                             <div className="flex items-center gap-2">
                               {STATUS_CONFIG[check.status].icon}
-                              <SelectValue placeholder="Status wählen" />
+                              <SelectValue />
                             </div>
                           </SelectTrigger>
                           <SelectContent>
                             {Object.entries(STATUS_CONFIG).map(([key, config]) => (
-                              <SelectItem key={key} value={key} className="text-xs uppercase font-bold tracking-tight py-2">
+                              <SelectItem key={key} value={key} className="text-[10px] uppercase font-black tracking-widest">
                                 <div className="flex items-center gap-2">
                                   {config.icon}
                                   {config.label}
@@ -298,90 +426,45 @@ export default function FunctionalChecklistPage() {
                         </Select>
                       </TableCell>
                       <TableCell>
-                        <div className="flex flex-col gap-0.5">
-                          <span className="text-xs font-medium">
-                            {check.last_checked ? format((check.last_checked as Timestamp).toDate(), 'dd.MM.yyyy HH:mm', { locale: de }) : 'Nie'}
+                        <div className="flex flex-col leading-tight">
+                          <span className="text-[10px] font-black uppercase tracking-tighter">
+                            {check.checked_by_name?.split(' ')[0] || '-'}
                           </span>
-                          <span className="text-[10px] text-muted-foreground uppercase font-black tracking-widest">
-                            {check.checked_by_name || '-'}
+                          <span className="text-[9px] text-muted-foreground">
+                            {check.last_checked ? format((check.last_checked as Timestamp).toDate(), 'dd.MM.yy HH:mm') : 'Nie'}
                           </span>
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-2">
                           <Input 
                             defaultValue={check.notes || ''} 
-                            placeholder="Bugs, Details..."
-                            className="h-8 text-xs"
+                            placeholder="Details..."
+                            className="h-8 text-[11px] bg-transparent border-transparent group-hover:border-muted group-hover:bg-white transition-all"
                             onBlur={(e) => handleUpdateNotes(check.id, e.target.value)}
                           />
-                        </div>
                       </TableCell>
                       <TableCell>
                         <a 
                           href={check.path || '/'+check.id.replace(/_/g, '/')} 
                           target="_blank" 
                           rel="noopener noreferrer"
-                          className="p-2 hover:bg-primary/10 rounded-full transition-colors inline-block"
+                          className="p-2 hover:bg-primary/10 rounded-lg transition-colors inline-block"
                         >
                           <ExternalLink className="w-4 h-4 text-muted-foreground hover:text-primary" />
                         </a>
                       </TableCell>
                     </TableRow>
                   ))
-                )}
+                }
               </TableBody>
             </Table>
           </div>
         </CardContent>
       </Card>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <Card className="border-2 border-emerald-200 bg-emerald-50/50">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-emerald-700 text-sm uppercase font-black flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4" />
-              Stabil
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-black text-emerald-800">
-              {checks.filter(c => c.status === 'perfect').length}
-            </div>
-            <p className="text-[10px] text-emerald-600 uppercase font-bold">Module ohne bekannte Bugs</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-2 border-amber-200 bg-amber-50/50">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-amber-700 text-sm uppercase font-black flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4" />
-              Baustellen
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-black text-amber-800">
-              {checks.filter(c => c.status === 'minor_bugs' || c.status === 'major_bugs').length}
-            </div>
-            <p className="text-[10px] text-amber-600 uppercase font-bold">Module mit Fehlern</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-2 border-red-200 bg-red-50/50">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-red-700 text-sm uppercase font-black flex items-center gap-2">
-              <AlertOctagon className="w-4 h-4" />
-              Kritisch
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-black text-red-800">
-              {checks.filter(c => c.status === 'catastrophic' || c.status === 'down').length}
-            </div>
-            <p className="text-[10px] text-red-600 uppercase font-bold">Module mit Totalausfall</p>
-          </CardContent>
-        </Card>
-      </div>
     </div>
   )
+}
+
+function Badge({ children, className }: { children: React.ReactNode, className?: string }) {
+    return <span className={cn("px-2 py-0.5 rounded-full font-black tracking-widest inline-flex items-center justify-center", className)}>{children}</span>
 }

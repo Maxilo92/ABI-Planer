@@ -532,6 +532,7 @@ export type SystemCheckStatus = 'perfect' | 'minor_bugs' | 'major_bugs' | 'catas
 export interface SystemCheck {
   id: string; // the path ID, e.g. "_admin_system"
   path: string; // the actual path, e.g. "/admin/system"
+  domain?: 'main' | 'tcg' | 'admin' | 'api' | string; // Subdomain/Bereich
   name: string;
   status: SystemCheckStatus;
   last_checked?: string | Timestamp | Date | null;
