@@ -6,6 +6,11 @@
 <!-- default_action: read newest entries only unless a regression requires older history -->
 <!-- index: docs/AGENT_CONTEXT_INDEX.md -->
 
+## [1.28.6.00] - 2026-04-22
+
+### Geändert
+- **Global Footer:** "Werde Teil des Teams" (Karriere-Link) zur Rubrik "Über uns" hinzugefügt, um die Sichtbarkeit des Entwickler-Onboardings zu erhöhen.
+
 ## [1.28.5.00] - 2026-04-22
 
 ### Hinzugefügt
