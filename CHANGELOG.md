@@ -6,6 +6,17 @@
 <!-- default_action: read newest entries only unless a regression requires older history -->
 <!-- index: docs/AGENT_CONTEXT_INDEX.md -->
 
+## [1.29.2.00] - 2026-04-22
+
+### Geändert
+- **Admin Bereich:** Umstrukturierung der Admin-Seiten.
+  - Die Benutzerverwaltung wurde von `/admin` nach `/admin/user` verschoben.
+  - `/admin` dient nun als zentrales Admin Control Center (Hub) mit Verweisen auf alle Module.
+- **Performance:** Die Benutzerverwaltung wurde massiv optimiert.
+  - Umstellung von Echtzeit-Listenern (`onSnapshot`) auf Paginierung (`getDocs`) mit Infinite Scroll.
+  - Reduzierung der Client-Last durch Laden von Nutzer-Batches (50 Profile pro Batch).
+  - Lokale State-Updates bei Einzeländerungen zur Vermeidung von Voll-Reloads.
+
 ## [1.29.1.00] - 2026-04-22
 
 ### Geändert

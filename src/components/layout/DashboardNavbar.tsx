@@ -177,8 +177,9 @@ export function DashboardNavbar() {
       label: 'Admin Bereich', 
       icon: ShieldCheck,
       subItems: [
-        { href: '/admin/system', label: 'Control Center', icon: Server },
-        { href: '/admin', label: 'Benutzer', icon: Users },
+        { href: '/admin', label: 'Admin Hub', icon: Server },
+        { href: '/admin/user', label: 'Benutzerverwaltung', icon: Users },
+        { href: '/admin/system', label: 'System Overview', icon: LayoutDashboard },
         { href: '/admin/changelog', label: 'Changelog', icon: FileText },
         { href: '/admin/sammelkarten', label: 'Sammelkarten Manager', icon: Sparkles },
         { href: '/admin/global-settings', label: 'Globale Einstellungen', icon: Settings },

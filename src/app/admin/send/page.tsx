@@ -446,7 +446,7 @@ function AdminSendContent() {
 
       // Cleanup and redirect
       sessionStorage.removeItem('admin_send_recipients')
-      router.push('/admin')
+      router.push('/admin/user')
     } catch (error) {
       console.error('Error sending message:', error)
       toast.error('Versand fehlgeschlagen.')
@@ -515,7 +515,7 @@ function AdminSendContent() {
         <Button 
           variant="link" 
           size="sm" 
-          onClick={() => router.push('/admin')} 
+          onClick={() => router.push('/admin/user')} 
           className="w-fit h-auto p-0 text-muted-foreground hover:text-primary gap-1 no-underline"
         >
           <ArrowLeft className="h-3 w-3" />
