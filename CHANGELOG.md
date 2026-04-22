@@ -6,6 +6,17 @@
 <!-- default_action: read newest entries only unless a regression requires older history -->
 <!-- index: docs/AGENT_CONTEXT_INDEX.md -->
 
+## [1.28.2.00] - 2026-04-22
+
+### Hinzugefügt
+- **Über-Seite (/uber):** Vollständiges Redesign der Informationsseite im "Modern & Immersive"-Stil.
+  - **Hero-Sektion:** Neues visuelles Banner mit Gradienten und Fokus auf den Abiturjahrgang 2027.
+  - **Feature-Grid:** Interaktive Kacheln für Dashboard, Kalender, Aufgaben, Finanzen, News und Abstimmungen.
+  - **Roadmap:** Visuelle Timeline der Projektentwicklung (v1.0.0 bis v2.0.0+).
+  - **Team & Credits:** Ansprechende Profil-Darstellung der Entwickler und Unterstützer.
+  - **Bento-Grid:** Neue Struktur für technische Architektur und Sicherheits-Features.
+  - **Responsiveness:** Optimiertes Layout für alle Bildschirmgrößen mit modernen Tailwind-Animationen.
+
 ## [1.28.1.00] - 2026-04-22
 
 ### Behoben
