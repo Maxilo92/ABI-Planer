@@ -18,7 +18,6 @@ import { LandingHeader } from '@/components/layout/LandingHeader'
 import { getTcgBaseUrl, extractGradeFromClassName, ALLOWED_PLANNER_GRADES } from '@/lib/dashboard-url'
 
 import { SupportHeader } from '@/components/support/SupportHeader'
-import { SupportFooter } from '@/components/support/SupportFooter'
 
 interface AppShellProps {
   children: React.ReactNode
@@ -138,7 +137,7 @@ export function AppShell({ children }: AppShellProps) {
         <main className="flex-1">
           {children}
         </main>
-        <SupportFooter />
+        <Footer />
         <CookieConsent />
       </div>
     )
