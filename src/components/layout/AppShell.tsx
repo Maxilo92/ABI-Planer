@@ -15,6 +15,10 @@ import { useAuth } from '@/context/AuthContext'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ThemeSync } from '@/components/layout/ThemeSync'
 import { LandingHeader } from '@/components/layout/LandingHeader'
+import { getTcgBaseUrl, extractGradeFromClassName, ALLOWED_PLANNER_GRADES } from '@/lib/dashboard-url'
+
+import { SupportHeader } from '@/components/support/SupportHeader'
+import { SupportFooter } from '@/components/support/SupportFooter'
 
 interface AppShellProps {
   children: React.ReactNode
@@ -38,19 +42,24 @@ export function AppShell({ children }: AppShellProps) {
     }
   }, [])
 
-  const isDashboardSubdomain = useMemo(() => {
-    if (isBoneyardBuild) return false
-    if (hostname === null) return null // Initial loading state
-    return (
-      hostname.startsWith('dashboard.') ||
-      hostname.startsWith('app.') ||
-      hostname.startsWith('tcg.') ||
-      hostname.startsWith('shop.') ||
-      hostname.includes('.dashboard.') ||
-      hostname.includes('.tcg.') ||
-      hostname.includes('.shop.')
-    )
+  const domainInfo = useMemo(() => {
+    if (isBoneyardBuild || hostname === null) return { isDashboard: false, isTcg: false, isShop: false, isSupport: false, isAnySubdomain: false }
+    
+    const isDashboard = hostname.startsWith('dashboard.') || hostname.startsWith('app.') || hostname.includes('.dashboard.')
+    const isTcg = hostname.startsWith('tcg.') || hostname.includes('.tcg.')
+    const isShop = hostname.startsWith('shop.') || hostname.includes('.shop.')
+    const isSupport = hostname.startsWith('support.') || hostname.includes('.support.')
+    
+    return {
+      isDashboard,
+      isTcg,
+      isShop,
+      isSupport,
+      isAnySubdomain: isDashboard || isTcg || isShop || isSupport
+    }
   }, [hostname, isBoneyardBuild])
+
+  const isDashboardSubdomain = domainInfo.isAnySubdomain
 
   const isNoMenuRoute = useMemo(() => {
     if (!pathname) return false
@@ -60,6 +69,7 @@ export function AppShell({ children }: AppShellProps) {
   const isAuthRoute = authRoutes.has(pathname) || 
     pathname?.startsWith('/lehrer/erstellen/')
   const isPublicLandingRoute = isDashboardSubdomain === false && !isAuthRoute && pathname !== '/maintenance'
+  const isSupportRoute = domainInfo.isSupport
   const isMaintenancePage = pathname === '/maintenance'
   const isNewsDetail = pathname?.startsWith('/news/')
   const isAdmin = ['admin_main', 'admin', 'admin_co'].includes(profile?.role || '')
@@ -86,14 +96,30 @@ export function AppShell({ children }: AppShellProps) {
     if (isDashboardSubdomain !== true) return
     if (authLoading) return
     if (isAuthRoute) return
-    if (!user) {
+    if (isSupportRoute) return // Support is public
+    
+    // Auth protection: Dashboard and TCG require login. Shop is public.
+    if (!user && !domainInfo.isShop) {
       const targetPath = typeof window !== 'undefined'
         ? `${window.location.pathname}${window.location.search}${window.location.hash}`
         : pathname || '/'
       const redirectTarget = targetPath.startsWith('/') ? targetPath : '/'
       router.replace(`/login?redirect=${encodeURIComponent(redirectTarget)}`)
+      return
     }
-  }, [authLoading, isBoneyardBuild, isDashboardSubdomain, isAuthRoute, pathname, router, user])
+
+    // Role protection for Dashboard subdomain
+    if (user && profile && domainInfo.isDashboard) {
+      const grade = extractGradeFromClassName(profile.class_name)
+      const isPlanner = ['admin_main', 'admin', 'admin_co', 'planner'].includes(profile.role || '')
+      const isGraduationClass = grade && ALLOWED_PLANNER_GRADES.has(grade)
+      
+      if (!isPlanner && !isGraduationClass) {
+        console.warn('[AppShell] User not authorized for dashboard, redirecting to TCG.')
+        window.location.href = `${getTcgBaseUrl()}/home`
+      }
+    }
+  }, [authLoading, isBoneyardBuild, isDashboardSubdomain, domainInfo.isShop, domainInfo.isDashboard, isAuthRoute, isSupportRoute, pathname, router, user, profile])
 
   // While hostname is not determined, show a minimal loading state to prevent flash
   // This return MUST be after all hooks have been declared
@@ -101,6 +127,20 @@ export function AppShell({ children }: AppShellProps) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary/20" />
+      </div>
+    )
+  }
+
+  if (isSupportRoute) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <SupportHeader />
+        <main className="flex-1">
+          {children}
+        </main>
+        <SupportFooter />
+        <Toaster />
+        <CookieConsent />
       </div>
     )
   }
@@ -115,7 +155,7 @@ export function AppShell({ children }: AppShellProps) {
     )
   }
 
-  if (!isBoneyardBuild && isDashboardSubdomain === true && !isAuthRoute && (authLoading || !user)) {
+  if (!isBoneyardBuild && isDashboardSubdomain === true && !isAuthRoute && (authLoading || (!user && !domainInfo.isShop))) {
     return (
       <div className="min-h-screen bg-background lg:flex">
         {/* Sidebar Skeleton */}

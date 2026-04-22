@@ -6,6 +6,44 @@
 <!-- default_action: read newest entries only unless a regression requires older history -->
 <!-- index: docs/AGENT_CONTEXT_INDEX.md -->
 
+## [1.26.0.00] - 2026-04-22
+
+### Hinzugefügt
+- **Dediziertes Support-Center (support.abi-planer-27.de):**
+  - **Claude-inspiriertes Design:** Neues, eigenständiges Support-Layout mit Hero-Suche, Kategorie-Kacheln und übersichtlichen Artikel-Seiten.
+  - **Subdomain-Integration:** Automatisches Routing via Next.js Middleware. Anfragen an `support.*` werden auf die neue `/support`-Struktur umgeschrieben.
+  - **Suche & Feedback:** Verbesserte FAQ-Suche und "War dieser Artikel hilfreich?"-Feedback-System.
+  - **Lehrer-Beschwerden Migration:** Das Beschwerde-Formular für Lehrer wurde vollständig in das Support-Center integriert und unter `/beschwerden` erreichbar gemacht.
+
+### Geändert
+- **Zentrale Hilfe-Verlinkung:** Alle "Hilfe"-Links in der Haupt-App (Sidebars, Menüs, Fehlerseiten) leiten nun direkt auf das externe Support-Center weiter.
+- **Middleware-Update:** Implementierung von Redirects für alle alten `/hilfe`-Routen auf die neue Subdomain.
+
+### Entfernt
+- **Altlasten:** Die alten Hilfe-Routen unter `src/app/hilfe` wurden vollständig entfernt, um Code-Duplikation zu vermeiden.
+
+## [1.25.0.00] - 2026-04-22
+
+### Hinzugefügt
+- **Architektonische Domänen-Trennung:**
+  - **Spezialisierte Navbars:** Einführung von `DashboardNavbar`, `TcgNavbar` und `ShopNavbar` für eine klare visuelle und funktionale Trennung der Bereiche.
+  - **Domänen-Selektor:** Die Haupt-`Navbar` erkennt nun automatisch die aktuelle Subdomain (`dashboard.`, `tcg.`, `shop.`) und zeigt das entsprechende Layout an.
+  - **Rollenbasiertes Routing:** Nach dem Login werden Nutzer automatisch basierend auf ihrem Jahrgang (Klasse 11) zum Dashboard oder zum TCG-Bereich weitergeleitet.
+  - **Gast-Zugang für den Shop:** Der Shop ist nun vollständig ohne Login zugänglich (für Merch und Spenden). Login wird nur noch für den Kauf von Sammelkarten-Boostern (Inventory-Verknüpfung) benötigt.
+  - **Dashboard-Schutz:** Strengere Prüfung des Jahrgangs beim Zugriff auf die `dashboard.` Subdomain in der `AppShell`.
+
+## [1.24.2.00] - 2026-04-21
+
+### Hinzugefügt
+- **Kampfsystem (Phase 2 - Energie/Mana):**
+  - **Energie-Pools:** Spieler und KI starten mit 3 Energie und regenerieren +2 Energie pro Zug (Maximal 10).
+  - **Angriffskosten:** Jeder Angriff hat nun spezifische Energiekosten (dynamisch berechnet aus dem Schaden, falls nicht explizit in der Karte hinterlegt).
+  - **Energie-Balken UI:** Neue Energie-Balken (10 Punkte) für Spieler (Blau) und KI (Gold) unter den HP-Balken im GameBoard.
+  - **Kosten-Visualisierung:** Energiekosten werden nun als blaue Punkte direkt auf den Angriffen (sowohl auf den Karten als auch im Focus-Menü) angezeigt.
+  - **Validierung:** Angriffe ohne ausreichende Energie sind ausgegraut und blockiert (Frontend) und werfen einen Fehler (Backend).
+  - **KI-Energie-Management:** Die KI priorisiert Angriffe, die sie sich leisten kann, und überspringt ihren Zug, wenn keine Angriffe oder Wechsel möglich sind, um Energie zu regenerieren.
+
+
 ## [1.24.1.19] - 2026-04-21
 
 ### Verbessert

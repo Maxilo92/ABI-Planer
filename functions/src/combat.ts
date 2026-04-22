@@ -395,6 +395,8 @@ export const onQueueJoin = onDocumentCreated({
           bench: shuffledCardsA.slice(1, 4),
           reserve: shuffledCardsA.slice(4),
           graveyard: [],
+          energy: 3,
+          maxEnergy: 10,
           points: 0,
           status: 'ready'
         },
@@ -407,6 +409,8 @@ export const onQueueJoin = onDocumentCreated({
           bench: shuffledCardsB.slice(1, 4),
           reserve: shuffledCardsB.slice(4),
           graveyard: [],
+          energy: 3,
+          maxEnergy: 10,
           points: 0,
           status: 'ready'
         },
@@ -501,6 +505,8 @@ export const startAiMatch = onCall({
         bench: shuffledPlayerCards.slice(1, 4),
         reserve: shuffledPlayerCards.slice(4),
         graveyard: [],
+        energy: 3,
+        maxEnergy: 10,
         points: 0,
         status: 'ready'
       },
@@ -513,6 +519,8 @@ export const startAiMatch = onCall({
         bench: shuffledAiCards.slice(1, 4),
         reserve: shuffledAiCards.slice(4),
         graveyard: [],
+        energy: 3,
+        maxEnergy: 10,
         points: 0,
         status: 'ready'
       },
@@ -677,9 +685,10 @@ export const onMatchUpdated = onDocumentUpdated({
   const matchRef = event.data.after.ref;
 
   // Dynamic delay based on AI ELO — lower ELO = faster (less "thinking"), higher = more deliberate
+  // Reduced times for better UX (500ms - ~1200ms)
   const aiElo = matchData.playerB?.elo || 1000;
   const normalizedElo = Math.min(1, Math.max(0, (aiElo - 500) / 2000));
-  const delayMs = Math.round(1000 + normalizedElo * 2000 + Math.random() * 500);
+  const delayMs = Math.round(500 + normalizedElo * 500 + Math.random() * 200);
   await new Promise(resolve => setTimeout(resolve, delayMs));
 
   try {
@@ -784,28 +793,45 @@ export const onMatchUpdated = onDocumentUpdated({
         action = { type: 'switch', benchIndex: switchIndex };
       }
 
-      // If no switch, pick the best attack
+      // If no switch,
       if (!action) {
-        const attackIndex = chooseAttackIndex(bot.activeCard, player.activeCard, difficultyProfile, attackStats);
+        const attackIndex = chooseAttackIndex(bot.activeCard, player.activeCard, difficultyProfile, attackStats, bot.energy || 0);
 
         if (attackIndex >= 0) {
           action = { type: 'attack', attackIndex };
-        } else if (bot.activeCard.attacks && bot.activeCard.attacks.length > 0) {
-          // Fallback: use first available attack
-          action = { type: 'attack', attackIndex: 0 };
         } else if (bot.bench.length > 0 && botPoints > 0) {
-          // No attacks available — try switching
+          // No attacks available/affordable — try switching
           action = { type: 'switch', benchIndex: 0 };
         } else {
-          // No valid actions — this shouldn't happen, but log and skip
-          logger.warn(`[Combat] AI has no valid actions in match ${event.params.matchId}. Skipping turn.`);
-          // Pass turn to player to avoid deadlock
-          transaction.update(matchRef, {
-            currentTurn: player.uid,
-            turnStartTime: FieldValue.serverTimestamp(),
-          });
-          return;
+          // No valid actions — AI must skip turn (e.g. out of energy, out of points)
+          logger.info(`[Combat] AI has no affordable attacks or points to switch in match ${event.params.matchId}. Skipping turn to regenerate energy.`);
+          // Create a skip action that does nothing
+          action = { type: 'skip' };
         }
+      }
+
+      if (action.type === 'skip') {
+        const logEntry: any = {
+          type: 'skip',
+          actor: AI_BOT_ID,
+          timestamp: new Date().toISOString()
+        };
+        const nextMatchStatus = data.status;
+        const switchKeepsTurn = false;
+        
+        const nextTurn = nextMatchStatus === 'finished' ? null : (switchKeepsTurn ? AI_BOT_ID : player.uid);
+        if (nextTurn && nextTurn === player.uid) {
+          player.energy = Math.min((player.maxEnergy || 10), (player.energy || 0) + 2);
+        }
+
+        transaction.update(matchRef, {
+          playerA: player,
+          playerB: bot,
+          currentTurn: nextTurn,
+          turnStartTime: FieldValue.serverTimestamp(),
+          actionLog: FieldValue.arrayUnion(logEntry)
+        });
+        return;
       }
 
       const logEntry: any = {
@@ -824,6 +850,14 @@ export const onMatchUpdated = onDocumentUpdated({
           logger.error(`[Combat] AI tried to use invalid attack index ${action.attackIndex} in match ${event.params.matchId}`);
           return;
         }
+
+        const energyCost = attack.energyCost ?? Math.max(1, Math.ceil((attack.damage || 10) / 10));
+        if ((bot.energy || 0) < energyCost) {
+          logger.error(`[Combat] AI tried to use attack without enough energy in match ${event.params.matchId}`);
+          return;
+        }
+        bot.energy -= energyCost;
+
         const damage = attack.damage || 0;
         logEntry.attackerCardId = bot.activeCard.cardId || bot.activeCard.fullId || null;
         logEntry.attackKey = buildAttackKey(logEntry.attackerCardId || '', attack.name || '');
@@ -890,10 +924,15 @@ export const onMatchUpdated = onDocumentUpdated({
         }
       }
 
+      const nextTurn = nextMatchStatus === 'finished' ? null : (switchKeepsTurn ? AI_BOT_ID : player.uid);
+      if (nextTurn && nextTurn === player.uid) {
+        player.energy = Math.min((player.maxEnergy || 10), (player.energy || 0) + 2);
+      }
+
       transaction.update(matchRef, {
         playerA: player,
         playerB: bot,
-        currentTurn: nextMatchStatus === 'finished' ? null : (switchKeepsTurn ? AI_BOT_ID : player.uid),
+        currentTurn: nextTurn,
         turnStartTime: FieldValue.serverTimestamp(),
         actionLog: FieldValue.arrayUnion(logEntry),
         status: nextMatchStatus,
@@ -999,6 +1038,12 @@ export const submitCombatAction = onCall({
         const attack = player.activeCard.attacks[action.attackIndex];
         if (!attack) throw new HttpsError("invalid-argument", "Invalid attack index");
 
+        const energyCost = attack.energyCost ?? Math.max(1, Math.ceil((attack.damage || 10) / 10));
+        if ((player.energy || 0) < energyCost) {
+          throw new HttpsError("failed-precondition", `Nicht genug Energie. Benötigt: ${energyCost}`);
+        }
+        player.energy -= energyCost;
+
         if (!opponent.activeCard) throw new HttpsError("failed-precondition", "Gegner hat keine aktive Karte.");
         opponent.activeCard.hp -= attack.damage;
         logEntry.value = attack.damage;
@@ -1076,10 +1121,15 @@ export const submitCombatAction = onCall({
         throw new HttpsError("invalid-argument", "Unknown action type");
       }
 
+      const nextTurn = nextStatus === 'finished' ? null : (action.type === 'switch' ? (switchKeepsTurn ? uid : opponent.uid) : opponent.uid);
+      if (nextTurn && nextTurn === opponent.uid) {
+        opponent.energy = Math.min((opponent.maxEnergy || 10), (opponent.energy || 0) + 2);
+      }
+
       transaction.update(matchRef, {
         playerA: isPlayerA ? player : opponent,
         playerB: isPlayerA ? opponent : player,
-        currentTurn: nextStatus === 'finished' ? null : (action.type === 'switch' ? (switchKeepsTurn ? uid : (isPlayerA ? data.playerB_uid : data.playerA_uid)) : (isPlayerA ? data.playerB_uid : data.playerA_uid)),
+        currentTurn: nextTurn,
         turnStartTime: FieldValue.serverTimestamp(),
         actionLog: FieldValue.arrayUnion(logEntry),
         status: nextStatus,
@@ -1172,6 +1222,8 @@ export const createFriendMatch = onCall({
         bench: shuffledPlayerCards.slice(1, 4),
         reserve: shuffledPlayerCards.slice(4),
         graveyard: [],
+        energy: 3,
+        maxEnergy: 10,
         points: 0,
         status: 'ready'
       },
@@ -1184,6 +1236,8 @@ export const createFriendMatch = onCall({
         bench: [],
         reserve: [],
         graveyard: [],
+        energy: 3,
+        maxEnergy: 10,
         points: 0,
         status: 'waiting'
       },
@@ -1271,6 +1325,8 @@ export const createMatchWithCode = onCall({
         bench: shuffledPlayerCards.slice(1, 4),
         reserve: shuffledPlayerCards.slice(4),
         graveyard: [],
+        energy: 3,
+        maxEnergy: 10,
         points: 0,
         status: 'ready'
       },
@@ -1353,6 +1409,8 @@ export const joinMatchByCode = onCall({
       bench: shuffledPlayerCards.slice(1, 4),
       reserve: shuffledPlayerCards.slice(4),
       graveyard: [],
+      energy: 3,
+      maxEnergy: 10,
       points: 0,
       status: 'ready'
     };
@@ -1450,6 +1508,8 @@ export const joinMatchById = onCall({
       bench: shuffledPlayerCards.slice(1, 4),
       reserve: shuffledPlayerCards.slice(4),
       graveyard: [],
+      energy: 3,
+      maxEnergy: 10,
       points: 0,
       status: 'ready'
     };

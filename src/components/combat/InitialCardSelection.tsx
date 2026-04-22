@@ -3,7 +3,9 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { TeacherSpecCard } from '@/components/cards/TeacherSpecCard'
+import { TeacherCard } from '@/components/cards/TeacherCard'
 import { Button } from '@/components/ui/button'
+import { getCard } from '@/constants/cardRegistry'
 import { Sparkles, Check } from 'lucide-react'
 import { httpsCallable } from 'firebase/functions'
 import { functions } from '@/lib/firebase'
@@ -100,27 +102,29 @@ export function InitialCardSelection({
             // Prepare card data for TeacherSpecCard with full compatibility
             const normalizedCardId = card.cardId?.includes(':') ? card.cardId.split(':')[1] : card.cardId;
             
+            const registryCard = getCard(normalizedCardId || card.id) as any;
+            
             const cardData: any = {
               // Core properties
               id: normalizedCardId || card.id || '',
               cardId: normalizedCardId || card.cardId || '',
               instanceId: card.instanceId || '',
-              name: card.name || '',
+              name: card.name || registryCard?.name || '',
               
               // Combat properties
-              hp: card.hp || card.maxHp || 100,
-              maxHp: card.maxHp || card.hp || 100,
-              attacks: card.attacks || [],
+              hp: card.hp || card.maxHp || registryCard?.hp || 100,
+              maxHp: card.maxHp || card.hp || registryCard?.hp || 100,
+              attacks: card.attacks || registryCard?.attacks || [],
               
               // Registry properties with safe defaults
-              rarity: card.rarity || 'common',
-              variant: card.variant || 0,
-              level: card.level || 1,
-              description: card.description || '',
-              color: card.color || '#ffffff',
-              photoUrl: card.photoUrl || '',
-              type: card.type || '',
-              cardNumber: card.cardNumber || '',
+              rarity: card.rarity || registryCard?.rarity || 'common',
+              variant: card.variant || registryCard?.variant || 'normal',
+              level: card.level || registryCard?.level || 1,
+              description: card.description || registryCard?.description || '',
+              color: card.color || registryCard?.color,
+              imageUrl: card.photoUrl || registryCard?.imageUrl || '',
+              type: card.type || registryCard?.type || '',
+              cardNumber: card.cardNumber || registryCard?.cardNumber || '',
             };
             
             return (
@@ -136,7 +140,7 @@ export function InitialCardSelection({
               }`}
             >
               <div className="aspect-[3/4] bg-black/40">
-                <TeacherSpecCard data={cardData} isCombat compact hideAttacks />
+                <TeacherCard data={cardData} frontOnly={true} />
               </div>
               
               {/* Selection checkmark */}

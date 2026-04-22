@@ -193,8 +193,12 @@ export const TeacherSpecCard = React.memo(({
                 <div key={idx} className="flex flex-col border-b-[0.15cqw] border-current/10 pb-[1.5%]" style={{ color: useLightText ? 'white' : 'black' }}>
                   <div className="flex min-w-0 items-start justify-between gap-[2%]">
                     <div className="flex min-w-0 flex-1 items-start gap-[1.5%]">
-                      <Swords className="w-[3.5cqw] h-[3.5cqw] text-blue-500" />
-                      <span className="min-w-0 whitespace-normal break-words text-[4.2cqw] font-black uppercase tracking-tight leading-[0.95]" style={{ textWrap: 'balance' }}>
+                      <div className="flex gap-[0.5cqw] mt-[0.8cqw] shrink-0">
+                        {Array.from({ length: Math.min(5, attack.energyCost ?? Math.max(1, Math.ceil((attack.damage || 10) / 10))) }).map((_, i) => (
+                          <div key={i} className="w-[2.2cqw] h-[2.2cqw] bg-sky-500 rounded-full" />
+                        ))}
+                      </div>
+                      <span className="min-w-0 whitespace-normal break-words text-[4.2cqw] font-black uppercase tracking-tight leading-[0.95] ml-[1cqw]" style={{ textWrap: 'balance' }}>
                         {attack.name}
                       </span>
                     </div>

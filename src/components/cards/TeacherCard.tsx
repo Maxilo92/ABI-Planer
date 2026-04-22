@@ -71,6 +71,15 @@ const Particle = React.memo(({ delay }: { delay: number }) => {
 
 Particle.displayName = 'Particle';
 
+const RARITY_COLORS: Record<string, string> = {
+  common: '#94a3b8',    // slate-400
+  rare: '#10b981',      // emerald-500
+  epic: '#a855f7',      // purple-500
+  mythic: '#ef4444',    // red-500
+  legendary: '#f59e0b', // amber-500
+  iconic: '#000000',    // black
+};
+
 export const TeacherCard = React.memo(({ 
   data, 
   className, 
@@ -85,6 +94,23 @@ export const TeacherCard = React.memo(({
   showDeckControls = false,
   frontOnly = false
 }: TeacherCardProps) => {
+  const rarity = data?.rarity || 'common';
+  const variant = data?.variant || 'normal';
+  const isBlckShiny = variant === 'black_shiny_holo';
+  const isIconic = rarity === 'iconic';
+  const isShiny = variant === 'shiny';
+  const isGlass = variant === 'holo';
+  const hasFoilEffects = variant !== 'normal' || isIconic;
+
+  const cardColor = React.useMemo(() => {
+    if (isBlckShiny || isIconic) return '#0a0a0a';
+    // Use RARITY_COLORS if color is missing or the default blue
+    if (!data?.color || data?.color === '#3b82f6') {
+      return RARITY_COLORS[rarity] || data?.color || '#94a3b8';
+    }
+    return data?.color;
+  }, [data?.color, rarity, isBlckShiny, isIconic]);
+
   const darkenHexColor = (hex: string, amount: number) => {
     const normalized = (hex || '').trim().replace('#', '')
     if (!/^[0-9a-fA-F]{6}$/.test(normalized)) return '#1f2937'
@@ -147,14 +173,9 @@ export const TeacherCard = React.memo(({
     }
   }, [upgradeInfo?.newLevel, upgradeInfo?.oldLevel, isFlipped, controls, displayLevel, frontOnly]);
 
-  const isBlckShiny = data.variant === 'black_shiny_holo';
-  const isIconic = data.rarity === 'iconic';
-  const isShiny = data.variant === 'shiny';
-  const isGlass = data.variant === 'holo';
-  const hasFoilEffects = data.variant !== 'normal' || isIconic;
   const cardFrontRef = useRef<HTMLDivElement | null>(null);
   const [effectsEnabled, setEffectsEnabled] = useState(!hasFoilEffects);
-  const numberStickerBackground = darkenHexColor(data.color || '#3b82f6', 0.35)
+  const numberStickerBackground = darkenHexColor(cardColor || '#3b82f6', 0.35)
   const numberStickerStyle = isBlckShiny
     ? {
         backgroundColor: 'rgba(52, 24, 74, 0.92)',
@@ -266,13 +287,13 @@ export const TeacherCard = React.memo(({
         frontOnly && "relative h-full w-full"
       )}
       style={{ 
-        backgroundColor: isBlckShiny ? '#0a0a0a' : (isGlass ? data.color : data.color),
+        backgroundColor: isBlckShiny ? '#0a0a0a' : (isGlass ? cardColor : cardColor),
         transform: frontOnly ? undefined : "translateZ(1px)"
       }}
     >
       <CardEffectOverlay
-        variant={data.variant}
-        tintColor={data.color}
+        variant={variant}
+        tintColor={cardColor}
         isIconic={isIconic}
         effectsEnabled={effectsEnabled}
       />

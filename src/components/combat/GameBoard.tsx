@@ -270,7 +270,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   // Perspective guard: show loading state if auth is refreshing
   if (!currentUserId) {
     return (
-      <div className="relative w-full h-full bg-neutral-950 overflow-hidden flex items-center justify-center rounded-[2rem] xl:rounded-[2.5rem] 2xl:rounded-[3rem] border border-white/5 shadow-2xl">
+      <div className="relative w-full h-full bg-neutral-950 overflow-hidden flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="w-10 h-10 text-primary animate-spin" />
           <span className="text-[10px] font-black uppercase tracking-widest text-white/40">Synchronisierung...</span>
@@ -280,7 +280,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   }
 
   return (
-    <div className="relative w-full h-full bg-neutral-950 overflow-hidden flex flex-col p-2 sm:p-4 lg:p-5 xl:p-6 2xl:p-8 font-sans select-none rounded-[2rem] xl:rounded-[2.5rem] 2xl:rounded-[3rem] border border-white/5 shadow-2xl">
+    <div className="relative w-full h-full overflow-hidden flex flex-col p-2 sm:p-4 lg:p-5 xl:p-6 2xl:p-8 font-sans select-none">
       {/* Initial Card Selection Modal */}
       <AnimatePresence>
         {showInitialCardSelection && (
@@ -418,6 +418,11 @@ export const GameBoard: React.FC<GameBoardProps> = ({
           <div className="h-2 bg-neutral-900 border border-white/5 rounded-full overflow-hidden">
             <motion.div animate={{ width: `${(opponent.activeCard?.maxHp || opponent.activeCard?.hp || 1) > 0 ? ((opponent.activeCard?.hp ?? 0) / (opponent.activeCard?.maxHp || opponent.activeCard?.hp || 1)) * 100 : 0}%` }} className="h-full bg-red-600" />
           </div>
+          <div className="flex gap-[2px] mt-1.5 h-1.5 justify-end px-1">
+            {Array.from({ length: 10 }).map((_, i) => (
+              <div key={i} className={cn("w-full max-w-3 rounded-full", i < (opponent.energy || 0) ? "bg-amber-400 shadow-[0_0_5px_rgba(251,191,36,0.5)]" : "bg-neutral-800")} />
+            ))}
+          </div>
         </div>
 
         <div className="flex gap-2 sm:gap-4 xl:gap-5 items-start">
@@ -527,6 +532,11 @@ export const GameBoard: React.FC<GameBoardProps> = ({
           <div className="h-2 bg-neutral-900 border border-white/5 rounded-full overflow-hidden">
             <motion.div animate={{ width: `${(player.activeCard?.maxHp || player.activeCard?.hp || 1) > 0 ? ((player.activeCard?.hp ?? 0) / (player.activeCard?.maxHp || player.activeCard?.hp || 1)) * 100 : 0}%` }} className="h-full bg-blue-600" />
           </div>
+          <div className="flex gap-[2px] mt-1.5 h-1.5 px-1">
+            {Array.from({ length: 10 }).map((_, i) => (
+              <div key={i} className={cn("w-full max-w-3 rounded-full", i < (player.energy || 0) ? "bg-sky-400 shadow-[0_0_5px_rgba(56,189,248,0.5)]" : "bg-neutral-800")} />
+            ))}
+          </div>
         </div>
       </div>
 
@@ -583,12 +593,16 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                   isCombat
                   renderAttacks={!focusState.isBench && isFocusOnCurrentActive ? () => (
                     <div className="h-full flex flex-col gap-[3cqw] py-[2cqw] overflow-visible">
-                      {activeActionAttacks.map((attack: any, idx: number) => (
+                      {activeActionAttacks.map((attack: any, idx: number) => {
+                        const energyCost = attack.energyCost ?? Math.max(1, Math.ceil((attack.damage || 10) / 10));
+                        const hasEnoughEnergy = (player.energy || 0) >= energyCost;
+                        
+                        return (
                         <motion.button
                           key={idx}
-                          whileHover={isMyTurn && !isSubmitting ? { scale: 1.05 } : {}}
-                          whileTap={isMyTurn && !isSubmitting ? { scale: 0.95 } : {}}
-                          disabled={!isMyTurn || isSubmitting || idx >= activeActionAttacks.length}
+                          whileHover={isMyTurn && !isSubmitting && hasEnoughEnergy ? { scale: 1.05 } : {}}
+                          whileTap={isMyTurn && !isSubmitting && hasEnoughEnergy ? { scale: 0.95 } : {}}
+                          disabled={!isMyTurn || isSubmitting || !hasEnoughEnergy || idx >= activeActionAttacks.length}
                           onClick={() => {
                             if (idx < activeActionAttacks.length) {
                               handleAction({ type: 'attack', attackIndex: idx });
@@ -598,18 +612,27 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                             "h-[18cqw] shrink-0 relative rounded-[3cqw] border transition-all flex flex-col justify-center px-[4cqw] shadow-lg z-[110]",
                             RARITY_BUTTON_STYLES[focusState.card.rarity || 'common'].bg,
                             RARITY_BUTTON_STYLES[focusState.card.rarity || 'common'].border,
-                            (!isMyTurn || isSubmitting) && "opacity-50 grayscale cursor-not-allowed"
+                            (!isMyTurn || isSubmitting || !hasEnoughEnergy) && "opacity-50 grayscale cursor-not-allowed"
                           )}
                         >
                           <div className="relative z-10 flex items-center justify-between w-full">
                             <div className="text-left min-w-0 flex-1">
                               <span className="text-[3.5cqw] font-black uppercase italic tracking-tight block text-white truncate">{attack.name}</span>
-                              <span className="text-[2.5cqw] text-white/40 block truncate">{attack.description || 'Keine Beschreibung'}</span>
+                              <div className="flex items-center gap-2">
+                                <span className="text-[2.5cqw] text-white/40 block truncate max-w-[70%]">{attack.description || 'Keine Beschreibung'}</span>
+                                <div className="flex gap-[1px]">
+                                  {Array.from({ length: Math.min(5, energyCost) }).map((_, i) => (
+                                    <div key={i} className="w-[1.5cqw] h-[1.5cqw] bg-sky-400 rounded-full" />
+                                  ))}
+                                  {energyCost > 5 && <span className="text-[1.5cqw] text-sky-400 ml-1">+{energyCost - 5}</span>}
+                                </div>
+                              </div>
                             </div>
                             <span className="text-[6cqw] font-black italic text-white/80 tabular-nums ml-[4cqw]">{attack.damage}</span>
                           </div>
                         </motion.button>
-                      ))}
+                        );
+                      })}
                     </div>
                   ) : undefined}
                 />

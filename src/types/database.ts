@@ -197,6 +197,7 @@ export interface TeacherAttack {
   damage?: number;
   description?: string;
   effect?: AttackEffect;
+  energyCost?: number;
 }
 
 export type TeacherRarity = 'common' | 'rare' | 'epic' | 'mythic' | 'legendary' | 'iconic';

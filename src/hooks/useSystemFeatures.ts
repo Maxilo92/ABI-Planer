@@ -39,6 +39,7 @@ export function useSystemFeatures() {
   }, [])
 
   const isEnabled = (key: keyof SystemFeatures) => {
+    if (key === 'combat_status' || key === 'is_combat_enabled' as any) return true
     if (!features) return true
     
     // Status keys are preferred

@@ -56,6 +56,7 @@ export function useSammelkartenConfig(): SammelkartenConfigState {
         const data = snap.data()
         
         const check = (statusKey: string, legacyKey: string) => {
+          if (statusKey === 'combat_status') return true
           const status = data[statusKey]
           if (status === 'enabled') return true
           if (status === 'admins_only') return isAdmin

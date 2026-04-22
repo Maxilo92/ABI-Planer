@@ -28,11 +28,11 @@ function splitHostSegments(hostname: string): string[] {
 
 function getKnownSubdomainIndex(segments: string[]): number {
   return segments.findIndex((segment) =>
-    segment === 'dashboard' || segment === 'app' || segment === 'tcg' || segment === 'shop' || segment === 'www'
+    segment === 'dashboard' || segment === 'app' || segment === 'tcg' || segment === 'shop' || segment === 'support' || segment === 'www'
   )
 }
 
-function buildTargetHost(currentHost: string, target: 'dashboard' | 'tcg' | 'shop' | 'main'): string | null {
+function buildTargetHost(currentHost: string, target: 'dashboard' | 'tcg' | 'shop' | 'support' | 'main'): string | null {
   const segments = splitHostSegments(currentHost)
   if (segments.length === 0) return null
 
@@ -73,6 +73,10 @@ function isShopHost(hostname: string): boolean {
   return /(^|\.)shop\./.test(hostname)
 }
 
+function isSupportHost(hostname: string): boolean {
+  return /(^|\.)support\./.test(hostname)
+}
+
 function safeRedirect(request: NextRequest, targetUrl: URL) {
   const current = request.nextUrl
   const forwardedProto = request.headers.get('x-forwarded-proto')
@@ -97,7 +101,7 @@ function safeRedirect(request: NextRequest, targetUrl: URL) {
   return NextResponse.redirect(targetUrl, { status: 307 })
 }
 
-function getRequestBaseUrl(request: NextRequest, target: 'dashboard' | 'tcg' | 'shop' | 'main'): string {
+function getRequestBaseUrl(request: NextRequest, target: 'dashboard' | 'tcg' | 'shop' | 'support' | 'main'): string {
   const currentUrl = request.nextUrl
   const hostname = getEffectiveRequestHost(request)
   const isLocal = isLocalHost(hostname)
@@ -132,7 +136,21 @@ export function middleware(request: NextRequest) {
   const isDashboardSubdomain = isDashboardHost(hostname)
   const isTcgSubdomain = isTcgHost(hostname)
   const isShopSubdomain = isShopHost(hostname)
-  const isLandingDomain = !isDashboardSubdomain && !isTcgSubdomain && !isShopSubdomain
+  const isSupportSubdomain = isSupportHost(hostname)
+  const isLandingDomain = !isDashboardSubdomain && !isTcgSubdomain && !isShopSubdomain && !isSupportSubdomain
+
+  // Support logic: Rewrite subdomain calls to /support route
+  if (isSupportSubdomain) {
+    // If user tries to access /support directly on the support subdomain, strip it to avoid /support/support
+    if (pathname.startsWith('/support')) {
+      const strippedPath = pathname.replace(/^\/support/, '') || '/'
+      const supportBaseUrl = getRequestBaseUrl(request, 'support')
+      return NextResponse.redirect(new URL(strippedPath, supportBaseUrl))
+    }
+    
+    // Rewrite internal URL to /support/[path]
+    return NextResponse.rewrite(new URL(`/support${pathname}`, request.url))
+  }
   
   // Routes categorization
   const landingOnlyRoutes = [
@@ -164,7 +182,6 @@ export function middleware(request: NextRequest) {
     '/feedback',
     '/finanzen',
     '/gruppen',
-    '/hilfe',
     '/kalender',
     '/r',
     '/todos',
@@ -179,6 +196,19 @@ export function middleware(request: NextRequest) {
       pathname.includes('.') || 
       pathname.startsWith('/favicon.ico')) {
     return NextResponse.next()
+  }
+
+  // Redirect old /hilfe to the support subdomain
+  if (pathname === '/hilfe' || pathname.startsWith('/hilfe/')) {
+    const supportBaseUrl = getRequestBaseUrl(request, 'support')
+    const strippedPath = pathname.replace(/^\/hilfe/, '') || '/'
+    const redirectUrl = new URL(strippedPath, supportBaseUrl)
+    
+    url.searchParams.forEach((value, key) => {
+      redirectUrl.searchParams.set(key, value)
+    })
+    
+    return safeRedirect(request, redirectUrl)
   }
 
   // 1. Check Shop Routes -> Redirect to Shop subdomain

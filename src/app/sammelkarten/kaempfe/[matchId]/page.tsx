@@ -84,15 +84,15 @@ export default function MatchPage() {
   }
 
   return (
-    <>
+    <div className="flex flex-col min-h-[calc(100vh-5rem)] -m-4 sm:-m-6 lg:-m-8">
       <CombatDebugPanel matchData={matchData} userId={user?.uid || ''} />
-      <div className="w-full h-[calc(100vh-12rem)] min-h-[600px] xl:h-[calc(100vh-11rem)] 2xl:h-[calc(100vh-10rem)]">
+      <div className="flex-1 w-full bg-neutral-950/50">
         <GameBoard 
           matchData={matchData} 
           currentUserId={user?.uid || ''}
           onExit={() => router.push('/sammelkarten/kaempfe')}
         />
       </div>
-    </>
+    </div>
   )
 }

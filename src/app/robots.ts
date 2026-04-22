@@ -4,7 +4,6 @@ const disallowPaths = [
   '/admin/',
   '/login',
   '/register',
-  '/hilfe',
   '/agb',
   '/datenschutz',
   '/impressum',

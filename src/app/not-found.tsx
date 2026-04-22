@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { SearchX, Home, ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { getSupportBaseUrl } from '@/lib/dashboard-url'
 
 export default function NotFound() {
   return (
@@ -21,9 +22,11 @@ export default function NotFound() {
             <Home className="h-4 w-4" />
             Zur Startseite
           </Button>
-          <Button variant="outline" render={<Link href="/hilfe" />} className="gap-2">
-            <ArrowLeft className="h-4 w-4" />
-            Zur Hilfe
+          <Button variant="outline" asChild className="gap-2">
+            <a href={getSupportBaseUrl()}>
+              <ArrowLeft className="h-4 w-4" />
+              Zur Hilfe
+            </a>
           </Button>
         </div>
       </div>

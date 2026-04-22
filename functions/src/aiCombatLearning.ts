@@ -213,6 +213,7 @@ export function chooseAttackIndex(
   opponentCard: any,
   difficultyProfile: AiDifficultyProfile,
   attackStats: Record<string, LearningStatDoc> = {},
+  botEnergy: number = 0,
   randomFn: () => number = Math.random,
 ): number {
   const attacks = Array.isArray(activeCard?.attacks) ? activeCard.attacks : [];
@@ -220,21 +221,28 @@ export function chooseAttackIndex(
 
   const targetHp = safeNumber(opponentCard?.hp, safeNumber(opponentCard?.maxHp, 0));
   const scores = attacks.map((attack: any) => {
+    const energyCost = attack.energyCost ?? Math.max(1, Math.ceil((attack.damage || 10) / 10));
+    if (botEnergy < energyCost) {
+      return -9999; // Cannot afford
+    }
+
     const attackKey = buildAttackKey(activeCard?.cardId || activeCard?.fullId || "", attack?.name || "");
     return getAttackScore(attack, attackStats[attackKey], difficultyProfile, targetHp);
   });
+
+  const maxScore = Math.max(...scores);
+  if (maxScore === -9999) return -1; // No affordable attacks
 
   // At low ELO, AI sometimes picks suboptimal attacks
   const shouldRandomize = randomFn() < difficultyProfile.randomness;
   if (!shouldRandomize) {
     // Smart mode: pick the highest-scoring attack
-    return scores.indexOf(Math.max(...scores));
+    return scores.indexOf(maxScore);
   }
 
   // Random mode: weighted random, but still biased toward good attacks
-  const minScore = Math.min(...scores);
-  const shiftedScores = scores.map((score: number) => Math.max(0.05, score - minScore + 0.2));
-  return pickWeightedIndex(shiftedScores, randomFn);
+  const validScores = scores.map((score: number) => score === -9999 ? 0 : Math.max(0.05, score - Math.min(...scores.filter((s: number) => s !== -9999)) + 0.2));
+  return pickWeightedIndex(validScores, randomFn);
 }
 
 /**

@@ -2,8 +2,9 @@ export const MAIN_DOMAIN = 'abi-planer-27.de'
 export const DASHBOARD_DOMAIN = 'dashboard.abi-planer-27.de'
 export const TCG_DOMAIN = 'tcg.abi-planer-27.de'
 export const SHOP_DOMAIN = 'shop.abi-planer-27.de'
+export const SUPPORT_DOMAIN = 'support.abi-planer-27.de'
 
-export type AppTarget = 'dashboard' | 'tcg' | 'shop'
+export type AppTarget = 'dashboard' | 'tcg' | 'shop' | 'support'
 
 export interface AccessTargetProfile {
   access_target?: AppTarget | null
@@ -15,10 +16,11 @@ export const ALLOWED_PLANNER_GRADES = new Set(['11'])
 const DASHBOARD_FALLBACK_URL = `https://${DASHBOARD_DOMAIN}`
 const TCG_FALLBACK_URL = `https://${TCG_DOMAIN}`
 const SHOP_FALLBACK_URL = `https://${SHOP_DOMAIN}`
+const SUPPORT_FALLBACK_URL = `https://${SUPPORT_DOMAIN}`
 const MAIN_FALLBACK_URL = `https://${MAIN_DOMAIN}`
 
 const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1'])
-const APP_HOSTS: Record<AppTarget, string> = {
+const APP_HOSTS: Record<Exclude<AppTarget, 'support'>, string> = {
   dashboard: DASHBOARD_DOMAIN,
   tcg: TCG_DOMAIN,
   shop: SHOP_DOMAIN,
@@ -93,6 +95,15 @@ export function getShopBaseUrl(): string {
   return SHOP_FALLBACK_URL
 }
 
+export function getSupportBaseUrl(): string {
+  const configuredUrl = process.env.NEXT_PUBLIC_SUPPORT_URL?.trim()
+  if (configuredUrl) {
+    return normalizeBaseUrl(configuredUrl)
+  }
+
+  return SUPPORT_FALLBACK_URL
+}
+
 export function getMainBaseUrl(): string {
   const configuredUrl = process.env.NEXT_PUBLIC_MAIN_URL?.trim()
   if (configuredUrl) {
@@ -108,6 +119,9 @@ export function getAppBaseUrl(target: AppTarget = 'dashboard'): string {
   }
   if (target === 'shop') {
     return getShopBaseUrl()
+  }
+  if (target === 'support') {
+    return getSupportBaseUrl()
   }
 
   return getDashboardBaseUrl()
