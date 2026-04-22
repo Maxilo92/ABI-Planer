@@ -332,7 +332,7 @@ export default function FunctionalChecklistPage() {
                         </div>
                         
                         <Select 
-                          value={check.status} 
+                          value={check.status || 'untested'} 
                           onValueChange={(val) => handleUpdateStatus(check.id, val as SystemCheckStatus)}
                           disabled={updatingId === check.id}
                         >
@@ -416,7 +416,7 @@ export default function FunctionalChecklistPage() {
                       </TableCell>
                       <TableCell>
                         <Select 
-                          value={check.status} 
+                          value={check.status || 'untested'} 
                           onValueChange={(val) => handleUpdateStatus(check.id, val as SystemCheckStatus)}
                           disabled={updatingId === check.id}
                         >
