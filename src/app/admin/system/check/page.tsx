@@ -337,19 +337,21 @@ export default function FunctionalChecklistPage() {
                           disabled={updatingId === check.id}
                         >
                           <SelectTrigger className={cn(
-                            "w-full h-10 text-xs font-black uppercase tracking-widest",
+                            "w-full h-10 text-[9px] sm:text-xs font-black uppercase tracking-widest px-2 sm:px-3",
                             STATUS_CONFIG[check.status].color
                           )}>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 truncate">
                               {STATUS_CONFIG[check.status].icon}
                               <SelectValue />
                             </div>
                           </SelectTrigger>
-                          <SelectContent>
+                          <SelectContent className="min-w-[220px] sm:min-w-[280px] max-w-[90vw]">
                             {Object.entries(STATUS_CONFIG).map(([key, config]) => (
-                              <SelectItem key={key} value={key} className="text-[10px] uppercase font-black tracking-widest py-3">
-                                <div className="flex items-center gap-2">
-                                  {config.icon}
+                              <SelectItem key={key} value={key} className="text-[10px] sm:text-xs uppercase font-black tracking-widest py-3 cursor-pointer">
+                                <div className="flex items-center gap-3">
+                                  <div className={cn("p-1 rounded-md", config.color.split(' ')[0])}>
+                                    {config.icon}
+                                  </div>
                                   {config.label}
                                 </div>
                               </SelectItem>
@@ -419,19 +421,21 @@ export default function FunctionalChecklistPage() {
                           disabled={updatingId === check.id}
                         >
                           <SelectTrigger className={cn(
-                            "w-full h-9 text-[10px] font-black uppercase tracking-widest",
+                            "w-full h-9 text-[10px] font-black uppercase tracking-widest px-2",
                             STATUS_CONFIG[check.status].color
                           )}>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 truncate">
                               {STATUS_CONFIG[check.status].icon}
                               <SelectValue />
                             </div>
                           </SelectTrigger>
-                          <SelectContent>
+                          <SelectContent className="min-w-[280px]">
                             {Object.entries(STATUS_CONFIG).map(([key, config]) => (
-                              <SelectItem key={key} value={key} className="text-[10px] uppercase font-black tracking-widest">
-                                <div className="flex items-center gap-2">
-                                  {config.icon}
+                              <SelectItem key={key} value={key} className="text-[10px] uppercase font-black tracking-widest py-2.5 cursor-pointer">
+                                <div className="flex items-center gap-3">
+                                  <div className={cn("p-1 rounded-md", config.color.split(' ')[0])}>
+                                    {config.icon}
+                                  </div>
                                   {config.label}
                                 </div>
                               </SelectItem>
