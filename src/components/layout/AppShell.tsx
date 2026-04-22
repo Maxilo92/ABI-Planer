@@ -139,7 +139,6 @@ export function AppShell({ children }: AppShellProps) {
           {children}
         </main>
         <SupportFooter />
-        <Toaster />
         <CookieConsent />
       </div>
     )
