@@ -163,20 +163,20 @@ export function PieChart({ data, labelKey, valueKey }: { data: any[], labelKey: 
 
 export function StatCard({ title, value, subValue, icon, loading, statusMode = false }: any) {
   return (
-    <Card className="border-2 shadow-sm overflow-hidden">
-      <CardContent className="p-4 sm:p-5 flex items-center justify-between gap-3">
-        <div className="space-y-1">
-          <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">{title}</p>
+    <Card className="border-2 shadow-sm overflow-hidden h-full">
+      <CardContent className="p-4 flex items-center justify-between gap-3 h-full">
+        <div className="space-y-1 min-w-0 flex-1">
+          <p className="text-[9px] font-black uppercase text-muted-foreground tracking-widest truncate" title={title}>{title}</p>
           {loading ? (
-            <div className="h-8 w-24 bg-muted animate-pulse rounded" />
+            <div className="h-7 w-20 bg-muted animate-pulse rounded" />
           ) : (
-            <p className={cn("text-xl sm:text-2xl font-black uppercase tracking-tighter break-words", statusMode && value === 'Wartung' ? 'text-red-700' : '')}>
+            <p className={cn("text-lg sm:text-xl font-black uppercase tracking-tighter break-words leading-tight", statusMode && value === 'Wartung' ? 'text-red-700' : '')}>
               {value}
             </p>
           )}
-          <p className="text-[10px] text-muted-foreground font-medium break-words">{subValue}</p>
+          <p className="text-[10px] text-muted-foreground font-medium truncate" title={subValue}>{subValue}</p>
         </div>
-        <div className="p-2.5 sm:p-3 bg-muted/50 rounded-2xl border shrink-0">
+        <div className="p-2 sm:p-2.5 bg-muted/50 rounded-xl border shrink-0">
           {icon}
         </div>
       </CardContent>
@@ -431,24 +431,26 @@ export function ToggleRow({ label, description, icon, enabled, onToggle, critica
 
   return (
     <div className={cn(
-      "flex items-center justify-between p-4 rounded-2xl border-2 transition-all",
+      "flex items-center justify-between p-3 rounded-2xl border-2 transition-all gap-4",
       isEnabled ? "bg-card border-muted" : "bg-muted/20 border-dashed border-red-200 opacity-80",
       critical && !isEnabled ? "bg-red-50 border-red-500 ring-4 ring-red-500/10" : ""
     )}>
-      <div className="flex gap-3 items-start min-w-0">
-        <div className={cn("p-2 rounded-lg mt-0.5", isEnabled ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground")}>
+      <div className="flex gap-3 items-center min-w-0 flex-1">
+        <div className={cn("p-2 rounded-lg shrink-0", isEnabled ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground")}>
           {icon}
         </div>
-        <div className="min-w-0">
-          <p className={cn("text-sm font-black uppercase tracking-tight truncate", critical && !isEnabled ? "text-red-900" : "")}>{label}</p>
-          <p className={cn("text-[10px] line-clamp-1", critical && !isEnabled ? "text-red-800/80 font-medium" : "text-muted-foreground")}>{description}</p>
+        <div className="min-w-0 flex-1">
+          <p className={cn("text-xs font-black uppercase tracking-tight truncate", critical && !isEnabled ? "text-red-900" : "")} title={label}>{label}</p>
+          <p className={cn("text-[9px] line-clamp-1 text-muted-foreground", critical && !isEnabled ? "text-red-800/80 font-medium" : "")} title={description}>{description}</p>
         </div>
       </div>
-      <Switch 
-        checked={isEnabled}
-        onCheckedChange={onToggle}
-        className={cn(critical && "data-[state=checked]:bg-red-600")}
-      />
+      <div className="shrink-0">
+        <Switch 
+          checked={isEnabled}
+          onCheckedChange={onToggle}
+          className={cn(critical && "data-[state=checked]:bg-red-600")}
+        />
+      </div>
     </div>
   )
 }

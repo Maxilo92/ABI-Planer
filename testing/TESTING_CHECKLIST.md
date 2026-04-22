@@ -9,7 +9,7 @@ Konkrete Test-Cases für systematisches Testen aller Features.
 
 ---
 
-## 🔐 AUTHENTIFIZIERUNG & ZUGANG
+##  AUTHENTIFIZIERUNG & ZUGANG
 
 ### Registrierung
 - [ ] **Test 1.1:** Mit gültiger @hgr-web.lernsax.de E-Mail registrieren → Konto erstellt
@@ -46,7 +46,7 @@ Konkrete Test-Cases für systematisches Testen aller Features.
 <!-- index: docs/AGENT_CONTEXT_INDEX.md -->
 
 
-## 📊 DASHBOARD
+##  DASHBOARD
 
 ### Layout & Komponenten
 - [ ] **Test 5.1:** Countdown wird angezeigt (richtige Tage bis zum Datum)
@@ -64,7 +64,7 @@ Konkrete Test-Cases für systematisches Testen aller Features.
 
 ---
 
-## 📅 KALENDER & EVENTS
+##  KALENDER & EVENTS
 
 ### Events Ansehen
 - [ ] **Test 7.1:** Kalender-Page laden → Alle Events werden angezeigt
@@ -92,7 +92,7 @@ Konkrete Test-Cases für systematisches Testen aller Features.
 
 ---
 
-## ✅ AUFGABEN (TODO-LIST)
+##  AUFGABEN (TODO-LIST)
 
 ### Aufgaben Ansehen
 - [ ] **Test 11.1:** Aufgaben-Page laden → Alle offenen/in-progress Aufgaben
@@ -120,7 +120,7 @@ Konkrete Test-Cases für systematisches Testen aller Features.
 
 ---
 
-## 💰 FINANZEN
+##  FINANZEN
 
 ### Finanzen Übersicht
 - [ ] **Test 15.1:** Finanzen-Page laden → Einnahmen, Ausgaben, Kontostand sichtbar
@@ -144,7 +144,7 @@ Konkrete Test-Cases für systematisches Testen aller Features.
 
 ---
 
-## 📰 NEWS
+##  NEWS
 
 ### News Lesen
 - [ ] **Test 18.1:** News-Page laden → Alle News chronologisch (neueste oben)
@@ -167,7 +167,7 @@ Konkrete Test-Cases für systematisches Testen aller Features.
 
 ---
 
-## 🗳️ UMFRAGEN (ABSTIMMUNGEN)
+## ️ UMFRAGEN (ABSTIMMUNGEN)
 
 ### Umfragen Ansehen
 - [ ] **Test 21.1:** Abstimmungen-Page laden → Aktive Umfragen
@@ -193,7 +193,7 @@ Konkrete Test-Cases für systematisches Testen aller Features.
 
 ---
 
-## 👥 GRUPPEN
+##  GRUPPEN
 
 ### Gruppen Ansehen
 - [ ] **Test 25.1:** Gruppen-Page laden → Alle Gruppen mit Kartendesign
@@ -203,7 +203,7 @@ Konkrete Test-Cases für systematisches Testen aller Features.
 
 ---
 
-## ⚙️ EINSTELLUNGEN
+## ️ EINSTELLUNGEN
 
 ### Theme & Anzeigeoptionen
 - [ ] **Test 26.1:** Dark Mode Toggle → Theme ändert sich
@@ -220,7 +220,7 @@ Konkrete Test-Cases für systematisches Testen aller Features.
 
 ---
 
-## 🔐 BERECHTIGUNGEN & ROLLEN
+##  BERECHTIGUNGEN & ROLLEN
 
 ### Viewer (Standard)
 - [ ] **Test 28.1:** Kann alle Daten sehen (readonly)
@@ -244,7 +244,7 @@ Konkrete Test-Cases für systematisches Testen aller Features.
 
 ---
 
-## 📱 RESPONSIVE DESIGN & MOBILE
+##  RESPONSIVE DESIGN & MOBILE
 
 ### Mobile View (Smartphone / 375px Breite)
 - [ ] **Test 31.1:** Alle Text lesbar ohne Zoom
@@ -263,7 +263,7 @@ Konkrete Test-Cases für systematisches Testen aller Features.
 
 ---
 
-## ⚡ PERFORMANCE
+##  PERFORMANCE
 
 ### Ladezeiten
 - [ ] **Test 34.1:** Dashboard lädt in < 2 Sekunden
@@ -278,7 +278,7 @@ Konkrete Test-Cases für systematisches Testen aller Features.
 
 ---
 
-## 🐛 FEHLERBEHANDLUNG
+##  FEHLERBEHANDLUNG
 
 ### Validierung
 - [ ] **Test 36.1:** Leere erforderliche Felder → Fehler
@@ -299,7 +299,7 @@ Konkrete Test-Cases für systematisches Testen aller Features.
 
 ---
 
-## 🎨 UI/UX & DESIGN
+##  UI/UX & DESIGN
 
 ### Visuelles Design
 - [ ] **Test 39.1:** Farbschema ist konsistent
@@ -321,7 +321,7 @@ Konkrete Test-Cases für systematisches Testen aller Features.
 
 ---
 
-## 📊 FINAL CHECKLIST
+##  FINAL CHECKLIST
 
 ### Browsers
 - [ ] Chrome (latest)
@@ -345,7 +345,7 @@ Konkrete Test-Cases für systematisches Testen aller Features.
 
 ---
 
-## 🏆 TEST-SUMMARY
+##  TEST-SUMMARY
 
 **Insgesamt Tests:** 41  
 **Bestanden:** ____  
@@ -361,4 +361,4 @@ Konkrete Test-Cases für systematisches Testen aller Features.
 
 ---
 
-**Danke für dein gründliches Testing! 🙏**
+**Danke für dein gründliches Testing! **

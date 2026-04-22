@@ -26,36 +26,36 @@ const testRemoveTeacherCards = () => {
   // - 1 card = no duplicate
   // -  4 duplicates
   // - Compensation: Math.ceil(4 / 3) = 2 packs
-  console.log("✓ Scenario 1: User with 5 cards should receive 2 packs compensation");
+  console.log(" Scenario 1: User with 5 cards should receive 2 packs compensation");
   
   // Scenario 2: Remove a teacher with few cards
   // User has 2 cards of Teacher B
   // - 1 card = no duplicate
   // - 1 duplicate
   // - Compensation: Math.ceil(1 / 3) = 1 pack
-  console.log("✓ Scenario 2: User with 2 cards should receive 1 pack compensation");
+  console.log(" Scenario 2: User with 2 cards should receive 1 pack compensation");
   
   // Scenario 3: Remove a teacher with exactly 3 duplicates
   // User has 4 cards of Teacher C
   // - 1 card = no duplicate
   // - 3 duplicates
   // - Compensation: Math.ceil(3 / 3) = 1 pack
-  console.log("✓ Scenario 3: User with 4 cards should receive 1 pack compensation");
+  console.log(" Scenario 3: User with 4 cards should receive 1 pack compensation");
   
   // Scenario 4: Remove a teacher where user has only 1 card
   // User has 1 card of Teacher D
   // - 0 duplicates
   // - Compensation: Math.ceil(0 / 3) = 0 packs
-  console.log("✓ Scenario 4: User with 1 card should receive 0 packs compensation");
+  console.log(" Scenario 4: User with 1 card should receive 0 packs compensation");
   
   // Scenario 5: Multiple users affected
   // User 1: 5 cards -> 2 packs
   // User 2: 3 cards -> 1 pack
   // User 3: 2 cards -> 1 pack
   // Total: 3 users affected, 4 packs distributed
-  console.log("✓ Scenario 5: Multiple users should all be processed correctly");
+  console.log(" Scenario 5: Multiple users should all be processed correctly");
   
-  console.log("✅ removeTeacherCards tests passed");
+  console.log(" removeTeacherCards tests passed");
 };
 
 /**
@@ -74,7 +74,7 @@ const testValidateAndFixRarities = () => {
   // User has 6 cards of removed Teacher A
   // - 5 duplicates
   // - Compensation: Math.ceil(5 / 3) = 2 packs
-  console.log("✓ Scenario 1: Removed teacher cards should trigger compensation");
+  console.log(" Scenario 1: Removed teacher cards should trigger compensation");
   
   // Scenario 2: Multiple teachers to check
   // User has:
@@ -82,16 +82,16 @@ const testValidateAndFixRarities = () => {
   // - 4 cards of removed Teacher Y (3 duplicates -> 1 pack, remove)
   // - 3 cards of existing Teacher Z (keep)
   // Result: Only Teacher X and Z remain, 1 pack added
-  console.log("✓ Scenario 2: Mixed existing and removed teachers handled correctly");
+  console.log(" Scenario 2: Mixed existing and removed teachers handled correctly");
   
   // Scenario 3: Multiple users with different scenarios
   // User 1: Has 5 cards of removed teacher -> 2 packs
   // User 2: Has all valid cards -> 0 packs
   // User 3: Has 2 cards of removed teacher -> 1 pack
   // Total: 2 users affected, 3 packs distributed
-  console.log("✓ Scenario 3: Multiple users with varied teacher pools processed");
+  console.log(" Scenario 3: Multiple users with varied teacher pools processed");
   
-  console.log("✅ validateAndFixRarities tests passed");
+  console.log(" validateAndFixRarities tests passed");
 };
 
 /**
@@ -120,10 +120,10 @@ const testCompensationLogic = () => {
       expectedPacks,
       `${cards} cards (${duplicates} duplicates) should give ${expectedPacks} packs, got ${compensation}`
     );
-    console.log(`✓ ${cards} cards -> ${expectedPacks} packs`);
+    console.log(` ${cards} cards -> ${expectedPacks} packs`);
   }
   
-  console.log("✅ Compensation logic tests passed");
+  console.log(" Compensation logic tests passed");
 };
 
 /**
@@ -157,10 +157,10 @@ try {
   testCompensationLogic();
   testRemoveTeacherCards();
   testValidateAndFixRarities();
-  console.log("\nALL TESTS PASSED! 🎉");
+  console.log("\nALL TESTS PASSED! ");
   console.log("\nNote: Integration tests with Firestore should be run with Firebase emulator");
 } catch (error) {
-  console.error("\nTEST FAILED! ❌");
+  console.error("\nTEST FAILED! ");
   console.error(error);
   process.exit(1);
 }

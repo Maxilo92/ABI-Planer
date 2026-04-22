@@ -9,7 +9,7 @@ import { translations, Language } from '@/lib/i18n/translations'
 interface LanguageContextType {
   language: Language
   setLanguage: (lang: Language) => Promise<void>
-  t: (key: string) => string
+  t: (key: string) => any
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined)
@@ -81,7 +81,7 @@ export const LanguageProvider = ({ children }: { children: React.ReactNode }) =>
     }
   }, [user])
 
-  const t = useCallback((key: string): string => {
+  const t = useCallback((key: string): any => {
     const keys = key.split('.')
     
     const getKeyValue = (obj: any, path: string[]) => {
@@ -89,12 +89,12 @@ export const LanguageProvider = ({ children }: { children: React.ReactNode }) =>
     }
 
     const value = getKeyValue(translations[language], keys)
-    if (typeof value === 'string') return value
+    if (value !== undefined) return value
 
     // Fallback to default language if not found in current language
     if (language !== DEFAULT_LANGUAGE) {
       const fallbackValue = getKeyValue(translations[DEFAULT_LANGUAGE], keys)
-      if (typeof fallbackValue === 'string') return fallbackValue
+      if (fallbackValue !== undefined) return fallbackValue
     }
 
     return key

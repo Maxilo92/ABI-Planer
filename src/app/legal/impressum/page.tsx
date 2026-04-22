@@ -9,12 +9,20 @@ import { useRouter } from 'next/navigation'
 export default function ImpressumPage() {
   const router = useRouter()
 
+  const handleBack = () => {
+    if (window.history.length <= 2) {
+      router.push('/')
+    } else {
+      router.back()
+    }
+  }
+
   return (
-    <div className="max-w-3xl mx-auto space-y-8 py-8">
+    <div className="max-w-3xl mx-auto space-y-8 py-8 pt-20 px-4">
       <Button 
         variant="ghost" 
         className="gap-2 -ml-2 text-muted-foreground hover:text-foreground"
-        onClick={() => router.back()}
+        onClick={handleBack}
       >
         <ArrowLeft className="h-4 w-4" /> Zurück
       </Button>
@@ -38,7 +46,7 @@ export default function ImpressumPage() {
             <h3 className="text-lg font-semibold border-b pb-2 mb-3">Kontakt</h3>
             <p className="text-muted-foreground leading-relaxed">
               E-Mail: priesnitz.maximilian@icloud.com<br />
-              Tel: 0176 36370172<br />
+              Tel: +049 0176 36370172<br />
               Webseite: https://github.com/Maxilo92/ABI-Planer
             </p>
           </section>
@@ -51,9 +59,17 @@ export default function ImpressumPage() {
           </section>
 
           <section>
+            <h3 className="text-lg font-semibold border-b pb-2 mb-3">Hinweis zum Entwicklungsstand</h3>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Die Plattform wird fortlaufend technisch und inhaltlich weiterentwickelt. Trotz sorgfältiger Pflege können in
+              Einzelfällen vorübergehende Funktionsabweichungen oder Darstellungsfehler auftreten.
+            </p>
+          </section>
+
+          <section>
             <h3 className="text-lg font-semibold border-b pb-2 mb-3">Datenschutz</h3>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Informationen zur Verarbeitung personenbezogener Daten finden Sie in der <Link href="/datenschutz" className="underline hover:text-primary">Datenschutzerklärung</Link>.
+              Informationen zur Verarbeitung personenbezogener Daten finden Sie in der <Link href="/legal/datenschutz" className="underline hover:text-primary">Datenschutzerklärung</Link>.
             </p>
           </section>
 
@@ -72,7 +88,7 @@ export default function ImpressumPage() {
           </section>
 
           <section className="pt-4 text-xs text-muted-foreground italic border-t">
-            Stand: 29. März 2026.
+            Stand: 22. April 2026.
           </section>
         </CardContent>
       </Card>

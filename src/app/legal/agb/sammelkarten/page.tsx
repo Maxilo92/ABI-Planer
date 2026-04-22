@@ -8,12 +8,20 @@ import { useRouter } from 'next/navigation'
 export default function SammelkartenAGBPage() {
   const router = useRouter()
 
+  const handleBack = () => {
+    if (window.history.length <= 2) {
+      router.push('/')
+    } else {
+      router.back()
+    }
+  }
+
   return (
-    <div className="max-w-3xl mx-auto space-y-8 py-8 px-4">
+    <div className="max-w-3xl mx-auto space-y-8 py-8 pt-20 px-4">
       <Button 
         variant="ghost" 
         className="gap-2 -ml-2 text-muted-foreground hover:text-foreground"
-        onClick={() => router.back()}
+        onClick={handleBack}
       >
         <ArrowLeft className="h-4 w-4" /> Zurück
       </Button>
@@ -73,9 +81,19 @@ export default function SammelkartenAGBPage() {
             </p>
           </section>
 
+          <section>
+            <h3 className="text-lg font-semibold text-foreground border-l-4 border-primary pl-3 mb-4 flex items-center gap-2">
+              <Database className="h-5 w-5 text-primary" /> 6. Entwicklungsstand und technische Abweichungen
+            </h3>
+            <p className="text-muted-foreground leading-relaxed">
+              Das Sammelkarten-System wird fortlaufend weiterentwickelt. Trotz sorgfältiger Qualitätssicherung können vorübergehend
+              technische Fehler, Anzeigeabweichungen oder kurzfristige Anpassungen einzelner Kartenattribute auftreten.
+            </p>
+          </section>
+
           <div className="pt-8 border-t space-y-2">
             <p className="text-xs text-muted-foreground italic">
-              Stand: 14. April 2026. Ergänzung zu den Allgemeinen Geschäftsbedingungen.
+              Stand: 22. April 2026. Ergänzung zu den Allgemeinen Geschäftsbedingungen.
             </p>
           </div>
         </CardContent>

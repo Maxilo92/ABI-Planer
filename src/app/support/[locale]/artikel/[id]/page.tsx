@@ -1,7 +1,7 @@
 'use client'
 
 import { use, useState } from 'react'
-import { helpFaqItems, helpFaqSections, getHelpFaqItems, Locale } from '@/lib/helpFaqs'
+import { helpFaqSections, getHelpFaqItems, Locale } from '@/lib/helpFaqs'
 import { useRouter } from 'next/navigation'
 import { 
   ArrowLeft, 

@@ -184,7 +184,7 @@ export function useSammelkartenGame(input: UseSammelkartenGameInput) {
         pushMessage({
           type: 'toast',
           priority: 'info',
-          title: '✨ GODPACK GEFUNDEN! ✨',
+          title: ' GODPACK GEFUNDEN! ',
           content: 'Alle Karten sind besonders selten!',
           duration: 5000
         })

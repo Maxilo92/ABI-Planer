@@ -44,21 +44,21 @@ export function Footer() {
     if (newCount === 1) {
       setShowFeedback(isEn ? 'Looking for something?' : 'Was suchst du?')
     } else if (newCount === 2) {
-      setShowFeedback('😠')
+      setShowFeedback('')
     } else if (newCount === 3) {
       if (user && !alreadyClaimed) {
         try {
           await claimExtraBoosters()
           toast.success(isEn ? 'Stop clicking! Here are 5 boosters, now leave me alone!' : 'Hör auf zu klicken! Hier hast du 5 Booster, jetzt lass mich in Ruhe!', {
-            icon: '🎁',
+            icon: '',
             duration: 5000
           })
-          setShowFeedback('🎉')
+          setShowFeedback('')
         } catch (error: any) {
-          setShowFeedback('🙄')
+          setShowFeedback('')
         }
       } else {
-        setShowFeedback('🙄')
+        setShowFeedback('')
       }
       setClickCount(0)
     }
@@ -123,9 +123,9 @@ export function Footer() {
           { label: 'Über den ABI Planer', href: `${mainBaseUrl}/uber` },
           { label: 'Werde Teil des Teams', href: `${mainBaseUrl}/uber/join` },
           { label: 'Vorteile', href: `${mainBaseUrl}/vorteile` },
-          { label: 'Impressum', href: `${mainBaseUrl}/impressum` },
-          { label: 'Datenschutz', href: `${mainBaseUrl}/datenschutz` },
-          { label: 'AGB', href: `${mainBaseUrl}/agb` },
+          { label: 'Impressum', href: `${mainBaseUrl}/legal/impressum` },
+          { label: 'Datenschutz', href: `${mainBaseUrl}/legal/datenschutz` },
+          { label: 'AGB', href: `${mainBaseUrl}/legal/agb` },
         ]
       }
     ],
@@ -181,9 +181,9 @@ export function Footer() {
           { label: 'About ABI Planner', href: `${mainBaseUrl}/uber` },
           { label: 'Join the Team', href: `${mainBaseUrl}/uber/join` },
           { label: 'Benefits', href: `${mainBaseUrl}/vorteile` },
-          { label: 'Imprint', href: `${mainBaseUrl}/impressum` },
-          { label: 'Privacy', href: `${mainBaseUrl}/datenschutz` },
-          { label: 'Terms', href: `${mainBaseUrl}/agb` },
+          { label: 'Imprint', href: `${mainBaseUrl}/legal/impressum` },
+          { label: 'Privacy', href: `${mainBaseUrl}/legal/datenschutz` },
+          { label: 'Terms', href: `${mainBaseUrl}/legal/agb` },
         ]
       }
     ]
@@ -277,9 +277,9 @@ export function Footer() {
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-muted-foreground font-medium">
             <div className="flex flex-wrap justify-center gap-x-6 gap-y-2">
               <span>&copy; {new Date().getFullYear()} Maximilian Priesnitz</span>
-              <a href={`${mainBaseUrl}/impressum`} className="hover:text-primary transition-colors underline-offset-4 hover:underline">Impressum</a>
-              <a href={`${mainBaseUrl}/datenschutz`} className="hover:text-primary transition-colors underline-offset-4 hover:underline">Datenschutz</a>
-              <a href={`${mainBaseUrl}/agb`} className="hover:text-primary transition-colors underline-offset-4 hover:underline">AGB</a>
+              <a href={`${mainBaseUrl}/legal/impressum`} className="hover:text-primary transition-colors underline-offset-4 hover:underline">Impressum</a>
+              <a href={`${mainBaseUrl}/legal/datenschutz`} className="hover:text-primary transition-colors underline-offset-4 hover:underline">Datenschutz</a>
+              <a href={`${mainBaseUrl}/legal/agb`} className="hover:text-primary transition-colors underline-offset-4 hover:underline">AGB</a>
             </div>
             <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-muted/50 border">
               <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />

@@ -787,7 +787,11 @@ export default function Dashboard() {
   useEffect(() => {
     if (typeof window === 'undefined') return
     const host = window.location.hostname
-    const isDashboardHost = host.startsWith('dashboard.') || host.startsWith('app.') || host.includes('.dashboard.')
+    const isDashboardHost = host.startsWith('dashboard.') || 
+                            host.startsWith('app.') || 
+                            host.includes('.dashboard.') ||
+                            host.startsWith('support.') ||
+                            host.includes('.support.')
     setRootMode(isDashboardHost ? 'dashboard' : 'landing')
   }, [])
 
@@ -1103,6 +1107,10 @@ export default function Dashboard() {
     )
   }
 
+  if (resolvedRootMode === 'dashboard' && typeof window !== 'undefined' && (window.location.hostname.startsWith('support.') || window.location.hostname.includes('.support.'))) {
+    return null
+  }
+
   if (resolvedRootMode === 'landing') {
     return <MainDomainLanding isAuthenticated={!!user} />
   }
@@ -1244,7 +1252,7 @@ export default function Dashboard() {
               onTicketSalesChange={canEditTicketSales ? handleTicketSalesChange : undefined}
               canEditTicketSales={canEditTicketSales}
               isAuthenticated={!!user}
-              loading={!initialLoadState.settings || !initialLoadState.finances}
+              loading={(!initialLoadState.settings || !initialLoadState.finances) && !timeoutReached}
             />
             </Skeleton>
           </div>
@@ -1276,7 +1284,7 @@ export default function Dashboard() {
                 </div>
               }
             >
-              <NewsPreview key="news" items={news.slice(0, 2)} loading={!initialLoadState.news} />
+              <NewsPreview key="news" items={news.slice(0, 2)} loading={!initialLoadState.news && !timeoutReached} />
             </Skeleton>
           </div>
         )
@@ -1315,7 +1323,7 @@ export default function Dashboard() {
                 canManage={canManage}
                 maxItems={5}
                 useScrollContainer={false}
-                loading={!initialLoadState.todos}
+                loading={!initialLoadState.todos && !timeoutReached}
               />
             </Skeleton>
           </div>
@@ -1352,7 +1360,7 @@ export default function Dashboard() {
                 events={events || []}
                 maxItems={3}
                 useScrollContainer={false}
-                loading={!initialLoadState.events}
+                loading={!initialLoadState.events && !timeoutReached}
               />
             </Skeleton>
           </div>
@@ -1400,7 +1408,7 @@ export default function Dashboard() {
                 maxRows={4}
                 useScrollContainer={false}
                 showManualCorrection={false}
-                loading={!initialLoadState.finances || !initialLoadState.shopEarnings}
+                loading={(!initialLoadState.finances || !initialLoadState.shopEarnings) && !timeoutReached}
               />
             </Skeleton>
           </div>
@@ -1478,7 +1486,7 @@ export default function Dashboard() {
                 canVote={!!currentUserId}
                 canManage={canManage}
                 useScrollContainer={false}
-                loading={!initialLoadState.polls}
+                loading={!initialLoadState.polls && !timeoutReached}
               />
             </Skeleton>
           </div>

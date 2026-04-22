@@ -13,7 +13,7 @@ function testRarityThresholds() {
     assert.strictEqual(calculateRarityFromAverage(0.25), "rare");
     assert.strictEqual(calculateRarityFromAverage(0.2), "common");
     assert.strictEqual(calculateRarityFromAverage(0), "common");
-    console.log("✅ testRarityThresholds passed");
+    console.log(" testRarityThresholds passed");
 }
 
 function testRarityLimits() {
@@ -43,7 +43,7 @@ function testRarityLimits() {
     assert.strictEqual(results.get("t5"), "common", "t5 should be demoted to common");
     assert.strictEqual(results.get("t6"), "common", "t6 should be demoted to common");
 
-    console.log("✅ testRarityLimits passed");
+    console.log(" testRarityLimits passed");
 }
 
 function testNoLimits() {
@@ -56,16 +56,16 @@ function testNoLimits() {
     const results = applyRarityLimits(teachers, limits);
     assert.strictEqual(results.get("t1"), "legendary");
     assert.strictEqual(results.get("t2"), "legendary");
-    console.log("✅ testNoLimits passed");
+    console.log(" testNoLimits passed");
 }
 
 try {
     testRarityThresholds();
     testRarityLimits();
     testNoLimits();
-    console.log("\nALL TESTS PASSED! 🎉");
+    console.log("\nALL TESTS PASSED! ");
 } catch (error) {
-    console.error("\nTEST FAILED! ❌");
+    console.error("\nTEST FAILED! ");
     console.error(error);
     process.exit(1);
 }

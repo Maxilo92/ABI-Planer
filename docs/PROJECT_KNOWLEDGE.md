@@ -6,70 +6,63 @@
 <!-- default_action: read before deeper file exploration -->
 <!-- index: docs/AGENT_CONTEXT_INDEX.md -->
 
-# Projekt-Wissen & Architektur (ABI Planer v1.0.0)
+# Projekt-Wissen und Architektur
 
-Dieses Dokument sichert das Wissen über die technische Struktur und die getroffenen Entscheidungen für die Production-Release. (Stand: 29. März 2026)
+Stand: 22. April 2026
 
-## 1. Architektur & Stack
-- **Framework:** Next.js 16 (App Router)
-- **Styling:** Tailwind CSS 4 & shadcn/ui
-- **Backend:** Firebase (Auth & Firestore)
-- **Deployment:** Firebase App Hosting (automatisiert via GitHub)
+Dieses Dokument ist der technische Index fuer Entwickler. Detaillierte Prozesse sind in spezialisierten Dokumenten ausgelagert.
 
-## 2. Datenbank (Firestore)
-- **Datenbank-ID:** `abi-data` (Wichtig: Nicht die Standard-ID `(default)`!).
-- **Pfad:** `src/lib/firebase.ts` initialisiert Firestore explizit mit dieser ID.
-- **Struktur:**
-  - `profiles/{uid}`: Nutzerdaten inkl. `role` ('viewer', 'planner', 'admin') und `is_approved`.
-  - `settings/config`: Zentrale App-Werte (`ball_date`, `funding_goal`).
-  - `finances`, `news`, `events`, `todos`, `polls`, `votes`: Module der App.
+## 1. Technische Kernfakten
+- Frontend: Next.js 16 (App Router), React 19, TypeScript 5, Tailwind CSS 4
+- Backend: Firebase Auth, Firestore, Storage
+- Cloud Functions: `functions/` (Node.js 22)
+- Firestore Datenbank-ID: `abi-data` (nie `(default)`)
+- Deployment: Firebase App Hosting, produktiv ueber Branch `release`
 
-### iPad & Tablet Optimierung
-- **Breakpoint:** Die Desktop-Sidebar wird erst ab `lg` (1024px) angezeigt.
-- **Strategie:** iPads im Portrait-Modus (768px - 834px) nutzen den mobilen Drawer. Dies maximiert den Platz für Dashboards und Listen auf Tablets.
-- **Dashboard:** Nutzt ein 2-spaltiges Layout ab `md` (768px), da ohne Sidebar genug Platz auf iPads vorhanden ist.
+## 2. Sicherheits- und Rollenmodell
+- Zero-Trust wird ueber `firestore.rules` und `storage.rules` erzwungen.
+- Rollen in `profiles/{uid}.role`: `viewer`, `planner`, `admin`, `admin_main`, `admin_co`.
+- Zugriff setzt `is_approved: true` voraus.
+- Domain Restriction: Registrierung nur mit `@hgr-web.lernsax.de`.
+- TCG-RNG bleibt serverseitig (`openBooster`), keine Client-RNG.
 
-## 3. Sicherheits-Konzept (Zero Trust)
-### Daten-Zugriff (Read Rules)
-- **Öffentlich:** Die `news` Collection ist für alle Nutzer (auch unauthentifiziert) lesbar, um Transparenz zu gewährleisten.
-- **Kritisch:** Alle anderen Kern-Collections (`events`, `finances`, `polls`, `teachers`, `todos`) sind gegen öffentlichen Lesezugriff gesperrt.
-- **Regel:** Zugriff erfolgt nur nach erfolgreicher Authentifizierung via `@hgr-web.lernsax.de`.
+Details:
+- `docs/SECURITY_GUIDE.md`
+- `docs/FIRESTORE_SCHEMA.md`
+- `docs/CLOUD_FUNCTIONS_API.md`
 
-### Sammelkarten & RNG (TCG)
-- **Autoritär:** Die Generierung von Karten-Packs und Varianten (RNG) erfolgt ausschließlich serverseitig über die Cloud Function `openBooster`.
-- **Integrität:** Client-seitige Manipulationen der Sammlung sind unmöglich, da Schreibrechte auf `user_teachers` für Nutzer gesperrt sind und nur via Admin SDK (Cloud Functions) aktualisiert werden.
+## 3. Deployment und CI/CD
+- Standard-Workflow: Entwicklung auf `main`.
+- Promotion nach `release` nur auf Anweisung.
+- Lokales Pflicht-Gate vor Merge/Release: `npm run check`.
 
-### Rollen-System
-...
-- **Erster Nutzer:** Der allererste registrierte Nutzer in der Datenbank erhält automatisch die `admin` Rolle.
+Details:
+- `DEPLOYMENT.md`
+- `docs/CI-CD.md`
 
-## 4. Backend & Automatisierung (Cloud Functions)
-### Rarity Sync (Cron)
-- **Job:** Ein 15-minütiger Cron-Job (`syncTeacherRarities`) stabilisiert die Seltenheiten basierend auf globalen Limits (z.B. max. 1 Legendary). Dies verhindert "Rarity Drift".
+## 4. Environment und Konfiguration
+- Public Firebase Variablen: `NEXT_PUBLIC_*`.
+- Secrets bleiben serverseitig (z. B. `GROQ_API_KEY`).
+- Lokale Konfiguration in `.env.local`, Produktion in App Hosting Settings.
 
-### GDPR & Löschung
-- **Vollständig:** Die Lösch-Logik (`onProfileDeleted`) umfasst alle Nutzer-Daten, inkl. der `referrals` Collection, `poll_votes` und Profil-Subcollections.
-- **Anonymisierung:** 
-  - **Finanzen:** Stripe-Transfers werden aus GoBD-Gründen (10 Jahre) anonymisiert aufbewahrt (`masked_userId`).
-  - **Audit Logs:** Log-Einträge in der `logs` Collection werden anonymisiert (`masked_userId`, `user_name` gelöscht), um die Revisionssicherheit bei gleichzeitiger Wahrung des "Rechts auf Vergessenwerden" zu garantieren.
+Details:
+- `docs/.env-reference.md`
 
-## 5. Deployment-Workflow
-...
+## 5. Recht und Compliance
+- Bei Aenderungen an Auth, Profilen, Logs, Zahlungen oder Rechtsseiten ist die Compliance-Checkliste verpflichtend.
 
-Das Deployment erfolgt über GitHub-Branches:
-1.  **Entwicklung:** Änderungen werden auf dem `main` Branch gesammelt.
-2.  **Sofortregel:** Nach jeder erfolgreich abgeschlossenen Änderung wird, sofern technisch möglich, direkt auf `main` gepusht.
-3.  **Parallelität & Konflikte:** Arbeiten mehrere Agenten gleichzeitig oder asynchron, werden lokale Änderungen zuerst gesichert. Schlägt ein Push fehl, wird niemals halb fertiger Code gelöscht; stattdessen werden Remote-Stand, Diff und Konflikte geprüft und gezielt gemerged oder gerebased.
-4.  **Produktion:** Um die Live-Seite zu aktualisieren, muss `main` in den **`release`** Branch gemergt und gepusht werden.
-5.  **CI/CD:** Firebase App Hosting überwacht den `release` Branch und baut die Seite im `standalone` Modus.
+Details:
+- `docs/LEGAL_COMPLIANCE.md`
 
-## 5. Umgebungsvariablen (Environment Variables)
-Die Firebase-Keys (`NEXT_PUBLIC_...`) müssen an zwei Stellen existieren:
-1.  **Lokal:** In der Datei `.env.local` (nicht auf GitHub!).
-2.  **Produktion:** Im Firebase Web Dashboard unter **App Hosting > Settings > Environment Variables**.
+## 6. Troubleshooting und Betrieb
+- Haeufige Fehlerbilder und Diagnosepfade sind zentral dokumentiert.
 
-## 6. Wichtige Konfigurationsdateien
-- `firebase.json`: Hosting & Firestore Verknüpfung.
-- `firestore.rules`: Die "Türsteher"-Logik für die Datenbank.
-- `firestore.indexes.json`: Performance-Indexe für Sortierungen nach Datum.
-- `next.config.ts`: Konfiguriert den `standalone` Build für Cloud-Umgebungen.
+Details:
+- `docs/TROUBLESHOOTING.md`
+
+## 7. Weitere wichtige Quellen
+- `README.md` (Einstieg)
+- `INSTALL.md` (Setup)
+- `CHANGELOG.md` (Aenderungshistorie)
+- `firestore.rules` / `storage.rules` (Sicherheitsquelle)
+- `firestore.indexes.json` (Indexquelle)

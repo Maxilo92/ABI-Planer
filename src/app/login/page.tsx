@@ -15,7 +15,7 @@ import Logo from '@/components/Logo'
 import { ForgotPasswordDialog } from '@/components/modals/ForgotPasswordDialog'
 import { useAuth } from '@/context/AuthContext'
 import { ShieldCheck, ArrowLeft } from 'lucide-react'
-import { getAppHomeUrl, getAccessTargetFromProfile } from '@/lib/dashboard-url'
+import { getAppHomeUrl, getAccessTargetFromProfile, getSupportBaseUrl } from '@/lib/dashboard-url'
 import { useLanguage } from '@/context/LanguageContext'
 import { LanguageToggle } from '@/components/ui/LanguageToggle'
 
@@ -33,7 +33,7 @@ export default function LoginPage() {
   // 2FA state
   const [step, setStep] = useState<'login' | '2fa'>('login')
   const [twoFactorCode, setTwoFactorCode] = useState('')
-  const { set2FAVerified } = useAuth()
+  const { is2FAVerified, set2FAVerified } = useAuth()
   const functions = getFirebaseFunctions()
   
   const router = useRouter()
@@ -101,12 +101,12 @@ export default function LoginPage() {
       const profileData = profileSnap.data()
       console.log('[Login] profile fetched, is_2fa_enabled:', profileData?.is_2fa_enabled)
       const accessTarget = getAccessTargetFromProfile(profileData)
-
-      if (profileData?.is_2fa_enabled) {
+      
+      if (profileData?.is_2fa_enabled && !is2FAVerified) {
         console.log('[Login] switching to 2FA step')
         setStep('2fa')
       } else {
-        console.log('[Login] no 2FA, proceeding to app target:', accessTarget)
+        console.log('[Login] no 2FA (or already verified), proceeding to app target:', accessTarget)
         set2FAVerified(true)
         redirectToApp(accessTarget)
       }
@@ -289,6 +289,17 @@ export default function LoginPage() {
                   <p className="text-xs text-muted-foreground">
                     {t('auth.login.twoFactorHint')}
                   </p>
+                  <div className="pt-2 border-t border-border/50">
+                    <p className="text-[10px] text-muted-foreground mb-1 uppercase font-bold tracking-wider">
+                      {t('auth.login.twoFactorLost')}
+                    </p>
+                    <a 
+                      href={getSupportBaseUrl()}
+                      className="text-xs font-bold text-primary hover:underline underline-offset-4"
+                    >
+                      {t('auth.login.contactAdmin')} →
+                    </a>
+                  </div>
                 </div>
               </CardContent>
               <CardFooter className="flex flex-col space-y-6 border-0 bg-transparent rounded-none px-5 pb-7 pt-3 sm:px-7 sm:pb-8 sm:pt-4">

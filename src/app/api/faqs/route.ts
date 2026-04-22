@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
   const limitParam = Number.parseInt(searchParams.get('limit') || '5', 10)
   const limit = Number.isFinite(limitParam) ? Math.min(Math.max(limitParam, 1), 10) : 5
 
-  const matches = searchHelpFaqs(query, limit)
+  const matches = searchHelpFaqs(query, 'de', limit)
 
   return NextResponse.json({
     ok: true,
@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => null)
   const query = typeof body?.q === 'string' ? body.q.trim() : ''
   const limit = typeof body?.limit === 'number' ? Math.min(Math.max(body.limit, 1), 10) : 5
-  const matches = searchHelpFaqs(query, limit)
+  const matches = searchHelpFaqs(query, 'de', limit)
 
   return NextResponse.json({
     ok: true,

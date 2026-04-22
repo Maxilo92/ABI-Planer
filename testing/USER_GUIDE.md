@@ -2,11 +2,11 @@
 
 **Willkommen!** Dieses Guide hilft dir, dich mit den Features des ABI Planers vertraut zu machen.
 
-🌐 **App URL:** [https://abi-planer-27.de](https://abi-planer-27.de)
+ **App URL:** [https://abi-planer-27.de](https://abi-planer-27.de)
 
 ---
 
-## 🔐 Anmeldung & Registrierung
+##  Anmeldung & Registrierung
 
 ### 1. **Registrieren** (Nur mit @hgr-web.lernsax.de)
 - Gehe auf die **Startseite** und klicke "Registrieren"
@@ -30,7 +30,7 @@
 <!-- index: docs/AGENT_CONTEXT_INDEX.md -->
 
 
-## 📊 Dashboard (Startseite)
+##  Dashboard (Startseite)
 
 Hier bekommst du einen Überblick über alles, was gerade wichtig ist.
 
@@ -38,17 +38,17 @@ Hier bekommst du einen Überblick über alles, was gerade wichtig ist.
 
 | Feature | Beschreibung |
 |---------|-------------|
-| **Countdown** 🎓 | Zeigt die Tage bis zum Ball | 
-| **Finanzstatus** 💰 | Visualisiert Einnahmen vs. Gesamtziel |
-| **Aufgaben-Übersicht** ✅ | Deine persönlichen To-Dos |
-| **Anstehende Events** 📅 | Nächste Termine |
-| **Aktuelle News** 📰 | Wichtigste Mitteilungen |
-| **Laufende Umfragen** 🗳️ | Abstimmungen zum Abstimmen |
-| **Ranking & Scoring** 🏆 | Wer hat am meisten beigetragen? |
+| **Countdown**  | Zeigt die Tage bis zum Ball | 
+| **Finanzstatus**  | Visualisiert Einnahmen vs. Gesamtziel |
+| **Aufgaben-Übersicht**  | Deine persönlichen To-Dos |
+| **Anstehende Events**  | Nächste Termine |
+| **Aktuelle News**  | Wichtigste Mitteilungen |
+| **Laufende Umfragen** ️ | Abstimmungen zum Abstimmen |
+| **Ranking & Scoring**  | Wer hat am meisten beigetragen? |
 
 ---
 
-## 📅 Kalender
+##  Kalender
 
 **Navigation:** `Kalender` (Hauptmenü)
 
@@ -62,14 +62,14 @@ Hier bekommst du einen Überblick über alles, was gerade wichtig ist.
 
 ---
 
-## ✅ Aufgaben (TODO-Liste)
+##  Aufgaben (TODO-Liste)
 
 **Navigation:** `Aufgaben` (Hauptmenü)
 
 ### **Status-Typen:**
-- 🔵 **Offen** — Noch nicht gestartet
-- 🟡 **In Bearbeitung** — Gerade aktiv
-- ✅ **Erledigt** — Fertig
+-  **Offen** — Noch nicht gestartet
+-  **In Bearbeitung** — Gerade aktiv
+-  **Erledigt** — Fertig
 
 ### **Was du tust:**
 1. Neue Aufgaben **erstellen** (mit Beschreibung, Priorität, Zuständigkeit)
@@ -86,7 +86,7 @@ Aufgaben bekommen automatisch Priorität basierend auf:
 
 ---
 
-## 💰 Finanzen
+##  Finanzen
 
 **Navigation:** `Finanzen` (Hauptmenü)
 
@@ -105,7 +105,7 @@ Aufgaben bekommen automatisch Priorität basierend auf:
 
 ---
 
-## 📰 News
+##  News
 
 **Navigation:** `News` (Hauptmenü)
 
@@ -121,7 +121,7 @@ Aufgaben bekommen automatisch Priorität basierend auf:
 
 ---
 
-## 🗳️ Umfragen
+## ️ Umfragen
 
 **Navigation:** `Abstimmungen` (Hauptmenü)
 
@@ -137,7 +137,7 @@ Aufgaben bekommen automatisch Priorität basierend auf:
 
 ---
 
-## 👥 Gruppen
+##  Gruppen
 
 **Navigation:** `Gruppen` (Hauptmenü)
 
@@ -151,7 +151,7 @@ Aufgaben bekommen automatisch Priorität basierend auf:
 
 ---
 
-## ⚙️ Einstellungen
+## ️ Einstellungen
 
 **Navigation:** `Einstellungen` (Hauptmenü)
 
@@ -163,7 +163,7 @@ Aufgaben bekommen automatisch Priorität basierend auf:
 
 ---
 
-## 📋 Admin-Funktionen
+##  Admin-Funktionen
 
 Wenn du **Admin** oder **Planner** bist, hast du zusätzliche Optionen:
 
@@ -174,29 +174,29 @@ Wenn du **Admin** oder **Planner** bist, hast du zusätzliche Optionen:
 - **System-Logs** (für Debugging)
 
 ### **Rollen:**
-- 👤 **Viewer** (Standard) — Kann lesen, abstimmen
-- 🔧 **Planner** — Kann Events, News, Aufgaben erstellen
-- 🔐 **Admin** — Volle Kontrolle
+-  **Viewer** (Standard) — Kann lesen, abstimmen
+-  **Planner** — Kann Events, News, Aufgaben erstellen
+-  **Admin** — Volle Kontrolle
 
 ---
 
 ## 🆘 FAQs
 
 ### **Kann ich mein Passwort zurücksetzen?**
-✅ Ja, klicke auf "Passwort vergessen" auf der Login-Seite. Ein Reset-Link wird dir mailt.
+ Ja, klicke auf "Passwort vergessen" auf der Login-Seite. Ein Reset-Link wird dir mailt.
 
 ### **Kann ich meine Nachrichten sehen?**
-✅ Klicke auf die **🔔 Notification Bell** in der Navigation (oben rechts).
+ Klicke auf die ** Notification Bell** in der Navigation (oben rechts).
 
 ### **Kann ich einen Event-Kalender herunterladen?**
-📅 Noch nicht in v1.0.0 — geplant für v1.1.
+ Noch nicht in v1.0.0 — geplant für v1.1.
 
 ### **Wie melde ich einen Bug?**
-🐛 Klick auf **"Feedback"** im Hauptmenü und beschreib das Problem.
+ Klick auf **"Feedback"** im Hauptmenü und beschreib das Problem.
 
 ---
 
-## 💡 Best Practices
+##  Best Practices
 
 1. **Regelmäßig schauen** — Check das Dashboard 2-3x pro Woche
 2. **Aufgaben aktualisieren** — Halte deine Status aktuell
@@ -205,6 +205,6 @@ Wenn du **Admin** oder **Planner** bist, hast du zusätzliche Optionen:
 
 ---
 
-**Viel Erfolg bei der Abi-Planung! 🎉**
+**Viel Erfolg bei der Abi-Planung! **
 
 Questions? Schreib ins Feedback oder kontaktier einen Admin.

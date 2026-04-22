@@ -64,6 +64,7 @@ export interface Profile {
   is_referral_claimed?: boolean;
   total_referrals?: number;
   total_referral_boosters?: number;
+  school_year?: number;
   dashboard_layout?: DashboardComponentKey[];
   theme?: 'light' | 'dark' | 'system';
   accent_theme?: string;
@@ -275,6 +276,15 @@ export interface FinanceEntry {
   responsible_user_name?: string | null;
   entry_date: string;
   created_by: string;
+}
+
+export interface CashVerification {
+  id: string;
+  amount: number;
+  verification_date: string | Timestamp | Date;
+  verified_by: string;
+  verified_by_name: string;
+  note?: string | null;
 }
 
 export interface ShopEarning {

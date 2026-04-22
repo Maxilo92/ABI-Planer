@@ -668,14 +668,14 @@ export default function AdminUserPage() {
 
     setBulkProcessing(true)
     try {
-      const isMainAdminActor = profile.role === 'admin' || profile.role === 'admin_main'
+      const isMainAdminActor = profile && (profile.role === 'admin' || profile.role === 'admin_main')
       const successIds: string[] = []
       const failedIds: string[] = []
       const skippedIds: string[] = []
 
       const toggleEmailVerif = httpsCallable(functions, 'toggleUserEmailVerification')
 
-      const chunkArray = <T>(arr: T[], size: number): T[][] => 
+      const chunkArray = <T,>(arr: T[], size: number): T[][] => 
         Array.from({ length: Math.ceil(arr.length / size) }, (_, i) => arr.slice(i * size, i * size + size))
 
       const chunks = chunkArray(targetIds, 15)

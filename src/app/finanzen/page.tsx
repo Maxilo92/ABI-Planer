@@ -2,19 +2,20 @@
 
 import { useEffect, useState } from 'react'
 import { db } from '@/lib/firebase'
-import { collection, query, orderBy, onSnapshot, doc, deleteDoc, setDoc } from 'firebase/firestore'
+import { collection, query, orderBy, onSnapshot, doc, deleteDoc, setDoc, limit } from 'firebase/firestore'
 import { useAuth } from '@/context/AuthContext'
 import { FundingStatus } from '@/components/dashboard/FundingStatus'
 import { ClassRanking } from '@/components/dashboard/ClassRanking'
 import { AddFinanceDialog } from '@/components/modals/AddFinanceDialog'
 import { EditFinanceDialog } from '@/components/modals/EditFinanceDialog'
-import { FinanceEntry, Settings, ShopEarning } from '@/types/database'
+import { VerifyCashDialog } from '@/components/modals/VerifyCashDialog'
+import { FinanceEntry, Settings, ShopEarning, CashVerification } from '@/types/database'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import { format } from 'date-fns'
 import { de } from 'date-fns/locale'
-import { Heart, Coffee, Loader2, Trash2, Wallet } from 'lucide-react'
+import { Heart, Coffee, Loader2, Trash2, Wallet, AlertCircle, CheckCircle2 } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { toDate } from '@/lib/utils'
 import Link from 'next/link'
@@ -28,6 +29,7 @@ export default function FinancePage() {
   const { confirm } = usePopupManager()
   const [settings, setSettings] = useState<Settings | null>(null)
   const [finances, setFinances] = useState<FinanceEntry[]>([])
+  const [lastVerification, setLastVerification] = useState<CashVerification | null>(null)
   const [shopEarnings, setShopEarnings] = useState<ShopEarning[]>([])
   const [shopEarningsLoaded, setShopEarningsLoaded] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -65,6 +67,19 @@ export default function FinancePage() {
       setLoading(false)
     })
 
+    // 2.5 Listen to latest Cash Verification
+    const verificationsRef = collection(db, 'cash_verifications')
+    const qVerifications = query(verificationsRef, orderBy('verification_date', 'desc'), limit(1))
+    const unsubscribeVerifications = onSnapshot(qVerifications, (snapshot) => {
+      if (!snapshot.empty) {
+        setLastVerification({ id: snapshot.docs[0].id, ...snapshot.docs[0].data() } as CashVerification)
+      } else {
+        setLastVerification(null)
+      }
+    }, (error) => {
+      console.error('Error listening to cash verifications:', error)
+    })
+
     // 3. Listen to Shop Earnings for leaderboard support
     let unsubscribeShopEarnings = () => setShopEarningsLoaded(true)
     if (profile?.is_approved) {
@@ -83,6 +98,7 @@ export default function FinancePage() {
     return () => {
       unsubscribeSettings()
       unsubscribeFinances()
+      unsubscribeVerifications()
       unsubscribeShopEarnings()
     }
   }, [authLoading, profile])
@@ -204,6 +220,10 @@ export default function FinancePage() {
   const currentBalance = totalIncome - totalExpenses
   const fundingGoal = settings?.funding_goal ?? 10000
 
+  // Checksum calculation
+  const diff = lastVerification ? lastVerification.amount - currentBalance : null
+  const isDiffSignificant = diff !== null && Math.abs(diff) > 0.01
+
   return (
     <div className="space-y-6">
       <div className="rounded-[2rem] border border-border bg-card px-6 py-6 shadow-sm">
@@ -225,7 +245,12 @@ export default function FinancePage() {
                 Support App
               </Button>
             </Link>
-            {isPlanner && <AddFinanceDialog />}
+            {isPlanner && (
+              <>
+                <VerifyCashDialog />
+                <AddFinanceDialog />
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -263,7 +288,7 @@ export default function FinancePage() {
         </Card>
         <Card className="bg-brand/5 border-brand/20">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-brand uppercase">Aktueller Kontostand</CardTitle>
+            <CardTitle className="text-sm font-medium text-brand uppercase">Virtueller Kontostand</CardTitle>
           </CardHeader>
           <CardContent>
             <div className={`text-2xl font-bold ${currentBalance < 0 ? 'text-destructive' : 'text-foreground'}`}>
@@ -272,6 +297,46 @@ export default function FinancePage() {
           </CardContent>
         </Card>
       </div>
+
+      {lastVerification && (
+        <Card className={`border-l-4 ${isDiffSignificant ? 'border-l-warning bg-warning/5' : 'border-l-success bg-success/5'}`}>
+          <CardContent className="py-4">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="flex items-start gap-3">
+                <div className={`mt-1 p-2 rounded-full ${isDiffSignificant ? 'bg-warning/10 text-warning' : 'bg-success/10 text-success'}`}>
+                  {isDiffSignificant ? <AlertCircle className="h-5 w-5" /> : <CheckCircle2 className="h-5 w-5" />}
+                </div>
+                <div>
+                  <h3 className="font-bold text-sm">Letzter Kassenabgleich (Prüfsumme)</h3>
+                  <p className="text-xs text-muted-foreground">
+                    Zuletzt am {format(toDate(lastVerification.verification_date), 'dd.MM.yyyy HH:mm', { locale: de })} von {lastVerification.verified_by_name}
+                  </p>
+                  {lastVerification.note && (
+                    <p className="text-[10px] mt-1 text-muted-foreground italic">"{lastVerification.note}"</p>
+                  )}
+                </div>
+              </div>
+              <div className="flex gap-6 items-center">
+                <div className="text-right">
+                  <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Physisch gezählt</p>
+                  <p className="text-lg font-bold">{lastVerification.amount.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Differenz</p>
+                  <p className={`text-lg font-black ${isDiffSignificant ? 'text-destructive' : 'text-success'}`}>
+                    {diff! > 0 ? '+' : ''}{diff?.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
+                  </p>
+                </div>
+              </div>
+            </div>
+            {isDiffSignificant && (
+              <p className="mt-3 text-[10px] text-warning-foreground bg-warning/10 p-2 rounded-lg border border-warning/20">
+                Achtung: Der physische Kassenstand weicht vom Transaktionsverlauf ab. Bitte prüfe, ob alle Einnahmen und Ausgaben korrekt erfasst wurden oder ob Geld in der Kasse fehlt.
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       <FundingStatus
         current={currentBalance}

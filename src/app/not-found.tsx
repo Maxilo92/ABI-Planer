@@ -17,6 +17,19 @@ export default function NotFound() {
           Diese URL existiert nicht oder wurde verschoben.
         </p>
 
+        <div className="mt-4 p-3 bg-muted/50 rounded-xl italic text-sm text-primary font-medium">
+          {(() => {
+            const quotes = [
+              "Hoppla! Diese Seite ist wie ein Freiblock: Man erwartet viel, aber am Ende ist nichts da.",
+              "404: Wissen nicht gefunden. Fühlt sich an wie die Mathe-Prüfung, oder?",
+              "Diese Seite hat wohl schon ihr Zeugnis abgeholt und ist im Urlaub.",
+              "Sogar unser Fehler-Bot hat einen besseren Schnitt als die Wahrscheinlichkeit, dass diese Seite existiert.",
+              "Hier gibt's nichts zu sehen – außer vielleicht die Hoffnung auf ein 1.0er Abi."
+            ];
+            return `"${quotes[Math.floor(Math.random() * quotes.length)]}"`;
+          })()}
+        </div>
+
         <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
           <Button render={<Link href="/" />} className="gap-2">
             <Home className="h-4 w-4" />

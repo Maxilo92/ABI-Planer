@@ -50,7 +50,7 @@ export function CombatDebugPanel({ matchData, userId }: { matchData: any; userId
     if (allCards.length > 0) {
       const cardIds = allCards.map(c => c.cardId);
       console.log('Card sequence:', cardIds);
-      console.log('✓ Shuffle appears working' + (cardIds.length < 10 ? ' (incomplete deck)' : ''));
+      console.log(' Shuffle appears working' + (cardIds.length < 10 ? ' (incomplete deck)' : ''));
     }
 
     console.groupEnd();

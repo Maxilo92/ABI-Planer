@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useRef, useState, useMemo } from 'react'
 import { getFirebaseAuth, getFirebaseDb, getFirebaseFunctions } from '@/lib/firebase'
-import { onAuthStateChanged, signOut, User, sendEmailVerification, verifyBeforeUpdateEmail } from 'firebase/auth'
+import { onAuthStateChanged, signOut, User, sendEmailVerification, verifyBeforeUpdateEmail, signInWithCustomToken } from 'firebase/auth'
 import { doc, onSnapshot, updateDoc, serverTimestamp } from 'firebase/firestore'
 import { httpsCallable } from 'firebase/functions'
 
@@ -12,8 +12,47 @@ const auth = getFirebaseAuth();
 const db = getFirebaseDb();
 const functions = getFirebaseFunctions();
 
-const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000
+const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000
 const SESSION_STARTED_AT_KEY_PREFIX = 'abi_session_started_at_'
+
+// Helper for cookie management
+function getBaseDomain() {
+  if (typeof window === 'undefined') return undefined
+  const host = window.location.hostname
+  
+  if (host.endsWith('.localhost')) {
+    return '.localhost'
+  }
+  
+  const parts = host.split('.')
+  if (parts.length >= 2) {
+    return `.${parts.slice(-2).join('.')}`
+  }
+  return undefined
+}
+
+function setBaseDomainCookie(name: string, value: string, maxAgeDays: number) {
+  if (typeof window === 'undefined') return
+  
+  const domain = getBaseDomain()
+  const domainAttr = domain ? `; domain=${domain}` : ''
+  const maxAgeAttr = `; max-age=${maxAgeDays * 24 * 60 * 60}`
+  
+  document.cookie = `${name}=${value}; path=/${domainAttr}${maxAgeAttr}; samesite=lax`
+}
+
+function deleteBaseDomainCookie(name: string) {
+  if (typeof window === 'undefined') return
+  const domain = getBaseDomain()
+  const domainAttr = domain ? `; domain=${domain}` : ''
+  document.cookie = `${name}=; path=/${domainAttr}; max-age=0; samesite=lax`
+}
+
+function getCookieValue(name: string): string | null {
+  if (typeof document === 'undefined') return null
+  const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'))
+  return match ? match[2] : null
+}
 
 function getSessionStartedAtKey(userId: string) {
   return `${SESSION_STARTED_AT_KEY_PREFIX}${userId}`
@@ -98,25 +137,44 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const sessionEndFlushedRef = useRef(false)
   const profileBootstrapAttemptedRef = useRef(false)
 
-  // Load 2FA status from localStorage on mount/init (30-day persistence)
+  // Load 2FA status from cookies on mount/init (30-day persistence, shared across subdomains)
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('is_2fa_verified')
-      const lastVerification = localStorage.getItem('last_2fa_verification')
+      // For the initial check, we try to see if there's a global cookie (backward compatibility)
+      // or if we already have a user (though unlikely on mount)
+      const stored = getCookieValue('is_2fa_verified')
+      const lastVerification = getCookieValue('last_2fa_verification')
       
       if (stored === 'true' && lastVerification) {
         const timestamp = parseInt(lastVerification, 10)
         const now = Date.now()
         
-        if (now - timestamp < THIRTY_DAYS_MS) {
+        if (now - timestamp < SEVEN_DAYS_MS) {
           setIs2FAVerifiedState(true)
         } else {
           // Expired - clear it
-          localStorage.removeItem('is_2fa_verified')
-          localStorage.removeItem('last_2fa_verification')
+          deleteBaseDomainCookie('is_2fa_verified')
+          deleteBaseDomainCookie('last_2fa_verification')
         }
       }
       setIs2FAInitialCheckDone(true)
+
+      // Try to sync session from base domain cookie if not logged in
+      const syncSession = async () => {
+        if (!auth.currentUser) {
+          try {
+            const res = await fetch('/api/auth/session')
+            const data = await res.json()
+            if (data.isOnline && data.customToken) {
+              console.log('[AuthContext] Syncing session from cross-subdomain cookie...')
+              await signInWithCustomToken(auth, data.customToken)
+            }
+          } catch (err) {
+            console.error('[AuthContext] Session sync failed:', err)
+          }
+        }
+      }
+      syncSession()
     }
   }, [])
 
@@ -124,14 +182,45 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setIs2FAVerifiedState(val)
     if (typeof window !== 'undefined') {
       if (val) {
-        localStorage.setItem('is_2fa_verified', 'true')
-        localStorage.setItem('last_2fa_verification', Date.now().toString())
+        // We set both a global and a user-specific cookie for maximum reliability
+        setBaseDomainCookie('is_2fa_verified', 'true', 7)
+        setBaseDomainCookie('last_2fa_verification', Date.now().toString(), 7)
+        
+        if (user?.uid) {
+          setBaseDomainCookie(`is_2fa_verified_${user.uid}`, 'true', 7)
+          setBaseDomainCookie(`last_2fa_verification_${user.uid}`, Date.now().toString(), 7)
+        }
       } else {
-        localStorage.removeItem('is_2fa_verified')
-        localStorage.removeItem('last_2fa_verification')
+        // Delete cookies on logout as requested
+        deleteBaseDomainCookie('is_2fa_verified')
+        deleteBaseDomainCookie('last_2fa_verification')
+        if (user?.uid) {
+          deleteBaseDomainCookie(`is_2fa_verified_${user.uid}`)
+          deleteBaseDomainCookie(`last_2fa_verification_${user.uid}`)
+        }
       }
     }
   }
+
+  // Effect to re-validate 2FA status when user changes
+  useEffect(() => {
+    if (user && typeof window !== 'undefined') {
+      const uid = user.uid
+      const stored = getCookieValue(`is_2fa_verified_${uid}`) || getCookieValue('is_2fa_verified')
+      const lastVerification = getCookieValue(`last_2fa_verification_${uid}`) || getCookieValue('last_2fa_verification')
+      
+      if (stored === 'true' && lastVerification) {
+        const timestamp = parseInt(lastVerification, 10)
+        const now = Date.now()
+        
+        if (now - timestamp < SEVEN_DAYS_MS) {
+          setIs2FAVerifiedState(true)
+        } else {
+          setIs2FAVerifiedState(false)
+        }
+      }
+    }
+  }, [user?.uid])
 
   const resendVerification = async () => {
     const currentUser = auth.currentUser
@@ -207,12 +296,43 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     triggerClaim()
   }, [user?.uid, user?.emailVerified, profile?.is_referral_claimed, profile?.referred_by, loading])
 
+  // Safety Timeout: Force loading to false if Firebase Auth initialization hangs
+  useEffect(() => {
+    if (!loading) return
+    const timer = setTimeout(() => {
+      console.warn('[AuthContext] Auth initialization timed out after 10s. Forcing load completion.')
+      setLoading(false)
+    }, 10000)
+    return () => clearTimeout(timer)
+  }, [loading])
+
   useEffect(() => {
     let profileUnsubscribe: (() => void) | null = null;
     let isSubscribed = true;
 
     const authUnsubscribe = onAuthStateChanged(auth, async (user) => {
       setUser(user)
+
+      if (user) {
+        // Create session cookie if it doesn't exist or just to keep it fresh
+        try {
+          const idToken = await user.getIdToken()
+          await fetch('/api/auth/session', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ idToken })
+          })
+        } catch (err) {
+          console.error('[AuthContext] Failed to create session cookie:', err)
+        }
+      } else {
+        // Delete session cookie on logout
+        try {
+          await fetch('/api/auth/session', { method: 'DELETE' })
+        } catch (err) {
+          console.error('[AuthContext] Failed to delete session cookie:', err)
+        }
+      }
 
       // Unsubscribe from previous profile if exists
       if (profileUnsubscribe) {

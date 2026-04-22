@@ -6,6 +6,148 @@
 <!-- default_action: read newest entries only unless a regression requires older history -->
 <!-- index: docs/AGENT_CONTEXT_INDEX.md -->
 
+## [1.30.7.07] - 2026-04-22
+
+### Radikaler Cache-Buster Fix
+- **Datei-Cleanup:** `reportAiEngine.ts` vollständig entfernt (auch die Proxy-Datei), da der Turbopack-Cache hartnäckig an einer alten Definition festhält.
+- **Modul-Renaming:** `reportAnalysisCore.ts` in `reportAnalysisModule.ts` umbenannt, um eine völlig neue Import-Kette zu erzwingen, die keine Altlasten im Cache hat.
+- **Import-Update:** Alle Referenzen in der API-Route und im Admin-Bericht auf das neue Modul aktualisiert.
+
+## [1.30.7.06] - 2026-04-22
+
+## [1.30.7.05] - 2026-04-22
+
+## [1.30.7.04] - 2026-04-22
+
+### Fixes
+- **Build-Cache Fix:** Variable `DELAY_MS` in `REPORT_DELAY_MS` umbenannt, um persistente Build-Fehler und Caching-Probleme im Dev-Server zu beheben.
+
+## [1.30.7.03] - 2026-04-22
+
+### Finalisierung
+- **Vollständige Integration:** Alle wählbaren Sektionen (Features, Intro, Social, Technik) werden nun korrekt im PDF-Report ausgegeben.
+- **KI-Optimierung:** Spezifische Prompts für die Einleitungs-Sektion hinzugefügt.
+- **Fehlerbehebung:** HTML-Attribute im PDF-Template korrigiert.
+
+## [1.30.7.02] - 2026-04-22
+
+### Fixes
+- **Build-Fehler:** Persistente doppelte Definition von `DELAY_MS` in `reportAiEngine.ts` behoben. Datei komplett bereinigt.
+
+## [1.30.7.01] - 2026-04-22
+
+### Fixes & Cleanup
+- **Code-Cleanup:** Nicht genutzte Icon-Imports entfernt.
+- **Hinweis:** Die `proxy.js` Fehlermeldungen in der Konsole beziehen sich auf Browser-Extensions (z.B. React DevTools) und beeinträchtigen die Funktionalität des Berichts nicht.
+
+## [1.30.7.00] - 2026-04-22
+
+### Clean Report Modus
+- **Radikale Vereinfachung:** Sämtliche Emojis, Farbverläufe, Schatten und dekorative Elemente wurden aus dem Bericht und dem Generator entfernt.
+- **Minimalistisches Design:** Der Bericht nutzt nun ein rein sachliches Layout mit Standard-Schriftarten, einfachen Linien und Schwarz-Weiß-Tabellen.
+- **KI-Anpassung:** Die KI wurde angewiesen, ausschließlich nüchternen Text ohne schmückende Adjektive oder Emojis zu generieren.
+- **Fokus:** Konzentration auf reine Fakten, Zahlen und Graphen für eine professionelle interne Dokumentation.
+
+## [1.30.6.00] - 2026-04-22
+
+### Overhaul: Pitch & Guide Studio
+- **Modus-Wechsel:** Der "Academic Mode" wurde durch einen praxisorientierten "Pitch & Guide"-Modus ersetzt.
+- **Inhaltliche Neuausrichtung:** Fokus auf überzeugende Projektvorstellungen (Pitch) und praktische Anleitungen für das Team.
+- **Design:** Professionelle Business-Serifen mit modernem Navy-Akzent und Erfolgs-Diagrammen.
+- **KI-Stabilität:** Implementierung eines intelligenten 429-Handlings (Rate Limit). Bei Überlastung der Groq-API (70B) erfolgt ein automatischer Fallback auf das schnellere 8B-Modell mit kurzen Verzögerungen zwischen den Requests.
+
+## [1.30.5.01] - 2026-04-22
+
+### Fixes
+- **Import Error:** Fehlendes `BookOpen`-Icon aus `lucide-react` hinzugefügt, um den `ReferenceError` beim Laden der Seite zu beheben.
+
+## [1.30.5.00] - 2026-04-22
+
+### Major Update: Academic Report Studio
+- **Wissenschaftlicher Modus:** Komplette Umgestaltung des Berichts-Generators in ein wissenschaftliches "Paper"-Format.
+- **Akademisches Design:** Verwendung von Serif-Schriftarten, Blocksatz, formalen Tabellen und Abbildungskennzeichnungen (keine Kacheln oder modernen UI-Elemente mehr).
+- **Strukturelle Erweiterung:** Neue Sektionen für Abstract, Methodik und Referenzen hinzugefügt.
+- **KI-Persona:** Die Analyse-Engine nutzt nun einen rein akademischen Schreibstil (Fachautor/Wissenschaftler).
+
+## [1.30.4.07] - 2026-04-22
+
+### Fixes & Verbesserungen
+- **PDF-Layout:** Korrektur von überlappenden Texten und fehlerhaften Seitenumbrüchen.
+- **Formatierung:** KI-Texte werden nun von Markdown bereinigt und korrekt als HTML gerendert (keine `**` oder `#` mehr).
+- **Neue Sektion:** "Sprechernotizen & Talking Points" Seite für Präsentationen vor der Schulleitung hinzugefügt.
+- **Anhang:** Neue Sektion mit einer tabellarischen Zusammenfassung aller Rohdaten am Ende des Berichts.
+
+## [1.30.4.06] - 2026-04-22
+
+### Neue Features
+- **Bericht-Erweiterung (Shop):** Integration von Shop-Einnahmen (Brutto, Netto, Abikasse-Anteil) inkl. eigener Analyse-Sektion und Diagramm.
+- **Bericht-Erweiterung (Features):** Neue Sektion zur Vorstellung der wichtigsten System-Innovationen (TCG, Organisation, Finanztransparenz) für die Schulleitung.
+
+## [1.30.4.05] - 2026-04-22
+
+### Geändert
+- **2FA-Persistence:** Anpassung der Speicherdauer auf 7 Tage (statt 30) und automatische Löschung der Geräteverifizierung beim Abmelden, wie vom Nutzer gewünscht.
+
+## [1.30.4.04] - 2026-04-22
+
+### Fixes
+- **Admin-Bericht:** Behebung von Skalierungsproblemen bei Diagrammen (kein Abschneiden mehr am Rand).
+- **KI-Stabilität:** Implementierung eines Fallback-Modells (`8b-instant`) und Timeout-Handlings für die Analyse-Engine, um Fehler bei API-Auslastung zu vermeiden.
+
+## [1.30.4.03] - 2026-04-22
+
+### Fixes
+- **Sicherheit & UX:** Behebung der zu häufigen 2FA-Abfragen.
+    - **Persistence:** 2FA-Verifizierungsstatus wird nun user-spezifisch für 30 Tage in Cookies gespeichert und NICHT mehr bei jedem Logout gelöscht.
+    - **Smart Login:** Die Login-Seite erkennt nun bereits verifizierte Geräte und überspringt den 2FA-Schritt automatisch.
+    - **Subdomain-Support:** Korrektur der 2FA-Ausnahmeregeln für Shop- und TCG-Subdomains, um auch beim Zugriff auf die Startseite der Subdomain unnötige Sperren zu vermeiden.
+
+## [1.30.4.02] - 2026-04-22
+
+### Fixes
+- **Admin-Bericht:** Behebung eines Authentifizierungsfehlers (401) in der Analyse-API durch Hinzufügung eines lokalen Entwicklungs-Fallbacks.
+
+## [1.30.4.01] - 2026-04-22
+
+### Fixes
+- **Admin-Bericht:** Fehlende Imports und Direktiven im Report Studio behoben.
+
+## [1.30.4.00] - 2026-04-22
+
+### Neue Features
+- **Report Studio Professional:** Einführung eines hochmodernen Bericht-Generators für akademische Projektberichte.
+    - **Modulare Konfiguration:** Admins können Sektionen (Finanzen, Nutzer, Technik, TCG etc.) individuell an- und abwählen.
+    - **KI-Analyse (Llama-3.1 70B):** Dynamische Generierung von tiefgehenden Analysen basierend auf Live-Systemdaten durch ein leistungsstarkes Sprachmodell.
+    - **Diagramm-Auswahl:** Unterstützung für verschiedene Diagrammtypen (Balken, Linien, Kreis, Ring) pro Sektion mittels Chart.js.
+    - **Akademisches PDF-Layout:** Professionelles Multi-Page Design (10-20 Seiten) mit Deckblatt, Inhaltsverzeichnis und Compliance-Siegel.
+    - **Sichere API:** Neue Server-Route zur Verarbeitung von KI-Anfragen unter Einhaltung von Sicherheitsstandards.
+
+## [1.30.3.07] - 2026-04-22
+
+### Verbessert
+- **Admin-Bericht:** Vollständige Wiederherstellung und Erweiterung des akademischen Projektberichts.
+    - Hinzufügung von Inhaltsverzeichnis, Executive Summary und detaillierten Sektionen zu Architektur, Sicherheit und DSGVO-Compliance.
+    - Optimierung des PDF-Layouts für einen professionellen Druck (A4).
+
+## [1.30.3.06] - 2026-04-22
+
+### Fixes
+- **Internationalisierung (i18n):** Behebung eines kritischen Absturzes (`TypeError: map is not a function`) auf der Landingpage.
+    - Die `t()` Funktion im `LanguageContext` wurde erweitert, um auch Arrays und Objekte (statt nur Strings) zurückzugeben, was für Features-Listen auf der Landingpage notwendig ist.
+
+## [1.30.3.05] - 2026-04-22
+
+### Fixes
+- **Dashboard:** Behebung eines unendlichen Ladezustands ("hört nicht auf zu laden").
+    - Entfernung des redundanten Full-Page-Skeletts in der `AppShell`, das die granularen Dashboard-Skelette überlagerte.
+    - Integration der 3-Sekunden-Timeout-Logik in die `loading` Props aller Dashboard-Komponenten (`FundingStatus`, `News`, `Todos`, `Kalender`, `Finanzen`, `Polls`), um bei Netzwerkverzögerungen zuverlässig zur Live-Ansicht zu wechseln.
+    - Sicherheits-Timeout (10s) im `AuthContext` hinzugefügt, um Hängenbleiben bei fehlgeschlagener Firebase-Auth-Initialisierung zu verhindern.
+
+## [1.30.3.04] - 2026-04-22
+
+### Fixes
+- **Admin-Bericht:** Zugriffsschutz der Seite `/admin/bericht` an den übrigen Admin-Bereich angeglichen (`reason`/`from` Redirect-Parameter) und sichtbaren Ladezustand ergänzt, um leere Ansicht während der Auth-Prüfung zu vermeiden.
+
 ## [1.30.3.03] - 2026-04-22
 
 ### Hinzugefügt

@@ -19,18 +19,18 @@ import { useLanguage } from '@/context/LanguageContext'
 import { LanguageToggle } from '@/components/ui/LanguageToggle'
 
 const OPTION_TEACHER = 'Lehrer'
-const OPTION_OTHER_GRADE = 'andere KlassenStufe'
+const OPTION_PARENT = 'Eltern'
 
 function RegisterForm() {
   const { t } = useLanguage()
-  const [step, setStep] = useState<1 | 2 | 3 | 4 | 5>(1)
+  const [step, setStep] = useState<1 | 2 | 3 | 4>(1)
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [courses, setCourses] = useState<string[]>(['Kurs 1', 'Kurs 2', 'Kurs 3', 'Kurs 4', 'Kurs 5', 'Kurs 6', 'Kurs 7'])
-  const [selectedCourse, setSelectedCourse] = useState('Kurs 1')
-  const [manualGrade, setManualGrade] = useState('')
-  const [isCoursesLoading, setIsCoursesLoading] = useState(true)
+  const [selectedGrade, setSelectedGrade] = useState('12')
+  const [gradeSuffix, setGradeSuffix] = useState('')
+  const [schoolYear, setSchoolYear] = useState('2025/26')
+  const [isConfigLoading, setIsConfigLoading] = useState(true)
   const [isAtLeast16, setIsAtLeast16] = useState(false)
   const [acceptsTerms, setAcceptsTerms] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -40,40 +40,32 @@ function RegisterForm() {
   const searchParams = useSearchParams()
   const ref = searchParams.get('ref')
   const mainBaseUrl = getMainBaseUrl()
-  const selectedClassName = selectedCourse === OPTION_OTHER_GRADE ? manualGrade.trim() : selectedCourse
-  const postSignupTarget = selectedCourse === OPTION_TEACHER
+  
+  const isSpecialRole = selectedGrade === OPTION_TEACHER || selectedGrade === OPTION_PARENT
+  const selectedClassName = isSpecialRole ? selectedGrade : `${selectedGrade}${gradeSuffix}`
+  const postSignupTarget = isSpecialRole
     ? 'dashboard'
     : getAccessTargetFromProfile({ class_name: selectedClassName })
 
-  const isSpecialOption = selectedCourse === OPTION_TEACHER || selectedCourse === OPTION_OTHER_GRADE
-
   useEffect(() => {
-    const loadCourses = async () => {
-      setIsCoursesLoading(true)
+    const loadConfig = async () => {
+      setIsConfigLoading(true)
       try {
         const settingsSnap = await getDoc(doc(db, 'settings', 'config'))
-        let allCourses = ['Kurs 1', 'Kurs 2', 'Kurs 3', 'Kurs 4', 'Kurs 5', 'Kurs 6', 'Kurs 7']
         if (settingsSnap.exists()) {
-          const configuredCourses = settingsSnap.data().courses
-          if (Array.isArray(configuredCourses) && configuredCourses.length > 0) {
-            allCourses = configuredCourses.filter((entry: unknown): entry is string => typeof entry === 'string' && entry.trim().length > 0)
+          const config = settingsSnap.data()
+          if (config.current_school_year) {
+            setSchoolYear(config.current_school_year)
           }
         }
-        
-        // Add special options if not present
-        if (!allCourses.includes(OPTION_TEACHER)) allCourses.push(OPTION_TEACHER)
-        if (!allCourses.includes(OPTION_OTHER_GRADE)) allCourses.push(OPTION_OTHER_GRADE)
-        
-        setCourses(allCourses)
-        setSelectedCourse(allCourses[0])
       } catch (loadError) {
-        console.error('Error loading courses:', loadError)
+        console.error('Error loading config:', loadError)
       } finally {
-        setIsCoursesLoading(false)
+        setIsConfigLoading(false)
       }
     }
 
-    loadCourses()
+    loadConfig()
   }, [])
 
   const validateCurrentStep = () => {
@@ -111,12 +103,12 @@ function RegisterForm() {
     }
 
     if (step === 3) {
-      if (isCoursesLoading) {
+      if (isConfigLoading) {
         setError(t('auth.register.errors.coursesLoading'))
         return false
       }
-      if (!selectedCourse) {
-        setError(t('auth.register.errors.courseRequired'))
+      if (!selectedGrade) {
+        setError(t('auth.register.errors.gradeRequired'))
         return false
       }
 
@@ -133,14 +125,6 @@ function RegisterForm() {
       return true
     }
 
-    if (step === 4) {
-      if (selectedCourse === OPTION_OTHER_GRADE && !manualGrade.trim()) {
-        setError(t('auth.register.errors.gradeRequired'))
-        return false
-      }
-      return true
-    }
-
     return true
   }
 
@@ -153,14 +137,8 @@ function RegisterForm() {
       return
     }
 
-    if (step === 3 && isSpecialOption) {
-      setStep(4)
-      setShowError(false)
-      return
-    }
-
     if (step < 3) {
-      setStep((prev) => (prev + 1) as 1 | 2 | 3 | 4 | 5)
+      setStep((prev) => (prev + 1) as 1 | 2 | 3 | 4)
       setShowError(false)
       return
     }
@@ -196,8 +174,8 @@ function RegisterForm() {
       const isFirstUser = querySnapshot.empty
 
       // 5. Create profile document in Firestore
-      const classNameToSave = selectedCourse === OPTION_OTHER_GRADE ? manualGrade : selectedCourse
-      const accessTarget = selectedCourse === OPTION_TEACHER
+      const classNameToSave = isSpecialRole ? selectedGrade : `${selectedGrade}${gradeSuffix}`
+      const accessTarget = isSpecialRole
         ? 'dashboard'
         : getAccessTargetFromProfile({ class_name: classNameToSave })
 
@@ -206,6 +184,7 @@ function RegisterForm() {
         email: normalizedEmail,
         role: isFirstUser ? 'admin' : 'viewer',
         class_name: classNameToSave,
+        school_year: schoolYear,
         access_target: accessTarget,
         planning_groups: [],
         led_groups: [],
@@ -227,6 +206,7 @@ function RegisterForm() {
         email: normalizedEmail,
         role: isFirstUser ? 'admin' : 'viewer',
         class_name: classNameToSave,
+        school_year: schoolYear,
         access_target: accessTarget,
         created_at: new Date().toISOString(),
       })
@@ -236,11 +216,12 @@ function RegisterForm() {
         action: 'profile_created',
         role: isFirstUser ? 'admin' : 'viewer',
         class_name: classNameToSave,
+        school_year: schoolYear,
         access_target: accessTarget,
         legal_consents_recorded: true,
       })
 
-      setStep(5) // Success/Verification step
+      setStep(4) // Success/Verification step
     } catch (err: any) {
       setError(t('auth.register.errors.failed') + err.message)
     } finally {
@@ -264,33 +245,29 @@ function RegisterForm() {
           </div>
           <CardHeader className="space-y-3 px-5 pb-7 pt-3 sm:px-7 sm:pb-8 sm:pt-5">
             <CardTitle className="text-4xl font-black text-center tracking-tight">
-              {step === 5 ? t('auth.register.titleSuccess') : t('auth.register.title')}
+              {step === 4 ? t('auth.register.titleSuccess') : t('auth.register.title')}
             </CardTitle>
             <CardDescription className="text-center">
-              {step === 5 
+              {step === 4 
                 ? t('auth.register.descSuccess') 
                 : t('auth.register.desc')}
             </CardDescription>
-            {step < 5 && (
+            {step < 4 && (
               <div className="pt-3 space-y-2.5">
                 <div className="flex gap-2">
                   <div className={`h-1.5 flex-1 rounded-full ${step >= 1 ? 'bg-primary' : 'bg-muted'}`} />
                   <div className={`h-1.5 flex-1 rounded-full ${step >= 2 ? 'bg-primary' : 'bg-muted'}`} />
                   <div className={`h-1.5 flex-1 rounded-full ${step >= 3 ? 'bg-primary' : 'bg-muted'}`} />
-                  {isSpecialOption && (
-                    <div className={`h-1.5 flex-1 rounded-full ${step >= 4 ? 'bg-primary' : 'bg-muted'}`} />
-                  )}
                 </div>
                 <p className="text-xs text-muted-foreground text-center">
-                  {step === 1 ? `${t('auth.register.step')} 1/${isSpecialOption ? '4' : '3'}: ${t('auth.register.steps.name')}` : 
-                   step === 2 ? `${t('auth.register.step')} 2/${isSpecialOption ? '4' : '3'}: ${t('auth.register.steps.emailPassword')}` : 
-                   step === 3 ? `${t('auth.register.step')} 3/${isSpecialOption ? '4' : '3'}: ${t('auth.register.steps.course')}` : 
-                   `${t('auth.register.step')} 4/4: ${selectedCourse === OPTION_TEACHER ? t('auth.register.steps.teacherInfo') : t('auth.register.steps.grade')}`}
+                  {step === 1 ? `${t('auth.register.step')} 1/3: ${t('auth.register.steps.name')}` : 
+                   step === 2 ? `${t('auth.register.step')} 2/3: ${t('auth.register.steps.emailPassword')}` : 
+                   `${t('auth.register.step')} 3/3: ${t('auth.register.steps.grade')}`}
                 </p>
               </div>
             )}
           </CardHeader>
-          {step === 5 ? (
+          {step === 4 ? (
             <CardContent className="space-y-6 px-5 pb-7 sm:px-7 sm:pb-8 text-center">
               <div className="p-4 bg-primary/10 rounded-xl text-sm text-primary font-medium leading-relaxed">
                 {t('auth.register.success.message')}
@@ -367,36 +344,60 @@ function RegisterForm() {
 
                 {step === 3 && (
                   <div className="space-y-5 mb-1 sm:mb-2">
-                    <div className="space-y-2">
-                      <Label htmlFor="course" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">{t('auth.register.labels.course')}</Label>
-                      <div className="relative">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="grade" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">{t('auth.register.labels.manualGrade')}</Label>
                         <select
-                          id="course"
-                          value={selectedCourse}
-                          onChange={(e) => setSelectedCourse(e.target.value)}
+                          id="grade"
+                          value={selectedGrade}
+                          onChange={(e) => setSelectedGrade(e.target.value)}
                           className="flex h-12 w-full rounded-md border border-input bg-background/70 px-3 py-2 text-base disabled:opacity-50"
                           required
-                          disabled={isCoursesLoading}
                         >
-                          {isCoursesLoading ? (
-                            <option value="">{t('auth.register.placeholders.loadingCourses')}</option>
-                          ) : (
-                            courses.map((course) => (
-                              <option key={course} value={course}>
-                                {course === OPTION_TEACHER ? t('auth.register.options.teacher') : 
-                                 course === OPTION_OTHER_GRADE ? t('auth.register.options.otherGrade') : 
-                                 course}
-                              </option>
-                            ))
-                          )}
+                          <option value="5">Klasse 5</option>
+                          <option value="6">Klasse 6</option>
+                          <option value="7">Klasse 7</option>
+                          <option value="8">Klasse 8</option>
+                          <option value="9">Klasse 9</option>
+                          <option value="10">Klasse 10</option>
+                          <option value="11">Klasse 11</option>
+                          <option value="12">Klasse 12</option>
+                          <option value={OPTION_TEACHER}>{t('auth.register.options.teacher')}</option>
+                          <option value={OPTION_PARENT}>{t('auth.register.options.parent')}</option>
                         </select>
-                        {isCoursesLoading && (
-                          <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                            <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                          </div>
-                        )}
                       </div>
+
+                      {!isSpecialRole && (
+                        <div className="space-y-2">
+                          <Label htmlFor="gradeSuffix" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">{t('auth.register.labels.gradeSuffix')}</Label>
+                          <Input 
+                            id="gradeSuffix" 
+                            placeholder={t('auth.register.placeholders.gradeSuffix')} 
+                            value={gradeSuffix}
+                            onChange={(e) => setGradeSuffix(e.target.value)}
+                            className="h-12 text-base bg-background/70 border-border"
+                          />
+                        </div>
+                      )}
                     </div>
+
+                    {selectedGrade === OPTION_TEACHER && (
+                      <div className="p-4 bg-muted/30 rounded-xl space-y-3 border border-border/50">
+                        <p className="text-sm font-bold text-foreground">{t('auth.register.teacherInfo.title')}</p>
+                        <p className="text-xs leading-relaxed text-muted-foreground">
+                          {t('auth.register.teacherInfo.text')}
+                        </p>
+                      </div>
+                    )}
+
+                    {selectedGrade === OPTION_PARENT && (
+                      <div className="p-4 bg-muted/30 rounded-xl space-y-3 border border-border/50">
+                        <p className="text-sm font-bold text-foreground">{t('auth.register.parentInfo.title')}</p>
+                        <p className="text-xs leading-relaxed text-muted-foreground">
+                          {t('auth.register.parentInfo.text')}
+                        </p>
+                      </div>
+                    )}
 
                     <div className="space-y-3 rounded-lg border border-border/70 bg-muted/20 p-3">
                       <div className="grid grid-cols-[1.25rem_minmax(0,1fr)] items-start gap-x-3 gap-y-1">
@@ -421,7 +422,7 @@ function RegisterForm() {
                         <Label htmlFor="termsAccepted" className="!block text-xs leading-relaxed text-muted-foreground font-medium cursor-pointer">
                           {t('auth.register.checkboxes.terms')}{' '}
                           <a
-                            href={`${mainBaseUrl}/agb`}
+                            href={`${mainBaseUrl}/legal/agb`}
                             target="_blank"
                             rel="noopener noreferrer"
                             onClick={(e) => e.stopPropagation()}
@@ -435,40 +436,6 @@ function RegisterForm() {
                     </div>
                   </div>
                 )}
-
-                {step === 4 && (
-                  <div className="space-y-6">
-                    {selectedCourse === OPTION_TEACHER ? (
-                      <div className="p-4 bg-muted/30 rounded-xl space-y-3 border border-border/50">
-                        <p className="text-sm font-bold text-foreground">{t('auth.register.teacherInfo.title')}</p>
-                        <p className="text-xs leading-relaxed text-muted-foreground">
-                          {t('auth.register.teacherInfo.text')}
-                        </p>
-                      </div>
-                    ) : (
-                      <div className="space-y-5">
-                        <div className="p-4 bg-muted/30 rounded-xl space-y-3 border border-border/50">
-                          <p className="text-sm font-bold text-foreground">{t('auth.register.otherGradeInfo.title')}</p>
-                          <p className="text-xs leading-relaxed text-muted-foreground">
-                            {t('auth.register.otherGradeInfo.text')}
-                          </p>
-                        </div>
-                        
-                        <div className="space-y-2">
-                          <Label htmlFor="manualGrade" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">{t('auth.register.labels.manualGrade')}</Label>
-                          <Input 
-                            id="manualGrade" 
-                            placeholder={t('auth.register.placeholders.manualGrade')} 
-                            value={manualGrade}
-                            onChange={(e) => setManualGrade(e.target.value)}
-                            className="h-12 text-base bg-background/70 border-border"
-                            required 
-                          />
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
               </CardContent>
               <CardFooter className="flex flex-col space-y-5 border-0 bg-transparent rounded-none px-5 pb-7 pt-3 sm:px-7 sm:pb-8 sm:pt-4">
                 <div className="w-full flex gap-2">
@@ -477,7 +444,7 @@ function RegisterForm() {
                       type="button"
                       variant="outline"
                       className="flex-1 h-12"
-                      onClick={() => setStep((prev) => (prev - 1) as 1 | 2 | 3 | 4 | 5)}
+                      onClick={() => setStep((prev) => (prev - 1) as 1 | 2 | 3 | 4)}
                       disabled={loading}
                     >
                       {t('auth.register.buttons.back')}
@@ -485,7 +452,7 @@ function RegisterForm() {
                   )}
 
                   <Button type="submit" className="flex-1 h-12" disabled={loading}>
-                    {step < 3 || (step === 3 && isSpecialOption) ? t('auth.register.buttons.next') : (loading ? t('auth.register.buttons.creating') : t('auth.register.buttons.submit'))}
+                    {step < 3 ? t('auth.register.buttons.next') : (loading ? t('auth.register.buttons.creating') : t('auth.register.buttons.submit'))}
                   </Button>
                 </div>
                 <p className="text-sm text-center text-muted-foreground">
@@ -495,7 +462,7 @@ function RegisterForm() {
                   </Link>
                   <br />
                   <span className="text-xs">
-                    <a href={`${mainBaseUrl}/datenschutz`} className="underline hover:text-primary" target="_blank" rel="noopener noreferrer">
+                    <a href={`${mainBaseUrl}/legal/datenschutz`} className="underline hover:text-primary" target="_blank" rel="noopener noreferrer">
                       {t('auth.register.footer.privacy')}
                     </a>
                   </span>

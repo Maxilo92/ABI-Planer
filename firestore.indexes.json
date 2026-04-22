@@ -109,6 +109,20 @@
       "fields": [
         { "fieldPath": "task_stats.completed_count", "order": "DESCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "cash_verifications",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "verification_date", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "finances",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "entry_date", "order": "DESCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

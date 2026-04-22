@@ -125,9 +125,9 @@ const KNOWN_ROUTES = [
   { id: '/vorteile', name: 'Vorteile & Features', domain: 'main' },
   { id: '/zugang', name: 'Zugangs-Verwaltung', domain: 'main' },
   { id: '/unauthorized', name: '403 Seite', domain: 'main' },
-  { id: '/agb', name: 'AGB', domain: 'main' },
-  { id: '/datenschutz', name: 'Datenschutz', domain: 'main' },
-  { id: '/impressum', name: 'Impressum', domain: 'main' },
+  { id: '/legal/agb', name: 'AGB', domain: 'main' },
+  { id: '/legal/datenschutz', name: 'Datenschutz', domain: 'main' },
+  { id: '/legal/impressum', name: 'Impressum', domain: 'main' },
   { id: '/maintenance', name: 'Wartung', domain: 'main' },
 
   // TCG
@@ -144,7 +144,7 @@ const KNOWN_ROUTES = [
   { id: '/sammelkarten/info', name: 'Karten-Info', domain: 'tcg' },
   { id: '/sammelkarten/packs', name: 'Meine Packs', domain: 'tcg' },
   { id: '/sammelkarten/shop', name: 'Karten Shop', domain: 'tcg' },
-  { id: '/agb/sammelkarten', name: 'TCG Regeln', domain: 'tcg' },
+  { id: '/legal/agb/sammelkarten', name: 'TCG Regeln', domain: 'tcg' },
 
   // ADMIN
   { id: '/admin', name: 'Admin Dashboard', domain: 'admin' },

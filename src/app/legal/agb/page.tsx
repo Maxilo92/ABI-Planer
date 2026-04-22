@@ -8,12 +8,20 @@ import { useRouter } from 'next/navigation'
 export default function AGBPage() {
   const router = useRouter()
 
+  const handleBack = () => {
+    if (window.history.length <= 2) {
+      router.push('/')
+    } else {
+      router.back()
+    }
+  }
+
   return (
-    <div className="max-w-3xl mx-auto space-y-8 py-8 px-4">
+    <div className="max-w-3xl mx-auto space-y-8 py-8 pt-20 px-4">
       <Button 
         variant="ghost" 
         className="gap-2 -ml-2 text-muted-foreground hover:text-foreground"
-        onClick={() => router.back()}
+        onClick={handleBack}
       >
         <ArrowLeft className="h-4 w-4" /> Zurück
       </Button>
@@ -67,6 +75,7 @@ export default function AGBPage() {
             <h3 className="text-lg font-semibold text-foreground border-l-4 border-primary pl-3 mb-4">5. Haftung</h3>
             <p className="text-muted-foreground leading-relaxed">
               Die Plattform wird auf freiwilliger Basis von Schülern für Schüler betrieben. Eine Haftung für die Richtigkeit der eingetragenen Daten (insbesondere bei Finanzen) oder für die ständige Verfügbarkeit des Dienstes wird ausgeschlossen. Die Plattform dient lediglich als Planungshilfe.
+              Sie befindet sich zudem in laufender Weiterentwicklung, weshalb es trotz sorgfältiger Betreuung vereinzelt zu vorübergehenden Funktionsstörungen oder technischen Fehlern kommen kann.
             </p>
           </section>
 
@@ -77,7 +86,7 @@ export default function AGBPage() {
               <br /><br />
               <strong>Spendenzweck:</strong> Mit dem Kauf unterstützen Sie direkt den Abiturjahrgang 2027. Von jedem Gewinn fließen 90% in die Stufenkasse (Abikasse) zur Finanzierung des Abiballs und anderer Jahrgangsaktivitäten. Die restlichen 10% dienen der Deckung von Transaktionsgebühren, Steuern und Serverkosten.
               <br /><br />
-              <strong>Sammelkarten-Produktion:</strong> Für die Erstellung und den Vertrieb von Sammelkarten (digital & physisch) gelten ergänzend unsere <a href="/agb/sammelkarten" className="text-primary underline hover:opacity-80 font-medium">Besonderen Bedingungen für Sammelkarten</a>.
+              <strong>Sammelkarten-Produktion:</strong> Für die Erstellung und den Vertrieb von Sammelkarten (digital & physisch) gelten ergänzend unsere <a href="/legal/agb/sammelkarten" className="text-primary underline hover:opacity-80 font-medium">Besonderen Bedingungen für Sammelkarten</a>.
             </p>
           </section>
 
@@ -99,7 +108,7 @@ export default function AGBPage() {
 
           <div className="pt-8 border-t space-y-2">
             <p className="text-xs text-muted-foreground italic">
-              Stand: 29. März 2026. Dies ist ein privat betriebenes Schul-Projekt des Abiturjahrgangs 2027.
+              Stand: 22. April 2026. Dies ist ein privat betriebenes Schul-Projekt des Abiturjahrgangs 2027.
             </p>
             <p className="text-xs text-muted-foreground">
               Projekt-Link: <a href="https://github.com/Maxilo92/ABI-Planer" className="underline hover:text-primary">GitHub Repository</a>

@@ -13,16 +13,20 @@ import { signOut } from 'firebase/auth'
 import { getFirebaseAuth } from '@/lib/firebase'
 import Logo from '@/components/Logo'
 import { usePathname } from 'next/navigation'
+import { useLanguage } from '@/context/LanguageContext'
+import { getSupportBaseUrl } from '@/lib/dashboard-url'
 
 const auth = getFirebaseAuth()
 
 export function TwoFactorGate({ children }: { children: React.ReactNode }) {
   const { user, profile, loading, is2FAVerified, is2FAInitialCheckDone, set2FAVerified } = useAuth()
+  const { t } = useLanguage()
   const [code, setCode] = useState('')
   const [verifying, setVerifying] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const functions = getFirebaseFunctions()
   const pathname = usePathname()
+  const supportUrl = getSupportBaseUrl()
 
   // If loading auth or no user, let the AuthProvider/AppShell handle redirection
   if (loading || !user || !profile) return children
@@ -31,9 +35,15 @@ export function TwoFactorGate({ children }: { children: React.ReactNode }) {
   if (!is2FAInitialCheckDone) return children
 
   // Determine if we are in TCG area or Shop area (both exempt from 2FA gate)
-  const isTcgArea = pathname?.startsWith('/sammelkarten') || 
-                   pathname?.startsWith('/battle-pass')
-  const isShopArea = pathname?.startsWith('/shop')
+  const isTcgArea = typeof window !== 'undefined' && (
+                    window.location.hostname.startsWith('tcg.') || 
+                    pathname?.startsWith('/sammelkarten') || 
+                    pathname?.startsWith('/battle-pass')
+                  )
+  const isShopArea = typeof window !== 'undefined' && (
+                    window.location.hostname.startsWith('shop.') || 
+                    pathname?.startsWith('/shop')
+                  )
 
   // If 2FA is not enabled, already verified, or user is in TCG/Shop area, show content
   // TCG and Shop are exempt from 2FA gate to allow quick collection/browsing without friction
@@ -56,11 +66,11 @@ export function TwoFactorGate({ children }: { children: React.ReactNode }) {
       if (result.data.success) {
         set2FAVerified(true)
       } else {
-        throw new Error('Ungültiger Code.')
+        throw new Error(t('auth.login.errors.invalidCode'))
       }
     } catch (err: any) {
       console.error('2FA Verification failed:', err)
-      setError(err.message || 'Der Code ist falsch oder abgelaufen.')
+      setError(err.message || t('auth.login.errors.expiredCode'))
     } finally {
       setVerifying(false)
     }
@@ -83,9 +93,9 @@ export function TwoFactorGate({ children }: { children: React.ReactNode }) {
             <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center text-primary mb-2">
               <ShieldCheck className="h-8 w-8" />
             </div>
-            <CardTitle className="text-2xl font-bold tracking-tight">Zwei-Faktor-Authentisierung</CardTitle>
+            <CardTitle className="text-2xl font-bold tracking-tight">{t('auth.login.verifying')}</CardTitle>
             <CardDescription>
-              Dein Konto ist geschützt. Bitte gib deinen Authenticator-Code ein, um fortzufahren.
+              {t('auth.login.desc2fa')}
             </CardDescription>
           </CardHeader>
 
@@ -99,7 +109,7 @@ export function TwoFactorGate({ children }: { children: React.ReactNode }) {
 
               <div className="space-y-4">
                 <Label htmlFor="gate-2fa-code" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground text-center block">
-                  6-stelliger Authenticator-Code
+                  {t('auth.login.twoFactorCode')}
                 </Label>
                 <Input 
                   id="gate-2fa-code" 
@@ -117,12 +127,7 @@ export function TwoFactorGate({ children }: { children: React.ReactNode }) {
             
             <CardFooter className="flex flex-col gap-3 bg-muted/30 p-6">
               <Button type="submit" className="w-full h-12 font-bold" disabled={verifying || code.length !== 6}>
-                {verifying ? (
-                  <>
-                    <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                    Verifizierung...
-                  </>
-                ) : 'Bestätigen & Einloggen'}
+                {verifying ? t('auth.login.verifyButtonLoading') : t('auth.login.verifyButton')}
               </Button>
               <Button 
                 variant="ghost" 
@@ -130,15 +135,23 @@ export function TwoFactorGate({ children }: { children: React.ReactNode }) {
                 className="w-full text-muted-foreground text-xs hover:text-foreground"
                 onClick={handleSignOut}
               >
-                Abmelden & anderes Konto nutzen
+                {t('auth.login.backToLogin')}
               </Button>
             </CardFooter>
           </form>
         </Card>
         
-        <p className="mt-8 text-center text-xs text-muted-foreground">
-          Sicherheit geht vor. Falls du deinen Code verloren hast, wende dich bitte an einen Administrator.
-        </p>
+        <div className="mt-8 text-center space-y-2">
+          <p className="text-xs text-muted-foreground">
+            {t('auth.login.twoFactorLost')}
+          </p>
+          <a 
+            href={supportUrl}
+            className="inline-block text-xs font-bold text-primary hover:underline underline-offset-4"
+          >
+            {t('auth.login.contactAdmin')} →
+          </a>
+        </div>
       </div>
     </div>
   )

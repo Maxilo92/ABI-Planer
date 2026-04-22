@@ -1,12 +1,12 @@
-# Test Environment Setup – ABI Planer v1.0.0
+# Test Environment Setup
 
-⚡ **WICHTIG:** Die App läuft bereits **live** auf [https://abi-planer-27.de](https://abi-planer-27.de)!
+ **WICHTIG:** Die App läuft bereits **live** auf [https://abi-planer-27.de](https://abi-planer-27.de)!
 
 Du kannst direkt dort testen. Diese Anleitung ist für lokales Development/Testing.
 
 ---
 
-## 🚀 Quick Start für Tester
+##  Quick Start für Tester
 
 ### Option A: Direkt auf der Live-URL testen (EMPFOHLEN)
 1. Gehe zu [https://abi-planer-27.de](https://abi-planer-27.de)
@@ -16,7 +16,7 @@ Du kannst direkt dort testen. Diese Anleitung ist für lokales Development/Testi
 ### Option B: Lokal entwickeln und testen
 
 **Voraussetzungen:**
-- [ ] Node.js 18+ installiert (check: `node -v`)
+- [ ] Node.js 22 installiert (check: `node -v`)
 - [ ] Git installiert (check: `git -v`)
 - [ ] Firebase Konfiguration (vom Admin)
 
@@ -35,11 +35,11 @@ Du kannst direkt dort testen. Diese Anleitung ist für lokales Development/Testi
 **Nur nötig wenn du lokal entwickeln willst. Zum Testen nutze [https://abi-planer-27.de](https://abi-planer-27.de).**
 
 ```bash
-# Via HTTPS (länger but kein SSH-Setup nötig)
+# Via HTTPS (laenger, aber kein SSH-Setup noetig)
 git clone https://github.com/YOUR-ORG/abi-planer.git
 cd abi-planer
 
-# Oder via SSH (schneller, wenn SSH-Keys setup)
+# Oder via SSH (schneller, wenn SSH-Keys gesetzt sind)
 git clone git@github.com:YOUR-ORG/abi-planer.git
 cd abi-planer
 ```
@@ -59,19 +59,21 @@ Dauert ~1-2 Minuten. Sollte mit `added XXX packages` enden ohne Fehler.
 ## 3. Umgebungsvariablen konfigurieren
 
 ```bash
-# Kopiere das Template
-cp .env.local.example .env.local
+# Falls vorhanden, kannst du ein Template kopieren
+cp testing/.env.local.example .env.local
 
 # Öffne .env.local in deinem Editor
 code .env.local  # oder `vim .env.local`
 ```
 
-**Admin wird dir Firebase-Keys bereitstellen.** Ersetze die Placeholder:
+**Admin wird dir Firebase-Keys bereitstellen.** Ersetze die Platzhalter:
 ```env
 NEXT_PUBLIC_FIREBASE_API_KEY=AIzaSyD...      # von Admin
 NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=...         # von Admin
 ...
 ```
+
+Die kanonische Liste und Sicherheitsregeln fuer Variablen stehen in `../docs/.env-reference.md`.
 
 ---
 
@@ -86,9 +88,9 @@ npm run dev
 
 Server läuft bis du `Ctrl+C` drückst.
 
-### Option B: Production Build (für reales Testen)
+### Option B: Production Build (fuer reales Testen)
 ```bash
-npm run check      # Alle Checks (lint + build)
+npm run check      # Alle Checks (regressions + tsc + build)
 npm run build      # Production Build
 npm run start      # Startet Server (Port 3000)
 ```
@@ -105,7 +107,7 @@ npm run start      # Startet Server (Port 3000)
 
 ---
 
-## 📋 Beim Testen
+##  Beim Testen
 
 ### Browser Development Tools öffnen
 ```
@@ -128,7 +130,7 @@ Dann: Seiten laden und auf Ladezeiten achten
 
 ---
 
-## 🛠️ Häufige Befehle beim Entwickeln
+## Haeufige Befehle beim Entwickeln
 
 ```bash
 # Code-Qualität prüfen
@@ -155,7 +157,7 @@ npm update
 
 ---
 
-## 🐛 Troubleshooting
+##  Troubleshooting
 
 ### `npm install` schlägt fehl
 **Problem:** Permission Error oder Netzwerk aus  
@@ -199,7 +201,7 @@ cat .env.local
 **Problem:** Feature funktioniert lokal nicht aber ist im Code  
 **Lösung:**
 ```bash
-# Kill node_modules (⚠️ Warnung: dauert!)
+# Kill node_modules (️ Warnung: dauert!)
 rm -rf node_modules package-lock.json
 npm install
 
@@ -209,7 +211,7 @@ npm run dev
 
 ---
 
-## 📊 Test-Metriken während Sessions
+##  Test-Metriken während Sessions
 
 Öffne DevTools (`F12`) → **Performance Tab** zur Analyse:
 
@@ -222,7 +224,7 @@ Metrics zu tracken:
 
 ---
 
-## 💾 Logs & Debugging
+##  Logs & Debugging
 
 ### Browser Console (wichtig!)
 ```
@@ -250,13 +252,18 @@ Schau nach:
 
 ---
 
-## 📝 Nach dem Testen
+##  Nach dem Testen
 
 ### Feedback geben
 1. Öffne **Feedback** im Menü (oder gib in App)
 2. Schreib was funktioniert hat / nicht funktioniert
 3. Screenshots/Links zum Problem
 4. Sende!
+
+## Weiterfuehrende Doku
+- `../DEPLOYMENT.md`
+- `../docs/CI-CD.md`
+- `../docs/TROUBLESHOOTING.md`
 
 ### Test-Report ausfüllen
 Der Admin teilt euch einen kurzen Fragebogen:
@@ -267,7 +274,7 @@ Der Admin teilt euch einen kurzen Fragebogen:
 
 ---
 
-## 🎯 Was am wichtigsten ist
+##  Was am wichtigsten ist
 
 1. **Authentifizierung:** Registrierung & Login müssen funktionieren
 2. **Dashboard:** Muss laden ohne Fehler
@@ -277,7 +284,7 @@ Der Admin teilt euch einen kurzen Fragebogen:
 
 ---
 
-## 🚀 Wenn alles funktioniert
+##  Wenn alles funktioniert
 
 1. Teste mit dem Fragebogen alle Kriterien
 2. Gib Feedback (über die App oder Email)
@@ -287,8 +294,8 @@ Next Schritte vorbereitet Admin.
 
 ---
 
-**Happy Testing! 🧪**
+**Happy Testing! **
 
 Wenn Fragen: Frag einen Admin oder schreib Feedback in der App (direkt vom Menü).
 
-Danke, dass du ABI Planer testest! 💙
+Danke, dass du ABI Planer testest! 

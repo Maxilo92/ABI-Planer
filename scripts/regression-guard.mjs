@@ -25,9 +25,9 @@ const checks = [
     patterns: [/bg-primary\/10/, /text-primary\/80/, /bg-card border-border/],
   },
   {
-    name: 'Register keeps 5-step flow and validation gate',
+    name: 'Register keeps flow and validation gate',
     file: 'src/app/register/page.tsx',
-    patterns: [/useState<1 \| 2 \| 3 \| 4 \| 5>\(1\)/, /validateCurrentStep\(/, /if \(!validateCurrentStep\(\)\)/],
+    patterns: [/useState<1 \| 2 \| 3 \| 4>\(1\)/, /validateCurrentStep\(/, /if \(!validateCurrentStep\(\)\)/],
   },
   {
     name: 'Dashboard keeps expense-driven funding goal logic',

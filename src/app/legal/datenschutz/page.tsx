@@ -8,12 +8,20 @@ import { useRouter } from 'next/navigation'
 export default function DatenschutzPage() {
   const router = useRouter()
 
+  const handleBack = () => {
+    if (window.history.length <= 2) {
+      router.push('/')
+    } else {
+      router.back()
+    }
+  }
+
   return (
-    <div className="max-w-3xl mx-auto space-y-8 py-8 px-4">
+    <div className="max-w-3xl mx-auto space-y-8 py-8 pt-20 px-4">
       <Button
         variant="ghost"
         className="gap-2 -ml-2 text-muted-foreground hover:text-foreground"
-        onClick={() => router.back()}
+        onClick={handleBack}
       >
         <ArrowLeft className="h-4 w-4" /> Zurück
       </Button>
@@ -49,6 +57,8 @@ export default function DatenschutzPage() {
             <p className="text-muted-foreground leading-relaxed">
               Die Verarbeitung personenbezogener Daten erfolgt zur Bereitstellung der Funktionen des ABI Planers, insbesondere zur
               Organisation von Terminen, Abstimmungen, Aufgaben, Finanzen und gruppenbezogenen Informationen des Abiturjahrgangs.
+              Zusätzlich verarbeiten wir technische Nutzungsdaten zur Qualitätssicherung, Fehleranalyse und laufenden Weiterentwicklung
+              der Plattform.
             </p>
           </section>
 
@@ -174,9 +184,13 @@ export default function DatenschutzPage() {
           </section>
 
           <div className="pt-8 border-t space-y-2">
-            <p className="text-xs text-muted-foreground italic">Stand: 29. März 2026.</p>
+            <p className="text-xs text-muted-foreground italic">Stand: 22. April 2026.</p>
             <p className="text-xs text-muted-foreground">
               Hinweis: Diese App ist ein privat betriebenes Projekt und kein offizielles Angebot der Schule.
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Die Plattform wird fortlaufend weiterentwickelt; dabei kann es vereinzelt zu vorübergehenden Funktionsstörungen oder
+              Darstellungsfehlern kommen.
             </p>
           </div>
         </CardContent>

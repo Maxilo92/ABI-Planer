@@ -74,6 +74,7 @@ export type LogActionType =
   | 'PROPOSALS_BACKFILL'
   | 'PROPOSAL_MODERATED'
   | 'POLL_SUBMISSION_CREATED'
+  | 'SCHOOL_YEAR_INCREMENTED'
 
 export interface LogEntry {
   action: LogActionType

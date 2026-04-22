@@ -18,7 +18,8 @@ import {
   MessageSquare,
   ArrowRight,
   ChevronRight,
-  HelpCircle
+  HelpCircle,
+  Mail
 } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -64,6 +65,9 @@ export default function SupportPage({ params }: { params: Promise<{ locale: stri
       view: 'Ansehen',
       moreQuestions: 'Immer noch Fragen?',
       contactSub: 'Unser Team ist bereit, dir zu helfen. Wenn du in den FAQs nicht fündig geworden bist, kannst du uns direkt kontaktieren.',
+      directContact: 'Direkter Kontakt',
+      directContactSub: 'Sende uns eine Nachricht mit deinem Anliegen. Wir antworten dir so schnell wie möglich per E-Mail.',
+      sendTicket: 'Ticket senden',
       complaint: 'Beschwerde',
       complaintSub: 'Als Lehrer kannst du Korrekturen an deinen Sammelkarten beantragen oder Löschungen anfordern.',
       submitComplaint: 'Beschwerde einreichen',
@@ -82,6 +86,9 @@ export default function SupportPage({ params }: { params: Promise<{ locale: stri
       view: 'View',
       moreQuestions: 'Still have questions?',
       contactSub: 'Our team is ready to help. If you didn\'t find what you were looking for in the FAQs, you can contact us directly.',
+      directContact: 'Direct Contact',
+      directContactSub: 'Send us a message with your concern. We will get back to you as soon as possible via email.',
+      sendTicket: 'Send Ticket',
       complaint: 'Complaint',
       complaintSub: 'As a teacher, you can request corrections to your trading cards or request deletions.',
       submitComplaint: 'Submit a complaint',
@@ -90,6 +97,28 @@ export default function SupportPage({ params }: { params: Promise<{ locale: stri
       availableApp: 'Available in the main app'
     }
   }[locale] || {
+    es: {
+      heroTitle: '¿Cómo podemos ayudarte?',
+      heroSub: 'Busca en nuestras preguntas frecuentes o elige una categoría para encontrar respuestas.',
+      placeholder: 'Introduce una palabra clave (p. ej., registro, tarjetas, Stripe)...',
+      topHits: 'Resultados principales',
+      noHits: 'No se han encontrado coincidencias exactas.',
+      browseThemes: 'Explorar temas',
+      articles: 'artículos disponibles',
+      view: 'Ver',
+      moreQuestions: '¿Todavía tienes preguntas?',
+      contactSub: 'Nuestro equipo está listo para ayudarte. Si no has encontrado lo que buscabas en las preguntas frecuentes, puedes ponerte en contacto con nosotros directamente.',
+      directContact: 'Contacto directo',
+      directContactSub: 'Envíanos un mensaje con tu consulta. Te responderemos lo antes posible por correo electrónico.',
+      sendTicket: 'Enviar ticket',
+      complaint: 'Reclamación',
+      complaintSub: 'Como profesor, puedes solicitar correcciones en tus tarjetas de intercambio o pedir eliminaciones.',
+      submitComplaint: 'Enviar una reclamación',
+      community: 'Soporte de la comunidad',
+      communitySub: 'Utiliza la función de comentarios en la aplicación o pide ayuda en el chat del equipo del Planner.',
+      availableApp: 'Disponible en la aplicación principal'
+    }
+  }.es || {
     de: {
       heroTitle: 'Wie können wir helfen?',
       heroSub: 'Durchsuche unsere FAQs oder wähle eine Kategorie, um Antworten zu finden.',
@@ -101,6 +130,9 @@ export default function SupportPage({ params }: { params: Promise<{ locale: stri
       view: 'Ansehen',
       moreQuestions: 'Immer noch Fragen?',
       contactSub: 'Unser Team ist bereit, dir zu helfen. Wenn du in den FAQs nicht fündig geworden bist, kannst du uns direkt kontaktieren.',
+      directContact: 'Direkter Kontakt',
+      directContactSub: 'Sende uns eine Nachricht mit deinem Anliegen. Wir antworten dir so schnell wie möglich per E-Mail.',
+      sendTicket: 'Ticket senden',
       complaint: 'Beschwerde',
       complaintSub: 'Als Lehrer kannst du Korrekturen an deinen Sammelkarten beantragen oder Löschungen anfordern.',
       submitComplaint: 'Beschwerde einreichen',
@@ -210,7 +242,23 @@ export default function SupportPage({ params }: { params: Promise<{ locale: stri
             </p>
           </div>
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-2xl mx-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="p-8 bg-background border rounded-2xl space-y-4 text-left hover:border-primary/50 transition-colors group">
+              <div className="p-3 bg-primary/10 rounded-xl w-fit">
+                <Mail className="h-6 w-6 text-primary" />
+              </div>
+              <h3 className="text-xl font-bold">{t.directContact}</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                {t.directContactSub}
+              </p>
+              <button 
+                onClick={() => router.push(`/${locale}/kontakt`)}
+                className="text-sm font-bold text-primary hover:underline flex items-center gap-1"
+              >
+                {t.sendTicket} <ArrowRight className="h-4 w-4" />
+              </button>
+            </div>
+
             <div className="p-8 bg-background border rounded-2xl space-y-4 text-left hover:border-primary/50 transition-colors group">
               <div className="p-3 bg-destructive/10 rounded-xl w-fit">
                 <Bug className="h-6 w-6 text-destructive" />

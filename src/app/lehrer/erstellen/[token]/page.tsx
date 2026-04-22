@@ -555,7 +555,7 @@ export default function TeacherCreateCardPage() {
                 />
               </div>
               <Label htmlFor="legal" className="text-sm sm:text-base leading-relaxed cursor-pointer font-medium text-foreground/90 block flex-1">
-                Ich akzeptiere die <a href="/agb/sammelkarten" target="_blank" className="text-primary underline hover:opacity-80 font-bold inline">Besonderen Bedingungen für Sammelkarten</a> und bestätige die Nutzung meiner Angaben.
+                Ich akzeptiere die <a href="/legal/agb/sammelkarten" target="_blank" className="text-primary underline hover:opacity-80 font-bold inline">Besonderen Bedingungen für Sammelkarten</a> und bestätige die Nutzung meiner Angaben.
               </Label>
             </div>
 

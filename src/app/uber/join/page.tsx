@@ -25,7 +25,7 @@ export default function JoinTeamPage() {
   const router = useRouter()
 
   const requirements = [
-    { title: "Grundlagen", desc: "HTML, CSS und JavaScript solltest du sicher beherrschen. Oder habe Claude Pro/Max, ist eh mittlerweile besser als per Hand zu programmieren. 🥀" },
+    { title: "Grundlagen", desc: "HTML, CSS und JavaScript solltest du sicher beherrschen. Oder habe Claude Pro/Max, ist eh mittlerweile besser als per Hand zu programmieren. " },
     { title: "React/Next.js", desc: "Erste Erfahrungen mit React sind super, den Rest lernst du hier." },
     { title: "Motivation", desc: "Du hast Lust, den Jahrgang 2027 mit deinen Skills zu unterstützen." },
     { title: "Zuverlässigkeit", desc: "Wir arbeiten im Team – Verlässlichkeit ist das A und O." }

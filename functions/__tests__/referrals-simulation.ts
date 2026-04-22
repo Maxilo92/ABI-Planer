@@ -58,13 +58,13 @@ function runSimulation() {
     assert.strictEqual(results[5].awarded, 0, "Referral 6 should award 0 boosters (Monthly cap reached)");
     assert.strictEqual(monthlyAwarded, 30, "Total boosters for 5+ referrals should be exactly 30");
 
-    console.log("✅ Simulation passed: New 4-8 scaling and monthly cap (30) correctly handled.");
+    console.log(" Simulation passed: New 4-8 scaling and monthly cap (30) correctly handled.");
 }
 
 try {
     runSimulation();
 } catch (error) {
-    console.error("❌ Simulation failed!");
+    console.error(" Simulation failed!");
     console.error(error);
     process.exit(1);
 }

@@ -1,7 +1,7 @@
 # Compliance Audit Report: Phase 3 - v1.0.0 Readiness
 **Date:** 2026-03-28  
 **Scope:** Stripe Checkout (VAT/MwSt) & GDPR Data Flows  
-**Status:** ⚠️ Partial Compliance (Identified Gaps)
+**Status:** ️ Partial Compliance (Identified Gaps)
 
 ---
 

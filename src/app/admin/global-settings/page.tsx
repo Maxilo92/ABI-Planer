@@ -12,7 +12,7 @@ import { useAuth } from '@/context/AuthContext'
 import { usePathname, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { toast } from 'sonner'
-import { Loader2, Plus, Trash2, RotateCcw, Cookie, GraduationCap, Sparkles, Construction, Users, Save } from 'lucide-react'
+import { Loader2, Plus, Trash2, RotateCcw, Cookie, GraduationCap, Sparkles, Construction, Users, Save, Calendar } from 'lucide-react'
 import { logAction } from '@/lib/logging'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
@@ -148,6 +148,7 @@ export default function GlobalSettingsPage() {
     routes: ['*'],
   })
   const [planningGroupRows, setPlanningGroupRows] = useState<PlanningGroupRow[]>([])
+  const [currentSchoolYear, setCurrentSchoolYear] = useState<number>(new Date().getFullYear())
   const [originalGroups, setOriginalGroups] = useState<{ name: string; leader_user_id: string | null }[]>([])
   const [planners, setPlanners] = useState<Profile[]>([])
   const [savingGroups, setSavingGroups] = useState(false)
@@ -258,7 +259,11 @@ export default function GlobalSettingsPage() {
 
   useEffect(() => {
     const unsubscribe = onSnapshot(doc(db, 'settings', 'config'), (snap) => {
-      const groups: any[] = snap.exists() ? (snap.data().planning_groups || []) : []
+      const data = snap.data()
+      const groups: any[] = snap.exists() ? (data?.planning_groups || []) : []
+      const schoolYear = snap.exists() ? (data?.current_school_year || new Date().getFullYear()) : new Date().getFullYear()
+      
+      setCurrentSchoolYear(schoolYear)
       setOriginalGroups(groups.map((g: any) => ({ name: g.name, leader_user_id: g.leader_user_id || null })))
       setPlanningGroupRows(groups.map((g: any, i: number) => ({
         id: `group-${i}`,
@@ -487,6 +492,27 @@ export default function GlobalSettingsPage() {
     }
   }
 
+  const handleStartNextYear = async () => {
+    const nextYear = currentSchoolYear + 1
+    const confirmed = await confirm({
+      title: 'Neues Schuljahr starten?',
+      content: `Möchtest du wirklich das Schuljahr von ${currentSchoolYear} auf ${nextYear} erhöhen? Dies hat Auswirkungen auf die Zuordnung von neuen Daten.`,
+      priority: 'high',
+      confirmLabel: 'Jahr erhöhen',
+    })
+    
+    if (!confirmed) return
+
+    try {
+      await setDoc(doc(db, 'settings', 'config'), { current_school_year: nextYear }, { merge: true })
+      if (user) await logAction('SCHOOL_YEAR_INCREMENTED', user.uid, profile?.full_name, { from: currentSchoolYear, to: nextYear })
+      toast.success(`Schuljahr auf ${nextYear} aktualisiert.`)
+    } catch (e) {
+      console.error(e)
+      toast.error('Fehler beim Aktualisieren des Schuljahres.')
+    }
+  }
+
   const handleResetToDefault = async () => {
     const confirmed = await confirm({
       title: 'Einstellungen zurücksetzen?',
@@ -515,7 +541,7 @@ export default function GlobalSettingsPage() {
     <div className="space-y-6">
       <div className="fixed top-4 right-4 z-50">
         {autosaveStatus === 'saving' && <span className="px-3 py-1 rounded bg-muted text-xs text-muted-foreground">Speichere...</span>}
-        {autosaveStatus === 'success' && <span className="px-3 py-1 rounded bg-green-100 text-xs text-green-800">Gespeichert ✓</span>}
+        {autosaveStatus === 'success' && <span className="px-3 py-1 rounded bg-green-100 text-xs text-green-800">Gespeichert </span>}
         {autosaveStatus === 'error' && <span className="px-3 py-1 rounded bg-red-100 text-xs text-red-800">Fehler beim Speichern!</span>}
       </div>
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -826,6 +852,30 @@ export default function GlobalSettingsPage() {
                   <Plus className="h-4 w-4 mr-2" /> Custom Popup hinzufügen
                 </Button>
               </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Calendar className="h-5 w-5 text-primary" />
+              Schuljahresverwaltung
+            </CardTitle>
+            <CardDescription>
+              Verwalte das aktuelle Schuljahr. Dies beeinflusst, welchem Jahrgang neue Daten (z.B. Sammelkarten-Besitz oder Statistiken) zugeordnet werden.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between p-4 rounded-lg border bg-muted/30">
+              <div>
+                <p className="text-sm font-medium">Aktuelles Schuljahr</p>
+                <p className="text-2xl font-bold text-primary">{currentSchoolYear}</p>
+              </div>
+              <Button onClick={handleStartNextYear} className="gap-2">
+                <Plus className="h-4 w-4" />
+                Neues Schuljahr starten ({currentSchoolYear + 1})
+              </Button>
             </div>
           </CardContent>
         </Card>

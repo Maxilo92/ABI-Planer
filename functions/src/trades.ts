@@ -589,13 +589,48 @@ async function ensureUserOwnsCardVariant(
 }
 
 /**
+ * Transaktionale Variante zur Prüfung des Kartenbesitzes.
+ */
+async function ensureUserOwnsCardVariantTx(
+  transaction: FirebaseFirestore.Transaction,
+  db: FirebaseFirestore.Firestore,
+  userId: string,
+  card: CardSelection,
+) {
+  const inventoryRef = db.collection("user_teachers").doc(userId);
+  const inventorySnap = await transaction.get(inventoryRef);
+  const inventoryData = inventorySnap.exists ? (inventorySnap.data() as Record<string, any>) : {};
+  const cardEntry = inventoryData[card.teacherId];
+  const variantCount = Number(cardEntry?.variants?.[card.variant]) || 0;
+
+  if (variantCount <= 0) {
+    throw new HttpsError(
+      "failed-precondition",
+      "Du kannst keine Karte anbieten, die du nicht besitzt."
+    );
+  }
+}
+
+/**
  * Prüft, ob das Trading-System global aktiviert ist.
  */
-async function validateTradingEnabled(db: FirebaseFirestore.Firestore) {
+async function validateTradingEnabled(db: FirebaseFirestore.Firestore, userId: string) {
   const featuresSnap = await db.collection("settings").doc("features").get();
   const features = featuresSnap.data();
-  if (!features?.is_trading_enabled) {
+  
+  // Legacy-Fallback auf is_trading_enabled, wenn trading_status nicht gesetzt ist.
+  const status = features?.trading_status || (features?.is_trading_enabled ? 'enabled' : 'disabled');
+
+  if (status === 'disabled') {
     throw new HttpsError("failed-precondition", "Das Trading-System ist aktuell deaktiviert.");
+  }
+
+  if (status === 'admins_only') {
+    const profileSnap = await db.collection("profiles").doc(userId).get();
+    const role = profileSnap.data()?.role;
+    if (role !== "admin" && role !== "admin_main" && role !== "admin_co") {
+      throw new HttpsError("failed-precondition", "Das Trading-System ist derzeit nur für Admins freigeschaltet.");
+    }
   }
 }
 
@@ -666,7 +701,7 @@ export const sendTradeOffer = onCall({ cors: CALLABLE_CORS_ORIGINS, region: "eur
   const senderId = request.auth.uid;
   const db = getFirestore("abi-data");
 
-  await validateTradingEnabled(db);
+  await validateTradingEnabled(db, senderId);
 
   if (senderId === receiverId) {
     throw new HttpsError("invalid-argument", "Tausch mit sich selbst ist nicht möglich.");
@@ -690,7 +725,7 @@ export const sendTradeOffer = onCall({ cors: CALLABLE_CORS_ORIGINS, region: "eur
     throw new HttpsError("invalid-argument", "Folien-Varianten müssen übereinstimmen.");
   }
 
-  // 3. Trade erstellen
+  // 3. Trade erstellen (Batch)
   const tradeRef = db.collection("card_trades").doc();
   const receiverProfileSnap = await db.collection("profiles").doc(receiverId).get();
   const receiverProfile = receiverProfileSnap.data();
@@ -712,11 +747,13 @@ export const sendTradeOffer = onCall({ cors: CALLABLE_CORS_ORIGINS, region: "eur
     expiresAt: Timestamp.fromMillis(Date.now() + 48 * 60 * 60 * 1000) // 48h
   };
 
-  await tradeRef.set(tradeData);
+  const notificationId = db.collection("notifications").doc().id;
+  const batch = db.batch();
+
+  batch.set(tradeRef, tradeData);
 
   // 4. Benachrichtigung
-  const notificationId = db.collection("notifications").doc().id;
-  await db.collection("notifications").doc(receiverId).collection("messages").doc(notificationId).set({
+  batch.set(db.collection("notifications").doc(receiverId).collection("messages").doc(notificationId), {
     id: notificationId,
     userId: receiverId,
     type: "new_trade_offer",
@@ -726,6 +763,8 @@ export const sendTradeOffer = onCall({ cors: CALLABLE_CORS_ORIGINS, region: "eur
     tradeId: tradeRef.id,
     read: false
   });
+
+  await batch.commit();
 
   return { success: true, tradeId: tradeRef.id };
 });
@@ -742,7 +781,7 @@ export const counterTradeOffer = onCall({ cors: CALLABLE_CORS_ORIGINS, region: "
   const userId = request.auth.uid;
   const db = getFirestore("abi-data");
 
-  await validateTradingEnabled(db);
+  await validateTradingEnabled(db, userId);
 
   return await db.runTransaction(async (transaction) => {
     const tradeRef = db.collection("card_trades").doc(tradeId);
@@ -753,6 +792,12 @@ export const counterTradeOffer = onCall({ cors: CALLABLE_CORS_ORIGINS, region: "
     }
 
     const trade = tradeSnap.data() as CardTrade;
+
+    // Hijacking-Schutz
+    if (userId !== trade.senderId && userId !== trade.receiverId) {
+      throw new HttpsError("permission-denied", "Du bist nicht an diesem Tausch beteiligt.");
+    }
+
     if (trade.status !== 'pending' && trade.status !== 'countered') {
       throw new HttpsError("failed-precondition", "Dieser Tausch ist nicht mehr aktiv.");
     }
@@ -770,7 +815,7 @@ export const counterTradeOffer = onCall({ cors: CALLABLE_CORS_ORIGINS, region: "
       throw new HttpsError("failed-precondition", "Dieser Tausch ist bereits abgelaufen.");
     }
 
-    // ... (Karten-Validierung bleibt gleich)
+    // Karten-Validierung
     validateCardEligibility(newOfferedCard);
     validateCardEligibility(newRequestedCard);
     
@@ -779,13 +824,13 @@ export const counterTradeOffer = onCall({ cors: CALLABLE_CORS_ORIGINS, region: "
       throw new HttpsError("invalid-argument", "Seltenheit und Folie müssen weiterhin übereinstimmen.");
     }
 
-    // Caller must own the card they are newly offering in this counter.
+    // Transaktionale Prüfung des Kartenbesitzes
     if (userId === trade.senderId) {
-      await ensureUserOwnsCardVariant(db, userId, newOfferedCard);
-      await ensureUserOwnsCardVariant(db, trade.receiverId, newRequestedCard);
+      await ensureUserOwnsCardVariantTx(transaction, db, userId, newOfferedCard);
+      await ensureUserOwnsCardVariantTx(transaction, db, trade.receiverId, newRequestedCard);
     } else {
-      await ensureUserOwnsCardVariant(db, userId, newRequestedCard);
-      await ensureUserOwnsCardVariant(db, trade.senderId, newOfferedCard);
+      await ensureUserOwnsCardVariantTx(transaction, db, userId, newRequestedCard);
+      await ensureUserOwnsCardVariantTx(transaction, db, trade.senderId, newOfferedCard);
     }
 
     const nextRound = (trade.roundCount || 0) + 1;
@@ -833,7 +878,7 @@ export const acceptTradeOffer = onCall({ cors: CALLABLE_CORS_ORIGINS, region: "e
   const userId = request.auth.uid;
   const db = getFirestore("abi-data");
 
-  await validateTradingEnabled(db);
+  await validateTradingEnabled(db, userId);
 
   return await db.runTransaction(async (transaction) => {
     const tradeRef = db.collection("card_trades").doc(tradeId);
@@ -844,6 +889,12 @@ export const acceptTradeOffer = onCall({ cors: CALLABLE_CORS_ORIGINS, region: "e
     }
 
     const trade = tradeSnap.data() as CardTrade;
+
+    // Hijacking-Schutz
+    if (userId !== trade.senderId && userId !== trade.receiverId) {
+      throw new HttpsError("permission-denied", "Du bist nicht an diesem Tausch beteiligt.");
+    }
+
     if (trade.status !== 'pending' && trade.status !== 'countered') {
       throw new HttpsError("failed-precondition", "Dieser Tausch ist nicht mehr aktiv.");
     }
@@ -884,8 +935,6 @@ export const acceptTradeOffer = onCall({ cors: CALLABLE_CORS_ORIGINS, region: "e
     const oppInv = oppInvSnap.data() || {};
 
     // Wer bietet was?
-    // Wenn userId der receiverId ist, bietet er die requestedCard (aus Sicht des senders)
-    // Wenn userId der senderId ist, bietet er die offeredCard
     const isUserSender = userId === trade.senderId;
     const userProvidedCard = isUserSender ? trade.offeredCard : trade.requestedCard;
     const oppProvidedCard = isUserSender ? trade.requestedCard : trade.offeredCard;
@@ -903,10 +952,13 @@ export const acceptTradeOffer = onCall({ cors: CALLABLE_CORS_ORIGINS, region: "e
     }
 
     // 3. Atomarer Tausch
-    // User gibt Karte ab, erhält Karte vom Gegner
+    // User gibt Karte ab
     userInv[userProvidedCard.teacherId].count--;
     userInv[userProvidedCard.teacherId].variants![userProvidedCard.variant]!--;
+    // Level neu berechnen
+    userInv[userProvidedCard.teacherId].level = Math.floor(Math.sqrt(Math.max(0, userInv[userProvidedCard.teacherId].count - 1))) + 1;
     
+    // User erhält Karte vom Gegner
     if (!userInv[oppProvidedCard.teacherId]) {
       userInv[oppProvidedCard.teacherId] = { count: 1, level: 1, variants: { [oppProvidedCard.variant]: 1 } };
     } else {
@@ -916,10 +968,13 @@ export const acceptTradeOffer = onCall({ cors: CALLABLE_CORS_ORIGINS, region: "e
       userInv[oppProvidedCard.teacherId].level = Math.floor(Math.sqrt(userInv[oppProvidedCard.teacherId].count - 1)) + 1;
     }
 
-    // Gegner gibt Karte ab, erhält Karte vom User
+    // Gegner gibt Karte ab
     oppInv[oppProvidedCard.teacherId].count--;
     oppInv[oppProvidedCard.teacherId].variants![oppProvidedCard.variant]!--;
+    // Level neu berechnen
+    oppInv[oppProvidedCard.teacherId].level = Math.floor(Math.sqrt(Math.max(0, oppInv[oppProvidedCard.teacherId].count - 1))) + 1;
 
+    // Gegner erhält Karte vom User
     if (!oppInv[userProvidedCard.teacherId]) {
       oppInv[userProvidedCard.teacherId] = { count: 1, level: 1, variants: { [userProvidedCard.variant]: 1 } };
     } else {
@@ -933,7 +988,7 @@ export const acceptTradeOffer = onCall({ cors: CALLABLE_CORS_ORIGINS, region: "e
     transaction.set(userInventoryRef, userInv);
     transaction.set(opponentInventoryRef, oppInv);
 
-    // Profile Stats Update (Limit + Total Cards bleibt gleich da 1-to-1)
+    // Profile Stats Update
     const newDailyCount = (tradeStats.last_trade_date === today) ? tradeStats.daily_trades_count + 1 : 1;
     transaction.update(userProfileRef, {
       "trade_stats.daily_trades_count": newDailyCount,
@@ -969,8 +1024,23 @@ export const acceptTradeOffer = onCall({ cors: CALLABLE_CORS_ORIGINS, region: "e
 export const declineTradeOffer = onCall({ cors: CALLABLE_CORS_ORIGINS, region: "europe-west3" }, async (request) => {
   if (!request.auth) throw new HttpsError("unauthenticated", "Anmeldung erforderlich.");
   const { tradeId } = request.data;
+  const userId = request.auth.uid;
   const db = getFirestore("abi-data");
+  
   const tradeRef = db.collection("card_trades").doc(tradeId);
+  const tradeSnap = await tradeRef.get();
+
+  if (!tradeSnap.exists) {
+    throw new HttpsError("not-found", "Tausch nicht gefunden.");
+  }
+
+  const trade = tradeSnap.data() as CardTrade;
+
+  // Hijacking-Schutz
+  if (userId !== trade.senderId && userId !== trade.receiverId) {
+    throw new HttpsError("permission-denied", "Du bist nicht an diesem Tausch beteiligt.");
+  }
+
   await tradeRef.update({ status: 'declined', updatedAt: Timestamp.now() });
   return { success: true };
 });
@@ -981,12 +1051,24 @@ export const declineTradeOffer = onCall({ cors: CALLABLE_CORS_ORIGINS, region: "
 export const cancelTradeOffer = onCall({ cors: CALLABLE_CORS_ORIGINS, region: "europe-west3" }, async (request) => {
   if (!request.auth) throw new HttpsError("unauthenticated", "Anmeldung erforderlich.");
   const { tradeId } = request.data;
+  const userId = request.auth.uid;
   const db = getFirestore("abi-data");
+
   const tradeRef = db.collection("card_trades").doc(tradeId);
   const tradeSnap = await tradeRef.get();
-  if (tradeSnap.exists && tradeSnap.data()?.senderId === request.auth.uid) {
-    await tradeRef.update({ status: 'cancelled', updatedAt: Timestamp.now() });
+
+  if (!tradeSnap.exists) {
+    throw new HttpsError("not-found", "Tausch nicht gefunden.");
   }
+
+  const trade = tradeSnap.data() as CardTrade;
+
+  // Nur derjenige, der das aktuelle Angebot gestellt hat, kann es zurückziehen.
+  if (trade.lastActorId !== userId) {
+    throw new HttpsError("permission-denied", "Du kannst nur dein eigenes (Gegen-)Angebot abbrechen.");
+  }
+
+  await tradeRef.update({ status: 'cancelled', updatedAt: Timestamp.now() });
   return { success: true };
 });
 
@@ -1141,7 +1223,7 @@ export const getFriendsWithCard = onCall({ cors: CALLABLE_CORS_ORIGINS, region: 
   const userId = request.auth.uid;
   const db = getFirestore("abi-data");
 
-  await validateTradingEnabled(db);
+  await validateTradingEnabled(db, userId);
 
   // 1. Alle Freundschaften laden
   const friendshipsSnap = await db.collection("friendships").where("members", "array-contains", userId).get();

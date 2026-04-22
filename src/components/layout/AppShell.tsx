@@ -17,6 +17,7 @@ import { ThemeSync } from '@/components/layout/ThemeSync'
 import { LandingHeader } from '@/components/layout/LandingHeader'
 import { getTcgBaseUrl, extractGradeFromClassName, ALLOWED_PLANNER_GRADES } from '@/lib/dashboard-url'
 import { FeatureGate } from '@/components/auth/FeatureGate'
+import { SchoolYearTransitionGate } from '@/components/auth/SchoolYearTransitionGate'
 
 import { SupportHeader } from '@/components/support/SupportHeader'
 
@@ -154,34 +155,6 @@ export function AppShell({ children }: AppShellProps) {
     )
   }
 
-  if (!isBoneyardBuild && isDashboardSubdomain === true && !isAuthRoute && (authLoading || (!user && !domainInfo.isShop))) {
-    return (
-      <div className="min-h-screen bg-background lg:flex">
-        {/* Sidebar Skeleton */}
-        <div className="hidden lg:flex w-64 flex-col border-r border-border p-4 space-y-4">
-          <Skeleton className="h-10 w-32 mb-8" />
-          {[1, 2, 3, 4, 5, 6].map(i => (
-            <Skeleton key={i} className="h-10 w-full rounded-xl" />
-          ))}
-        </div>
-        {/* Main Content Skeleton */}
-        <div className="flex-1 p-4 sm:p-6 lg:p-8 space-y-6">
-          <div className="flex justify-between items-center">
-            <div className="space-y-2">
-              <Skeleton className="h-10 w-48" />
-              <Skeleton className="h-4 w-64" />
-            </div>
-            <Skeleton className="h-10 w-10 rounded-full" />
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[1, 2, 3].map(i => (
-              <Skeleton key={i} className="h-48 w-full rounded-2xl" />
-            ))}
-          </div>
-        </div>
-      </div>
-    )
-  }
 
   if (isMaintenancePage || (maintenance?.active && isNewsDetail)) {
     return (
@@ -234,7 +207,9 @@ export function AppShell({ children }: AppShellProps) {
           <main className="flex-1 px-4 py-8 sm:px-6 lg:px-8 min-w-0">
             <div className="mx-auto max-w-7xl w-full">
               <FeatureGate>
-                {children}
+                <SchoolYearTransitionGate>
+                  {children}
+                </SchoolYearTransitionGate>
               </FeatureGate>
             </div>
           </main>

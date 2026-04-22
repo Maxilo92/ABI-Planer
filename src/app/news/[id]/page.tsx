@@ -290,7 +290,7 @@ export default function NewsDetailPage({ params }: { params: Promise<{ id: strin
 
   const reactions = news.reactions || {}
   // Daumen hoch/runter sind immer da, andere Emojis kommen dynamisch dazu
-  const defaultEmojis = ['👍', '👎']
+  const defaultEmojis = ['', '']
   const otherActiveEmojis = Object.keys(reactions)
     .filter(key => Array.isArray(reactions[key]) && !defaultEmojis.includes(key))
     .sort((a, b) => (reactions[b]?.length || 0) - (reactions[a]?.length || 0))
@@ -298,7 +298,7 @@ export default function NewsDetailPage({ params }: { params: Promise<{ id: strin
   const activeEmojis = [...defaultEmojis, ...otherActiveEmojis]
   const canSummarize = !!user && !!profile?.is_approved
   
-  const quickEmojis = ['👍', '❤️', '🔥', '😂', '😮', '😢', '🎓', '🥂', '🚀', '💸', '📝', '🎉', '🍦', '🍕', '🍺', '✅']
+  const quickEmojis = ['', '️', '', '', '', '', '', '', '', '', '', '', '', '', '', '']
 
   if (rootMode === 'landing') {
     return (
@@ -709,7 +709,7 @@ export default function NewsDetailPage({ params }: { params: Promise<{ id: strin
                           
                           <div className="mt-3 pt-2 border-t border-muted text-[9px] text-muted-foreground italic px-1 flex justify-between">
                             <span>Win+. / Cmd+Ctrl+Space</span>
-                            <span className="opacity-60">Abitur 🎓</span>
+                            <span className="opacity-60">Abitur </span>
                           </div>
                         </motion.div>
                       </>

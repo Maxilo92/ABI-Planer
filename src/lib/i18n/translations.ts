@@ -136,6 +136,14 @@ export const translations = {
         backToLogin: 'Zurück zum Login',
         twoFactorCode: '6-stelliger Authenticator-Code',
         twoFactorHint: 'Öffne deine Authenticator-App und gib den aktuell angezeigten Code ein.',
+        twoFactorLost: 'Code verloren?',
+        contactAdmin: 'Kontaktiere einen Administrator',
+        contactTitle: 'Kontakt',
+        contactSubject: 'Betreff',
+        contactMessage: 'Nachricht',
+        contactEmail: 'Deine E-Mail-Adresse (optional)',
+        contactSend: 'Nachricht senden',
+        contactSuccess: 'Vielen Dank! Deine Nachricht wurde gesendet.',
         verifyButton: 'Bestätigen',
         verifyButtonLoading: 'Verifizierung...',
         errors: {
@@ -169,12 +177,14 @@ export const translations = {
           email: 'E-Mail',
           password: 'Passwort',
           course: 'Kurs',
-          manualGrade: 'Klassenstufe / Bezeichnung'
+          manualGrade: 'Klassenstufe',
+          gradeSuffix: 'Zusatz / Kurs'
         },
         placeholders: {
           fullName: 'Max Mustermann',
           email: 'nachname.vorname@hgr-web.lernsax.de',
           manualGrade: 'z.B. 10L2, 7b, ...',
+          gradeSuffix: 'z.B. b, L2, /4',
           loadingCourses: 'Lade Kurse...'
         },
         hints: {
@@ -187,6 +197,10 @@ export const translations = {
         teacherInfo: {
           title: 'Lehrer-Account',
           text: 'Als Lehrer hast du vollen Zugriff auf alle Inhalte der App, um den Abiturjahrgang zu unterstützen. Bitte beachte, dass du an schüler-spezifischen Abstimmungen (z.B. Abimotto) nicht teilnehmen kannst.'
+        },
+        parentInfo: {
+          title: 'Eltern-Account',
+          text: 'Als Elternteil hast du Lese-Zugriff auf das Dashboard und relevante Termine.'
         },
         otherGradeInfo: {
           title: 'Andere Klassenstufe',
@@ -223,8 +237,19 @@ export const translations = {
         },
         options: {
           teacher: 'Lehrer',
+          parent: 'Eltern',
           otherGrade: 'andere KlassenStufe'
         }
+      },
+      transition: {
+        title: 'Neues Schuljahr!',
+        description: 'Willkommen im neuen Schuljahr. Bitte bestätige oder aktualisiere deine Klasse.',
+        grade: 'Klassenstufe',
+        suffix: 'Zusatz / Kurs',
+        checkbox: 'Ich habe meine Klasse geprüft und sie ist korrekt.',
+        button: 'Speichern & Fortfahren',
+        saving: 'Speichern...',
+        success: 'Klasse erfolgreich aktualisiert.'
       }
     },
     settings: {
@@ -481,6 +506,14 @@ export const translations = {
         backToLogin: 'Back to login',
         twoFactorCode: '6-digit authenticator code',
         twoFactorHint: 'Open your authenticator app and enter the code currently displayed.',
+        twoFactorLost: 'Lost your code?',
+        contactAdmin: 'Contact an administrator',
+        contactTitle: 'Contact',
+        contactSubject: 'Subject',
+        contactMessage: 'Message',
+        contactEmail: 'Your email address (optional)',
+        contactSend: 'Send message',
+        contactSuccess: 'Thank you! Your message has been sent.',
         verifyButton: 'Confirm',
         verifyButtonLoading: 'Verifying...',
         errors: {
@@ -514,12 +547,14 @@ export const translations = {
           email: 'Email',
           password: 'Password',
           course: 'Course',
-          manualGrade: 'Grade / Designation'
+          manualGrade: 'Grade',
+          gradeSuffix: 'Suffix / Course'
         },
         placeholders: {
           fullName: 'John Doe',
           email: 'lastname.firstname@hgr-web.lernsax.de',
           manualGrade: 'e.g. 10L2, 7b, ...',
+          gradeSuffix: 'e.g. b, L2, /4',
           loadingCourses: 'Loading courses...'
         },
         hints: {
@@ -532,6 +567,10 @@ export const translations = {
         teacherInfo: {
           title: 'Teacher Account',
           text: 'As a teacher, you have full access to all content of the app to support the graduation class. Please note that you cannot participate in student-specific polls (e.g. graduation motto).'
+        },
+        parentInfo: {
+          title: 'Parent Account',
+          text: 'As a parent, you have read access to the dashboard and relevant appointments.'
         },
         otherGradeInfo: {
           title: 'Other Grade',
@@ -568,8 +607,19 @@ export const translations = {
         },
         options: {
           teacher: 'Teacher',
+          parent: 'Parent',
           otherGrade: 'other Grade'
         }
+      },
+      transition: {
+        title: 'New School Year!',
+        description: 'Welcome to the new school year. Please confirm or update your class.',
+        grade: 'Grade',
+        suffix: 'Suffix / Course',
+        checkbox: 'I have checked my class and it is correct.',
+        button: 'Save & Continue',
+        saving: 'Saving...',
+        success: 'Class successfully updated.'
       }
     },
     settings: {
@@ -826,6 +876,14 @@ export const translations = {
         backToLogin: 'Volver al inicio de sesión',
         twoFactorCode: 'Código de autenticador de 6 dígitos',
         twoFactorHint: 'Abre tu aplicación de autenticador e introduce el código que se muestra actualmente.',
+        twoFactorLost: '¿Has perdido tu código?',
+        contactAdmin: 'Contactar con un administrador',
+        contactTitle: 'Contacto',
+        contactSubject: 'Asunto',
+        contactMessage: 'Mensaje',
+        contactEmail: 'Tu correo electrónico (opcional)',
+        contactSend: 'Enviar mensaje',
+        contactSuccess: '¡Gracias! Tu mensaje ha sido enviado.',
         verifyButton: 'Confirmar',
         verifyButtonLoading: 'Verificando...',
         errors: {
@@ -859,12 +917,14 @@ export const translations = {
           email: 'Correo electrónico',
           password: 'Contraseña',
           course: 'Curso',
-          manualGrade: 'Grado / Designación'
+          manualGrade: 'Grado',
+          gradeSuffix: 'Sufijo / Curso'
         },
         placeholders: {
           fullName: 'Juan Pérez',
           email: 'apellido.nombre@hgr-web.lernsax.de',
           manualGrade: 'p. ej. 10L2, 7b, ...',
+          gradeSuffix: 'p. ej. b, L2, /4',
           loadingCourses: 'Cargando cursos...'
         },
         hints: {
@@ -877,6 +937,10 @@ export const translations = {
         teacherInfo: {
           title: 'Cuenta de Profesor',
           text: 'Como profesor, tienes acceso total a todo el contenido de la aplicación para apoyar a la clase de graduación. Ten en cuenta que no puedes participar en votaciones específicas de los estudiantes (p. ej., lema de graduación).'
+        },
+        parentInfo: {
+          title: 'Cuenta de Padre/Madre',
+          text: 'Como padre/madre, tienes acceso de lectura al panel y a las citas relevantes.'
         },
         otherGradeInfo: {
           title: 'Otro Grado',
@@ -913,8 +977,19 @@ export const translations = {
         },
         options: {
           teacher: 'Profesor',
+          parent: 'Padre/Madre',
           otherGrade: 'otro Grado'
         }
+      },
+      transition: {
+        title: '¡Nuevo año escolar!',
+        description: 'Bienvenido al nuevo año escolar. Por favor, confirma o actualiza tu clase.',
+        grade: 'Grado',
+        suffix: 'Sufijo / Curso',
+        checkbox: 'He revisado mi clase y es correcta.',
+        button: 'Guardar y continuar',
+        saving: 'Guardando...',
+        success: 'Clase actualizada con éxito.'
       }
     },
     settings: {

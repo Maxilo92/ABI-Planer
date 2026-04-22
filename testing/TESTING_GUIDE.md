@@ -12,7 +12,7 @@
 
 ---
 
-## 🎯 Überblick
+##  Überblick
 
 **Ziel:** Sicherstellen, dass alle Features funktionieren und benutzerfreundlich sind.
 
@@ -22,7 +22,7 @@
 
 ---
 
-## 📋 Test-Setup
+##  Test-Setup
 
 ### 1. **Dein Test-Konto erstellen**
 - Gehe auf die **Startseite**
@@ -44,13 +44,13 @@ Windows: F12 → Console Tab
 
 ---
 
-## ✅ Test-Szenarien
+##  Test-Szenarien
 
 Folge die **TESTING_CHECKLIST.md** für konkrete Test-Cases.
 
 ---
 
-## 🛑 Severity Triage & Release Decision (Mobile Release Gate)
+##  Severity Triage & Release Decision (Mobile Release Gate)
 
 Um eine hohe Qualität auf mobilen Geräten zu gewährleisten, nutzen wir folgendes Modell für die Bewertung von Fehlern. **Jeder Test-Befund muss einer dieser Kategorien zugeordnet werden.**
 

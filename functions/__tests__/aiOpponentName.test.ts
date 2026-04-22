@@ -13,7 +13,7 @@ function testPrefixAndNamePool() {
     assert.ok(AI_FIRST_NAMES.includes(firstName), `Unexpected first name: ${firstName}`);
   }
 
-  console.log("✅ testPrefixAndNamePool passed");
+  console.log(" testPrefixAndNamePool passed");
 }
 
 function testCustomEloSuffix() {
@@ -22,15 +22,15 @@ function testCustomEloSuffix() {
   const aiName = buildAiOpponentName(1500, () => 0);
   assert.strictEqual(aiName, "ki-tom (ELO 1500)");
 
-  console.log("✅ testCustomEloSuffix passed");
+  console.log(" testCustomEloSuffix passed");
 }
 
 try {
   testPrefixAndNamePool();
   testCustomEloSuffix();
-  console.log("\nALL TESTS PASSED! 🎉");
+  console.log("\nALL TESTS PASSED! ");
 } catch (error) {
-  console.error("\nTEST FAILED! ❌");
+  console.error("\nTEST FAILED! ");
   console.error(error);
   process.exit(1);
 }

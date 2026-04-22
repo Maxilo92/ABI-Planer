@@ -78,12 +78,17 @@ export const bootstrapMissingProfile = onCall({
   const fallbackName = userRecord.displayName?.trim() || userRecord.email?.split("@")[0] || "Neuer Nutzer";
   const email = userRecord.email || "";
 
+  // Fetch current school year from settings
+  const configSnap = await db.collection("settings").doc("config").get();
+  const currentSchoolYear = configSnap.data()?.current_school_year || null;
+
   const profile = {
     id: request.auth.uid,
     full_name: fallbackName,
     email,
     role: "viewer",
     access_target: "tcg",
+    school_year: currentSchoolYear,
     planning_groups: [],
     led_groups: [],
     class_name: null,

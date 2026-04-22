@@ -308,7 +308,7 @@ export async function atomicNPUpdate(
   // 5. Warn if fraud score is elevated but not blocking
   let fraudAlert = undefined;
   if (fraudCheck.fraudScore > 40) {
-    fraudAlert = `⚠️ Fraud warning: Score ${fraudCheck.fraudScore}/100. Flags: ${fraudCheck.flags.join(", ")}`;
+    fraudAlert = `️ Fraud warning: Score ${fraudCheck.fraudScore}/100. Flags: ${fraudCheck.flags.join(", ")}`;
     logger.warn(`[NP_FRAUD_ALERT] User: ${userId}, Score: ${fraudCheck.fraudScore}, Flags: ${fraudCheck.flags.join("; ")}`);
   }
 

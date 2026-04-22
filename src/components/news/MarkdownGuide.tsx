@@ -31,7 +31,7 @@ export function MarkdownGuide() {
         ))}
       </div>
       <p className="text-[10px] text-muted-foreground italic text-center">
-        Tipp: Du kannst auch Emojis wie ✨ oder 🚀 direkt verwenden!
+        Tipp: Du kannst auch Emojis wie  oder  direkt verwenden!
       </p>
     </div>
   )

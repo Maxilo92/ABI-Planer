@@ -6,9 +6,14 @@
 <!-- default_action: read before deeper file exploration -->
 <!-- index: docs/AGENT_CONTEXT_INDEX.md -->
 
-# Installation & Setup (v1.0.0 Release)
+# Installation und Setup
 
-Folge diesen Schritten, um den ABI Planer produktiv zu setzen.
+Folge diesen Schritten, um den ABI Planer lokal oder produktionsnah aufzusetzen.
+
+## Voraussetzungen
+- Node.js 22 (empfohlen, da Cloud Functions auf Node 22 laufen)
+- npm
+- Firebase Projekt mit Firestore, Auth und Storage
 
 ## 1. Firebase Projekt Setup
 - Erstelle ein neues Projekt in der [Firebase Console](https://console.firebase.google.com/).
@@ -17,7 +22,10 @@ Folge diesen Schritten, um den ABI Planer produktiv zu setzen.
 - Erstelle eine **Web-App** im Projekt und kopiere die Konfiguration.
 
 ## 2. Umgebungsvariablen (.env)
-Erstelle eine `.env.local` (lokal) oder füge die Variablen in deinem Hosting (z.B. Vercel) hinzu:
+Erstelle eine `.env.local` (lokal) oder pflege die Variablen in Firebase App Hosting.
+Die kanonische Liste steht in `docs/.env-reference.md`.
+
+Beispiel:
 
 ```bash
 NEXT_PUBLIC_FIREBASE_API_KEY=xxx
@@ -34,7 +42,7 @@ GROQ_API_KEY=gsk_xxx
 NEXT_PUBLIC_USE_FIREBASE_EMULATOR=true
 ```
 
-`GROQ_API_KEY` darf **nicht** mit `NEXT_PUBLIC_` praefixed sein, da der Key ausschliesslich serverseitig genutzt wird.
+`GROQ_API_KEY` darf **nicht** mit `NEXT_PUBLIC_` prefixed sein, da der Key ausschliesslich serverseitig genutzt wird.
 
 Wenn `NEXT_PUBLIC_USE_FIREBASE_EMULATOR` **nicht** gesetzt ist, nutzt die Kampfeseite in der lokalen Entwicklung für `endMyOpenMatches` automatisch einen same-origin Proxy, damit Browser-CORS bei `*.localhost` nicht blockiert.
 
@@ -48,7 +56,11 @@ Damit das Dashboard (Countdown & Finanzziel) korrekt funktioniert, musst du **ei
   - `funding_goal` (number): `10000`
 
 ## 4. Sicherheitsregeln anwenden
-Kopiere den Inhalt der Datei `FIRESTORE_RULES.md` in den Tab **Rules** deiner Firestore Database.
+Die produktiven Regeln liegen in `firestore.rules` und `storage.rules`.
+Bei Aenderungen:
+- Rules-Datei aktualisieren
+- optional noetige Indexe in `firestore.indexes.json` ergänzen
+- Dokumentation aktualisieren (`docs/SECURITY_GUIDE.md`, `docs/FIRESTORE_SCHEMA.md`)
 
 ## 5. Den ersten Admin erstellen
 1. Starte die App und gehe auf **Registrieren**.
@@ -71,3 +83,14 @@ Wenn du eigene Subdomains wie `dashboard.abi-planer-27.de` nutzen willst, brauch
 - Für einen reinen Dashboard-Zugang bleibt die bestehende App-Logik erhalten: Root zeigt Landingpage, Dashboard-Subdomain springt direkt ins Produkt.
 
 Wichtig: Das ist nicht nur eine Code-Änderung. Die Domain muss im Hosting-System selbst verbunden werden, sonst kann der Browser die Subdomain nicht auflösen.
+
+## 8. Qualitaets-Gates vor Commit/Release
+Vor jedem Merge/Release ausfuehren:
+- `npm run check`
+
+Wenn Cloud Functions geaendert wurden:
+- `cd functions && npm run build`
+
+Details:
+- `DEPLOYMENT.md`
+- `docs/CI-CD.md`

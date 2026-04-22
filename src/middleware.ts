@@ -178,9 +178,9 @@ export function middleware(request: NextRequest) {
   const landingOnlyRoutes = [
     '/uber',
     '/vorteile',
-    '/agb',
-    '/datenschutz',
-    '/impressum'
+    '/legal/agb',
+    '/legal/datenschutz',
+    '/legal/impressum'
   ]
 
   const shopRoutes = [
@@ -238,6 +238,18 @@ export function middleware(request: NextRequest) {
     return safeRedirect(request, redirectUrl)
   }
 
+  // Legacy Redirects for Legal Pages
+  const legacyLegalRedirects: Record<string, string> = {
+    '/agb': '/legal/agb',
+    '/datenschutz': '/legal/datenschutz',
+    '/impressum': '/legal/impressum',
+  }
+
+  if (legacyLegalRedirects[pathname]) {
+    const mainBaseUrl = getRequestBaseUrl(request, 'main')
+    return safeRedirect(request, new URL(legacyLegalRedirects[pathname], mainBaseUrl))
+  }
+
   // 1. Check Shop Routes -> Redirect to Shop subdomain
   if (shopRoutes.some(route => pathname === route || pathname.startsWith(route + '/'))) {
     if (!isShopSubdomain) {
@@ -288,6 +300,12 @@ export function middleware(request: NextRequest) {
 
   // 4. Check Landing Routes -> Redirect to Main Domain
   if (landingOnlyRoutes.some(route => pathname === route || pathname.startsWith(route + '/'))) {
+    // Legal routes should ONLY be accessible on the landing domain.
+    // On subdomains, we show a 404 instead of redirecting to avoid loops and enforce isolation.
+    if (pathname.startsWith('/legal/') && !isLandingDomain) {
+      return NextResponse.rewrite(new URL('/404', request.url))
+    }
+
     if (!isLandingDomain) {
       const mainBaseUrl = getRequestBaseUrl(request, 'main')
       const redirectUrl = new URL(pathname, mainBaseUrl)

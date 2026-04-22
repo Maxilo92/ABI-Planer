@@ -264,6 +264,7 @@ service cloud.firestore {
       allow write: if isPlanner(); 
     }
     match /finances/{id} { allow read: if isAuthenticated() && isLernsax(); allow write: if isPlanner(); }
+    match /cash_verifications/{id} { allow read: if isApproved(); allow write: if isPlanner(); }
     match /shop_earnings/{id} {
       allow read: if isApproved();
       allow write: if false;
@@ -457,8 +458,10 @@ service cloud.firestore {
     
     match /feedback/{feedbackId} {
       allow read: if isPlanner() || (isAuthenticated() && resource.data.created_by == request.auth.uid) || (isAuthenticated() && resource.data.get('is_private', false) == false);
-        allow create: if isApproved();
-        allow update, delete: if isAdmin();
+      allow create: if 
+        (request.resource.data.type == 'support_ticket') || 
+        isApproved();
+      allow update, delete: if isAdmin();
     }
 
     match /user_secrets/{userId} {
