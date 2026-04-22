@@ -293,11 +293,11 @@ export default function UberPage() {
           </div>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center relative pt-4">
-            <Button variant="secondary" size="lg" className="gap-2 px-8" onClick={() => router.push('/feedback')}>
-              <MessageCircle className="h-5 w-5" /> Jetzt Kontakt aufnehmen
+            <Button variant="secondary" size="lg" className="gap-2 px-8" onClick={() => router.push('/uber/join')}>
+              <Users className="h-5 w-5" /> Jetzt Teil des Teams werden
             </Button>
             <Button variant="outline" size="lg" className="bg-transparent border-primary-foreground/30 hover:bg-primary-foreground/10 gap-2 px-8" asChild>
-              <a href="https://github.com/Maxilo92/ABI-Planer" target="_blank"><Github className="h-5 w-5" /> Mitentwickeln auf GitHub</a>
+              <a href="https://github.com/Maxilo92/ABI-Planer" target="_blank"><Github className="h-5 w-5" /> Quellcode ansehen</a>
             </Button>
           </div>
         </section>

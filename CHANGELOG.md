@@ -6,6 +6,12 @@
 <!-- default_action: read newest entries only unless a regression requires older history -->
 <!-- index: docs/AGENT_CONTEXT_INDEX.md -->
 
+## [1.28.5.00] - 2026-04-22
+
+### Hinzugefügt
+- **Developer-Onboarding (/uber/join):** Neue Informationsseite für potenzielle Entwickler mit Details zu Aufgaben, Tech-Stack, Anforderungen und dem Bewerbungsprozess via E-Mail.
+- **CTA-Update:** Der Button auf der Über-Seite leitet nun direkt zum Bewerbungsprozess weiter.
+
 ## [1.28.4.00] - 2026-04-22
 
 ### Behoben
