@@ -6,6 +6,11 @@
 <!-- default_action: read newest entries only unless a regression requires older history -->
 <!-- index: docs/AGENT_CONTEXT_INDEX.md -->
 
+## [1.28.4.00] - 2026-04-22
+
+### Behoben
+- **Über-Seite (/uber):** GitHub-Profile-Links auf das korrekte Profil (`github.com/Maxilo92`) aktualisiert.
+
 ## [1.28.3.00] - 2026-04-22
 
 ### Geändert

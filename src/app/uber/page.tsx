@@ -205,7 +205,7 @@ export default function UberPage() {
                   <p className="text-primary font-medium text-sm">Main Developer & Architect</p>
                   <div className="flex gap-2 mt-2">
                     <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" asChild>
-                      <a href="https://github.com" target="_blank"><Github className="h-4 w-4" /></a>
+                      <a href="https://github.com/Maxilo92" target="_blank"><Github className="h-4 w-4" /></a>
                     </Button>
                   </div>
                 </div>
@@ -297,7 +297,7 @@ export default function UberPage() {
               <MessageCircle className="h-5 w-5" /> Jetzt Kontakt aufnehmen
             </Button>
             <Button variant="outline" size="lg" className="bg-transparent border-primary-foreground/30 hover:bg-primary-foreground/10 gap-2 px-8" asChild>
-              <a href="https://github.com" target="_blank"><Github className="h-5 w-5" /> Mitentwickeln auf GitHub</a>
+              <a href="https://github.com/Maxilo92/ABI-Planer" target="_blank"><Github className="h-5 w-5" /> Mitentwickeln auf GitHub</a>
             </Button>
           </div>
         </section>
