@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { applicationDefault, cert, getApps, initializeApp } from 'firebase-admin/app'
 import { getAuth } from 'firebase-admin/auth'
 import { getFirestore, Timestamp } from 'firebase-admin/firestore'
-import { formatHelpFaqContext, helpFaqItems, searchFaqItems, type HelpFaqItem } from '@/lib/helpFaqs'
+import { formatHelpFaqContext, getHelpFaqItems, searchFaqItems, type HelpFaqItem } from '@/lib/helpFaqs'
 
 export const runtime = 'nodejs'
 
@@ -249,7 +249,7 @@ async function buildFaqContext(prompt: string) {
   }
 
   const firestoreItems = await loadFirestoreFaqItems()
-  const combinedFaqItems = [...firestoreItems, ...helpFaqItems]
+  const combinedFaqItems = [...firestoreItems, ...getHelpFaqItems()]
   const matches = searchFaqItems(prompt, combinedFaqItems, 4)
   return {
     matches,

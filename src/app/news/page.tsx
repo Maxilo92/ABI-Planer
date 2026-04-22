@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useMemo, Suspense } from 'react'
 import { db } from '@/lib/firebase'
 import { collection, query, orderBy, onSnapshot, doc, deleteDoc, updateDoc } from 'firebase/firestore'
 import { useAuth } from '@/context/AuthContext'
@@ -10,23 +10,41 @@ import { NewsEntry } from '@/types/database'
 import { CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { format } from 'date-fns'
-import { de } from 'date-fns/locale'
-import { Loader2, Trash2, ArrowRight, Eye, User as UserIcon, Smile, MessageSquare, Sparkles } from 'lucide-react'
-import { Skeleton } from '@/components/ui/skeleton'
-import { toDate } from '@/lib/utils'
-import { useSystemMessage } from '@/context/SystemMessageContext'
+import { useLanguage } from '@/context/LanguageContext'
+import { de, enUS, es } from 'date-fns/locale'
 import { useSearchParams } from 'next/navigation'
-import { Suspense } from 'react'
-import Link from 'next/link'
+import { useSystemMessage } from '@/context/SystemMessageContext'
+import { usePopupManager } from '@/modules/popup/usePopupManager'
 import { deleteNewsImageByPath } from '@/lib/newsImageUpload'
 import { logAction } from '@/lib/logging'
+import { toDate } from '@/lib/utils'
+import { 
+  Sparkles, 
+  User as UserIcon, 
+  Eye, 
+  MessageSquare, 
+  ArrowRight, 
+  Trash2, 
+  Smile,
+  UserIcon as LucideUserIcon
+} from 'lucide-react'
+import Link from 'next/link'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { ShareResourceButton } from '@/components/ui/share-resource-button'
-import { usePopupManager } from '@/modules/popup/usePopupManager'
+import { Skeleton } from '@/components/ui/skeleton'
 
 function NewsPageContent() {
+  const { t, language } = useLanguage()
   const searchParams = useSearchParams()
+
+  const dateLocale = useMemo(() => {
+    switch (language) {
+      case 'en-US': return enUS
+      case 'es-ES': return es
+      default: return de
+    }
+  }, [language])
   const { profile, user, loading: authLoading } = useAuth()
   const { pushMessage } = useSystemMessage()
   const { confirm } = usePopupManager()
@@ -106,10 +124,10 @@ function NewsPageContent() {
 
   const handleDelete = async (id: string) => {
     const confirmed = await confirm({
-      title: 'Beitrag löschen?',
-      content: 'Möchtest du diesen Beitrag wirklich löschen?',
+      title: t('news.delete.title'),
+      content: t('news.delete.confirm'),
       priority: 'high',
-      confirmLabel: 'Beitrag löschen',
+      confirmLabel: t('news.delete.button'),
       confirmVariant: 'destructive',
     })
     if (!confirmed) return
@@ -131,16 +149,16 @@ function NewsPageContent() {
       pushMessage({
         type: 'toast',
         priority: 'info',
-        title: 'Erfolg',
-        content: 'Beitrag erfolgreich gelöscht.'
+        title: t('news.success'),
+        content: t('news.delete.success')
       })
     } catch (err) {
       console.error('Error deleting news:', err)
       pushMessage({
         type: 'toast',
         priority: 'critical',
-        title: 'Fehler',
-        content: 'Fehler beim Löschen des Beitrags.'
+        title: t('news.error'),
+        content: t('news.delete.error')
       })
     }
   }
@@ -178,16 +196,16 @@ function NewsPageContent() {
         <main className="relative z-10 pt-28 pb-16 px-4 sm:px-6 md:pt-32 md:pb-20">
           <div className="max-w-5xl mx-auto space-y-12">
             <div className="space-y-4 text-center">
-              <h1 className="text-3xl sm:text-4xl md:text-6xl font-black tracking-tight">Neuigkeiten</h1>
+              <h1 className="text-3xl sm:text-4xl md:text-6xl font-black tracking-tight">{t('news.title')}</h1>
               <p className="text-muted-foreground text-base sm:text-lg max-w-2xl mx-auto">
-                Bleibe auf dem Laufenden über alles, was in eurem Jahrgang passiert.
+                {t('news.desc')}
               </p>
             </div>
 
             <div className="grid gap-8">
               {news.length === 0 ? (
                 <div className="p-10 md:p-20 text-center border-2 border-dashed border-border rounded-3xl">
-                  <p className="text-muted-foreground italic text-base md:text-lg">Aktuell sind keine News veröffentlicht.</p>
+                  <p className="text-muted-foreground italic text-base md:text-lg">{t('news.empty')}</p>
                 </div>
               ) : (
                 news.map((item) => {
@@ -208,10 +226,10 @@ function NewsPageContent() {
 
                         <div className={isCompactEntry ? 'space-y-4 rounded-2xl border border-border/40 bg-background/60 p-4 sm:p-5 md:p-6' : 'space-y-5 md:space-y-6'}>
                           <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-primary">
-                            <span className="bg-primary/10 px-3 py-1 rounded-full">{item.created_at ? format(toDate(item.created_at), 'dd. MMMM yyyy', { locale: de }) : 'Neu'}</span>
-                            {isCompactEntry && <span className="bg-muted px-3 py-1 rounded-full text-muted-foreground">Kurzupdate</span>}
-                            {item.is_ai_generated && <span className="bg-amber-500/10 border border-amber-500/20 px-3 py-1 rounded-full text-amber-600 flex items-center gap-1"><Sparkles className="h-3 w-3" /> KI-unterstützt</span>}
-                            <span className="flex items-center gap-1.5"><UserIcon className="h-3.5 w-3.5" /> {item.author_name || 'System'}</span>
+                            <span className="bg-primary/10 px-3 py-1 rounded-full">{item.created_at ? format(toDate(item.created_at), 'dd. MMMM yyyy', { locale: dateLocale }) : t('news.new')}</span>
+                            {isCompactEntry && <span className="bg-muted px-3 py-1 rounded-full text-muted-foreground">{t('news.shortUpdate')}</span>}
+                            {item.is_ai_generated && <span className="bg-amber-500/10 border border-amber-500/20 px-3 py-1 rounded-full text-amber-600 flex items-center gap-1"><Sparkles className="h-3 w-3" /> {t('news.aiGenerated')}</span>}
+                            <span className="flex items-center gap-1.5"><UserIcon className="h-3.5 w-3.5" /> {item.author_name || t('news.system')}</span>
                           </div>
 
                           <div className="space-y-3">
@@ -233,7 +251,7 @@ function NewsPageContent() {
                               )}
                             </div>
                             <Button render={<Link href={`/news/${item.id}`} />} variant="ghost" className="w-full sm:w-auto justify-center font-black uppercase tracking-widest text-[10px] gap-2 rounded-xl group/btn">
-                              Weiterlesen
+                              {t('news.readMore')}
                               <ArrowRight className="h-4 w-4 transition-transform group-hover/btn:translate-x-1" />
                             </Button>
                           </div>
@@ -256,7 +274,7 @@ function NewsPageContent() {
         <div className="absolute -right-8 -top-8 h-28 w-28 rounded-full bg-primary/10 blur-2xl" />
         <div className="absolute -left-8 bottom-0 h-20 w-20 rounded-full bg-primary/5 blur-xl" />
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Neuigkeiten</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{t('news.title')}</h1>
         </div>
         <div className="mt-4">
           {isPlanner && (
@@ -274,7 +292,7 @@ function NewsPageContent() {
       <div className="grid grid-cols-1 gap-5">
         {news.length === 0 ? (
           <p className="text-center py-12 text-muted-foreground italic bg-secondary/20 rounded-xl border-2 border-dashed">
-            Noch keine Neuigkeiten vorhanden.
+            {t('news.emptyDashboard')}
           </p>
         ) : (
           news.map((item) => {
@@ -294,7 +312,7 @@ function NewsPageContent() {
                       <ShareResourceButton
                         resourcePath={`/news/${item.id}`}
                         title={item.title}
-                        text="Schau dir diese News im ABI Planer an."
+                        text={t('news.shareText')}
                       />
                       {isPlanner && (
                         <div className="flex items-center gap-1">
@@ -304,7 +322,7 @@ function NewsPageContent() {
                             size="icon"
                             className="h-8 w-8 text-muted-foreground hover:text-destructive"
                             onClick={() => handleDelete(item.id)}
-                            title="Löschen"
+                            title={t('news.deleteLabel')}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -314,10 +332,10 @@ function NewsPageContent() {
                   </div>
 
                   <div className="mb-3 mt-3 flex flex-wrap items-center gap-2 sm:gap-3 text-[10px] sm:text-[11px] uppercase tracking-wide text-muted-foreground/90">
-                    <span className="rounded-full bg-primary/10 px-2.5 py-1 text-primary">{item.created_at ? format(toDate(item.created_at), 'dd. MMMM yyyy', { locale: de }) : 'Neu'}</span>
-                    {item.is_ai_generated && <span className="bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded-full text-amber-600 flex items-center gap-1 font-black"><Sparkles className="h-3 w-3" /> KI-unterstützt</span>}
+                    <span className="rounded-full bg-primary/10 px-2.5 py-1 text-primary">{item.created_at ? format(toDate(item.created_at), 'dd. MMMM yyyy', { locale: dateLocale }) : t('news.new')}</span>
+                    {item.is_ai_generated && <span className="bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded-full text-amber-600 flex items-center gap-1 font-black"><Sparkles className="h-3 w-3" /> {t('news.aiGenerated')}</span>}
                     <span className="inline-flex items-center gap-1.5 normal-case tracking-normal">
-                      <UserIcon className="h-3.5 w-3.5" /> {item.author_name || 'Unbekannt'}
+                      <UserIcon className="h-3.5 w-3.5" /> {item.author_name || t('news.unknown')}
                     </span>
                     <span className="inline-flex items-center gap-1.5 normal-case tracking-normal">
                       <Eye className="h-3.5 w-3.5" /> {item.view_count || 0}
@@ -327,7 +345,7 @@ function NewsPageContent() {
                         <MessageSquare className="h-3.5 w-3.5" /> {item.comment_count}
                       </span>
                     )}
-                    <span className="rounded-full bg-muted px-2.5 py-1 text-muted-foreground">Kurzupdate</span>
+                    <span className="rounded-full bg-muted px-2.5 py-1 text-muted-foreground">{t('news.shortUpdate')}</span>
                   </div>
 
                   <div className="text-foreground/80 leading-relaxed text-sm md:text-[0.95rem] line-clamp-2">
@@ -364,7 +382,7 @@ function NewsPageContent() {
 
                   <div className="flex justify-end mt-3">
                     <Button render={<Link href={`/news/${item.id}`} />} variant="link" size="sm" className="gap-1 p-0 h-auto text-primary">
-                      <>Weiterlesen <ArrowRight className="h-4 w-4" /></>
+                      <>{t('news.readMore')} <ArrowRight className="h-4 w-4" /></>
                     </Button>
                   </div>
                 </article>
@@ -381,7 +399,7 @@ function NewsPageContent() {
                     <div className="relative aspect-[16/10] w-full overflow-hidden rounded-2xl bg-muted">
                       <img
                         src={item.image_url}
-                        alt={`Titelbild zu ${item.title}`}
+                        alt={`${t('news.imageAlt')} ${item.title}`}
                         className="h-full w-full object-cover transition-transform duration-500 hover:scale-[1.03]"
                         loading="lazy"
                       />
@@ -399,7 +417,7 @@ function NewsPageContent() {
                       <ShareResourceButton
                         resourcePath={`/news/${item.id}`}
                         title={item.title}
-                        text="Schau dir diese News im ABI Planer an."
+                        text={t('news.shareText')}
                       />
                       {isPlanner && (
                         <div className="flex items-center gap-1">
@@ -409,7 +427,7 @@ function NewsPageContent() {
                             size="icon"
                             className="h-8 w-8 text-muted-foreground hover:text-destructive"
                             onClick={() => handleDelete(item.id)}
-                            title="Löschen"
+                            title={t('news.deleteLabel')}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -419,10 +437,10 @@ function NewsPageContent() {
                   </div>
 
                   <div className="mb-3 mt-3 flex flex-wrap items-center gap-2 sm:gap-4 text-[11px] sm:text-xs uppercase tracking-wide text-muted-foreground/90">
-                    <span>{item.created_at ? format(toDate(item.created_at), 'dd. MMMM yyyy', { locale: de }) : 'Neu'}</span>
-                    {item.is_ai_generated && <span className="bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded-full text-amber-600 flex items-center gap-1 font-black"><Sparkles className="h-3 w-3" /> KI-unterstützt</span>}
+                    <span>{item.created_at ? format(toDate(item.created_at), 'dd. MMMM yyyy', { locale: dateLocale }) : t('news.new')}</span>
+                    {item.is_ai_generated && <span className="bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded-full text-amber-600 flex items-center gap-1 font-black"><Sparkles className="h-3 w-3" /> {t('news.aiGenerated')}</span>}
                     <span className="inline-flex items-center gap-1.5 normal-case tracking-normal">
-                      <UserIcon className="h-3.5 w-3.5" /> {item.author_name || 'Unbekannt'}
+                      <UserIcon className="h-3.5 w-3.5" /> {item.author_name || t('news.unknown')}
                     </span>
                     <span className="inline-flex items-center gap-1.5 normal-case tracking-normal">
                       <Eye className="h-3.5 w-3.5" /> {item.view_count || 0}
@@ -474,7 +492,7 @@ function NewsPageContent() {
                   {!item.is_small_update && (
                     <div className="flex justify-end mt-4">
                       <Button render={<Link href={`/news/${item.id}`} />} variant="link" size="sm" className="gap-1 p-0 h-auto text-primary">
-                        <>Weiterlesen <ArrowRight className="h-4 w-4" /></>
+                        <>{t('news.readMore')} <ArrowRight className="h-4 w-4" /></>
                       </Button>
                     </div>
                   )}

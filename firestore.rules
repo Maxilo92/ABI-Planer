@@ -547,5 +547,10 @@ service cloud.firestore {
       allow create: if isValidTeacherSubmission(request.resource.data);
       allow read, update, delete: if isAdmin();
     }
+
+    match /system_checks/{checkId} {
+      allow read, write: if isAdmin();
+    }
   }
 }
+

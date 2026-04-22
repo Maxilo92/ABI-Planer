@@ -4,7 +4,7 @@ import React from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { useAuth } from '@/context/AuthContext'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { LayoutDashboard, BarChart2, Settings, Server } from 'lucide-react'
+import { LayoutDashboard, BarChart2, Settings, Server, CheckCircle2 } from 'lucide-react'
 import { AdminSystemProvider } from '@/components/admin/AdminSystemContext'
 
 export default function AdminSystemLayout({ children }: { children: React.ReactNode }) {
@@ -18,12 +18,14 @@ export default function AdminSystemLayout({ children }: { children: React.ReactN
   const getActiveTab = () => {
     if (pathname === '/admin/system/analytics') return 'analytics'
     if (pathname === '/admin/system/control') return 'control'
+    if (pathname === '/admin/system/check') return 'check'
     return 'overview'
   }
 
   const handleTabChange = (value: string) => {
     if (value === 'analytics') router.push('/admin/system/analytics')
     else if (value === 'control') router.push('/admin/system/control')
+    else if (value === 'check') router.push('/admin/system/check')
     else router.push('/admin/system')
   }
 
@@ -62,6 +64,10 @@ export default function AdminSystemLayout({ children }: { children: React.ReactN
             <TabsTrigger value="control" className="h-full gap-2 px-6 font-black uppercase tracking-widest text-[10px]">
               <Settings className="w-3.5 h-3.5" />
               System-Steuerung
+            </TabsTrigger>
+            <TabsTrigger value="check" className="h-full gap-2 px-6 font-black uppercase tracking-widest text-[10px]">
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              Funktions-Check
             </TabsTrigger>
           </TabsList>
           {children}

@@ -16,10 +16,13 @@ import { ForgotPasswordDialog } from '@/components/modals/ForgotPasswordDialog'
 import { useAuth } from '@/context/AuthContext'
 import { ShieldCheck, ArrowLeft } from 'lucide-react'
 import { getAppHomeUrl, getAccessTargetFromProfile } from '@/lib/dashboard-url'
+import { useLanguage } from '@/context/LanguageContext'
+import { LanguageToggle } from '@/components/ui/LanguageToggle'
 
 const auth = getFirebaseAuth()
 
 export default function LoginPage() {
+  const { t } = useLanguage()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -35,7 +38,7 @@ export default function LoginPage() {
   
   const router = useRouter()
 
-  const redirectToApp = (target: 'dashboard' | 'tcg' | 'shop') => {
+  const redirectToApp = (target: 'dashboard' | 'tcg' | 'shop' | 'support') => {
     if (typeof window === 'undefined') {
       router.push('/')
       return
@@ -58,12 +61,12 @@ export default function LoginPage() {
         setRedirectPath(redirect)
       }
       if (reason === 'timeout') {
-        setReasonMessage('Deine Sitzung ist abgelaufen. Bitte melde dich erneut an.')
+        setReasonMessage(t('auth.login.errors.timeout'))
       } else if (reason === 'unauthorized') {
-        setReasonMessage('Du musst angemeldet sein, um auf diesen Bereich zuzugreifen.')
+        setReasonMessage(t('auth.login.errors.unauthorized'))
       }
     }
-  }, [])
+  }, [t])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -75,7 +78,7 @@ export default function LoginPage() {
     try {
       const normalizedEmail = email.trim().toLowerCase()
       if (!normalizedEmail.endsWith('@hgr-web.lernsax.de')) {
-        throw new Error('Anmeldung nur mit offizieller @hgr-web.lernsax.de E-Mail erlaubt.')
+        throw new Error(t('auth.login.errors.domainRestricted'))
       }
       
       console.log('[Login] calling signInWithEmailAndPassword...')
@@ -109,10 +112,10 @@ export default function LoginPage() {
       }
     } catch (err: any) {
       console.error('[Login] Error during sign-in:', err)
-      let message = 'Anmeldung fehlgeschlagen. Bitte überprüfe deine Daten.'
-      if (err.code === 'auth/user-not-found') message = 'Kein Account mit dieser E-Mail gefunden.'
-      if (err.code === 'auth/wrong-password') message = 'Falsches Passwort.'
-      if (err.code === 'auth/invalid-credential') message = 'E-Mail oder Passwort ist nicht korrekt.'
+      let message = t('auth.login.errors.failed')
+      if (err.code === 'auth/user-not-found') message = t('auth.login.errors.userNotFound')
+      if (err.code === 'auth/wrong-password') message = t('auth.login.errors.wrongPassword')
+      if (err.code === 'auth/invalid-credential') message = t('auth.login.errors.invalidCredential')
       setError(message || err.message)
     } finally {
       setLoading(false)
@@ -142,18 +145,23 @@ export default function LoginPage() {
         const accessTarget = getAccessTargetFromProfile(profileSnap.exists() ? profileSnap.data() : null)
         redirectToApp(accessTarget)
       } else {
-        throw new Error('Ungültiger Code.')
+        throw new Error(t('auth.login.errors.invalidCode'))
       }
     } catch (err: any) {
       console.error('2FA Verification failed:', err)
-      setError(err.message || 'Der Code ist falsch oder abgelaufen.')
+      setError(err.message || t('auth.login.errors.expiredCode'))
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen bg-background px-4 py-10 sm:px-6 sm:py-14 lg:px-8 md:flex md:items-center md:justify-center">
+    <div className="min-h-screen bg-background px-4 py-10 sm:px-6 sm:py-14 lg:px-8 md:flex md:items-center md:justify-center relative">
+      {/* Language Toggle - Top Right */}
+      <div className="absolute top-6 right-6 z-10">
+        <LanguageToggle />
+      </div>
+
       <div className="mx-auto w-full max-w-md flex flex-col items-center gap-8">
         <Logo width={120} height={120} />
         <Card className="w-full rounded-2xl border border-border/70 bg-card shadow-sm overflow-hidden">
@@ -170,26 +178,26 @@ export default function LoginPage() {
                 }}
               >
                 <ArrowLeft className="h-4 w-4" />
-                Zurück zum Login
+                {t('auth.login.backToLogin')}
               </Button>
             ) : (
               <Button
                 variant="ghost"
                 size="sm"
                 className="-ml-2 text-muted-foreground hover:text-foreground"
-                render={<Link href="/">Zurück zur Startseite</Link>}
+                render={<Link href="/">{t('auth.login.backToHome')}</Link>}
               />
             )}
           </div>
           
           <CardHeader className="space-y-3 px-5 pb-7 pt-3 text-center sm:px-7 sm:pb-9 sm:pt-5">
             <CardTitle className="text-4xl font-black tracking-tight">
-              {step === 'login' ? 'Anmelden' : 'Verifizierung'}
+              {step === 'login' ? t('auth.login.title') : t('auth.login.verifying')}
             </CardTitle>
             <CardDescription className="text-muted-foreground">
               {step === 'login' 
-                ? 'Nutze dein @hgr-web.lernsax.de Konto' 
-                : 'Dein Konto ist durch 2FA geschützt. Bitte gib deinen Code ein.'}
+                ? t('auth.login.desc') 
+                : t('auth.login.desc2fa')}
             </CardDescription>
           </CardHeader>
 
@@ -208,7 +216,7 @@ export default function LoginPage() {
                 )}
                 
                 <div className="space-y-2">
-                  <Label htmlFor="email" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">E-Mail</Label>
+                  <Label htmlFor="email" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">{t('auth.login.email')}</Label>
                    <Input 
                      id="email" 
                      type="email" 
@@ -221,7 +229,7 @@ export default function LoginPage() {
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <Label htmlFor="password" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Passwort</Label>
+                    <Label htmlFor="password" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">{t('auth.login.password')}</Label>
                     <ForgotPasswordDialog initialEmail={email} />
                   </div>
                   <Input 
@@ -238,12 +246,12 @@ export default function LoginPage() {
               </CardContent>
               <CardFooter className="flex flex-col space-y-6 border-0 bg-transparent rounded-none px-5 pb-7 pt-3 sm:px-7 sm:pb-8 sm:pt-4">
                 <Button type="submit" className="w-full h-12 text-base font-bold shadow-md active:scale-[0.98] transition-transform" disabled={loading}>
-                  {loading ? 'Anmeldung...' : 'Anmelden'}
+                  {loading ? t('auth.login.buttonLoading') : t('auth.login.button')}
                 </Button>
                 <p className="text-sm text-center text-muted-foreground">
-                  Noch keinen Account?{' '}
+                  {t('auth.login.noAccount')}{' '}
                   <Link href="/register" className="text-foreground hover:underline font-bold decoration-2 underline-offset-4">
-                    Registrieren
+                    {t('auth.login.register')}
                   </Link>
                 </p>
               </CardFooter>
@@ -265,7 +273,7 @@ export default function LoginPage() {
 
                 <div className="space-y-4">
                   <Label htmlFor="2fa-code" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                    6-stelliger Authenticator-Code
+                    {t('auth.login.twoFactorCode')}
                   </Label>
                   <Input 
                     id="2fa-code" 
@@ -279,13 +287,13 @@ export default function LoginPage() {
                     required 
                   />
                   <p className="text-xs text-muted-foreground">
-                    Öffne deine Authenticator-App und gib den aktuell angezeigten Code ein.
+                    {t('auth.login.twoFactorHint')}
                   </p>
                 </div>
               </CardContent>
               <CardFooter className="flex flex-col space-y-6 border-0 bg-transparent rounded-none px-5 pb-7 pt-3 sm:px-7 sm:pb-8 sm:pt-4">
                 <Button type="submit" className="w-full h-12 text-base font-bold shadow-md active:scale-[0.98] transition-transform" disabled={loading || twoFactorCode.length !== 6}>
-                  {loading ? 'Verifizierung...' : 'Bestätigen'}
+                  {loading ? t('auth.login.verifyButtonLoading') : t('auth.login.verifyButton')}
                 </Button>
               </CardFooter>
             </form>

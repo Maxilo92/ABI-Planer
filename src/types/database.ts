@@ -527,3 +527,16 @@ export interface Task {
   created_at: string | Timestamp | Date;
 }
 
+export type SystemCheckStatus = 'perfect' | 'minor_bugs' | 'major_bugs' | 'catastrophic' | 'down' | 'untested';
+
+export interface SystemCheck {
+  id: string; // the path ID, e.g. "_admin_system"
+  path: string; // the actual path, e.g. "/admin/system"
+  name: string;
+  status: SystemCheckStatus;
+  last_checked?: string | Timestamp | Date | null;
+  checked_by?: string | null;
+  checked_by_name?: string | null;
+  notes?: string | null;
+}
+

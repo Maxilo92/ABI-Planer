@@ -25,7 +25,7 @@ export default function JoinTeamPage() {
   const router = useRouter()
 
   const requirements = [
-    { title: "Grundlagen", desc: "HTML, CSS und JavaScript solltest du sicher beherrschen." },
+    { title: "Grundlagen", desc: "HTML, CSS und JavaScript solltest du sicher beherrschen. Oder habe Claude Pro/Max, ist eh mittlerweile besser als per Hand zu programmieren. 🥀" },
     { title: "React/Next.js", desc: "Erste Erfahrungen mit React sind super, den Rest lernst du hier." },
     { title: "Motivation", desc: "Du hast Lust, den Jahrgang 2027 mit deinen Skills zu unterstützen." },
     { title: "Zuverlässigkeit", desc: "Wir arbeiten im Team – Verlässlichkeit ist das A und O." }
@@ -99,7 +99,7 @@ export default function JoinTeamPage() {
               <Coffee className="h-8 w-8 text-primary" />
             </div>
             <p className="italic text-muted-foreground leading-relaxed">
-              "Die App ist zu groß für eine Person geworden. Wir brauchen Teamspirit, neue Ideen und Leute, die Bock auf Code haben."
+              "Das Abi Planer Tool ist mittlerweile echt stark gewachsen und es ist fast unmöglich geworden allen Bugs hinterher zu rennen und trotzdem noch Inovation zu bringen."
             </p>
             <p className="font-bold text-sm text-primary">— Maximilian, Lead Developer</p>
           </Card>
@@ -148,12 +148,12 @@ export default function JoinTeamPage() {
             <div className="space-y-3 text-center">
               <div className="w-10 h-10 bg-primary text-primary-foreground rounded-full flex items-center justify-center mx-auto font-bold">2</div>
               <h4 className="font-bold">Check & Chat</h4>
-              <p className="text-sm text-muted-foreground">Kurzer Call oder Treffen zum Kennenlernen & Onboarding.</p>
+              <p className="text-sm text-muted-foreground">Kurzer Call oder Nachicht fürs Onboarding.</p>
             </div>
             <div className="space-y-3 text-center">
               <div className="w-10 h-10 bg-primary text-primary-foreground rounded-full flex items-center justify-center mx-auto font-bold">3</div>
               <h4 className="font-bold">Code on!</h4>
-              <p className="text-sm text-muted-foreground">Du bekommst Zugriff auf das Repo und wir legen los.</p>
+              <p className="text-sm text-muted-foreground">Du bekommst Zugriff auf das Repo und los geht's.</p>
             </div>
           </div>
         </section>

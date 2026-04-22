@@ -1,8 +1,13 @@
+'use client'
+
 import { Suspense } from 'react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { SammelkartenModule } from '../sammelkarten/_modules/components/SammelkartenModule'
+import { useLanguage } from '@/context/LanguageContext'
 
 export default function TcgHomePage() {
+  const { t } = useLanguage()
+  
   return (
     <Suspense 
       fallback={

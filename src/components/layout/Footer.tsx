@@ -276,7 +276,7 @@ export function Footer() {
 
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-muted-foreground font-medium">
             <div className="flex flex-wrap justify-center gap-x-6 gap-y-2">
-              <span>&copy; {new Date().getFullYear()} Maximilian Priesnitz & Team</span>
+              <span>&copy; {new Date().getFullYear()} Maximilian Priesnitz</span>
               <a href={`${mainBaseUrl}/impressum`} className="hover:text-primary transition-colors underline-offset-4 hover:underline">Impressum</a>
               <a href={`${mainBaseUrl}/datenschutz`} className="hover:text-primary transition-colors underline-offset-4 hover:underline">Datenschutz</a>
               <a href={`${mainBaseUrl}/agb`} className="hover:text-primary transition-colors underline-offset-4 hover:underline">AGB</a>

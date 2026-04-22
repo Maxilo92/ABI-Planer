@@ -6,10 +6,39 @@
 <!-- default_action: read newest entries only unless a regression requires older history -->
 <!-- index: docs/AGENT_CONTEXT_INDEX.md -->
 
-## [1.28.6.00] - 2026-04-22
+## [1.29.1.00] - 2026-04-22
 
 ### Geändert
-- **Global Footer:** "Werde Teil des Teams" (Karriere-Link) zur Rubrik "Über uns" hinzugefügt, um die Sichtbarkeit des Entwickler-Onboardings zu erhöhen.
+- **Footer:** Copyright-Angabe korrigiert (Entfernung des Team-Zusatzes).
+
+## [1.29.0.00] - 2026-04-22
+
+### Hinzugefügt
+- **Globaler Footer:** Implementierung eines umfassenden Footers im Apple-Stil für alle Subdomains.
+  - **Grid-Layout:** 6-spaltiges Desktop-Grid und mobiles Akkordeon-System.
+  - **Zentrale Navigation:** Verlinkung aller Funktionsbereiche (Planer, Sammelkarten, Shop, Support).
+  - **Subdomain-Support:** Nahtlose Integration über alle Bereiche hinweg.
+
+## [1.28.8.00] - 2026-04-22
+
+### Hinzugefügt
+- **Admin System Control Center:** 
+  - **Funktions-Checkliste:** Eine neue Seite (`/admin/system/check`), die alle System-Module und Routen in einer interaktiven Tabelle auflistet.
+  - **Status-Tracking:** Admins können den Zustand jeder Seite tracken (Funktioniert, Minimale Bugs, Große Bugs, Katastrophal, Down, Ungetestet).
+  - **Echtzeit-Synchronisierung:** Änderungen werden sofort in der Firestore-Sammlung `system_checks` gespeichert und für alle Admins synchronisiert.
+  - **Routen-Scan:** Funktion zum automatischen Synchronisieren bekannter Routen mit der Datenbank.
+  - **Dashboard-Statistiken:** Übersichtliche Karten zur Anzeige der Anzahl stabiler, fehlerhafter und kritischer Module.
+
+## [1.28.7.00] - 2026-04-22
+
+### Geändert
+- **Internationalisierung (i18n):**
+  - **Login-Seite:** Vollständige Umstellung auf das i18n-System. Alle hardcodierten deutschen Texte wurden durch `t()` Aufrufe ersetzt.
+  - **Login-Seite:** Integration des `LanguageToggle` in der oberen rechten Ecke für einen schnellen Sprachwechsel vor der Anmeldung.
+  - **Home-Seite (TCG):** Einbindung des `useLanguage` Hooks zur Vorbereitung auf zukünftige Lokalisierungen.
+  - **Fehlerbehandlung:** Lokalisierte Fehlermeldungen für Login-Szenarien (Timeout, unberechtigter Zugriff, falsche Anmeldedaten, 2FA-Fehler).
+
+## [1.28.6.00] - 2026-04-22
 
 ## [1.28.5.00] - 2026-04-22
 

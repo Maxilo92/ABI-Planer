@@ -121,6 +121,35 @@ export const translations = {
       }
     },
     auth: {
+      login: {
+        title: 'Anmelden',
+        verifying: 'Verifizierung',
+        desc: 'Nutze dein @hgr-web.lernsax.de Konto',
+        desc2fa: 'Dein Konto ist durch 2FA geschützt. Bitte gib deinen Code ein.',
+        email: 'E-Mail',
+        password: 'Passwort',
+        button: 'Anmelden',
+        buttonLoading: 'Anmeldung...',
+        noAccount: 'Noch keinen Account?',
+        register: 'Registrieren',
+        backToHome: 'Zurück zur Startseite',
+        backToLogin: 'Zurück zum Login',
+        twoFactorCode: '6-stelliger Authenticator-Code',
+        twoFactorHint: 'Öffne deine Authenticator-App und gib den aktuell angezeigten Code ein.',
+        verifyButton: 'Bestätigen',
+        verifyButtonLoading: 'Verifizierung...',
+        errors: {
+          timeout: 'Deine Sitzung ist abgelaufen. Bitte melde dich erneut an.',
+          unauthorized: 'Du musst angemeldet sein, um auf diesen Bereich zuzugreifen.',
+          domainRestricted: 'Anmeldung nur mit offizieller @hgr-web.lernsax.de E-Mail erlaubt.',
+          failed: 'Anmeldung fehlgeschlagen. Bitte überprüfe deine Daten.',
+          userNotFound: 'Kein Account mit dieser E-Mail gefunden.',
+          wrongPassword: 'Falsches Passwort.',
+          invalidCredential: 'E-Mail oder Passwort ist nicht korrekt.',
+          invalidCode: 'Ungültiger Code.',
+          expiredCode: 'Der Code ist falsch oder abgelaufen.'
+        }
+      },
       register: {
         title: 'Registrierung',
         titleSuccess: 'Fast fertig!',
@@ -269,6 +298,50 @@ export const translations = {
         updated: 'Kurssystem aktualisiert.',
         error: 'Kurse konnten nicht gespeichert werden.'
       }
+    },
+    news: {
+      title: 'Neuigkeiten',
+      desc: 'Bleibe auf dem Laufenden über alles, was in eurem Jahrgang passiert.',
+      empty: 'Aktuell sind keine News veröffentlicht.',
+      emptyDashboard: 'Noch keine Neuigkeiten vorhanden.',
+      new: 'Neu',
+      shortUpdate: 'Kurzupdate',
+      aiGenerated: 'KI-unterstützt',
+      system: 'System',
+      unknown: 'Unbekannt',
+      readMore: 'Weiterlesen',
+      shareText: 'Schau dir diese News im ABI Planer an.',
+      imageAlt: 'Titelbild zu',
+      delete: {
+        title: 'Beitrag löschen?',
+        confirm: 'Möchtest du diesen Beitrag wirklich löschen?',
+        button: 'Beitrag löschen',
+        success: 'Beitrag erfolgreich gelöscht.',
+        error: 'Fehler beim Löschen des Beitrags.'
+      },
+      success: 'Erfolg',
+      error: 'Fehler',
+      deleteLabel: 'Löschen'
+    },
+    todos: {
+      title: 'Aufgaben',
+      desc: 'Alle anstehenden To-Dos für unser Abi.',
+      search: 'Suchen...',
+      locked: {
+        title: 'Aufgaben gesperrt',
+        desc: 'Die internen To-Dos und Verantwortlichkeiten sind nur für angemeldete Schüler einsehbar.'
+      },
+      tabs: {
+        all: 'Alle',
+        open: 'Offen',
+        inProgress: 'In Arbeit',
+        done: 'Erledigt'
+      }
+    },
+    dashboard: {
+      loading: 'Lade Dashboard...',
+      welcome: 'Willkommen zurück!',
+      title: 'Dashboard'
     }
   },
   'en-US': {
@@ -393,6 +466,35 @@ export const translations = {
       }
     },
     auth: {
+      login: {
+        title: 'Login',
+        verifying: 'Verification',
+        desc: 'Use your @hgr-web.lernsax.de account',
+        desc2fa: 'Your account is protected by 2FA. Please enter your code.',
+        email: 'Email',
+        password: 'Password',
+        button: 'Login',
+        buttonLoading: 'Logging in...',
+        noAccount: 'No account yet?',
+        register: 'Register',
+        backToHome: 'Back to home',
+        backToLogin: 'Back to login',
+        twoFactorCode: '6-digit authenticator code',
+        twoFactorHint: 'Open your authenticator app and enter the code currently displayed.',
+        verifyButton: 'Confirm',
+        verifyButtonLoading: 'Verifying...',
+        errors: {
+          timeout: 'Your session has expired. Please log in again.',
+          unauthorized: 'You must be logged in to access this area.',
+          domainRestricted: 'Login only allowed with official @hgr-web.lernsax.de email.',
+          failed: 'Login failed. Please check your data.',
+          userNotFound: 'No account found with this email.',
+          wrongPassword: 'Incorrect password.',
+          invalidCredential: 'Email or password is not correct.',
+          invalidCode: 'Invalid code.',
+          expiredCode: 'The code is incorrect or expired.'
+        }
+      },
       register: {
         title: 'Registration',
         titleSuccess: 'Almost done!',
@@ -541,6 +643,50 @@ export const translations = {
         updated: 'Course system updated.',
         error: 'Courses could not be saved.'
       }
+    },
+    news: {
+      title: 'News',
+      desc: 'Stay up to date on everything happening in your class.',
+      empty: 'No news published yet.',
+      emptyDashboard: 'No news available yet.',
+      new: 'New',
+      shortUpdate: 'Short update',
+      aiGenerated: 'AI-supported',
+      system: 'System',
+      unknown: 'Unknown',
+      readMore: 'Read more',
+      shareText: 'Check out this news in ABI Planer.',
+      imageAlt: 'Cover image for',
+      delete: {
+        title: 'Delete post?',
+        confirm: 'Do you really want to delete this post?',
+        button: 'Delete post',
+        success: 'Post successfully deleted.',
+        error: 'Error deleting post.'
+      },
+      success: 'Success',
+      error: 'Error',
+      deleteLabel: 'Delete'
+    },
+    todos: {
+      title: 'Tasks',
+      desc: 'All upcoming to-dos for our graduation.',
+      search: 'Search...',
+      locked: {
+        title: 'Tasks locked',
+        desc: 'Internal to-dos and responsibilities are only viewable for logged-in students.'
+      },
+      tabs: {
+        all: 'All',
+        open: 'Open',
+        inProgress: 'In progress',
+        done: 'Done'
+      }
+    },
+    dashboard: {
+      loading: 'Loading dashboard...',
+      welcome: 'Welcome back!',
+      title: 'Dashboard'
     }
   },
   'es-ES': {
@@ -665,6 +811,35 @@ export const translations = {
       }
     },
     auth: {
+      login: {
+        title: 'Iniciar sesión',
+        verifying: 'Verificación',
+        desc: 'Usa tu cuenta de @hgr-web.lernsax.de',
+        desc2fa: 'Tu cuenta está protegida por 2FA. Por favor, introduce tu código.',
+        email: 'Correo electrónico',
+        password: 'Contraseña',
+        button: 'Iniciar sesión',
+        buttonLoading: 'Iniciando sesión...',
+        noAccount: '¿Aún no tienes cuenta?',
+        register: 'Registrarse',
+        backToHome: 'Volver al inicio',
+        backToLogin: 'Volver al inicio de sesión',
+        twoFactorCode: 'Código de autenticador de 6 dígitos',
+        twoFactorHint: 'Abre tu aplicación de autenticador e introduce el código que se muestra actualmente.',
+        verifyButton: 'Confirmar',
+        verifyButtonLoading: 'Verificando...',
+        errors: {
+          timeout: 'Tu sesión ha caducado. Por favor, inicia sesión de nuevo.',
+          unauthorized: 'Debes iniciar sesión para acceder a esta área.',
+          domainRestricted: 'Solo se permite el inicio de sesión con el correo oficial @hgr-web.lernsax.de.',
+          failed: 'Error al iniciar sesión. Por favor, comprueba tus datos.',
+          userNotFound: 'No se encontró ninguna cuenta con este correo electrónico.',
+          wrongPassword: 'Contraseña incorrecta.',
+          invalidCredential: 'El correo electrónico o la contraseña no son correctos.',
+          invalidCode: 'Código inválido.',
+          expiredCode: 'El código es incorrecto o ha caducado.'
+        }
+      },
       register: {
         title: 'Registro',
         titleSuccess: '¡Casi listo!',
@@ -813,6 +988,50 @@ export const translations = {
         updated: 'Sistema de cursos actualizado.',
         error: 'No se pudieron guardar los cursos.'
       }
+    },
+    news: {
+      title: 'Noticias',
+      desc: 'Mantente al día de todo lo que ocurre en tu curso.',
+      empty: 'Aún no se han publicado noticias.',
+      emptyDashboard: 'Aún no hay noticias disponibles.',
+      new: 'Nuevo',
+      shortUpdate: 'Actualización corta',
+      aiGenerated: 'Asistido por IA',
+      system: 'Sistema',
+      unknown: 'Desconocido',
+      readMore: 'Leer más',
+      shareText: 'Echa un vistazo a esta noticia en ABI Planer.',
+      imageAlt: 'Imagen de portada para',
+      delete: {
+        title: '¿Eliminar publicación?',
+        confirm: '¿Realmente quieres eliminar esta publicación?',
+        button: 'Eliminar publicación',
+        success: 'Publicación eliminada con éxito.',
+        error: 'Error al eliminar la publicación.'
+      },
+      success: 'Éxito',
+      error: 'Error',
+      deleteLabel: 'Eliminar'
+    },
+    todos: {
+      title: 'Tareas',
+      desc: 'Todas las tareas pendientes para nuestra graduación.',
+      search: 'Buscar...',
+      locked: {
+        title: 'Tareas bloqueadas',
+        desc: 'Las tareas internas y responsabilidades solo son visibles para estudiantes registrados.'
+      },
+      tabs: {
+        all: 'Todas',
+        open: 'Abiertas',
+        inProgress: 'En progreso',
+        done: 'Hechas'
+      }
+    },
+    dashboard: {
+      loading: 'Cargando panel...',
+      welcome: '¡Bienvenido de nuevo!',
+      title: 'Panel de control'
     }
   }
 };
