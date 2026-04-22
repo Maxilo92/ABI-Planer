@@ -13,7 +13,8 @@ import {
   Send,
   Database,
   RefreshCw,
-  Layout
+  Layout,
+  FileText
 } from 'lucide-react'
 import Link from 'next/link'
 import { useAuth } from '@/context/AuthContext'
@@ -110,6 +111,14 @@ const adminModules = [
     bgColor: 'bg-pink-500/10'
   },
   {
+    title: 'Projektbericht',
+    description: 'PDF-Bericht mit Live-Systemdaten für die Schulleitung generieren.',
+    href: '/admin/bericht',
+    icon: FileText,
+    color: 'text-indigo-500',
+    bgColor: 'bg-indigo-500/10'
+  },
+  {
     title: 'Aufgaben',
     description: 'Admin-Aufgaben und Zuweisungen.',
     href: '/admin/aufgaben',
@@ -150,18 +159,22 @@ export default function AdminHubPage() {
         <p className="text-muted-foreground mt-1">Zentrale Verwaltung für alle ABI Planer Module.</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {adminModules.map((module) => (
           <Link key={module.href} href={module.href}>
-            <Card className="h-full hover:bg-accent/50 transition-colors cursor-pointer border-border/50">
-              <CardHeader className="flex flex-row items-center gap-4 pb-2">
-                <div className={`${module.bgColor} ${module.color} p-2.5 rounded-xl`}>
+            <Card className="h-full hover:bg-accent/50 transition-all cursor-pointer border-border/50 group">
+              <CardHeader className="flex flex-row items-center gap-3 pb-3">
+                <div className={`${module.bgColor} ${module.color} p-2 rounded-xl shrink-0 group-hover:scale-110 transition-transform`}>
                   <module.icon className="h-5 w-5" />
                 </div>
-                <CardTitle className="text-lg">{module.title}</CardTitle>
+                <div className="min-w-0">
+                  <CardTitle className="text-base font-bold leading-tight break-words">
+                    {module.title}
+                  </CardTitle>
+                </div>
               </CardHeader>
               <CardContent>
-                <CardDescription className="text-sm line-clamp-2">
+                <CardDescription className="text-xs line-clamp-2 leading-relaxed">
                   {module.description}
                 </CardDescription>
               </CardContent>

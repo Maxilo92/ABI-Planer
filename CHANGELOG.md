@@ -6,6 +6,139 @@
 <!-- default_action: read newest entries only unless a regression requires older history -->
 <!-- index: docs/AGENT_CONTEXT_INDEX.md -->
 
+## [1.30.3.03] - 2026-04-22
+
+### Hinzugefügt
+- **Admin-Bereich:** Neuer Generator (`/admin/bericht`) zur Erstellung eines akademischen PDF-Projektberichts inklusive echter, aggregierter System- und Finanzdaten (Compliance, Finanzen, Registrierungen, etc.) zur Präsentation bei der Schulleitung.
+
+## [1.30.3.02] - 2026-04-22
+
+### Fixes
+- **Finanzen:** "Permission Denied" Fehler beim Kassenabgleich durch Hinzufügen fehlender Firestore-Indizes behoben.
+- **Sicherheit:** Lesezugriff für `cash_verifications` auf alle verifizierten Profile (`isApproved`) erweitert, um Probleme bei der lokalen Entwicklung zu vermeiden.
+
+## [1.30.3.01] - 2026-04-22
+
+### Hinzugefügt
+- **Finanzen (Kassenabgleich):** Neues System zur Verifizierung des physischen Kassenbestands (Prüfsumme).
+    - `VerifyCashDialog`: Erlaubt Planern, den tatsächlichen Barbestand zu erfassen.
+    - Differenzberechnung: Automatische Anzeige der Abweichung zwischen Transaktionsverlauf ("Virtueller Kontostand") und gezähltem Kassenbestand.
+    - Sicherheitsregeln: Zugriffsschutz für die neue `cash_verifications` Collection.
+
+## [1.30.3.00] - 2026-04-22
+
+### Hinzugefügt
+- **Schuljahres-Übergang:** Integration des `SchoolYearTransitionGate` in die `AppShell` zur Steuerung von jahrgangsspezifischen Zugriffen.
+- **Benutzerprofile:** Automatische Initialisierung des `school_year` Feldes bei der Profilerstellung (Bootstrap) basierend auf der globalen Konfiguration (`settings/config`).
+
+## [1.30.2.03] - 2026-04-22
+
+### Hinzugefügt
+- **Support-Tickets:** Einführung eines direkten Kontaktformulars auf der Support-Subdomain zur Erstellung von Support-Tickets.
+- **Kontakt-Integration:** Neue Kachel "Direkter Kontakt" auf der Hilfe-Startseite für eine bessere Erreichbarkeit des Administratoren-Teams.
+
+## [1.30.2.02] - 2026-04-22
+
+### Fixes
+- **Support Routing:** Fehler behoben, bei dem die Support-Subdomain fälschlicherweise die Landingpage statt der Support-Startseite anzeigte.
+- **Subdomain-Erkennung:** Verbesserung der Host-Erkennung in der Dashboard-Hauptkomponente zur korrekten Unterscheidung zwischen Landing, Dashboard und Support.
+
+## [1.30.2.01] - 2026-04-22
+
+### Verbessert
+- **2FA Support-Integration:** Hinzufügen eines direkten Links zur Support-Seite bei Verlust des 2FA-Codes in der `TwoFactorGate`-Komponente und auf der Login-Seite.
+- **Lokalisierung:** Vollständige Lokalisierung der `TwoFactorGate`-Komponente (DE, EN, ES).
+
+## [1.30.2.00] - 2026-04-22
+
+### Hinzugefuegt
+- **Cross-Subdomain Authentication (SSO):** Implementierung einer sitzungsübergreifenden Anmeldung zwischen Subdomains (Dashboard, Shop, TCG, Support).
+    - Neue API-Route `/api/auth/session` zur Verwaltung von Session-Cookies auf der Hauptdomain.
+    - `AuthContext` synchronisiert nun automatisch den Auth-Status via Custom Tokens über Subdomain-Grenzen hinweg.
+    - 2FA-Verifizierungsstatus wird nun via Cookie geteilt, um erneute Abfragen beim Wechsel der Subdomain zu vermeiden.
+    - Unterstützung für Subdomain-Session-Sharing in lokalen Entwicklungsumgebungen (`*.localhost`).
+
+## [1.30.1.03] - 2026-04-22
+
+### Hinzugefuegt
+- **Developer-Dokumentation (Kernpaket):** Neue kanonische Doku fuer Deployment, CI/CD, Environment, Security, Compliance, Firestore-Schema, Cloud-Functions-API und Troubleshooting.
+    - `DEPLOYMENT.md`
+    - `docs/CI-CD.md`
+    - `docs/.env-reference.md`
+    - `docs/SECURITY_GUIDE.md`
+    - `docs/LEGAL_COMPLIANCE.md`
+    - `docs/FIRESTORE_SCHEMA.md`
+    - `docs/CLOUD_FUNCTIONS_API.md`
+    - `docs/TROUBLESHOOTING.md`
+
+### Geaendert
+- **README/Onboarding:** Veraltete Links und Versionsangaben korrigiert, zentrale Doku-Navigation erweitert.
+- **Installationsdoku:** `INSTALL.md` auf aktuelle Setup- und Sicherheitsrealitaet aktualisiert.
+- **Architektur-Index:** `docs/PROJECT_KNOWLEDGE.md` als technischer Index mit klaren Verweisen auf Spezialdokumente neu strukturiert.
+- **Testing-Doku:** `testing/README_TESTING_PHASE.md` und `testing/TEST_ENVIRONMENT_SETUP.md` auf aktuellen Stand gebracht und auf neue Kern-Doku ausgerichtet.
+- **Agent-Drift reduziert:** `GEMINI.md` auf schlanke Weiterleitung zur kanonischen Quelle `CLAUDE.md` umgestellt.
+
+## [1.30.1.02] - 2026-04-22
+
+### Geändert
+- **Rechtliche Seiten:** Dezente Hinweise zum laufenden Entwicklungsstand ergänzt.
+    - In Impressum, Datenschutzerklärung, AGB und den besonderen Sammelkarten-Bedingungen wurde klargestellt, dass die Plattform fortlaufend weiterentwickelt wird.
+    - Es wurde rechtlich zurückhaltend ergänzt, dass vereinzelt vorübergehende Funktionsstörungen oder Darstellungsfehler auftreten können.
+
+## [1.30.1.01] - 2026-04-22
+
+### Geändert
+- **Registrierungsprozess:** Der Registrierungsprozess wurde vereinfacht und auf ein 3-Schritte-Modell (plus Erfolgsmeldung) umgestellt.
+  - Die Kursauswahl wurde durch eine direkte Auswahl der Klassenstufe (5-12) und ein optionales Suffix-Feld (z.B. für Kursbezeichnungen) ersetzt.
+  - Lehrer können sich weiterhin über eine dedizierte Option registrieren.
+  - Das aktuelle Schuljahr wird nun automatisch bei der Registrierung im Benutzerprofil hinterlegt.
+- **Internationalisierung:** Neue Übersetzungen für Klassenstufen-Suffixe und Platzhalter in Deutsch, Englisch und Spanisch hinzugefügt.
+
+## [1.30.1.00] - 2026-04-22
+
+### Hinzugefügt
+- **Schuljahresverwaltung:** Einführung einer zentralen Steuerung für das aktuelle Schuljahr in den globalen Einstellungen.
+  - Admins können das aktuelle Schuljahr einsehen und manuell erhöhen.
+  - Das Schuljahr wird im `settings/config` Dokument in Firestore gespeichert.
+- **Benutzerprofile:** Das `Profile` Interface wurde um das optionale Feld `school_year` erweitert, um Nutzerdaten jahrgangsspezifisch zuordnen zu können.
+
+## [1.30.0.00] - 2026-04-22
+
+### Geändert
+- **Struktur (Legal):** Alle rechtlich relevanten Seiten wurden zur besseren Übersicht unter einem gemeinsamen Pfad zusammengefasst.
+  - `/agb` -> `/legal/agb`
+  - `/agb/sammelkarten` -> `/legal/agb/sammelkarten`
+  - `/datenschutz` -> `/legal/datenschutz`
+  - `/impressum` -> `/legal/impressum`
+- **Navigation:** Aktualisierung aller internen Verweise im Footer, im Registrierungsprozess und im Lehrer-Kartendesigner.
+- **Konfiguration:** Anpassung der `middleware.ts` und `robots.ts` an die neue Verzeichnisstruktur.
+
+## [1.29.5.01] - 2026-04-22
+
+### Behandelte Probleme
+- **Security (Trading):** Behebung kritischer Sicherheitslücken im Tausch-System.
+  - Schutz gegen Tausch-Hijacking durch Dritte in `acceptTradeOffer`, `declineTradeOffer` und `counterTradeOffer`.
+  - Fix für unautorisiertes Ablehnen von Tauschanfragen.
+  - Absicherung der `cancelTradeOffer` Funktion: Nutzer können nun ihre eigenen Gegenangebote korrekt abbrechen.
+- **Logik (Trading):**
+  - Implementierung einer transaktionssicheren Inventarprüfung in `counterTradeOffer` zur Vermeidung von Race Conditions.
+  - Korrektur des Level-Downgrades: Lehrer-Level werden nun korrekt neu berechnet, wenn ein Nutzer seine letzte Karte einer Variante abgibt.
+  - Atomare Erstellung von Tauschangeboten und Benachrichtigungen mittels Firestore Batches.
+- **Administration:**
+  - Synchronisation der Trading-Feature-Gates mit dem Frontend. Unterstützung für den `admins_only` Status im Backend inklusive Rollenprüfung.
+
+## [1.29.5.00] - 2026-04-22
+
+### Geändert
+- **UX/UI (Admin Hub):** Optimierung der Modul-Karten für bessere Skalierbarkeit.
+  - Fix für Textüberläufe bei schmalen Bildschirmen durch Einsatz von `min-w-0` und `break-words`.
+  - Anpassung der Grid-Breakpoints (`sm:grid-cols-2`) für stabilere Darstellung auf Tablets und kleinen Desktops.
+  - Hover-Effekte (Scale) für Icons zur besseren visuellen Rückmeldung.
+- **UI (System Components):** Verbesserung der `StatCard` und `ToggleRow` Komponenten.
+  - Reduzierung der Schriftgrößen und Paddings für kompaktere Darstellung.
+  - Einsatz von `truncate` und Tooltips (native `title`) für überlange Titel.
+  - Verhindern von Icon-Shrinking in Flex-Layouter.
+
 ## [1.29.4.00] - 2026-04-22
 
 ### Hinzugefügt
@@ -1504,7 +1637,7 @@
 
 ### IMPORTANT - DEPLOYMENT REQUIRED
 
-⚠️ **Diese Version erfordert ein Cloud Functions Deployment!**
+️ **Diese Version erfordert ein Cloud Functions Deployment!**
 
 ```bash
 cd functions && npm run build && npm run deploy
@@ -2530,14 +2663,14 @@ Wenn Kartenmischung/Umleitung nicht funktioniert:
 
 ### Security Measures
 
-- ✅ **Immutable Audit Trail**: Every NP transaction logged with timestamp, source, admin verification
-- ✅ **Atomic Transactions**: Firestore transactions prevent race conditions and inconsistent state
-- ✅ **Fraud Scoring**: Algorithmic detection of suspicious patterns (daily limits, frequency, chargebacks, overlap)
-- ✅ **Rate Limiting**: Per-user operation limits (max 20 purchases/hour, 5 refunds/hour, etc.)
-- ✅ **Balance Constraints**: Max 10M NP per account, negative balance prevention
-- ✅ **Replay Protection**: Webhook event deduplication via event ID tracking
-- ✅ **Admin Access Control**: Only Main Admins can adjust NP; all changes logged with reason
-- ✅ **Encryption**: Stripe webhook signatures verified; no unencrypted PII in logs
+-  **Immutable Audit Trail**: Every NP transaction logged with timestamp, source, admin verification
+-  **Atomic Transactions**: Firestore transactions prevent race conditions and inconsistent state
+-  **Fraud Scoring**: Algorithmic detection of suspicious patterns (daily limits, frequency, chargebacks, overlap)
+-  **Rate Limiting**: Per-user operation limits (max 20 purchases/hour, 5 refunds/hour, etc.)
+-  **Balance Constraints**: Max 10M NP per account, negative balance prevention
+-  **Replay Protection**: Webhook event deduplication via event ID tracking
+-  **Admin Access Control**: Only Main Admins can adjust NP; all changes logged with reason
+-  **Encryption**: Stripe webhook signatures verified; no unencrypted PII in logs
 
 ### Contributing Changes
 
@@ -3678,7 +3811,7 @@ Wenn Kartenmischung/Umleitung nicht funktioniert:
     - **Smart Compensation:** Betroffene Nutzer erhalten faire Entschädigung basierend auf Duplikaten: Math.ceil(duplicate_count / 3) Booster-Packs.
     - **Rarity Validation:** Neue Funktion zur Validierung und Bereinigung von Rarity-Mismatches in allen Nutzer-Alben.
     - **Deprecation:** Entfernung des alten `per_user_card_limits` Systems. Neue, flexible Admin-Kontrolle ersetzt starre Limits.
-    - **Admin UX:** Neuer "Blitz"-Button (⚡) in der Lehrerliste ermöglicht schnelle, sichere Kartenverwaltung mit Bestätigung und detailliertem Feedback.
+    - **Admin UX:** Neuer "Blitz"-Button () in der Lehrerliste ermöglicht schnelle, sichere Kartenverwaltung mit Bestätigung und detailliertem Feedback.
     - **Logging:** Vollständige Audit-Logs zeigen betroffene Nutzer, entfernte Karten und verteilte Kompensation.
 
 ## [1.0.82] - 2026-03-31
@@ -3922,7 +4055,7 @@ Wenn Kartenmischung/Umleitung nicht funktioniert:
 
 ## [1.0.46] - 2026-03-30
 - **Reactions UX Improvement:** Festlegen von Standard-Emojis.
-    - **Änderung:** Die Daumen-hoch (👍) und Daumen-runter (👎) Emojis werden nun standardmäßig in der Reaktionsleiste angezeigt, auch wenn noch keine Reaktionen vorhanden sind. Alle weiteren Emojis erscheinen weiterhin dynamisch bei Benutzung.
+    - **Änderung:** Die Daumen-hoch () und Daumen-runter () Emojis werden nun standardmäßig in der Reaktionsleiste angezeigt, auch wenn noch keine Reaktionen vorhanden sind. Alle weiteren Emojis erscheinen weiterhin dynamisch bei Benutzung.
 
 ## [1.0.45] - 2026-03-30
 - **UI Refinement (News):** Reduzierung visuellen Rauschens in der Detailansicht.
@@ -3935,7 +4068,7 @@ Wenn Kartenmischung/Umleitung nicht funktioniert:
 
 ## [1.0.43] - 2026-03-30
 - **Social Engagement Update:** Implementierung eines dynamischen "Slack-Style" Emoji-Reaktionssystems für News-Beiträge.
-    - **Funktionalität:** Nutzer können nun mit mehreren Emojis reagieren (z.B. ❤️, 😂, 🔥, 🎓, 🥂). Jedes Emoji zeigt die Anzahl der Reaktionen an.
+    - **Funktionalität:** Nutzer können nun mit mehreren Emojis reagieren (z.B. ️, , , , ). Jedes Emoji zeigt die Anzahl der Reaktionen an.
     - **UI:** Neuer "+"-Button mit einem animierten Emoji-Picker-Menü (Vorschlagsliste inklusive Jahrgangs-relevanter Emojis).
     - **System-Integration:** Unterstützung für native System-Emoji-Picker (Win+. / Cmd+Ctrl+Space).
     - **News-Feed:** In der Übersicht wird nun die Gesamtzahl aller abgegebenen Reaktionen angezeigt.
