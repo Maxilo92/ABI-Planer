@@ -28,7 +28,7 @@ interface NavItem {
   notify?: boolean
   isBeta?: boolean
   subItems?: NavItem[]
-  isExternalLink?: boolean
+  isExternal?: boolean
 }
 
 interface QuickAction {
@@ -135,7 +135,7 @@ export function DashboardNavbar() {
       icon: Euro,
       subItems: [
         { href: '/finanzen', label: 'Kassenstand', icon: Euro },
-        ...(isEnabled('shop_status') ? [{ href: resolveHref('/shop', 'shop'), label: 'Stufen-Shop', icon: ShoppingBag, isExternalLink: true }] : []),
+        ...(isEnabled('shop_status') ? [{ href: resolveHref('/shop', 'shop'), label: 'Stufen-Shop', icon: ShoppingBag, isExternal: true }] : []),
       ],
     })
 
@@ -144,7 +144,7 @@ export function DashboardNavbar() {
         href: resolveHref('/home', 'tcg'),
         label: 'Zu den Sammelkarten',
         icon: Sparkles,
-        isExternalLink: true
+        isExternal: true
       })
     }
 
@@ -235,7 +235,7 @@ export function DashboardNavbar() {
         ) : (
           <Link
             href={item.href}
-            target={item.isExternalLink ? '_blank' : undefined}
+            target={item.isExternal ? '_blank' : undefined}
             className={cn(
               'flex items-center gap-2.5 rounded-lg text-sm font-medium transition-colors',
               isCompact ? 'justify-center px-2 py-2.5' : 'px-3 py-2.5',
@@ -254,7 +254,7 @@ export function DashboardNavbar() {
                 <Link
                   key={sub.href}
                   href={sub.href}
-                  target={sub.isExternalLink ? '_blank' : undefined}
+                  target={sub.isExternal ? '_blank' : undefined}
                   className={cn(
                     'flex items-center gap-2 rounded-md px-2.5 py-2 text-sm font-medium transition-colors',
                     pathname === sub.href ? 'text-primary bg-secondary/30' : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
