@@ -255,6 +255,11 @@ service cloud.firestore {
       allow write: if isPlanner();
     }
 
+    match /shop_items/{itemId} {
+      allow read: if true;
+      allow write: if isPlanner();
+    }
+
     match /todos/{id} { 
       allow read: if isAuthenticated() && isLernsax(); 
       allow write: if isPlanner(); 

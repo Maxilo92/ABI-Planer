@@ -190,7 +190,7 @@ export function TcgNavbar() {
 
   return (
     <>
-      <header className="lg:hidden fixed top-0 left-0 right-0 z-50 h-16 border-b bg-background/95 backdrop-blur-sm px-4 flex items-center justify-between">
+      <header className="lg:hidden fixed top-0 left-0 right-0 z-[100] h-16 border-b bg-background/95 backdrop-blur-sm px-4 flex items-center justify-between">
         <Link href="/home" className="flex items-center gap-3">
           <Logo width={40} height={40} />
           <span className="font-extrabold text-xl tracking-tight">ABI TCG</span>

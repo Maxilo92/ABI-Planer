@@ -29,12 +29,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: false, error: 'Missing authorization header' }, { status: 401 })
     }
 
+    const body = await request.json().catch(() => ({}))
+    const windowDays = Number(body.window_days) || 7
+
     let response = await fetch(`${getFunctionsBaseUrl()}/getSystemAnalyticsHttp`, {
       method: 'POST',
       headers: {
         Authorization: authHeader,
         'Content-Type': 'application/json',
       },
+      body: JSON.stringify({ window_days: windowDays })
     })
 
     // Backward-compatible fallback when the HTTP variant is not deployed.
@@ -45,7 +49,7 @@ export async function POST(request: NextRequest) {
           Authorization: authHeader,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ data: {} }),
+        body: JSON.stringify({ data: { window_days: windowDays } }),
       })
     }
 
@@ -53,7 +57,7 @@ export async function POST(request: NextRequest) {
     if (!response.ok) {
       if (response.status === 404) {
         try {
-          const fallbackAnalytics = await buildAnalyticsFromPastLogs(authHeader)
+          const fallbackAnalytics = await buildAnalyticsFromPastLogs(authHeader, windowDays)
           return NextResponse.json({ ok: true, data: fallbackAnalytics, degraded: true, source: 'local-logs' }, { status: 200 })
         } catch {
           return NextResponse.json({ ok: true, data: getEmptyAnalyticsPayload(), degraded: true, source: 'empty-fallback' }, { status: 200 })

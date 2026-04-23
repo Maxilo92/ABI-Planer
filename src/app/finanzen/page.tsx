@@ -288,11 +288,18 @@ export default function FinancePage() {
         </Card>
         <Card className="bg-brand/5 border-brand/20">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-brand uppercase">Virtueller Kontostand</CardTitle>
+            <CardTitle className="text-sm font-medium text-brand uppercase">Kontostand (Effektiv)</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className={`text-2xl font-bold ${currentBalance < 0 ? 'text-destructive' : 'text-foreground'}`}>
-              {currentBalance.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
+            <div className="flex items-center gap-2">
+              <div className={`text-2xl font-bold ${currentBalance < 0 ? 'text-destructive' : 'text-foreground'}`}>
+                {Math.max(currentBalance, lastVerification?.amount || 0).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
+              </div>
+              {isDiffSignificant && (
+                <div className="text-warning animate-pulse">
+                  <AlertCircle className="h-5 w-5" />
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -340,6 +347,7 @@ export default function FinancePage() {
 
       <FundingStatus
         current={currentBalance}
+        checksum={lastVerification?.amount}
         goal={fundingGoal}
         initialTicketSales={settings?.expected_ticket_sales ?? 150}
         onTicketSalesChange={canEditTicketSales ? handleTicketSalesChange : undefined}

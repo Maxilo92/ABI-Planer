@@ -21,13 +21,16 @@ import {
   Clock,
   LayoutGrid,
   Tags,
-  Loader2
+  Loader2,
+  Calendar,
+  MapPin,
+  Ticket
 } from 'lucide-react'
 import { toast } from 'sonner'
 import Link from 'next/link'
 import { BoosterPackVisual } from '@/components/cards/BoosterPackVisual'
 import { getFunctions, httpsCallable } from 'firebase/functions'
-import { doc, getDoc } from 'firebase/firestore'
+import { doc, getDoc, collection, query, onSnapshot } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import { cn } from '@/lib/utils'
 import React, { useState, useEffect, useMemo, Suspense } from 'react'
@@ -37,20 +40,29 @@ import { Skeleton } from '@/components/ui/skeleton'
 
 type ShopItem = {
   id: string
-  category: 'sammelkarten' | 'extras' | 'merch' | 'notenpunkte'
+  category: 'sammelkarten' | 'extras' | 'merch' | 'tickets' | 'notenpunkte'
   name: string
   description: string
   price: string
   priceNum: number
   amount: number
   limit: number
-  color: 'blue' | 'purple' | 'amber' | 'emerald' | 'slate' | 'rose'
+  color: 'blue' | 'purple' | 'amber' | 'emerald' | 'slate' | 'rose' | 'indigo' | 'cyan'
   badge?: string
   isBooster?: boolean
   fanCardCount?: number
   isPlaceholder?: boolean
   requireAuth?: boolean
   supportBonus?: number
+  featured?: boolean
+  image?: string
+  variants?: string[]
+  externalUrl?: string
+  eventDetails?: {
+    date: string
+    location: string
+    time?: string
+  }
 }
 
 const SUPPORT_BONUS: Record<number, number> = {
@@ -63,120 +75,118 @@ const BASE_PACK_PRICE = 0.60
 
 const CATEGORIES = [
   { id: 'all', name: 'Alle Artikel', icon: LayoutGrid },
-  { id: 'sammelkarten', name: 'Sammelkarten', icon: Sparkles },
-  // { id: 'notenpunkte', name: 'Notenpunkte', icon: Zap },
+  { id: 'tickets', name: 'Tickets', icon: Ticket },
   { id: 'merch', name: 'Stufen-Merch', icon: ShoppingBag },
+  { id: 'sammelkarten', name: 'Sammelkarten', icon: Sparkles },
   { id: 'extras', name: 'Sonstiges', icon: Tags },
 ]
 
 // Preisstaffel: Je größer das Bundle, desto günstiger pro Karte
 const BUNDLE_DEFS = [
-  { amount: 1,  price: 0.60 },    // 0,60 €/Karte
-  { amount: 3,  price: 1.70 },   // 0,57 €/Karte
-  { amount: 5,  price: 2.70 },   // 0,54 €/Karte
-  { amount: 10, price: 5.20 },   // 0,52 €/Karte
-  { amount: 20, price: 10.00 },  // 0,50 €/Karte
-  { amount: 50, price: 23.00 },  // 0,46 €/Karte
-  { amount: 100, price: 44.00 }, // 0,44 €/Karte
+  { amount: 1,  price: 0.60, color: 'slate', badge: 'Einsteiger' },
+  { amount: 3,  price: 1.70, color: 'blue', badge: undefined },
+  { amount: 5,  price: 2.70, color: 'emerald', badge: undefined },
+  { amount: 10, price: 5.20, color: 'purple', badge: 'Beliebt' },
+  { amount: 20, price: 10.00, color: 'amber', badge: 'Top Deal' },
+  { amount: 50, price: 23.00, color: 'rose', badge: undefined },
+  { amount: 100, price: 44.00, color: 'rose', badge: 'Maximaler Support' },
 ]
 
-const ALL_ITEMS: ShopItem[] = [
-  ...BUNDLE_DEFS.map((def, idx) => {
-    const id = `booster-bundle-${def.amount}`;
-    // Farbverlauf von Einstiegs- zu Premium-Bundles.
-    const colors = ['slate', 'blue', 'emerald', 'purple', 'amber', 'rose', 'rose'];
-    const color = colors[idx % colors.length] as ShopItem['color'];
-    const badge = def.amount === 1 ? 'Einsteiger' : def.amount === 100 ? 'Maximaler Support' : def.amount >= 20 ? 'Top Deal' : def.amount >= 10 ? 'Beliebt' : undefined;
-    const supportBonus = SUPPORT_BONUS[def.amount];
-    
-    return {
-      id,
-      category: 'sammelkarten' as const,
-      name: `Booster-Bundle ${def.amount}`,
-      amount: def.amount,
-      fanCardCount: idx + 1,
-      limit: def.amount === 1 ? 20 : def.amount === 3 ? 10 : def.amount === 5 ? 5 : def.amount === 10 ? 3 : def.amount === 20 ? 2 : def.amount === 50 ? 1 : 1,
-      price: def.price.toLocaleString('de-DE', { minimumFractionDigits: 2 }) + ' €',
-      priceNum: def.price,
-      description: `${def.amount} Booster Packs (${def.amount * 3} Lehrerkarten).${supportBonus ? ` + ${supportBonus} GRATIS Support Booster!` : ''}`,
-      color,
-      badge,
-      isBooster: true,
-      requireAuth: true,
-      supportBonus
-    }
-  }),
-  // Spendenartikel wie gehabt:
+const BUILTIN_BOOSTERS: ShopItem[] = BUNDLE_DEFS.map((def, idx) => ({
+  id: `booster-bundle-${def.amount}`,
+  category: 'sammelkarten',
+  name: `Booster-Bundle ${def.amount}`,
+  amount: def.amount,
+  fanCardCount: idx + 1,
+  limit: def.amount === 1 ? 20 : def.amount === 3 ? 10 : def.amount === 5 ? 5 : 3,
+  price: def.price.toLocaleString('de-DE', { minimumFractionDigits: 2, style: 'currency', currency: 'EUR' }),
+  priceNum: def.price,
+  description: `${def.amount} Booster Packs (${def.amount * 3} Lehrerkarten).${SUPPORT_BONUS[def.amount] ? ` + ${SUPPORT_BONUS[def.amount]} GRATIS Support Booster!` : ''}`,
+  color: def.color as any,
+  badge: def.badge,
+  isBooster: true,
+  requireAuth: true,
+  supportBonus: SUPPORT_BONUS[def.amount],
+  featured: def.amount === 10
+}))
+
+const EXTERNAL_STORES: ShopItem[] = [
   {
-    id: 'soli-donation-small',
-    category: 'extras' as const,
-    name: 'Kleiner Beitrag',
+    id: 'printify-popup-store',
+    category: 'merch',
+    name: 'Offizieller Merch-Store',
+    description: 'Hoodies, Shirts & mehr über unseren Printify Pop-up Store.',
+    price: 'Extern',
+    priceNum: 0,
     amount: 1,
-    limit: 100,
-    price: '2,50 €',
-    priceNum: 2.50,
-    description: 'Unterstütze deine Stufe direkt mit einem kleinen Beitrag.',
+    limit: 999,
+    color: 'indigo',
+    badge: 'Printify',
+    externalUrl: 'https://printify.com', // Platzhalter URL
+    featured: true
+  },
+  {
+    id: 'pretix-ticket-shop',
+    category: 'tickets',
+    name: 'Event-Tickets',
+    description: 'Sichere dir deine Eintrittskarten für Abiball & Events via pretix.eu.',
+    price: 'Tickets',
+    priceNum: 0,
+    amount: 1,
+    limit: 999,
     color: 'emerald',
-    requireAuth: false
-  },
-  {
-    id: 'soli-donation-medium',
-    category: 'extras' as const,
-    name: 'Mittlerer Beitrag',
-    amount: 1,
-    limit: 100,
-    price: '5,00 €',
-    priceNum: 5.00,
-    description: 'Starke Unterstützung für eure Abikasse.',
-    color: 'rose',
-    requireAuth: false
-  },
-  {
-    id: 'soli-donation-large',
-    category: 'extras' as const,
-    name: 'Großer Beitrag',
-    amount: 1,
-    limit: 100,
-    price: '10,00 €',
-    priceNum: 10.00,
-    description: 'Unterstütze deine Stufe direkt mit einem großen Beitrag.',
-    color: 'emerald',
-    requireAuth: false
-  },
-  /* // NP Packs (Notenpunkte)
-  {
-    id: 'np-pack-100',
-    category: 'notenpunkte' as const,
-...
-    badge: 'Monatlich',
-    requireAuth: true,
-    isPlaceholder: false,
-  } */
+    badge: 'pretix.eu',
+    externalUrl: 'https://pretix.eu', // Platzhalter URL
+    featured: true
+  }
 ]
 
 function ShopContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { user, profile, loading: authLoading } = useAuth()
+  const [dbItems, setDbItems] = useState<ShopItem[]>([])
+  const [itemsLoading, setItemsLoading] = useState(true)
+
+  useEffect(() => {
+    const q = query(collection(db, 'shop_items'))
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      setDbItems(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ShopItem)))
+      setItemsLoading(false)
+    })
+    return () => unsubscribe()
+  }, [])
+
+  const allItems = useMemo(() => {
+    // Merge built-in boosters, external stores, and database items
+    const merged = [...BUILTIN_BOOSTERS, ...EXTERNAL_STORES]
+    dbItems.forEach(dbItem => {
+      const idx = merged.findIndex(m => m.id === dbItem.id)
+      if (idx > -1) merged[idx] = dbItem
+      else merged.push(dbItem)
+    })
+    return merged
+  }, [dbItems])
   
   const availableCategories = useMemo(() => {
     return CATEGORIES.filter(cat => {
       if (cat.id === 'all') return true
-      const itemsInCat = ALL_ITEMS.filter(item => item.category === cat.id as any)
+      const itemsInCat = allItems.filter(item => item.category === cat.id as any)
       const accessibleItems = user ? itemsInCat : itemsInCat.filter(i => !i.requireAuth)
       return accessibleItems.length > 0
     })
-  }, [user])
+  }, [user, allItems])
 
   const [activeCategory, setActiveCategory] = useState(searchParams.get('category') || 'all')
 
-  // Effect to handle category hiding if user logs out or requested cat is invalid for guest
   useEffect(() => {
     if (activeCategory !== 'all' && !availableCategories.find(c => c.id === activeCategory)) {
       setActiveCategory('all')
     }
   }, [availableCategories, activeCategory])
+
   const [isPurchasing, setIsPurchasing] = useState<string | null>(null)
+  const [selectedVariant, setSelectedVariant] = useState<Record<string, string>>({})
   const [successItem, setSuccessItem] = useState<{name: string, amount: number} | null>(null)
   const [confirmItem, setConfirmItem] = useState<ShopItem | null>(null)
   const [courses, setCourses] = useState<string[]>([])
@@ -206,7 +216,6 @@ function ShopContent() {
     loadCourses()
   }, [])
 
-  // Handle successful purchase return from Stripe
   useEffect(() => {
     if (searchParams.get('success') === 'true') {
       toast.success('Zahlung erfolgreich! Deine Artikel werden in Kürze freigeschaltet.')
@@ -218,16 +227,25 @@ function ShopContent() {
   }, [searchParams])
 
   const filteredItems = useMemo(() => {
-    let items = ALL_ITEMS
+    let items = [...allItems]
+    
+    if (!user) {
+      items.sort((a, b) => {
+        const order = { 'merch': 0, 'tickets': 1, 'extras': 2, 'sammelkarten': 3, 'notenpunkte': 4 }
+        return (order[a.category] || 99) - (order[b.category] || 99)
+      })
+    }
+
     if (activeCategory !== 'all') {
       items = items.filter(item => item.category === activeCategory)
     }
-    // Filter out items that require login if user is not authenticated
-    if (!user) {
-      items = items.filter(item => !item.requireAuth)
-    }
+    
     return items
-  }, [activeCategory, user])
+  }, [activeCategory, user, allItems])
+
+  const featuredItems = useMemo(() => {
+    return allItems.filter(item => item.featured)
+  }, [allItems])
 
   const now = new Date()
   const currentMonthStr = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`
@@ -241,6 +259,16 @@ function ShopContent() {
       return
     }
 
+    if (item.variants && !selectedVariant[item.id]) {
+      toast.error('Bitte wähle eine Variante (z.B. Größe) aus.')
+      return
+    }
+
+    if (item.externalUrl) {
+      window.open(item.externalUrl, '_blank')
+      return
+    }
+
     if (item.isPlaceholder) {
       toast.info('Dieser Artikel ist aktuell noch in Vorbereitung.')
       return
@@ -250,9 +278,14 @@ function ShopContent() {
     
     try {
       const functions = getFunctions(undefined, 'europe-west3')
-      const createSession = httpsCallable<{ itemId: string, selectedCourse?: string, donorName?: string }, { url: string }>(functions, 'createStripeCheckoutSession')
+      const createSession = httpsCallable<{ itemId: string, selectedCourse?: string, donorName?: string, variant?: string }, { url: string }>(functions, 'createStripeCheckoutSession')
       
-      const result = await createSession({ itemId: item.id, selectedCourse, donorName })
+      const result = await createSession({ 
+        itemId: item.id, 
+        selectedCourse, 
+        donorName,
+        variant: selectedVariant[item.id]
+      })
       
       if (result.data.url) {
         window.location.href = result.data.url
@@ -266,7 +299,7 @@ function ShopContent() {
     }
   }
 
-  if (authLoading) {
+  if (authLoading || itemsLoading) {
     return (
       <div className="container mx-auto max-w-6xl px-4 py-8 space-y-12">
         <div className="space-y-4 text-center">
@@ -286,109 +319,75 @@ function ShopContent() {
     )
   }
 
-
   return (
     <div className="min-h-screen bg-background text-foreground pb-20">
 
-      <main className="container mx-auto max-w-6xl px-4 py-8 space-y-12">
-        {/* Hero Section */}
-        <section className="text-center space-y-3 sm:space-y-4">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-[10px] sm:text-xs font-black uppercase tracking-widest">
-            <Heart className="w-3 h-3 fill-current" />
-            Gewinne für eure Abikasse
+      <main className="container mx-auto max-w-6xl px-4 py-12 sm:py-20 space-y-16">
+        {/* Minimalist Hero Section */}
+        <section className="space-y-6">
+          <div className="flex flex-col items-center text-center space-y-4">
+            <h1 className="text-5xl sm:text-7xl md:text-8xl font-black tracking-tighter uppercase leading-[0.8]">
+              ABI<span className="text-primary">SHOP</span>
+            </h1>
+            <p className="text-muted-foreground max-w-lg mx-auto text-base sm:text-lg font-medium">              Offizielle Kollektion & Events der Stufe ABI 2027. <br />
+              <span className="text-foreground font-bold italic">90% Gewinnanteil fließen direkt in eure Abikasse.</span>
+            </p>
           </div>
-          <h2 className="text-4xl sm:text-5xl md:text-6xl font-black tracking-tighter italic">Alles für die Stufe</h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto leading-relaxed text-base sm:text-lg md:text-xl font-medium px-2">
-            Entdecke Booster-Packs, exklusiven Merch und mehr. 
-            <span className="text-foreground block mt-1 sm:mt-2">90% der Gewinne fließen direkt in eure Abikasse!</span>
-          </p>
         </section>
 
-        {/* NP Balance Widget
-        {user && (
-          <div className="bg-gradient-to-r from-blue-500/10 to-purple-500/10 border border-blue-500/30 rounded-lg p-4 sm:p-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="p-2 sm:p-3 bg-blue-500/20 rounded-lg">
-                  <Zap className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500" />
-                </div>
-                <div>
-                  <p className="text-[10px] sm:text-xs uppercase font-black tracking-widest text-muted-foreground">Deine Notenpunkte</p>
-                  <p className="text-xl sm:text-2xl font-black">{profile?.currencies?.notepunkte || 0} NP</p>
-                </div>
-              </div>
-              <Link href="/battle-pass" className="text-blue-500 hover:text-blue-400 font-bold text-xs sm:text-sm">
-                Zum Battle Pass →
-              </Link>
-            </div>
-          </div>
-        )} */}
-
-        {/* Categories */}
-        <div className="flex flex-wrap justify-center gap-1.5 sm:gap-2">
+        {/* Categories (Clean Tabs) */}
+        <div className="flex flex-wrap justify-center gap-4 sm:gap-8 border-b border-border pb-4">
           {availableCategories.map((cat) => (
             <button
               key={cat.id}
               onClick={() => setActiveCategory(cat.id)}
               className={cn(
-                "flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-[10px] sm:text-xs font-black uppercase tracking-wider transition-all border-2",
+                "flex items-center gap-2 px-1 py-2 text-xs font-black uppercase tracking-widest transition-all relative",
                 activeCategory === cat.id 
-                  ? "bg-primary border-primary text-primary-foreground shadow-lg shadow-primary/20" 
-                  : "bg-muted/50 border-transparent text-muted-foreground hover:bg-muted hover:border-border"
+                  ? "text-primary after:absolute after:bottom-[-1px] after:left-0 after:right-0 after:h-0.5 after:bg-primary" 
+                  : "text-muted-foreground hover:text-foreground"
               )}
             >
-              <cat.icon className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+              <cat.icon className="w-3.5 h-3.5" />
               {cat.name}
             </button>
           ))}
         </div>
 
-        {/* Shop Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6 lg:gap-8">
+        {/* Shop Grid (Minimalist Cards) */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           <AnimatePresence mode="popLayout">
             {filteredItems.map((item) => {
               const currentPurchases = shopStats[item.id] || 0
               const isLimitReached = !item.isPlaceholder && currentPurchases >= item.limit
               const fullPrice = item.amount * BASE_PACK_PRICE
-              const savings = fullPrice - item.priceNum
+              const savings = fullPrice - (item.priceNum || 0)
               const hasDiscount = item.isBooster && savings > 0.001
 
               return (
                 <motion.div
                   layout
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.9 }}
+                  id={`item-${item.id}`}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
                   key={item.id}
                   className={cn(
-                    "relative flex flex-col p-1 rounded-[2.5rem] transition-all duration-500 bg-card border border-border overflow-hidden shadow-2xl",
-                    item.badge && !isLimitReached && "ring-2 ring-primary/20 ring-offset-4 ring-offset-background",
-                    isLimitReached && "opacity-75 grayscale-[0.5]"
+                    "group flex flex-col space-y-4",
+                    isLimitReached && "opacity-60 grayscale-[0.5]"
                   )}
                 >
-                  <div className="absolute inset-0 bg-gradient-to-tr from-white/5 via-transparent to-transparent pointer-events-none" />
+                  {/* Image/Visual Area */}
+                  <div className="relative aspect-[4/5] rounded-2xl bg-muted/30 border border-border overflow-hidden flex items-center justify-center transition-all group-hover:border-primary/20 group-hover:shadow-xl group-hover:shadow-primary/5">
+                    {item.badge && !isLimitReached && (
+                      <div className="absolute top-4 right-4 z-10">
+                        <Badge className="bg-primary text-primary-foreground font-black uppercase tracking-tighter text-[9px]">
+                          {item.badge}
+                        </Badge>
+                      </div>
+                    )}
 
-                  {hasDiscount && !isLimitReached && (
-                    <div className="absolute top-4 sm:top-6 left-4 sm:left-6 z-20">
-                      <Badge className="bg-success text-success-foreground px-2.5 sm:px-3 py-1 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-tighter shadow-lg border-none">
-                        -{Math.round((1 - item.priceNum! / fullPrice) * 100)}% Rabatt
-                      </Badge>
-                    </div>
-                  )}
-
-                  {(item.badge || isLimitReached) && (
-                    <div className="absolute top-4 sm:top-6 right-4 sm:right-6 z-20">
-                      <Badge className={cn(
-                        "px-3 sm:px-4 py-1 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-tighter shadow-lg border-none",
-                        isLimitReached ? "bg-destructive text-destructive-foreground" : "bg-primary text-primary-foreground"
-                      )}>
-                        {isLimitReached ? 'Limit erreicht' : item.badge}
-                      </Badge>
-                    </div>
-                  )}
-
-                  <div className="relative px-5 sm:px-6 md:px-8 pb-6 md:pb-8 pt-12 sm:pt-16 flex-1 flex flex-col space-y-6 sm:space-y-8">
-                    <div className="py-4 min-h-[160px] sm:min-h-[180px] flex items-center justify-center rounded-[1.75rem] border border-border/70 bg-muted/20 shadow-inner">
+                    <div className="transform group-hover:scale-105 transition-transform duration-500">
                        {item.isBooster ? (
                          <BoosterPackVisual
                            amount={item.amount}
@@ -398,142 +397,101 @@ function ShopContent() {
                            fanCardCount={item.fanCardCount}
                            density={item.amount >= 50 ? 'dense' : 'normal'}
                          />
-                       ) : item.category === 'notenpunkte' ? (
-                         <div className="relative flex flex-col items-center justify-center gap-4">
-                           <div className="relative w-28 h-28 flex items-center justify-center">
-                             <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/30 to-orange-500/30 rounded-full blur-2xl animate-pulse" />
-                             <div className={cn(
-                               "w-24 h-24 rounded-3xl flex items-center justify-center border-4 shadow-2xl relative bg-gradient-to-br",
-                               item.color === 'blue' ? "border-blue-500 from-blue-500/20 to-blue-600/20" :
-                               item.color === 'purple' ? "border-purple-500 from-purple-500/20 to-purple-600/20" :
-                               item.color === 'amber' ? "border-amber-500 from-amber-500/20 to-amber-600/20" :
-                               "border-rose-500 from-rose-500/20 to-rose-600/20"
-                             )}>
-                               <Zap className={cn(
-                                 "w-12 h-12 fill-current",
-                                 item.color === 'blue' ? "text-blue-500" :
-                                 item.color === 'purple' ? "text-purple-500" :
-                                 item.color === 'amber' ? "text-amber-500" :
-                                 "text-rose-500"
-                               )} />
-                             </div>
-                             <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 text-[10px] font-black text-muted-foreground uppercase tracking-widest px-2 py-0.5 bg-muted/60 rounded-full border border-border">
-                               {item.amount} NP
-                             </div>
-                           </div>
-                         </div>
-                       ) : item.id === 'subscription-monthly' ? (
-                         <div className="relative flex flex-col items-center justify-center gap-2">
-                           <div className="relative w-28 h-28 flex items-center justify-center">
-                             <div className="absolute inset-0 bg-gradient-to-br from-purple-400/30 to-blue-500/30 rounded-full blur-2xl animate-pulse" />
-                             <div className="w-24 h-24 rounded-3xl flex items-center justify-center border-4 shadow-2xl rotate-2 bg-gradient-to-br border-slate-500 from-slate-500/20 to-slate-600/20">
-                               <Trophy className="w-12 h-12 text-slate-500" />
-                             </div>
-                           </div>
-                         </div>
+                       ) : item.category === 'merch' ? (
+                          <div className="relative">
+                            <ShoppingBag className={cn("w-28 h-28 opacity-20", `text-${item.color}-500`)} />
+                            <div className="absolute inset-0 flex items-center justify-center">
+                               <Package className="w-12 h-12 text-foreground" />
+                            </div>
+                          </div>
+                       ) : item.category === 'tickets' ? (
+                          <div className="relative flex flex-col items-center">
+                            <Ticket className="w-32 h-32 text-primary opacity-20 rotate-12" />
+                            <div className="absolute inset-0 flex items-center justify-center">
+                               <div className="bg-primary text-primary-foreground px-4 py-2 rounded-lg font-black tracking-widest uppercase rotate-[-10deg] shadow-2xl">
+                                  TICKET
+                               </div>
+                            </div>
+                          </div>
                        ) : (
-                         <div className={cn(
-                           "w-32 h-32 rounded-3xl flex items-center justify-center border-4 rotate-3 shadow-2xl relative",
-                           item.color === 'emerald' ? "bg-emerald-500/20 border-emerald-500 text-emerald-500" : "bg-rose-500/20 border-rose-500 text-rose-500"
-                         )}>
-                            <div className="absolute inset-0 bg-white/10 rounded-[inherit] blur-xl opacity-0 hover:opacity-100 transition-opacity" />
-                            {item.category === 'merch' ? <ShoppingBag className="w-16 h-16" /> : <Heart className="w-16 h-16 fill-current" />}
-                         </div>
+                         <Heart className="w-20 h-20 text-primary fill-current opacity-20" />
                        )}
                     </div>
 
-                    <div className="space-y-2 sm:space-y-3 text-center">
-                      <h3 className="text-2xl sm:text-3xl font-black tracking-tight">{item.name}</h3>
-                      <div className="flex flex-col items-center">
-                        <p className="text-xs sm:text-sm text-muted-foreground font-bold uppercase tracking-widest">{item.description}</p>
-                        {item.supportBonus && (
-                          <div className="mt-3 inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500 text-white text-[10px] font-black uppercase tracking-[0.1em] shadow-lg shadow-emerald-500/20 border-2 border-emerald-400 animate-pulse">
-                            <Zap className="w-3.5 h-3.5 fill-current" />
-                            + {item.supportBonus} Support Booster Gratis
-                          </div>
-                        )}
-                        {hasDiscount && (
-                          <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-success/10 border border-success/20 text-success text-[10px] font-black uppercase tracking-wider">
-                            <Sparkles className="w-3 h-3 fill-current" />
-                            Spare {savings.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
-                          </div>
-                        )}
-                        <div className={cn("h-1 w-12 rounded-full mt-2", `bg-${item.color}-500/20`)} />
-                      </div>
-                    </div>
+                    {/* Quick Info Overlay */}
+                    {!isLimitReached && item.variants && !item.externalUrl && (
+                       <div className="absolute bottom-4 left-4 right-4 translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
+                         <div className="bg-background/80 backdrop-blur-md p-2 rounded-xl border border-border flex justify-center gap-1">
+                            {item.variants.map(v => (
+                              <button
+                                key={v}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedVariant(prev => ({ ...prev, [item.id]: v }));
+                                }}
+                                className={cn(
+                                  "w-8 h-8 rounded-md text-[10px] font-bold transition-colors",
+                                  selectedVariant[item.id] === v ? "bg-primary text-primary-foreground" : "hover:bg-muted"
+                                )}
+                              >
+                                {v}
+                              </button>
+                            ))}
+                         </div>
+                       </div>
+                    )}
+                  </div>
 
-                    {!item.isPlaceholder && (
-                      <div className="bg-muted/30 rounded-3xl p-4 flex flex-col items-center justify-center space-y-1 border border-border/50 shadow-inner mt-auto">
-                        <div className="flex items-center gap-2">
-                           <Clock className="w-3 h-3 text-muted-foreground" />
-                           <span className="text-[10px] text-muted-foreground font-black uppercase tracking-[0.1em]">
-                             Verfügbar: {item.limit - currentPurchases} / {item.limit}
-                           </span>
-                        </div>
-                      </div>
+                  {/* Info Area */}
+                  <div className="space-y-1 px-1">
+                    <div className="flex items-start justify-between gap-4">
+                      <h3 className="text-lg font-black tracking-tight leading-tight">{item.name}</h3>
+                      <span className="text-lg font-black shrink-0">{item.price}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground font-medium line-clamp-1">{item.description}</p>
+                    
+                    {item.variants && !item.externalUrl && (
+                       <div className="pt-1">
+                         <p className="text-[9px] font-black uppercase text-primary tracking-widest">
+                           {selectedVariant[item.id] ? `Größe: ${selectedVariant[item.id]}` : "Größe wählen (Hover)"}
+                         </p>
+                       </div>
                     )}
                     
-                    {item.isPlaceholder && (
-                      <div className="bg-muted/30 rounded-3xl p-4 flex flex-col items-center justify-center space-y-1 border border-border/50 shadow-inner mt-auto">
-                        <span className="text-[10px] text-muted-foreground font-black uppercase tracking-[0.1em]">Coming Soon</span>
+                    {item.eventDetails && (
+                      <div className="flex gap-3 pt-1">
+                        <span className="text-[10px] font-bold text-primary uppercase flex items-center gap-1">
+                          <Calendar className="w-3 h-3" /> {item.eventDetails.date}
+                        </span>
+                        <span className="text-[10px] font-bold text-muted-foreground uppercase flex items-center gap-1">
+                          <MapPin className="w-3 h-3" /> {item.eventDetails.location}
+                        </span>
                       </div>
                     )}
                   </div>
 
-                  <div className="p-5 sm:p-6 md:p-8 pt-0">
-                    <Button
-                      className={cn(
-                        "w-full font-black h-16 sm:h-20 rounded-2xl shadow-xl transition-all duration-300 relative overflow-hidden text-lg sm:text-xl active:scale-[0.98]",
-                        isLimitReached ? "bg-muted text-muted-foreground cursor-not-allowed" : "bg-primary text-primary-foreground hover:bg-primary/90 hover:shadow-primary/20"
-                      )}
-                      disabled={isPurchasing !== null || isLimitReached}
-                      onClick={() => {
-                        if (item.requireAuth && !user) {
-                          toast.error('Anmeldung erforderlich', {
-                            description: 'Booster-Packs können nur mit einem registrierten Lernsax-Konto gesammelt werden.'
-                          })
-                          return
-                        }
-                        if (item.id === 'subscription-monthly') {
-                          router.push('/shop/abo')
-                          return
-                        }
-                        if (isDonationItem(item)) {
-                          setSelectedDonationCourse('')
-                          setDonorDisplayName('')
-                          setConfirmItem(item)
-                          return
-                        }
-
-                        handleStripeCheckout(item)
-                      }}
-                    >
-                      {isPurchasing === item.id ? (
-                        <div className="flex items-center gap-3">
-                          <div className="w-6 h-6 border-3 border-current border-t-transparent rounded-full animate-spin" />
-                          Verarbeite...
-                        </div>
-                      ) : isLimitReached ? (
-                        <span>Limit erreicht</span>
-                      ) : (
-                        <div className="flex flex-col items-center justify-center">
-                          <div className="flex items-center justify-center gap-2 sm:gap-4">
-                            {hasDiscount && (
-                              <span className="text-xs sm:text-sm line-through opacity-50 decoration-2 font-semibold">
-                                {fullPrice.toLocaleString('de-DE', { minimumFractionDigits: 2 })}€
-                              </span>
-                            )}
-                            <span className="text-xl sm:text-2xl tracking-tighter">{item.price}</span>
-                          </div>
-                          {item.requireAuth && !user && (
-                            <span className="text-[9px] uppercase tracking-widest opacity-70 mt-1 flex items-center gap-1 font-black">
-                              <Lock className="w-2.5 h-2.5" /> Login erforderlich
-                            </span>
-                          )}
-                        </div>
-                      )}
-                    </Button>
-                  </div>
+                  <Button
+                    variant={isLimitReached ? "secondary" : "default"}
+                    className="w-full h-12 rounded-xl font-black uppercase tracking-widest text-xs"
+                    disabled={isPurchasing !== null || isLimitReached}
+                    onClick={() => {
+                      if (item.requireAuth && !user) {
+                        toast.error('Anmeldung erforderlich')
+                        return
+                      }
+                      if (!item.externalUrl && item.variants && !selectedVariant[item.id]) {
+                        toast.error('Bitte Größe wählen')
+                        return
+                      }
+                      if (!item.externalUrl && isDonationItem(item)) {
+                        setConfirmItem(item)
+                        return
+                      }
+                      handleStripeCheckout(item)
+                    }}
+                  >
+                    {isPurchasing === item.id ? "..." : isLimitReached ? "Ausverkauft" : item.externalUrl ? "Zum Shop" : "In den Warenkorb"}
+                  </Button>
                 </motion.div>
               )
             })}

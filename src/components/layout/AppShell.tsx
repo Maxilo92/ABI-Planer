@@ -135,6 +135,7 @@ export function AppShell({ children }: AppShellProps) {
   if (isSupportRoute) {
     return (
       <div className="min-h-screen bg-background flex flex-col">
+        <ThemeSync />
         <SupportHeader />
         <main className="flex-1">
           {children}
@@ -148,6 +149,7 @@ export function AppShell({ children }: AppShellProps) {
   if (isPublicLandingRoute) {
     return (
       <div className="min-h-screen bg-background">
+        <ThemeSync />
         <LandingHeader isAuthenticated={!!user} />
         <main className="min-h-screen">{children}</main>
         <Footer />
@@ -159,6 +161,7 @@ export function AppShell({ children }: AppShellProps) {
   if (isMaintenancePage || (maintenance?.active && isNewsDetail)) {
     return (
       <div className="min-h-screen bg-background pb-safe">
+        <ThemeSync />
         <main>{children}</main>
       </div>
     )
@@ -167,6 +170,7 @@ export function AppShell({ children }: AppShellProps) {
   if (isAuthRoute) {
     return (
       <div className="min-h-screen bg-background pb-safe">
+        <ThemeSync />
         {showMaintenanceBanner && maintenance?.start && (
           <MaintenanceBanner 
             startTime={maintenance.start} 

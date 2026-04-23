@@ -23,7 +23,13 @@ interface AdminSystemContextType {
   aiSummary: string | null
   aiSummaryLoading: boolean
   aiSummaryError: string | null
-  aiSummaryMeta: { generatedAt?: string; model?: string } | null
+  aiSummaryMeta: { generatedAt?: string; model?: string; mode?: 'briefing' | 'full' } | null
+  aiProgress: number
+  aiStep: string
+  dailyBriefing: string | null
+  dailyBriefingLoading: boolean
+  dailyBriefingError: string | null
+  dailyBriefingMeta: { generatedAt?: string; model?: string; isCached?: boolean } | null
   loadingData: boolean
   savingMaintenance: boolean
   resettingSessionStats: boolean
@@ -31,8 +37,11 @@ interface AdminSystemContextType {
   loadingCardsByUser: boolean
   isMaintenanceActive: boolean
   isAdmin: boolean
+  analyticsWindowDays: number
+  setAnalyticsWindowDays: (days: number) => void
   loadData: () => Promise<void>
-  generateAISummary: () => Promise<void>
+  generateAISummary: (mode?: 'briefing' | 'full', forceRefresh?: boolean) => Promise<void>
+  setAiSummary: (value: string | null) => void
   updateFeatureStatus: (key: keyof SystemFeatures, status: FeatureStatus) => Promise<void>
   handleSaveMaintenance: (data: any) => Promise<void>
   resetSessionStatistics: () => Promise<void>
@@ -47,10 +56,20 @@ export function AdminSystemProvider({ children }: { children: React.ReactNode })
   const [maintenance, setMaintenance] = useState<any>(null)
   const [stats, setStats] = useState<GlobalStats | null>(null)
   const [analytics, setAnalytics] = useState<SystemAnalytics | null>(null)
+  const [analyticsWindowDays, setAnalyticsWindowDays] = useState(7)
   const [aiSummary, setAiSummary] = useState<string | null>(null)
   const [aiSummaryLoading, setAiSummaryLoading] = useState(false)
   const [aiSummaryError, setAiSummaryError] = useState<string | null>(null)
-  const [aiSummaryMeta, setAiSummaryMeta] = useState<{ generatedAt?: string; model?: string } | null>(null)
+  const [aiSummaryMeta, setAiSummaryMeta] = useState<{ generatedAt?: string; model?: string; mode?: 'briefing' | 'full' } | null>(null)
+  const [aiProgress, setAiProgress] = useState(0)
+  const [aiStep, setAiStep] = useState('')
+  
+  const [dailyBriefing, setDailyBriefing] = useState<string | null>(null)
+  const [dailyBriefingLoading, setDailyBriefingLoading] = useState(false)
+  const [dailyBriefingError, setDailyBriefingError] = useState<string | null>(null)
+  const [dailyBriefingMeta, setDailyBriefingMeta] = useState<{ generatedAt?: string; model?: string; isCached?: boolean } | null>(null)
+  const [hasTriggeredAutoBriefing, setHasTriggeredAutoBriefing] = useState(false)
+
   const [loadingData, setLoadingData] = useState(true)
   const [savingMaintenance, setSavingMaintenance] = useState(false)
   const [resettingSessionStats, setResettingSessionStats] = useState(false)
@@ -138,10 +157,18 @@ export function AdminSystemProvider({ children }: { children: React.ReactNode })
         actions: Number(item.actions || 0),
         active_users: Number(item.active_users || 0),
       })),
-      recent_actions: (analytics?.recent_actions || []).slice(0, 20).map((item) => ({
+      registration_timeline: (analytics?.registration_timeline || []).slice(0, 14).map((item) => ({
+        date: String(item.date || ''),
+        label: String(item.label || ''),
+        count: Number(item.count || 0),
+        cumulative: Number(item.cumulative || 0),
+      })),
+      recent_actions: (analytics?.recent_actions || []).slice(0, 40).map((item) => ({
         timestamp: String(item.timestamp || ''),
         action: String(item.action || ''),
         user_id: String(item.user_id || ''),
+        user_name: String(item.user_name || ''),
+        user_role: String(item.user_role || 'user'),
         section: String(item.section || ''),
         details: String(item.details || '').slice(0, 300),
       })),
@@ -152,6 +179,7 @@ export function AdminSystemProvider({ children }: { children: React.ReactNode })
       analytics: safeAnalytics,
       cardsByUser: cardsByUser.slice(0, 12).map((entry) => ({
         value: Number(entry.value || 0),
+        label: String(entry.label || '')
       })),
     }
   }, [stats, analytics, cardsByUser])
@@ -194,7 +222,51 @@ export function AdminSystemProvider({ children }: { children: React.ReactNode })
       limit(2500)
     )
 
-    const logsSnap = await getDocs(logsQuery)
+    const [logsSnap, profilesSnap] = await Promise.all([
+      getDocs(logsQuery),
+      getDocs(collection(db, 'profiles'))
+    ])
+
+    const profiles = profilesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })) as any[]
+    const registrationTimelineMap = new Map<string, number>()
+    
+    profiles.forEach(p => {
+      const createdAtValue = p.created_at || p.timestamp
+      let createdAt: Date | null = null
+
+      if (createdAtValue instanceof Timestamp) {
+        createdAt = createdAtValue.toDate()
+      } else if (createdAtValue instanceof Date) {
+        createdAt = createdAtValue
+      } else if (typeof createdAtValue === 'string') {
+        const d = new Date(createdAtValue)
+        if (!isNaN(d.getTime())) createdAt = d
+      } else if (createdAtValue && typeof createdAtValue === 'object' && 'seconds' in createdAtValue) {
+        createdAt = new Date((createdAtValue as any).seconds * 1000)
+      }
+      
+      if (createdAt && !isNaN(createdAt.getTime())) {
+        const dayKey = createdAt.toISOString().slice(0, 10)
+        registrationTimelineMap.set(dayKey, (registrationTimelineMap.get(dayKey) || 0) + 1)
+      }
+    })
+
+    const allRegistrationDays = Array.from(registrationTimelineMap.keys()).sort()
+    let cumulative = 0
+    const registrationTimeline = allRegistrationDays.map(date => {
+      const count = registrationTimelineMap.get(date) || 0
+      cumulative += count
+      const d = new Date(date)
+      return {
+        date,
+        label: d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' }),
+        count,
+        cumulative
+      }
+    }).filter(point => {
+      const d = new Date(point.date)
+      return d >= since
+    })
 
     type ClientLog = {
       id: string
@@ -227,7 +299,7 @@ export function AdminSystemProvider({ children }: { children: React.ReactNode })
     const sectionUsage = new Map<string, number>()
     const dayUsage = new Map<string, { label: string; actions: number; users: Set<string> }>()
     const hourUsage = new Map<number, { hour: number; actions: number; users: Set<string> }>()
-    const userActionCounts = new Map<string, { id: string; name: string | null; count: number }>()
+    const userActionCounts = new Map<string, { id: string; name: string | null; count: number; role?: string }>()
 
     logs.forEach((log) => {
       actionUsage.set(log.action, (actionUsage.get(log.action) || 0) + 1)
@@ -254,6 +326,11 @@ export function AdminSystemProvider({ children }: { children: React.ReactNode })
         const existingUser = userActionCounts.get(log.user_id) || { id: log.user_id, name: log.user_name, count: 0 }
         existingUser.count += 1
         if (log.user_name && !existingUser.name) existingUser.name = log.user_name
+        
+        // Find role from profiles
+        const profile = profiles.find(p => p.id === log.user_id)
+        if (profile?.role) existingUser.role = profile.role
+        
         userActionCounts.set(log.user_id, existingUser)
       }
     })
@@ -297,16 +374,20 @@ export function AdminSystemProvider({ children }: { children: React.ReactNode })
       }))
 
     const recentActions = logs
-      .slice(0, 12)
-      .map((log) => ({
-        id: log.id,
-        timestamp: log.timestamp.toISOString(),
-        action: log.action,
-        user_id: log.user_id,
-        user_name: log.user_name,
-        section: inferSectionFromAction(log.action),
-        details: typeof log.details === 'string' ? log.details : JSON.stringify(log.details || {}),
-      }))
+      .slice(0, 40)
+      .map((log) => {
+        const role = userActionCounts.get(log.user_id)?.role || 'user'
+        return {
+          id: log.id,
+          timestamp: log.timestamp.toISOString(),
+          action: log.action,
+          user_id: log.user_id,
+          user_name: log.user_name,
+          user_role: role,
+          section: inferSectionFromAction(log.action),
+          details: typeof log.details === 'string' ? log.details : JSON.stringify(log.details || {}),
+        }
+      })
 
     return {
       ...currentAnalytics,
@@ -316,6 +397,7 @@ export function AdminSystemProvider({ children }: { children: React.ReactNode })
       top_actions: topActions,
       section_usage: sectionStats,
       activity_timeline: activityTimeline,
+      registration_timeline: registrationTimeline,
       recent_actions: recentActions,
       activity_by_hour: activityByHour,
       top_active_users: topActiveUsers,
@@ -325,7 +407,7 @@ export function AdminSystemProvider({ children }: { children: React.ReactNode })
   const enrichAnalyticsFromFirestoreInBackground = useCallback(async (baseAnalytics: SystemAnalytics) => {
     try {
       const rebuiltAnalytics = await buildClientAnalyticsFromFirestoreLogs(baseAnalytics?.window_days || 7, baseAnalytics)
-      if (rebuiltAnalytics.total_log_entries > 0) {
+      if (rebuiltAnalytics.total_log_entries > 0 || (rebuiltAnalytics.registration_timeline && rebuiltAnalytics.registration_timeline.length > 0)) {
         setAnalytics(rebuiltAnalytics)
       }
     } catch {
@@ -354,41 +436,91 @@ export function AdminSystemProvider({ children }: { children: React.ReactNode })
     return total
   }, [])
 
-  const loadCardsByUserInBackground = useCallback(async () => {
+  const enrichStatsFromFirestoreInBackground = useCallback(async (currentStats: GlobalStats | null) => {
     setLoadingCardsByUser(true)
     try {
-      const inventoriesSnap = await getDocs(collection(db, 'user_teachers'))
-      const totals = inventoriesSnap.docs
-        .map((item) => {
-          const totalCards = countCardsInInventoryDoc(item.data() as Record<string, unknown>)
-          return {
-            userId: item.id,
-            totalCards,
+      const [inventoriesSnap, sammelkartenSettingsSnap] = await Promise.all([
+        getDocs(collection(db, 'user_teachers')),
+        getDoc(doc(db, 'settings', 'sammelkarten'))
+      ])
+
+      const settings = sammelkartenSettingsSnap.data() || {}
+      const lootTeachers = settings.loot_teachers || []
+      const teacherRarityMap = new Map<string, string>(
+        lootTeachers.map((t: any) => [t.id, t.rarity])
+      )
+
+      let totalCardsCount = 0
+      const rarityDistribution: Record<string, number> = {
+        common: 0, rare: 0, epic: 0, mythic: 0, legendary: 0, iconic: 0
+      }
+
+      const userTotals: Array<{ userId: string; totalCards: number }> = []
+
+      inventoriesSnap.docs.forEach((doc) => {
+        const inv = doc.data()
+        let userTotal = 0
+        Object.entries(inv).forEach(([teacherId, card]: [string, any]) => {
+          if (!card || typeof card !== 'object' || teacherId === 'updated_at') return
+          
+          const count = Number(card.count || 0)
+          if (count <= 0) return
+
+          userTotal += count
+          totalCardsCount += count
+
+          const rarity = teacherRarityMap.get(teacherId) || card.rarity || 'unknown'
+          if (rarity !== 'unknown') {
+            const normalizedRarity = rarity.toLowerCase()
+            rarityDistribution[normalizedRarity] = (rarityDistribution[normalizedRarity] || 0) + count
           }
         })
-        .filter((entry) => entry.totalCards > 0)
-        .sort((left, right) => right.totalCards - left.totalCards)
+
+        if (userTotal > 0) {
+          userTotals.push({ userId: doc.id, totalCards: userTotal })
+        }
+      })
+
+      // Update Global Stats
+      setStats(prev => {
+        const base = prev || {
+          online_users_count: 0,
+          total_users: 0,
+          total_cards_count: 0,
+          active_trades_count: 0,
+          completed_trades_count: 0,
+        }
+        return {
+          ...base,
+          total_cards_count: totalCardsCount,
+          rarity_distribution: rarityDistribution
+        }
+      })
+
+      // Update Top Collectors
+      const topTotals = userTotals
+        .sort((a, b) => b.totalCards - a.totalCards)
         .slice(0, 12)
 
       const profileEntries = await Promise.all(
-        totals.map(async (entry) => {
+        topTotals.map(async (entry) => {
           const profileSnap = await getDoc(doc(db, 'profiles', entry.userId))
           const profileData = profileSnap.exists() ? (profileSnap.data() as Record<string, unknown>) : null
           const fullName = typeof profileData?.full_name === 'string' ? profileData.full_name : null
           const email = typeof profileData?.email === 'string' ? profileData.email : null
           return {
-            label: fullName || email || entry.userId,
+            label: fullName || email || entry.userId.slice(0, 8),
             value: entry.totalCards,
           }
         })
       )
       setCardsByUser(profileEntries)
-    } catch {
-      setCardsByUser([])
+    } catch (error) {
+      console.error('Error enriching stats from Firestore:', error)
     } finally {
       setLoadingCardsByUser(false)
     }
-  }, [countCardsInInventoryDoc])
+  }, [])
 
   const buildFallbackAnalytics = useCallback((): SystemAnalytics => ({
     window_days: 7,
@@ -403,8 +535,121 @@ export function AdminSystemProvider({ children }: { children: React.ReactNode })
     average_session_minutes: 0,
   }), [])
 
-  const loadData = useCallback(async () => {
+  const generateAISummary = async (mode: 'briefing' | 'full' = 'full', forceRefresh: boolean = false) => {
+    if (!user) {
+      toast.error('Nicht angemeldet.')
+      return
+    }
+    if (!stats || !analytics) {
+      toast.error('Bitte zuerst Systemdaten laden.')
+      return
+    }
+
+    if (mode === 'briefing') {
+      setDailyBriefingLoading(true)
+      setDailyBriefingError(null)
+    } else {
+      setAiSummaryLoading(true)
+      setAiSummaryError(null)
+      setAiProgress(5)
+      setAiStep('Initialisiere Analyse...')
+    }
+
+    // Progress simulation timer
+    let progressTimer: any
+    if (mode === 'full') {
+      const steps = [
+        { p: 15, s: 'Scanne Log-Einträge...' },
+        { p: 30, s: 'Analysiere Nutzerwachstum...' },
+        { p: 45, s: 'Berechne Engagement-Raten...' },
+        { p: 60, s: 'Identifiziere Modul-Trends...' },
+        { p: 80, s: 'Formuliere Empfehlungen...' },
+        { p: 95, s: 'Finalisiere Bericht...' }
+      ]
+      let currentStep = 0
+      progressTimer = setInterval(() => {
+        if (currentStep < steps.length) {
+          setAiProgress(steps[currentStep].p)
+          setAiStep(steps[currentStep].s)
+          currentStep++
+        } else {
+          clearInterval(progressTimer)
+        }
+      }, 1500)
+    }
+
+    try {
+      const idToken = await user.getIdToken()
+      const response = await postWithResilientFallback(
+        ['/api/admin/system/ai-summary', '/api/admin/system/ai-summary'],
+        {
+          Authorization: `Bearer ${idToken}`,
+          'Content-Type': 'application/json',
+        },
+        {
+          ...buildSummaryPayload(),
+          mode,
+          forceRefresh
+        }
+      )
+      if (!response) {
+        throw new Error('KI-Zusammenfassung API nicht erreichbar.')
+      }
+
+      if (progressTimer) clearInterval(progressTimer)
+      if (mode === 'full') setAiProgress(100)
+
+      const payload = await response.json().catch(() => null)
+      if (!response.ok || !payload?.ok) {
+        throw new Error(
+          typeof payload?.error === 'string' && payload.error
+            ? payload.error
+            : 'KI-Zusammenfassung konnte nicht erstellt werden.'
+        )
+      }
+      const summaryText = typeof payload.summary === 'string' ? payload.summary.trim() : ''
+      if (!summaryText) {
+        throw new Error('Leere KI-Antwort erhalten.')
+      }
+
+      if (mode === 'briefing') {
+        setDailyBriefing(summaryText)
+        setDailyBriefingMeta({
+          generatedAt: payload?.meta?.generatedAt,
+          model: payload?.meta?.model,
+          isCached: payload?.meta?.isCached
+        })
+      } else {
+        setAiSummary(summaryText)
+        setAiSummaryMeta({
+          generatedAt: typeof payload?.meta?.generatedAt === 'string' ? payload.meta.generatedAt : undefined,
+          model: typeof payload?.meta?.model === 'string' ? payload.meta.model : undefined,
+          mode: payload?.meta?.mode || 'full'
+        })
+      }
+      
+      if (mode === 'full') toast.success('Strategische Analyse erstellt.')
+    } catch (error) {
+      if (progressTimer) clearInterval(progressTimer)
+      const message = error instanceof Error ? error.message : 'KI-Zusammenfassung konnte nicht erstellt werden.'
+      if (mode === 'briefing') {
+        setDailyBriefingError(message)
+      } else {
+        setAiSummaryError(message)
+        toast.error(message)
+      }
+    } finally {
+      if (mode === 'briefing') {
+        setDailyBriefingLoading(false)
+      } else {
+        setAiSummaryLoading(false)
+      }
+    }
+  }
+
+  const loadData = useCallback(async (windowDaysOverride?: number) => {
     setLoadingData(true)
+    const windowDays = windowDaysOverride || analyticsWindowDays
     try {
       if (!user) {
         throw new Error('Nicht angemeldet.')
@@ -413,16 +658,18 @@ export function AdminSystemProvider({ children }: { children: React.ReactNode })
       const idToken = await user.getIdToken()
       const headers = {
         Authorization: `Bearer ${idToken}`,
+        'Content-Type': 'application/json',
       }
 
       const [statsResponse, analyticsResponse] = await Promise.all([
         postWithResilientFallback(
-          ['/api/admin/system/global-stats', '/admin/api/system/global-stats'],
+          ['/api/admin/system/global-stats', '/api/admin/system/global-stats'],
           headers
         ),
         postWithResilientFallback(
-          ['/api/admin/system/analytics', '/admin/api/system/analytics'],
-          headers
+          ['/api/admin/system/analytics', '/api/admin/system/analytics'],
+          headers,
+          { window_days: windowDays }
         ),
       ])
 
@@ -432,7 +679,7 @@ export function AdminSystemProvider({ children }: { children: React.ReactNode })
 
       const [statsRawPayload, analyticsRawPayload] = await Promise.all([
         statsResponse.json(),
-        analyticsResponse.json(),
+        analyticsResponse ? analyticsResponse.json() : null,
       ])
 
       const statsPayload = parseProxyOrDirectPayload(statsRawPayload)
@@ -445,19 +692,26 @@ export function AdminSystemProvider({ children }: { children: React.ReactNode })
         throw new Error('System-API liefert keine verwertbaren Stats-Daten.')
       }
 
-      setStats(statsPayload.data as GlobalStats)
-      void loadCardsByUserInBackground()
+      const statsData = statsPayload.data as GlobalStats
+      setStats(statsData)
+      void enrichStatsFromFirestoreInBackground(statsData)
 
       if (httpAnalyticsOk) {
         const analyticsData = analyticsPayload.data as SystemAnalytics
-        let resolvedAnalytics = analyticsData
+        let resolvedAnalytics = { ...analyticsData, window_days: windowDays }
 
-        if ((analyticsData?.total_log_entries || 0) === 0 || (analyticsData?.top_actions?.length || 0) === 0) {
+        if (
+          (analyticsData?.total_log_entries || 0) === 0 || 
+          (analyticsData?.top_actions?.length || 0) === 0 || 
+          analyticsData.window_days !== windowDays ||
+          !analyticsData.registration_timeline ||
+          analyticsData.registration_timeline.length === 0
+        ) {
           try {
-            const fallbackCount = await countRecentLogsFromFirestore(analyticsData?.window_days || 7)
+            const fallbackCount = await countRecentLogsFromFirestore(windowDays)
             if (fallbackCount > 0) {
               resolvedAnalytics = {
-                ...analyticsData,
+                ...resolvedAnalytics,
                 total_log_entries: fallbackCount,
               }
             }
@@ -470,9 +724,9 @@ export function AdminSystemProvider({ children }: { children: React.ReactNode })
           setAnalytics(resolvedAnalytics)
         }
       } else {
-        let fallbackAnalytics = buildFallbackAnalytics()
+        let fallbackAnalytics = { ...buildFallbackAnalytics(), window_days: windowDays }
         try {
-          const fallbackCount = await countRecentLogsFromFirestore(fallbackAnalytics.window_days)
+          const fallbackCount = await countRecentLogsFromFirestore(windowDays)
           if (fallbackCount > 0) {
             fallbackAnalytics = {
               ...fallbackAnalytics,
@@ -492,58 +746,14 @@ export function AdminSystemProvider({ children }: { children: React.ReactNode })
     } finally {
       setLoadingData(false)
     }
-  }, [user, postWithResilientFallback, parseProxyOrDirectPayload, loadCardsByUserInBackground, countRecentLogsFromFirestore, enrichAnalyticsFromFirestoreInBackground, buildFallbackAnalytics])
+  }, [user, analyticsWindowDays, postWithResilientFallback, parseProxyOrDirectPayload, enrichStatsFromFirestoreInBackground, countRecentLogsFromFirestore, enrichAnalyticsFromFirestoreInBackground, buildFallbackAnalytics])
 
-  const generateAISummary = async () => {
-    if (!user) {
-      toast.error('Nicht angemeldet.')
-      return
+  useEffect(() => {
+    if (isAdmin && !hasTriggeredAutoBriefing && stats && analytics) {
+      setHasTriggeredAutoBriefing(true)
+      generateAISummary('briefing')
     }
-    if (!stats || !analytics) {
-      toast.error('Bitte zuerst Systemdaten laden.')
-      return
-    }
-    setAiSummaryLoading(true)
-    setAiSummaryError(null)
-    try {
-      const idToken = await user.getIdToken()
-      const response = await postWithResilientFallback(
-        ['/api/admin/system/ai-summary', '/admin/api/system/ai-summary'],
-        {
-          Authorization: `Bearer ${idToken}`,
-          'Content-Type': 'application/json',
-        },
-        buildSummaryPayload()
-      )
-      if (!response) {
-        throw new Error('KI-Zusammenfassung API nicht erreichbar.')
-      }
-      const payload = await response.json().catch(() => null)
-      if (!response.ok || !payload?.ok) {
-        throw new Error(
-          typeof payload?.error === 'string' && payload.error
-            ? payload.error
-            : 'KI-Zusammenfassung konnte nicht erstellt werden.'
-        )
-      }
-      const summaryText = typeof payload.summary === 'string' ? payload.summary.trim() : ''
-      if (!summaryText) {
-        throw new Error('Leere KI-Antwort erhalten.')
-      }
-      setAiSummary(summaryText)
-      setAiSummaryMeta({
-        generatedAt: typeof payload?.meta?.generatedAt === 'string' ? payload.meta.generatedAt : undefined,
-        model: typeof payload?.meta?.model === 'string' ? payload.meta.model : undefined,
-      })
-      toast.success('KI-Zusammenfassung erstellt.')
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'KI-Zusammenfassung konnte nicht erstellt werden.'
-      setAiSummaryError(message)
-      toast.error(message)
-    } finally {
-      setAiSummaryLoading(false)
-    }
-  }
+  }, [isAdmin, hasTriggeredAutoBriefing, stats, analytics])
 
   const updateFeatureStatus = async (key: keyof SystemFeatures, status: FeatureStatus) => {
     if (!features) return
@@ -639,7 +849,7 @@ export function AdminSystemProvider({ children }: { children: React.ReactNode })
     try {
       const idToken = await user.getIdToken()
       const response = await postWithResilientFallback(
-        ['/api/admin/system/reset-session-stats', '/admin/api/system/reset-session-stats'],
+        ['/api/admin/system/reset-session-stats', '/api/admin/system/reset-session-stats'],
         { Authorization: `Bearer ${idToken}` }
       )
       if (!response) {
@@ -704,7 +914,7 @@ export function AdminSystemProvider({ children }: { children: React.ReactNode })
   // Initial data load
   useEffect(() => {
     if (isAdmin) loadData()
-  }, [isAdmin, user?.uid, loadData])
+  }, [isAdmin, user?.uid, analyticsWindowDays, loadData])
 
   const value = {
     features,
@@ -715,6 +925,12 @@ export function AdminSystemProvider({ children }: { children: React.ReactNode })
     aiSummaryLoading,
     aiSummaryError,
     aiSummaryMeta,
+    aiProgress,
+    aiStep,
+    dailyBriefing,
+    dailyBriefingLoading,
+    dailyBriefingError,
+    dailyBriefingMeta,
     loadingData,
     savingMaintenance,
     resettingSessionStats,
@@ -722,8 +938,11 @@ export function AdminSystemProvider({ children }: { children: React.ReactNode })
     loadingCardsByUser,
     isMaintenanceActive,
     isAdmin,
+    analyticsWindowDays,
+    setAnalyticsWindowDays,
     loadData,
     generateAISummary,
+    setAiSummary,
     updateFeatureStatus,
     handleSaveMaintenance,
     resetSessionStatistics

@@ -12,46 +12,27 @@ const auth = getFirebaseAuth();
 const db = getFirebaseDb();
 const functions = getFirebaseFunctions();
 
-const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000
+const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000
 const SESSION_STARTED_AT_KEY_PREFIX = 'abi_session_started_at_'
+const LAST_2FA_VERIFICATION_AT_KEY_PREFIX = 'abi_last_2fa_verification_at_'
 
-// Helper for cookie management
-function getBaseDomain() {
-  if (typeof window === 'undefined') return undefined
-  const host = window.location.hostname
-  
-  if (host.endsWith('.localhost')) {
-    return '.localhost'
-  }
-  
-  const parts = host.split('.')
-  if (parts.length >= 2) {
-    return `.${parts.slice(-2).join('.')}`
-  }
-  return undefined
+function getLastTwoFactorVerificationKey(userId: string) {
+  return `${LAST_2FA_VERIFICATION_AT_KEY_PREFIX}${userId}`
 }
 
-function setBaseDomainCookie(name: string, value: string, maxAgeDays: number) {
+function readLastTwoFactorVerification(userId: string): number | null {
+  if (typeof window === 'undefined') return null
+  const raw = window.localStorage.getItem(getLastTwoFactorVerificationKey(userId))
+  if (!raw) return null
+
+  const parsed = Number.parseInt(raw, 10)
+  if (!Number.isFinite(parsed)) return null
+  return parsed
+}
+
+function writeLastTwoFactorVerification(userId: string) {
   if (typeof window === 'undefined') return
-  
-  const domain = getBaseDomain()
-  const domainAttr = domain ? `; domain=${domain}` : ''
-  const maxAgeAttr = `; max-age=${maxAgeDays * 24 * 60 * 60}`
-  
-  document.cookie = `${name}=${value}; path=/${domainAttr}${maxAgeAttr}; samesite=lax`
-}
-
-function deleteBaseDomainCookie(name: string) {
-  if (typeof window === 'undefined') return
-  const domain = getBaseDomain()
-  const domainAttr = domain ? `; domain=${domain}` : ''
-  document.cookie = `${name}=; path=/${domainAttr}; max-age=0; samesite=lax`
-}
-
-function getCookieValue(name: string): string | null {
-  if (typeof document === 'undefined') return null
-  const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'))
-  return match ? match[2] : null
+  window.localStorage.setItem(getLastTwoFactorVerificationKey(userId), Date.now().toString())
 }
 
 function getSessionStartedAtKey(userId: string) {
@@ -137,26 +118,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const sessionEndFlushedRef = useRef(false)
   const profileBootstrapAttemptedRef = useRef(false)
 
-  // Load 2FA status from cookies on mount/init (30-day persistence, shared across subdomains)
+  // Initialize non-user specific auth state and sync cross-subdomain session.
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      // For the initial check, we try to see if there's a global cookie (backward compatibility)
-      // or if we already have a user (though unlikely on mount)
-      const stored = getCookieValue('is_2fa_verified')
-      const lastVerification = getCookieValue('last_2fa_verification')
-      
-      if (stored === 'true' && lastVerification) {
-        const timestamp = parseInt(lastVerification, 10)
-        const now = Date.now()
-        
-        if (now - timestamp < SEVEN_DAYS_MS) {
-          setIs2FAVerifiedState(true)
-        } else {
-          // Expired - clear it
-          deleteBaseDomainCookie('is_2fa_verified')
-          deleteBaseDomainCookie('last_2fa_verification')
-        }
-      }
       setIs2FAInitialCheckDone(true)
 
       // Try to sync session from base domain cookie if not logged in
@@ -180,46 +144,27 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const set2FAVerified = (val: boolean) => {
     setIs2FAVerifiedState(val)
-    if (typeof window !== 'undefined') {
-      if (val) {
-        // We set both a global and a user-specific cookie for maximum reliability
-        setBaseDomainCookie('is_2fa_verified', 'true', 7)
-        setBaseDomainCookie('last_2fa_verification', Date.now().toString(), 7)
-        
-        if (user?.uid) {
-          setBaseDomainCookie(`is_2fa_verified_${user.uid}`, 'true', 7)
-          setBaseDomainCookie(`last_2fa_verification_${user.uid}`, Date.now().toString(), 7)
-        }
-      } else {
-        // Delete cookies on logout as requested
-        deleteBaseDomainCookie('is_2fa_verified')
-        deleteBaseDomainCookie('last_2fa_verification')
-        if (user?.uid) {
-          deleteBaseDomainCookie(`is_2fa_verified_${user.uid}`)
-          deleteBaseDomainCookie(`last_2fa_verification_${user.uid}`)
-        }
-      }
+    if (val && user?.uid) {
+      writeLastTwoFactorVerification(user.uid)
     }
   }
 
-  // Effect to re-validate 2FA status when user changes
+  // Re-validate 2FA status per user with 30-day persistence in localStorage.
   useEffect(() => {
     if (user && typeof window !== 'undefined') {
       const uid = user.uid
-      const stored = getCookieValue(`is_2fa_verified_${uid}`) || getCookieValue('is_2fa_verified')
-      const lastVerification = getCookieValue(`last_2fa_verification_${uid}`) || getCookieValue('last_2fa_verification')
-      
-      if (stored === 'true' && lastVerification) {
-        const timestamp = parseInt(lastVerification, 10)
-        const now = Date.now()
-        
-        if (now - timestamp < SEVEN_DAYS_MS) {
-          setIs2FAVerifiedState(true)
-        } else {
-          setIs2FAVerifiedState(false)
-        }
+      const lastVerification = readLastTwoFactorVerification(uid)
+
+      if (lastVerification && Date.now() - lastVerification < THIRTY_DAYS_MS) {
+        setIs2FAVerifiedState(true)
+      } else {
+        setIs2FAVerifiedState(false)
       }
+    } else {
+      setIs2FAVerifiedState(false)
     }
+
+    setIs2FAInitialCheckDone(true)
   }, [user?.uid])
 
   const resendVerification = async () => {

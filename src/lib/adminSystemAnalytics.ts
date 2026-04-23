@@ -38,12 +38,27 @@ function getAdminApp() {
 }
 
 function getTimestampDate(value: unknown): Date | null {
-  if (!value || typeof value !== 'object') return null
+  if (!value) return null
 
-  const candidate = value as { toDate?: () => Date }
-  if (typeof candidate.toDate === 'function') {
-    const date = candidate.toDate()
-    return Number.isNaN(date.getTime()) ? null : date
+  if (value instanceof Date) {
+    return isNaN(value.getTime()) ? null : value
+  }
+
+  if (typeof value === 'string') {
+    const d = new Date(value)
+    return isNaN(d.getTime()) ? null : d
+  }
+
+  if (typeof value === 'object') {
+    const candidate = value as { toDate?: () => Date; seconds?: number }
+    if (typeof candidate.toDate === 'function') {
+      const date = candidate.toDate()
+      return isNaN(date.getTime()) ? null : date
+    }
+    if (typeof candidate.seconds === 'number') {
+      const date = new Date(candidate.seconds * 1000)
+      return isNaN(date.getTime()) ? null : date
+    }
   }
 
   return null
@@ -241,12 +256,12 @@ async function verifyAdminFromHeader(authHeader: string): Promise<void> {
   }
 }
 
-export async function buildAnalyticsFromPastLogs(authHeader: string): Promise<SystemAnalytics> {
+export async function buildAnalyticsFromPastLogs(authHeader: string, windowDays: number = 7): Promise<SystemAnalytics> {
   await verifyAdminFromHeader(authHeader)
 
   const db = getFirestore('abi-data')
   const now = new Date()
-  const windowStart = new Date(now.getTime() - ANALYTICS_WINDOW_DAYS * 24 * 60 * 60 * 1000)
+  const windowStart = new Date(now.getTime() - windowDays * 24 * 60 * 60 * 1000)
 
   const [profilesSnap, logsSnap] = await Promise.all([
     db.collection('profiles').get(),
@@ -430,13 +445,41 @@ export async function buildAnalyticsFromPastLogs(authHeader: string): Promise<Sy
       }
     })
 
+  const registrationTimelineMap = new Map<string, number>()
+  profiles.forEach(p => {
+    const createdAt = getTimestampDate(p.created_at || p.timestamp)
+    if (createdAt) {
+      const dayKey = toIsoDay(createdAt)
+      registrationTimelineMap.set(dayKey, (registrationTimelineMap.get(dayKey) || 0) + 1)
+    }
+  })
+
+  // Sort all registration days to calculate cumulative growth
+  const allRegistrationDays = Array.from(registrationTimelineMap.keys()).sort()
+  let cumulative = 0
+  const registrationTimeline = allRegistrationDays.map(date => {
+    const count = registrationTimelineMap.get(date) || 0
+    cumulative += count
+    const d = new Date(date)
+    return {
+      date,
+      label: d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' }),
+      count,
+      cumulative
+    }
+  }).filter(point => {
+    const d = new Date(point.date)
+    return d >= windowStart
+  })
+
   return {
-    window_days: ANALYTICS_WINDOW_DAYS,
+    window_days: windowDays,
     generated_at: now.toISOString(),
     total_log_entries: logs.length,
     current_online_users_count: currentOnlineUsersWithActivity.length,
     current_online_users: currentOnlineUsersWithActivity,
     activity_timeline: activityTimeline,
+    registration_timeline: registrationTimeline,
     activity_by_hour: activityByHourList,
     top_active_users: topActiveUsers,
     session_duration_distribution: sessionDurationDistribution,

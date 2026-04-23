@@ -4,13 +4,17 @@ import { getAuth } from 'firebase-admin/auth'
 import { getFirestore } from 'firebase-admin/firestore'
 
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions'
-const DEFAULT_GROQ_MODEL = 'llama-3.1-8b-instant'
-const MAX_PAYLOAD_CHARS = 18000
-const MAX_ACTIONS = 20
-const MAX_TOP_ACTIONS = 12
-const MAX_SECTION_USAGE = 12
-const MAX_TIMELINE_POINTS = 14
-const MAX_CARDS_BY_USER = 12
+const DEFAULT_GROQ_MODEL = 'llama-3.3-70b-versatile'
+
+const ANTHROPIC_API_URL = 'https://api.anthropic.com/v1/messages'
+const DEFAULT_CLAUDE_MODEL = 'claude-3-5-sonnet-20241022'
+
+const MAX_PAYLOAD_CHARS = 24000
+const MAX_ACTIONS = 40
+const MAX_TOP_ACTIONS = 15
+const MAX_SECTION_USAGE = 15
+const MAX_TIMELINE_POINTS = 20
+const MAX_CARDS_BY_USER = 15
 
 type LocalRouteError = Error & { status?: number }
 
@@ -18,6 +22,9 @@ type SummaryInput = {
   stats?: Record<string, unknown>
   analytics?: Record<string, unknown>
   cardsByUser?: Array<Record<string, unknown>>
+  registration_timeline?: Array<Record<string, unknown>>
+  mode?: 'briefing' | 'full'
+  forceRefresh?: boolean
 }
 
 function toRouteError(message: string, status: number): LocalRouteError {
@@ -31,41 +38,24 @@ function isObject(value: unknown): value is Record<string, unknown> {
 }
 
 function getAdminApp() {
-  if (getApps().length > 0) {
-    return getApps()[0]
-  }
-
+  if (getApps().length > 0) return getApps()[0]
   const projectId = process.env.FIREBASE_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID
   const clientEmail = process.env.FIREBASE_CLIENT_EMAIL
   const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n')
-
   if (projectId && clientEmail && privateKey) {
     return initializeApp({
       credential: cert({ projectId, clientEmail, privateKey }),
       projectId,
     })
   }
-
-  return initializeApp({
-    credential: applicationDefault(),
-    projectId,
-  })
+  return initializeApp({ credential: applicationDefault(), projectId })
 }
 
-type DbCandidate = {
-  label: string
-  db: FirebaseFirestore.Firestore
-}
+type DbCandidate = { label: string; db: FirebaseFirestore.Firestore }
 
 function getDatabaseCandidates(app: ReturnType<typeof getAdminApp>): DbCandidate[] {
   const candidates: DbCandidate[] = []
-
-  try {
-    candidates.push({ label: 'abi-data', db: getFirestore(app, 'abi-data') })
-  } catch {
-    // Continue with default DB fallback.
-  }
-
+  try { candidates.push({ label: 'abi-data', db: getFirestore(app, 'abi-data') }) } catch {}
   candidates.push({ label: 'default', db: getFirestore(app) })
   return candidates
 }
@@ -75,84 +65,48 @@ function isAdminRole(role: unknown) {
 }
 
 async function verifyAdminFromHeader(authHeader: string) {
-  if (!authHeader.startsWith('Bearer ')) {
-    throw toRouteError('Missing bearer token', 401)
-  }
-
+  if (!authHeader.startsWith('Bearer ')) throw toRouteError('Missing bearer token', 401)
   const idToken = authHeader.slice(7).trim()
-  if (!idToken) {
-    throw toRouteError('Missing bearer token', 401)
-  }
-
+  if (!idToken) throw toRouteError('Missing bearer token', 401)
   const app = getAdminApp()
   const auth = getAuth(app)
-
   let decoded: { uid: string }
-  try {
-    decoded = await auth.verifyIdToken(idToken)
-  } catch {
-    throw toRouteError('Invalid authentication token', 401)
-  }
+  try { decoded = await auth.verifyIdToken(idToken) } catch { throw toRouteError('Invalid authentication token', 401) }
 
   const candidateErrors: string[] = []
   let resolvedRole: string | undefined
+  let resolvedDb: FirebaseFirestore.Firestore | undefined
 
   for (const candidate of getDatabaseCandidates(app)) {
     try {
       const profileSnap = await candidate.db.collection('profiles').doc(decoded.uid).get()
-      if (!profileSnap.exists) {
-        candidateErrors.push(`[${candidate.label}] profile not found`)
-        continue
-      }
-
+      if (!profileSnap.exists) { candidateErrors.push(`[${candidate.label}] profile not found`); continue }
       const profile = profileSnap.data() as { role?: string } | undefined
-      if (!isAdminRole(profile?.role)) {
-        throw toRouteError('Insufficient permissions', 403)
-      }
-
+      if (!isAdminRole(profile?.role)) throw toRouteError('Insufficient permissions', 403)
       resolvedRole = profile?.role
+      resolvedDb = candidate.db
       break
     } catch (error) {
-      if ((error as LocalRouteError)?.status === 403) {
-        throw error
-      }
-
-      const message = error instanceof Error ? error.message : 'Unknown database error'
-      candidateErrors.push(`[${candidate.label}] ${message}`)
+      if ((error as LocalRouteError)?.status === 403) throw error
+      candidateErrors.push(`[${candidate.label}] ${error instanceof Error ? error.message : 'Unknown error'}`)
     }
   }
 
-  if (!resolvedRole) {
-    const details = candidateErrors.join(' | ')
-
-    // Local fallback: allow authenticated admin page usage even if Firestore role lookup fails.
-    // This prevents local-dev hard failures when named/default Firestore DB resolution is flaky.
-    if (process.env.NODE_ENV !== 'production') {
-      return {
-        uid: decoded.uid,
-        role: 'dev_token_only',
-      }
-    }
-
-    throw toRouteError(`Unable to resolve Firestore database for admin summary: ${details}`, 500)
+  if (!resolvedRole || !resolvedDb) {
+    if (process.env.NODE_ENV !== 'production') return { uid: decoded.uid, role: 'dev_token_only', db: getFirestore(app, 'abi-data') }
+    throw toRouteError(`Database resolution failed: ${candidateErrors.join(' | ')}`, 500)
   }
-
-  return {
-    uid: decoded.uid,
-    role: resolvedRole || 'admin',
-  }
+  return { uid: decoded.uid, role: resolvedRole, db: resolvedDb }
 }
 
 function toSafeNumber(value: unknown): number {
   const parsed = Number(value)
-  if (!Number.isFinite(parsed)) return 0
-  return parsed
+  return Number.isFinite(parsed) ? parsed : 0
 }
 
 function toSafeText(value: unknown, maxLength: number): string {
   if (typeof value !== 'string') return ''
   const trimmed = value.trim().replace(/\s+/g, ' ')
-  if (!trimmed) return ''
   return trimmed.slice(0, maxLength)
 }
 
@@ -164,58 +118,19 @@ function buildPromptData(input: SummaryInput) {
   const statsRaw = isObject(input.stats) ? input.stats : {}
   const analyticsRaw = isObject(input.analytics) ? input.analytics : {}
   const cardsByUserRaw = Array.isArray(input.cardsByUser) ? input.cardsByUser : []
+  const registrationTimelineRaw = Array.isArray(input.registration_timeline) ? input.registration_timeline : []
 
-  const topActionsRaw = Array.isArray(analyticsRaw.top_actions) ? analyticsRaw.top_actions : []
-  const sectionUsageRaw = Array.isArray(analyticsRaw.section_usage) ? analyticsRaw.section_usage : []
-  const timelineRaw = Array.isArray(analyticsRaw.activity_timeline) ? analyticsRaw.activity_timeline : []
-  const recentActionsRaw = Array.isArray(analyticsRaw.recent_actions) ? analyticsRaw.recent_actions : []
-
-  const topActions = topActionsRaw.slice(0, MAX_TOP_ACTIONS).map((entry) => {
-    const record = isObject(entry) ? entry : {}
-    return {
-      action: toSafeText(record.action, 80),
-      count: toSafeNumber(record.count),
-    }
-  })
-
-  const sectionUsage = sectionUsageRaw.slice(0, MAX_SECTION_USAGE).map((entry) => {
-    const record = isObject(entry) ? entry : {}
-    return {
-      section: toSafeText(record.section, 80),
-      count: toSafeNumber(record.count),
-    }
-  })
-
-  const timeline = timelineRaw.slice(0, MAX_TIMELINE_POINTS).map((entry) => {
-    const record = isObject(entry) ? entry : {}
-    return {
-      date: toSafeText(record.date, 20),
-      label: toSafeText(record.label, 20),
-      actions: toSafeNumber(record.actions),
-      active_users: toSafeNumber(record.active_users),
-    }
-  })
-
-  const recentActions = recentActionsRaw.slice(0, MAX_ACTIONS).map((entry) => {
-    const record = isObject(entry) ? entry : {}
-    const rawDetails = redactEmails(toSafeText(record.details, 300))
-    return {
-      timestamp: toSafeText(record.timestamp, 40),
-      action: toSafeText(record.action, 120),
-      user_id: toSafeText(record.user_id, 120),
-      section: toSafeText(record.section, 80),
-      details: rawDetails,
-    }
-  })
-
-  const cardsByUser = cardsByUserRaw.slice(0, MAX_CARDS_BY_USER).map((entry) => {
-    const record = isObject(entry) ? entry : {}
-    // Label is anonymized in case it contains clear names or emails.
-    return {
-      label: 'user',
-      value: toSafeNumber(record.value),
-    }
-  })
+  const recentActions = (Array.isArray(analyticsRaw.recent_actions) ? analyticsRaw.recent_actions : [])
+    .slice(0, MAX_ACTIONS)
+    .map((entry) => ({
+      timestamp: toSafeText(entry.timestamp, 40),
+      action: toSafeText(entry.action, 120),
+      user_id: toSafeText(entry.user_id, 120),
+      user_name: toSafeText(entry.user_name, 80),
+      user_role: toSafeText(entry.user_role, 20),
+      section: toSafeText(entry.section, 80),
+      details: redactEmails(toSafeText(entry.details, 300)),
+    }))
 
   return {
     stats: {
@@ -229,143 +144,244 @@ function buildPromptData(input: SummaryInput) {
       window_days: Math.max(1, Math.min(30, toSafeNumber(analyticsRaw.window_days) || 7)),
       generated_at: toSafeText(analyticsRaw.generated_at, 40),
       total_log_entries: toSafeNumber(analyticsRaw.total_log_entries),
-      current_online_users_count: toSafeNumber(analyticsRaw.current_online_users_count),
       average_session_minutes: toSafeNumber(analyticsRaw.average_session_minutes),
-      top_actions: topActions,
-      section_usage: sectionUsage,
-      activity_timeline: timeline,
+      top_actions: (Array.isArray(analyticsRaw.top_actions) ? analyticsRaw.top_actions : []).slice(0, MAX_TOP_ACTIONS).map(e => ({ action: toSafeText(e.action, 80), count: toSafeNumber(e.count) })),
+      section_usage: (Array.isArray(analyticsRaw.section_usage) ? analyticsRaw.section_usage : []).slice(0, MAX_SECTION_USAGE).map(e => ({ section: toSafeText(e.section, 80), count: toSafeNumber(e.count) })),
+      activity_timeline: (Array.isArray(analyticsRaw.activity_timeline) ? analyticsRaw.activity_timeline : []).slice(0, MAX_TIMELINE_POINTS).map(e => ({ date: toSafeText(e.date, 20), actions: toSafeNumber(e.actions), active_users: toSafeNumber(e.active_users) })),
+      registration_timeline: registrationTimelineRaw.slice(0, MAX_TIMELINE_POINTS).map(e => ({ date: toSafeText(e.date, 20), count: toSafeNumber(e.count), cumulative: toSafeNumber(e.cumulative) })),
       recent_actions: recentActions,
     },
-    cards_by_user: cardsByUser,
+    cards_by_user: cardsByUserRaw.slice(0, MAX_CARDS_BY_USER).map(e => ({ label: toSafeText(e.label, 80), value: toSafeNumber(e.value) })),
   }
 }
 
-function buildPrompt(promptData: ReturnType<typeof buildPromptData>) {
+function buildPrompt(promptData: ReturnType<typeof buildPromptData>, mode: 'briefing' | 'full' = 'full') {
   const serialized = JSON.stringify(promptData, null, 2)
 
+  if (mode === 'briefing') {
+    return [
+      'Du bist ein hochintelligenter System-Analyst fuer das ABI Planer Netzwerk.',
+      'Analysiere die Daten auf Anomalien und strategische Highlights.',
+      'STRIKTES VERBOT: Lies niemals Statistiken vor, die man direkt im Dashboard sieht.',
+      '',
+      'DEINE AUFGABE:',
+      '- Fokus auf reguläre Nutzer: Suche nach echten Anomalien bei normalen Usern (Spam, Exploits, plötzliches Wachstum).',
+      '- ADMIN-FILTER (WICHTIG): Nutzer mit der Rolle "admin", "admin_main" oder "admin_co" (z.B. Maximilian Priesnitz) sind ENTWICKLER. Ignoriere deren Aktivitäts-Volumen komplett. Erwähne Admins NUR, wenn sie technische Fehler (500er, Crashes) auslösen, niemals wegen "hoher Aktivität".',
+      '- Interpretiere die Lage: Wie ist die Gesamtzustand? Gibt es Trends (z.B. "Umfragen werden heute extrem gut angenommen")?',
+      '- Sei extrem prägnant: Maximal 2-3 flüssige Sätze.',
+      '',
+      'STIL:',
+      '- Direkt, professionell, keine Emojis.',
+      '- Nutze Fettschrift für kritische Erkenntnisse.',
+      '',
+      'DATENBASIS:',
+      serialized,
+    ].join('\n')
+  }
+
   return [
-    'Du bist ein Analyse-Assistent fuer das Admin System Control Center vom ABI Planer.',
-    'Erstelle einen kurzen Lagebericht auf Deutsch basierend ausschliesslich auf den gelieferten Daten.',
-    'Ausgabeformat:',
-    '1) Kurzfazit (max. 3 Saetze)',
-    '2) Auffaelligkeiten (3-5 Stichpunkte)',
-    '3) Konkrete Empfehlungen (max. 3 nummerierte Punkte)',
-    'Regeln:',
-    '- Keine Halluzinationen. Nur aus den Daten ableiten.',
-    '- Keine Namen oder E-Mails erfinden oder ausgeben.',
-    '- Wenn Daten lueckenhaft sind, benenne die Unsicherheit klar.',
+    'Du bist ein hochintelligenter System-Analyst fuer das Admin-Dashboard vom ABI Planer.',
+    'Erstelle einen tiefgreifenden strategischen Lagebericht auf Deutsch.',
     '',
-    'Dashboard-Daten:',
+    'ANALYSE-LOGIK:',
+    '1. WACHSTUM: Analysiere Zuwachsraten aus registration_timeline. Bewerte den Trend.',
+    '2. ANOMALIEN-CHECK: Scanne die recent_actions nach Mustern (Spam, Fehler, Missbrauch).',
+    '3. ENGAGEMENT: Setze Aktionen ins Verhältnis zur Nutzerzahl.',
+    '',
+    'STRUKTUR:',
+    '# Strategisches Lagebild',
+    '## Wachstum & Akquisition',
+    '## Engagement & Anomalien',
+    '## Modul-Performance',
+    '## Strategische Handlungsempfehlungen',
+    '',
+    'WICHTIGE REGELN:',
+    '- KEINE Emojis.',
+    '- Nutze **Fettschrift** für Kennzahlen.',
+    '- Interpretiere die Daten, anstatt sie nur aufzulisten.',
+    '',
+    'DATENBASIS:',
     serialized,
   ].join('\n')
 }
 
 function cleanSummary(raw: unknown): string {
   if (typeof raw !== 'string') return ''
-  return raw.trim().replace(/\n{3,}/g, '\n\n').slice(0, 3200)
+  return raw.trim().replace(/\n{3,}/g, '\n\n').slice(0, 5000)
 }
 
-async function requestSummaryFromGroq(prompt: string) {
+async function requestSummaryFromGroq(prompt: string, model: string = DEFAULT_GROQ_MODEL) {
   const apiKey = process.env.GROQ_API_KEY?.trim().replace(/^['\"]|['\"]$/g, '')
-  if (!apiKey) {
-    throw toRouteError('GROQ_API_KEY is not configured on the server', 500)
-  }
-
-  const controller = new AbortController()
-  const timeout = setTimeout(() => controller.abort(), 20000)
+  if (!apiKey) throw toRouteError('GROQ_API_KEY not configured on server.', 500)
 
   try {
-    const groqResponse = await fetch(GROQ_API_URL, {
+    const response = await fetch(GROQ_API_URL, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model,
+        temperature: 0.3,
+        max_tokens: 600,
+        messages: [{ role: 'user', content: prompt }],
+      }),
+    })
+    if (!response.ok) {
+      const err = await response.text()
+      console.error('[Groq Error]', response.status, err)
+      throw toRouteError(`Groq API error (${response.status})`, 502)
+    }
+    const payload = await response.json()
+    return cleanSummary(payload?.choices?.[0]?.message?.content)
+  } catch (e) {
+    if (e instanceof Error && (e as any).status) throw e
+    console.error('[Groq Fetch Error]', e)
+    throw toRouteError('Failed to reach Groq API', 504)
+  }
+}
+
+async function requestSummaryFromAnthropic(prompt: string) {
+  const apiKey = (process.env.CLAUDE_API_KEY || process.env.ANTHROPIC_API_KEY)?.trim().replace(/^['\"]|['\"]$/g, '')
+  if (!apiKey) throw new Error('CLAUDE_API_KEY_MISSING')
+
+  try {
+    const response = await fetch(ANTHROPIC_API_URL, {
+      method: 'POST',
+      headers: { 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: DEFAULT_CLAUDE_MODEL,
+        max_tokens: 1200,
+        messages: [{ role: 'user', content: prompt }],
+      }),
+    })
+    if (!response.ok) {
+      const err = await response.text()
+      console.error('[Anthropic Error]', response.status, err)
+      throw new Error(`ANTHROPIC_ERROR_${response.status}`)
+    }
+    const payload = await response.json()
+    return cleanSummary(payload?.content?.[0]?.text)
+  } catch (e) {
+    console.error('[Anthropic Fetch Error]', e)
+    throw e
+  }
+}
+
+async function requestSummaryFromGroqFull(prompt: string) {
+  const apiKey = process.env.GROQ_API_KEY?.trim().replace(/^['\"]|['\"]$/g, '')
+  if (!apiKey) throw toRouteError('GROQ_API_KEY not configured', 500)
+
+  try {
+    const response = await fetch(GROQ_API_URL, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
-      signal: controller.signal,
       body: JSON.stringify({
-        model: DEFAULT_GROQ_MODEL,
+        model: 'llama-3.3-70b-versatile',
         temperature: 0.2,
-        max_tokens: 450,
-        messages: [
-          {
-            role: 'user',
-            content: prompt,
-          },
-        ],
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: prompt }],
       }),
     })
 
-    const rawPayload = await groqResponse.text()
-    if (!groqResponse.ok) {
-      throw toRouteError(`Groq request failed (${groqResponse.status})`, 502)
+    if (!response.ok) {
+      const err = await response.text()
+      console.error('[Groq Fallback Error]', response.status, err)
+      throw toRouteError('Groq Fallback failed', 502)
     }
-
-    let parsed: unknown = null
-    try {
-      parsed = JSON.parse(rawPayload)
-    } catch {
-      throw toRouteError('Invalid Groq response format', 502)
-    }
-
-    const parsedObject = parsed as { choices?: Array<{ message?: { content?: string } }> } | null
-    const summary = cleanSummary(parsedObject?.choices?.[0]?.message?.content)
-    if (!summary) {
-      throw toRouteError('Empty summary returned by Groq', 502)
-    }
-
-    return summary
-  } catch (error) {
-    if (error instanceof Error && error.name === 'AbortError') {
-      throw toRouteError('Groq request timed out', 504)
-    }
-    throw error
-  } finally {
-    clearTimeout(timeout)
+    const payload = await response.json()
+    return cleanSummary(payload?.choices?.[0]?.message?.content)
+  } catch (e) {
+    if (e instanceof Error && (e as any).status) throw e
+    console.error('[Groq Fallback Fetch Error]', e)
+    throw toRouteError('Failed to reach Groq API for fallback', 504)
   }
 }
 
 export async function handleAdminSystemAISummary(request: NextRequest) {
   try {
     const authHeader = request.headers.get('authorization')
-    if (!authHeader) {
-      return NextResponse.json({ ok: false, error: 'Missing authorization header' }, { status: 401 })
-    }
-
+    if (!authHeader) return NextResponse.json({ ok: false, error: 'Missing auth' }, { status: 401 })
     const auth = await verifyAdminFromHeader(authHeader)
-
+    
     const body = await request.json().catch(() => null)
-    if (!isObject(body)) {
-      return NextResponse.json({ ok: false, error: 'Invalid request body' }, { status: 400 })
+    if (!isObject(body)) return NextResponse.json({ ok: false, error: 'Invalid body' }, { status: 400 })
+
+    const mode = (body.mode === 'briefing' ? 'briefing' : 'full') as 'briefing' | 'full'
+    const forceRefresh = Boolean(body.forceRefresh)
+
+    if (mode === 'briefing' && !forceRefresh) {
+      const today = new Date().toISOString().slice(0, 10)
+      const cacheRef = auth.db.collection('admin_cache').doc('daily_briefing')
+      try {
+        const cacheSnap = await cacheRef.get()
+        if (cacheSnap.exists) {
+          const cacheData = cacheSnap.data()
+          if (cacheData?.date === today && cacheData?.summary) {
+            return NextResponse.json({
+              ok: true,
+              summary: cacheData.summary,
+              meta: {
+                model: cacheData.model || 'cached',
+                generatedAt: cacheData.generatedAt || new Date().toISOString(),
+                mode: 'briefing',
+                isCached: true
+              }
+            }, { status: 200 })
+          }
+        }
+      } catch (cacheErr) {
+        console.warn('[AI Summary] Cache read failed, proceeding with generation', cacheErr)
+      }
     }
 
     const promptData = buildPromptData(body as SummaryInput)
-    const prompt = buildPrompt(promptData)
+    const prompt = buildPrompt(promptData, mode)
 
-    if (prompt.length > MAX_PAYLOAD_CHARS) {
-      return NextResponse.json(
-        { ok: false, error: `Payload too long. Max ${MAX_PAYLOAD_CHARS} characters.` },
-        { status: 400 }
-      )
+    let summary: string
+    let model: string
+
+    if (mode === 'briefing') {
+      summary = await requestSummaryFromGroq(prompt)
+      model = DEFAULT_GROQ_MODEL
+      
+      try {
+        const today = new Date().toISOString().slice(0, 10)
+        await auth.db.collection('admin_cache').doc('daily_briefing').set({
+          summary,
+          model,
+          date: today,
+          generatedAt: new Date().toISOString()
+        })
+      } catch (cacheWriteErr) {
+        console.warn('[AI Summary] Cache write failed', cacheWriteErr)
+      }
+    } else {
+      try {
+        summary = await requestSummaryFromAnthropic(prompt)
+        model = DEFAULT_CLAUDE_MODEL
+      } catch (e) {
+        console.warn('[AI Summary] Claude failed, falling back to Groq 70B', e)
+        summary = await requestSummaryFromGroqFull(prompt)
+        model = 'llama-3.3-70b-versatile (Fallback)'
+      }
     }
 
-    const summary = await requestSummaryFromGroq(prompt)
-
-    return NextResponse.json(
-      {
-        ok: true,
-        summary,
-        meta: {
-          model: DEFAULT_GROQ_MODEL,
-          generatedAt: new Date().toISOString(),
-          requestedBy: auth.uid,
-          anonymizationMode: 'partial',
-        },
-      },
-      { status: 200 }
-    )
+    return NextResponse.json({
+      ok: true,
+      summary,
+      meta: {
+        model,
+        generatedAt: new Date().toISOString(),
+        requestedBy: auth.uid,
+        mode
+      }
+    }, { status: 200 })
   } catch (error) {
+    console.error('[AI Summary Global Error]', error)
     const status = (error as LocalRouteError)?.status || 500
-    const message = error instanceof Error ? error.message : 'Failed to generate system summary'
+    const message = error instanceof Error ? error.message : 'Analysis failed'
     return NextResponse.json({ ok: false, error: message }, { status })
   }
 }

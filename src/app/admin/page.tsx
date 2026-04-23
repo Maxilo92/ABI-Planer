@@ -14,7 +14,8 @@ import {
   Database,
   RefreshCw,
   Layout,
-  FileText
+  FileText,
+  ShoppingBag
 } from 'lucide-react'
 import Link from 'next/link'
 import { useAuth } from '@/context/AuthContext'
@@ -71,12 +72,20 @@ const adminModules = [
     bgColor: 'bg-yellow-500/10'
   },
   {
-    title: 'Shop & Einnahmen',
+    title: 'Shop-Verwaltung',
+    description: 'Artikel anlegen, Merch-Links und Tickets verwalten.',
+    href: '/admin/shop',
+    icon: ShoppingBag,
+    color: 'text-emerald-500',
+    bgColor: 'bg-emerald-500/10'
+  },
+  {
+    title: 'Einnahmen & Statistik',
     description: 'Finanzübersicht und Shop-Statistiken.',
     href: '/admin/shop-earnings',
     icon: CreditCard,
-    color: 'text-emerald-500',
-    bgColor: 'bg-emerald-500/10'
+    color: 'text-sky-500',
+    bgColor: 'bg-sky-500/10'
   },
   {
     title: 'Popup senden',

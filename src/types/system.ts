@@ -109,4 +109,5 @@ export interface SystemAnalytics {
   activity_by_hour?: ActivityByHour[];
   top_active_users?: TopActiveUser[];
   session_duration_distribution?: SessionDurationBucket[];
+  registration_timeline?: Array<{ date: string; label: string; count: number; cumulative: number }>;
 }

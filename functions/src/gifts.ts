@@ -89,7 +89,6 @@ export const giftBoosterPack = onCall({
     } = request.data as GiftBoosterPackData;
 
     const normalizedPackId = normalizePackId((packId || "").trim());
-    const isSupportPack = normalizedPackId === "support_vol_1";
 
     const message = (customMessage || popupBody || "Du hast ein Geschenk erhalten!").trim();
     const normalizedPopupTitle = (popupTitle || "Neue Pack-Schenkung").trim();
@@ -229,23 +228,14 @@ export const giftBoosterPack = onCall({
 
                     if (safePackCount > 0) {
                         const packKey = normalizedPackId || TEACHER_PACK_ID;
-                        const incrementField = isSupportPack ? "support_extra_available" : "extra_available";
                         
                         const updates: any = {
                             "booster_stats.updated_at": admin.firestore.FieldValue.serverTimestamp(),
                         };
                         
-                        // Legacy support
-                        updates[`booster_stats.${incrementField}`] = admin.firestore.FieldValue.increment(safePackCount);
-                        
                         // New Scalable Inventory
                         updates[`booster_stats.inventory.${packKey}`] = admin.firestore.FieldValue.increment(safePackCount);
 
-                        transaction.set(profileRef, {
-                            booster_stats: updates.booster_stats || {}
-                        }, { merge: true });
-                        
-                        // Update using update for deep nesting safety in transactions
                         transaction.update(profileRef, updates);
                     }
 

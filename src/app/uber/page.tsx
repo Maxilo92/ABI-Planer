@@ -75,9 +75,11 @@ export default function UberPage() {
   ]
 
   const roadmap = [
-    { version: "v1.0.0", date: "März 2026", status: "completed", title: "Der Release", desc: "Launch der Core-Features, Production Ready." },
-    { version: "v1.1.0", date: "April 2026", status: "current", title: "Optimization", desc: "Kalender-Export, Reports & Mobile Optimization." },
-    { version: "v2.0.0+", date: "Zukunft", status: "planned", title: "Expansion", desc: "Multi-School Support & Reusable Templates." }
+    { version: "v1.1.0", date: "April 2026", status: "completed", title: "Optimization", desc: "Kalender-Export, Reports & Mobile Optimization." },
+    { version: "v1.5.0", date: "Mai 2026", status: "current", title: "Combat Engine", desc: "Start des Lehrer-Karten Kampfsystems & Balancing der Stats." },
+    { version: "v1.6.0", date: "Mai 2026", status: "planned", title: "Revenue & Tickets", desc: "Pretix Ticket-Verkauf Integration & exklusive Käufer-Rewards." },
+    { version: "v1.7.0", date: "Juni 2026", status: "planned", title: "Trading & Arena", desc: "Live-Karten-Tauschbörse & Sitzplatz-Reservierung." },
+    { version: "v2.0.0", date: "Juli 2026", status: "planned", title: "The Grand Finale", desc: "Live Check-in am Ballabend & Digitales Jahrbuch Release." }
   ]
 
   return (

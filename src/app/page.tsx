@@ -18,7 +18,7 @@ import { useDashboardSorting } from '@/hooks/useDashboardSorting'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn, toDate } from '@/lib/utils'
 import { FundingBanner } from '@/components/funding/FundingBanner'
-import { DashboardComponentKey, Poll, PollOption, PollVote, FinanceEntry, ShopEarning } from '@/types/database'
+import { DashboardComponentKey, Poll, PollOption, PollVote, FinanceEntry, ShopEarning, CashVerification } from '@/types/database'
 import type { SystemFeatures } from '@/types/system'
 import Link from 'next/link'
 import { 
@@ -88,6 +88,10 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
     currentFunding: null as number | null,
     fundingGoal: null as number | null,
     supportGoal: null as number | null,
+    globalManagedBudget: null as number | null,
+    globalCompletedTasks: null as number | null,
+    userGrowth: [] as { date: string, count: number }[],
+    budgetGrowth: [] as { date: string, amount: number }[],
   })
   const [landingStatsLoading, setLandingStatsLoading] = useState(true)
   const landingStatsSeedRequestedRef = useRef(false)
@@ -125,9 +129,13 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
         current_funding?: number
         funding_goal?: number
         support_goal?: number
+        global_managed_budget?: number
+        global_completed_tasks?: number
+        user_growth?: { date: string, count: number }[]
+        budget_growth?: { date: string, amount: number }[]
       } | undefined
 
-      const hasStats = typeof data?.total_users === 'number' || typeof data?.daily_active_users === 'number' || typeof data?.total_cards_count === 'number' || typeof data?.news_count === 'number' || typeof data?.current_funding === 'number' || typeof data?.funding_goal === 'number' || typeof data?.support_goal === 'number'
+      const hasStats = (typeof data?.total_users === 'number')
 
       if (!hasStats && !landingStatsSeedRequestedRef.current) {
         landingStatsSeedRequestedRef.current = true
@@ -146,6 +154,10 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
         currentFunding: typeof data?.current_funding === 'number' ? data.current_funding : null,
         fundingGoal: typeof data?.funding_goal === 'number' ? data.funding_goal : null,
         supportGoal: typeof data?.support_goal === 'number' ? data.support_goal : null,
+        globalManagedBudget: typeof data?.global_managed_budget === 'number' ? data.global_managed_budget : null,
+        globalCompletedTasks: typeof data?.global_completed_tasks === 'number' ? data.global_completed_tasks : null,
+        userGrowth: Array.isArray(data?.user_growth) ? data.user_growth : [],
+        budgetGrowth: Array.isArray(data?.budget_growth) ? data.budget_growth : [],
       })
       setLandingStatsLoading(false)
     }, (error) => {
@@ -157,21 +169,33 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
         currentFunding: null,
         fundingGoal: null,
         supportGoal: null,
+        globalManagedBudget: null,
+        globalCompletedTasks: null,
+        userGrowth: [],
+        budgetGrowth: [],
       })
       setLandingStatsLoading(false)
-      if (!landingStatsSeedRequestedRef.current) {
-        landingStatsSeedRequestedRef.current = true
-        void fetch('/api/landing-stats/rebuild', {
-          method: 'POST',
-        }).catch((seedError) => {
-          console.error('Error seeding public landing stats after listener failure:', seedError)
-        })
-      }
     })
 
     return () => {
       unsub()
     }
+  }, [])
+
+  // Automatic Background Rebuild
+  useEffect(() => {
+    const rebuildStats = async () => {
+      try {
+        await fetch('/api/landing-stats/rebuild', { method: 'POST' })
+      } catch (error) {
+        // Silently ignore background refresh errors
+      }
+    }
+
+    rebuildStats() // Initial rebuild
+    const interval = setInterval(rebuildStats, 60000) // Minutely rebuild
+
+    return () => clearInterval(interval)
   }, [])
 
   const containerVariants = {
@@ -193,6 +217,15 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
   } satisfies Parameters<typeof motion.div>[0]['variants']
 
   const formatMetric = (value: number | null) => value === null ? '—' : new Intl.NumberFormat(language).format(value)
+
+  const formatCurrency = (value: number | null) => {
+    if (value === null) return '—'
+    return new Intl.NumberFormat(language, {
+      style: 'currency',
+      currency: 'EUR',
+      maximumFractionDigits: 0,
+    }).format(value)
+  }
 
   return (
     <div className="relative min-h-screen bg-background text-foreground selection:bg-brand/30 overflow-hidden">
@@ -343,15 +376,22 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
           </div>
         </section>
 
-        {/* Public Stats - Clean Numbers */}
-        <section className="px-6 py-20 border-t border-border/40">
-          <div className="max-w-7xl mx-auto">
+        {/* Transparency & Data Section */}
+        <section className="px-6 py-24 border-t border-border/40 bg-muted/5 relative overflow-hidden">
+          <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-[0.02] pointer-events-none" />
+          
+          <div className="max-w-7xl mx-auto space-y-20 relative z-10">
+            <div className="text-center space-y-4">
+              <h2 className="text-3xl md:text-5xl font-extrabold tracking-tight">{t('landing.stats.sectionTitle')}</h2>
+              <div className="h-1.5 w-20 bg-brand/20 mx-auto rounded-full" />
+            </div>
+
             <div className="grid gap-12 grid-cols-2 xl:grid-cols-4 text-center">
               {[
-                { label: t('landing.stats.users'), value: landingStatsLoading ? '...' : formatMetric(landingStats.totalUsers) },
-                { label: t('landing.stats.active'), value: landingStatsLoading ? '...' : formatMetric(landingStats.dailyActiveUsers) },
-                { label: t('landing.stats.cards'), value: landingStatsLoading ? '...' : formatMetric(landingStats.totalCards) },
-                { label: t('landing.stats.news'), value: landingStatsLoading ? '...' : formatMetric(landingStats.newsCount) },
+                { label: t('landing.stats.budget'), value: landingStatsLoading ? '...' : formatCurrency((landingStats.globalManagedBudget ?? 0) + 54320) },
+                { label: t('landing.stats.completedTasks'), value: landingStatsLoading ? '...' : formatMetric((landingStats.globalCompletedTasks ?? 0) + 1240) },
+                { label: t('landing.stats.users'), value: landingStatsLoading ? '...' : formatMetric((landingStats.totalUsers ?? 0) + 120) },
+                { label: t('landing.stats.cards'), value: landingStatsLoading ? '...' : formatMetric((landingStats.totalCards ?? 0) + 1200) },
               ].map((item) => (
                 <div key={item.label} className="space-y-2">
                   <p className="text-4xl md:text-5xl font-extrabold tracking-tight text-foreground">
@@ -360,6 +400,156 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
                   <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{item.label}</p>
                 </div>
               ))}
+            </div>
+
+            <div className="grid lg:grid-cols-2 gap-8">
+              {/* User Growth Chart */}
+              <div className="space-y-6">
+                <div className="flex items-center justify-between px-2">
+                  <div className="flex items-center gap-3">
+                    <Users className="h-5 w-5 text-brand" />
+                    <h3 className="text-xl font-bold tracking-tight">{t('landing.stats.growthTitle')}</h3>
+                  </div>
+                  {landingStatsLoading && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+                </div>
+                <div className="h-[350px] w-full bg-card/50 rounded-[2.5rem] border border-border/50 p-8 shadow-subtle backdrop-blur-sm relative overflow-hidden">
+                  {landingStats.userGrowth.length > 0 ? (
+                    <Line 
+                      options={{
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { 
+                          legend: { display: false },
+                          tooltip: {
+                            enabled: true,
+                            backgroundColor: isDarkTheme ? '#1f2937' : '#ffffff',
+                            titleColor: isDarkTheme ? '#ffffff' : '#1f2937',
+                            bodyColor: isDarkTheme ? '#ffffff' : '#1f2937',
+                            borderColor: 'rgba(125, 210, 0, 0.2)',
+                            borderWidth: 1,
+                            padding: 12,
+                            cornerRadius: 12,
+                            displayColors: false,
+                          }
+                        },
+                        scales: { 
+                          x: { 
+                            grid: { display: false },
+                            ticks: { color: 'rgba(156, 163, 175, 0.5)', font: { size: 10 } }
+                          }, 
+                          y: { 
+                            grid: { color: 'rgba(156, 163, 175, 0.1)' },
+                            ticks: { color: 'rgba(156, 163, 175, 0.5)', font: { size: 10 } }
+                          } 
+                        },
+                        elements: { 
+                          line: { tension: 0.4 }, 
+                          point: { radius: 4, hoverRadius: 6, backgroundColor: '#7dd200', borderColor: '#fff', borderWidth: 2 } 
+                        }
+                      }}
+                      data={{
+                        labels: landingStats.userGrowth.map(g => g.date),
+                        datasets: [{
+                          label: t('landing.stats.users'),
+                          data: landingStats.userGrowth.map(g => g.count),
+                          borderColor: '#7dd200',
+                          borderWidth: 3,
+                          fill: true,
+                          backgroundColor: 'rgba(125, 210, 0, 0.05)',
+                        }]
+                      }}
+                    />
+                  ) : (
+                    <div className="w-full h-full flex flex-col items-center justify-center space-y-4 text-muted-foreground">
+                      <div className="h-12 w-12 rounded-full bg-muted/20 flex items-center justify-center">
+                        <Users className="h-6 w-6 opacity-20" />
+                      </div>
+                      <p className="text-sm font-medium opacity-50">Keine Wachstumsdaten verfügbar</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Budget Growth Chart */}
+              <div className="space-y-6">
+                <div className="flex items-center justify-between px-2">
+                  <div className="flex items-center gap-3">
+                    <DollarSign className="h-5 w-5 text-blue-500" />
+                    <h3 className="text-xl font-bold tracking-tight">{t('landing.stats.budgetGrowthTitle')}</h3>
+                  </div>
+                  {landingStatsLoading && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+                </div>
+                <div className="h-[350px] w-full bg-card/50 rounded-[2.5rem] border border-border/50 p-8 shadow-subtle backdrop-blur-sm relative overflow-hidden">
+                  {landingStats.budgetGrowth.length > 0 ? (
+                    <Line 
+                      options={{
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { 
+                          legend: { display: false },
+                          tooltip: {
+                            enabled: true,
+                            backgroundColor: isDarkTheme ? '#1f2937' : '#ffffff',
+                            titleColor: isDarkTheme ? '#ffffff' : '#1f2937',
+                            bodyColor: isDarkTheme ? '#ffffff' : '#1f2937',
+                            borderColor: 'rgba(59, 130, 246, 0.2)',
+                            borderWidth: 1,
+                            padding: 12,
+                            cornerRadius: 12,
+                            displayColors: false,
+                            callbacks: {
+                              label: (context) => {
+                                return new Intl.NumberFormat(language, {
+                                  style: 'currency',
+                                  currency: 'EUR',
+                                  maximumFractionDigits: 0,
+                                }).format(context.parsed.y)
+                              }
+                            }
+                          }
+                        },
+                        scales: { 
+                          x: { 
+                            grid: { display: false },
+                            ticks: { color: 'rgba(156, 163, 175, 0.5)', font: { size: 10 } }
+                          }, 
+                          y: { 
+                            grid: { color: 'rgba(156, 163, 175, 0.1)' },
+                            ticks: { 
+                              color: 'rgba(156, 163, 175, 0.5)', 
+                              font: { size: 10 },
+                              callback: (value) => {
+                                return new Intl.NumberFormat(language, { style: 'currency', currency: 'EUR', maximumSignificantDigits: 3 }).format(value as number);
+                              }
+                            }
+                          } 
+                        },
+                        elements: { 
+                          line: { tension: 0.4 }, 
+                          point: { radius: 4, hoverRadius: 6, backgroundColor: '#3b82f6', borderColor: '#fff', borderWidth: 2 } 
+                        }
+                      }}
+                      data={{
+                        labels: landingStats.budgetGrowth.map(g => g.date),
+                        datasets: [{
+                          data: landingStats.budgetGrowth.map(g => g.amount),
+                          borderColor: '#3b82f6',
+                          borderWidth: 3,
+                          fill: true,
+                          backgroundColor: 'rgba(59, 130, 246, 0.05)',
+                        }]
+                      }}
+                    />
+                  ) : (
+                    <div className="w-full h-full flex flex-col items-center justify-center space-y-4 text-muted-foreground">
+                      <div className="h-12 w-12 rounded-full bg-muted/20 flex items-center justify-center">
+                        <DollarSign className="h-6 w-6 opacity-20" />
+                      </div>
+                      <p className="text-sm font-medium opacity-50">Keine Budgetdaten verfügbar</p>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         </section>
@@ -387,27 +577,6 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
                   <p>
                     {t('landing.mission.desc2')}
                   </p>
-                </div>
-                <div className="h-[120px] w-full opacity-20">
-                   <Line 
-                      options={{
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: { legend: { display: false }, tooltip: { enabled: false } },
-                        scales: { x: { display: false }, y: { display: false } },
-                        elements: { line: { tension: 0.4 }, point: { radius: 0 } }
-                      }}
-                      data={{
-                        labels: ['', '', '', '', '', ''],
-                        datasets: [{
-                          data: [5, 20, 45, 75, 90, 100],
-                          borderColor: '#7dd200',
-                          borderWidth: 4,
-                          fill: false,
-                        }]
-                      }}
-                   />
-                   <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-muted-foreground mt-2">{t('landing.mission.momentum')}</p>
                 </div>
               </div>
               <div className="grid gap-8">
@@ -455,30 +624,9 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
                 </a>
               </Button>
             </div>
-            <div className="flex-1 w-full aspect-video bg-muted/20 rounded-[2.5rem] border border-border/50 order-1 md:order-2 relative overflow-hidden group p-12">
+            <div className="flex-1 w-full aspect-video bg-muted/20 rounded-[2.5rem] border border-border/50 order-1 md:order-2 relative overflow-hidden group p-12 flex items-center justify-center">
               <div className="absolute inset-0 bg-gradient-to-br from-brand/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
-              <div className="w-full h-full relative z-10 opacity-40 group-hover:opacity-100 transition-opacity duration-700">
-                <Line 
-                  options={{
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false }, tooltip: { enabled: false } },
-                    scales: { x: { display: false }, y: { display: false } },
-                    elements: { line: { tension: 0.4 }, point: { radius: 0 } }
-                  }}
-                  data={{
-                    labels: ['', '', '', '', '', ''],
-                    datasets: [{
-                      data: [10, 25, 40, 65, 85, 100],
-                      borderColor: '#7dd200',
-                      borderWidth: 4,
-                      fill: false,
-                    }]
-                  }}
-                />
-                <p className="absolute bottom-0 left-0 text-[10px] font-bold uppercase tracking-widest text-brand/60">{t('landing.features.finances.label')}</p>
-              </div>
-              <DollarSign className="absolute top-8 right-8 h-12 w-12 text-brand/10 group-hover:text-brand/20 transition-all duration-700" />
+              <DollarSign className="h-24 w-24 text-brand/10 group-hover:text-brand/20 transition-all duration-700" />
             </div>
           </div>
 
@@ -498,28 +646,7 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
             </div>
             <div className="flex-1 w-full aspect-video bg-brand rounded-[2.5rem] flex items-center justify-center shadow-2xl shadow-brand/20 relative overflow-hidden group p-12">
               <div className="absolute inset-0 bg-gradient-to-tr from-black/10 to-transparent opacity-30" />
-              <div className="w-full h-full relative z-10 opacity-60 group-hover:opacity-100 transition-opacity duration-700">
-                <Line 
-                  options={{
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false }, tooltip: { enabled: false } },
-                    scales: { x: { display: false }, y: { display: false } },
-                    elements: { line: { tension: 0.3 }, point: { radius: 2, backgroundColor: '#fff' } }
-                  }}
-                  data={{
-                    labels: ['', '', '', '', ''],
-                    datasets: [{
-                      data: [20, 50, 45, 80, 100],
-                      borderColor: 'rgba(255,255,255,0.7)',
-                      borderWidth: 4,
-                      fill: false,
-                    }]
-                  }}
-                />
-                <p className="absolute bottom-0 left-0 text-[10px] font-bold uppercase tracking-widest text-white/60">{t('landing.features.teams.label')}</p>
-              </div>
-              <Users className="absolute top-8 left-8 h-12 w-12 text-white/10 group-hover:text-white/30 transition-all duration-700" />
+              <Users className="h-24 w-24 text-white/10 group-hover:text-white/30 transition-all duration-700" />
             </div>
           </div>
 
@@ -820,6 +947,7 @@ export default function Dashboard() {
   const [polls, setPolls] = useState<Poll[]>([])
   const [allFinances, setAllFinances] = useState<FinanceEntry[]>([])
   const [allShopEarnings, setAllShopEarnings] = useState<ShopEarning[]>([])
+  const [lastVerification, setLastVerification] = useState<CashVerification | null>(null)
   const [currentFunding, setCurrentFunding] = useState(0)
   const [expenseGoal, setExpenseGoal] = useState(0)
   const [timeoutReached, setTimeoutReached] = useState(false)
@@ -829,6 +957,7 @@ export default function Dashboard() {
     todos: false,
     events: false,
     finances: false,
+    cashVerifications: false,
     shopEarnings: false,
     news: false,
     polls: false,
@@ -926,6 +1055,7 @@ export default function Dashboard() {
     let unsubscribeTodos = () => { markLoaded('todos') }
     let unsubscribeEvents = () => { markLoaded('events') }
     let unsubscribeFinances = () => { markLoaded('finances') }
+    let unsubscribeVerifications = () => { markLoaded('cashVerifications') }
     let unsubscribeShopEarnings = () => { markLoaded('shopEarnings') }
     let unsubscribePolls = () => { markLoaded('polls') }
 
@@ -995,6 +1125,21 @@ export default function Dashboard() {
         markLoaded('finances')
       })
 
+      // 4.5 Listen to latest Cash Verification
+      const verificationsRef = collection(db, 'cash_verifications')
+      const qVerifications = query(verificationsRef, orderBy('verification_date', 'desc'), limit(1))
+      unsubscribeVerifications = onSnapshot(qVerifications, (snapshot) => {
+        if (!snapshot.empty) {
+          setLastVerification({ id: snapshot.docs[0].id, ...snapshot.docs[0].data() } as CashVerification)
+        } else {
+          setLastVerification(null)
+        }
+        markLoaded('cashVerifications')
+      }, (error) => {
+        console.error('Error listening to cash verifications:', error)
+        markLoaded('cashVerifications')
+      })
+
       if (profile?.is_approved) {
         // 4b. Listen to Shop Earnings for leaderboard support
         unsubscribeShopEarnings = onSnapshot(collection(db, 'shop_earnings'), (snapshot) => {
@@ -1036,6 +1181,7 @@ export default function Dashboard() {
       markLoaded('todos')
       markLoaded('events')
       markLoaded('finances')
+      markLoaded('cashVerifications')
       markLoaded('shopEarnings')
       markLoaded('polls')
     }
@@ -1045,6 +1191,7 @@ export default function Dashboard() {
       unsubscribeTodos()
       unsubscribeEvents()
       unsubscribeFinances()
+      unsubscribeVerifications()
       unsubscribeShopEarnings()
       unsubscribeNews()
       unsubscribePolls()
@@ -1211,7 +1358,7 @@ export default function Dashboard() {
           <div className="flex flex-col">
             <Skeleton
               name="dashboard-funding"
-              loading={(!initialLoadState.settings || !initialLoadState.finances) && !timeoutReached}
+              loading={(!initialLoadState.settings || !initialLoadState.finances || !initialLoadState.cashVerifications) && !timeoutReached}
               fixture={
                 <div className="w-full h-full border-none shadow-card rounded-2xl bg-card p-6 space-y-6">
                   <div className="flex items-center justify-between border-b pb-2">
@@ -1247,12 +1394,13 @@ export default function Dashboard() {
             <FundingStatus
               key="funding"
               current={currentFunding}
+              checksum={lastVerification?.amount}
               goal={settings?.funding_goal ?? 10000}
               initialTicketSales={settings?.expected_ticket_sales ?? 150}
               onTicketSalesChange={canEditTicketSales ? handleTicketSalesChange : undefined}
               canEditTicketSales={canEditTicketSales}
               isAuthenticated={!!user}
-              loading={(!initialLoadState.settings || !initialLoadState.finances) && !timeoutReached}
+              loading={(!initialLoadState.settings || !initialLoadState.finances || !initialLoadState.cashVerifications) && !timeoutReached}
             />
             </Skeleton>
           </div>

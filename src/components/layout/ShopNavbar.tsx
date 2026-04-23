@@ -35,7 +35,7 @@ export function ShopNavbar() {
       <div className="max-w-7xl mx-auto h-full px-4 sm:px-6 lg:px-8 flex items-center justify-between">
         <Link href="/shop" className="flex items-center gap-3">
           <Logo width={40} height={40} />
-          <span className="font-extrabold text-xl tracking-tight hidden sm:inline-block">ABI Shop</span>
+          <span className="font-extrabold text-xl tracking-tight hidden sm:inline-block">ABISHOP</span>
         </Link>
 
         {/* Desktop Nav */}

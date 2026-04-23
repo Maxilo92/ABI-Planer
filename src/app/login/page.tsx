@@ -20,6 +20,19 @@ import { useLanguage } from '@/context/LanguageContext'
 import { LanguageToggle } from '@/components/ui/LanguageToggle'
 
 const auth = getFirebaseAuth()
+const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000
+
+function hasRecentTwoFactorVerification(userId: string): boolean {
+  if (typeof window === 'undefined') return false
+
+  const raw = window.localStorage.getItem(`abi_last_2fa_verification_at_${userId}`)
+  if (!raw) return false
+
+  const timestamp = Number.parseInt(raw, 10)
+  if (!Number.isFinite(timestamp)) return false
+
+  return Date.now() - timestamp < THIRTY_DAYS_MS
+}
 
 export default function LoginPage() {
   const { t } = useLanguage()
@@ -33,7 +46,7 @@ export default function LoginPage() {
   // 2FA state
   const [step, setStep] = useState<'login' | '2fa'>('login')
   const [twoFactorCode, setTwoFactorCode] = useState('')
-  const { is2FAVerified, set2FAVerified } = useAuth()
+  const { set2FAVerified } = useAuth()
   const functions = getFirebaseFunctions()
   
   const router = useRouter()
@@ -102,7 +115,9 @@ export default function LoginPage() {
       console.log('[Login] profile fetched, is_2fa_enabled:', profileData?.is_2fa_enabled)
       const accessTarget = getAccessTargetFromProfile(profileData)
       
-      if (profileData?.is_2fa_enabled && !is2FAVerified) {
+      const requires2FA = profileData?.is_2fa_enabled && !hasRecentTwoFactorVerification(uid)
+
+      if (requires2FA) {
         console.log('[Login] switching to 2FA step')
         setStep('2fa')
       } else {

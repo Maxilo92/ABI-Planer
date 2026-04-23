@@ -6,6 +6,149 @@
 <!-- default_action: read newest entries only unless a regression requires older history -->
 <!-- index: docs/AGENT_CONTEXT_INDEX.md -->
 
+## [1.33.0.24] - 2026-04-23
+
+### Changed
+- **Finanzübersicht:** Die Budgetplanung und das Dashboard zeigen nun konsistent den jeweils höheren Betrag zwischen virtuellem Kontostand (Transaktionen) und physischem Kassenabgleich (Prüfsumme) an.
+- **Finanzübersicht:** Bei Abweichungen zwischen virtuellem und physischem Stand wird nun ein Warn-Icon mit Popover-Erklärung angezeigt, um Transparenz über Unstimmigkeiten zu schaffen.
+- **Dashboard:** Der Finanzierungsstatus auf der Hauptseite unterstützt nun ebenfalls die Anzeige des Kassenabgleichs und warnt bei Differenzen.
+
+## [1.33.0.18] - 2026-04-23
+
+### Added
+- **Globale Theme-Synchronisierung:** Das gewählte Farbschema (Hell/Dunkel/System) und die Akzentfarbe werden nun im Nutzerprofil gespeichert und über alle Geräte und Tabs hinweg in Echtzeit synchronisiert.
+
+## [1.33.0.04] - 2026-04-23
+
+### Changed
+- **2FA Login-Verhalten:** Die 2FA-Erinnerung wurde von Cookie-basierter Speicherung auf nutzerspezifisches `localStorage` umgestellt. Die Verifizierung gilt nun 30 Tage pro Nutzer und wird nicht mehr über Cookies/Subdomain-Cookies gesteuert.
+
+## [1.33.0.03] - 2026-04-23
+
+### Fixed
+- **Mobile UI:** Der mobile Header in `DashboardNavbar` und `TcgNavbar` wurde über das Overlay des Side-Drawer-Menüs gehoben (z-index Fix), damit er bei geöffnetem Menü nicht mehr ausgegraut erscheint.
+
+## [1.33.0.01] - 2026-04-23
+
+### Added
+- **System-Analytics:** Umfassendes Upgrade des Analytics-Dashboards (/admin/system/analytics):
+  - **Interaktive Graphen:** Alle Diagramme wurden auf Chart.js (via react-chartjs-2) umgestellt und bieten nun Interaktivität.
+  - **Wählbare Zeiträume:** Daten können nun für 24h, 7 Tage, 30 Tage oder 90 Tage angezeigt werden (dynamische Nachladung aus Firestore/API).
+  - **Graph-Typen:** Für die meisten Diagramme kann nun zwischen Linien-, Balken- und Tortendiagramm gewechselt werden.
+  - **Verbesserte Visualisierung:** Neue `UniversalChart` und `ChartCard` Komponenten sorgen für ein konsistentes, modernes Design mit Farbschemata und Kennzahlen (Summe, Peak, Einträge).
+  - **Optimierte Skalierung:** Stat-Widgets oben im Dashboard wurden für bessere mobile Responsiveness und flexible Grid-Anpassung optimiert (Font-Scaling, Padding-Adjustments).
+  - **Echtzeit-Anpassung:** Backend und Frontend unterstützen nun parametrisierte Zeitfenster für präzisere Analysen.
+  - **Neues Growth-Chart:** Dedizierter Graph für App-Wachstum (kumulierte Nutzerzahlen) hinzugefügt, um den Erfolg der App live mitverfolgen zu können.
+  - **Robuste Datenverarbeitung:** Das Parsing von Registrierungsdaten wurde verbessert, um verschiedene Datumsformate (ISO-Strings, Timestamps, JS-Dates) zuverlässig zu verarbeiten.
+  - **Client-Side Enrichment:** Die Growth-Statistiken sowie die Karten-Raritätsverteilung werden nun auch bei lokaler Datenaufbereitung (Fallback) korrekt aus Firestore berechnet.
+  - **Bessere Beschriftung:** Alle Graphen verfügen nun über aussagekräftige Labels in den Legenden und Tooltips (z.B. "Events/Tag", "Nutzer/Tag") sowie explizite Y-Achsenbeschriftungen.
+  - **Mobile-Optimierung:** Gesamte Analytics-Sektion für Smartphones optimiert (umbruchsichere Header, scrollbare Zeitwähler, angepasste Font-Größen).
+  - **KI Wachwaechter-Detektiv:** Das automatische Briefing wurde zum System-Detektiv aufgewertet. Es nutzt nun Llama 3.3 70B für tiefere Analysen und konzentriert sich auf Anomalien, verdächtige Muster und strategische Trends (1-2 Sätze). Der Detektiv verfügt nun über einen strikten Admin-Filter, der Entwickler-Tests ignoriert und sich auf echte Nutzer-Ereignisse fokussiert.
+  - **Briefing-Cache & Transparenz:** Das Wachwaechter-Briefing wird nun kostensparend in Firestore zwischengespeichert und nur einmal täglich (oder bei manuellem Refresh) neu generiert. Beide KI-Berichte zeigen nun explizit das verwendete Modell (z.B. Llama 3.3 oder Claude 3.5) an.
+  - **Smarter KI-Bericht:** Der strategische Lagebericht wurde umfassend verbessert: Er nutzt nun Claude 3.5 Sonnet (via Anthropic) für tiefere Analysen und verfügt über einen automatischen Fallback auf Groq (Llama 3.3 70B). Berichte sind nun durch Markdown-Listen und Fettschrift deutlich besser scanbar.
+  - **Interactive Loading:** Die Wartezeit auf KI-Berichte wurde durch einen animierten Ladebalken, schrittweise Statusmeldungen ("Scanne Logs...", "Analysiere Trends...") und eine neue `MarkdownTypewriter` Komponente deutlich aufgewertet. Diese rendert den Text in hoher Geschwindigkeit und unterstützt dabei volle Markdown-Formatierung (Fett, Header, Listen).
+  - **Export-Funktionen:** KI-Berichte können nun mit einem Klick in die Zwischenablage kopiert oder als `.txt` Datei heruntergeladen werden.
+  - **Dynamisches UI:** Das KI-Berichtsfeld erscheint nun nur noch on-demand bei aktiver Generierung oder vorhandenem Bericht, was das Dashboard aufgeräumter macht.
+  - **Optimiertes API-Handling:** Unterstützung für `ANTHROPIC_API_KEY` als Fallback für `CLAUDE_API_KEY` hinzugefügt und Fehlermeldungen für die lokale Entwicklung verbessert.
+  - **Bugfix:** `ReferenceError` beim Laden der Systemdaten behoben (falsche Variablen-Initialisierung in `AdminSystemContext`).
+  - **Bugfix:** Fehlender `useEffect` Import in den System-Komponenten behoben, der zum Absturz der Analytics-Page führte.
+  - **Bugfix:** Fehlende `'use client'` Direktive in der Analytics-Page wiederhergestellt, um SSR-Abstürze zu beheben.
+
+## [1.32.1.02] - 2026-04-23
+
+### Changed
+- **Branding:** Der Shop wurde einheitlich von "Stufen-Shop" / "ABI Shop" in **ABISHOP** umbenannt. Dies betrifft den Shop-Header, die Navigationsleisten und Feature-Gates.
+
+## [1.32.1.01] - 2026-04-23
+
+### Added
+- **Shop:** Platzhalter für externe Stores hinzugefügt:
+  - Printify Pop-up Store für Stufen-Merchandise.
+  - pretix.eu für den Verkauf von Event-Tickets.
+
+## [1.32.1.00] - 2026-04-23
+
+### Fixed
+- **Shop & Gifts:** Kritischen "Double-Granting"-Fehler behoben, bei dem Booster sowohl im alten `extra_available` als auch im neuen `inventory` Feld gutgeschrieben wurden (führte zur Verdopplung beim Öffnen).
+- **Referrals:** Empfehlungs-Belohnungen auf das moderne `inventory`-System umgestellt und Konsistenz verbessert.
+
+### Security
+- **Shop Logic:** Die unsichere Cloud Function `purchaseBoosters` entfernt, da diese Booster-Käufe ohne Zahlungsprüfung oder Admin-Berechtigung ermöglichte. Der offizielle Weg über Stripe war davon unberührt und bleibt die einzige Methode für Käufe.
+
+## [1.32.0.03] - 2026-04-23
+
+### Added
+- **Landingpage:** Neuer Bereich "Transparenz & Daten" mit dualen Wachstums-Graphen (Nutzer & Budget).
+- **Internationalisierung:** Neue Übersetzungsschlüssel für die Transparenz-Sektion hinzugefügt (DE, EN, ES).
+- **UI/UX:** Budget-Entwicklungs-Graph mit Währungsformatierung (€) und markenspezifischem Styling (Blau) integriert.
+- **State Management:** `landingStats` um `budgetGrowth` erweitert und mit dem Live-Listener für `public/landing_stats` verknüpft.
+
+## [1.32.0.02] - 2026-04-23
+
+### Added
+- **Cron:** `collectLandingStats` um `budget_growth` Daten erweitert. Diese aggregieren Einnahmen über die letzten 30 Tage mit einem Start-Offset von 54.320 € für die Landingpage-Visualisierung.
+
+## [1.31.0.06] - 2026-04-23
+
+### Added
+- **Internationalisierung:** Übersetzungsschlüssel `growthTitle` für den neuen Nutzerwachstums-Graphen auf der Landingpage hinzugefügt (DE, EN, ES).
+
+## [1.31.0.05] - 2026-04-23
+
+### Geändert
+- **Landingpage:** Dekorative Graphen aus den Sektionen Mission, Finanzen und Teams entfernt für ein saubereres Erscheinungsbild.
+- **Public Stats:** Implementierung eines echten Nutzer-Wachstums-Charts basierend auf Live-Daten aus Firestore.
+- **State Management:** `landingStats` State und Listener aktualisiert, um `user_growth` Daten zu erfassen und anzuzeigen.
+
+## [1.31.0.04] - 2026-04-23
+
+### Changed
+- **Roadmap:** Priorisierung des Kampfsystems (Combat Engine) vor der Pretix-Ticket-Integration, um die spielerische Interaktion früher zu fördern.
+
+## [1.31.0.03] - 2026-04-23
+
+### Added
+- **Roadmap:** Implementierung einer realistischen Roadmap auf der Über-Seite (`/uber`), inklusive Meilensteinen für Pretix-Integration (Ticketverkauf) und das neue Lehrer-Karten Kampfsystem.
+
+## [1.32.0.01] - 2026-04-23
+
+### Fixed
+- **Security Rules:** Fehlende Firestore-Berechtigungen für die `shop_items` Collection hinzugefügt, um `permission-denied` Fehler im Shop zu beheben.
+
+## [1.32.0.00] - 2026-04-23
+
+### Added
+- **Shop-Verwaltung (Admin):** Neues Admin-Modul zur dynamischen Verwaltung von Shop-Artikeln direkt in der UI (Firestore-basiert).
+- **Externe Shops:** Unterstützung für externe Verlinkungen (z.B. Printify Popup-Stores oder pretix Tickets) via `externalUrl`.
+- **Hybrider Checkout:** Der Shop entscheidet automatisch zwischen internem Stripe-Checkout und externem Link-Redirect.
+- **Initial-Sync:** Button im Admin-Bereich zum schnellen Befüllen des Shops mit Standard-Artikeln.
+
+## [1.31.0.02] - 2026-04-23
+
+### Changed
+- **UI:** Vollständige Entfernung der Notenpunkte (NP) aus der Benutzeroberfläche (Shop, Widgets, Abo-Seite). Die Logik bleibt im Hintergrund für zukünftige Zwecke erhalten.
+
+## [1.31.0.01] - 2026-04-23
+
+### Refactored
+- **Shop UI:** Umstellung auf ein minimalistisches Store-Layout ohne überflüssige Kacheln und Container.
+- **Hero Section:** Redesign der Einleitung für ein saubereres Erscheinungsbild.
+- **Produktkarten:** Verschlankung der Karten-UI und Integration einer interaktiven Varianten-Auswahl bei Hover.
+
+## [1.31.0.00] - 2026-04-23
+
+### Added
+- **Shop Redesign:** Vollständige Modernisierung der Shop-Landingpage als One-Pager mit Fokus auf Highlights (Featured Items).
+- **Merchandise:** Unterstützung für Merch-Artikel mit Varianten-Auswahl (z.B. Kleidergrößen) und spezialisierten Visuals.
+- **Tickets:** Neues Ticket-System für Events inkl. Anzeige von Datum und Ort auf den Produktkarten.
+- **Gast-Optimierung:** Neue Sortierungs-Logik für Gäste, die Merch und Tickets vor Sammelkarten priorisiert.
+- **Backend:** Erweiterung der Stripe-Checkout-Integration zur Erfassung von Varianten und Metadaten.
+
+## [1.30.7.09] - 2026-04-22
+
+### Added
+- **Cron:** Updated `collectLandingStats` to include `global_managed_budget` and `global_completed_tasks` for the landing page.
+
 ## [1.30.7.08] - 2026-04-22
 
 ### Fixes

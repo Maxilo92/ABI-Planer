@@ -133,7 +133,6 @@ export default function AboPage() {
               <div className="space-y-3 pt-6 border-t border-border/50">
                 {[
                   { icon: Trophy, text: 'Premium Battle Pass – 50 exklusive Tiers' },
-                  { icon: Zap, text: '500 NP monatlich zum Ausgeben' },
                   { icon: Gift, text: 'Exklusive Cosmetics & Early Access' },
                   { icon: Calendar, text: 'Automatische Verlängerung • Jederzeit kündbar' },
                   { icon: CheckCircle2, text: 'Werbefreies Erlebnis' }
@@ -216,7 +215,6 @@ export default function AboPage() {
               <tbody className="space-y-2">
                 {[
                   { feature: 'Battle Pass Tiers', free: '25 (Free)', premium: '50 (Free + Premium)' },
-                  { feature: 'NP monatlich', free: '0', premium: '500' },
                   { feature: 'Premium Cosmetics', free: 'Nein', premium: 'Ja' },
                   { feature: 'Early Access', free: 'Nein', premium: 'Ja' },
                   { feature: 'Werbefreies Erlebnis', free: 'Nein', premium: 'Ja' },
@@ -247,15 +245,11 @@ export default function AboPage() {
               },
               {
                 q: 'Was passiert nach dem Kündigen?',
-                a: 'Du verlierst Zugang zum Premium Battle Pass, bekommst aber weiterhin den kostenlosen Pass. NP werden nicht gelöscht.'
+                a: 'Du verlierst Zugang zum Premium Battle Pass, bekommst aber weiterhin den kostenlosen Pass.'
               },
               {
                 q: 'Gibt es eine Testphase?',
                 a: 'Nein, aber du kannst jederzeit kündigen. Du zahlst nur für die Tage, die du nutzt.'
-              },
-              {
-                q: 'Wie werden die 500 NP beansprucht?',
-                a: 'Die 500 NP werden automatisch zu deinem Account hinzugefügt, wenn dein Abo erneuert wird.'
               },
               {
                 q: 'Kann ich mehrere Abos haben?',

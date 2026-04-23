@@ -135,8 +135,7 @@ export function DashboardNavbar() {
       icon: Euro,
       subItems: [
         { href: '/finanzen', label: 'Kassenstand', icon: Euro },
-        ...(isEnabled('shop_status') ? [{ href: resolveHref('/shop', 'shop'), label: 'Stufen-Shop', icon: ShoppingBag, isExternal: true }] : []),
-      ],
+        ...(isEnabled('shop_status') ? [{ href: resolveHref('/shop', 'shop'), label: 'ABISHOP', icon: ShoppingBag, isExternal: true }] : []),      ],
     })
 
     if (isEnabled('sammelkarten_status')) {
@@ -276,7 +275,7 @@ export function DashboardNavbar() {
   return (
     <>
       {/* Mobile Header */}
-      <header className="lg:hidden fixed top-0 left-0 right-0 z-50 h-16 border-b bg-background/95 backdrop-blur-sm px-4 flex items-center justify-between">
+      <header className="lg:hidden fixed top-0 left-0 right-0 z-[100] h-16 border-b bg-background/95 backdrop-blur-sm px-4 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-3">
           <Logo width={40} height={40} />
           <span className="font-extrabold text-xl tracking-tight">ABI Planer</span>
@@ -317,7 +316,7 @@ export function DashboardNavbar() {
             {!isDesktopCollapsed && <Button variant="ghost" size="icon" onClick={toggleDesktopCollapsed}><ChevronLeft className="h-4 w-4" /></Button>}
           </div>
 
-          <div className="p-2 border-b"><CountdownHeader /></div>
+          <div className="p-2 border-b flex justify-center"><CountdownHeader /></div>
 
           <nav className="flex-1 overflow-y-auto p-4 space-y-1">
             {navItems.map(item => renderNavItem(item))}

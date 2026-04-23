@@ -1,10 +1,23 @@
 'use client'
 
-import { Children, cloneElement, isValidElement, type ReactNode } from 'react'
+import { Children, cloneElement, isValidElement, type ReactNode, useState, useMemo, useEffect } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Switch } from '@/components/ui/switch'
 import { cn } from '@/lib/utils'
 import { motion, type Variants } from 'framer-motion'
+import { 
+  LineChart as LineChartIcon, 
+  BarChart3, 
+  PieChart as PieChartIcon,
+  Activity,
+  Users,
+  Clock,
+  ArrowLeftRight,
+  MessageSquare,
+  Sparkles,
+  TrendingUp,
+  History
+} from 'lucide-react'
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -22,6 +35,286 @@ import { Line, Bar, Pie } from 'react-chartjs-2'
 import type { FeatureStatus, SystemAnalyticsTimelinePoint, SystemAnalyticsActionStat } from '@/types/system'
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, ArcElement, Filler, Tooltip, Legend)
+
+export type ChartType = 'line' | 'bar' | 'pie' | 'doughnut'
+
+interface UniversalChartProps {
+  data: any[]
+  labelKey: string
+  valueKey: string
+  datasetLabel?: string
+  xLabel?: string
+  yLabel?: string
+  type?: ChartType
+  title?: string
+  height?: number
+  emptyLabel?: string
+  colorScheme?: 'blue' | 'emerald' | 'purple' | 'amber' | 'violet' | 'orange' | 'rose'
+  showLegend?: boolean
+  showGrid?: boolean
+  indexAxis?: 'x' | 'y'
+}
+
+export function UniversalChart({
+  data,
+  labelKey,
+  valueKey,
+  datasetLabel = 'Wert',
+  xLabel,
+  yLabel,
+  type = 'line',
+  height = 240,
+  emptyLabel = 'Keine Daten vorhanden.',
+  colorScheme = 'blue',
+  showLegend = true,
+  showGrid = true,
+  indexAxis = 'x'
+}: UniversalChartProps) {
+  if (!data || data.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center rounded-xl border border-dashed py-12 px-4 text-center">
+        <div className="bg-muted p-3 rounded-full mb-3">
+          <BarChart3 className="w-5 h-5 text-muted-foreground" />
+        </div>
+        <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider">{emptyLabel}</p>
+      </div>
+    )
+  }
+
+  const labels = data.map(d => String(d[labelKey] || ''))
+  const values = data.map(d => Number(d[valueKey]) || 0)
+
+  const colors = {
+    blue: { border: '#3b82f6', bg: 'rgba(59, 130, 246, 0.15)', multi: ['#3b82f6', '#60a5fa', '#93c5fd', '#bfdbfe', '#dbeafe'] },
+    emerald: { border: '#10b981', bg: 'rgba(16, 185, 129, 0.15)', multi: ['#10b981', '#34d399', '#6ee7b7', '#a7f3d0', '#d1fae5'] },
+    purple: { border: '#a855f7', bg: 'rgba(168, 85, 247, 0.15)', multi: ['#a855f7', '#c084fc', '#d8b4fe', '#e9d5ff', '#f3e8ff'] },
+    amber: { border: '#f59e0b', bg: 'rgba(245, 158, 11, 0.15)', multi: ['#f59e0b', '#fbbf24', '#fcd34d', '#fde68a', '#fef3c7'] },
+    violet: { border: '#8b5cf6', bg: 'rgba(139, 92, 246, 0.15)', multi: ['#8b5cf6', '#a78bfa', '#c4b5fd', '#ddd6fe', '#ede9fe'] },
+    orange: { border: '#f97316', bg: 'rgba(249, 115, 22, 0.15)', multi: ['#f97316', '#fb923c', '#fdba74', '#fed7aa', '#ffedd5'] },
+    rose: { border: '#f43f5e', bg: 'rgba(244, 63, 94, 0.15)', multi: ['#f43f5e', '#fb7185', '#fda4af', '#fecdd3', '#fff1f2'] },
+  }
+
+  const selectedColor = colors[colorScheme]
+
+  const chartData = {
+    labels,
+    datasets: [{
+      label: datasetLabel,
+      data: values,
+      borderColor: selectedColor.border,
+      backgroundColor: (type === 'pie' || type === 'doughnut') ? 
+        [
+          'rgba(59, 130, 246, 0.8)',
+          'rgba(16, 185, 129, 0.8)',
+          'rgba(245, 158, 11, 0.8)',
+          'rgba(239, 68, 68, 0.8)',
+          'rgba(139, 92, 246, 0.8)',
+          'rgba(236, 72, 153, 0.8)',
+          'rgba(20, 184, 166, 0.8)',
+          'rgba(100, 116, 139, 0.8)',
+        ] : selectedColor.bg,
+      borderWidth: type === 'line' ? 3 : 0,
+      borderRadius: type === 'bar' ? 6 : 0,
+      tension: 0.4,
+      fill: type === 'line',
+      pointRadius: type === 'line' ? 4 : 0,
+      pointHoverRadius: 6,
+      pointBackgroundColor: selectedColor.border,
+      pointBorderColor: '#fff',
+      pointBorderWidth: 2,
+    }]
+  }
+
+  const options: ChartOptions<any> = {
+    responsive: true,
+    maintainAspectRatio: false,
+    indexAxis,
+    plugins: {
+      legend: {
+        display: showLegend,
+        position: 'bottom',
+        labels: {
+          color: '#64748b',
+          font: { size: 10, weight: 700 },
+          usePointStyle: true,
+          padding: 20
+        }
+      },
+      tooltip: {
+        backgroundColor: '#0f172a',
+        padding: 12,
+        titleFont: { size: 12, weight: 'bold' },
+        bodyFont: { size: 12 },
+        cornerRadius: 8,
+        displayColors: type === 'pie' || type === 'doughnut',
+      }
+    },
+    scales: (type === 'pie' || type === 'doughnut') ? {} : {
+      x: {
+        beginAtZero: indexAxis === 'y',
+        title: {
+          display: !!xLabel,
+          text: xLabel,
+          color: '#64748b',
+          font: { size: 10, weight: 800 },
+          padding: { top: 10 }
+        },
+        grid: { 
+          display: indexAxis === 'y' ? showGrid : false,
+          color: 'rgba(148, 163, 184, 0.1)',
+        },
+        ticks: {
+          color: '#64748b',
+          font: { size: 10, weight: 600 },
+          maxRotation: 45,
+          minRotation: 0,
+          autoSkip: true,
+          callback: (value: any) => indexAxis === 'y' && typeof value === 'number' ? (value >= 1000 ? `${(value / 1000).toFixed(1)}k` : value) : value
+        }
+      },
+      y: {
+        beginAtZero: indexAxis === 'x',
+        title: {
+          display: !!yLabel,
+          text: yLabel,
+          color: '#64748b',
+          font: { size: 10, weight: 800 },
+          padding: { bottom: 10 }
+        },
+        grid: {
+          display: indexAxis === 'x' ? showGrid : false,
+          color: 'rgba(148, 163, 184, 0.1)',
+        },
+        ticks: {
+          color: '#64748b',
+          font: { size: 10, weight: 600 },
+          callback: (value: any) => indexAxis === 'x' && typeof value === 'number' ? (value >= 1000 ? `${(value / 1000).toFixed(1)}k` : value) : value
+        }
+      }
+    }
+  }
+
+  return (
+    <div style={{ height: `${height}px` }} className="w-full">
+      {type === 'line' && <Line data={chartData} options={options} />}
+      {type === 'bar' && <Bar data={chartData} options={options} />}
+      {type === 'pie' && <Pie data={chartData} options={options} />}
+      {type === 'doughnut' && <Pie data={chartData} options={{...options, cutout: '65%'}} />}
+    </div>
+  )
+}
+
+export function ChartCard({
+  title,
+  description,
+  icon,
+  data,
+  labelKey,
+  valueKey,
+  datasetLabel,
+  xLabel,
+  yLabel,
+  defaultType = 'line',
+  colorScheme = 'blue',
+  emptyLabel,
+  allowTypeSwitch = true,
+  height = 300,
+  className
+}: {
+  title: string
+  description: string
+  icon?: ReactNode
+  data: any[]
+  labelKey: string
+  valueKey: string
+  datasetLabel?: string
+  xLabel?: string
+  yLabel?: string
+  defaultType?: ChartType
+  colorScheme?: 'blue' | 'emerald' | 'purple' | 'amber' | 'violet' | 'orange' | 'rose'
+  emptyLabel?: string
+  allowTypeSwitch?: boolean
+  height?: number
+  className?: string
+}) {
+  const [type, setType] = useState<ChartType>(defaultType)
+
+  const stats = useMemo(() => {
+    if (!data.length) return null
+    const values = data.map(d => Number(d[valueKey]) || 0)
+    return {
+      peak: Math.max(...values),
+      sum: values.reduce((a, b) => a + b, 0),
+      avg: values.reduce((a, b) => a + b, 0) / values.length,
+      entries: data.length
+    }
+  }, [data, valueKey])
+
+  return (
+    <Card className={cn("border-2 shadow-sm overflow-hidden flex flex-col", className)}>
+      <div className="p-3 sm:p-4 border-b flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+        <div className="space-y-0.5 sm:space-y-1 min-w-0">
+          <div className="flex items-center gap-2">
+            {icon && <div className="p-1.5 bg-muted rounded-lg shrink-0">{icon}</div>}
+            <p className="text-[11px] sm:text-xs font-black uppercase tracking-tight truncate">{title}</p>
+          </div>
+          <p className="text-[9px] sm:text-[10px] text-muted-foreground font-medium line-clamp-1">{description}</p>
+        </div>
+        
+        {allowTypeSwitch && (
+          <div className="flex bg-muted p-0.5 sm:p-1 rounded-lg shrink-0 w-fit sm:scale-90 sm:origin-right">
+            {(['line', 'bar', 'pie'] as ChartType[]).map((t) => (
+              <button
+                key={t}
+                onClick={() => setType(t)}
+                className={cn(
+                  "p-1 sm:p-1.5 rounded-md transition-all",
+                  type === t ? "bg-background shadow-sm text-primary" : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                {t === 'line' && <LineChartIcon className="w-3.5 h-3.5" />}
+                {t === 'bar' && <BarChart3 className="w-3.5 h-3.5" />}
+                {t === 'pie' && <PieChartIcon className="w-3.5 h-3.5" />}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="p-4 flex-1">
+        <UniversalChart
+          data={data}
+          labelKey={labelKey}
+          valueKey={valueKey}
+          datasetLabel={datasetLabel}
+          xLabel={xLabel}
+          yLabel={yLabel}
+          type={type}
+          height={height}
+          colorScheme={colorScheme}
+          emptyLabel={emptyLabel}
+        />
+      </div>
+
+      {stats && (
+        <div className="p-3 bg-muted/30 border-t grid grid-cols-3 gap-2">
+          <div className="text-center">
+            <p className="text-[8px] font-black uppercase text-muted-foreground tracking-widest">Eintraege</p>
+            <p className="text-xs font-bold">{stats.entries}</p>
+          </div>
+          <div className="text-center">
+            <p className="text-[8px] font-black uppercase text-muted-foreground tracking-widest">Summe</p>
+            <p className="text-xs font-bold">{Math.round(stats.sum * 10) / 10}</p>
+          </div>
+          <div className="text-center">
+            <p className="text-[8px] font-black uppercase text-muted-foreground tracking-widest">Peak</p>
+            <p className="text-xs font-bold">{Math.round(stats.peak * 10) / 10}</p>
+          </div>
+        </div>
+      )}
+    </Card>
+  )
+}
 
 export function FeatureStatusToggle({
   label,
@@ -161,22 +454,69 @@ export function PieChart({ data, labelKey, valueKey }: { data: any[], labelKey: 
   )
 }
 
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
+
+export function ProgressBar({ progress, color = 'bg-primary' }: { progress: number; color?: string }) {
+  return (
+    <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+      <motion.div
+        className={cn("h-full", color)}
+        initial={{ width: 0 }}
+        animate={{ width: `${progress}%` }}
+        transition={{ type: 'spring', bounce: 0, duration: 0.5 }}
+      />
+    </div>
+  )
+}
+
+export function MarkdownTypewriter({ text, speed = 20 }: { text: string; speed?: number }) {
+  const [displayedText, setDisplayedText] = useState('')
+  
+  useEffect(() => {
+    if (!text) return
+    setDisplayedText('')
+    let i = 0
+    const interval = setInterval(() => {
+      if (i < text.length) {
+        // Dynamic increment: faster for longer texts
+        const increment = text.length > 1000 ? 15 : (text.length > 300 ? 8 : 3)
+        setDisplayedText(text.slice(0, i + increment))
+        i += increment
+      } else {
+        setDisplayedText(text)
+        clearInterval(interval)
+      }
+    }, speed)
+    return () => clearInterval(interval)
+  }, [text, speed])
+
+  return (
+    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+      {displayedText}
+    </ReactMarkdown>
+  )
+}
+
 export function StatCard({ title, value, subValue, icon, loading, statusMode = false }: any) {
   return (
-    <Card className="border-2 shadow-sm overflow-hidden h-full">
-      <CardContent className="p-4 flex items-center justify-between gap-3 h-full">
-        <div className="space-y-1 min-w-0 flex-1">
-          <p className="text-[9px] font-black uppercase text-muted-foreground tracking-widest truncate" title={title}>{title}</p>
+    <Card className="border-2 shadow-sm overflow-hidden h-full group hover:border-primary/30 transition-colors">
+      <CardContent className="p-3 sm:p-4 flex items-center justify-between gap-2 sm:gap-3 h-full">
+        <div className="space-y-0.5 sm:space-y-1 min-w-0 flex-1">
+          <p className="text-[8px] sm:text-[9px] font-black uppercase text-muted-foreground tracking-widest truncate" title={title}>{title}</p>
           {loading ? (
-            <div className="h-7 w-20 bg-muted animate-pulse rounded" />
+            <div className="h-6 sm:h-7 w-16 sm:w-20 bg-muted animate-pulse rounded" />
           ) : (
-            <p className={cn("text-lg sm:text-xl font-black uppercase tracking-tighter break-words leading-tight", statusMode && value === 'Wartung' ? 'text-red-700' : '')}>
+            <p className={cn(
+              "text-base sm:text-lg lg:text-xl font-black uppercase tracking-tighter break-words leading-none sm:leading-tight", 
+              statusMode && value === 'Wartung' ? 'text-red-700' : ''
+            )}>
               {value}
             </p>
           )}
-          <p className="text-[10px] text-muted-foreground font-medium truncate" title={subValue}>{subValue}</p>
+          <p className="text-[9px] sm:text-[10px] text-muted-foreground font-medium truncate opacity-80" title={subValue}>{subValue}</p>
         </div>
-        <div className="p-2 sm:p-2.5 bg-muted/50 rounded-xl border shrink-0">
+        <div className="p-1.5 sm:p-2.5 bg-muted/50 rounded-lg sm:rounded-xl border shrink-0 group-hover:bg-primary/5 group-hover:text-primary transition-colors">
           {icon}
         </div>
       </CardContent>

@@ -168,9 +168,8 @@ async function processReferralReward(uid: string, after: Profile) {
         // Referred User
         transaction.set(referredRef, {
             is_referral_claimed: true,
-            booster_stats: {
-                extra_available: FieldValue.increment(5),
-            },
+            "booster_stats.inventory.teacher_vol1": FieldValue.increment(5),
+            "booster_stats.updated_at": FieldValue.serverTimestamp(),
         }, { merge: true });
 
         const referredGiftRef = referredRef.collection("unseen_gifts").doc();
@@ -190,9 +189,8 @@ async function processReferralReward(uid: string, after: Profile) {
             transaction.set(referrerRef, {
                 total_referrals: FieldValue.increment(1),
                 total_referral_boosters: FieldValue.increment(allowedReward),
-                booster_stats: {
-                    extra_available: FieldValue.increment(allowedReward),
-                },
+                "booster_stats.inventory.teacher_vol1": FieldValue.increment(allowedReward),
+                "booster_stats.updated_at": FieldValue.serverTimestamp(),
             }, { merge: true });
 
             const referrerGiftRef = referrerRef.collection("unseen_gifts").doc();

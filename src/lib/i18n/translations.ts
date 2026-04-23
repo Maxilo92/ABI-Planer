@@ -3,9 +3,9 @@ export const translations = {
     landing: {
       hero: {
         badge: 'Plattform für euren Abschluss',
-        title1: 'Alles für euren',
-        title2: 'perfekten Abschluss.',
-        desc: 'ABI Planer verbindet professionelle Organisation für euren Jahrgang mit einem interaktiven Kartenbereich. Klar strukturiert, sicher und für alle Geräte optimiert.',
+        title1: 'Sicher planen.',
+        title2: 'Gemeinsam feiern.',
+        desc: 'Der ABI Planer ist das verlässliche Fundament für euren Abschluss. Stressfrei, transparent und 100% DSGVO-konform organisiert ihr euren gesamten Jahrgang an einem Ort.',
         ctaPrimary: 'Jahrgang einrichten',
         ctaSecondary: 'Funktionen ansehen'
       },
@@ -24,16 +24,19 @@ export const translations = {
         }
       },
       stats: {
-        users: 'Registrierte Nutzer',
-        active: 'Aktiv in 24h',
-        cards: 'Karten im System',
-        news: 'News-Updates'
+        sectionTitle: 'Transparenz & Daten',
+        budget: 'Verwaltetes Budget',
+        completedTasks: 'Erledigte Aufgaben',
+        users: 'Aktive Planer',
+        cards: 'Gesammelte Karten',
+        growthTitle: 'Nutzerwachstum (30 Tage)',
+        budgetGrowthTitle: 'Budget-Entwicklung'
       },
       mission: {
         badge: 'Mission',
-        title: 'Klare Prozesse statt verstreuter Informationen für euren Jahrgang.',
-        desc1: 'ABI Planer bündelt Budget, Aufgaben, Termine und Abstimmungen an einem zentralen Ort. Kein Suchen mehr in unübersichtlichen Chats oder veralteten Tabellen.',
-        desc2: 'So entsteht ein dauerhaftes Archiv für euren Abschluss. Alle Entscheidungen und Zuständigkeiten sind jederzeit transparent für alle Beteiligten einsehbar.',
+        title: 'Verlässliche Planung statt Chaos.',
+        desc1: 'ABI Planer bietet euch die Sicherheit, die ihr für euren Abschluss braucht. Wir ersetzen unübersichtliche Chats durch klare Strukturen und verlässliche Prozesse.',
+        desc2: '100% DSGVO-konform und mit Datensicherheit aus Deutschland – damit ihr euch voll und ganz auf eure Feier konzentrieren könnt.',
         momentum: 'Plattform-Momentum & Wachstum',
         items: [
           { title: 'Planung mit Überblick', text: 'Finanzen, Aufgaben und Deadlines sind an einem Ort sichtbar.' },
@@ -41,9 +44,9 @@ export const translations = {
         ]
       },
       trust: [
-        { title: 'Datenschutz', text: 'Datenzugriffe sind klar getrennt und nachvollziehbar.' },
-        { title: 'Schul-Fokus', text: 'Optimiert für die Jahrgangsorganisation und Teamarbeit.' },
-        { title: 'Interaktion', text: 'Karten-Features fördern die aktive Beteiligung aller Schüler.' }
+        { title: 'Datensicherheit', text: '100% DSGVO-konform. Eure Daten werden sicher auf Servern in Deutschland gespeichert.' },
+        { title: 'Verlässlichkeit', text: 'Kein Informationsverlust mehr. Alle Absprachen und Budgets sind zentral gesichert.' },
+        { title: 'Transparenz', text: 'Jederzeit volle Einsicht in den Planungsstand für den gesamten Jahrgang.' }
       ],
       features: {
         finances: {
@@ -103,21 +106,6 @@ export const translations = {
         desc: 'Richtet euren Jahrgang ein und bindet alle Schüler aktiv in die Planung ein.',
         ctaPrimary: 'Jetzt starten',
         ctaSecondary: 'Einloggen'
-      },
-      dashboard: {
-        loading: 'Initialisiere Plattform...',
-        secureConnection: 'Sichere Verbindung wird hergestellt...',
-        welcome: 'Willkommen zurück!',
-        autoLayout: 'Auto',
-        lastUpdates: 'Letzte Updates',
-        viewPost: 'Zum Beitrag',
-        noNews: 'Noch keine Neuigkeiten vorhanden.',
-        viewAllNews: 'Alle News ansehen',
-        supportBanner: {
-          title: 'Helft uns die Seite am Laufen zu halten',
-          description: 'Damit der ABI Planer werbefrei, stabil und für alle kostenlos bleibt, fallen monatliche Kosten für Server, Datenbanken und Hosting an. Da wir keine Daten verkaufen oder Werbung schalten, deckt dieser Support-Pool ausschließlich diese technischen Ausgaben. Sollte das Ziel nicht erreicht werden, müssten die Kosten privat getragen oder Funktionen eingeschränkt werden – jeder Euro sichert also den Betrieb eurer Plattform!',
-          cta: 'Support geben'
-        }
       }
     },
     auth: {
@@ -364,18 +352,29 @@ export const translations = {
       }
     },
     dashboard: {
-      loading: 'Lade Dashboard...',
+      title: 'Dashboard',
+      loading: 'Initialisiere Plattform...',
+      secureConnection: 'Sichere Verbindung wird hergestellt...',
       welcome: 'Willkommen zurück!',
-      title: 'Dashboard'
+      autoLayout: 'Auto',
+      lastUpdates: 'Letzte Updates',
+      viewPost: 'Zum Beitrag',
+      noNews: 'Noch keine Neuigkeiten vorhanden.',
+      viewAllNews: 'Alle News ansehen',
+      supportBanner: {
+        title: 'Helft uns die Seite am Laufen zu halten',
+        description: 'Damit der ABI Planer werbefrei, stabil und für alle kostenlos bleibt, fallen monatliche Kosten für Server, Datenbanken und Hosting an. Da wir keine Daten verkaufen oder Werbung schalten, deckt dieser Support-Pool ausschließlich diese technischen Ausgaben. Sollte das Ziel nicht erreicht werden, müssten die Kosten privat getragen oder Funktionen eingeschränkt werden – jeder Euro sichert also den Betrieb eurer Plattform!',
+        cta: 'Support geben'
+      }
     }
   },
   'en-US': {
     landing: {
       hero: {
         badge: 'Platform for your graduation',
-        title1: 'Everything for your',
-        title2: 'perfect graduation.',
-        desc: 'ABI Planer combines professional organization for your class with an interactive card area. Clearly structured, secure, and optimized for all devices.',
+        title1: 'Plan securely.',
+        title2: 'Celebrate together.',
+        desc: 'ABI Planer is the reliable foundation for your graduation. Stress-free, transparent, and 100% GDPR-compliant, you organize your entire class in one place.',
         ctaPrimary: 'Set up class',
         ctaSecondary: 'View features'
       },
@@ -394,16 +393,19 @@ export const translations = {
         }
       },
       stats: {
-        users: 'Registered Users',
-        active: 'Active in 24h',
-        cards: 'Cards in System',
-        news: 'News Updates'
+        sectionTitle: 'Transparency & Data',
+        budget: 'Managed Budget',
+        completedTasks: 'Completed Tasks',
+        users: 'Active Planners',
+        cards: 'Collected Cards',
+        growthTitle: 'User Growth (30 Days)',
+        budgetGrowthTitle: 'Budget Growth'
       },
       mission: {
         badge: 'Mission',
-        title: 'Clear processes instead of scattered information for your class.',
-        desc1: 'ABI Planer bundles budget, tasks, appointments, and polls in one central place. No more searching in messy chats or outdated spreadsheets.',
-        desc2: 'This creates a permanent archive for your graduation. All decisions and responsibilities are transparently viewable for everyone involved at any time.',
+        title: 'Reliable planning instead of chaos.',
+        desc1: 'ABI Planer provides the security you need for your graduation. We replace messy chats with clear structures and reliable processes.',
+        desc2: '100% GDPR-compliant and with high data security standards – so you can focus entirely on your celebration.',
         momentum: 'Platform Momentum & Growth',
         items: [
           { title: 'Planning with Overview', text: 'Finances, tasks, and deadlines are visible in one place.' },
@@ -411,9 +413,9 @@ export const translations = {
         ]
       },
       trust: [
-        { title: 'Data Privacy', text: 'Data access is clearly separated and traceable.' },
-        { title: 'School Focus', text: 'Optimized for class organization and teamwork.' },
-        { title: 'Interaction', text: 'Card features promote active participation of all students.' }
+        { title: 'Data Security', text: '100% GDPR-compliant. Your data is stored securely and handled with care.' },
+        { title: 'Reliability', text: 'No more lost information. All agreements and budgets are centrally secured.' },
+        { title: 'Transparency', text: 'Full insight into the planning status for the entire class at any time.' }
       ],
       features: {
         finances: {
@@ -473,21 +475,6 @@ export const translations = {
         desc: 'Set up your class and actively involve all students in the planning.',
         ctaPrimary: 'Start now',
         ctaSecondary: 'Login'
-      },
-      dashboard: {
-        loading: 'Initializing platform...',
-        secureConnection: 'Establishing secure connection...',
-        welcome: 'Welcome back!',
-        autoLayout: 'Auto',
-        lastUpdates: 'Last Updates',
-        viewPost: 'To Post',
-        noNews: 'No news available yet.',
-        viewAllNews: 'View all news',
-        supportBanner: {
-          title: 'Help us keep the site running',
-          description: 'To keep ABI Planer ad-free, stable, and free for everyone, monthly costs for servers, databases, and hosting are incurred. Since we do not sell data or run ads, this support pool exclusively covers these technical expenses. If the goal is not reached, the costs would have to be borne privately or functions restricted – so every euro secures the operation of your platform!',
-          cta: 'Give support'
-        }
       }
     },
     auth: {
@@ -734,18 +721,29 @@ export const translations = {
       }
     },
     dashboard: {
-      loading: 'Loading dashboard...',
+      title: 'Dashboard',
+      loading: 'Initializing platform...',
+      secureConnection: 'Establishing secure connection...',
       welcome: 'Welcome back!',
-      title: 'Dashboard'
+      autoLayout: 'Auto',
+      lastUpdates: 'Last Updates',
+      viewPost: 'To Post',
+      noNews: 'No news available yet.',
+      viewAllNews: 'View all news',
+      supportBanner: {
+        title: 'Help us keep the site running',
+        description: 'To keep ABI Planer ad-free, stable, and free for everyone, monthly costs for servers, databases, and hosting are incurred. Since we do not sell data or run ads, this support pool exclusively covers these technical expenses. If the goal is not reached, the costs would have to be borne privately or functions restricted – so every euro secures the operation of your platform!',
+        cta: 'Give support'
+      }
     }
   },
   'es-ES': {
     landing: {
       hero: {
         badge: 'Plataforma para tu graduación',
-        title1: 'Todo para tu',
-        title2: 'graduación perfecta.',
-        desc: 'ABI Planer combina la organización profesional de tu curso con un área de cartas interactiva. Claramente estructurado, seguro y optimizado para todos los dispositivos.',
+        title1: 'Planifica con seguridad.',
+        title2: 'Celebrad juntos.',
+        desc: 'ABI Planer es la base confiable para vuestra graduación. Sin estrés, transparente y 100% conforme al RGPD, organizáis todo vuestro curso en un solo lugar.',
         ctaPrimary: 'Configurar curso',
         ctaSecondary: 'Ver funciones'
       },
@@ -764,16 +762,19 @@ export const translations = {
         }
       },
       stats: {
-        users: 'Usuarios Registrados',
-        active: 'Activos en 24h',
-        cards: 'Cartas en el Sistema',
-        news: 'Actualizaciones de Noticias'
+        sectionTitle: 'Transparencia y Datos',
+        budget: 'Presupuesto gestionado',
+        completedTasks: 'Tareas completadas',
+        users: 'Planificadores activos',
+        cards: 'Cartas coleccionadas',
+        growthTitle: 'Crecimiento de usuarios (30 días)',
+        budgetGrowthTitle: 'Evolución del Presupuesto'
       },
       mission: {
         badge: 'Misión',
-        title: 'Procesos claros en lugar de información dispersa para tu curso.',
-        desc1: 'ABI Planer agrupa presupuesto, tareas, citas y votaciones en un solo lugar central. Se acabó el buscar en chats desordenados o hojas de cálculo obsoletas.',
-        desc2: 'Esto crea un archivo permanente para tu graduación. Todas las decisiones y responsabilidades son visibles de forma transparente para todos los involucrados en cualquier momento.',
+        title: 'Planificación confiable en lugar de caos.',
+        desc1: 'ABI Planer os ofrece la seguridad que necesitáis para vuestra graduación. Reemplazamos los chats desordenados por estructuras claras y procesos fiables.',
+        desc2: '100% conforme al RGPD y con altos estándares de seguridad de datos, para que podáis concentraros totalmente en vuestra celebración.',
         momentum: 'Impulso y Crecimiento de la Plataforma',
         items: [
           { title: 'Planificación con Visión General', text: 'Finanzas, tareas y plazos son visibles en un solo lugar.' },
@@ -781,9 +782,9 @@ export const translations = {
         ]
       },
       trust: [
-        { title: 'Privacidad de Datos', text: 'El acceso a los datos está claramente separado y es rastreable.' },
-        { title: 'Enfoque Escolar', text: 'Optimizado para la organización del curso y el trabajo en equipo.' },
-        { title: 'Interacción', text: 'Las funciones de cartas fomentan la participación activa de todos los estudiantes.' }
+        { title: 'Seguridad de datos', text: '100% conforme al RGPD. Tus datos se almacenan de forma segura y se tratan con cuidado.' },
+        { title: 'Fiabilidad', text: 'No más pérdida de información. Todos los acuerdos y presupuestos están asegurados centralmente.' },
+        { title: 'Transparencia', text: 'Visión completa del estado de la planificación para todo el curso en cualquier momento.' }
       ],
       features: {
         finances: {
@@ -843,21 +844,6 @@ export const translations = {
         desc: 'Configura tu curso e involucra activamente a todos los estudiantes en la planificación.',
         ctaPrimary: 'Empezar ahora',
         ctaSecondary: 'Iniciar sesión'
-      },
-      dashboard: {
-        loading: 'Inicializando plataforma...',
-        secureConnection: 'Estableciendo conexión segura...',
-        welcome: '¡Bienvenido de nuevo!',
-        autoLayout: 'Auto',
-        lastUpdates: 'Últimas Actualizaciones',
-        viewPost: 'Ver Publicación',
-        noNews: 'Aún no hay noticias disponibles.',
-        viewAllNews: 'Ver todas las noticias',
-        supportBanner: {
-          title: 'Ayúdanos a mantener el sitio en funcionamiento',
-          description: 'Para que ABI Planer siga siendo libre de publicidad, estable y gratuito para todos, se incurre en costes mensuales de servidores, bases de datos y alojamiento. Como no vendemos datos ni publicamos anuncios, este fondo de apoyo cubre exclusivamente estos gastos técnicos. Si no se alcanza el objetivo, los costes tendrían que ser asumidos de forma privada o se restringirían las funciones, ¡así que cada euro asegura el funcionamiento de tu plataforma!',
-          cta: 'Dar apoyo'
-        }
       }
     },
     auth: {
@@ -1104,9 +1090,20 @@ export const translations = {
       }
     },
     dashboard: {
-      loading: 'Cargando panel...',
+      title: 'Panel de control',
+      loading: 'Inicializando plataforma...',
+      secureConnection: 'Estableciendo conexión segura...',
       welcome: '¡Bienvenido de nuevo!',
-      title: 'Panel de control'
+      autoLayout: 'Auto',
+      lastUpdates: 'Últimas Actualizaciones',
+      viewPost: 'Ver Publicación',
+      noNews: 'Aún no hay noticias disponibles.',
+      viewAllNews: 'Ver todas las noticias',
+      supportBanner: {
+        title: 'Ayúdanos a mantener el sitio en funcionamiento',
+        description: 'Para que ABI Planer siga siendo libre de publicidad, estable y gratuito para todos, se incurre en costes mensuales de servidores, bases de datos y alojamiento. Como no vendemos datos ni publicamos anuncios, este fondo de apoyo cubre exclusivamente estos gastos técnicos. Si no se alcanza el objetivo, los costes tendrían que ser asumidos de forma privada o se restringirían las funciones, ¡así que cada euro asegura el funcionamiento de tu plataforma!',
+        cta: 'Dar apoyo'
+      }
     }
   }
 };

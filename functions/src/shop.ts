@@ -38,6 +38,12 @@ const STRIPE_PRICES: Record<string, StripeShopProduct> = {
   "soli-donation-small": { amount: 1, priceId: "price_1TGGzZAnqErqKKxAn2UYcCxq" },
   "soli-donation-medium": { amount: 1, priceId: "price_1TGGzsAnqErqKKxASTxTWqYj" },
   "soli-donation-large": { amount: 1, priceId: "price_1TGH03AnqErqKKxABplUroCg" },
+  // Merch - Placeholder IDs
+  "merch-hoodie-2027": { amount: 1, unitAmountCents: 3490, productName: "Stufen-Hoodie ABI 2027", productDescription: "Hochwertiger Hoodie (Bio-Baumwolle)" },
+  "merch-tshirt-2027": { amount: 1, unitAmountCents: 1990, productName: "Stufen-T-Shirt ABI 2027", productDescription: "Klassisches T-Shirt ABI 2027" },
+  // Tickets - Placeholder IDs
+  "ticket-abiball-2027": { amount: 1, unitAmountCents: 4500, productName: "Abiball 2027 Eintritt", productDescription: "Eintrittskarte inkl. Buffet" },
+  "ticket-vofi-party": { amount: 1, unitAmountCents: 800, productName: "Vofinanzierungs-Party", productDescription: "Eintritt Vofi-Party" },
   // NP Packs - update priceIds with actual Stripe Price IDs once created
   "np-pack-100": { amount: 100, priceId: "price_np_100", productName: "100 Notenpunkte", productDescription: "100 NP für Shop und Battle Pass" },
   "np-pack-550": { amount: 550, priceId: "price_np_550", productName: "550 Notenpunkte (10% Bonus)", productDescription: "550 NP für Shop und Battle Pass" },
@@ -62,6 +68,10 @@ const SHOP_ITEM_LABELS: Record<string, string> = {
   "soli-donation-small": "Soli-Spende Klein",
   "soli-donation-medium": "Soli-Spende Mittel",
   "soli-donation-large": "Soli-Spende Gross",
+  "merch-hoodie-2027": "Stufen-Hoodie ABI 2027",
+  "merch-tshirt-2027": "Stufen-T-Shirt ABI 2027",
+  "ticket-abiball-2027": "Abiball 2027 Eintritt",
+  "ticket-vofi-party": "Vofinanzierungs-Party",
 };
 
 const PACK_CONFIGS: Record<string, {
@@ -185,7 +195,7 @@ export const createStripeCheckoutSession = onCall({
   region: "europe-west3",
   secrets: ["STRIPE_SECRET_KEY"],
 }, async (request) => {
-  const { itemId, selectedCourse, donorName } = request.data;
+  const { itemId, selectedCourse, donorName, variant, quantity = 1 } = request.data;
   const product = STRIPE_PRICES[itemId];
   if (!product) throw new HttpsError("invalid-argument", "Ungültiges Produkt.");
 
@@ -194,10 +204,29 @@ export const createStripeCheckoutSession = onCall({
 
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "");
   const session = await stripe.checkout.sessions.create({
-    line_items: product.priceId ? [{ price: product.priceId, quantity: 1 }] : [{ quantity: 1, price_data: { currency: "eur", unit_amount: product.unitAmountCents, product_data: { name: product.productName || itemId } } }],
+    line_items: product.priceId 
+      ? [{ price: product.priceId, quantity }] 
+      : [{ 
+          quantity, 
+          price_data: { 
+            currency: "eur", 
+            unit_amount: product.unitAmountCents, 
+            product_data: { 
+              name: product.productName || itemId,
+              description: product.productDescription,
+            } 
+          } 
+        }],
     mode: "payment",
     client_reference_id: request.auth?.uid,
-    metadata: { itemId, amount: product.amount.toString(), isAppProduct: isAppProduct.toString(), selectedCourse: selectedCourse || "", donorName: donorName || "" },
+    metadata: { 
+      itemId, 
+      amount: (product.amount * quantity).toString(), 
+      isAppProduct: isAppProduct.toString(), 
+      selectedCourse: selectedCourse || "", 
+      donorName: donorName || "",
+      variant: variant || ""
+    },
     success_url: isAppProduct ? `https://tcg.abi-planer-27.de/sammelkarten?success=true` : `https://shop.abi-planer-27.de/shop?success=true`,
     cancel_url: `https://shop.abi-planer-27.de/shop?canceled=true`,
   });
@@ -314,12 +343,10 @@ export const stripeWebhook = onRequest({
               if (!profileSnap.exists) throw new Error(`Profile ${safeUserId} not found`);
 
               const updates: any = {
-                "booster_stats.extra_available": FieldValue.increment(amount),
                 "booster_stats.inventory.teacher_vol1": FieldValue.increment(amount),
                 updated_at: FieldValue.serverTimestamp(),
               };
               if (supportBonus > 0) {
-                updates["booster_stats.support_extra_available"] = FieldValue.increment(supportBonus);
                 updates["booster_stats.inventory.support_vol_1"] = FieldValue.increment(supportBonus);
               }
               transaction.update(profileRef, updates);
@@ -512,25 +539,4 @@ export const migrateBoosterStats = onCall({ cors: CALLABLE_CORS_ORIGINS, region:
     transaction.update(profileRef, { "booster_stats.extra_available": 0, "booster_stats.support_extra_available": 0, "booster_stats.inventory": mig, updated_at: FieldValue.serverTimestamp() });
     return { success: true };
   });
-});
-
-export const purchaseBoosters = onCall({ cors: CALLABLE_CORS_ORIGINS, region: "europe-west3" }, async (request) => {
-  if (!request.auth?.uid) throw new HttpsError("unauthenticated", "Anmeldung erforderlich.");
-  const { amount, itemId } = request.data;
-  const db = getFirestore("abi-data");
-  const profileRef = db.collection("profiles").doc(request.auth.uid);
-  await db.runTransaction(async (transaction) => {
-    const docSnap = await transaction.get(profileRef);
-    if (!docSnap.exists) throw new HttpsError("not-found", "Profil fehlt.");
-    const stats = docSnap.data()?.booster_stats || {};
-    const inv = stats.inventory || {};
-    const bonus = SUPPORT_BONUS[itemId] || 0;
-    const teacherInventory = (inv.teacher_vol1 || 0) + (inv.teachers_v1 || 0);
-    transaction.update(profileRef, { 
-      "booster_stats.inventory.teacher_vol1": teacherInventory + amount,
-      "booster_stats.inventory.support_vol_1": (inv.support_vol_1 || 0) + bonus,
-      updated_at: FieldValue.serverTimestamp() 
-    });
-  });
-  return { success: true };
 });

@@ -7,7 +7,7 @@ import { useAccentTheme } from '@/context/AccentThemeProvider'
 
 /**
  * ThemeSync component handles carrying over theme and accent settings
- * across subdomains (e.g. from dashboard.abi-planer-27.de to tcg.abi-planer-27.de).
+ * across sessions, tabs, and devices.
  * It uses the user profile in Firestore as the single source of truth.
  */
 export function ThemeSync() {
@@ -15,37 +15,41 @@ export function ThemeSync() {
   const { theme, setTheme } = useTheme()
   const { presetId, setPresetId } = useAccentTheme()
   
-  // Track synchronization status for this mount
-  const hasSyncedThemeRef = useRef(false)
-  const hasSyncedAccentRef = useRef(false)
+  // Track synchronization status to avoid race conditions during local updates
+  const lastSyncedThemeRef = useRef<string | undefined>(undefined)
+  const lastSyncedAccentRef = useRef<string | undefined>(undefined)
 
-  // 1. Sync Theme (Dark/Light)
+  // 1. Sync Theme (Dark/Light/System)
   useEffect(() => {
-    if (loading || !profile) return
+    if (loading || !profile || !profile.theme) return
 
-    // If profile has a theme and it differs from current local theme (and we haven't forced a sync yet)
-    if (profile.theme && profile.theme !== theme && !hasSyncedThemeRef.current) {
-      console.log(`[ThemeSync] Syncing theme: ${theme} -> ${profile.theme}`)
-      setTheme(profile.theme)
-      hasSyncedThemeRef.current = true
-    } else if (profile.theme === theme) {
-      // If they already match, mark as synced so we don't overwrite user changes later in the session
-      hasSyncedThemeRef.current = true
+    // If the profile theme has changed (different from what we last synced/applied)
+    if (profile.theme !== lastSyncedThemeRef.current) {
+      // If the local theme differs from the profile theme, update it
+      if (profile.theme !== theme) {
+        console.log(`[ThemeSync] Syncing theme from profile: ${theme} -> ${profile.theme}`)
+        setTheme(profile.theme)
+      }
+      // Update our record of what the profile theme is
+      lastSyncedThemeRef.current = profile.theme
     }
-  }, [profile, loading, theme, setTheme])
+  }, [profile?.theme, theme, setTheme, loading])
 
   // 2. Sync Accent Theme
   useEffect(() => {
-    if (loading || !profile) return
+    if (loading || !profile || !profile.accent_theme) return
 
-    if (profile.accent_theme && profile.accent_theme !== presetId && !hasSyncedAccentRef.current) {
-      console.log(`[ThemeSync] Syncing accent: ${presetId} -> ${profile.accent_theme}`)
-      setPresetId(profile.accent_theme)
-      hasSyncedAccentRef.current = true
-    } else if (profile.accent_theme === presetId) {
-      hasSyncedAccentRef.current = true
+    // If the profile accent theme has changed
+    if (profile.accent_theme !== lastSyncedAccentRef.current) {
+      // If the local accent theme differs from the profile accent theme, update it
+      if (profile.accent_theme !== presetId) {
+        console.log(`[ThemeSync] Syncing accent from profile: ${presetId} -> ${profile.accent_theme}`)
+        setPresetId(profile.accent_theme)
+      }
+      // Update our record of what the profile accent theme is
+      lastSyncedAccentRef.current = profile.accent_theme
     }
-  }, [profile, loading, presetId, setPresetId])
+  }, [profile?.accent_theme, presetId, setPresetId, loading])
 
   return null
 }

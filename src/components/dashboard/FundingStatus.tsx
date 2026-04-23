@@ -5,13 +5,16 @@ import { Progress } from '@/components/ui/progress'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { useState, useEffect } from 'react'
+import { AlertCircle, Info } from 'lucide-react'
 
 const TICKET_SALES_SAVE_DEBOUNCE_MS = 500
 
 interface FundingStatusProps {
   current: number
   goal: number
+  checksum?: number | null
   initialTicketSales?: number
   onTicketSalesChange?: (value: number) => void
   canEditTicketSales?: boolean
@@ -22,6 +25,7 @@ interface FundingStatusProps {
 export function FundingStatus({
   current,
   goal,
+  checksum,
   initialTicketSales = 150,
   onTicketSalesChange,
   canEditTicketSales,
@@ -102,11 +106,15 @@ export function FundingStatus({
     )
   }
 
+  const displayCurrent = Math.max(current, checksum || 0)
   const safeGoal = Math.max(goal, 1)
-  const percentage = Math.min(Math.round((current / safeGoal) * 100), 100)
-  const remaining = Math.max(0, goal - current)
+  const percentage = Math.min(Math.round((displayCurrent / safeGoal) * 100), 100)
+  const remaining = Math.max(0, goal - displayCurrent)
   const estimatedPrice = ticketSales > 0 ? remaining / ticketSales : 0
   
+  const hasChecksum = checksum !== undefined && checksum !== null
+  const isDiffSignificant = hasChecksum && Math.abs(current - checksum!) > 0.01
+
   // Safe formatting that won't cause hydration mismatch
   const formatCurrency = (val: number, decimals: number = 0) => {
     if (!mounted) return `${val.toFixed(decimals)} €` // Fallback for server
@@ -130,9 +138,34 @@ export function FundingStatus({
         <div className="space-y-6">
           <div className="space-y-4">
             <div className="flex justify-between items-end">
-              <span className="text-2xl md:text-3xl font-bold" suppressHydrationWarning>
-                {isAuthenticated ? formatCurrency(current) : '???,?? €'}
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-2xl md:text-3xl font-bold" suppressHydrationWarning>
+                  {isAuthenticated ? formatCurrency(displayCurrent) : '???,?? €'}
+                </span>
+                {isAuthenticated && isDiffSignificant && (
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <button className="text-warning hover:text-warning/80 transition-colors">
+                        <AlertCircle className="h-5 w-5" />
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-80 p-4">
+                      <div className="space-y-2">
+                        <h4 className="font-bold text-sm flex items-center gap-2">
+                          <AlertCircle className="h-4 w-4 text-warning" />
+                          Abweichung festgestellt
+                        </h4>
+                        <p className="text-xs text-muted-foreground leading-relaxed">
+                          Der physisch gezählte Kassenbestand ({formatCurrency(checksum!)}) weicht vom rein virtuellen Kontostand ({formatCurrency(current)}) ab.
+                        </p>
+                        <p className="text-[10px] bg-warning/10 p-2 rounded border border-warning/20 text-warning-foreground italic">
+                          Es wird sicherheitshalber der jeweils höhere Betrag für die Zielberechnung verwendet. Bitte prüfe den Finanzverlauf.
+                        </p>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                )}
+              </div>
               <span className="text-xs text-muted-foreground mb-1" suppressHydrationWarning>
                 von {formatCurrency(goal)}
               </span>

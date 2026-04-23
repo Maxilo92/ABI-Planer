@@ -26,7 +26,7 @@ export function FeatureGate({ children }: FeatureGateProps) {
       { path: '/kalender', feature: 'calendar_status', label: 'Kalender & Events' },
       { path: '/todos', feature: 'todos_status', label: 'Todos & Aufgaben' },
       { path: '/finanzen', feature: 'shop_status', label: 'Finanzen & Shop' },
-      { path: '/shop', feature: 'shop_status', label: 'Stufen-Shop' },
+      { path: '/shop', feature: 'shop_status', label: 'ABISHOP' },
       { path: '/home', feature: 'sammelkarten_status', label: 'Sammelkarten System' },
       { path: '/album', feature: 'sammelkarten_status', label: 'Sammelkarten Album' },
       { path: '/booster', feature: 'sammelkarten_status', label: 'Booster Packs' },
