@@ -10,6 +10,7 @@ import { getFirebaseAuth } from '@/lib/firebase'
 import { signOut } from 'firebase/auth'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/AuthContext'
+import { CountdownHeader } from './CountdownHeader'
 import Logo from '@/components/Logo'
 import { getTcgBaseUrl, getDashboardBaseUrl } from '@/lib/dashboard-url'
 
@@ -37,6 +38,14 @@ export function ShopNavbar() {
           <Logo width={40} height={40} />
           <span className="font-extrabold text-xl tracking-tight hidden sm:inline-block">ABISHOP</span>
         </Link>
+
+        {/* Center Countdown */}
+        <div className="absolute left-1/2 -translate-x-1/2 md:hidden lg:block">
+           <div className="hidden sm:block lg:hidden">
+              {/* Optional: could hide on some medium sizes if too crowded */}
+           </div>
+           <CountdownHeader />
+        </div>
 
         {/* Desktop Nav */}
         <nav className="hidden md:flex items-center gap-6">

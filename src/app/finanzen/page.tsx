@@ -220,6 +220,54 @@ export default function FinancePage() {
   const currentBalance = totalIncome - totalExpenses
   const fundingGoal = settings?.funding_goal ?? 10000
 
+  // Calculate course breakdown for progress bar
+  const COURSE_COLORS = [
+    'bg-primary',
+    'bg-success',
+    'bg-brand',
+    'bg-info',
+    'bg-warning',
+    'bg-orange-500',
+    'bg-pink-500',
+    'bg-cyan-500',
+  ]
+
+  const courseContributions: Record<string, number> = {}
+  
+  // Add contributions from finance entries (income only for better visualization)
+  finances.forEach(entry => {
+    if (entry.responsible_class && entry.amount > 0) {
+      const course = String(entry.responsible_class)
+      courseContributions[course] = (courseContributions[course] || 0) + entry.amount
+    }
+  })
+
+  // Add contributions from shop earnings
+  shopEarnings.forEach(earning => {
+    if (earning.selected_course && earning.abi_share_eur > 0) {
+      const course = String(earning.selected_course)
+      courseContributions[course] = (courseContributions[course] || 0) + earning.abi_share_eur
+    }
+  })
+
+  // Add manual adjustments if they exist
+  if (settings?.leaderboard_adjustments) {
+    Object.entries(settings.leaderboard_adjustments).forEach(([course, amount]) => {
+      if (amount > 0) {
+        courseContributions[course] = (courseContributions[course] || 0) + amount
+      }
+    })
+  }
+
+  const breakdown = Object.entries(courseContributions)
+    .filter(([_, amount]) => amount > 0)
+    .sort((a, b) => b[1] - a[1])
+    .map(([course, amount], index) => ({
+      label: `Kurs ${course}`,
+      amount,
+      color: COURSE_COLORS[index % COURSE_COLORS.length]
+    }))
+
   // Checksum calculation
   const diff = lastVerification ? lastVerification.amount - currentBalance : null
   const isDiffSignificant = diff !== null && Math.abs(diff) > 0.01
@@ -348,6 +396,7 @@ export default function FinancePage() {
       <FundingStatus
         current={currentBalance}
         checksum={lastVerification?.amount}
+        breakdown={breakdown}
         goal={fundingGoal}
         initialTicketSales={settings?.expected_ticket_sales ?? 150}
         onTicketSalesChange={canEditTicketSales ? handleTicketSalesChange : undefined}

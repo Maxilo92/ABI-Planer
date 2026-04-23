@@ -20,6 +20,11 @@ interface FundingStatusProps {
   canEditTicketSales?: boolean
   isAuthenticated: boolean
   loading?: boolean
+  breakdown?: {
+    label: string
+    amount: number
+    color: string
+  }[]
 }
 
 export function FundingStatus({
@@ -30,7 +35,8 @@ export function FundingStatus({
   onTicketSalesChange,
   canEditTicketSales,
   isAuthenticated,
-  loading
+  loading,
+  breakdown
 }: FundingStatusProps) {
   const [mounted, setHydrated] = useState(false)
   const [ticketSalesInput, setTicketSalesInput] = useState(String(initialTicketSales))
@@ -126,6 +132,30 @@ export function FundingStatus({
     })
   }
 
+  // Calculate segments for the progress bar
+  const segments = breakdown && breakdown.length > 0 ? breakdown.map(item => ({
+    ...item,
+    width: (item.amount / safeGoal) * 100
+  })) : []
+
+  // If checksum is higher than sum of breakdown, add an "unallocated" segment
+  const sumBreakdown = breakdown ? breakdown.reduce((acc, item) => acc + item.amount, 0) : 0
+  if (checksum && checksum > sumBreakdown) {
+    segments.push({
+      label: 'Sonstiges/Prüfsumme',
+      amount: checksum - sumBreakdown,
+      color: 'bg-muted-foreground/30',
+      width: ((checksum - sumBreakdown) / safeGoal) * 100
+    })
+  } else if (current > sumBreakdown) {
+    segments.push({
+      label: 'Unzugeordnet',
+      amount: current - sumBreakdown,
+      color: 'bg-muted-foreground/30',
+      width: ((current - sumBreakdown) / safeGoal) * 100
+    })
+  }
+
   return (
     <Card className="w-full h-full border-none shadow-card">
       <CardHeader className="pb-2">
@@ -171,11 +201,36 @@ export function FundingStatus({
               </span>
             </div>
             {/* Explicitly set aria-valuetext to avoid hydration mismatch from auto-generated values */}
-            <Progress
-              value={percentage}
-              className="h-3"
-              aria-valuetext={`${percentage}%`}
-            />
+            {segments.length > 0 ? (
+              <div className="h-3 w-full bg-muted rounded-full overflow-hidden flex" aria-label="Finanzierungsfortschritt">
+                {segments.map((segment, idx) => (
+                  <div 
+                    key={idx}
+                    className={`h-full ${segment.color} transition-all duration-500`}
+                    style={{ width: `${segment.width}%` }}
+                    title={`${segment.label}: ${formatCurrency(segment.amount)}`}
+                  />
+                ))}
+              </div>
+            ) : (
+              <Progress
+                value={percentage}
+                className="h-3"
+                aria-valuetext={`${percentage}%`}
+              />
+            )}
+            {segments.length > 0 && (
+              <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2">
+                {segments.filter(s => s.width > 1).map((segment, idx) => (
+                  <div key={idx} className="flex items-center gap-1.5">
+                    <div className={`w-2 h-2 rounded-full ${segment.color}`} />
+                    <span className="text-[10px] text-muted-foreground font-medium">
+                      {segment.label}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {isAuthenticated ? (

@@ -9,24 +9,27 @@
 ## [1.33.0.27] - 2026-04-23
 
 ### Added
-- **Finanzen:** Der Kassenstand-Fortschrittsbalken ist nun segmentiert und zeigt die farbliche Zusammensetzung der Einnahmen nach Kursen an.
-- **Finanzen:** Unterstützung für die Anzeige von "Sonstiges/Prüfsumme" im Fortschrittsbalken, wenn die physische Prüfsumme von den erfassten Transaktionen abweicht.
-
-## [1.33.0.26] - 2026-04-23
-
-### Fixed
-- **UI/UX:** Der Abiball-Countdown-Timer wurde in der Desktop-Menüleiste (Sidebar) horizontal zentriert.
-
-### Added
+- **Finanzübersicht:** Segmentierter Fortschrittsbalken in `FundingStatus` hinzugefügt, der die Einnahmen nach Kursen und Quellen (inkl. Kassenabgleich) farblich aufgeschlüsselt anzeigt.
 - **Mobile UI:** Der Abiball-Countdown-Timer wurde zur besseren Übersicht auch im mobilen Header aller Bereiche (Dashboard, TCG, Shop) mittig hinzugefügt.
 - **Navigation:** Countdown-Timer in die TCG- und Shop-Menüleisten integriert für eine konsistente Nutzererfahrung.
 
-## [1.33.0.26] - 2026-04-23
-
 ### Fixed
-- **Admin System:** Type-Error in `AdminSystemContext` behoben (fehlendes `user_role` Feld in der Analytics-Schnittstelle).
+- **Build:** Kritische Type-Errors in `src/app/page.tsx` und `AdminSystemContext` behoben, die den Produktions-Build verhinderten.
+- **Admin System:** Fehlendes `user_role` Feld in der Analytics-Schnittstelle ergänzt.
 
 ## [1.33.0.25] - 2026-04-23
+
+### Fixed
+- **Landingpage:** Type-Error im Tooltip des Budget-Wachstumscharts behoben (Null-Check für Chart-Daten).
+
+## [1.33.0.24] - 2026-04-23
+
+### Changed
+- **Finanzübersicht:** Die Budgetplanung und das Dashboard zeigen nun konsistent den jeweils höheren Betrag zwischen virtuellem Kontostand (Transaktionen) und physischem Kassenabgleich (Prüfsumme) an.
+- **Finanzübersicht:** Bei Abweichungen zwischen virtuellem und physischem Stand wird nun ein Warn-Icon mit Popover-Erklärung angezeigt.
+- **Dashboard:** Der Finanzierungsstatus auf der Hauptseite unterstützt nun ebenfalls die Anzeige des Kassenabgleichs und warnt bei Differenzen.
+
+## [1.33.0.05] - 2026-04-23
 
 ### Added
 - **Globale Theme-Synchronisierung:** Das gewählte Farbschema (Hell/Dunkel/System) und die Akzentfarbe werden nun im Nutzerprofil gespeichert und über alle Geräte und Tabs hinweg in Echtzeit synchronisiert.

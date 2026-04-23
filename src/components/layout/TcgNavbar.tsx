@@ -14,6 +14,7 @@ import { cn } from '@/lib/utils'
 import { useAuth } from '@/context/AuthContext'
 import { useSystemFeatures } from '@/hooks/useSystemFeatures'
 import { useNotifications } from '@/hooks/useNotifications'
+import { CountdownHeader } from './CountdownHeader'
 import Logo from '@/components/Logo'
 import { getDashboardBaseUrl, getShopBaseUrl, getSupportBaseUrl } from '@/lib/dashboard-url'
 
@@ -193,8 +194,13 @@ export function TcgNavbar() {
       <header className="lg:hidden fixed top-0 left-0 right-0 z-[100] h-16 border-b bg-background/95 backdrop-blur-sm px-4 flex items-center justify-between">
         <Link href="/home" className="flex items-center gap-3">
           <Logo width={40} height={40} />
-          <span className="font-extrabold text-xl tracking-tight">ABI TCG</span>
+          <span className="font-extrabold text-xl tracking-tight hidden xs:inline">ABI TCG</span>
         </Link>
+
+        <div className="absolute left-1/2 -translate-x-1/2">
+          <CountdownHeader />
+        </div>
+
         <button onClick={() => setIsOpen(!isOpen)} className="p-2 rounded-md text-muted-foreground hover:bg-secondary">
           {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
         </button>
@@ -228,6 +234,8 @@ export function TcgNavbar() {
             </Link>
             {!isDesktopCollapsed && <Button variant="ghost" size="icon" onClick={toggleDesktopCollapsed}><ChevronLeft className="h-4 w-4" /></Button>}
           </div>
+
+          <div className="p-2 border-b flex justify-center"><CountdownHeader /></div>
 
           <nav className="flex-1 overflow-y-auto p-4 space-y-1">
             {navItems.map(item => renderNavItem(item))}
