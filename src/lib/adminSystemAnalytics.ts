@@ -423,6 +423,9 @@ export async function buildAnalyticsFromPastLogs(authHeader: string, windowDays:
     .sort((left, right) => right.count - left.count)
     .slice(0, 10)
 
+  const profileMap = new Map<string, any>()
+  profiles.forEach(p => profileMap.set(p.id, p))
+
   const recentActions: SystemAnalyticsRecentAction[] = [...logs]
     .sort((left, right) => {
       const leftTime = getTimestampDate(left.timestamp)?.getTime() || 0
@@ -433,13 +436,15 @@ export async function buildAnalyticsFromPastLogs(authHeader: string, windowDays:
     .map((entry) => {
       const timestamp = getTimestampDate(entry.timestamp)
       const details = (entry.details || null) as Record<string, unknown> | null
+      const profile = entry.user_id ? profileMap.get(entry.user_id) : null
 
       return {
         id: entry.id,
         timestamp: timestamp ? timestamp.toISOString() : now.toISOString(),
         action: (entry.action as string) || 'UNKNOWN_ACTION',
         user_id: (entry.user_id as string) || 'unknown',
-        user_name: (entry.user_name as string) || null,
+        user_name: (entry.user_name as string) || (profile?.full_name as string) || null,
+        user_role: (entry.user_role as string) || (profile?.role as string) || 'user',
         section: getSectionFromAction((entry.action as string) || 'UNKNOWN_ACTION', details),
         details: formatDetails(details),
       }

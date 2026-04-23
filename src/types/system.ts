@@ -74,6 +74,7 @@ export interface SystemAnalyticsRecentAction {
   action: string;
   user_id: string;
   user_name: string | null;
+  user_role: string | null;
   section: string;
   details: string;
 }

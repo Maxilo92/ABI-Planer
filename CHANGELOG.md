@@ -6,12 +6,27 @@
 <!-- default_action: read newest entries only unless a regression requires older history -->
 <!-- index: docs/AGENT_CONTEXT_INDEX.md -->
 
-## [1.33.0.25] - 2026-04-23
+## [1.33.0.27] - 2026-04-23
+
+### Added
+- **Finanzen:** Der Kassenstand-Fortschrittsbalken ist nun segmentiert und zeigt die farbliche Zusammensetzung der Einnahmen nach Kursen an.
+- **Finanzen:** Unterstützung für die Anzeige von "Sonstiges/Prüfsumme" im Fortschrittsbalken, wenn die physische Prüfsumme von den erfassten Transaktionen abweicht.
+
+## [1.33.0.26] - 2026-04-23
 
 ### Fixed
-- **Landingpage:** Type-Error im Tooltip des Budget-Wachstumscharts behoben, der zum Build-Abbruch führte (Null-Check für Chart-Daten).
+- **UI/UX:** Der Abiball-Countdown-Timer wurde in der Desktop-Menüleiste (Sidebar) horizontal zentriert.
 
-## [1.33.0.24] - 2026-04-23
+### Added
+- **Mobile UI:** Der Abiball-Countdown-Timer wurde zur besseren Übersicht auch im mobilen Header aller Bereiche (Dashboard, TCG, Shop) mittig hinzugefügt.
+- **Navigation:** Countdown-Timer in die TCG- und Shop-Menüleisten integriert für eine konsistente Nutzererfahrung.
+
+## [1.33.0.26] - 2026-04-23
+
+### Fixed
+- **Admin System:** Type-Error in `AdminSystemContext` behoben (fehlendes `user_role` Feld in der Analytics-Schnittstelle).
+
+## [1.33.0.25] - 2026-04-23
 
 ### Added
 - **Globale Theme-Synchronisierung:** Das gewählte Farbschema (Hell/Dunkel/System) und die Akzentfarbe werden nun im Nutzerprofil gespeichert und über alle Geräte und Tabs hinweg in Echtzeit synchronisiert.
