@@ -6,14 +6,12 @@
 <!-- default_action: read newest entries only unless a regression requires older history -->
 <!-- index: docs/AGENT_CONTEXT_INDEX.md -->
 
+## [1.33.0.25] - 2026-04-23
+
+### Fixed
+- **Landingpage:** Type-Error im Tooltip des Budget-Wachstumscharts behoben, der zum Build-Abbruch führte (Null-Check für Chart-Daten).
+
 ## [1.33.0.24] - 2026-04-23
-
-### Changed
-- **Finanzübersicht:** Die Budgetplanung und das Dashboard zeigen nun konsistent den jeweils höheren Betrag zwischen virtuellem Kontostand (Transaktionen) und physischem Kassenabgleich (Prüfsumme) an.
-- **Finanzübersicht:** Bei Abweichungen zwischen virtuellem und physischem Stand wird nun ein Warn-Icon mit Popover-Erklärung angezeigt, um Transparenz über Unstimmigkeiten zu schaffen.
-- **Dashboard:** Der Finanzierungsstatus auf der Hauptseite unterstützt nun ebenfalls die Anzeige des Kassenabgleichs und warnt bei Differenzen.
-
-## [1.33.0.18] - 2026-04-23
 
 ### Added
 - **Globale Theme-Synchronisierung:** Das gewählte Farbschema (Hell/Dunkel/System) und die Akzentfarbe werden nun im Nutzerprofil gespeichert und über alle Geräte und Tabs hinweg in Echtzeit synchronisiert.

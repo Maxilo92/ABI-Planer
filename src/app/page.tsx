@@ -503,7 +503,7 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
                                   style: 'currency',
                                   currency: 'EUR',
                                   maximumFractionDigits: 0,
-                                }).format(context.parsed.y)
+                                }).format(context.parsed.y ?? 0)
                               }
                             }
                           }
