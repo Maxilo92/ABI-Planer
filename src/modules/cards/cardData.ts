@@ -12,6 +12,7 @@ type CatalogIndexSource = TeacherCatalogEntry[] | Map<string, number> | number
 export function getBestVariant(variants: Record<string, number> | undefined): CardVariant {
   if (!variants) return 'normal'
   if (variants.black_shiny_holo) return 'black_shiny_holo'
+  if (variants.selten) return 'selten'
   if (variants.shiny) return 'shiny'
   if (variants.holo) return 'holo'
   return 'normal'

@@ -577,7 +577,18 @@ async function ensureUserOwnsCardVariant(
 ) {
   const inventorySnap = await db.collection("user_teachers").doc(userId).get();
   const inventoryData = inventorySnap.exists ? (inventorySnap.data() as Record<string, any>) : {};
-  const cardEntry = inventoryData[card.teacherId];
+  
+  // Normalize teacherId to canonical fullId (e.g. teacher_vol1:id)
+  const canonicalId = !card.teacherId.includes(":") 
+    ? `teacher_vol1:${card.teacherId}` 
+    : (card.teacherId.startsWith("teachers_v1:") ? card.teacherId.replace("teachers_v1:", "teacher_vol1:") : card.teacherId);
+  const legacyId = canonicalId.replace("teacher_vol1:", "teachers_v1:");
+
+  let cardEntry = inventoryData[canonicalId] || inventoryData[legacyId];
+  if (!cardEntry && !card.teacherId.includes(":")) {
+    cardEntry = inventoryData[card.teacherId];
+  }
+
   const variantCount = Number(cardEntry?.variants?.[card.variant]) || 0;
 
   if (variantCount <= 0) {
@@ -600,7 +611,18 @@ async function ensureUserOwnsCardVariantTx(
   const inventoryRef = db.collection("user_teachers").doc(userId);
   const inventorySnap = await transaction.get(inventoryRef);
   const inventoryData = inventorySnap.exists ? (inventorySnap.data() as Record<string, any>) : {};
-  const cardEntry = inventoryData[card.teacherId];
+  
+  // Normalize teacherId to canonical fullId (e.g. teacher_vol1:id)
+  const canonicalId = !card.teacherId.includes(":") 
+    ? `teacher_vol1:${card.teacherId}` 
+    : (card.teacherId.startsWith("teachers_v1:") ? card.teacherId.replace("teachers_v1:", "teacher_vol1:") : card.teacherId);
+  const legacyId = canonicalId.replace("teacher_vol1:", "teachers_v1:");
+
+  let cardEntry = inventoryData[canonicalId] || inventoryData[legacyId];
+  if (!cardEntry && !card.teacherId.includes(":")) {
+    cardEntry = inventoryData[card.teacherId];
+  }
+
   const variantCount = Number(cardEntry?.variants?.[card.variant]) || 0;
 
   if (variantCount <= 0) {
@@ -939,49 +961,70 @@ export const acceptTradeOffer = onCall({ cors: CALLABLE_CORS_ORIGINS, region: "e
     const userProvidedCard = isUserSender ? trade.offeredCard : trade.requestedCard;
     const oppProvidedCard = isUserSender ? trade.requestedCard : trade.offeredCard;
 
+    // FIND CORRECT KEYS for decrements (check canonical, then legacy, then short)
+    const findKey = (inv: any, id: string) => {
+      const canonical = !id.includes(":") ? `teacher_vol1:${id}` : (id.startsWith("teachers_v1:") ? id.replace("teachers_v1:", "teacher_vol1:") : id);
+      const legacy = canonical.replace("teacher_vol1:", "teachers_v1:");
+      if (inv[canonical]) return canonical;
+      if (inv[legacy]) return legacy;
+      if (!id.includes(":") && inv[id]) return id;
+      return canonical; // Default to canonical
+    };
+
+    let userCardKey = findKey(userInv, userProvidedCard.teacherId);
+    let oppCardKey = findKey(oppInv, oppProvidedCard.teacherId);
+
+    // Canonical IDs for increments (we always want to store new cards with canonical keys)
+    const getCanonical = (id: string) => {
+      if (!id.includes(":")) return `teacher_vol1:${id}`;
+      if (id.startsWith("teachers_v1:")) return id.replace("teachers_v1:", "teacher_vol1:");
+      return id;
+    };
+
+    const userReceiveKey = getCanonical(oppProvidedCard.teacherId);
+    const oppReceiveKey = getCanonical(userProvidedCard.teacherId);
+
     // Check user has card
-    const userCardEntry = userInv[userProvidedCard.teacherId];
+    const userCardEntry = userInv[userCardKey];
     if (!userCardEntry || (userCardEntry.variants?.[userProvidedCard.variant] || 0) <= 0) {
       throw new HttpsError("failed-precondition", "Du besitzt die angebotene Karte nicht mehr.");
     }
 
     // Check opponent has card
-    const oppCardEntry = oppInv[oppProvidedCard.teacherId];
+    const oppCardEntry = oppInv[oppCardKey];
     if (!oppCardEntry || (oppCardEntry.variants?.[oppProvidedCard.variant] || 0) <= 0) {
       throw new HttpsError("failed-precondition", "Dein Partner besitzt die geforderte Karte nicht mehr.");
     }
 
     // 3. Atomarer Tausch
     // User gibt Karte ab
-    userInv[userProvidedCard.teacherId].count--;
-    userInv[userProvidedCard.teacherId].variants![userProvidedCard.variant]!--;
-    // Level neu berechnen
-    userInv[userProvidedCard.teacherId].level = Math.floor(Math.sqrt(Math.max(0, userInv[userProvidedCard.teacherId].count - 1))) + 1;
+    userInv[userCardKey].count--;
+    userInv[userCardKey].variants![userProvidedCard.variant]!--;
+    userInv[userCardKey].level = Math.floor(Math.sqrt(Math.max(0, userInv[userCardKey].count - 1))) + 1;
     
     // User erhält Karte vom Gegner
-    if (!userInv[oppProvidedCard.teacherId]) {
-      userInv[oppProvidedCard.teacherId] = { count: 1, level: 1, variants: { [oppProvidedCard.variant]: 1 } };
+    if (!userInv[userReceiveKey]) {
+      userInv[userReceiveKey] = { count: 1, level: 1, variants: { [oppProvidedCard.variant]: 1 } };
     } else {
-      userInv[oppProvidedCard.teacherId].count++;
-      userInv[oppProvidedCard.teacherId].variants = userInv[oppProvidedCard.teacherId].variants || {};
-      userInv[oppProvidedCard.teacherId].variants[oppProvidedCard.variant] = (userInv[oppProvidedCard.teacherId].variants[oppProvidedCard.variant] || 0) + 1;
-      userInv[oppProvidedCard.teacherId].level = Math.floor(Math.sqrt(userInv[oppProvidedCard.teacherId].count - 1)) + 1;
+      userInv[userReceiveKey].count++;
+      userInv[userReceiveKey].variants = userInv[userReceiveKey].variants || {};
+      userInv[userReceiveKey].variants[oppProvidedCard.variant] = (userInv[userReceiveKey].variants[oppProvidedCard.variant] || 0) + 1;
+      userInv[userReceiveKey].level = Math.floor(Math.sqrt(userInv[userReceiveKey].count - 1)) + 1;
     }
 
     // Gegner gibt Karte ab
-    oppInv[oppProvidedCard.teacherId].count--;
-    oppInv[oppProvidedCard.teacherId].variants![oppProvidedCard.variant]!--;
-    // Level neu berechnen
-    oppInv[oppProvidedCard.teacherId].level = Math.floor(Math.sqrt(Math.max(0, oppInv[oppProvidedCard.teacherId].count - 1))) + 1;
+    oppInv[oppCardKey].count--;
+    oppInv[oppCardKey].variants![oppProvidedCard.variant]!--;
+    oppInv[oppCardKey].level = Math.floor(Math.sqrt(Math.max(0, oppInv[oppCardKey].count - 1))) + 1;
 
     // Gegner erhält Karte vom User
-    if (!oppInv[userProvidedCard.teacherId]) {
-      oppInv[userProvidedCard.teacherId] = { count: 1, level: 1, variants: { [userProvidedCard.variant]: 1 } };
+    if (!oppInv[oppReceiveKey]) {
+      oppInv[oppReceiveKey] = { count: 1, level: 1, variants: { [userProvidedCard.variant]: 1 } };
     } else {
-      oppInv[userProvidedCard.teacherId].count++;
-      oppInv[userProvidedCard.teacherId].variants = oppInv[userProvidedCard.teacherId].variants || {};
-      oppInv[userProvidedCard.teacherId].variants[userProvidedCard.variant] = (oppInv[userProvidedCard.teacherId].variants[userProvidedCard.variant] || 0) + 1;
-      oppInv[userProvidedCard.teacherId].level = Math.floor(Math.sqrt(oppInv[userProvidedCard.teacherId].count - 1)) + 1;
+      oppInv[oppReceiveKey].count++;
+      oppInv[oppReceiveKey].variants = oppInv[oppReceiveKey].variants || {};
+      oppInv[oppReceiveKey].variants[userProvidedCard.variant] = (oppInv[oppReceiveKey].variants[userProvidedCard.variant] || 0) + 1;
+      oppInv[oppReceiveKey].level = Math.floor(Math.sqrt(oppInv[oppReceiveKey].count - 1)) + 1;
     }
 
     // 4. Updates speichern
@@ -1237,20 +1280,93 @@ export const getFriendsWithCard = onCall({ cors: CALLABLE_CORS_ORIGINS, region: 
   // 2. Inventare dieser Freunde prüfen
   const owners: Array<{ id: string; name: string }> = [];
   
+  // Normalize teacherId to canonical fullId (e.g. teacher_vol1:id)
+  const canonicalId = !teacherId.includes(":") 
+    ? `teacher_vol1:${teacherId}` 
+    : (teacherId.startsWith("teachers_v1:") ? teacherId.replace("teachers_v1:", "teacher_vol1:") : teacherId);
+  const legacyId = canonicalId.replace("teacher_vol1:", "teachers_v1:");
+
   // Wir laden die Profile für die Namen und prüfen die Inventare
   const profileSnaps = await Promise.all(friendIds.map(id => db.collection("profiles").doc(id).get()));
   const inventorySnaps = await Promise.all(friendIds.map(id => db.collection("user_teachers").doc(id).get()));
 
   for (let i = 0; i < friendIds.length; i++) {
     const inv = inventorySnaps[i].data();
-    if (inv && inv[teacherId] && (inv[teacherId].variants?.[variant] || 0) > 0) {
-      owners.push({
-        id: friendIds[i],
-        name: profileSnaps[i].data()?.full_name || "Unbekannter Freund"
-      });
+    if (inv) {
+      // Check canonical
+      let variantCount = Number(inv[canonicalId]?.variants?.[variant]) || 0;
+      
+      // Fallback legacy
+      if (variantCount <= 0) {
+        variantCount = Number(inv[legacyId]?.variants?.[variant]) || 0;
+      }
+
+      // Fallback short ID
+      if (variantCount <= 0 && !teacherId.includes(":")) {
+        variantCount = Number(inv[teacherId]?.variants?.[variant]) || 0;
+      }
+
+      if (variantCount > 0) {
+        owners.push({
+          id: friendIds[i],
+          name: profileSnaps[i].data()?.full_name || "Unbekannter Freund"
+        });
+      }
     }
   }
 
   return { friends: owners };
+});
+
+/**
+ * Findet alle Karten-IDs, die von mindestens einem Freund in einer bestimmten Variante besessen werden.
+ */
+export const getFriendsAvailableCards = onCall({ cors: CALLABLE_CORS_ORIGINS, region: "europe-west3" }, async (request) => {
+  if (!request.auth) throw new HttpsError("unauthenticated", "Anmeldung erforderlich.");
+  const { variant } = request.data;
+  const userId = request.auth.uid;
+  const db = getFirestore("abi-data");
+
+  await validateTradingEnabled(db, userId);
+
+  // 1. Alle Freundschaften laden
+  const friendshipsSnap = await db.collection("friendships").where("members", "array-contains", userId).get();
+  const friendIds = friendshipsSnap.docs.map(doc => {
+    const members = doc.data().members as string[];
+    return members.find(id => id !== userId);
+  }).filter(id => !!id) as string[];
+
+  if (friendIds.length === 0) return { availableCardIds: [] };
+
+  // 2. Inventare dieser Freunde laden
+  const inventorySnaps = await Promise.all(friendIds.map(id => db.collection("user_teachers").doc(id).get()));
+  
+  const availableCardIdsSet = new Set<string>();
+
+  inventorySnaps.forEach((snap) => {
+    const inv = snap.data();
+    if (!inv) return;
+
+    Object.entries(inv).forEach(([teacherId, data]: [string, any]) => {
+      const variantCount = Number(data?.variants?.[variant]) || 0;
+      if (variantCount > 0) {
+        // Wir speichern die ID normalisiert (ohne Prefix, wenn es ein Lehrer-Pack ist, 
+        // oder wir speichern sie so wie sie ist). 
+        // Da die Frontend-Logik teacher_vol1:id erwartet für lookups, 
+        // sollten wir sie hier auch so zurückgeben wenn möglich.
+        
+        let normalizedId = teacherId;
+        if (teacherId.startsWith("teachers_v1:")) {
+          normalizedId = teacherId.replace("teachers_v1:", "teacher_vol1:");
+        } else if (!teacherId.includes(":")) {
+          normalizedId = `teacher_vol1:${teacherId}`;
+        }
+        
+        availableCardIdsSet.add(normalizedId);
+      }
+    });
+  });
+
+  return { availableCardIds: Array.from(availableCardIdsSet) };
 });
 

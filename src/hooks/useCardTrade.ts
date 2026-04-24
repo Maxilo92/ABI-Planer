@@ -142,6 +142,12 @@ export function useCardTrade() {
       return { friends: [] }
     }
 
+    // Normalize teacherId to canonical fullId (e.g. teacher_vol1:id)
+    const canonicalId = !teacherId.includes(':') 
+      ? `teacher_vol1:${teacherId}` 
+      : (teacherId.startsWith('teachers_v1:') ? teacherId.replace('teachers_v1:', 'teacher_vol1:') : teacherId)
+    const legacyId = canonicalId.replace('teacher_vol1:', 'teachers_v1:')
+
     const friendshipsSnap = await getDocs(
       query(collection(db, 'friendships'), where('members', 'array-contains', currentUserId))
     )
@@ -164,9 +170,21 @@ export function useCardTrade() {
       ])
 
       const inventory = inventorySnap.exists() ? (inventorySnap.data() as Record<string, any>) : {}
-      const hasVariant = (Number(inventory?.[teacherId]?.variants?.[variant]) || 0) > 0
+      
+      // Check for variant in canonical ID
+      let variantCount = Number(inventory?.[canonicalId]?.variants?.[variant]) || 0
 
-      if (!hasVariant) return null
+      // Fallback to legacy ID
+      if (variantCount <= 0) {
+        variantCount = Number(inventory?.[legacyId]?.variants?.[variant]) || 0
+      }
+
+      // Special fallback for short ID (just in case they are stored without prefix)
+      if (variantCount <= 0 && !teacherId.includes(':')) {
+        variantCount = Number(inventory?.[teacherId]?.variants?.[variant]) || 0
+      }
+
+      if (variantCount <= 0) return null
 
       const profileData = profileSnap.exists() ? profileSnap.data() : null
       return {
@@ -176,6 +194,15 @@ export function useCardTrade() {
     }))
 
     return { friends: friendChecks.filter((entry): entry is { id: string; name: string } => !!entry) }
+  }, [currentUserId])
+
+  const getFriendsAvailableCards = useCallback(async (variant: string) => {
+    if (!currentUserId) {
+      return { availableCardIds: [] }
+    }
+    const fn = httpsCallable(functions, 'getFriendsAvailableCards')
+    const result = await fn({ variant })
+    return result.data as { availableCardIds: string[] }
   }, [currentUserId])
 
   return {
@@ -188,6 +215,7 @@ export function useCardTrade() {
     declineTrade,
     cancelTrade,
     getFriendsWithCard,
+    getFriendsAvailableCards,
     isTradingEnabled,
     currentUserId
   }

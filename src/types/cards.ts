@@ -1,12 +1,15 @@
 import { LootTeacher, TeacherRarity, TeacherAttack } from './database';
 
+export type { TeacherRarity };
+
 export type Rarity = TeacherRarity;
 
 export type CardVariant = 
   | 'normal' 
   | 'holo' 
   | 'shiny' 
-  | 'black_shiny_holo';
+  | 'black_shiny_holo'
+  | 'selten';
 
 export type CardStyle = 'soft-glass' | 'modern-flat' | 'playful-pattern' | 'modern-premium' | 'holographic-edge';
 

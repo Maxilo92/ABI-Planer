@@ -235,11 +235,6 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
         style={{ scaleX }}
       />
 
-      {/* Language Toggle - Top Right */}
-      <div className="fixed top-6 right-6 z-[70]">
-        <LanguageToggle />
-      </div>
-
       {/* Background Effects - Branding Colors */}
       <div className="fixed inset-0 pointer-events-none z-0">
         <div className="absolute top-[-10%] left-[-5%] w-[50%] h-[50%] rounded-full bg-brand/10 blur-[120px]" />
@@ -332,10 +327,12 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
                       </Button>
                    </div>
                 </div>
-                <div className="flex-1 w-full aspect-video bg-gradient-to-br from-brand/10 to-brand/5 rounded-[2.5rem] border border-brand/10 flex items-center justify-center relative overflow-hidden group">
-                   <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-[0.05] [mask-image:radial-gradient(ellipse_at_center,black,transparent)]" />
-                   <div className="absolute inset-0 bg-gradient-to-tr from-brand/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
-                   <Target className="h-24 w-24 text-brand/30 relative z-10 transition-transform duration-700 group-hover:scale-110" />
+                <div className="flex-1 w-full aspect-video bg-muted rounded-[2.5rem] border border-brand/10 flex items-center justify-center relative overflow-hidden group shadow-2xl shadow-brand/5">
+                   <img 
+                      src="/marketing/bild_1.png" 
+                      alt="ABI Planer Dashboard" 
+                      className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                   />
                 </div>
              </div>
 
@@ -367,10 +364,12 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
                       </Button>
                    </div>
                 </div>
-                <div className="flex-1 w-full aspect-video bg-gradient-to-bl from-blue-500/10 to-blue-500/5 rounded-[2.5rem] border border-blue-500/10 flex items-center justify-center relative overflow-hidden group">
-                   <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-[0.05] [mask-image:radial-gradient(ellipse_at_center,black,transparent)]" />
-                   <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
-                   <Gamepad2 className="h-24 w-24 text-blue-500/30 relative z-10 transition-transform duration-700 group-hover:scale-110" />
+                <div className="flex-1 w-full aspect-video bg-muted rounded-[2.5rem] border border-blue-500/10 flex items-center justify-center relative overflow-hidden group shadow-2xl shadow-blue-500/5">
+                   <img 
+                      src="/marketing/oidutse-salon-710047_1920.jpg" 
+                      alt="ABI Planer Sammelkarten" 
+                      className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                   />
                 </div>
              </div>
           </div>
@@ -578,14 +577,28 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
                     {t('landing.mission.desc2')}
                   </p>
                 </div>
+                <div className="grid gap-8">
+                  {(t('landing.mission.items') as unknown as { title: string, text: string }[]).map((item) => (
+                    <div key={item.title} className="space-y-2">
+                      <p className="font-bold text-foreground">{item.title}</p>
+                      <p className="text-sm leading-relaxed text-muted-foreground">{item.text}</p>
+                    </div>
+                  ))}
+                </div>
               </div>
-              <div className="grid gap-8">
-                {(t('landing.mission.items') as unknown as { title: string, text: string }[]).map((item) => (
-                  <div key={item.title} className="space-y-2">
-                    <p className="font-bold text-foreground">{item.title}</p>
-                    <p className="text-sm leading-relaxed text-muted-foreground">{item.text}</p>
-                  </div>
-                ))}
+              <div className="relative group">
+                <div className="absolute -inset-4 bg-brand/10 rounded-[3rem] blur-2xl group-hover:bg-brand/20 transition-colors duration-700" />
+                <div className="relative aspect-[4/5] md:aspect-square rounded-[2.5rem] overflow-hidden border border-border shadow-2xl">
+                   <img 
+                      src="/marketing/beeki-festival-16780_640.jpg" 
+                      alt="Abiball Celebration" 
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                   />
+                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60" />
+                   <div className="absolute bottom-8 left-8 right-8">
+                      <p className="text-white text-sm font-bold uppercase tracking-widest drop-shadow-md">Unvergessliche Momente</p>
+                   </div>
+                </div>
               </div>
             </div>
           </div>
@@ -624,9 +637,12 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
                 </a>
               </Button>
             </div>
-            <div className="flex-1 w-full aspect-video bg-muted/20 rounded-[2.5rem] border border-border/50 order-1 md:order-2 relative overflow-hidden group p-12 flex items-center justify-center">
-              <div className="absolute inset-0 bg-gradient-to-br from-brand/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
-              <DollarSign className="h-24 w-24 text-brand/10 group-hover:text-brand/20 transition-all duration-700" />
+            <div className="flex-1 w-full aspect-video bg-muted rounded-[2.5rem] border border-border/50 order-1 md:order-2 relative overflow-hidden group flex items-center justify-center">
+              <img 
+                src="/marketing/bild_1.1.png" 
+                alt="Finanzübersicht" 
+                className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+              />
             </div>
           </div>
 
@@ -644,9 +660,12 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
                 </a>
               </Button>
             </div>
-            <div className="flex-1 w-full aspect-video bg-brand rounded-[2.5rem] flex items-center justify-center shadow-2xl shadow-brand/20 relative overflow-hidden group p-12">
-              <div className="absolute inset-0 bg-gradient-to-tr from-black/10 to-transparent opacity-30" />
-              <Users className="h-24 w-24 text-white/10 group-hover:text-white/30 transition-all duration-700" />
+            <div className="flex-1 w-full aspect-video bg-muted rounded-[2.5rem] flex items-center justify-center shadow-2xl shadow-brand/10 relative overflow-hidden group">
+              <img 
+                src="/marketing/stocksnap-people-2557399_1920.jpg" 
+                alt="Teams & Gruppen" 
+                className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+              />
             </div>
           </div>
 
@@ -664,9 +683,12 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
                 </a>
               </Button>
             </div>
-            <div className="flex-1 w-full aspect-video bg-muted/20 rounded-[2.5rem] flex items-center justify-center border border-border/50 order-1 md:order-2 relative overflow-hidden group">
-              <div className="absolute inset-0 bg-gradient-to-bl from-brand/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
-              <CheckSquare className="h-24 w-24 text-brand/20 group-hover:text-brand/40 transition-all duration-700 group-hover:scale-110" />
+            <div className="flex-1 w-full aspect-video bg-muted rounded-[2.5rem] flex items-center justify-center border border-border/50 order-1 md:order-2 relative overflow-hidden group">
+              <img 
+                src="/marketing/bild_2.png" 
+                alt="Abstimmungen & Polls" 
+                className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+              />
             </div>
           </div>
         </section>
@@ -1223,6 +1245,23 @@ export default function Dashboard() {
     }
   }
 
+  const handleTicketPriceChange = async (value: number) => {
+    if (!canManage) return
+    try {
+      await setDoc(doc(db, 'settings', 'config'), { expected_ticket_price: value }, { merge: true })
+
+      if (user) {
+        await logAction('SETTINGS_UPDATED', user.uid, profile?.full_name, {
+          field: 'expected_ticket_price',
+          value,
+          source: 'dashboard',
+        })
+      }
+    } catch (error) {
+      console.error('Error updating expected ticket price:', error)
+    }
+  }
+
   const sortedComponents = useDashboardSorting(profile, todos, events, polls, news)
   const currentUserId = user?.uid || profile?.id || ''
   const unvotedPolls = polls.filter((poll) => {
@@ -1397,7 +1436,9 @@ export default function Dashboard() {
               checksum={lastVerification?.amount}
               goal={settings?.funding_goal ?? 10000}
               initialTicketSales={settings?.expected_ticket_sales ?? 150}
+              initialTicketPrice={settings?.expected_ticket_price ?? 0}
               onTicketSalesChange={canEditTicketSales ? handleTicketSalesChange : undefined}
+              onTicketPriceChange={canEditTicketSales ? handleTicketPriceChange : undefined}
               canEditTicketSales={canEditTicketSales}
               isAuthenticated={!!user}
               loading={(!initialLoadState.settings || !initialLoadState.finances || !initialLoadState.cashVerifications) && !timeoutReached}

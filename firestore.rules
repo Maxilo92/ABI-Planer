@@ -559,6 +559,10 @@ service cloud.firestore {
     match /system_checks/{checkId} {
       allow read, write: if isAdmin();
     }
+
+    match /custom_card_designs/{designId} {
+      allow read, write: if isPlanner();
+    }
   }
 }
 

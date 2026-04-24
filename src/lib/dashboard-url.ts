@@ -158,3 +158,31 @@ export function getAppRedirectUrl(location: Location, target: AppTarget = 'dashb
 export function getDashboardRedirectUrl(location: Location, target: AppTarget = 'dashboard'): string {
   return getAppRedirectUrl(location, target)
 }
+
+/**
+ * Checks if the current hostname corresponds to the TCG subdomain.
+ */
+export function isTcgHost(hostname: string): boolean {
+  return hostname.startsWith('tcg.') || hostname.includes('.tcg.')
+}
+
+/**
+ * Checks if the current hostname corresponds to the Dashboard subdomain.
+ */
+export function isDashboardHost(hostname: string): boolean {
+  return hostname.startsWith('dashboard.') || hostname.startsWith('app.') || hostname.includes('.dashboard.')
+}
+
+/**
+ * Checks if the current hostname corresponds to the Shop subdomain.
+ */
+export function isShopHost(hostname: string): boolean {
+  return hostname.startsWith('shop.') || hostname.includes('.shop.')
+}
+
+/**
+ * Checks if the current hostname corresponds to the Support subdomain.
+ */
+export function isSupportHost(hostname: string): boolean {
+  return hostname.startsWith('support.') || hostname.includes('.support.')
+}

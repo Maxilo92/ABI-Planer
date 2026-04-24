@@ -1,10 +1,10 @@
-import { LootTeacher } from '@/types/database'
+import { LootTeacher, CardVariant } from '@/types/database'
 import { CollectionResult, MassPackReveal, MaybeCollectionResult, UserTeacherMap } from '../types'
 import { getCard } from '@/constants/cardRegistry'
 
 type BoosterResult = {
   teacherId: string
-  variant: 'normal' | 'holo' | 'shiny' | 'black_shiny_holo'
+  variant: CardVariant
   count: number
   level: number
 }

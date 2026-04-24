@@ -6,10 +6,149 @@
 <!-- default_action: read newest entries only unless a regression requires older history -->
 <!-- index: docs/AGENT_CONTEXT_INDEX.md -->
 
-## [1.33.1.07] - 2026-04-23
+## [1.34.14] - 2026-04-24
+
+### Added
+- **Offizielle Design-Galerie**: Die neue Design-Matrix ist nun offiziell unter `/cards/new/galerie` erreichbar.
+- **Rollenbasierte Zugriffskontrolle**: Das Feature ist vorerst exklusiv für Administratoren (`admin`, `admin_main`, `admin_co`) und Planer (`planner`) freigeschaltet. Nicht autorisierte Nutzer sehen ein `ProtectedSystemGate`.
+
+### Removed
+- **Demo-Route**: Die temporäre Route `/demo/galerie` wurde entfernt.
+
+## [1.34.13] - 2026-04-24
+
+### Added
+- **Neues Lehrer-Kartendesign**: Implementierung einer modernen, druckoptimierten TCG-Karte (`PrintableTeacherCard`) mit Vollbild-PNG, dynamischen Hintergründen und strukturierten Stats auf der Rückseite.
+- **Design Matrix Galerie**: Neue Route `/demo/galerie` zur Visualisierung aller 18 Kombinationen aus Seltenheiten (Common-Iconic) und Varianten (Standard, Selten, Holo) für die Qualitätssicherung.
+- **Holo- & Sunburst-Effekte**: Dynamische Design-Varianten, die sich farblich an die Seltenheit der Karte anpassen.
+- **PDF-Export / Drucken**: Vollständige Unterstützung für den Ausdruck im TCG-Format (63mm x 88mm) auf A4-Querformat.
+- **Lehrer-Selektor**: Auswahlfunktion in der Galerie, um verschiedene Lehrer-Profile in der Matrix zu testen.
 
 ### Changed
-- **Finanzprognose:** Die Lifecycle-Intensitätsberechnung ("Knick" vor dem Abiball) wurde komplett entfernt. Die Prognose ist nun rein linear und extrapoliert stur auf Basis des historischen Trends (gewichtet aus den letzten 30 und 90 Tagen), ohne den Abiball-Termin künstlich zu verzerren.
+- **Namensdarstellung**: Auf der Vorderseite wird nun nur noch die Anrede und der Nachname zweizeilig angezeigt, um das Gesicht des Lehrers freizugeben.
+- **Kontrast-Optimierung**: Signifikante Erhöhung der Lesbarkeit von Kartennummern durch neue Outline- und Schatten-Kombinationen.
+
+## [1.34.12] - 2026-04-24
+
+### Added
+- **Sammelkarten:** Implementierung der `PrintableTeacherCard` Komponente. Diese bietet ein druckoptimiertes TCG-Format (63x88mm), einen interaktiven 3D-Flip-Effekt mittels Framer Motion und detaillierte Lehrer-Stats auf der Rückseite.
+
+## [1.34.11] - 2026-04-24
+
+## [1.34.10] - 2026-04-24
+
+### Added
+- **Navigation:** Das System erkennt nun automatisch die Nutzerrolle (Admin/Planer) auch auf der Standalone-TCG-Seite. Für berechtigte Nutzer wird in der Menüleiste automatisch der Button "Zum Planer" sowie Links zu den Einstellungen und zum Feedback eingeblendet, um einen nahtlosen Wechsel zwischen den Modulen zu ermöglichen.
+
+## [1.34.09] - 2026-04-24
+
+### Changed
+- **TCG-Dashboard:** Das statische Karten-Visual im Banner wurde durch das interaktive und animierte `SammelkartenPromo` Karussell ersetzt, um eine lebendigere und konsistentere UI zu gewährleisten.
+
+## [1.34.08] - 2026-04-24
+
+### Fixed
+- **TCG-Dashboard:** Fehlender Import von `useMemo` behoben, der zu einem Absturz der Seite führte.
+
+## [1.34.07] - 2026-04-24
+
+### Added
+- **Domain-Handling:** `tcg.abi-planer-27.de` wurde als vollständig alleinstehende TCG-Seite konfiguriert. Alle Planer-Links werden auf dieser Subdomain nun automatisch ausgeblendet.
+
+### Fixed
+- **TCG-Dashboard:** Ein Logikfehler in der Sammlungs-Statistik wurde behoben, bei dem die Fortschrittsanzeige über 100% steigen konnte (verursacht durch redundante Lehrer-IDs). Die Zählung basiert nun auf eindeutigen kanonischen IDs.
+- **UI/UX:** Das TCG-Banner wurde optisch an das aktuelle Theme angepasst (Farben, Kontraste) und für kleine Bildschirme optimiert. Die Skalierung und das Grid-Layout wurden verbessert, um auf Smartphones eine bessere Übersichtlichkeit zu gewährleisten.
+- **UI:** Das Seitenverhältnis der News-Bilder wurde auf ein konstantes 16:10 Format fixiert, um optische Verzerrungen bei unterschiedlichen Textlängen zu verhindern.
+
+## [1.34.06] - 2026-04-24
+
+### Fixed
+- **News:** Fehlender Import der `cn`-Utility behoben, der zu einem Absturz der News-Seite führte.
+
+## [1.34.05] - 2026-04-24
+
+### Fixed
+- **UI:** Das fehlerhafte Grid-Layout der Newskarten im Landing-Mode wurde repariert. Bild und Inhalt nutzen nun die volle Breite der Karte und sind auf Desktop-Geräten sauber nebeneinander angeordnet.
+
+## [1.34.04] - 2026-04-24
+
+### Fixed
+- **Layout:** Header-Überlappung auf der News-Seite (insbesondere auf `localhost`) behoben, indem die Layout-Erkennung (Landing vs. Dashboard) mit der App-Shell synchronisiert wurde.
+
+## [1.34.03] - 2026-04-24
+
+### Changed
+- **Statistiken:** Die Code-Metriken auf der Jobs-Seite wurden auf Basis einer exakten Zählung aktualisiert (80.620 Zeilen Quellcode).
+
+## [1.34.02] - 2026-04-24
+
+### Added
+- **Backend:** Neue Cloud-Funktion `getFriendsAvailableCards` hinzugefügt, die effizient alle Karten-IDs ermittelt, die von Freunden in einer bestimmten Variante besessen werden.
+
+### Changed
+- **Trading-UI:** Die Kartenauswahl beim Erstellen eines neuen Trades wurde komplett überarbeitet. Sie entspricht nun dem Design des Lehrer-Albums und ist in zwei Abschnitte unterteilt: "Bei Freunden verfügbar" und "Nicht bei Freunden gefunden". Dies erleichtert das Finden von Karten, die tatsächlich getauscht werden können.
+- **Trading-Wizard:** Die Schritte für das eigene Angebot und die Bestätigung wurden ebenfalls an das neue Album-Design angepasst, um eine konsistente UX zu gewährleisten.
+- **UI Redesign:** Die Karriereseite wurde von einem Kachel-basierten Design auf ein offeneres, redaktionelles Listen-Layout umgestellt. Dies verhindert unsaubere Überlagerungen und verbessert die Lesbarkeit auf allen Geräten.
+
+## [1.34.01] - 2026-04-24
+
+### Fixed
+- **Jobs:** Fehlender Import von `ArrowRight` behoben, der zu einem Absturz der Karriereseite führte.
+
+## [1.34.00] - 2026-04-24
+
+### Added
+- **Karriere:** Die neue Jobs-Seite (`/jobs`) ist live! Sie ersetzt die alte `/uber` Sektion und bietet ein komplett überarbeitetes Design, klare Rollenprofile (Frontend, Backend, Design) und einen optimierten Bewerbungsprozess.
+- **Mobile Optimization:** Die neue Jobs-Seite wurde von Grund auf für Smartphones optimiert (Responsive Grids, angepasste Paddings und Touch-freundliche Elemente).
+
+### Removed
+- **Legacy:** Die veralteten Pfade `/uber` und `/uber/join` wurden entfernt und durch den zentralen `/jobs` Hub ersetzt.
+
+## [1.33.1.14] - 2026-04-24
+
+### Fixed
+- **Trading-System:** Die Identifizierung von Karten im Inventar von Freunden wurde robuster gestaltet. Das System unterstützt nun sowohl die kanonischen `teacher_vol1:`-Präfixe als auch die alten `teachers_v1:`-Präfixe und Kurz-IDs. Dies behebt den Fehler, bei dem fälschlicherweise gemeldet wurde, dass kein Freund eine bestimmte Karte besitzt.
+- **Backend:** `acceptTradeOffer`, `getFriendsWithCard` und Besitz-Prüfungen im Backend wurden aktualisiert, um ID-Diskrepanzen während des Tauschvorgangs abzufangen und erhaltene Karten automatisch auf das neue kanonische Format zu migrieren.
+
+## [1.33.1.13] - 2026-04-24
+
+### Added
+- **Navigation:** Ein neuer Menüpunkt "Jobs" wurde im `LandingHeader` hinzugefügt, der auf die Karriereseite (`/jobs`) verlinkt.
+
+## [1.33.1.12] - 2026-04-24
+
+### Fixed
+- **UI/UX:** Die Deckkraft der Marketing-Bilder auf der Landingpage wurde auf 100% erhöht, um die Verblasstheit zu korrigieren.
+- **Layout:** Icons, die über den Marketing-Bildern lagen, wurden entfernt, um den Fokus auf den App-Inhalten zu belassen.
+- **Navigation:** Der `LanguageToggle` wurde aus dem globalen Layout entfernt und fest in den `LandingHeader` integriert, um Überlappungen mit anderen Navigations-Buttons zu verhindern.
+
+## [1.33.1.11] - 2026-04-24
+
+### Added
+- **Marketing:** Die Landingpage wurde visuell überarbeitet. Sechs neue Marketing-Bilder (Screenshots und Lifestyle-Fotos) wurden in `public/marketing/` integriert und ersetzen die bisherigen Icon-Platzhalter in den Sektionen "Dual Focus", "Features" und "Mission". Dies verbessert den visuellen Eindruck der App und macht die Features greifbarer.
+
+## [1.33.1.10] - 2026-04-24
+
+### Changed
+- **Branding:** Die Logos wurden in ein zentrales `Assets/`-Verzeichnis umgezogen. Die `Logo`-Komponente verwendet nun dynamisch die optimierten Versionen (`klein`, `mittel`, `groß`) basierend auf der Anzeige-Breite, was die Ladezeiten der App (insbesondere in der Navbar) deutlich reduziert.
+- **Konfiguration:** Pfad-Alias `@Assets` in `tsconfig.json` hinzugefügt, um saubere Importe der Grafik-Assets zu ermöglichen.
+
+## [1.33.1.09] - 2026-04-24
+
+### Changed
+- **Finanzprognose:** Der Prognose-Algorithmus wurde auf einen "Weighted Moving Average" (WMA) umgestellt. Aktuellere Transaktionen werden nun stärker gewichtet als ältere (linear abnehmend über 90 Tage), was zu einer präziseren und reaktionsschnelleren Vorhersage der Ziel-Erreichung führt.
+
+## [1.33.1.08] - 2026-04-24
+
+### Added
+- **Finanzübersicht:** Neues Eingabefeld für den "Geplanten Ticketpreis" in `FundingStatus` hinzugefügt. Dies ermöglicht es Planern, mit verschiedenen Preisszenarien zu experimentieren.
+- **Finanzprognose:** Die Prognose im Diagramm und die Berechnung der "Ziel-Erreichung" sind nun dynamisch. Sie berücksichtigen sowohl zukünftige manuelle Transaktionen als auch die virtuellen Einnahmen aus geplanten Ticketverkäufen.
+
+### Changed
+- **Finanzübersicht:** Der `FundingStatus` zeigt nun zusätzlich die "Prognose Differenz" (Überdeckung/Fehlbetrag) und das "Erwartete Budget (Gesamt)" an, um eine präzisere Planung zu ermöglichen.
+- **Finanzgrafik:** Der Prognose-Algorithmus wurde erweitert, um zukünftige "Spikes" (große Einzeleinnahmen) korrekt in den linearen Trend einzurechnen.
+
+## [1.33.1.07] - 2026-04-23
 
 ## [1.33.1.06] - 2026-04-23
 
@@ -260,7 +399,41 @@
 <!-- default_action: read newest entries only unless a regression requires older history -->
 <!-- index: docs/AGENT_CONTEXT_INDEX.md -->
 
-## [1.30.7.07] - 2026-04-22
+## [1.34.07] - 2026-04-24
+
+### Fixed
+- **UI:** Das Seitenverhältnis der News-Bilder wurde auf ein konstantes 16:10 Format fixiert, um optische Verzerrungen bei unterschiedlichen Textlängen zu verhindern.
+
+## [1.34.07] - 2026-04-24
+
+### Added
+- **Domain-Handling:** `tcg.abi-planer-27.de` wurde als vollständig alleinstehende TCG-Seite konfiguriert. Alle Planer-Links werden auf dieser Subdomain nun automatisch ausgeblendet.
+
+### Fixed
+- **TCG-Dashboard:** Ein Logikfehler in der Sammlungs-Statistik wurde behoben, bei dem die Fortschrittsanzeige über 100% steigen konnte (verursacht durch redundante Lehrer-IDs). Die Zählung basiert nun auf eindeutigen kanonischen IDs.
+- **UI/UX:** Das TCG-Banner wurde optisch an das aktuelle Theme angepasst (Farben, Kontraste) und für kleine Bildschirme optimiert. Die Skalierung und das Grid-Layout wurden verbessert, um auf Smartphones eine bessere Übersichtlichkeit zu gewährleisten.
+
+## [1.34.06] - 2026-04-24
+
+### Fixed
+- **News:** Fehlender Import der `cn`-Utility behoben, der zu einem Absturz der News-Seite führte.
+
+## [1.34.05] - 2026-04-24
+
+### Fixed
+- **UI:** Das fehlerhafte Grid-Layout der Newskarten im Landing-Mode wurde repariert. Bild und Inhalt nutzen nun die volle Breite der Karte und sind auf Desktop-Geräten sauber nebeneinander angeordnet.
+
+## [1.34.04] - 2026-04-24
+
+### Fixed
+- **Layout:** Header-Überlappung auf der News-Seite (insbesondere auf `localhost`) behoben, indem die Layout-Erkennung (Landing vs. Dashboard) mit der App-Shell synchronisiert wurde.
+
+## [1.34.03] - 2026-04-24
+
+### Changed
+- **Statistiken:** Die Code-Metriken auf der Jobs-Seite wurden auf Basis einer exakten Zählung aktualisiert (80.620 Zeilen Quellcode).
+
+## [1.34.02] - 2026-04-24
 
 ### Radikaler Cache-Buster Fix
 - **Datei-Cleanup:** `reportAiEngine.ts` vollständig entfernt (auch die Proxy-Datei), da der Turbopack-Cache hartnäckig an einer alten Definition festhält.

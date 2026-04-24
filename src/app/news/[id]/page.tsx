@@ -42,7 +42,11 @@ export default function NewsDetailPage({ params }: { params: Promise<{ id: strin
   useEffect(() => {
     if (typeof window === 'undefined') return
     const host = window.location.hostname
-    const isDashboardHost = host.startsWith('dashboard.') || host.startsWith('app.') || host === 'localhost' || host === '127.0.0.1'
+    const isDashboardHost = host.startsWith('dashboard.') || 
+                            host.startsWith('app.') || 
+                            host.includes('.dashboard.') ||
+                            host.startsWith('support.') ||
+                            host.includes('.support.')
     setRootMode(isDashboardHost ? 'dashboard' : 'landing')
   }, [])
 

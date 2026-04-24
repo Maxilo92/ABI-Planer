@@ -15,7 +15,7 @@ import { useAuth } from '@/context/AuthContext'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ThemeSync } from '@/components/layout/ThemeSync'
 import { LandingHeader } from '@/components/layout/LandingHeader'
-import { getTcgBaseUrl, extractGradeFromClassName, ALLOWED_PLANNER_GRADES } from '@/lib/dashboard-url'
+import { getTcgBaseUrl, extractGradeFromClassName, ALLOWED_PLANNER_GRADES, isDashboardHost, isTcgHost, isShopHost, isSupportHost } from '@/lib/dashboard-url'
 import { FeatureGate } from '@/components/auth/FeatureGate'
 import { SchoolYearTransitionGate } from '@/components/auth/SchoolYearTransitionGate'
 
@@ -46,10 +46,10 @@ export function AppShell({ children }: AppShellProps) {
   const domainInfo = useMemo(() => {
     if (isBoneyardBuild || hostname === null) return { isDashboard: false, isTcg: false, isShop: false, isSupport: false, isAnySubdomain: false }
     
-    const isDashboard = hostname.startsWith('dashboard.') || hostname.startsWith('app.') || hostname.includes('.dashboard.')
-    const isTcg = hostname.startsWith('tcg.') || hostname.includes('.tcg.')
-    const isShop = hostname.startsWith('shop.') || hostname.includes('.shop.')
-    const isSupport = hostname.startsWith('support.') || hostname.includes('.support.')
+    const isDashboard = isDashboardHost(hostname)
+    const isTcg = isTcgHost(hostname)
+    const isShop = isShopHost(hostname)
+    const isSupport = isSupportHost(hostname)
     
     return {
       isDashboard,

@@ -16,7 +16,7 @@ import { useSystemFeatures } from '@/hooks/useSystemFeatures'
 import { useNotifications } from '@/hooks/useNotifications'
 import { CountdownHeader } from './CountdownHeader'
 import Logo from '@/components/Logo'
-import { getDashboardBaseUrl, getShopBaseUrl, getSupportBaseUrl } from '@/lib/dashboard-url'
+import { getDashboardBaseUrl, getShopBaseUrl, getSupportBaseUrl, isTcgHost } from '@/lib/dashboard-url'
 
 const auth = getFirebaseAuth()
 
@@ -34,11 +34,18 @@ export function TcgNavbar() {
   const [isOpen, setIsOpen] = useState(false)
   const [isDesktopCollapsed, setIsDesktopCollapsed] = useState(false)
   const [openSubmenus, setOpenSubmenus] = useState<Record<string, boolean>>({})
+  const [isStandaloneTCG, setIsStandaloneTCG] = useState(false)
   const { user, profile } = useAuth()
   const { isEnabled } = useSystemFeatures()
   const notifications = useNotifications()
   const router = useRouter()
   const pathname = usePathname()
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setIsStandaloneTCG(isTcgHost(window.location.hostname))
+    }
+  }, [])
 
   const dashboardUrl = getDashboardBaseUrl()
   const shopUrl = getShopBaseUrl()
@@ -61,6 +68,7 @@ export function TcgNavbar() {
     { href: '/home', label: 'TCG Dashboard', icon: Home },
   ]
 
+  // Show Planner link for admins and planners
   if (isLocalPlannerUser) {
     navItems.push({
       href: '/planer-back-root',
@@ -109,7 +117,8 @@ export function TcgNavbar() {
     subItems: [
       { href: '/profil', label: 'Profil', icon: User },
       { href: '/profil/freunde', label: 'Freunde', icon: UserPlus },
-      { href: `${dashboardUrl}/einstellungen`, label: 'Einstellungen', icon: Settings, isExternalLink: true },
+      // Hide Planner settings for normal users in TCG mode, but keep for admins/planners
+      ...(!isStandaloneTCG || isLocalPlannerUser ? [{ href: `${dashboardUrl}/einstellungen`, label: 'Einstellungen', icon: Settings, isExternalLink: true }] : []),
     ]
   })
 
@@ -119,7 +128,8 @@ export function TcgNavbar() {
     icon: HelpCircle,
     subItems: [
       { href: getSupportBaseUrl(), label: 'Hilfe Center', icon: HelpCircle, isExternalLink: true },
-      { href: `${dashboardUrl}/feedback`, label: 'Feedback geben', icon: MessageSquareHeart, isExternalLink: true },
+      // Keep Feedback for admins/planners
+      ...(!isStandaloneTCG || isLocalPlannerUser ? [{ href: `${dashboardUrl}/feedback`, label: 'Feedback geben', icon: MessageSquareHeart, isExternalLink: true }] : []),
     ]
   })
 

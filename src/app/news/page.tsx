@@ -17,7 +17,7 @@ import { useSystemMessage } from '@/context/SystemMessageContext'
 import { usePopupManager } from '@/modules/popup/usePopupManager'
 import { deleteNewsImageByPath } from '@/lib/newsImageUpload'
 import { logAction } from '@/lib/logging'
-import { toDate } from '@/lib/utils'
+import { toDate, cn } from '@/lib/utils'
 import { 
   Sparkles, 
   User as UserIcon, 
@@ -74,7 +74,11 @@ function NewsPageContent() {
   useEffect(() => {
     if (typeof window === 'undefined') return
     const host = window.location.hostname
-    const isDashboardHost = host.startsWith('dashboard.') || host.startsWith('app.') || host === 'localhost' || host === '127.0.0.1'
+    const isDashboardHost = host.startsWith('dashboard.') || 
+                            host.startsWith('app.') || 
+                            host.includes('.dashboard.') ||
+                            host.startsWith('support.') ||
+                            host.includes('.support.')
     setRootMode(isDashboardHost ? 'dashboard' : 'landing')
   }, [])
 
@@ -212,49 +216,58 @@ function NewsPageContent() {
                   const isCompactEntry = item.is_small_update || !item.image_url
 
                   return (
-                    <article key={item.id} className="group grid md:grid-cols-[1.2fr_1.8fr] gap-5 md:gap-8 items-start bg-card/30 border border-border/50 rounded-[2rem] p-4 sm:p-6 md:p-8 hover:bg-card/50 transition-all hover:shadow-2xl hover:shadow-primary/5">
-                      <div className={isCompactEntry ? 'space-y-4 md:col-span-2' : 'space-y-6'}>
-                        {!isCompactEntry && item.image_url && (
-                          <Link href={`/news/${item.id}`} className="block overflow-hidden rounded-2xl aspect-[16/10] bg-muted shadow-lg">
-                            <img 
-                              src={item.image_url} 
-                              alt="" 
-                              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                            />
-                          </Link>
-                        )}
+                    <article key={item.id} className="group grid grid-cols-1 md:grid-cols-[1.2fr_1.8fr] gap-6 md:gap-10 items-start bg-card/30 border border-border/50 rounded-[2.5rem] p-4 sm:p-6 md:p-8 hover:bg-card/40 transition-all hover:shadow-2xl hover:shadow-primary/5">
+                      {!isCompactEntry && item.image_url ? (
+                        <Link href={`/news/${item.id}`} className="block overflow-hidden rounded-3xl aspect-[16/10] bg-muted shadow-lg w-full shrink-0">
+                          <img 
+                            src={item.image_url} 
+                            alt="" 
+                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                          />
+                        </Link>
+                      ) : null}
 
-                        <div className={isCompactEntry ? 'space-y-4 rounded-2xl border border-border/40 bg-background/60 p-4 sm:p-5 md:p-6' : 'space-y-5 md:space-y-6'}>
+                      <div className={cn(
+                        "flex flex-col h-full",
+                        isCompactEntry ? "md:col-span-2 space-y-6" : "space-y-6"
+                      )}>
+                        <div className="space-y-5">
                           <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-primary">
                             <span className="bg-primary/10 px-3 py-1 rounded-full">{item.created_at ? format(toDate(item.created_at), 'dd. MMMM yyyy', { locale: dateLocale }) : t('news.new')}</span>
                             {isCompactEntry && <span className="bg-muted px-3 py-1 rounded-full text-muted-foreground">{t('news.shortUpdate')}</span>}
                             {item.is_ai_generated && <span className="bg-amber-500/10 border border-amber-500/20 px-3 py-1 rounded-full text-amber-600 flex items-center gap-1"><Sparkles className="h-3 w-3" /> {t('news.aiGenerated')}</span>}
-                            <span className="flex items-center gap-1.5"><UserIcon className="h-3.5 w-3.5" /> {item.author_name || t('news.system')}</span>
+                            <span className="flex items-center gap-1.5 ml-auto md:ml-0"><UserIcon className="h-3.5 w-3.5" /> {item.author_name || t('news.system')}</span>
                           </div>
 
                           <div className="space-y-3">
                             <Link href={`/news/${item.id}`} className="block group-hover:text-primary transition-colors">
-                              <h2 className={isCompactEntry ? 'text-xl sm:text-2xl font-black leading-tight tracking-tight break-words' : 'text-xl sm:text-2xl md:text-3xl font-black leading-tight tracking-tight break-words'}>{item.title}</h2>
+                              <h2 className={cn(
+                                "font-black leading-[1.1] tracking-tight break-words",
+                                isCompactEntry ? "text-2xl sm:text-3xl md:text-4xl" : "text-xl sm:text-2xl md:text-3xl lg:text-4xl"
+                              )}>{item.title}</h2>
                             </Link>
-                            <div className={isCompactEntry ? 'text-muted-foreground leading-relaxed line-clamp-2 text-sm md:text-[0.95rem]' : 'text-muted-foreground leading-relaxed line-clamp-3'}>
+                            <div className={cn(
+                              "text-muted-foreground leading-relaxed font-medium",
+                              isCompactEntry ? "text-base md:text-lg line-clamp-3" : "text-sm md:text-base line-clamp-3"
+                            )}>
                               <ReactMarkdown remarkPlugins={[remarkGfm]}>
                                 {item.content}
                               </ReactMarkdown>
                             </div>
                           </div>
+                        </div>
 
-                          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pt-4 border-t border-border/50">
-                            <div className="flex items-center gap-4 text-muted-foreground">
-                              <span className="flex items-center gap-1 text-[11px] font-bold"><Eye className="h-3.5 w-3.5" /> {item.view_count || 0}</span>
-                              {item.comment_count !== undefined && item.comment_count > 0 && (
-                                <span className="flex items-center gap-1 text-[11px] font-bold"><MessageSquare className="h-3.5 w-3.5" /> {item.comment_count}</span>
-                              )}
-                            </div>
-                            <Button render={<Link href={`/news/${item.id}`} />} variant="ghost" className="w-full sm:w-auto justify-center font-black uppercase tracking-widest text-[10px] gap-2 rounded-xl group/btn">
-                              {t('news.readMore')}
-                              <ArrowRight className="h-4 w-4 transition-transform group-hover/btn:translate-x-1" />
-                            </Button>
+                        <div className="flex flex-row items-center justify-between pt-6 border-t border-border/50 mt-auto">
+                          <div className="flex items-center gap-4 text-muted-foreground">
+                            <span className="flex items-center gap-1 text-[11px] font-bold"><Eye className="h-3.5 w-3.5" /> {item.view_count || 0}</span>
+                            {item.comment_count !== undefined && item.comment_count > 0 && (
+                              <span className="flex items-center gap-1 text-[11px] font-bold"><MessageSquare className="h-3.5 w-3.5" /> {item.comment_count}</span>
+                            )}
                           </div>
+                          <Button render={<Link href={`/news/${item.id}`} />} variant="ghost" className="font-black uppercase tracking-widest text-[10px] gap-2 rounded-xl group/btn hover:bg-primary hover:text-primary-foreground px-4">
+                            {t('news.readMore')}
+                            <ArrowRight className="h-4 w-4 transition-transform group-hover/btn:translate-x-1" />
+                          </Button>
                         </div>
                       </div>
                     </article>

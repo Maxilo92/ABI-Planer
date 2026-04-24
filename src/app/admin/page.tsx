@@ -15,7 +15,8 @@ import {
   RefreshCw,
   Layout,
   FileText,
-  ShoppingBag
+  ShoppingBag,
+  Sparkles
 } from 'lucide-react'
 import Link from 'next/link'
 import { useAuth } from '@/context/AuthContext'
@@ -134,6 +135,14 @@ const adminModules = [
     icon: Layout,
     color: 'text-teal-500',
     bgColor: 'bg-teal-500/10'
+  },
+  {
+    title: 'Design Matrix',
+    description: 'Vorschau und Test der neuen Sammelkarten-Designs (Standard, Selten, Holo).',
+    href: '/cards/new/galerie',
+    icon: Sparkles,
+    color: 'text-indigo-500',
+    bgColor: 'bg-indigo-500/10'
   }
 ]
 

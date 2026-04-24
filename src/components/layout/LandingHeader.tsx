@@ -11,6 +11,7 @@ import { getAppHomeUrl, getDashboardBaseUrl, getAccessTargetFromProfile } from '
 import Logo from '@/components/Logo'
 import { doc, updateDoc } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
+import { LanguageToggle } from '@/components/ui/LanguageToggle'
 
 export function LandingHeader({ isAuthenticated }: { isAuthenticated: boolean }) {
   const { resolvedTheme, setTheme } = useTheme()
@@ -74,9 +75,12 @@ export function LandingHeader({ isAuthenticated }: { isAuthenticated: boolean })
           <Link href="/#tcg" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Karten</Link>
           <Link href="/news" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">News</Link>
           <a href={`${dashboardBaseUrl}/zugang`} className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Vorteile</a>
+          <Link href="/jobs" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Jobs</Link>
         </nav>
 
         <div className="flex items-center gap-3">
+          <LanguageToggle />
+          
           <Button
             variant="ghost"
             size="icon"

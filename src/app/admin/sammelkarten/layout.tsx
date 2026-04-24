@@ -8,8 +8,9 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Loader2, Save, RefreshCw, Users, TrendingUp, Settings2, Sparkles, Send, ArrowLeftRight, BarChart3, Zap, AlertTriangle } from 'lucide-react'
+import { Loader2, Save, RefreshCw, Users, TrendingUp, Settings2, Sparkles, Send, ArrowLeftRight, BarChart3, Zap, AlertTriangle, Wand2 } from 'lucide-react'
 import { cn, getRarityColor, getRarityLabel } from '@/lib/utils'
+import Link from 'next/link'
 import { TeacherRarity } from '@/types/database'
 import {
   Chart as ChartJS,
@@ -265,47 +266,55 @@ function SammelkartenAdminLayoutContent({ children }: { children: React.ReactNod
 
       <div className={cn(
         "grid grid-cols-1 gap-6 lg:gap-8 items-start",
-        activeTab !== 'einladungen' && "xl:grid-cols-4"
+        (activeTab !== 'einladungen' && activeTab !== 'new-design') && "xl:grid-cols-4"
       )}>
         {/* Left/Main Column: Tabs Content */}
         <div className={cn(
           "space-y-8",
-          activeTab !== 'einladungen' ? "xl:col-span-3" : "xl:col-span-full"
+          (activeTab !== 'einladungen' && activeTab !== 'new-design') ? "xl:col-span-3" : "xl:col-span-full"
         )}>
           <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-            <div className="overflow-x-auto">
-              <TabsList className="w-fit bg-muted/50 p-1 rounded-xl border border-border/60 inline-flex">
-                <TabsTrigger value="pool" className="px-3 sm:px-4 py-1.5 text-xs gap-2 transition-all shrink-0">
-                  <Users className="h-3.5 w-3.5" />
-                  <span className="hidden sm:inline">Lehrerpool</span>
-                  <span className="sm:hidden">Pool</span>
-                </TabsTrigger>
-                <TabsTrigger value="drop-rates" className="px-3 sm:px-4 py-1.5 text-xs gap-2 transition-all shrink-0">
-                  <TrendingUp className="h-3.5 w-3.5" />
-                  <span className="hidden sm:inline">Drop-Rates</span>
-                  <span className="sm:hidden">Rates</span>
-                </TabsTrigger>
-                <TabsTrigger value="parameter" className="px-3 sm:px-4 py-1.5 text-xs gap-2 transition-all shrink-0">
-                  <Settings2 className="h-3.5 w-3.5" />
-                  <span className="hidden sm:inline">Parameter</span>
-                  <span className="sm:hidden">Param</span>
-                </TabsTrigger>
-                <TabsTrigger value="ideen-labor" className="px-3 sm:px-4 py-1.5 text-xs gap-2 transition-all shrink-0">
-                  <Sparkles className="h-3.5 w-3.5" />
-                  <span className="hidden sm:inline">Ideen-Labor</span>
-                  <span className="sm:hidden">Labor</span>
-                </TabsTrigger>
-                <TabsTrigger value="einladungen" className="px-3 sm:px-4 py-1.5 text-xs gap-2 transition-all shrink-0">
-                  <Send className="h-3.5 w-3.5" />
-                  <span className="hidden sm:inline">Einladungen</span>
-                  <span className="sm:hidden">Einlad.</span>
-                </TabsTrigger>
-                <TabsTrigger value="trading" className="px-3 sm:px-4 py-1.5 text-xs gap-2 transition-all shrink-0">
-                  <ArrowLeftRight className="h-3.5 w-3.5" />
-                  <span className="hidden sm:inline">Trading</span>
-                  <span className="sm:hidden">Trade</span>
-                </TabsTrigger>
-              </TabsList>
+            <div className="relative group">
+              <div className="overflow-x-auto scrollbar-hide -mx-1 px-1">
+                <TabsList className="w-fit bg-muted/30 p-1.5 rounded-2xl border border-border/40 inline-flex min-w-full sm:min-w-0">
+                  <TabsTrigger value="pool" className="px-3 sm:px-4 py-2 text-[11px] font-bold gap-2 transition-all shrink-0 rounded-xl data-active:bg-background data-active:shadow-sm">
+                    <Users className="h-3.5 w-3.5" />
+                    <span className="hidden sm:inline">Lehrerpool</span>
+                    <span className="sm:hidden">Pool</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="drop-rates" className="px-3 sm:px-4 py-2 text-[11px] font-bold gap-2 transition-all shrink-0 rounded-xl data-active:bg-background data-active:shadow-sm">
+                    <TrendingUp className="h-3.5 w-3.5" />
+                    <span className="hidden sm:inline">Drop-Rates</span>
+                    <span className="sm:hidden">Rates</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="parameter" className="px-3 sm:px-4 py-2 text-[11px] font-bold gap-2 transition-all shrink-0 rounded-xl data-active:bg-background data-active:shadow-sm">
+                    <Settings2 className="h-3.5 w-3.5" />
+                    <span className="hidden sm:inline">Parameter</span>
+                    <span className="sm:hidden">Param</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="ideen-labor" className="px-3 sm:px-4 py-2 text-[11px] font-bold gap-2 transition-all shrink-0 rounded-xl data-active:bg-background data-active:shadow-sm">
+                    <Sparkles className="h-3.5 w-3.5" />
+                    <span className="hidden sm:inline">Ideen-Labor</span>
+                    <span className="sm:hidden">Labor</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="einladungen" className="px-3 sm:px-4 py-2 text-[11px] font-bold gap-2 transition-all shrink-0 rounded-xl data-active:bg-background data-active:shadow-sm">
+                    <Send className="h-3.5 w-3.5" />
+                    <span className="hidden sm:inline">Einladungen</span>
+                    <span className="sm:hidden">Einlad.</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="trading" className="px-3 sm:px-4 py-2 text-[11px] font-bold gap-2 transition-all shrink-0 rounded-xl data-active:bg-background data-active:shadow-sm">
+                    <ArrowLeftRight className="h-3.5 w-3.5" />
+                    <span className="hidden sm:inline">Trading</span>
+                    <span className="sm:hidden">Trade</span>
+                  </TabsTrigger>
+                  <div className="w-px h-4 bg-border/60 mx-1 self-center shrink-0" />
+                  <TabsTrigger value="new-design" className="px-3 sm:px-4 py-2 text-[11px] font-bold gap-2 transition-all shrink-0 rounded-xl data-active:bg-background data-active:shadow-sm text-amber-600 dark:text-amber-400">
+                    <Wand2 className="h-3.5 w-3.5" />
+                    <span className="hidden sm:inline">Neues Design</span>
+                    <span className="sm:hidden">Neu</span>
+                  </TabsTrigger>
+                </TabsList>
+              </div>
             </div>
 
             <div className="mt-6">
@@ -315,7 +324,7 @@ function SammelkartenAdminLayoutContent({ children }: { children: React.ReactNod
         </div>
 
         {/* Right Column: Pack Simulator & Stats */}
-        {activeTab !== 'einladungen' && (
+        {(activeTab !== 'einladungen' && activeTab !== 'new-design') && (
           <div className="space-y-6">
             <Card className="border-primary/15 shadow-md">
               <CardHeader className="bg-primary/5">

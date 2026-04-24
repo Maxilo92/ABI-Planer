@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { SammelkartenConfig } from '@/types/cards'
+import { SammelkartenConfig, CardVariant } from '@/types/cards'
 import { LootTeacher } from '@/types/database'
 import { CollectionResult, MassPackReveal, MaybeCollectionResult, PackSelection, UserTeacherMap } from '../types'
 import {
@@ -26,8 +26,8 @@ type UseSammelkartenGameInput = {
   getRemainingSupportBoosters: () => number
   getRandomOpenableBoosters: () => number
   getActivePackSelection: () => PackSelection | null
-  collectBooster: (options?: { packSource?: 'random' | 'custom', customPackQueueId?: string | null, packId?: string }) => Promise<Array<{ teacherId: string, variant: 'normal' | 'holo' | 'shiny' | 'black_shiny_holo', count: number, level: number }>>
-  collectMassBoosters: (amount: number, options?: { packSource?: 'random' | 'custom', customPackQueueId?: string | null, packId?: string }) => Promise<Array<Array<{ teacherId: string, variant: 'normal' | 'holo' | 'shiny' | 'black_shiny_holo', count: number, level: number }>>>
+  collectBooster: (options?: { packSource?: 'random' | 'custom', customPackQueueId?: string | null, packId?: string }) => Promise<Array<{ teacherId: string, variant: CardVariant, count: number, level: number }>>
+  collectMassBoosters: (amount: number, options?: { packSource?: 'random' | 'custom', customPackQueueId?: string | null, packId?: string }) => Promise<Array<Array<{ teacherId: string, variant: CardVariant, count: number, level: number }>>>
   pushMessage: PushMessageFn
 }
 

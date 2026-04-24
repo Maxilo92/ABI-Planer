@@ -115,7 +115,17 @@ export function FinanceChart({ finances, shopEarnings, settings, loading }: Fina
         date: toDate(s.processed_at || s.id.split('_')[0]),
         amount: Number(s.abi_share_eur)
       }))
-    ].sort((a, b) => a.date.getTime() - b.date.getTime())
+    ]
+
+    // 1.1 Add virtual ticket sales transaction for dynamic prognosis
+    if (settings?.expected_ticket_sales && settings?.expected_ticket_price) {
+      allTransactions.push({
+        date: toDate(settings.ball_date),
+        amount: settings.expected_ticket_sales * settings.expected_ticket_price
+      })
+    }
+
+    allTransactions.sort((a, b) => a.date.getTime() - b.date.getTime())
 
     if (allTransactions.length === 0) return null
 
@@ -191,64 +201,88 @@ export function FinanceChart({ finances, shopEarnings, settings, loading }: Fina
     }
 
     // 5. Smart Prediction logic
-    // Calculate absolute current balance at 'now'
     const currentBalance = allTransactions.filter(t => !isAfter(t.date, now)).reduce((sum, t) => sum + t.amount, 0)
 
-    const getSlope = (days: number) => {
-      const cutoff = addDays(now, -days)
-      const gained = allTransactions
-        .filter(t => !isAfter(t.date, now) && !isBefore(t.date, cutoff))
-        .reduce((sum, t) => sum + t.amount, 0)
-      return gained / days
-    }
+    let WMA_Slope = 0
+    const pastTransactions = allTransactions.filter(t => !isAfter(t.date, now))
+    
+    if (pastTransactions.length > 0) {
+      const lookbackDays = 90
+      const firstTxDate = new Date(pastTransactions[0].date)
+      firstTxDate.setHours(0,0,0,0)
+      const actualLookback = Math.min(lookbackDays, differenceInDays(now, firstTxDate) + 1)
+      
+      const dailyDeltas: Record<string, number> = {}
+      pastTransactions.forEach(t => {
+        const key = format(t.date, 'yyyy-MM-dd')
+        dailyDeltas[key] = (dailyDeltas[key] || 0) + t.amount
+      })
 
-    let blendedSlope = 0
-    if (allTransactions.length > 0) {
-      const firstTx = allTransactions[0].date
-      // Use at least 7 days denominator to prevent extreme spikes from single-day first deposits
-      const daysSinceFirst = Math.max(7, differenceInDays(now, firstTx))
-      const allTimeSlope = currentBalance / daysSinceFirst
-
-      if (daysSinceFirst < 30) {
-        // Not enough history for short/long term blending, use smoothed all-time
-        blendedSlope = allTimeSlope
-      } else {
-        const shortTermSlope = getSlope(30)
-        const longTermSlope = getSlope(90)
+      let weightedSum = 0
+      let weightSum = 0
+      
+      for (let i = 0; i < actualLookback; i++) {
+        const day = addDays(now, -i)
+        const key = format(day, 'yyyy-MM-dd')
+        const dayDelta = dailyDeltas[key] || 0
+        const weight = actualLookback - i
         
-        if (longTermSlope > 0) {
-          // Weighted blend: 50% last month, 30% last 3 months, 20% all-time baseline
-          blendedSlope = (shortTermSlope * 0.5) + (longTermSlope * 0.3) + (allTimeSlope * 0.2)
-        } else {
-          // Stagnant phase (no income in 90 days): conservative all-time projection
-          blendedSlope = allTimeSlope * 0.3
-        }
+        weightedSum += dayDelta * weight
+        weightSum += weight
       }
+      
+      WMA_Slope = weightSum > 0 ? weightedSum / weightSum : 0
     }
     
-    // Ensure we don't predict negative growth towards an ABI goal
-    blendedSlope = Math.max(0, blendedSlope)
+    WMA_Slope = Math.max(0, WMA_Slope)
 
     const predictionValues: (number | null)[] = new Array(labels.length).fill(null)
     
     let projectedDate: Date | null = null
     const fundingGoal = settings?.funding_goal || 10000
 
-    // Absolute Target Date Calculation (independent of chart view)
-    if (blendedSlope > 0) {
-      const remaining = fundingGoal - currentBalance
-      if (remaining > 0) {
-        const daysNeeded = Math.ceil(remaining / blendedSlope)
-        if (daysNeeded > 0 && daysNeeded < 3650) { // Max 10 years
-          projectedDate = addDays(now, daysNeeded)
-        }
+    if (WMA_Slope >= 0) {
+      let tempBalance = currentBalance
+      let tempDate = new Date(now)
+      tempDate.setHours(0,0,0,0)
+      
+      const futureTransactions = allTransactions.filter(t => isAfter(t.date, now))
+      let reached = tempBalance >= fundingGoal
+
+      if (reached) {
+        projectedDate = tempDate
       } else {
-        projectedDate = now // Goal already reached
+        for (const tx of futureTransactions) {
+          const daysToTx = differenceInDays(tx.date, tempDate)
+          const growth = WMA_Slope * Math.max(0, daysToTx)
+          
+          if (tempBalance + growth >= fundingGoal) {
+            const daysNeeded = Math.ceil((fundingGoal - tempBalance) / WMA_Slope)
+            projectedDate = addDays(tempDate, daysNeeded)
+            reached = true
+            break
+          }
+          
+          tempBalance += growth + tx.amount
+          tempDate = new Date(tx.date)
+          tempDate.setHours(0,0,0,0)
+          
+          if (tempBalance >= fundingGoal) {
+            projectedDate = tempDate
+            reached = true
+            break
+          }
+        }
+        
+        if (!reached && WMA_Slope > 0) {
+          const remaining = fundingGoal - tempBalance
+          const daysNeeded = Math.ceil(remaining / WMA_Slope)
+          projectedDate = addDays(tempDate, daysNeeded)
+        }
       }
     }
 
-    // Chart Prediction Line Generation
-    if (blendedSlope > 0 || currentBalance > 0) {
+    if (WMA_Slope > 0 || currentBalance > 0) {
       if (viewMode === 'year') {
         let currentMonth = new Date(startDate)
         currentMonth.setDate(1)
@@ -259,12 +293,13 @@ export function FinanceChart({ finances, shopEarnings, settings, loading }: Fina
           const isCurrentMonth = getMonth(currentMonth) === getMonth(now) && getYear(currentMonth) === getYear(now)
           
           if (isCurrentMonth) {
-            // For HEUTE, connect exactly to the actual value
             predictionValues[i] = values[i] !== null ? values[i] : currentBalance
           } else if (!isPastOrCurrentMonth) {
-            // Future months: predict continuously from today
             const daysFromNow = differenceInDays(currentMonth, now)
-            predictionValues[i] = currentBalance + (blendedSlope * Math.max(0, daysFromNow))
+            const futureSpikesSum = allTransactions
+              .filter(t => isAfter(t.date, now) && !isAfter(t.date, currentMonth))
+              .reduce((sum, t) => sum + t.amount, 0)
+            predictionValues[i] = currentBalance + (WMA_Slope * Math.max(0, daysFromNow)) + futureSpikesSum
           }
           currentMonth = addMonthsDateFns(currentMonth, 1)
         }
@@ -280,7 +315,10 @@ export function FinanceChart({ finances, shopEarnings, settings, loading }: Fina
             predictionValues[i] = values[i] !== null ? values[i] : currentBalance
           } else if (!isPast) {
             const daysFromNow = differenceInDays(current, now)
-            predictionValues[i] = currentBalance + (blendedSlope * Math.max(0, daysFromNow))
+            const futureSpikesSum = allTransactions
+              .filter(t => isAfter(t.date, now) && !isAfter(t.date, current))
+              .reduce((sum, t) => sum + t.amount, 0)
+            predictionValues[i] = currentBalance + (WMA_Slope * Math.max(0, daysFromNow)) + futureSpikesSum
           }
           current = addDays(current, 1)
         }

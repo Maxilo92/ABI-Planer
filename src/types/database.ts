@@ -237,6 +237,7 @@ export interface Settings {
   courses?: ClassName[];
   leaderboard_adjustments?: Record<string, number>;
   expected_ticket_sales?: number;
+  expected_ticket_price?: number;
   planning_groups?: PlanningGroup[];
   loot_teachers?: LootTeacher[];
   custom_popup_messages?: CustomPopupMessage[];
@@ -377,7 +378,7 @@ export interface Feedback {
   teacher_card_name?: string;
 }
 
-export type CardVariant = 'normal' | 'holo' | 'shiny' | 'black_shiny_holo';
+export type CardVariant = 'normal' | 'holo' | 'shiny' | 'black_shiny_holo' | 'selten';
 
 export interface UserTeacher {
   [teacherId: string]: {

@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation'
 import { DashboardNavbar } from './DashboardNavbar'
 import { TcgNavbar } from './TcgNavbar'
 import { ShopNavbar } from './ShopNavbar'
+import { isTcgHost, isDashboardHost, isShopHost } from '@/lib/dashboard-url'
 
 export function Navbar() {
   const pathname = usePathname()
@@ -14,26 +15,27 @@ export function Navbar() {
       return { isTcgDomain: false, isDashboardDomain: false, isShopDomain: false }
     }
     const host = window.location.hostname
-    const tcg = host.startsWith('tcg.') || host.includes('.tcg.')
-    const dashboard = host.startsWith('dashboard.') || host.startsWith('app.') || host.includes('.dashboard.')
-    const shop = host.startsWith('shop.') || host.includes('.shop.')
     return {
-      isTcgDomain: tcg,
-      isDashboardDomain: dashboard,
-      isShopDomain: shop
+      isTcgDomain: isTcgHost(host),
+      isDashboardDomain: isDashboardHost(host),
+      isShopDomain: isShopHost(host)
     }
   }, [])
 
-  // Area detection based on domain or path
-  const isShopArea = isShopDomain || pathname.startsWith('/shop')
-  const isTcgArea = isTcgDomain || pathname.startsWith('/sammelkarten') || pathname.startsWith('/album') || pathname.startsWith('/battle-pass') || pathname.startsWith('/home') || pathname.startsWith('/booster')
-  const isDashboardArea = isDashboardDomain || (!isShopArea && !isTcgArea)
+  // Area detection: Subdomain strictly defines the navbar.
+  // If no known subdomain is active, fall back to path detection.
+  
+  if (isShopDomain) return <ShopNavbar />
+  if (isTcgDomain) return <TcgNavbar />
+  if (isDashboardDomain) return <DashboardNavbar />
 
-  if (isShopArea) {
-    return <ShopNavbar />
-  }
-
-  if (isTcgArea) {
+  // Fallback for landing page paths (if accessed via path on main domain)
+  if (pathname.startsWith('/shop')) return <ShopNavbar />
+  if (pathname.startsWith('/sammelkarten') || 
+      pathname.startsWith('/album') || 
+      pathname.startsWith('/battle-pass') || 
+      pathname.startsWith('/home') || 
+      pathname.startsWith('/booster')) {
     return <TcgNavbar />
   }
 

@@ -33,9 +33,10 @@ const RARITY_PRIORITY: Record<TeacherRarity, number> = {
 
 const VARIANT_PRIORITY: Record<NewCardVariant, number> = {
   black_shiny_holo: 0,
-  shiny: 1,
-  holo: 2,
-  normal: 3
+  selten: 1,
+  shiny: 2,
+  holo: 3,
+  normal: 4
 }
 
 interface DeckSelectionProps {

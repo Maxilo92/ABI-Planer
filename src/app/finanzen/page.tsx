@@ -184,6 +184,23 @@ export default function FinancePage() {
       console.error('Error updating expected ticket sales:', error)
     }
   }
+
+  const handleTicketPriceChange = async (value: number) => {
+    if (!isPlanner) return
+    try {
+      await setDoc(doc(db, 'settings', 'config'), { expected_ticket_price: value }, { merge: true })
+
+      if (user) {
+        await logAction('SETTINGS_UPDATED', user.uid, profile?.full_name, {
+          field: 'expected_ticket_price',
+          value,
+          source: 'finanzen',
+        })
+      }
+    } catch (error) {
+      console.error('Error updating expected ticket price:', error)
+    }
+  }
   
   const handleDelete = async (id: string) => {
     const confirmed = await confirm({
@@ -407,7 +424,9 @@ export default function FinancePage() {
         breakdown={breakdown}
         goal={fundingGoal}
         initialTicketSales={settings?.expected_ticket_sales ?? 150}
+        initialTicketPrice={settings?.expected_ticket_price ?? 0}
         onTicketSalesChange={canEditTicketSales ? handleTicketSalesChange : undefined}
+        onTicketPriceChange={canEditTicketSales ? handleTicketPriceChange : undefined}
         canEditTicketSales={canEditTicketSales}
         isAuthenticated={!!user}
       />
