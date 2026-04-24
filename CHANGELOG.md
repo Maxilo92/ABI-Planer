@@ -6,6 +6,88 @@
 <!-- default_action: read newest entries only unless a regression requires older history -->
 <!-- index: docs/AGENT_CONTEXT_INDEX.md -->
 
+## [1.33.1.07] - 2026-04-23
+
+### Changed
+- **Finanzprognose:** Die Lifecycle-Intensitätsberechnung ("Knick" vor dem Abiball) wurde komplett entfernt. Die Prognose ist nun rein linear und extrapoliert stur auf Basis des historischen Trends (gewichtet aus den letzten 30 und 90 Tagen), ohne den Abiball-Termin künstlich zu verzerren.
+
+## [1.33.1.06] - 2026-04-23
+
+### Fixed
+- **Finanzgrafik:** Die Jahresansicht wurde radikal überarbeitet und aggregiert Daten nun sauber pro Monat (12 Datenpunkte) statt pro Tag (365 Punkte). Dies behebt die fehlerhafte Y-Achsen-Skalierung und die visuelle Überlagerung von Datenpunkten.
+- **Finanzprognose:** Die Prognoselinie verbindet sich nun nahtlos mit dem Ist-Verlauf und füllt die Grafik in der Jahresansicht bis zum Jahresende (Dezember) aus, wodurch ungenutzter Raum im Diagramm vermieden wird.
+- **UI/UX:** Die "Ziel-Erreichung"-Anzeige zeigt nun das exakt berechnete Datum (z.B. 15.09.2030) statt nur Monat und Jahr.
+
+## [1.33.1.05] - 2026-04-23
+
+### Fixed
+- **Finanzgrafik:** Ein schwerwiegender Bug in der Datenaggregation der Jahresansicht wurde behoben. Die Beträge wurden aufgrund fehlerhafter Datumsiteration nicht korrekt summiert, was zu falschen Y-Achsen-Werten (z. B. 1,20 € statt > 400 €) führte. Die Iteration ist nun für alle Ansichten tagesscharf und exakt.
+- **Finanzprognose:** Die fehlende Prognose in der Jahresansicht wurde korrigiert und der "Lücke"-Bereich oben rechts im Diagramm wird nun vollständig mit dem Vorhersage-Trend bis Dezember (bzw. Jahresende) gefüllt.
+- **UI/UX:** Das Sternchen (`*`) bei der "Ziel-Erreichung"-Anzeige wurde entfernt, um das echte berechnete Datum klarer und seriöser zu präsentieren.
+
+## [1.33.1.04] - 2026-04-23
+
+### Added
+- **Finanzgrafik:** Neue "Insight"-Anzeige ergänzt. Das System berechnet nun auf Basis des aktuellen Tempos den geschätzten Monat der Ziel-Erreichung und zeigt diesen oben rechts an.
+
+### Fixed
+- **Finanzgrafik:** Skalierungsproblem der Y-Achse bei sehr kleinen Beträgen behoben (Rundungsfehler entfernt, dynamische Nachkommastellen hinzugefügt).
+- **Finanzprognose:** Die gestrichelte Prognoselinie schließt nun nahtlos an den aktuellsten Datenpunkt an.
+
+## [1.33.1.03] - 2026-04-23
+
+### Fixed
+- **Finanzgrafik:** Die Prognose wird nun auch in der Jahresansicht korrekt über das aktuelle Datum hinaus gezeichnet. Der Lifecycle-Algorithmus wurde verfeinert, um realistischere Trends bis zum Abiball-Termin abzubilden.
+
+## [1.33.1.02] - 2026-04-23
+
+### Changed
+- **Finanzprognose:** „Smarter“ Lifecycle-Algorithmus implementiert. Die Prognose berücksichtigt nun die verbleibende Zeit bis zum Abiball und passt die Wachstumsgeschwindigkeit dynamisch an (geringere Intensität in frühen Projektphasen, exponentieller Anstieg in der Finalphase).
+
+## [1.33.1.01] - 2026-04-23
+
+### Changed
+- **Mobile UI:** Finanzgrafik-Steuerung für Smartphones optimiert. Kompakteres Layout, kleinere Buttons und angepasste Datumsformate sorgen für eine bessere Bedienbarkeit auf kleinen Bildschirmen.
+
+## [1.33.1.00] - 2026-04-23
+
+### Changed
+- **Finanzprognose:** Algorithmus auf gewichtete Multi-Fenster-Regression umgestellt. Berücksichtigt nun kurz- und langfristige Trends unterschiedlich stark und gewichtet aktuellere Daten höher für präzisere Vorhersagen.
+
+## [1.33.0.33] - 2026-04-23
+
+### Added
+- **Finanzgrafik:** Komplexe Datumsnavigation hinzugefügt. Zeiträume sind nun an Kalenderwochen (Mo-So), Kalendermonaten und Kalenderjahren ausgerichtet.
+- **UI/UX:** Navigationselemente (Vor/Zurück) und ein „Heute“-Button ermöglichen das gezielte Ansehen vergangener oder zukünftiger Zeiträume in der Finanzentwicklung.
+
+## [1.33.0.32] - 2026-04-23
+
+### Changed
+- **Finanzgrafik:** Zeiträume auf „Woche“, „Monat“ und „Jahr“ umgestellt, um eine bessere Skalierung der Daten zu ermöglichen.
+- **Finanzprognose:** Die Länge der Vorhersage passt sich nun dynamisch dem gewählten Zeitraum an (z. B. kürzere Prognose in der Wochenansicht), um die Übersichtlichkeit zu wahren.
+
+## [1.33.0.31] - 2026-04-23
+
+### Fixed
+- **Finanzgrafik:** Syntax-Fehler (doppelte Variablen-Deklaration) behoben, der zum Absturz der Komponente führte.
+
+## [1.33.0.30] - 2026-04-23
+
+### Fixed
+- **Finanzgrafik:** Das aktuelle Datum wird nun explizit als „HEUTE“ markiert, um den Übergang von Historie zu Prognose visuell eindeutig zu kennzeichnen. Die X-Achse wurde für eine bessere Lesbarkeit optimiert.
+
+## [1.33.0.29] - 2026-04-23
+
+### Changed
+- **Finanzgrafik:** Zeitraum „Alle“ in „Gesamt“ (intern: `NOW`) umbenannt und als Standardansicht festgelegt, um den kompletten Verlauf bis zum aktuellen Datum präziser abzubilden.
+
+## [1.33.0.28] - 2026-04-23
+
+### Added
+- **Finanzübersicht:** Interaktives Liniendiagramm (`FinanceChart`) hinzugefügt, das die kumulative Budgetentwicklung über Zeit anzeigt.
+- **Finanzprognose:** Lineare Regressionsanalyse implementiert, die den zukünftigen Kontostand bis zum Abiball-Datum vorhersagt.
+- **UI/UX:** Zeitraum-Selektoren (1M, 3M, 6M, YTD, Alle) für die Finanzgrafik zur gezielten Analyse von Trends.
+
 ## [1.33.0.27] - 2026-04-23
 
 ### Added

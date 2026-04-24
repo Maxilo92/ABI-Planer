@@ -23,6 +23,7 @@ import { toast } from 'sonner'
 import { logAction } from '@/lib/logging'
 import { ProtectedSystemGate } from '@/components/ui/ProtectedSystemGate'
 import { usePopupManager } from '@/modules/popup/usePopupManager'
+import { FinanceChart } from '@/components/dashboard/FinanceChart'
 
 export default function FinancePage() {
   const { user, profile, loading: authLoading } = useAuth()
@@ -352,6 +353,13 @@ export default function FinancePage() {
           </CardContent>
         </Card>
       </div>
+
+      <FinanceChart 
+        finances={finances} 
+        shopEarnings={shopEarnings} 
+        settings={settings} 
+        loading={loading || !shopEarningsLoaded}
+      />
 
       {lastVerification && (
         <Card className={`border-l-4 ${isDiffSignificant ? 'border-l-warning bg-warning/5' : 'border-l-success bg-success/5'}`}>
