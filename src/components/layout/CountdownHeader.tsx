@@ -6,6 +6,7 @@ import { doc, onSnapshot } from 'firebase/firestore'
 import { useCountdown } from '@/hooks/useCountdown'
 import { useAuth } from '@/context/AuthContext'
 import { Clock, Calendar, Info, Timer } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import {
   Dialog,
   DialogContent,
@@ -15,7 +16,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 
-export function CountdownHeader() {
+export function CountdownHeader({ collapsed = false }: { collapsed?: boolean }) {
   const { profile, loading } = useAuth()
   const [targetDate, setTargetDate] = useState<string | null>(null)
   const [mounted, setMounted] = useState(false)
@@ -52,29 +53,34 @@ export function CountdownHeader() {
     <Dialog>
       <DialogTrigger
         render={
-          <button className="flex items-center gap-2 px-3 py-1.5 bg-secondary/50 rounded-full border border-border/50 transition-all hover:bg-secondary hover:border-primary/30 group outline-none focus-visible:ring-2 focus-visible:ring-primary/20">
-            <Clock className="h-3.5 w-3.5 text-primary animate-pulse group-hover:scale-110 transition-transform" />
-            <div className="flex items-center gap-1.5 text-[11px] font-bold tracking-tight tabular-nums">
-              <div className="flex flex-col items-center leading-none">
-                <span>{days}</span>
-                <span className="text-[7px] uppercase text-muted-foreground font-medium">d</span>
+          <button className={cn(
+            "flex items-center bg-secondary/50 rounded-full border border-border/50 transition-all hover:bg-secondary hover:border-primary/30 group outline-none focus-visible:ring-2 focus-visible:ring-primary/20",
+            collapsed ? "p-2.5" : "gap-2 px-3 py-1.5"
+          )}>
+            <Clock className={cn("text-primary animate-pulse group-hover:scale-110 transition-transform", collapsed ? "h-4 w-4" : "h-3.5 w-3.5")} />
+            {!collapsed && (
+              <div className="flex items-center gap-1.5 text-[11px] font-bold tracking-tight tabular-nums">
+                <div className="flex flex-col items-center leading-none">
+                  <span>{days}</span>
+                  <span className="text-[7px] uppercase text-muted-foreground font-medium">d</span>
+                </div>
+                <span className="text-muted-foreground/50">:</span>
+                <div className="flex flex-col items-center leading-none">
+                  <span>{hours}</span>
+                  <span className="text-[7px] uppercase text-muted-foreground font-medium">h</span>
+                </div>
+                <span className="text-muted-foreground/50">:</span>
+                <div className="flex flex-col items-center leading-none">
+                  <span>{minutes}</span>
+                  <span className="text-[7px] uppercase text-muted-foreground font-medium">m</span>
+                </div>
+                <span className="text-muted-foreground/50">:</span>
+                <div className="flex flex-col items-center leading-none">
+                  <span className="text-primary">{seconds}</span>
+                  <span className="text-[7px] uppercase text-primary/70 font-medium">s</span>
+                </div>
               </div>
-              <span className="text-muted-foreground/50">:</span>
-              <div className="flex flex-col items-center leading-none">
-                <span>{hours}</span>
-                <span className="text-[7px] uppercase text-muted-foreground font-medium">h</span>
-              </div>
-              <span className="text-muted-foreground/50">:</span>
-              <div className="flex flex-col items-center leading-none">
-                <span>{minutes}</span>
-                <span className="text-[7px] uppercase text-muted-foreground font-medium">m</span>
-              </div>
-              <span className="text-muted-foreground/50">:</span>
-              <div className="flex flex-col items-center leading-none">
-                <span className="text-primary">{seconds}</span>
-                <span className="text-[7px] uppercase text-primary/70 font-medium">s</span>
-              </div>
-            </div>
+            )}
           </button>
         }
       />

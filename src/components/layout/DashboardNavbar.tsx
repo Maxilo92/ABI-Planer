@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { LayoutDashboard, CheckSquare, Calendar, Euro, DollarSign, Megaphone, BarChart2, LogOut, Menu, X, ShieldCheck, User, MessageSquareHeart, Settings, Users, ChevronRight, ChevronLeft, Sparkles, HelpCircle, Trophy, AlertTriangle, ShoppingBag, UserPlus, Server, ArrowLeftRight, Pin, PinOff, Briefcase, Home, ShieldAlert, FileText } from 'lucide-react'
+import { LayoutDashboard, CheckSquare, Calendar, Euro, DollarSign, Megaphone, BarChart2, LogOut, Menu, X, ShieldCheck, User, MessageSquareHeart, Settings, Users, ChevronRight, ChevronLeft, Sparkles, HelpCircle, Trophy, AlertTriangle, ShoppingBag, UserPlus, Server, ArrowLeftRight, Pin, PinOff, Briefcase, Home, ShieldAlert, FileText, Wand2, Package, Printer, LayoutGrid, List } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button, buttonVariants } from '@/components/ui/button'
@@ -135,15 +135,22 @@ export function DashboardNavbar() {
       icon: Euro,
       subItems: [
         { href: '/finanzen', label: 'Kassenstand', icon: Euro },
-        ...(isEnabled('shop_status') ? [{ href: resolveHref('/shop', 'shop'), label: 'ABISHOP', icon: ShoppingBag, isExternal: true }] : []),      ],
+        ...(isEnabled('shop_status') ? [{ href: resolveHref('/shop', 'shop'), label: 'ABISHOP', icon: ShoppingBag, isExternal: true }] : []),
+      ],
     })
 
     if (isEnabled('sammelkarten_status')) {
       navItems.push({
-        href: resolveHref('/home', 'tcg'),
-        label: 'Zu den Sammelkarten',
-        icon: Sparkles,
-        isExternal: true
+        href: '/sammelkarten-manager-root',
+        label: 'Sammelkarten-Manager',
+        icon: Package,
+        subItems: [
+          { href: '/sammelkarten-manager/queue', label: 'Warteschlange', icon: List },
+          { href: '/sammelkarten-manager/editor', label: 'Designer', icon: Wand2 },
+          { href: '/sammelkarten-manager/pool', label: 'Karten-Pool', icon: Package },
+          { href: '/sammelkarten-manager/logistik', label: 'Druck-Logistik', icon: Printer },
+          { href: '/sammelkarten-manager/matrix', label: 'Design-Matrix', icon: LayoutGrid },
+        ]
       })
     }
 
@@ -180,7 +187,7 @@ export function DashboardNavbar() {
         { href: '/admin/user', label: 'Benutzerverwaltung', icon: Users },
         { href: '/admin/system', label: 'System Overview', icon: LayoutDashboard },
         { href: '/admin/changelog', label: 'Changelog', icon: FileText },
-        { href: '/admin/sammelkarten', label: 'Sammelkarten Manager', icon: Sparkles },
+        { href: '/admin/sammelkarten', label: 'Sammelkarten (Digital)', icon: Sparkles },
         { href: '/admin/global-settings', label: 'Globale Einstellungen', icon: Settings },
         { href: '/admin/shop-earnings', label: 'Shop Einnahmen', icon: DollarSign },
         { href: '/admin/logs', label: 'Logs', icon: BarChart2 },
@@ -192,6 +199,7 @@ export function DashboardNavbar() {
   const isActive = (href: string) => {
     if (href === '/') return pathname === '/'
     if (href === '/admin-root') return pathname.startsWith('/admin')
+    if (href === '/sammelkarten-manager-root') return pathname.startsWith('/sammelkarten-manager')
     if (href === '/uebersicht-root') return pathname === '/' || pathname.startsWith('/news') || pathname.startsWith('/abstimmungen')
     if (href === '/planung-root') return pathname.startsWith('/kalender') || pathname.startsWith('/todos') || pathname.startsWith('/gruppen')
     if (href === '/finanzen-root') return pathname.startsWith('/finanzen')
@@ -321,7 +329,7 @@ export function DashboardNavbar() {
             {!isDesktopCollapsed && <Button variant="ghost" size="icon" onClick={toggleDesktopCollapsed}><ChevronLeft className="h-4 w-4" /></Button>}
           </div>
 
-          <div className="p-2 border-b flex justify-center"><CountdownHeader /></div>
+          <div className="p-2 border-b flex justify-center"><CountdownHeader collapsed={isDesktopCollapsed} /></div>
 
           <nav className="flex-1 overflow-y-auto p-4 space-y-1">
             {navItems.map(item => renderNavItem(item))}

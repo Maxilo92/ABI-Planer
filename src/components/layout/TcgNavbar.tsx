@@ -245,7 +245,7 @@ export function TcgNavbar() {
             {!isDesktopCollapsed && <Button variant="ghost" size="icon" onClick={toggleDesktopCollapsed}><ChevronLeft className="h-4 w-4" /></Button>}
           </div>
 
-          <div className="p-2 border-b flex justify-center"><CountdownHeader /></div>
+          <div className="p-2 border-b flex justify-center"><CountdownHeader collapsed={isDesktopCollapsed} /></div>
 
           <nav className="flex-1 overflow-y-auto p-4 space-y-1">
             {navItems.map(item => renderNavItem(item))}
