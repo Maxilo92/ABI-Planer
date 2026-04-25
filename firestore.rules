@@ -561,7 +561,11 @@ service cloud.firestore {
     }
 
     match /custom_card_designs/{designId} {
-      allow read, write: if isPlanner();
+      allow read, create, update, delete: if isPlanner();
+    }
+
+    match /teacher_card_drafts/{draftId} {
+      allow read, create, update, delete: if isPlanner();
     }
   }
 }

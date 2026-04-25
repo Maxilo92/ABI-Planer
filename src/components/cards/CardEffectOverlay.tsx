@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 export const CardEffectOverlay: React.FC<{ 
   variant: CardVariant; 
   tintColor?: string;
+  rarity?: string;
   isIconic?: boolean;
   effectsEnabled?: boolean;
   isCombat?: boolean;
@@ -14,12 +15,14 @@ export const CardEffectOverlay: React.FC<{
 }> = ({ 
   variant, 
   tintColor,
+  rarity,
   isIconic,
   effectsEnabled = true,
   isCombat = false,
   forceVisible = false,
 }) => {
   if (!effectsEnabled) return null;
+  const isLegendary = rarity === 'legendary';
   if (variant === 'normal' && !isIconic && !forceVisible) return null;
 
   const getOverlayStyles = () => {
@@ -53,10 +56,20 @@ export const CardEffectOverlay: React.FC<{
 
     switch (variant) {
       case 'holo':
-        // 02 Holo Oil-Slick: Combat uses screen blend for dark board visibility
+        // Legendary Holo: Special Gold Foil background
+        if (isLegendary) {
+          return cn(
+            "bg-[url('/images/cards/goldfolie.jpg')] bg-cover bg-center mix-blend-screen opacity-90",
+            "before:absolute before:inset-0 before:bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.4)_0%,transparent_50%),radial-gradient(circle_at_80%_80%,rgba(251,191,36,0.3)_0%,transparent_50%)] before:mix-blend-overlay",
+            "after:absolute after:inset-0 after:bg-[radial-gradient(circle_at_50%_50%,transparent_40%,rgba(0,0,0,0.3)_100%)] after:mix-blend-multiply",
+            "animate-pulse shadow-[inset_0_0_80px_rgba(255,255,255,0.2)]"
+          );
+        }
+
+        // 02 Holo Oil-Slick: Use the rarity's tint color to make them more distinct
         return isCombat
-          ? "bg-[radial-gradient(circle_at_20%_20%,rgba(45,212,191,0.7)_0%,transparent_52%),radial-gradient(circle_at_80%_80%,rgba(232,121,249,0.65)_0%,transparent_52%),radial-gradient(circle_at_50%_50%,rgba(163,230,81,0.5)_0%,transparent_72%),radial-gradient(circle_at_10%_90%,rgba(251,191,36,0.52)_0%,transparent_44%)] mix-blend-screen opacity-95 shadow-[inset_0_0_120px_rgba(255,255,255,0.38)] brightness-125 saturate-150 animate-pulse"
-          : "bg-[radial-gradient(circle_at_20%_20%,rgba(45,212,191,0.6)_0%,transparent_50%),radial-gradient(circle_at_80%_80%,rgba(232,121,249,0.6)_0%,transparent_50%),radial-gradient(circle_at_50%_50%,rgba(163,230,81,0.5)_0%,transparent_70%),radial-gradient(circle_at_10%_90%,rgba(251,191,36,0.5)_0%,transparent_40%)] mix-blend-color-dodge opacity-100 shadow-[inset_0_0_120px_rgba(255,255,255,0.4)] brightness-125 animate-pulse";
+          ? "mix-blend-screen opacity-95 shadow-[inset_0_0_120px_rgba(255,255,255,0.38)] brightness-125 saturate-150 animate-pulse"
+          : "mix-blend-color-dodge opacity-100 shadow-[inset_0_0_120px_rgba(255,255,255,0.4)] brightness-125 animate-pulse";
       
       case 'shiny': 
         // 03 Shiny Sparkle: Multi-layered metallic shimmer with moving highlight
@@ -88,13 +101,38 @@ export const CardEffectOverlay: React.FC<{
   const isBlackShiny = variant === 'black_shiny_holo';
   const getTintOpacity = () => isCombat ? '55' : '40';
 
+  const hexToRgba = (hex: string, opacity: number) => {
+    const normalized = (hex || '').trim().replace('#', '');
+    if (!/^[0-9a-fA-F]{6}$/.test(normalized)) return `rgba(255, 255, 255, ${opacity})`;
+    const r = parseInt(normalized.slice(0, 2), 16);
+    const g = parseInt(normalized.slice(2, 4), 16);
+    const b = parseInt(normalized.slice(4, 6), 16);
+    return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+  };
+
+  const getHoloBackground = () => {
+    if (variant !== 'holo' || isLegendary) return undefined;
+    
+    const baseColor = tintColor || '#ffffff';
+    const op = isCombat ? 0.7 : 0.6;
+    
+    // Create a dynamic oil-slick that features the rarity color prominently
+    return `radial-gradient(circle at 20% 20%, ${hexToRgba(baseColor, op)} 0%, transparent 50%), 
+            radial-gradient(circle at 80% 80%, rgba(232,121,249,${op}) 0%, transparent 50%), 
+            radial-gradient(circle at 50% 50%, rgba(163,230,81,${op * 0.8}) 0%, transparent 70%), 
+            radial-gradient(circle at 10% 90%, rgba(45,212,191,${op * 0.8}) 0%, transparent 40%)`;
+  };
+
   return (
     <div 
       className={cn(
         "absolute inset-0 pointer-events-none z-25 transition-all duration-500 will-change-transform rounded-[inherit] [&::before]:rounded-[inherit] [&::after]:rounded-[inherit]",
         getOverlayStyles()
       )}
-      style={isBlackShiny && tintColor ? { backgroundColor: `${tintColor}${getTintOpacity()}` } : undefined}
+      style={{ 
+        ...(isBlackShiny && tintColor ? { backgroundColor: `${tintColor}${getTintOpacity()}` } : {}),
+        ...(variant === 'holo' && !isLegendary ? { backgroundImage: getHoloBackground() } : {})
+      }}
     />
   );
 };

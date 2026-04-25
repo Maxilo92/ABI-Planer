@@ -72,12 +72,25 @@ const Particle = React.memo(({ delay }: { delay: number }) => {
 Particle.displayName = 'Particle';
 
 const RARITY_COLORS: Record<string, string> = {
-  common: '#94a3b8',    // slate-400
-  rare: '#10b981',      // emerald-500
-  epic: '#a855f7',      // purple-500
-  mythic: '#ef4444',    // red-500
-  legendary: '#f59e0b', // amber-500
-  iconic: '#000000',    // black
+  common: '#cbd5e1',    // slate-300
+  rare: '#059669',      // emerald-600
+  epic: '#7c3aed',      // violet-600
+  mythic: '#dc2626',    // red-600
+  legendary: '#fbbf24', // amber-400
+  iconic: '#1e293b',    // slate-800
+};
+
+const lightenColor = (hex: string, amount: number) => {
+  const normalized = (hex || '').trim().replace('#', '');
+  if (!/^[0-9a-fA-F]{6}$/.test(normalized)) return hex;
+
+  const toChannel = (start: number) => parseInt(normalized.slice(start, start + 2), 16);
+  const brighten = (value: number) => Math.max(0, Math.min(255, Math.floor(value + (255 - value) * amount)));
+
+  const r = brighten(toChannel(0)).toString(16).padStart(2, '0');
+  const g = brighten(toChannel(2)).toString(16).padStart(2, '0');
+  const b = brighten(toChannel(4)).toString(16).padStart(2, '0');
+  return `#${r}${g}${b}`;
 };
 
 export const TeacherCard = React.memo(({ 
@@ -103,10 +116,10 @@ export const TeacherCard = React.memo(({
   const hasFoilEffects = variant !== 'normal' || isIconic;
 
   const cardColor = React.useMemo(() => {
-    if (isBlckShiny || isIconic) return '#0a0a0a';
+    if (isBlckShiny || isIconic) return '#1e293b';
     // Use RARITY_COLORS if color is missing or the default blue
     if (!data?.color || data?.color === '#3b82f6') {
-      return RARITY_COLORS[rarity] || data?.color || '#94a3b8';
+      return RARITY_COLORS[rarity] || data?.color || '#cbd5e1';
     }
     return data?.color;
   }, [data?.color, rarity, isBlckShiny, isIconic]);
@@ -123,6 +136,9 @@ export const TeacherCard = React.memo(({
     const b = darken(toChannel(4)).toString(16).padStart(2, '0')
     return `#${r}${g}${b}`
   }
+
+  const colorLighter = lightenColor(cardColor, 0.4);
+  const colorDarker = darkenHexColor(cardColor, 0.3);
 
   const [isFlippedInternally, setIsFlippedInternally] = useState(isFlippedExternally ?? false);
   const [prevExternal, setPrevExternal] = useState(isFlippedExternally);
@@ -291,6 +307,62 @@ export const TeacherCard = React.memo(({
         transform: frontOnly ? undefined : "translateZ(1px)"
       }}
     >
+      {/* Background Patterns for Normal Variants */}
+      {!hasFoilEffects && !isGlass && !isShiny && (
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          <div 
+            className="absolute inset-0" 
+            style={{ 
+              backgroundImage: `
+                radial-gradient(at 0% 0%, ${colorLighter} 0px, transparent 50%),
+                radial-gradient(at 100% 0%, ${cardColor} 0px, transparent 50%),
+                radial-gradient(at 100% 100%, ${colorDarker} 0px, transparent 50%),
+                radial-gradient(at 0% 100%, ${cardColor} 0px, transparent 50%),
+                linear-gradient(135deg, ${cardColor} 0%, ${colorDarker} 100%)
+              `
+            }}
+          />
+          <div className="absolute inset-0 opacity-[0.1] mix-blend-overlay" 
+               style={{ backgroundImage: `repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.5) 10px, rgba(255,255,255,0.5) 11px)` }} 
+          />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,transparent_30%,rgba(0,0,0,0.3)_100%)] mix-blend-multiply" />
+        </div>
+      )}
+
+      {/* Special Background for Iconic (if not using special variant) */}
+      {isIconic && variant === 'normal' && (
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          <div 
+            className="absolute inset-0" 
+            style={{ 
+              backgroundColor: '#0f172a',
+              backgroundImage: `
+                radial-gradient(at 50% 0%, #1e293b 0%, transparent 70%),
+                radial-gradient(at 0% 100%, #1e293b 0%, transparent 50%),
+                radial-gradient(at 100% 100%, #020617 0%, transparent 50%)
+              `
+            }}
+          />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_40%,rgba(251,191,36,0.15)_0%,transparent_80%)] mix-blend-screen" />
+          <div className="absolute inset-0 opacity-[0.12] mix-blend-overlay" 
+               style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Cpath fill='%23fbbf24' fill-opacity='1' d='M0 0h20v20H0V0zm10 17.32L18.66 12.32 10 7.32 1.34 12.32 10 17.32zM20 20h20v20H20V20zm10 17.32L38.66 32.32 30 27.32 21.34 32.32 30 17.32z'/%3E%3C/svg%3E")` }} 
+          />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,transparent_40%,rgba(0,0,0,0.6)_100%)] mix-blend-multiply" />
+        </div>
+      )}
+
+      {/* Special Background for Iconic Holo */}
+      {isIconic && isGlass && (
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          <img 
+            src="/images/cards/iconic-holo.jpg" 
+            className="w-full h-full object-cover opacity-100"
+            alt="Iconic Holo Effect"
+          />
+          <div className="absolute inset-0 bg-white/5 mix-blend-overlay" />
+        </div>
+      )}
+
       <CardEffectOverlay
         variant={variant}
         tintColor={cardColor}

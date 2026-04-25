@@ -17,14 +17,11 @@ import {
 } from 'lucide-react';
 import { CardData } from '@/types/cards';
 import { cn } from '@/lib/utils';
-// @ts-ignore
-import SchoolLogo from './hgr-logo.png';
-// @ts-ignore
-import HoloBackground from './Background-Holographic.jpg';
-// @ts-ignore
-import IconicHoloBackground from './iconic-holo.jpg';
-// @ts-ignore
-import GoldFoil from './goldfolie.jpg';
+// Asset paths from public directory
+const SchoolLogo = '/images/cards/hgr-logo.png';
+const HoloBackground = '/images/cards/background-holographic.jpg';
+const IconicHoloBackground = '/images/cards/iconic-holo.jpg';
+const GoldFoil = '/images/cards/goldfolie.jpg';
 
 interface PrintableTeacherCardProps {
   data: CardData;
@@ -155,7 +152,7 @@ export const PrintableTeacherCard: React.FC<PrintableTeacherCardProps> = ({
               /* Holo Background Image with Rarity Color Overlay */
               <div className="absolute inset-0">
                 <img 
-                  src={getImgSrc(isLegendary ? GoldFoil : (isIconic ? IconicHoloBackground : HoloBackground))} 
+                  src={isLegendary ? GoldFoil : (isIconic ? IconicHoloBackground : HoloBackground)} 
                   className="w-full h-full object-cover opacity-100"
                   alt="Holo Effect"
                 />
@@ -182,6 +179,7 @@ export const PrintableTeacherCard: React.FC<PrintableTeacherCardProps> = ({
                 <div className="absolute inset-0 bg-white/5 mix-blend-overlay" />
               </div>
             ) : isSeltenVariant ? (
+
               /* Premium Sunburst Effect with Multi-layered Gradients and Gold Accents */
               <div 
                 className="absolute inset-0 opacity-100" 
@@ -296,11 +294,11 @@ export const PrintableTeacherCard: React.FC<PrintableTeacherCardProps> = ({
           )}
 
           {/* Large Outline Number - Symmetrical Corner Position */}
-          <div className="absolute top-1 right-1 flex items-start justify-end pointer-events-none z-20">
+          <div className="absolute top-2 right-2 flex items-start justify-end pointer-events-none z-20">
             <span 
-              className="text-[52px] font-black text-transparent rotate-90 opacity-70 select-none translate-x-[16%] translate-y-[10%] [print-color-adjust:exact] drop-shadow-[0_4px_8px_rgba(0,0,0,0.5)]"
+              className="text-[32px] font-black text-transparent rotate-90 opacity-60 select-none translate-y-[10%] [print-color-adjust:exact] drop-shadow-[0_4px_8px_rgba(0,0,0,0.5)]"
               style={{ 
-                WebkitTextStroke: '1.5px white',
+                WebkitTextStroke: '1px white',
                 fontFamily: 'sans-serif'
               }}
             >

@@ -366,6 +366,80 @@ export const translations = {
         description: 'Damit der ABI Planer werbefrei, stabil und für alle kostenlos bleibt, fallen monatliche Kosten für Server, Datenbanken und Hosting an. Da wir keine Daten verkaufen oder Werbung schalten, deckt dieser Support-Pool ausschließlich diese technischen Ausgaben. Sollte das Ziel nicht erreicht werden, müssten die Kosten privat getragen oder Funktionen eingeschränkt werden – jeder Euro sichert also den Betrieb eurer Plattform!',
         cta: 'Support geben'
       }
+    },
+    designer: {
+      title: 'Karten-Designer',
+      subtitle: 'Entwurfs- und Produktionsumgebung für Sammelkarten.',
+      tabs: {
+        queue: 'Warteschlange',
+        editor: 'Editor',
+        matrix: 'Matrix',
+        pool: 'Pool'
+      },
+      queue: {
+        title: 'Registrierungs-Warteschlange',
+        empty: 'Aktuell keine offenen Registrierungen',
+        selectionHint: 'Wähle einen Entwurf zum Bearbeiten aus',
+        edit: 'Bearbeiten',
+        selected: 'Aktuell ausgewählt'
+      },
+      editor: {
+        section1: {
+          title: '01. Identifikation & Inhalt',
+          syncActive: 'Sync Aktiv',
+          labelTitle: 'Titel',
+          labelFirstName: 'Vorname',
+          labelLastName: 'Nachname',
+          labelIndex: 'Index-ID',
+          labelSubjects: 'Fachbereich / Fächer',
+          placeholderSubjects: 'z.B. Mathematik, Physik...'
+        },
+        section2: {
+          title: '02. Medien & Ausrichtung',
+          newAsset: 'Neue Datei',
+          resetAsset: 'Asset zurücksetzen',
+          moveHint: 'Die Feineinstellung wurde zur besseren visuellen Kontrolle direkt unter die Vorschau verschoben.'
+        },
+        section3: {
+          title: '03. Kern-Parameter',
+          labelRarity: 'Seltenheitsstufe',
+          labelQuote: 'Karten-Zitat',
+          placeholderQuote: 'Zitat eingeben...',
+          labelPunctuality: 'Pünktlichkeits-Score',
+          labelDifficulty: 'Schwierigkeits-Index'
+        }
+      },
+      preview: {
+        title: 'Output Rendering Engine',
+        fineTuning: {
+          title: 'Asset Feineinstellung',
+          realTime: 'Echtzeit-Vorschau',
+          zoom: 'Zoom / Skalierung',
+          horizontal: 'Horizontal',
+          vertical: 'Vertikal',
+          rotation: 'Rotation'
+        },
+        actions: {
+          save: 'Design in DB speichern',
+          saving: 'Verarbeitung...',
+          abort: 'Transaktion abbrechen',
+          abortConfirm: 'Unwiderruflich: Aktuellen Fortschritt verwerfen?',
+          success: 'Speichern erfolgreich'
+        }
+      },
+      matrix: {
+        noData: 'Keine Daten verfügbar'
+      },
+      gallery: {
+        deleteConfirm: 'Löschen?',
+        exportPdf: 'PDF Export'
+      },
+      footer: {
+        identity: 'Kernel Identität: Master Admin',
+        instance: 'Nutzer Instanz',
+        environment: 'Umgebung: Produktions-Designer',
+        hotkey: 'Hotkeys: [CMD+S] Erzwinge Commit'
+      }
     }
   },
   'en-US': {
@@ -735,6 +809,80 @@ export const translations = {
         description: 'To keep ABI Planer ad-free, stable, and free for everyone, monthly costs for servers, databases, and hosting are incurred. Since we do not sell data or run ads, this support pool exclusively covers these technical expenses. If the goal is not reached, the costs would have to be borne privately or functions restricted – so every euro secures the operation of your platform!',
         cta: 'Give support'
       }
+    },
+    designer: {
+      title: 'Card Designer',
+      subtitle: 'Design and production environment for trading cards.',
+      tabs: {
+        queue: 'Queue',
+        editor: 'Editor',
+        matrix: 'Matrix',
+        pool: 'Pool'
+      },
+      queue: {
+        title: 'Registration Queue',
+        empty: 'No open registrations currently',
+        selectionHint: 'Select a draft to edit',
+        edit: 'Edit',
+        selected: 'Currently selected'
+      },
+      editor: {
+        section1: {
+          title: '01. Identification & Content',
+          syncActive: 'Sync Active',
+          labelTitle: 'Title',
+          labelFirstName: 'First Name',
+          labelLastName: 'Last Name',
+          labelIndex: 'Index-ID',
+          labelSubjects: 'Department / Subjects',
+          placeholderSubjects: 'e.g. Mathematics, Physics...'
+        },
+        section2: {
+          title: '02. Media Assets & Alignment',
+          newAsset: 'New File Asset',
+          resetAsset: 'Reset Asset',
+          moveHint: 'Fine-tuning controls have been moved directly below the preview for better visual control.'
+        },
+        section3: {
+          title: '03. Core Parameters',
+          labelRarity: 'Rarity Class',
+          labelQuote: 'Card Quote',
+          placeholderQuote: 'Enter quote...',
+          labelPunctuality: 'Punctuality Score',
+          labelDifficulty: 'Difficulty Index'
+        }
+      },
+      preview: {
+        title: 'Output Rendering Engine',
+        fineTuning: {
+          title: 'Asset Fine-Tuning',
+          realTime: 'Real-time Preview',
+          zoom: 'Zoom / Scale',
+          horizontal: 'Horizontal',
+          vertical: 'Vertical',
+          rotation: 'Rotation'
+        },
+        actions: {
+          save: 'Push Design to DB',
+          saving: 'Processing...',
+          abort: 'Abort Transaction',
+          abortConfirm: 'Irreversible: Discard current progress?',
+          success: 'Commit Success'
+        }
+      },
+      matrix: {
+        noData: 'No Data'
+      },
+      gallery: {
+        deleteConfirm: 'Delete?',
+        exportPdf: 'PDF Export'
+      },
+      footer: {
+        identity: 'Kernel Identity: Master Admin',
+        instance: 'User Instance',
+        environment: 'Environment: Production Designer',
+        hotkey: 'Hotkeys: [CMD+S] Force Commit'
+      }
     }
   },
   'es-ES': {
@@ -1103,6 +1251,80 @@ export const translations = {
         title: 'Ayúdanos a mantener el sitio en funcionamiento',
         description: 'Para que ABI Planer siga siendo libre de publicidad, estable y gratuito para todos, se incurre en costes mensuales de servidores, bases de datos y alojamiento. Como no vendemos datos ni publicamos anuncios, este fondo de apoyo cubre exclusivamente estos gastos técnicos. Si no se alcanza el objetivo, los costes tendrían que ser asumidos de forma privada o se restringirían las funciones, ¡así que cada euro asegura el funcionamiento de tu plataforma!',
         cta: 'Dar apoyo'
+      }
+    },
+    designer: {
+      title: 'Diseñador de Cartas',
+      subtitle: 'Entorno de diseño y producción de cartas coleccionables.',
+      tabs: {
+        queue: 'Cola',
+        editor: 'Editor',
+        matrix: 'Matriz',
+        pool: 'Colección'
+      },
+      queue: {
+        title: 'Cola de Registro',
+        empty: 'No hay registros abiertos actualmente',
+        selectionHint: 'Selecciona un borrador para editar',
+        edit: 'Editar',
+        selected: 'Seleccionado actualmente'
+      },
+      editor: {
+        section1: {
+          title: '01. Identificación y Contenido',
+          syncActive: 'Sincronización Activa',
+          labelTitle: 'Título',
+          labelFirstName: 'Nombre',
+          labelLastName: 'Apellido',
+          labelIndex: 'ID de Índice',
+          labelSubjects: 'Departamento / Materias',
+          placeholderSubjects: 'p. ej. Matemáticas, Física...'
+        },
+        section2: {
+          title: '02. Activos de Medios y Alineación',
+          newAsset: 'Nuevo Archivo',
+          resetAsset: 'Restablecer Activo',
+          moveHint: 'Los controles de ajuste fino se han movido directamente debajo de la vista previa para un mejor control visual.'
+        },
+        section3: {
+          title: '03. Parámetros Principales',
+          labelRarity: 'Clase de Rareza',
+          labelQuote: 'Cita de la Carta',
+          placeholderQuote: 'Introduce la cita...',
+          labelPunctuality: 'Puntuación de Puntualidad',
+          labelDifficulty: 'Índice de Dificultad'
+        }
+      },
+      preview: {
+        title: 'Motor de Renderizado de Salida',
+        fineTuning: {
+          title: 'Ajuste Fino de Activos',
+          realTime: 'Vista Previa en Tiempo Real',
+          zoom: 'Zoom / Escala',
+          horizontal: 'Horizontal',
+          vertical: 'Vertical',
+          rotation: 'Rotación'
+        },
+        actions: {
+          save: 'Guardar Diseño en BD',
+          saving: 'Procesando...',
+          abort: 'Abortar Transacción',
+          abortConfirm: 'Irreversible: ¿Descartar el progreso actual?',
+          success: 'Guardado con éxito'
+        }
+      },
+      matrix: {
+        noData: 'No hay datos'
+      },
+      gallery: {
+        deleteConfirm: '¿Eliminar?',
+        exportPdf: 'Exportar PDF'
+      },
+      footer: {
+        identity: 'Identidad del Kernel: Maestro Admin',
+        instance: 'Instancia de Usuario',
+        environment: 'Entorno: Diseñador de Producción',
+        hotkey: 'Atajos: [CMD+S] Forzar Guardado'
       }
     }
   }

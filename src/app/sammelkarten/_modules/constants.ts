@@ -13,7 +13,7 @@ export const DEFAULT_GODPACK_WEIGHTS = [
 ]
 
 export const DEFAULT_VARIANTS_PROBABILITIES = {
-  shiny: 0.05,
-  holo: 0.15,
+  shiny: 0.15,
+  holo: 0.05,
   black_shiny_holo: 0.005
 }

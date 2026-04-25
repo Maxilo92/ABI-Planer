@@ -30,12 +30,12 @@ const RARITY_BADGE_MAP: Record<TeacherRarity, string> = {
 }
 
 const RARITY_HEX_MAP: Record<TeacherRarity, string> = {
-  common: '#64748b',
-  rare: '#10b981',
-  epic: '#9333ea',
+  common: '#cbd5e1',
+  rare: '#059669',
+  epic: '#7c3aed',
   mythic: '#dc2626',
-  legendary: '#f59e0b',
-  iconic: '#000000',
+  legendary: '#fbbf24',
+  iconic: '#1e293b',
 }
 
 function asTeacherRarity(rarity: string | TeacherRarity): TeacherRarity {

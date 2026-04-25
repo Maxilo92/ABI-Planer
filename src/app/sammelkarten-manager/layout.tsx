@@ -1,0 +1,51 @@
+'use client'
+
+import React from 'react'
+import { AdminGuard } from '@/components/auth/AdminGuard'
+import { SammelkartenManagerProvider } from '@/components/sammelkarten/SammelkartenManagerContext'
+import { Package, Printer } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+
+export default function SammelkartenManagerLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  return (
+    <AdminGuard>
+      <SammelkartenManagerProvider>
+        <div className="w-full h-full">
+          <div className="max-w-[1920px] mx-auto space-y-6 animate-in fade-in duration-500 py-6 px-4">
+            {/* Common Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-neutral-200 pb-4 print:hidden">
+              <div>
+                <h1 className="text-xl font-black uppercase tracking-tight flex items-center gap-2 text-neutral-800">
+                  <Package className="w-5 h-5 text-primary" /> Sammelkarten Manager
+                </h1>
+                <p className="text-neutral-500 text-xs font-medium">Zentrale Verwaltung für Produktions-Design und Druck-Logistik.</p>
+              </div>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => window.print()} className="h-8 rounded-md gap-2 border-neutral-200 font-bold uppercase tracking-widest text-[9px] bg-white">
+                  <Printer className="w-3.5 h-3.5" /> PDF Export
+                </Button>
+              </div>
+            </div>
+            
+            {children}
+          </div>
+
+          <style dangerouslySetInnerHTML={{ __html: `
+            @media print {
+              @page { size: A4 portrait; margin: 0mm !important; }
+              html, body { background: white !important; margin: 0 !important; padding: 0 !important; width: 210mm !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+              header, footer, nav, [role="tablist"], button, .print-hidden { display: none !important; }
+              .print-page-container { page-break-after: always !important; break-after: page !important; height: 297mm !important; width: 210mm !important; display: flex !important; align-items: flex-start; justify-content: center; padding-top: 10mm !important; background: white !important; }
+              .print-gallery-grid { display: grid !important; grid-template-columns: repeat(3, 63mm) !important; grid-auto-rows: 88mm !important; gap: 2mm !important; justify-content: center !important; }
+              .card-container { transform: none !important; break-inside: avoid !important; page-break-inside: avoid !important; }
+            }
+          `}} />
+        </div>
+      </SammelkartenManagerProvider>
+    </AdminGuard>
+  )
+}

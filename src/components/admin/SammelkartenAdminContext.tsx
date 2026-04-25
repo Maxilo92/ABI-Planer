@@ -157,8 +157,8 @@ const DEFAULT_GODPACK_WEIGHTS = [
 ]
 
 const DEFAULT_VARIANTS = {
-  shiny: 0.05,
-  holo: 0.15,
+  shiny: 0.15,
+  holo: 0.05,
   black_shiny_holo: 0.005
 }
 
@@ -766,19 +766,41 @@ export function SammelkartenAdminProvider({ children }: { children: React.ReactN
     reader.onload = (evt) => {
       const text = evt.target?.result as string
       const lines = text.split('\n')
-      const headers = lines[0].split(',')
+      const headerRow = lines[0].split(',').map(h => h.trim().toLowerCase())
+      const isNewFormatHeader = headerRow.includes('nachname') && headerRow.includes('vorname')
       
       const teachers: LootTeacher[] = []
       for (let i = 1; i < lines.length; i++) {
         const row = lines[i].split(',')
         if (row.length < 2) continue
         
+        let name = ''
+        let rarity: TeacherRarity = 'common'
+        let hp = 100
+        let description = ''
+
+        // New format: Nachname, Vorname, Rarity, HP, Description (5 columns)
+        if (isNewFormatHeader || row.length >= 5) {
+          const lastName = row[0]?.trim() || ''
+          const firstName = row[1]?.trim() || ''
+          name = firstName ? `${firstName} ${lastName}` : lastName
+          rarity = (row[2]?.trim().toLowerCase() || 'common') as TeacherRarity
+          hp = row[3] ? parseInt(row[3]) : 100
+          description = row[4] ? row[4].trim() : ''
+        } else {
+          // Old format: Name, Rarity, HP, Description
+          name = row[0].trim()
+          rarity = (row[1].trim().toLowerCase() || 'common') as TeacherRarity
+          hp = row[2] ? parseInt(row[2]) : 100
+          description = row[3] ? row[3].trim() : ''
+        }
+        
         const teacher: any = {
-          name: row[0].trim(),
-          rarity: (row[1].trim().toLowerCase() || 'common') as TeacherRarity,
+          name,
+          rarity,
           type: 'teacher',
-          hp: row[2] ? parseInt(row[2]) : 100,
-          description: row[3] ? row[3].trim() : '',
+          hp,
+          description,
           attacks: []
         }
         
@@ -830,13 +852,31 @@ export function SammelkartenAdminProvider({ children }: { children: React.ReactN
 
   const handleExportCSV = () => {
     if (!currentSet) return
-    const headers = ['Name', 'Rarity', 'HP', 'Description']
-    const rows = currentSet.cards.map(t => [
-      t.name,
-      t.rarity,
-      (t as any).hp || '',
-      t.description || ''
-    ])
+    const headers = ['Nachname', 'Vorname', 'Rarity', 'HP', 'Description']
+    const rows = currentSet.cards.map(t => {
+      let lastName = t.name
+      let firstName = ''
+      
+      if (t.name.includes(',')) {
+        const parts = t.name.split(',').map(s => s.trim())
+        lastName = parts[0]
+        firstName = parts[1] || ''
+      } else {
+        const parts = t.name.trim().split(/\s+/)
+        if (parts.length > 1) {
+          lastName = parts[parts.length - 1]
+          firstName = parts.slice(0, parts.length - 1).join(' ')
+        }
+      }
+
+      return [
+        lastName,
+        firstName,
+        t.rarity,
+        (t as any).hp || '',
+        t.description || ''
+      ]
+    })
     
     const csvContent = [headers, ...rows].map(e => e.join(",")).join("\n")
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
@@ -1094,10 +1134,10 @@ export function SammelkartenAdminProvider({ children }: { children: React.ReactN
         const vRand = Math.random()
         if (vRand < localConfig.variant_probabilities.black_shiny_holo) {
           results.variantCounts.black_shiny_holo++
-        } else if (vRand < localConfig.variant_probabilities.shiny) {
-          results.variantCounts.shiny++
         } else if (vRand < localConfig.variant_probabilities.holo) {
           results.variantCounts.holo++
+        } else if (vRand < localConfig.variant_probabilities.shiny) {
+          results.variantCounts.shiny++
         } else {
           results.variantCounts.normal++
         }

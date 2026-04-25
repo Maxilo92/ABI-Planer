@@ -180,7 +180,8 @@ export function middleware(request: NextRequest) {
     '/vorteile',
     '/legal/agb',
     '/legal/datenschutz',
-    '/legal/impressum'
+    '/legal/impressum',
+    '/lehrer-anmeldung'
   ]
 
   const shopRoutes = [
@@ -209,7 +210,8 @@ export function middleware(request: NextRequest) {
     '/todos',
     '/unauthorized',
     '/zugang',
-    '/maintenance'
+    '/maintenance',
+    '/sammelkarten-manager'
   ]
 
   // API and static files should always be accessible

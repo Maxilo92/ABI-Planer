@@ -16,9 +16,7 @@ interface FundingStatusProps {
   goal: number
   checksum?: number | null
   initialTicketSales?: number
-  initialTicketPrice?: number
   onTicketSalesChange?: (value: number) => void
-  onTicketPriceChange?: (value: number) => void
   canEditTicketSales?: boolean
   isAuthenticated: boolean
   loading?: boolean
@@ -34,9 +32,7 @@ export function FundingStatus({
   goal,
   checksum,
   initialTicketSales = 150,
-  initialTicketPrice = 0,
   onTicketSalesChange,
-  onTicketPriceChange,
   canEditTicketSales,
   isAuthenticated,
   loading,
@@ -44,7 +40,6 @@ export function FundingStatus({
 }: FundingStatusProps) {
   const [mounted, setHydrated] = useState(false)
   const [ticketSalesInput, setTicketSalesInput] = useState(String(initialTicketSales))
-  const [ticketPriceInput, setTicketPriceInput] = useState(String(initialTicketPrice))
   const ticketSalesEditable = canEditTicketSales ?? !!onTicketSalesChange
   
   useEffect(() => {
@@ -54,10 +49,6 @@ export function FundingStatus({
   useEffect(() => {
     setTicketSalesInput(String(initialTicketSales))
   }, [initialTicketSales])
-
-  useEffect(() => {
-    setTicketPriceInput(String(initialTicketPrice))
-  }, [initialTicketPrice])
 
   useEffect(() => {
     if (!ticketSalesEditable || !onTicketSalesChange) return
@@ -74,23 +65,7 @@ export function FundingStatus({
     }
   }, [ticketSalesInput, onTicketSalesChange, initialTicketSales, ticketSalesEditable])
 
-  useEffect(() => {
-    if (!ticketSalesEditable || !onTicketPriceChange) return
-    if (ticketPriceInput === '') return
-
-    if (Number(ticketPriceInput) === initialTicketPrice) return
-
-    const timeoutId = window.setTimeout(() => {
-      onTicketPriceChange(Number(ticketPriceInput))
-    }, TICKET_SALES_SAVE_DEBOUNCE_MS)
-
-    return () => {
-      window.clearTimeout(timeoutId)
-    }
-  }, [ticketPriceInput, onTicketPriceChange, initialTicketPrice, ticketSalesEditable])
-
   const ticketSales = ticketSalesInput === '' ? 0 : Number(ticketSalesInput)
-  const ticketPrice = ticketPriceInput === '' ? 0 : Number(ticketPriceInput)
 
   if (loading) {
     return (
@@ -144,7 +119,7 @@ export function FundingStatus({
   const neededPrice = ticketSales > 0 ? remaining / ticketSales : 0
   
   // 2. Projected outcome with planned price
-  const projectedTicketIncome = ticketSales * ticketPrice
+  const projectedTicketIncome = ticketSales * neededPrice
   const projectedFinalBalance = displayCurrent + projectedTicketIncome
   const projectedDiff = projectedFinalBalance - goal
 
@@ -287,40 +262,16 @@ export function FundingStatus({
                   )}
                 </div>
                 <div className="space-y-1">
-                  <Label htmlFor="price" className="text-xs text-muted-foreground">Geplanter Ticketpreis</Label>
-                  {ticketSalesEditable ? (
-                    <div className="relative">
-                      <Input
-                        id="price"
-                        type="number"
-                        step="0.5"
-                        value={ticketPriceInput}
-                        onChange={(e) => {
-                          const value = e.target.value
-                          if (/^\d*\.?\d*$/.test(value)) {
-                            setTicketPriceInput(value)
-                          }
-                        }}
-                        className="w-full h-8 text-sm border-brand/30 focus-visible:ring-brand/40 pr-6"
-                        min="0"
-                      />
-                      <span className="absolute right-2 top-1.5 text-[10px] text-muted-foreground font-bold">€</span>
-                    </div>
-                  ) : (
-                    <p className="text-lg font-bold text-foreground" suppressHydrationWarning>{formatCurrency(ticketPrice, 2)}</p>
-                  )}
+                  <Label htmlFor="price" className="text-xs text-muted-foreground">Berechneter Ticketpreis</Label>
+                  <div className="h-8 flex items-center">
+                    <p className="text-lg font-bold text-foreground" suppressHydrationWarning>{formatCurrency(neededPrice, 2)}</p>
+                  </div>
+                  <p className="text-[9px] text-muted-foreground leading-tight">Um das Ziel exakt zu erreichen.</p>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4 pt-2">
-                <div className="p-3 rounded-2xl bg-muted/30 border border-border/50">
-                  <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider mb-1">Benötigter Preis</p>
-                  <p className="text-sm font-bold text-foreground" suppressHydrationWarning>
-                    {formatCurrency(neededPrice, 2)}
-                  </p>
-                  <p className="text-[9px] text-muted-foreground leading-tight mt-1">Um das Ziel exakt zu erreichen.</p>
-                </div>
-                <div className={`p-3 rounded-2xl border ${projectedDiff >= 0 ? 'bg-success/5 border-success/20' : 'bg-destructive/5 border-destructive/20'}`}>
+              <div className="grid grid-cols-1 gap-4 pt-2">
+                <div className={`p-3 rounded-2xl border ${projectedDiff >= 0 ? 'bg-success/5 border-success/20' : 'bg-destructive/5 border-destructive/20 hidden'}`}>
                   <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider mb-1">Prognose Differenz</p>
                   <p className={`text-sm font-black ${projectedDiff >= 0 ? 'text-success' : 'text-destructive'}`} suppressHydrationWarning>
                     {projectedDiff > 0 ? '+' : ''}{formatCurrency(projectedDiff, 2)}
@@ -333,14 +284,14 @@ export function FundingStatus({
 
               <div className="p-3 rounded-2xl bg-brand/5 border border-brand/20">
                 <div className="flex justify-between items-center mb-1">
-                  <p className="text-[10px] uppercase font-bold text-brand tracking-wider">Erwartetes Budget (Gesamt)</p>
+                  <p className="text-[10px] uppercase font-bold text-brand tracking-wider">Erwartetes Budget (Ziel)</p>
                   <TrendingUp className="h-3 w-3 text-brand" />
                 </div>
                 <p className="text-xl font-black text-foreground" suppressHydrationWarning>
                   {formatCurrency(projectedFinalBalance, 2)}
                 </p>
                 <p className="text-[9px] text-muted-foreground leading-tight mt-1">
-                  Aktueller Stand + {ticketSales} x {formatCurrency(ticketPrice, 2)} Tickets.
+                  Aktueller Stand + {ticketSales} x {formatCurrency(neededPrice, 2)} Tickets.
                 </p>
               </div>
             </div>
@@ -351,10 +302,6 @@ export function FundingStatus({
               </p>
             </div>
           )}
-          
-          <p className="text-[10px] md:text-xs text-muted-foreground text-center italic opacity-70">
-            Das Ziel bildet euer angestrebtes Budget ab. Einnahmen bilden den aktuellen Stand.
-          </p>
         </div>
       </CardContent>
     </Card>

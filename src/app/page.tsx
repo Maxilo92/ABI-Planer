@@ -1245,23 +1245,6 @@ export default function Dashboard() {
     }
   }
 
-  const handleTicketPriceChange = async (value: number) => {
-    if (!canManage) return
-    try {
-      await setDoc(doc(db, 'settings', 'config'), { expected_ticket_price: value }, { merge: true })
-
-      if (user) {
-        await logAction('SETTINGS_UPDATED', user.uid, profile?.full_name, {
-          field: 'expected_ticket_price',
-          value,
-          source: 'dashboard',
-        })
-      }
-    } catch (error) {
-      console.error('Error updating expected ticket price:', error)
-    }
-  }
-
   const sortedComponents = useDashboardSorting(profile, todos, events, polls, news)
   const currentUserId = user?.uid || profile?.id || ''
   const unvotedPolls = polls.filter((poll) => {
@@ -1436,9 +1419,7 @@ export default function Dashboard() {
               checksum={lastVerification?.amount}
               goal={settings?.funding_goal ?? 10000}
               initialTicketSales={settings?.expected_ticket_sales ?? 150}
-              initialTicketPrice={settings?.expected_ticket_price ?? 0}
               onTicketSalesChange={canEditTicketSales ? handleTicketSalesChange : undefined}
-              onTicketPriceChange={canEditTicketSales ? handleTicketPriceChange : undefined}
               canEditTicketSales={canEditTicketSales}
               isAuthenticated={!!user}
               loading={(!initialLoadState.settings || !initialLoadState.finances || !initialLoadState.cashVerifications) && !timeoutReached}

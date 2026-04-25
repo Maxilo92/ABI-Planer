@@ -118,10 +118,18 @@ export function FinanceChart({ finances, shopEarnings, settings, loading }: Fina
     ]
 
     // 1.1 Add virtual ticket sales transaction for dynamic prognosis
-    if (settings?.expected_ticket_sales && settings?.expected_ticket_price) {
+    if (settings?.expected_ticket_sales && settings?.expected_ticket_sales > 0) {
+      const now = new Date()
+      const currentBalanceForCalculation = allTransactions
+        .filter(t => !isAfter(t.date, now))
+        .reduce((sum, t) => sum + t.amount, 0)
+      
+      const fundingGoal = settings.funding_goal || 10000
+      const remaining = Math.max(0, fundingGoal - currentBalanceForCalculation)
+
       allTransactions.push({
         date: toDate(settings.ball_date),
-        amount: settings.expected_ticket_sales * settings.expected_ticket_price
+        amount: remaining
       })
     }
 

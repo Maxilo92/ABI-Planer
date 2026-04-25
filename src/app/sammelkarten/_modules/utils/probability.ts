@@ -24,14 +24,14 @@ export function getVariantProbability(
   }
 
   const pBSH = probs.black_shiny_holo ?? 0.005
-  const pShiny = probs.shiny ?? 0.05
-  const pHolo = probs.holo ?? 0.15
+  const pHolo = probs.holo ?? 0.05
+  const pShiny = probs.shiny ?? 0.15
 
   switch (variant) {
     case 'black_shiny_holo': return pBSH
-    case 'shiny': return pShiny - pBSH
-    case 'holo': return pHolo - pShiny
-    default: return 1.0 - pHolo
+    case 'holo': return pHolo - pBSH
+    case 'shiny': return pShiny - pHolo
+    default: return 1.0 - pShiny
   }
 }
 
