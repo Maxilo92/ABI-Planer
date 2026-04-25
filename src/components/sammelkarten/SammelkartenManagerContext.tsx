@@ -104,7 +104,7 @@ export function SammelkartenManagerProvider({ children }: { children: ReactNode 
       
       // Calculate next available number
       if (cards.length > 0) {
-        const nums = cards.map(c => {
+        const nums = cards.map((c: any) => {
           const raw = c.data?.cardNumber;
           if (!raw) return 0;
           const match = raw.match(/\d+/);
