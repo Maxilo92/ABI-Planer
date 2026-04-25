@@ -174,7 +174,7 @@ export default function EditorPage() {
              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <div className="space-y-2">
                   <Label className="text-[10px] uppercase text-neutral-400 font-black tracking-widest">Titel</Label>
-                  <Select value={formData.title || 'Herr'} onValueChange={(v) => updateField('title', v)}>
+                  <Select value={formData.title || 'Herr'} onValueChange={(v) => updateField('title', v as string)}>
                     <SelectTrigger className="h-11 border-neutral-200 bg-neutral-50/50 rounded-md text-sm font-bold">
                       <SelectValue />
                     </SelectTrigger>
@@ -232,7 +232,7 @@ export default function EditorPage() {
              <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-neutral-800 border-b border-neutral-100 pb-3 flex items-center gap-2">Eigenschaften & Stats</h3>
              <div className="space-y-2">
                 <Label className="text-[10px] uppercase text-neutral-400 font-black tracking-widest ml-1">Seltenheit (Standard)</Label>
-                <Select value={formData.rarity || 'common'} onValueChange={(v) => updateField('rarity', v)}><SelectTrigger className="h-11 border-neutral-200 bg-neutral-50/50 rounded-md font-black text-xs uppercase tracking-widest"><SelectValue /></SelectTrigger><SelectContent className="rounded-md">{RARITY_OPTIONS.map(o => <SelectItem key={o.value} value={o.value} className="text-xs uppercase font-black tracking-widest">{o.label}</SelectItem>)}</SelectContent></Select>
+                <Select value={formData.rarity || 'common'} onValueChange={(v) => updateField('rarity', v as string)}><SelectTrigger className="h-11 border-neutral-200 bg-neutral-50/50 rounded-md font-black text-xs uppercase tracking-widest"><SelectValue /></SelectTrigger><SelectContent className="rounded-md">{RARITY_OPTIONS.map(o => <SelectItem key={o.value} value={o.value} className="text-xs uppercase font-black tracking-widest">{o.label}</SelectItem>)}</SelectContent></Select>
              </div>
              <div className="space-y-2"><Label className="text-[10px] uppercase text-neutral-400 font-black tracking-widest ml-1">Lehrer-Zitat</Label><textarea value={formData.quote} onChange={(e) => updateField('quote', e.target.value)} className="w-full min-h-[100px] p-4 bg-neutral-50/50 border border-neutral-200 rounded-md text-sm italic font-medium focus:bg-white focus:ring-2 focus:ring-neutral-100 outline-none transition-all resize-none" placeholder="Was dieser Lehrer oft sagt..." /></div>
              <div className="grid grid-cols-1 md:grid-cols-2 gap-10 pt-2">

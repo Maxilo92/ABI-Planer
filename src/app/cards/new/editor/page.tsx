@@ -159,7 +159,7 @@ export default function CardEditorPage() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="space-y-2">
                 <Label className="text-[10px] font-bold uppercase text-neutral-500">Anrede</Label>
-                <Select value={formData.title} onValueChange={(v) => updateField('title', v)}>
+                <Select value={formData.title} onValueChange={(v) => updateField('title', v as string)}>
                   <SelectTrigger className="h-11 rounded-xl">
                     <SelectValue placeholder="Anrede" />
                   </SelectTrigger>
@@ -214,7 +214,7 @@ export default function CardEditorPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label className="text-[10px] font-bold uppercase text-neutral-500">Seltenheit (Farbe)</Label>
-                <Select value={formData.rarity} onValueChange={(v) => updateField('rarity', v)}>
+                <Select value={formData.rarity} onValueChange={(v) => updateField('rarity', v as string)}>
                   <SelectTrigger className="h-11 rounded-xl">
                     <SelectValue />
                   </SelectTrigger>
@@ -227,7 +227,7 @@ export default function CardEditorPage() {
               </div>
               <div className="space-y-2">
                 <Label className="text-[10px] font-bold uppercase text-neutral-500">Design-Variante</Label>
-                <Select value={formData.variant} onValueChange={(v) => updateField('variant', v)}>
+                <Select value={formData.variant} onValueChange={(v) => updateField('variant', v as string)}>
                   <SelectTrigger className="h-11 rounded-xl">
                     <SelectValue />
                   </SelectTrigger>

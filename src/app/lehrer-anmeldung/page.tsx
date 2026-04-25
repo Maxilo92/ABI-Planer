@@ -367,7 +367,7 @@ export default function LehrerAnmeldungPage() {
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-[130px_1fr]">
                     <div className="space-y-2">
                       <Label htmlFor="title">Anrede</Label>
-                      <Select value={formData.title} onValueChange={(v) => updateField('title', v)}>
+                      <Select value={formData.title} onValueChange={(v) => updateField('title', v as string)}>
                         <SelectTrigger id="title">
                           <SelectValue />
                         </SelectTrigger>
