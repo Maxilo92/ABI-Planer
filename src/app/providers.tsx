@@ -26,7 +26,7 @@ if (typeof window !== 'undefined') {
       capture_pageview: false, // Disable automatic pageview capture, as we use PostHogPageView
       capture_pageleave: true,
       persistence: 'localStorage+cookie',
-      cookie_domain: cookieDomain,
+      cross_subdomain_cookie: true,
     })
     
     if (process.env.NODE_ENV === 'development') {

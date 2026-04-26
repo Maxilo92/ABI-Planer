@@ -6,6 +6,11 @@
 <!-- default_action: read newest entries only unless a regression requires older history -->
 <!-- index: docs/AGENT_CONTEXT_INDEX.md -->
 
+## [1.34.1.20] - 2026-04-26
+
+### Fixed
+- **Analytics (PostHog)**: Korrektur eines TypeScript-Build-Fehlers in `providers.tsx`. Die Konfigurationseigenschaft `cookie_domain` wurde durch `cross_subdomain_cookie: true` ersetzt, da erstere im offiziellen PostHog-SDK nicht direkt im Config-Objekt unterstützt wird.
+
 ## [1.34.1.19] - 2026-04-26
 
 ### Fixed
