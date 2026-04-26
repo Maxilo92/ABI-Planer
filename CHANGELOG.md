@@ -6,6 +6,15 @@
 <!-- default_action: read newest entries only unless a regression requires older history -->
 <!-- index: docs/AGENT_CONTEXT_INDEX.md -->
 
+## [1.34.1.19] - 2026-04-26
+
+### Fixed
+- **Analytics (PostHog)**: Behebung der fehlerhaften Initialisierung außerhalb von localhost.
+  - Der Standard-Host wurde auf die US-Instanz (`us.i.posthog.com`) korrigiert, um mit dem verwendeten Projekt-Token im Entwicklungsprozess übereinzustimmen.
+  - Implementierung einer dynamischen `cookie_domain`-Erkennung (z.B. `.abi-planer-27.de`), um ein nahtloses Tracking über alle Subdomains (Dashboard, Shop, TCG) hinweg zu ermöglichen.
+  - Umstellung auf `person_profiles: 'always'`, um auch anonyme Nutzer zuverlässig zu erfassen und die Datenqualität im Dashboard zu verbessern.
+  - Hinzufügen von Debug-Logging in der Konsole zur schnelleren Identifizierung von fehlenden Umgebungsvariablen in Produktionsumgebungen.
+
 ## [1.34.1.18] - 2026-04-26
 
 ### Fixed
