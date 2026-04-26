@@ -47,7 +47,7 @@ async function verifyAdmin(request: NextRequest) {
     return decoded.uid
   }
 
-  const db = getFirestore(app)
+  const db = getFirestore(app, 'abi-data')
   const profileSnap = await db.collection('profiles').doc(decoded.uid).get()
   const profile = profileSnap.data()
   

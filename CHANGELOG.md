@@ -6,6 +6,14 @@
 <!-- default_action: read newest entries only unless a regression requires older history -->
 <!-- index: docs/AGENT_CONTEXT_INDEX.md -->
 
+## [1.34.1.23] - 2026-04-26
+
+### Fixed
+- **Datenbank (Firestore)**: Behebung von kritischen Fehlern in der Produktionsumgebung basierend auf Log-Analysen.
+  - Hinzufügen des fehlenden zusammengesetzten Index für `matches` (Status + turnStartTime), um die Timeout-Prüfung im Combat-System zu reparieren.
+  - Korrektur der Datenbank-Initialisierung: Alle Admin-API-Routen nutzen nun explizit die Datenbank `abi-data`, was 502/NOT_FOUND Fehler bei der Sitzungsbeendigung (`close-session`) behebt.
+  - Robusteres Fallback für Firebase Admin: In Produktionsumgebungen wird nun automatisch auf `applicationDefault()` zurückgegriffen, falls explizite Service-Account-Umgebungsvariablen fehlen.
+
 ## [1.34.1.22] - 2026-04-26
 
 ### Fixed

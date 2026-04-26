@@ -22,6 +22,15 @@ const nextConfig: NextConfig = {
     ],
   },
   allowedDevOrigins: ['dashboard.abi-planer-27.localhost', 'shop.abi-planer-27.localhost'],
+  async redirects() {
+    return [
+      {
+        source: '/todo',
+        destination: '/todos',
+        permanent: true,
+      },
+    ];
+  },
   async headers() {
     return [
       {
