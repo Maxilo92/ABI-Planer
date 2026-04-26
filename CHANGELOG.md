@@ -6,6 +6,25 @@
 <!-- default_action: read newest entries only unless a regression requires older history -->
 <!-- index: docs/AGENT_CONTEXT_INDEX.md -->
 
+## [1.34.1.22] - 2026-04-26
+
+### Fixed
+- **Admin/Benutzerverwaltung**: Verbesserung der mobilen Nutzbarkeit.
+  - Das Drei-Punkte-Aktionsmenü wurde in die mobile Listenansicht integriert, sodass Nutzeraktionen (Sperren, Löschen, Rollenänderung) nun auch auf kleinen Bildschirmen verfügbar sind.
+  - Die Kurs- und Gruppenauswahl wurde zur mobilen Ansicht hinzugefügt, um die vollständige Profilverwaltung auf mobilen Endgeräten zu ermöglichen.
+  - Optimierung des mobilen Layouts der Benutzerkarten für bessere Übersichtlichkeit.
+
+## [1.34.1.21] - 2026-04-26
+
+### Added
+- **Kalender**: Einführung einer Löschfunktion für Termine. Termine können nun direkt über den Bearbeiten-Dialog gelöscht werden (nur für Planer/Admins).
+
+### Fixed
+- **Kalender**: Wiederherstellung der Bearbeitbarkeit von Terminen. 
+  - Die Bearbeitungs-Schaltfläche (Stift-Icon) wurde in die Termin-Karten der Seitenleiste integriert.
+  - Der Bearbeiten-Dialog wurde zusätzlich auf der Termin-Detailseite verfügbar gemacht.
+  - Jede Termin-Karte im Kalender verlinkt nun korrekt auf die entsprechende Detailseite.
+
 ## [1.34.1.20] - 2026-04-26
 
 ### Fixed

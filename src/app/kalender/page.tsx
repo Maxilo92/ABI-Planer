@@ -5,8 +5,10 @@ import { db } from '@/lib/firebase'
 import { collection, query, orderBy, onSnapshot, doc, updateDoc } from 'firebase/firestore'
 import { useAuth } from '@/context/AuthContext'
 import { AddEventDialog } from '@/components/modals/AddEventDialog'
+import { EditEventDialog } from '@/components/modals/EditEventDialog'
 import { Event } from '@/types/database'
-import { Search, Calendar as CalendarIcon, Clock, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Search, Calendar as CalendarIcon, Clock, ChevronLeft, ChevronRight, Settings2 } from 'lucide-react'
+import Link from 'next/link'
 import { Skeleton } from '@/components/ui/skeleton'
 import { toDate } from '@/lib/utils'
 import { Input } from '@/components/ui/input'
@@ -244,7 +246,7 @@ export default function CalendarPage() {
             )}
           </div>
           {(selectedDay ? selectedDayEvents : upcomingEvents).map((event: Event) => (
-              <div key={event.id} className="bg-card p-4 rounded-xl border shadow-sm space-y-2">
+              <div key={event.id} className="group relative bg-card p-4 rounded-xl border shadow-sm space-y-2 hover:border-primary/50 transition-all">
                 <div className="flex items-center justify-between">
                   <span className={cn(
                     "text-[10px] font-bold px-1.5 py-0.5 rounded uppercase",
@@ -252,12 +254,19 @@ export default function CalendarPage() {
                   )}>
                     {event.assigned_to_group || 'Allgemein'}
                   </span>
-                  <span className="text-xs font-bold text-muted-foreground flex items-center gap-1">
-                    <Clock className="w-3 h-3" /> {format(toDate(event.start_date), 'HH:mm')}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-muted-foreground flex items-center gap-1">
+                      <Clock className="w-3 h-3" /> {format(toDate(event.start_date), 'HH:mm')}
+                    </span>
+                    {isPlanner && (
+                      <EditEventDialog event={event} />
+                    )}
+                  </div>
                 </div>
-                <p className="text-sm font-bold leading-tight">{event.title}</p>
-                <p className="text-[10px] text-muted-foreground">{format(toDate(event.start_date), 'dd. MMMM yyyy', { locale: de })}</p>
+                <Link href={`/kalender/${event.id}`} className="block group-hover:text-primary transition-colors">
+                  <p className="text-sm font-bold leading-tight">{event.title}</p>
+                  <p className="text-[10px] text-muted-foreground">{format(toDate(event.start_date), 'dd. MMMM yyyy', { locale: de })}</p>
+                </Link>
               </div>
             ))
           }

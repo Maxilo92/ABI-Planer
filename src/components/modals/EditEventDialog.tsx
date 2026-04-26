@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { db } from '@/lib/firebase'
-import { doc, updateDoc, collection, query, orderBy, onSnapshot } from 'firebase/firestore'
+import { doc, updateDoc, deleteDoc, collection, query, orderBy, onSnapshot } from 'firebase/firestore'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
@@ -11,7 +11,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Pencil, X, Users, Shield, Group, Plus } from 'lucide-react'
+import { Pencil, X, Users, Shield, Group, Plus, Trash2 } from 'lucide-react'
 import { Event, Profile, UserRole } from '@/types/database'
 import { format } from 'date-fns'
 import { toDate } from '@/lib/utils'
@@ -146,6 +146,32 @@ export function EditEventDialog({ event }: EditEventDialogProps) {
     } catch (err) {
       console.error('Error updating event:', err)
       toast.error('Fehler beim Aktualisieren.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleDelete = async () => {
+    if (!window.confirm('Möchtest du diesen Termin wirklich löschen?')) return
+    setLoading(true)
+
+    try {
+      const docRef = doc(db, 'events', event.id)
+      await deleteDoc(docRef)
+
+      if (user) {
+        await logAction('EVENT_DELETED', user.uid, profile?.full_name, {
+          event_id: event.id,
+          title: event.title
+        })
+      }
+
+      toast.success('Termin gelöscht.')
+      setOpen(false)
+      router.push('/kalender')
+    } catch (err) {
+      console.error('Error deleting event:', err)
+      toast.error('Fehler beim Löschen.')
     } finally {
       setLoading(false)
     }
@@ -310,10 +336,25 @@ export function EditEventDialog({ event }: EditEventDialogProps) {
               </div>
             </div>
           </div>
-          <DialogFooter>
-            <Button type="submit" disabled={loading}>
-              {loading ? 'Speichern...' : 'Aktualisieren'}
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button 
+              type="button" 
+              variant="destructive" 
+              onClick={handleDelete} 
+              disabled={loading}
+              className="sm:mr-auto"
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Löschen
             </Button>
+            <div className="flex gap-2">
+              <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={loading}>
+                Abbrechen
+              </Button>
+              <Button type="submit" disabled={loading}>
+                {loading ? 'Speichern...' : 'Aktualisieren'}
+              </Button>
+            </div>
           </DialogFooter>
         </form>
       </DialogContent>
