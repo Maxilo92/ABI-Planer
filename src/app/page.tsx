@@ -47,7 +47,7 @@ import { motion, useScroll, useSpring, AnimatePresence } from 'framer-motion'
 import { logAction } from '@/lib/logging'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import { getDashboardBaseUrl } from '@/lib/dashboard-url'
+import { getDashboardBaseUrl, getDashboardRedirectUrl } from '@/lib/dashboard-url'
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -79,7 +79,13 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
   const { t, language } = useLanguage()
   const [landingNews, setLandingNews] = useState<any[]>([])
   const [landingNewsLoading, setLandingNewsLoading] = useState(true)
-  const dashboardBaseUrl = getDashboardBaseUrl()
+  const [dashboardBaseUrl, setDashboardBaseUrl] = useState('')
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setDashboardBaseUrl(getDashboardRedirectUrl(window.location))
+    }
+  }, [])
   const [landingStats, setLandingStats] = useState({
     totalUsers: null as number | null,
     dailyActiveUsers: null as number | null,
@@ -1266,6 +1272,14 @@ export default function Dashboard() {
     rootMode === 'unknown' && isBoneyardBuild && typeof window !== 'undefined'
       ? (window.location.hostname.startsWith('dashboard.') || window.location.hostname.startsWith('app.') || window.location.hostname.includes('.dashboard.') ? 'dashboard' : 'landing')
       : rootMode
+
+  // Redirect logged-in users from landing page to dashboard
+  useEffect(() => {
+    if (isBoneyardBuild) return
+    if (resolvedRootMode === 'landing' && !authLoading && user && typeof window !== 'undefined') {
+      window.location.href = getDashboardRedirectUrl(window.location)
+    }
+  }, [authLoading, isBoneyardBuild, resolvedRootMode, user])
 
   if (resolvedRootMode === 'unknown') {
     return (

@@ -15,14 +15,30 @@ function DialogTrigger({
   asChild,
   render,
   children,
+  nativeButton,
   ...props
 }: DialogPrimitive.Trigger.Props & { asChild?: boolean }) {
-  const resolvedRender = asChild && React.isValidElement(children) ? children : render
+  const isNativeButton = 
+    (asChild && React.isValidElement(children) && children.type === "button") ||
+    (React.isValidElement(render) && render.type === "button")
+  
+  const resolvedNativeButton = nativeButton ?? (isNativeButton ? true : (asChild || render ? false : undefined))
+
+  const resolvedRender = asChild && React.isValidElement(children) 
+    ? React.cloneElement(children as React.ReactElement<any>, { 
+        ...(typeof children.type !== "string" ? { nativeButton: resolvedNativeButton } : {})
+      }) 
+    : (React.isValidElement(render) 
+        ? React.cloneElement(render as React.ReactElement<any>, { 
+            ...(typeof render.type !== "string" ? { nativeButton: resolvedNativeButton } : {})
+          }) 
+        : undefined)
 
   return (
     <DialogPrimitive.Trigger
       data-slot="dialog-trigger"
       render={resolvedRender}
+      nativeButton={resolvedNativeButton}
       {...props}
     >
       {asChild ? null : children}
@@ -38,14 +54,30 @@ function DialogClose({
   asChild,
   render,
   children,
+  nativeButton,
   ...props
 }: DialogPrimitive.Close.Props & { asChild?: boolean }) {
-  const resolvedRender = asChild && React.isValidElement(children) ? children : render
+  const isNativeButton = 
+    (asChild && React.isValidElement(children) && children.type === "button") ||
+    (React.isValidElement(render) && render.type === "button")
+  
+  const resolvedNativeButton = nativeButton ?? (isNativeButton ? true : (asChild || render ? false : undefined))
+
+  const resolvedRender = asChild && React.isValidElement(children) 
+    ? React.cloneElement(children as React.ReactElement<any>, { 
+        ...(typeof children.type !== "string" ? { nativeButton: resolvedNativeButton } : {})
+      }) 
+    : (React.isValidElement(render) 
+        ? React.cloneElement(render as React.ReactElement<any>, { 
+            ...(typeof render.type !== "string" ? { nativeButton: resolvedNativeButton } : {})
+          }) 
+        : undefined)
 
   return (
     <DialogPrimitive.Close
       data-slot="dialog-close"
       render={resolvedRender}
+      nativeButton={resolvedNativeButton}
       {...props}
     >
       {asChild ? null : children}
@@ -90,7 +122,7 @@ function DialogContent({
       >
         {children}
         {showCloseButton && (
-          <DialogPrimitive.Close
+          <DialogClose
             data-slot="dialog-close"
             render={
               <Button
@@ -103,7 +135,7 @@ function DialogContent({
             <XIcon
             />
             <span className="sr-only">Close</span>
-          </DialogPrimitive.Close>
+          </DialogClose>
         )}
       </DialogPrimitive.Popup>
     </DialogPortal>
@@ -139,9 +171,9 @@ function DialogFooter({
     >
       {children}
       {showCloseButton && (
-        <DialogPrimitive.Close render={<Button variant="outline" />}>
+        <DialogClose render={<Button variant="outline" />}>
           Close
-        </DialogPrimitive.Close>
+        </DialogClose>
       )}
     </div>
   )

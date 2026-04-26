@@ -7,17 +7,17 @@ const checks = [
   {
     name: 'Login has Startseite back link',
     file: 'src/app/login/page.tsx',
-    patterns: [/href=\"\/\"/, /Zur\u00fcck zur Startseite/],
+    patterns: [/href=\"\/\"/, /auth\.login\.backToHome/],
   },
   {
     name: 'Register has Startseite back link',
     file: 'src/app/register/page.tsx',
-    patterns: [/href=\"\/\"/, /Zur\u00fcck zur Startseite/],
+    patterns: [/href=\"\/\"/, /auth\.register\.backToHome/],
   },
   {
     name: 'Dashboard news cards link to detail page',
     file: 'src/app/page.tsx',
-    patterns: [/href=\{`\/news\/\$\{item\.id\}`\}/, /Zum Beitrag/],
+    patterns: [/href=\{`\/news\/\$\{item\.id\}`\}/, /dashboard\.viewPost/],
   },
   {
     name: 'Countdown keeps themed highlight styles',
@@ -46,7 +46,7 @@ const checks = [
   {
     name: 'Funding status keeps ticket price estimator controls',
     file: 'src/components/dashboard/FundingStatus.tsx',
-    patterns: [/initialTicketSales\?/, /onTicketSalesChange\?/, /Geschätzter Ticketpreis/, /remaining \/ ticketSales/],
+    patterns: [/initialTicketSales\?/, /onTicketSalesChange\?/, /Berechneter Ticketpreis/, /remaining \/ ticketSales/],
   },
   {
     name: 'Poll creation keeps vote-change control',
@@ -70,16 +70,15 @@ const checks = [
   },
   {
     name: 'Navbar uses notifications and indicators',
-    file: 'src/components/layout/Navbar.tsx',
-    patterns: [/useNotifications/, /notify: notifications/, /rounded-full bg-red-500/],
+    file: 'src/components/layout/DashboardNavbar.tsx',
+    patterns: [/useNotifications/, /notify: notifications/, /bg-rose-500/, /animate-ping/],
   },
   {
     name: 'Navbar keeps nested Einstellungen submenu path',
-    file: 'src/components/layout/Navbar.tsx',
+    file: 'src/components/layout/DashboardNavbar.tsx',
     patterns: [
       /href: '\/konto-root'/,
-      /\{ href: resolveHref\('\/einstellungen'\), label: 'Einstellungen', icon: Settings, isExternalLink: !isDashboardDomain \}/,
-      /renderNavSection\('Konto & Hilfe', accountHelpItems, isMobile\)/,
+      /\{ href: '\/einstellungen', label: 'Einstellungen', icon: Settings \}/,
       /if \(href === '\/konto-root'\) return pathname\.startsWith\('\/profil'\) \|\| pathname\.startsWith\('\/einstellungen'\)/,
     ],
   },

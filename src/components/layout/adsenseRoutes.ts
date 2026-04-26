@@ -1,3 +1,3 @@
 export function isAdSenseAllowedRoute(pathname: string) {
-  return pathname === '/' || pathname.startsWith('/vorteile') || pathname.startsWith('/news')
+  return pathname === '/' || pathname === '/uber' || pathname.startsWith('/vorteile') || pathname.startsWith('/news')
 }

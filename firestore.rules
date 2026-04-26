@@ -309,12 +309,6 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    match /teacher_ratings/{ratingId} {
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated() && request.auth.uid == request.resource.data.userId;
-      allow update, delete: if isAdmin();
-    }
-
     match /polls/{pollId} {
       allow read: if isApproved() && (
         isPlanner() || 
@@ -364,18 +358,6 @@ service cloud.firestore {
         resource.data.referredId == request.auth.uid
       );
       allow create, update, delete: if false; // Only via Cloud Functions
-    }
-
-    match /votes/{voteId} {
-      allow read: if isAuthenticated() && isLernsax();
-      allow create: if isLernsax() && request.resource.data.user_id == request.auth.uid;
-      allow delete: if isAdmin() || (isAuthenticated() && resource.data.user_id == request.auth.uid);
-    }
-
-    match /poll_votes/{voteId} {
-      allow read: if isAuthenticated() && isLernsax();
-      allow create, update: if isAuthenticated() && request.auth.uid == request.resource.data.user_id;
-      allow delete: if isAdmin() || (isAuthenticated() && resource.data.user_id == request.auth.uid);
     }
 
     match /logs/{logId} {
@@ -528,12 +510,6 @@ service cloud.firestore {
       allow write: if isServiceAccount(); // Only Cloud Functions
     }
 
-    // ====== Fraud Alerts ======
-    match /fraud_alerts/{alertId} {
-      allow read: if isAdmin();
-      allow write: if isServiceAccount(); // Only Cloud Functions
-    }
-
     // ====== Admin Background Tasks ======
     match /admin_tasks/{taskId} {
       allow read: if isAdmin();
@@ -569,4 +545,3 @@ service cloud.firestore {
     }
   }
 }
-

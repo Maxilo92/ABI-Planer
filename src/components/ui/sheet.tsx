@@ -15,14 +15,30 @@ function SheetTrigger({
   asChild,
   render,
   children,
+  nativeButton,
   ...props
 }: DialogPrimitive.Trigger.Props & { asChild?: boolean }) {
-  const resolvedRender = asChild && React.isValidElement(children) ? children : render
+  const isNativeButton = 
+    (asChild && React.isValidElement(children) && children.type === "button") ||
+    (React.isValidElement(render) && render.type === "button")
+  
+  const resolvedNativeButton = nativeButton ?? (isNativeButton ? true : (asChild || render ? false : undefined))
+
+  const resolvedRender = asChild && React.isValidElement(children) 
+    ? React.cloneElement(children as React.ReactElement<any>, { 
+        ...(typeof children.type !== "string" ? { nativeButton: resolvedNativeButton } : {})
+      }) 
+    : (React.isValidElement(render) 
+        ? React.cloneElement(render as React.ReactElement<any>, { 
+            ...(typeof render.type !== "string" ? { nativeButton: resolvedNativeButton } : {})
+          }) 
+        : undefined)
 
   return (
     <DialogPrimitive.Trigger
       data-slot="sheet-trigger"
       render={resolvedRender}
+      nativeButton={resolvedNativeButton}
       {...props}
     >
       {asChild ? null : children}
@@ -38,14 +54,30 @@ function SheetClose({
   asChild,
   render,
   children,
+  nativeButton,
   ...props
 }: DialogPrimitive.Close.Props & { asChild?: boolean }) {
-  const resolvedRender = asChild && React.isValidElement(children) ? children : render
+  const isNativeButton = 
+    (asChild && React.isValidElement(children) && children.type === "button") ||
+    (React.isValidElement(render) && render.type === "button")
+  
+  const resolvedNativeButton = nativeButton ?? (isNativeButton ? true : (asChild || render ? false : undefined))
+
+  const resolvedRender = asChild && React.isValidElement(children) 
+    ? React.cloneElement(children as React.ReactElement<any>, { 
+        ...(typeof children.type !== "string" ? { nativeButton: resolvedNativeButton } : {})
+      }) 
+    : (React.isValidElement(render) 
+        ? React.cloneElement(render as React.ReactElement<any>, { 
+            ...(typeof render.type !== "string" ? { nativeButton: resolvedNativeButton } : {})
+          }) 
+        : undefined)
 
   return (
     <DialogPrimitive.Close
       data-slot="sheet-close"
       render={resolvedRender}
+      nativeButton={resolvedNativeButton}
       {...props}
     >
       {asChild ? null : children}
@@ -90,7 +122,7 @@ function SheetContent({
       >
         {children}
         {showCloseButton && (
-          <DialogPrimitive.Close
+          <SheetClose
             data-slot="sheet-close"
             render={
               <Button
@@ -102,7 +134,7 @@ function SheetContent({
           >
             <XIcon />
             <span className="sr-only">Close</span>
-          </DialogPrimitive.Close>
+          </SheetClose>
         )}
       </DialogPrimitive.Popup>
     </SheetPortal>

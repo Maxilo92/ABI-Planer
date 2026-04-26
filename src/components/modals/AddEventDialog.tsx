@@ -26,10 +26,13 @@ const AVAILABLE_ROLES: { id: UserRole; label: string }[] = [
 
 interface AddEventDialogProps {
   defaultGroup?: string
+  defaultDate?: Date
   triggerLabel?: string
+  children?: React.ReactNode
+  nativeButton?: boolean
 }
 
-export function AddEventDialog({ defaultGroup, triggerLabel = 'Termin hinzufügen' }: AddEventDialogProps) {
+export function AddEventDialog({ defaultGroup, defaultDate, triggerLabel = 'Termin hinzufügen', children, nativeButton }: AddEventDialogProps) {
   const [open, setOpen] = useState(false)
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
@@ -49,7 +52,17 @@ export function AddEventDialog({ defaultGroup, triggerLabel = 'Termin hinzufüge
   useEffect(() => {
     if (!open) return
     setAssignedGroup(defaultGroup || '')
-  }, [defaultGroup, open])
+    
+    if (defaultDate) {
+      // Format date for datetime-local input: YYYY-MM-DDTHH:mm
+      const year = defaultDate.getFullYear()
+      const month = String(defaultDate.getMonth() + 1).padStart(2, '0')
+      const day = String(defaultDate.getDate()).padStart(2, '0')
+      const hours = String(defaultDate.getHours()).padStart(2, '0')
+      const minutes = String(defaultDate.getMinutes()).padStart(2, '0')
+      setStartDate(`${year}-${month}-${day}T${hours}:${minutes}`)
+    }
+  }, [defaultGroup, defaultDate, open])
 
   useEffect(() => {
     if (!open || authLoading || !profile?.is_approved) return
@@ -161,13 +174,13 @@ export function AddEventDialog({ defaultGroup, triggerLabel = 'Termin hinzufüge
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger
-        render={
+      <DialogTrigger asChild>
+        {children || (
           <Button size="sm" className="gap-2">
             <Plus className="h-4 w-4" /> {triggerLabel}
           </Button>
-        }
-      />
+        )}
+      </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <form onSubmit={handleSubmit}>
           <DialogHeader>

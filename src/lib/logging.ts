@@ -1,5 +1,6 @@
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore'
 import { db } from './firebase'
+import posthog from 'posthog-js'
 
 export type LogActionType = 
   | 'ACCOUNT_CREATED'
@@ -117,6 +118,25 @@ export const logAction = async (
       details: details || null,
       timestamp: serverTimestamp(),
     })
+
+    // Bridge to PostHog if in browser
+    if (typeof window !== 'undefined') {
+      try {
+        // Sanitize details to remove PII before sending to PostHog
+        const sanitizedDetails = { ...(details || {}) }
+        const piiKeys = ['email', 'full_name', 'name', 'password', 'phone', 'address']
+        piiKeys.forEach(key => {
+          if (key in sanitizedDetails) delete sanitizedDetails[key]
+        })
+
+        posthog.capture(action, {
+          user_id: userId,
+          ...sanitizedDetails,
+        })
+      } catch (phError) {
+        console.warn(`[Logging] PostHog capture failed for ${action}:`, phError)
+      }
+    }
   } catch (error) {
     // We don't want logging to break the app, but we should know if it fails
     console.error(`[Logging] Failed to log action ${action}:`, error)

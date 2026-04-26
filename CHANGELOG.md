@@ -6,6 +6,169 @@
 <!-- default_action: read newest entries only unless a regression requires older history -->
 <!-- index: docs/AGENT_CONTEXT_INDEX.md -->
 
+## [1.34.1.16] - 2026-04-26
+
+### Fixed
+- **UI/Base UI**: Behebung einer React-Warnung ("unknown property"), bei der die `nativeButton`-Eigenschaft fälschlicherweise an native DOM-Elemente durchgereicht wurde. Die Propagierung wurde so verfeinert, dass sie nur noch für React-Komponenten erfolgt, während native HTML-Tags sauber bleiben.
+
+## [1.34.1.15] - 2026-04-26
+
+### Fixed
+- **UI/Base UI**: Behebung eines kritischen Fehlers ("invalid-render-prop"), bei dem die `render`-Eigenschaft fälschlicherweise einen String statt eines validen React-Elements erhielt. Alle UI-Komponenten stellen nun sicher, dass die `render`-Eigenschaft immer ein klonbares Element (`<button />`, `<div />`) oder `undefined` ist, was die Stabilität der Anwendung bei der Verwendung von Triggern und Buttons wiederherstellt.
+
+## [1.34.1.14] - 2026-04-26
+
+### Fixed
+- **UI/Base UI**: Implementierung einer robusten `nativeButton`-Propagierung mittels `React.cloneElement`. Trigger- und Close-Komponenten geben nun ihren berechneten `nativeButton`-Status explizit an ihre Kinder weiter. Dies stellt sicher, dass benutzerdefinierte Komponenten wie `Button` synchronisiert sind und ihr Rendering (z.B. Umstellung auf `div`) korrekt anpassen, um widersprüchliche Accessibility-Warnungen in der Konsole vollständig zu eliminieren.
+
+## [1.34.1.13] - 2026-04-26
+
+### Fixed
+- **UI/Base UI**: Verfeinerung der `nativeButton` Logik zur Vermeidung von gegensätzlichen React-Warnungen. Die Komponenten erkennen nun zuverlässig native HTML-Buttons und setzen die Eigenschaft entsprechend. Zusätzlich wurde die `Button`-Komponente so erweitert, dass sie bei `nativeButton={false}` (z.B. innerhalb von Triggern) automatisch als `div` statt als `button` rendert, was die strengen Anforderungen von Base UI an die Barrierefreiheit und Attribut-Validierung erfüllt, ohne die Funktionalität einzuschränken.
+
+## [1.34.1.12] - 2026-04-26
+
+### Fixed
+- **UI/Base UI**: Vollständige Behebung von React-Warnungen bezüglich der `nativeButton` Eigenschaft in den UI-Komponenten `Dialog`, `Popover`, `Sheet` und `DropdownMenu`. Die Trigger- und Close-Komponenten erkennen nun automatisch, wenn sie mit benutzerdefinierten Komponenten (wie `Button` oder `ContextMenuItem`) verwendet werden, und deaktivieren die redundanten nativen Button-Prüfungen, um Konsolenfehler zu vermeiden und die Barrierefreiheit zu wahren.
+
+## [1.34.1.11] - 2026-04-26
+
+### Fixed
+- **Kalender**: 
+  - Ein Linksklick auf einen Tag im Kalender öffnet nicht mehr fälschlicherweise direkt den Dialog zur Terminerstellung, sondern dient nur noch der Auswahl des Tages.
+  - Das Kontextmenü (Rechtsklick) auf Kalendertagen wurde repariert und lässt sich nun wieder ordnungsgemäß nutzen, um Tage auszuwählen oder direkt Termine hinzuzufügen.
+  - Fehler bei der Anzeige behoben: Mehrtägige Termine werden jetzt wieder korrekt über alle relevanten Tage im Kalender-Grid verteilt visualisiert.
+
+## [1.34.1.10] - 2026-04-26
+
+### Fixed
+- **Analytics**: Wiederherstellung der fehlenden `PHProvider` und `PostHogPageView` Komponenten. Die PostHog-Integration ist nun wieder funktionsfähig und trackt Seitenaufrufe sowie Benutzeraktionen korrekt im Next.js App Router.
+- **PostHog**: Korrektur der Initialisierungs-Logik unter Verwendung der korrekten Umgebungsvariablen (`NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN`).
+
+## [1.34.1.9] - 2026-04-26
+
+### Changed
+- **Kalender**: Umstellung auf die standardisierte `Calendar` UI-Komponente, um eine konsistente visuelle Integration in das aktuelle Design-System zu gewährleisten.
+
+## [1.34.1.8] - 2026-04-26
+
+### Fixed
+- **Layout**: Korrektur der `AppShell` Desktop-Struktur. Durch das Hinzufügen von `lg:flex` wird die Sidebar nun wieder korrekt neben dem Inhaltsbereich positioniert, anstatt ihn nach unten aus dem sichtbaren Bereich zu schieben.
+
+## [1.34.1.7] - 2026-04-26
+
+### Fixed
+- **Proxy/Routing**: Behebung einer Endlos-Weiterleitungsschleife auf `localhost` Subdomains (z.B. `dashboard.localhost`). Das Proxy-System erkennt nun korrekt, wenn es sich bereits auf der Ziel-Subdomain befindet, und verhindert redundante Domain-Präfixe.
+
+## [1.34.1.6] - 2026-04-26
+
+### Added
+- **PostHog Analytics Integration**: Umfassendes Produkt-Tracking inklusive Funnels, Retention-Analyse, Heatmaps und Session Replays zur Verbesserung der User Experience.
+- **Privacy-First Tracking**: Nutzung der PostHog EU-Cloud (Frankfurt), anonymisierte IPs und Cookie-freie Persistenz (Memory-Mode) für maximale DSGVO-Konformität.
+- **Event-Bridging**: Automatische Weiterleitung aller `logAction`-Events an PostHog bei gleichzeitiger Filterung von PII (personenbezogenen Daten).
+- **User Journey Tracking**: Automatisches Tracking von Seitenaufrufen im Next.js App Router.
+
+### Changed
+- **Datenschutzerklärung**: Aktualisiert auf Version 26.04.2026 mit neuem Abschnitt zur Produktanalyse via PostHog.
+- **AuthContext**: Automatische Identifikation von Nutzern in PostHog nach erfolgreichem Login.
+- **Env Reference**: Dokumentation der erforderlichen PostHog Umgebungsvariablen ergänzt.
+
+## [1.34.1.6] - 2026-04-26
+
+### Fixed
+- **UI/Base UI**: Umfassende Behebung von Base UI Warnungen bezüglich der `nativeButton` Eigenschaft. Die Komponenten `Button`, `DialogTrigger` und `DialogClose` erkennen nun präziser, wann sie sich als natives HTML-Button-Element verhalten sollen, insbesondere bei Verwendung von `asChild` oder benutzerdefinierten `render` Props.
+
+## [1.34.1.5] - 2026-04-26
+
+### Fixed
+- **UI/Accessibility**: Behebung einer Base UI Warnung bezüglich nativer Button-Semantik in `DialogTrigger` und `DialogClose`.
+- **Kalender**: Umstellung der Tages-Zellen im Kalender von `div` auf `button` für bessere Barrierefreiheit und zur Erfüllung der Base UI Anforderungen.
+
+## [1.34.1.4] - 2026-04-26
+
+### Fixed
+- **Navigation**: Wiederherstellung des klassischen Navigationssystems (Navbar/DashboardNavbar). Das neue Sidebar-Design wurde entfernt, um das bewährte Layout und die gewohnte Nutzererfahrung wiederherzustellen.
+- **Layout**: Korrektur der `AppShell` Struktur, um wieder mit dem Standard-Layout (ohne Sidebar-Flex-Container) zu arbeiten.
+
+## [1.34.1.3] - 2026-04-26
+
+### Fixed
+- **Routing**: Korrektur des Auto-Routing-Systems für angemeldete Nutzer auf der Landingpage. Die Weiterleitung zum Dashboard funktioniert nun auch korrekt in lokalen Entwicklungsumgebungen (`localhost`), ohne dass spezifische Umgebungsvariablen (`NEXT_PUBLIC_DASHBOARD_URL`) gesetzt sein müssen.
+
+## [1.34.1.2] - 2026-04-26
+
+### Fixed
+- **Next.js Proxy/Middleware**: Korrektur eines Export-Fehlers in `src/proxy.ts`. Es wurden sowohl ein Default-Export als auch ein benannter `proxy`-Export hinzugefügt, um die Anforderungen neuerer Next.js-Versionen (v15/v16) an die Middleware/Proxy-Erkennung zu erfüllen.
+
+## [1.34.1.1] - 2026-04-26
+
+### Fixed
+- **Profil-Seite**: Korrektur des fehlerhaften Links zum Einstellungsbereich (von `/settings` zu `/einstellungen`).
+- **Sidebar**: Refactoring der Active-State-Logik. Parent-Items bleiben nun auch auf Detail-Seiten (z. B. `/news/[id]` oder `/abstimmungen/[id]`) korrekt hervorgehoben.
+- **Dark Mode**: Umfassender Audit und Fix von visuellen Inkonsistenzen in der Sidebar und auf der Profilseite. Hardcodierte Farben wurden durch CSS-Variablen (`bg-card`, `text-foreground`, `border-border`) ersetzt, um eine konsistente Darstellung im Dark Mode zu gewährleisten.
+
+### Changed
+- **Versionierung**: Synchronisierung der in der Sidebar angezeigten Versionsnummer mit der tatsächlichen Projektversion (`v1.34.1.1`).
+
+## [1.34.1.0] - 2026-04-26
+
+### Changed
+- **Kalender-Design**: Vollständige Überarbeitung des Terminkalenders (`/kalender`) mit einer interaktiven Monatsübersicht.
+  - Einführung eines visuellen Monats-Grids mit Datums-Logik (Wochentage, Monatswechsel).
+  - Implementierung einer Sidebar für anstehende Termine (Desktop: rechts, Mobile: unten).
+  - Integration von Firebase-Events direkt in das Grid (Punkt-Indikatoren für Termine).
+  - Optimierung des Workflows: Klick auf einen Tag öffnet direkt den `AddEventDialog` mit vorausgefülltem Datum.
+  - Unterstützung für Dark Mode und verbesserte mobile Responsivität.
+
+## [1.34.0.61] - 2026-04-26
+
+### Changed
+- **Profil-Design**: Komplette Überarbeitung der Profilseite (`/profil`) im modernen "Hero"-Stil.
+  - Einführung eines dunklen Slate-Banners und eines überlappenden Avatars mit dynamischem Dicebear-Seed.
+  - Integration des Sammelkarten-Albums und der Freundes-Übersicht in das neue Layout.
+  - Optimierung der Informationsdarstellung (Rollen-Badges, Schulname, Mitgliedschafts-Status).
+
+## [1.34.0.60] - 2026-04-26
+
+### Added
+- **Datenbank-Cleanup**: Einführung des administrativen Skripts `scripts/db_cleanup.ts` zur Bereinigung von Legacy-Collections (votes, poll_votes, teacher_ratings) und zur automatisierten Archivierung/Löschung veralteter Logs und Benachrichtigungen.
+
+### Changed
+- **Sicherheits-Regeln**: Bereinigung der `firestore.rules` durch Entfernung nicht mehr genutzter Top-Level-Collections (votes, poll_votes, teacher_ratings, fraud_alerts) zur Verbesserung der Übersichtlichkeit und Wartbarkeit.
+
+## [1.34.0.59] - 2026-04-26
+
+### Changed
+- **Terminologie-Update**: Umbenennung von "Kohorte" in "Jahrgang" (technisch: `year_group`, `YearGroup`, `yearGroupId`) in allen Planungsdokumenten (`new/01-08`) und im Master-Design-Dokument zur Verbesserung der Nutzerakzeptanz und Konsistenz.
+
+## [1.34.0.58] - 2026-04-26
+
+### Added
+- **v2 Dokumentation**: Detaillierung der Billing-Flows (Stripe, Idempotenz, Refunds) und Sicherheits-Protokolle (Tenant-Isolation, DSGVO-Audit-Logging) für Abi-Planer v2 in `new/04-billing-entitlements.md` und `new/05-security-compliance.md`.
+
+## [1.34.0.57] - 2026-04-26
+
+### Fixed
+- **Turbopack-Absturz**: Behebung eines fatalen Fehlers ("corrupted database") durch Bereinigung des `.next`-Verzeichnisses.
+- **Middleware-Migration**: Umbenennung von `src/middleware.ts` zu `src/proxy.ts`, um der Deprecation-Warnung von Next.js 16 zu entsprechen.
+
+## [1.34.0.56] - 2026-04-26
+
+### Fixed
+- **Polls-Berechnung**: Korrektur der Prozentanzeige in Umfragen. Der Nenner (`totalParticipants`) wird nun robust berechnet, indem das Maximum aus der Teilnehmer-Subcollection und der tatsächlichen Stimmen-Anzahl verwendet wird. Dies verhindert fehlerhafte Werte über 100%, wenn die Teilnehmer-Tracking-Daten (z. B. durch Legacy-Polls) unvollständig sind.
+
+## [1.34.0.55] - 2026-04-26
+
+### Changed
+- **Repository-Cleanup (sicher)**: Nicht aktiv referenzierte Einmal-Skripte aus dem Root-/Scripts-Bereich in eine Legacy-Struktur unter `scripts/legacy/` verschoben, um die produktive Skriptfläche zu verkleinern.
+- **Datei-Organisation**: Root-Beispieldateien für News nach `docs/archive/repo-cleanup/news-examples/` verschoben, damit das Projekt-Root klarer bleibt.
+
+### Removed
+- **Lokale Artefakte**: Temporäre Build-/Cache-Dateien wie `tsconfig.tsbuildinfo`, `.DS_Store` und `test-results/.last-run.json` aus dem Arbeitsstand entfernt.
+
+### Notes
+- Sensible Exportdateien (z. B. Lehrer-/Feedback-Exporte) wurden in dieser Runde bewusst nicht automatisch gelöscht und bleiben bis zur dokumentierten DSGVO-Prüfung unverändert.
+
 ## [1.34.0.54] - 2026-04-25
 
 ### Fixed

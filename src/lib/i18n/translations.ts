@@ -440,6 +440,21 @@ export const translations = {
         environment: 'Umgebung: Produktions-Designer',
         hotkey: 'Hotkeys: [CMD+S] Erzwinge Commit'
       }
+    },
+    about: {
+      badge: 'Über den ABI Planer',
+      title: 'Die Plattform von Schülern für Schüler.',
+      desc1: 'Der ABI Planer entstand aus der Notwendigkeit, das Chaos der Abitur-Organisation zu bändigen. Statt unzähliger Excel-Tabellen und unübersichtlicher Chat-Gruppen bieten wir eine zentrale, strukturierte und sichere Lösung.',
+      desc2: 'Unser Ziel ist es, jedem Jahrgang die Werkzeuge an die Hand zu geben, die für einen unvergesslichen Abschluss nötig sind – ohne den organisatorischen Stress.',
+      mission: {
+        title: 'Unsere Mission',
+        text: 'Transparenz, Sicherheit und Gemeinschaft. Wir glauben, dass die Planung der schönsten Zeit der Schulkarriere nicht zur Last werden sollte.'
+      },
+      team: {
+        title: 'Das Projekt',
+        text: 'ABI Planer ist ein privates Projekt, das mit Leidenschaft entwickelt wurde, um die Digitalisierung im schulischen Umfeld sinnvoll voranzutreiben.'
+      },
+      cta: 'Jetzt loslegen'
     }
   },
   'en-US': {
@@ -883,6 +898,21 @@ export const translations = {
         environment: 'Environment: Production Designer',
         hotkey: 'Hotkeys: [CMD+S] Force Commit'
       }
+    },
+    about: {
+      badge: 'About ABI Planner',
+      title: 'The platform by students for students.',
+      desc1: 'ABI Planner was born out of the need to tame the chaos of graduation organization. Instead of countless Excel sheets and messy chat groups, we offer a central, structured, and secure solution.',
+      desc2: 'Our goal is to give every class the tools they need for an unforgettable graduation – without the organizational stress.',
+      mission: {
+        title: 'Our Mission',
+        text: 'Transparency, security, and community. We believe that planning the best time of your school career should not be a burden.'
+      },
+      team: {
+        title: 'The Project',
+        text: 'ABI Planner is a private project developed with passion to meaningfully advance digitalization in the school environment.'
+      },
+      cta: 'Get started now'
     }
   },
   'es-ES': {
@@ -1326,6 +1356,21 @@ export const translations = {
         environment: 'Entorno: Diseñador de Producción',
         hotkey: 'Atajos: [CMD+S] Forzar Guardado'
       }
+    },
+    about: {
+      badge: 'Sobre ABI Planner',
+      title: 'La plataforma de estudiantes para estudiantes.',
+      desc1: 'ABI Planner nació de la necesidad de domar el caos de la organización de la graduación. En lugar de innumerables hojas de Excel y grupos de chat desordenados, ofrecemos una solución central, estructurada y segura.',
+      desc2: 'Nuestro objetivo es dar a cada curso las herramientas que necesitan para una graduación inolvidable, sin el estrés organizativo.',
+      mission: {
+        title: 'Nuestra Misión',
+        text: 'Transparencia, seguridad y comunidad. Creemos que planificar el mejor momento de tu carrera escolar no debería ser una carga.'
+      },
+      team: {
+        title: 'El Proyecto',
+        text: 'ABI Planner es un proyecto privado desarrollado con pasión para avanzar significativamente en la digitalización en el entorno escolar.'
+      },
+      cta: 'Empezar ahora'
     }
   }
 };

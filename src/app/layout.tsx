@@ -10,6 +10,7 @@ import { AccentThemeProvider } from '@/context/AccentThemeProvider'
 import { LanguageProvider } from '@/context/LanguageContext'
 import { GoogleAdSense } from '@/components/layout/GoogleAdSense'
 import { AdSenseScript } from '@/components/layout/AdSenseScript'
+import { PHProvider } from './providers'
 
 import { faviconLinks } from '@/components/FaviconLinks'
 
@@ -34,25 +35,27 @@ export default function RootLayout({
       <body className={`${inter.variable} font-sans antialiased h-full bg-background`}>
         {/* Optional: Logo prominent platzieren */}
         {/* <Logo width={250} height={100} style={{ display: 'block', margin: '2rem auto 0 auto' }} /> */}
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <AccentThemeProvider>
-            <AuthProvider>
-              <LanguageProvider>
-                <SystemMessageProvider>
-                  <AdSenseScript />
-                  <AppShell>{children}</AppShell>
-                  <GoogleAdSense />
-                  <Toaster />
-                </SystemMessageProvider>
-              </LanguageProvider>
-            </AuthProvider>
-          </AccentThemeProvider>
-        </ThemeProvider>
+        <PHProvider>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <AccentThemeProvider>
+              <AuthProvider>
+                <LanguageProvider>
+                  <SystemMessageProvider>
+                    <AdSenseScript />
+                    <AppShell>{children}</AppShell>
+                    <GoogleAdSense />
+                    <Toaster />
+                  </SystemMessageProvider>
+                </LanguageProvider>
+              </AuthProvider>
+            </AccentThemeProvider>
+          </ThemeProvider>
+        </PHProvider>
       </body>
     </html>
   )

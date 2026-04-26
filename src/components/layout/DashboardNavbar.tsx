@@ -234,7 +234,15 @@ export function DashboardNavbar() {
             )}
           >
             <div className="flex items-center gap-2.5">
-              <item.icon className="h-4 w-4" />
+              <div className="relative">
+                <item.icon className="h-4 w-4" />
+                {item.notify && (
+                  <span className="absolute -top-0.5 -right-0.5 flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500 border border-background"></span>
+                  </span>
+                )}
+              </div>
               {!isCompact && <span>{item.label}</span>}
             </div>
             {!isCompact && <ChevronRight className={cn("h-4 w-4 opacity-50 transition-transform", isExpanded && "rotate-90")} />}
@@ -249,7 +257,15 @@ export function DashboardNavbar() {
               active ? 'bg-secondary text-primary' : 'hover:bg-secondary'
             )}
           >
-            <item.icon className="h-4 w-4" />
+            <div className="relative">
+              <item.icon className="h-4 w-4" />
+              {item.notify && (
+                <span className="absolute -top-0.5 -right-0.5 flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500 border border-background"></span>
+                </span>
+              )}
+            </div>
             {!isCompact && <span>{item.label}</span>}
           </Link>
         )}
@@ -263,12 +279,17 @@ export function DashboardNavbar() {
                   href={sub.href}
                   target={sub.isExternal ? '_blank' : undefined}
                   className={cn(
-                    'flex items-center gap-2 rounded-md px-2.5 py-2 text-sm font-medium transition-colors',
+                    'flex items-center justify-between rounded-md px-2.5 py-2 text-sm font-medium transition-colors',
                     pathname === sub.href ? 'text-primary bg-secondary/30' : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
                   )}
                 >
-                  <sub.icon className="h-4 w-4" />
-                  <span className="truncate">{sub.label}</span>
+                  <div className="flex items-center gap-2">
+                    <sub.icon className="h-4 w-4" />
+                    <span className="truncate">{sub.label}</span>
+                  </div>
+                  {sub.notify && (
+                    <span className="h-1.5 w-1.5 rounded-full bg-rose-500 mr-1" />
+                  )}
                 </Link>
               ))}
             </motion.div>

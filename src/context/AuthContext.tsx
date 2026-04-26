@@ -7,6 +7,7 @@ import { doc, onSnapshot, updateDoc, serverTimestamp } from 'firebase/firestore'
 import { httpsCallable } from 'firebase/functions'
 
 import { Profile } from '@/types/database'
+import posthog from 'posthog-js'
 
 const auth = getFirebaseAuth();
 const db = getFirebaseDb();
@@ -259,6 +260,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setUser(user)
 
       if (user) {
+        // Identify in PostHog
+        posthog.identify(user.uid, {
+          email: user.email,
+        })
+
         // Create session cookie if it doesn't exist or just to keep it fresh
         try {
           const idToken = await user.getIdToken()
@@ -271,6 +277,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           console.error('[AuthContext] Failed to create session cookie:', err)
         }
       } else {
+        // Reset PostHog on logout
+        posthog.reset()
+
         // Delete session cookie on logout
         try {
           await fetch('/api/auth/session', { method: 'DELETE' })

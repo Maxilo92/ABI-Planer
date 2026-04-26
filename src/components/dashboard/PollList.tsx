@@ -508,10 +508,11 @@ export function PollList({
   const pollCards = displayedPolls.map((poll) => {
         const pollVotes = votesByPoll[poll.id] || poll.votes || []
         
-        // Use participant tracking subcollection if available, fallback to votes length
-        const totalParticipants = participantCounts[poll.id] !== undefined 
-          ? participantCounts[poll.id] 
-          : pollVotes.length
+        // Use participant tracking subcollection if available, but ensure it's at least the number of votes
+        const totalParticipants = Math.max(
+          participantCounts[poll.id] || 0,
+          pollVotes.length
+        )
 
         const userVote = userId ? pollVotes.find(v => v.user_id === userId) : null
         const userSelection = userVote?.option_ids || (userVote?.option_id ? [userVote.option_id] : [])

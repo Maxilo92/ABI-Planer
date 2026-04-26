@@ -3,9 +3,9 @@
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { signOut } from 'firebase/auth'
-import { User, MoonStar, MessageSquarePlus, LogOut, Users, Save, Plus, Trash2, Sparkles, AlertTriangle, Globe } from 'lucide-react'
-import { collection, doc, getDocs, onSnapshot, query, setDoc, where, writeBatch } from 'firebase/firestore'
+import { deleteUser, sendPasswordResetEmail, signOut, updateProfile } from 'firebase/auth'
+import { User, MoonStar, MessageSquarePlus, LogOut, Users, Save, Plus, Trash2, Sparkles, AlertTriangle, Globe, ShieldCheck } from 'lucide-react'
+import { collection, doc, getDoc, getDocs, onSnapshot, query, setDoc, updateDoc, where, writeBatch, deleteDoc } from 'firebase/firestore'
 
 import { auth, db } from '@/lib/firebase'
 import { useAuth } from '@/context/AuthContext'
@@ -24,8 +24,11 @@ import { ThemeToggle } from '@/components/layout/ThemeToggle'
 import { AccentThemeSelector } from '@/components/layout/AccentThemeSelector'
 import { AddFeedbackDialog } from '@/components/modals/AddFeedbackDialog'
 import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { toast } from 'sonner'
 import { logAction } from '@/lib/logging'
+import { TOTPSetup } from '@/components/admin/TOTPSetup'
+import { usePopupManager } from '@/modules/popup/usePopupManager'
 
 interface CourseRow {
   id: string
@@ -36,12 +39,22 @@ interface CourseRow {
 export default function SettingsPage() {
   const { user, profile, loading } = useAuth()
   const { t, language, setLanguage } = useLanguage()
+  const { prompt } = usePopupManager()
   const [courseRows, setCourseRows] = useState<CourseRow[]>([])
   const [originalCourses, setOriginalCourses] = useState<string[]>([])
   const [savingCourses, setSavingCourses] = useState(false)
   const [isGuardOpen, setIsGuardOpen] = useState(false)
   const [nextPath, setNextPath] = useState<string | null>(null)
   const router = useRouter()
+
+  // Account management state
+  const [fullName, setFullName] = useState('')
+  const [savingName, setSavingName] = useState(false)
+  const [availableCourses, setAvailableCourses] = useState<string[]>(['Kurs 1', 'Kurs 2', 'Kurs 3', 'Kurs 4', 'Kurs 5', 'Kurs 6', 'Kurs 7'])
+  const [selectedCourse, setSelectedCourse] = useState('')
+  const [savingCourse, setSavingCourse] = useState(false)
+  const [sendingReset, setSendingReset] = useState(false)
+  const [deletingAccount, setDeletingAccount] = useState(false)
 
   // Check for unsaved changes
   const hasUnsavedChanges = useCallback(() => {
@@ -133,6 +146,164 @@ export default function SettingsPage() {
     window.addEventListener('beforeunload', handleBeforeUnload)
     return () => window.removeEventListener('beforeunload', handleBeforeUnload)
   }, [courseRows, originalCourses, hasUnsavedChanges])
+
+  useEffect(() => {
+    const loadCourses = async () => {
+      try {
+        const settingsSnap = await getDoc(doc(db, 'settings', 'config'))
+        const configuredCourses = settingsSnap.exists() ? settingsSnap.data().courses : undefined
+        if (Array.isArray(configuredCourses) && configuredCourses.length > 0) {
+          const normalizedCourses = configuredCourses.filter((entry: unknown): entry is string => typeof entry === 'string' && entry.trim().length > 0)
+          if (normalizedCourses.length > 0) {
+            setAvailableCourses(normalizedCourses)
+          }
+        }
+      } catch (loadError) {
+        console.error('Error loading courses:', loadError)
+      }
+    }
+
+    loadCourses()
+  }, [])
+
+  useEffect(() => {
+    setFullName(profile?.full_name || '')
+    setSelectedCourse(profile?.class_name || '')
+  }, [profile?.full_name, profile?.class_name])
+
+  const handleUpdateName = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!user || !profile) return
+    const normalizedName = fullName.trim()
+
+    if (normalizedName.length < 2) {
+      toast.error('Bitte gib einen gültigen Namen ein.')
+      return
+    }
+
+    try {
+      setSavingName(true)
+      await updateProfile(user, { displayName: normalizedName })
+      await updateDoc(doc(db, 'profiles', user.uid), { full_name: normalizedName })
+
+      await logAction('PROFILE_UPDATED', user.uid, profile.full_name, {
+        field: 'full_name',
+        value: normalizedName,
+      })
+
+      toast.success('Name aktualisiert.')
+      router.refresh()
+    } catch (error) {
+      console.error('Error updating full name:', error)
+      toast.error('Name konnte nicht aktualisiert werden.')
+    } finally {
+      setSavingName(false)
+    }
+  }
+
+  const handleUpdateCourse = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!user || !profile) return
+
+    if (!selectedCourse) {
+      toast.error('Bitte wähle einen Kurs aus.')
+      return
+    }
+
+    try {
+      setSavingCourse(true)
+      await updateDoc(doc(db, 'profiles', user.uid), { class_name: selectedCourse })
+
+      await logAction('PROFILE_UPDATED', user.uid, profile.full_name, {
+        field: 'class_name',
+        value: selectedCourse,
+      })
+
+      toast.success('Kurs aktualisiert.')
+      router.refresh()
+    } catch (error) {
+      console.error('Error updating course:', error)
+      toast.error('Kurs konnte nicht aktualisiert werden.')
+    } finally {
+      setSavingCourse(false)
+    }
+  }
+
+  const handlePasswordReset = async () => {
+    if (!user?.email) {
+      toast.error('Keine E-Mail-Adresse gefunden.')
+      return
+    }
+
+    try {
+      setSendingReset(true)
+      await sendPasswordResetEmail(auth, user.email)
+      toast.success('E-Mail zum Ändern des Passworts wurde gesendet.')
+    } catch (error) {
+      console.error('Error sending password reset email:', error)
+      toast.error('Passwort-E-Mail konnte nicht gesendet werden.')
+    } finally {
+      setSendingReset(false)
+    }
+  }
+
+  const handleDeleteAccount = async () => {
+    if (!user || !profile) return
+
+    if (profile.role === 'admin_main' || profile.role === 'admin') {
+      toast.error('Main Admins können ihr Konto nicht löschen. Übertrage die Rolle zuerst auf einen anderen Nutzer.')
+      return
+    }
+
+    const confirmation = await prompt({
+      title: 'Konto unwiderruflich löschen?',
+      content: 'Diese Aktion kann nicht rückgängig gemacht werden. Bitte gib KONTO LOESCHEN ein, um dein Konto endgültig zu löschen.',
+      priority: 'high',
+      inputLabel: 'Bestätigungstext',
+      placeholder: 'KONTO LOESCHEN',
+      requiredValue: 'KONTO LOESCHEN',
+      validationMessage: 'Bitte gib den Text KONTO LOESCHEN exakt ein.',
+      confirmLabel: 'Konto löschen',
+      confirmVariant: 'destructive',
+      cancelLabel: 'Abbrechen',
+    })
+
+    if (confirmation !== 'KONTO LOESCHEN') {
+      toast.error('Kontolöschung abgebrochen.')
+      return
+    }
+
+    const profileRef = doc(db, 'profiles', user.uid)
+    const { id: _profileId, ...profileData } = profile
+
+    try {
+      setDeletingAccount(true)
+      await deleteDoc(profileRef)
+
+      try {
+        await deleteUser(user)
+      } catch (deleteAuthError: any) {
+        await setDoc(profileRef, profileData)
+        throw deleteAuthError
+      }
+
+      await logAction('PROFILE_DELETED', user.uid, profile.full_name, {
+        self_delete: true,
+      })
+
+      toast.success('Konto wurde gelöscht.')
+      router.push('/register')
+    } catch (error: any) {
+      console.error('Error deleting account:', error)
+      if (error?.code === 'auth/requires-recent-login') {
+        toast.error('Bitte melde dich neu an und versuche das Löschen erneut.')
+      } else {
+        toast.error('Konto konnte nicht gelöscht werden.')
+      }
+    } finally {
+      setDeletingAccount(false)
+    }
+  }
 
   const canManageCourses = !!profile?.is_approved && (
     profile?.role === 'planner' ||
@@ -270,7 +441,7 @@ export default function SettingsPage() {
           <a href="#sprache" className="inline-flex"><Button variant="outline" size="sm">{t('settings.sections.language')}</Button></a>
           <a href="#feedback" className="inline-flex"><Button variant="outline" size="sm">{t('settings.sections.feedback')}</Button></a>
           <a href="#boni" className="inline-flex"><Button variant="outline" size="sm">{t('settings.sections.bonuses')}</Button></a>
-          <a href="#konto" className="inline-flex"><Button variant="outline" size="sm">{t('settings.sections.account')}</Button></a>
+          <a href="#kontoverwaltung" className="inline-flex"><Button variant="outline" size="sm">Kontoverwaltung</Button></a>
           {canManageCourses && (
             <a href="#kurssystem" className="inline-flex"><Button variant="outline" size="sm">{t('settings.courseSystem.title')}</Button></a>
           )}
@@ -394,19 +565,84 @@ export default function SettingsPage() {
         </Card>
       </section>
 
-      <section className="space-y-3" id="konto">
-        <h2 className="text-lg font-bold tracking-tight">{t('settings.sections.account')}</h2>
+      <section className="space-y-3" id="kontoverwaltung">
+        <h2 className="text-lg font-bold tracking-tight">Kontoverwaltung</h2>
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-xl">
-              <LogOut className="h-5 w-5 text-destructive" /> {t('settings.account.title')}
+              <User className="h-5 w-5" /> Account-Einstellungen
             </CardTitle>
-            <CardDescription>{t('settings.account.desc')}</CardDescription>
+            <CardDescription>Verwalte deine persönlichen Daten und Sicherheitseinstellungen.</CardDescription>
           </CardHeader>
-          <CardContent>
-            <Button variant="destructive" onClick={handleSignOut} className="w-full sm:w-auto gap-2">
-              <LogOut className="h-4 w-4" /> {t('settings.account.button')}
-            </Button>
+          <CardContent className="space-y-6">
+            <form onSubmit={handleUpdateName} className="space-y-3">
+              <Label htmlFor="profile-full-name">Name ändern</Label>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Input
+                  id="profile-full-name"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  placeholder="Dein vollständiger Name"
+                  required
+                />
+                <Button type="submit" disabled={savingName}>
+                  {savingName ? 'Speichere...' : 'Name speichern'}
+                </Button>
+              </div>
+            </form>
+
+            <form onSubmit={handleUpdateCourse} className="space-y-3 border-t pt-4">
+              <Label htmlFor="profile-course">Kurs ändern</Label>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <select
+                  id="profile-course"
+                  value={selectedCourse}
+                  onChange={(e) => setSelectedCourse(e.target.value)}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  required
+                >
+                  {availableCourses.map((course) => (
+                    <option key={course} value={course}>
+                      {course}
+                    </option>
+                  ))}
+                </select>
+                <Button type="submit" disabled={savingCourse}>
+                  {savingCourse ? 'Speichere...' : 'Kurs speichern'}
+                </Button>
+              </div>
+            </form>
+
+            <div className="space-y-3 border-t pt-4">
+              <Label>Passwort ändern</Label>
+              <Button variant="outline" className="w-full sm:w-auto" onClick={handlePasswordReset} disabled={sendingReset}>
+                {sendingReset ? 'Sende E-Mail...' : 'Passwort ändern'}
+              </Button>
+            </div>
+
+            <div className="space-y-3 border-t pt-4">
+              <Label>Zwei-Faktor-Authentisierung (2FA)</Label>
+              <div className="w-full sm:w-auto">
+                <TOTPSetup profile={profile} />
+              </div>
+            </div>
+
+            <div className="space-y-3 border-t pt-4">
+              <Label className="text-destructive">Abmelden</Label>
+              <Button variant="outline" onClick={handleSignOut} className="w-full sm:w-auto gap-2">
+                <LogOut className="h-4 w-4" /> {t('settings.account.button')}
+              </Button>
+            </div>
+
+            <div className="space-y-3 border-t pt-4">
+              <Label className="text-destructive">Konto löschen</Label>
+              <p className="text-sm text-muted-foreground mb-2">
+                Dein Konto und alle damit verbundenen Daten werden unwiderruflich gelöscht.
+              </p>
+              <Button variant="destructive" onClick={handleDeleteAccount} disabled={deletingAccount} className="w-full sm:w-auto">
+                {deletingAccount ? 'Lösche Konto...' : 'Konto löschen'}
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </section>

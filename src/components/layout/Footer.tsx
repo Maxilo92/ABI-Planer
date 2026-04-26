@@ -121,7 +121,6 @@ export function Footer() {
         title: 'Über uns',
         links: [
           { label: 'Über den ABI Planer', href: `${mainBaseUrl}/uber` },
-          { label: 'Werde Teil des Teams', href: `${mainBaseUrl}/uber/join` },
           { label: 'Vorteile', href: `${mainBaseUrl}/vorteile` },
           { label: 'Impressum', href: `${mainBaseUrl}/legal/impressum` },
           { label: 'Datenschutz', href: `${mainBaseUrl}/legal/datenschutz` },
@@ -179,7 +178,6 @@ export function Footer() {
         title: 'About Us',
         links: [
           { label: 'About ABI Planner', href: `${mainBaseUrl}/uber` },
-          { label: 'Join the Team', href: `${mainBaseUrl}/uber/join` },
           { label: 'Benefits', href: `${mainBaseUrl}/vorteile` },
           { label: 'Imprint', href: `${mainBaseUrl}/legal/impressum` },
           { label: 'Privacy', href: `${mainBaseUrl}/legal/datenschutz` },

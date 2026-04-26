@@ -162,7 +162,28 @@ export default function DatenschutzPage() {
           </section>
 
           <section>
-            <h3 className="text-lg font-semibold text-foreground border-l-4 border-primary pl-3 mb-4">10. Ihre Rechte</h3>
+            <h3 className="text-lg font-semibold text-foreground border-l-4 border-primary pl-3 mb-4">10. Produktanalyse (PostHog)</h3>
+            <div className="space-y-3 text-muted-foreground leading-relaxed">
+              <p>
+                Zur kontinuierlichen Verbesserung der Benutzerfreundlichkeit und zur Analyse der Nutzung unserer App setzen wir das Analyse-Tool PostHog ein. Anbieter ist die PostHog Inc., 965 Mission St, San Francisco, CA 94103, USA.
+              </p>
+              <p>
+                Wir nutzen die Instanz von PostHog in der <strong>Europäischen Union (EU-Cloud)</strong>, sodass die Daten primär auf Servern innerhalb der EU (Frankfurt am Main, Deutschland) verarbeitet werden.
+              </p>
+              <p>
+                PostHog hilft uns zu verstehen, welche Funktionen besonders häufig genutzt werden, an welchen Stellen Nutzer die Anwendung abbrechen und wie wir die Navigation optimieren können. Hierzu werden Nutzungsdaten (z. B. Seitenaufrufe, Klicks auf Buttons, Interaktionen mit Formularen) sowie technische Daten (z. B. Browsertyp, Betriebssystem) erfasst. Die IP-Adresse wird dabei anonymisiert.
+              </p>
+              <p>
+                <strong>Session Replay & Heatmaps:</strong> Wir nutzen zudem Funktionen zur visuellen Wiedergabe von Nutzersitzungen (Session Replays) und Heatmaps. Diese dienen ausschließlich dazu, Bedienungsfehler zu identifizieren und die Benutzeroberfläche zu verbessern. Sensible Eingabefelder werden dabei von der Aufzeichnung ausgeschlossen.
+              </p>
+              <p>
+                <strong>Rechtsgrundlage:</strong> Die Nutzung von PostHog erfolgt auf Grundlage unseres berechtigten Interesses an einer bedarfsgerechten Gestaltung und stetigen Optimierung unserer App gemäß Art. 6 Abs. 1 lit. f DSGVO.
+              </p>
+            </div>
+          </section>
+
+          <section>
+            <h3 className="text-lg font-semibold text-foreground border-l-4 border-primary pl-3 mb-4">11. Ihre Rechte</h3>
             <p className="text-muted-foreground leading-relaxed">Sie haben nach der DSGVO insbesondere folgende Rechte:</p>
             <ul className="list-disc pl-6 text-muted-foreground space-y-1">
               <li>Auskunft über gespeicherte Daten (Art. 15 DSGVO)</li>
@@ -175,7 +196,7 @@ export default function DatenschutzPage() {
           </section>
 
           <section>
-            <h3 className="text-lg font-semibold text-foreground border-l-4 border-primary pl-3 mb-4">11. Kontakt bei Datenschutzfragen</h3>
+            <h3 className="text-lg font-semibold text-foreground border-l-4 border-primary pl-3 mb-4">12. Kontakt bei Datenschutzfragen</h3>
             <p className="text-muted-foreground leading-relaxed">
               Bei Fragen zur Datenverarbeitung oder zur Ausübung Ihrer Rechte wenden Sie sich bitte an:
               <br />
@@ -184,7 +205,7 @@ export default function DatenschutzPage() {
           </section>
 
           <div className="pt-8 border-t space-y-2">
-            <p className="text-xs text-muted-foreground italic">Stand: 22. April 2026.</p>
+            <p className="text-xs text-muted-foreground italic">Stand: 26. April 2026.</p>
             <p className="text-xs text-muted-foreground">
               Hinweis: Diese App ist ein privat betriebenes Projekt und kein offizielles Angebot der Schule.
             </p>

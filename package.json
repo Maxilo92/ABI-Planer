@@ -1,6 +1,6 @@
 {
   "name": "abi-planer",
-  "version": "1.34.0.53",
+  "version": "1.34.1.10",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -49,6 +49,7 @@
     "lucide-react": "^0.577.0",
     "next": "^16.1.7",
     "next-themes": "^0.4.6",
+    "posthog-js": "^1.372.1",
     "qrcode.react": "^4.2.0",
     "react": "^19.2.4",
     "react-chartjs-2": "^5.3.1",
