@@ -6,6 +6,11 @@
 <!-- default_action: read newest entries only unless a regression requires older history -->
 <!-- index: docs/AGENT_CONTEXT_INDEX.md -->
 
+## [1.34.1.24] - 2026-04-26
+
+### Fixed
+- **Build**: Korrektur eines TypeScript-Fehlers in `firebase-admin-server.ts`. Die `firestore()`-Methode des Admin-Apps wurde durch den expliziten `getFirestore`-Import ersetzt, um die korrekte Typisierung für die Datenbank-ID `abi-data` sicherzustellen.
+
 ## [1.34.1.23] - 2026-04-26
 
 ### Fixed

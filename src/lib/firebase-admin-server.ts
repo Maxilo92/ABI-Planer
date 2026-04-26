@@ -1,3 +1,4 @@
+import { getFirestore } from 'firebase-admin/firestore'
 import * as admin from 'firebase-admin'
 
 const project_id = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || process.env.FIREBASE_PROJECT_ID
@@ -46,4 +47,4 @@ export function initAdmin() {
 }
 
 export const adminAuth = () => initAdmin().auth()
-export const adminDb = () => initAdmin().firestore('abi-data')
+export const adminDb = () => getFirestore(initAdmin(), 'abi-data')
