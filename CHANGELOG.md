@@ -6,6 +6,11 @@
 <!-- default_action: read newest entries only unless a regression requires older history -->
 <!-- index: docs/AGENT_CONTEXT_INDEX.md -->
 
+## [1.34.1.17] - 2026-04-26
+
+### Fixed
+- **Build**: Behebung des "Both middleware file and proxy file are detected" Fehlers in Next.js 16. Die Migration von `middleware.ts` zu `proxy.ts` wurde korrigiert, indem die exportierten Funktionen ebenfalls von `middleware` zu `proxy` umbenannt wurden. Dies verhindert Konflikte bei der automatischen Datei-Erkennung durch Turbopack und entspricht den neuen Konventionen von Next.js 16.
+
 ## [1.34.1.16] - 2026-04-26
 
 ### Fixed

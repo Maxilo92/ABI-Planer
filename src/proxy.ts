@@ -144,7 +144,7 @@ function getRequestBaseUrl(request: NextRequest, target: 'dashboard' | 'tcg' | '
   return getAppBaseUrl('dashboard')
 }
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const url = request.nextUrl.clone()
   const hostname = getEffectiveRequestHost(request)
   const pathname = url.pathname
@@ -354,11 +354,7 @@ export function middleware(request: NextRequest) {
   return NextResponse.next()
 }
 
-export default middleware
-
-export function proxy(request: NextRequest) {
-  return middleware(request);
-}
+export default proxy
 
 // Ensure middleware runs on all relevant routes
 export const config = {
