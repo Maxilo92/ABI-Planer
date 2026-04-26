@@ -31,5 +31,5 @@
     ".next/dev/types/**/*.ts",
     "**/*.mts"
   ],
-  "exclude": ["node_modules", "functions", "CardDesign", "scripts", "docs/archive"]
+  "exclude": ["node_modules", "functions", "CardDesign", "scripts", "docs/archive", "altVer"]
 }

@@ -6,6 +6,11 @@
 <!-- default_action: read newest entries only unless a regression requires older history -->
 <!-- index: docs/AGENT_CONTEXT_INDEX.md -->
 
+## [1.34.1.18] - 2026-04-26
+
+### Fixed
+- **Build**: Ausschluss des Verzeichnisses `altVer` von der TypeScript-Kompilierung. Dies verhindert Build-Fehler, die durch Typ-Inkonsistenzen in alten oder parallelen Entwicklungsständen innerhalb des Repositorys verursacht wurden.
+
 ## [1.34.1.17] - 2026-04-26
 
 ### Fixed
