@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { LayoutDashboard, CheckSquare, Calendar, Euro, DollarSign, Megaphone, BarChart2, LogOut, Menu, X, ShieldCheck, User, MessageSquareHeart, Settings, Users, ChevronRight, ChevronLeft, Sparkles, HelpCircle, Trophy, AlertTriangle, ShoppingBag, UserPlus, Server, ArrowLeftRight, Pin, PinOff, Briefcase, Home, ShieldAlert, FileText, Wand2, Package, Printer, LayoutGrid, List } from 'lucide-react'
+import { LayoutDashboard, CheckSquare, Calendar, Euro, DollarSign, Megaphone, BarChart2, LogOut, Menu, X, ShieldCheck, User, MessageSquareHeart, Settings, Users, ChevronRight, ChevronLeft, Sparkles, HelpCircle, Trophy, AlertTriangle, ShoppingBag, UserPlus, Server, ArrowLeftRight, Pin, PinOff, Briefcase, Home, ShieldAlert, FileText, Wand2, Package, Printer, LayoutGrid, List, Gift } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button, buttonVariants } from '@/components/ui/button'
@@ -138,6 +138,21 @@ export function DashboardNavbar() {
         ...(isEnabled('shop_status') ? [{ href: resolveHref('/shop', 'shop'), label: 'ABISHOP', icon: ShoppingBag, isExternal: true }] : []),
       ],
     })
+
+    if (isEnabled('sammelkarten_status')) {
+      navItems.push({
+        href: '/sammelkarten-root',
+        label: 'Sammelkarten',
+        icon: Package,
+        notify: notifications.karten,
+        subItems: [
+          { href: `${tcgUrl}/home`, label: 'TCG Home', icon: Home, isExternal: true },
+          { href: `${tcgUrl}/booster`, label: 'Booster', icon: Gift, isExternal: true },
+          { href: `${tcgUrl}/album`, label: 'Album', icon: Trophy, isExternal: true },
+          ...(isEnabled('trading_status') ? [{ href: `${tcgUrl}/sammelkarten/tausch`, label: 'Trading', icon: ArrowLeftRight, isExternal: true, notify: notifications.karten }] : []),
+        ],
+      })
+    }
 
     if (isEnabled('sammelkarten_status')) {
       navItems.push({
