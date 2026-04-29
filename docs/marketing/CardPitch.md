@@ -120,30 +120,31 @@ Die aktuell genannte grobe Druckspanne liegt bei etwa 500 bis 700 Euro für den 
 
 Mögliche Kostenblöcke:
 
-- Gestaltung: intern durch den Jahrgang, daher meist gering
-- Druck: abhängig von Kartenanzahl und Qualität
-- Optional: Hüllen, Boxen oder kleine Alben
-- Optional: Veredelung wie Holo- oder Special-Effekte
 
 Empfehlung:
 
-- Erst eine einfache Standardauflage kalkulieren.
-- Veredelungen nur optional und nur, wenn das Budget es zulässt.
-- Keine Ausgaben ohne vorherige Freigabe.
 
 ## 12. Risikoanalyse und Gegenmaßnahmen
 Die wichtigsten Risiken sind überschaubar, wenn sie aktiv gesteuert werden:
 
-- Risiko: einzelne Personen fühlen sich bloßgestellt.
 	- Gegenmaßnahme: Freigabe, Tonalitätscheck und Verzicht auf problematische Inhalte.
-- Risiko: Seltenheit wird als Bewertung verstanden.
 	- Gegenmaßnahme: Seltenheit nur als Designmerkmal oder ganz weglassen.
-- Risiko: Datenschutzfragen bei Fotos und Texten.
 	- Gegenmaßnahme: Einwilligung und Freigabeprozess.
-- Risiko: Unpassende Verbreitung außerhalb der Schule.
 	- Gegenmaßnahme: Klarer interner Rahmen und abgestimmte Nutzung.
-- Risiko: Schulleitung sieht das Projekt als kindisch.
 	- Gegenmaßnahme: Professionelle Präsentation, klare Leitplanken, sauberer Nutzen.
+
+## 13. Finanzierung & Lessons Learned
+Ein zentraler Zweck des Projekts ist die Mittelbeschaffung für Abschlussaktivitäten: Die Karten sollen in kontrollierter Auflage verkauft oder gegen Spenden abgegeben werden, der Erlös fließt vollständig in den Jahrgangshaushalt (z. B. Abiball, Jahrgangskasse). Transparenz ist dabei zwingend: Budgetplan, Kostenaufstellung und zweckgebundene Abrechnung werden offen gelegt.
+
+Wichtig: Es gab offenbar einen früheren Versuch des vorherigen Jahrgangs, der an der Schulleitung gescheitert ist — mutmaßlich wegen fehlender Struktur und unklarer Verantwortlichkeiten. Um das zu vermeiden, schlagen wir folgende zusätzliche Maßnahmen vor:
+
+- Klare Budget- und Preisaufstellung vorlegen (Stückkosten, Druck, Verpackung, Reserve)
+- Pilot-Auflage klein halten (z. B. 100–200 Packs) bevor Vollproduktion
+- Verantwortlichkeiten und Konten klar benennen (Wer verwaltet das Geld?)
+- Regelmäßige finanzielle Reportings an Schulleitung/Elternbeirat
+- Schriftliche Vereinbarung über Verwendung der Erlöse
+
+Diese Punkte sichern die finanzielle Glaubwürdigkeit und reduzieren das Risiko einer Ablehnung durch die Schulleitung.
 
 ## 13. Vorschlag für die Genehmigung
 Damit das Gespräch mit der Schulleitung sicher läuft, würde ich das Projekt nicht als „lustige Lehrer-Sammelkarten“ pitchen, sondern als:

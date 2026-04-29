@@ -1,7 +1,7 @@
 import Image from 'next/image';
-import logoSmall from '@Assets/logos/abiplaner-logo/logo klein.png';
-import logoMedium from '@Assets/logos/abiplaner-logo/logo mittel.png';
-import logoLarge from '@Assets/logos/abiplaner-logo/logo groß.png';
+import logoSmall from '@Assets/logos/abiplaner-logo/logo-small.png';
+import logoMedium from '@Assets/logos/abiplaner-logo/logo-medium.png';
+import logoLarge from '@Assets/logos/abiplaner-logo/logo-large.png';
 
 interface LogoProps {
   width?: number;

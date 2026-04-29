@@ -6,6 +6,84 @@
 <!-- default_action: read newest entries only unless a regression requires older history -->
 <!-- index: docs/AGENT_CONTEXT_INDEX.md -->
 
+## [1.34.4.2] - 2026-04-29
+
+### Fixed
+- **Logo**: Die Import-Pfade in `src/components/Logo.tsx` wurden korrigiert und die Logo-Dateien umbenannt, um Leerzeichen und Sonderzeichen zu entfernen, die zu Build-Fehlern führten.
+- **Abstimmungen**: Ein TypeScript-Typisierungsfehler beim Laden von Einreichungen in `src/app/abstimmungen/[id]/page.tsx` wurde behoben.
+
+## [1.34.4.1] - 2026-04-29
+
+### Changed
+- **Sammelkarten-Manager**: Der Index (`cardNumber`) wird nun basierend auf der Seltenheit vergeben.
+  - Ikonische Karten erhalten die niedrigsten Nummern (001, 002...), gefolgt von Legendär, Mythisch, Episch, Selten und Gewöhnlich.
+  - Neue Funktion "Neu nummerieren" im Pool-Manager hinzugefügt, um alle Karten im Pool automatisch nach Seltenheit und Name zu sortieren und neu zu indizieren.
+  - Die Standard-Sortierung im Pool-Manager wurde auf den Karten-Index (`cardNumber`) umgestellt.
+- **Admin-Pool**: Die Seltenheits-Sortierung wurde vereinheitlicht, sodass seltenere Karten (Ikonisch zuerst) nun bei aufsteigender Sortierung am Anfang der Liste stehen.
+
+## [1.34.4.0] - 2026-04-29
+
+### Added
+- **Umfrage-Export**: Umfrageergebnisse können nun als CSV-Datei exportiert werden.
+  - Der Export enthält alle Antwortmöglichkeiten, Stimmenanzahlen und die Namen der Teilnehmer.
+  - Eigene Vorschläge (Submissions) werden ebenfalls im Export berücksichtigt und gruppiert dargestellt.
+  - Zugriff auf den Export haben Planer, Administratoren und der jeweilige Ersteller der Umfrage.
+
+## [1.34.3.2] - 2026-04-29
+
+### Fixed
+- **Export**: Überarbeitung der Druck-Sichtbarkeit mit einem robusteren `visibility`-Ansatz. Dies behebt das Problem der leeren Seiten bei beiden Export-Größen (Fullsize & Poker), indem die Export-Ansicht gezielt eingeblendet wird, während der Rest der App während des Drucks unsichtbar bleibt.
+
+## [1.34.3.1] - 2026-04-29
+
+### Fixed
+- **Export**: Behebung eines Fehlers, bei dem der Poker-Karten-Export (Originalgröße) eine leere Seite erzeugte. Die Print-Sichtbarkeit wurde optimiert, um sicherzustellen, dass die Karten unabhängig von der Verschachtelung im DOM korrekt gerendert werden.
+
+## [1.34.3.0] - 2026-04-29
+
+### Added
+- **Sammelkarten-Export**: Einführung von Export-Größenoptionen im PDF-Dialog.
+  - **Fullsize**: Die bisherige postergroße Ansicht (skaliert auf A4).
+  - **Originalgröße**: Export in exakten Poker-Karten-Maßen (63mm x 88mm), ideal für den direkten Druck auf Karten-Rohlinge oder Bastelbögen.
+
+## [1.34.2.16] - 2026-04-29
+
+### Fixed
+- **Export**: Radikale Lösung des „Zwei-Seiten-Problems“. Die Export-Ansicht wird nun absolut auf der Seite fixiert und alle anderen Seitenelemente werden während des Drucks zwangsweise ausgeblendet. Die Skalierung wurde auf 2.05 optimiert, um jeglichen Überlauf (Overflow) zu eliminieren.
+
+## [1.34.2.15] - 2026-04-29
+
+### Fixed
+- **UI/UX**: Die Varianten-Auswahl im Export-Dialog wurde komplett überarbeitet. Conflicting Event-Handler wurden entfernt und visuelles Feedback (Farben, Animationen) hinzugefügt, damit sich die Auswahl „snappy“ und direkt anfühlt.
+
+## [1.34.2.14] - 2026-04-29
+
+### Fixed
+- **Code**: Syntax-Fehler in der `layout.tsx` behoben, der durch eine fehlerhafte Text-Ersetzung in den Druck-Styles verursacht wurde.
+
+## [1.34.2.13] - 2026-04-29
+
+### Fixed
+- **Export**: Ein „Print Lock“ verhindert nun, dass Karten beim PDF-Export doppelt getriggert werden (behebt das Problem der mehrfachen PDF-Dialoge).
+- **Export**: Durch striktere CSS-Höhenbeschränkungen (`100vh`) und `overflow: hidden` im Druck-View wird die Erstellung einer unnötigen zweiten Leerseite im PDF unterbunden.
+
+## [1.34.2.12] - 2026-04-29
+
+### Fixed
+- **Sammelkarten-Design**: Die Position der Kartennummer wurde auf den vorherigen Stand zurückgesetzt, da dieser bereits als optimal bewertet wurde.
+
+## [1.34.2.11] - 2026-04-29
+
+### Changed
+- **Sammelkarten-Design**: Die Position der Kartennummer wurde final angepasst (Nudge) und über alle Komponenten hinweg harmonisiert.
+- **Sammelkarten-Design**: Das Muster-Overlay wurde nun auch bei der „Iconic“ (Ikonen) Rarity entfernt, um ein ruhigeres Gesamtbild zu gewährleisten.
+- **Export**: Der Skalierungsfaktor im PDF-Export wurde von 2,2 auf 2,1 reduziert, um einen sichereren Druckbereich zu garantieren und potenzielle Rendering-Artefakte zu minimieren.
+
+## [1.34.2.10] - 2026-04-29
+
+### Fixed
+- **Sammelkarten-Design**: Das Hexagon-Muster im Hintergrund der „seltenen“ Karten-Variante wurde entfernt, um ein klareres Erscheinungsbild zu erzielen.
+
 ## [1.34.2.6] - 2026-04-29
 
 ### Changed
@@ -32,6 +110,11 @@
 
 ### Changed
 - **Marketing/Dokumentation**: Pitch-Dokument um verbindliche rechtliche Leitplanken, Einwilligungs- und Proof-Prozess sowie konkreten Ablauf (Fragebögen, Foto-Termine, Datenaufbewahrung) ergänzt.
+
+## [1.34.2.9] - 2026-04-29
+
+### Changed
+- **Marketing/Dokumentation**: Pitch-Dokument um Finanzierungshinweis, Lessons-Learned (früherer Versuch) und Maßnahmen zur finanziellen Absicherung ergänzt.
 
 ## [1.34.2.4] - 2026-04-29
 

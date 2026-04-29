@@ -33,6 +33,8 @@ function SammelkartenManagerContent({ children }: { children: React.ReactNode })
     currentPrint,
     setCurrentPrint
   } = useManager();
+
+  const isPrintingRef = React.useRef(false);
   
   const singlePrintCard = approvedCards.find(c => c.dbId === (currentPrint?.id || singlePrintCardId));
   const activePrintVariant = currentPrint?.variant || singlePrintCard?.data?.variant || 'normal';
@@ -43,6 +45,7 @@ function SammelkartenManagerContent({ children }: { children: React.ReactNode })
       const next = printQueue[0];
       setPrintQueue(printQueue.slice(1));
       setCurrentPrint(next);
+      isPrintingRef.current = false;
     }
   }, [currentPrint, printQueue, setPrintQueue, setCurrentPrint]);
 
@@ -50,6 +53,7 @@ function SammelkartenManagerContent({ children }: { children: React.ReactNode })
     const handleAfterPrint = () => {
       setCurrentPrint(null);
       setSinglePrintCardId(null);
+      isPrintingRef.current = false;
     };
 
     window.addEventListener('afterprint', handleAfterPrint);
@@ -57,7 +61,8 @@ function SammelkartenManagerContent({ children }: { children: React.ReactNode })
   }, [setCurrentPrint, setSinglePrintCardId]);
 
   useEffect(() => {
-    if ((singlePrintCardId || currentPrint) && singlePrintCard) {
+    if ((singlePrintCardId || currentPrint) && singlePrintCard && !isPrintingRef.current) {
+      isPrintingRef.current = true;
       // Set temporary title for PDF filename
       const originalTitle = document.title;
       const personName = `${singlePrintCard.details?.lastName || 'Karte'}`.replace(/\s+/g, '_');
@@ -73,7 +78,7 @@ function SammelkartenManagerContent({ children }: { children: React.ReactNode })
           setSinglePrintCardId(null);
         }
         document.title = originalTitle;
-      }, 700);
+      }, 800);
       return () => {
         clearTimeout(timer);
         document.title = originalTitle;
@@ -104,8 +109,14 @@ function SammelkartenManagerContent({ children }: { children: React.ReactNode })
 
       {/* Single Card Print View */}
       {singlePrintCard && (
-        <div className="hidden print:flex fixed inset-0 bg-white z-[9999] items-center justify-center single-card-print-view">
-          <div className="flex flex-row items-center justify-center gap-[4mm] single-card-print-scaling-wrapper">
+        <div className="hidden print:flex fixed inset-0 bg-white z-[99999] overflow-hidden single-card-print-view items-center justify-center">
+          <div 
+            className="flex flex-row items-center justify-center gap-[6mm] single-card-print-scaling-wrapper"
+            style={{
+              transform: currentPrint?.size === 'original' ? 'scale(1)' : 'scale(2.05)',
+              transformOrigin: 'center center'
+            }}
+          >
             <PrintableTeacherCard 
               data={{ ...singlePrintCard.data, variant: activePrintVariant }} 
               details={singlePrintCard.details} 
@@ -123,23 +134,43 @@ function SammelkartenManagerContent({ children }: { children: React.ReactNode })
 
       <style dangerouslySetInnerHTML={{ __html: `
         @media print {
-          @page { size: ${singlePrintCardId || currentPrint ? 'A4 landscape' : 'A4 portrait'}; margin: 0mm !important; }
-          html, body { background: white !important; margin: 0 !important; padding: 0 !important; width: ${singlePrintCardId || currentPrint ? '297mm' : '210mm'} !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-          header, footer, nav, [role="tablist"], button, .print-hidden { display: none !important; }
-          
-          .print-page-container { 
-            display: ${singlePrintCardId || currentPrint ? 'none !important' : 'flex !important'};
-            page-break-after: always !important; break-after: page !important; height: 297mm !important; width: 210mm !important; align-items: flex-start; justify-content: center; padding-top: 10mm !important; background: white !important; 
+          @page { 
+            size: ${singlePrintCardId || currentPrint ? 'A4 landscape' : 'A4 portrait'}; 
+            margin: 0 !important; 
           }
-          .print-gallery-grid { display: grid !important; grid-template-columns: repeat(3, 63mm) !important; grid-auto-rows: 88mm !important; gap: 2mm !important; justify-content: center !important; }
-          .card-container { transform: none !important; break-inside: avoid !important; page-break-inside: avoid !important; }
           
-          .single-card-print-view {
-            display: ${singlePrintCardId || currentPrint ? 'flex !important' : 'none !important'};
+          html, body { 
+            background: white !important; 
+            margin: 0 !important; 
+            padding: 0 !important; 
+            height: 100vh !important;
+            width: 100vw !important;
+            overflow: hidden !important;
+            -webkit-print-color-adjust: exact !important; 
+            print-color-adjust: exact !important; 
           }
 
-          .single-card-print-scaling-wrapper {
-            transform: scale(2.2) !important;
+          /* Hide all application content */
+          body {
+            visibility: hidden !important;
+          }
+
+          /* Show only the single card print view and its contents */
+          .single-card-print-view {
+            visibility: visible !important;
+            display: flex !important;
+            position: fixed !important;
+            inset: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            background: white !important;
+            z-index: 9999999 !important;
+            align-items: center !important;
+            justify-content: center !important;
+          }
+
+          .single-card-print-view * {
+            visibility: visible !important;
           }
 
           .single-card-print-view [data-slot="back-side"] {
