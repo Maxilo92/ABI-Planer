@@ -19,6 +19,8 @@ import { TradeNegotiationModal } from '@/components/cards/TradeNegotiationModal'
 import { useRouter } from 'next/navigation'
 import { useCountdown } from '@/hooks/useCountdown'
 import { getTradeStatusMeta } from '@/modules/shared/status'
+import { collection, query, where, getDocs, writeBatch } from 'firebase/firestore'
+import { db } from '@/lib/firebase'
 
 function TradeCountdown({ targetDate }: { targetDate: any }) {
   const dateStr = targetDate?.toDate ? targetDate.toDate().toISOString() : (targetDate instanceof Date ? targetDate.toISOString() : targetDate)
@@ -50,6 +52,34 @@ export default function TradeCenterPage() {
       router.replace('/sammelkarten')
     }
   }, [isTradingEnabled, router])
+
+  // Mark trade notifications as read when entering the trade hub
+  useEffect(() => {
+    if (!currentUserId) return;
+
+    const markTradeNotificationsAsRead = async () => {
+      try {
+        const q = query(
+          collection(db, 'notifications', currentUserId, 'messages'),
+          where('read', '==', false),
+          where('type', 'in', ['new_trade_offer', 'counter_trade_offer', 'trade_accepted'])
+        );
+        const snapshot = await getDocs(q);
+        
+        if (snapshot.empty) return;
+
+        const batch = writeBatch(db);
+        snapshot.docs.forEach((docSnap) => {
+          batch.update(docSnap.ref, { read: true });
+        });
+        await batch.commit();
+      } catch (err) {
+        console.error('[TradeHub] Error marking notifications as read:', err);
+      }
+    };
+
+    markTradeNotificationsAsRead();
+  }, [currentUserId]);
 
   const totalCards = useMemo(() => {
     if (teachers) {

@@ -6,6 +6,39 @@
 <!-- default_action: read newest entries only unless a regression requires older history -->
 <!-- index: docs/AGENT_CONTEXT_INDEX.md -->
 
+## [1.34.2.6] - 2026-04-29
+
+### Changed
+- **Sammelkarten-Manager**: Der Manager ist nicht mehr exklusiv für Admins zugänglich, sondern kann nun auch von Benutzern mit der Rolle „Planer“ verwendet werden.
+- **Berechtigungen**: Einführung des `StaffGuard` zur konsistenten Verwaltung von Admin- und Planer-Zugriffen.
+- **Navigation**: Der Sammelkarten-Manager wurde als Unterpunkt im Bereich „Sammelkarten“ in der Sidebar für berechtigte Rollen hinzugefügt.
+
+## [1.34.2.5] - 2026-04-29
+
+### Fixed
+- **Sammelkarten-Manager (Matrix)**: Die Position der Kartennummer auf den Lehrer-Sammelkarten wurde symmetrisiert. Der Abstand zum rechten Rand entspricht nun dem Abstand zum oberen Rand.
+
+## [1.34.2.7] - 2026-04-29
+
+### Changed
+- **Marketing/Dokumentation**: Das Pitch-Dokument wurde um konkrete Produktionszahlen, die Seltenheits- und Variantenstruktur sowie einen realistischen Kostenrahmen für Karten- und Effektfoliendruck ergänzt.
+
+## [1.34.2.6] - 2026-04-29
+
+### Changed
+- **Marketing/Dokumentation**: Das Pitch-Dokument für das Sammelkarten-Konzept wurde zu einem mehrseitigen, schulleitungstauglichen Konzeptpapier ausgebaut, mit Fokus auf Freiwilligkeit, Datenschutz, Fairness und Kostenrahmen.
+
+## [1.34.2.8] - 2026-04-29
+
+### Changed
+- **Marketing/Dokumentation**: Pitch-Dokument um verbindliche rechtliche Leitplanken, Einwilligungs- und Proof-Prozess sowie konkreten Ablauf (Fragebögen, Foto-Termine, Datenaufbewahrung) ergänzt.
+
+## [1.34.2.4] - 2026-04-29
+
+### Added
+- **Sammelkarten-Manager**: Auswahl-Dialog für PDF-Export-Varianten (Standard, Holo, Selten).
+- **Sammelkarten-Manager**: Unterstützung für sequenziellen PDF-Export mehrerer Varianten (Print-Queue), wobei jede Variante als eigene PDF-Datei ausgegeben wird.
+
 ## [1.34.2.3] - 2026-04-27
 
 ### Added

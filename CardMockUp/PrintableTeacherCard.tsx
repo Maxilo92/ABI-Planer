@@ -88,14 +88,14 @@ const darkenColor = (hex: string, amount: number) => {
   return `#${r}${g}${b}`;
 };
 
-export const PrintableTeacherCard: React.FC<PrintableTeacherCardProps> = ({
+export const PrintableTeacherCard = React.memo(({
   data,
   details,
   imageSettings,
   isFlipped: isFlippedExternal,
   onFlip,
   className
-}) => {
+}: PrintableTeacherCardProps) => {
   const [isFlippedInternal, setIsFlippedInternal] = useState(false);
   
   const isFlipped = isFlippedExternal !== undefined ? isFlippedExternal : isFlippedInternal;
@@ -296,9 +296,9 @@ export const PrintableTeacherCard: React.FC<PrintableTeacherCardProps> = ({
           )}
 
           {/* Large Outline Number - Symmetrical Corner Position */}
-          <div className="absolute top-1 right-1 flex items-start justify-end pointer-events-none z-20">
+          <div className="absolute top-2 right-2 flex items-start justify-end pointer-events-none z-20">
             <span 
-              className="text-[52px] font-black text-transparent rotate-90 opacity-70 select-none translate-x-[16%] translate-y-[10%] [print-color-adjust:exact] drop-shadow-[0_4px_8px_rgba(0,0,0,0.5)]"
+              className="text-[52px] font-black text-transparent rotate-90 opacity-70 select-none translate-x-[10%] translate-y-[10%] [print-color-adjust:exact] drop-shadow-[0_4px_8px_rgba(0,0,0,0.5)]"
               style={{ 
                 WebkitTextStroke: '1.5px white',
                 fontFamily: 'sans-serif'
@@ -442,4 +442,6 @@ export const PrintableTeacherCard: React.FC<PrintableTeacherCardProps> = ({
       </motion.div>
     </div>
   );
-};
+});
+
+PrintableTeacherCard.displayName = 'PrintableTeacherCard';

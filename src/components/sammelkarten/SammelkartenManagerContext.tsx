@@ -46,6 +46,10 @@ interface ManagerContextType {
   nextAvailableNumber: string;
   singlePrintCardId: string | null;
   setSinglePrintCardId: (id: string | null) => void;
+  printQueue: { id: string; variant: string }[];
+  setPrintQueue: (queue: { id: string; variant: string }[]) => void;
+  currentPrint: { id: string; variant: string } | null;
+  setCurrentPrint: (print: { id: string; variant: string } | null) => void;
 }
 
 const DEFAULT_RARITY_QUOTAS = { common: 60, rare: 20, epic: 10, mythic: 6, legendary: 3, iconic: 1 };
@@ -63,6 +67,8 @@ export function SammelkartenManagerProvider({ children }: { children: ReactNode 
   const [calculating, setCalculating] = useState(false);
   const [printStats, setPrintStats] = useState<any>(null);
   const [singlePrintCardId, setSinglePrintCardId] = useState<string | null>(null);
+  const [printQueue, setPrintQueue] = useState<{ id: string; variant: string }[]>([]);
+  const [currentPrint, setCurrentPrint] = useState<{ id: string; variant: string } | null>(null);
 
   const [nextAvailableNumber, setNextAvailableNumber] = useState('001');
 
@@ -131,7 +137,8 @@ export function SammelkartenManagerProvider({ children }: { children: ReactNode 
       activeDraftId, setActiveDraftId, boosterCount, setBoosterCount, cardsPerBooster, setCardsPerBooster,
       godpackCount, setGodpackCount, rarityQuotas, setRarityQuotas, variantQuotas, setVariantQuotas,
       printStats, setPrintStats, calculating, setCalculating,
-      nextAvailableNumber, singlePrintCardId, setSinglePrintCardId
+      nextAvailableNumber, singlePrintCardId, setSinglePrintCardId,
+      printQueue, setPrintQueue, currentPrint, setCurrentPrint
     }}>
       {children}
     </ManagerContext.Provider>
