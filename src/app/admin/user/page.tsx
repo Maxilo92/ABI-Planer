@@ -979,18 +979,66 @@ export default function AdminUserPage() {
           {/* Mobile List */}
           <div className="xl:hidden space-y-4">
             {filteredProfiles.map((p) => {
+              const isMainAdminAccount = p.role === 'admin_main' || p.role === 'admin'
+              const isSelf = p.id === profile.id
+              const canManageRoleActions = !isMainAdminAccount && !isSelf
               const selected = isSelected(p.id)
               return (
                 <div key={p.id} className={cn("border rounded-xl p-4 space-y-4 transition-colors", selected ? "bg-primary/5 border-primary/20" : "bg-card/50")}>
                   <div className="flex justify-between items-start gap-2">
-                    <div className="min-w-0 flex items-start gap-3">
-                      <Checkbox checked={selected} onCheckedChange={(checked) => toggleRecipient(p.id, checked === true)} />
-                      <div>
-                        <Link href={`/profil/${p.id}`} className="font-bold hover:underline truncate block text-foreground">{p.full_name || 'Unbekannt'}</Link>
-                        <p className="text-xs text-muted-foreground break-all">{p.email}</p>
+                    <div className="min-w-0 flex-1 flex items-start gap-3">
+                      <Checkbox checked={selected} onCheckedChange={(checked) => toggleRecipient(p.id, checked === true)} className="mt-1" />
+                      <div className="min-w-0 flex-1">
+                        <Link href={`/profil/${p.id}`} className="font-bold hover:underline truncate block text-foreground leading-tight">{p.full_name || 'Unbekannt'}</Link>
+                        <p className="text-xs text-muted-foreground break-all mt-0.5">{p.email}</p>
                       </div>
                     </div>
-                    <Badge variant="outline" className="capitalize">{p.role}</Badge>
+                    
+                    <DropdownMenu>
+                      <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="h-8 w-8 -mr-2"><MoreVertical className="h-4 w-4" /></Button>} />
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => router.push(`/admin/send?u=${p.id}`)}><MessageSquare className="mr-2 h-4 w-4" /> Popup senden</DropdownMenuItem>
+                        <DropdownMenuItem disabled={!canManageRoleActions} onClick={() => handleUpdateProfile(p.id, { role: 'admin' })}><Shield className="mr-2 h-4 w-4" /> Zum Admin</DropdownMenuItem>
+                        <DropdownMenuItem disabled={!canManageRoleActions} onClick={() => handleUpdateProfile(p.id, { role: 'admin_co' })}><Shield className="mr-2 h-4 w-4" /> Zum Co-Admin</DropdownMenuItem>
+                        <DropdownMenuItem disabled={!canManageRoleActions} onClick={() => {
+                          setTimeoutTarget({ id: p.id, name: p.full_name || p.email })
+                          setIsTimeoutDialogOpen(true)
+                        }}><AlertTriangle className="mr-2 h-4 w-4 text-destructive" /> Warnen / Sperren</DropdownMenuItem>
+                        <ResetPasswordDialog userEmail={p.email} userName={p.full_name || 'User'} />
+                        <DropdownMenuItem className="text-destructive" disabled={!canManageRoleActions} onClick={() => handleDeleteProfile(p.id)}><Trash2 className="mr-2 h-4 w-4" /> Löschen</DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge variant="outline" className="capitalize text-[10px] h-5">{p.role}</Badge>
+                    {p.timeout_until && new Date(p.timeout_until).getTime() > Date.now() && (
+                      <Badge variant="destructive" className="text-[10px] h-5">Sperre</Badge>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-border/50">
+                    <div className="space-y-1.5">
+                      <Label className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground/70 ml-1">Kurs</Label>
+                      <SearchableValuePicker
+                        value={p.class_name || ''}
+                        options={courses}
+                        emptyLabel="Kein Kurs"
+                        searchPlaceholder="Kurs suchen..."
+                        onSelect={(value) => handleUpdateProfile(p.id, { class_name: value || null })}
+                        className="h-8 text-xs"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground/70 ml-1">Planungsgruppe</Label>
+                      <PlanningGroupsPopover
+                        profileId={p.id}
+                        groups={p.planning_groups || []}
+                        availableGroups={planningGroups}
+                        onAddGroup={(profileId, groupName) => handleUpdateProfile(profileId, { planning_groups: arrayUnion(groupName) })}
+                        onRemoveGroup={(profileId, groupName) => handleUpdateProfile(profileId, { planning_groups: arrayRemove(groupName) })}
+                      />
+                    </div>
                   </div>
                 </div>
               )

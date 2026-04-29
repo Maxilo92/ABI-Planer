@@ -6,6 +6,183 @@
 <!-- default_action: read newest entries only unless a regression requires older history -->
 <!-- index: docs/AGENT_CONTEXT_INDEX.md -->
 
+## [1.34.4.3] - 2026-04-29
+
+### Fixed
+- **Logo**: Die Logo-Assets wurden in den `src`-Ordner verschoben (`src/assets/logos/`) und die Importe in `Logo.tsx` wurden auf `@/assets/...` umgestellt, um die Zuverlässigkeit der Modulauflösung in TypeScript zu verbessern.
+- **Config**: `baseUrl` wurde zur `tsconfig.json` hinzugefügt, um eine konsistente Auflösung von Pfad-Aliasen zu gewährleisten.
+
+## [1.34.4.2] - 2026-04-29
+
+### Fixed
+- **Logo**: Die Import-Pfade in `src/components/Logo.tsx` wurden korrigiert und die Logo-Dateien umbenannt, um Leerzeichen und Sonderzeichen zu entfernen, die zu Build-Fehlern führten.
+- **Abstimmungen**: Ein TypeScript-Typisierungsfehler beim Laden von Einreichungen in `src/app/abstimmungen/[id]/page.tsx` wurde behoben.
+
+## [1.34.4.1] - 2026-04-29
+
+### Changed
+- **Sammelkarten-Manager**: Der Index (`cardNumber`) wird nun basierend auf der Seltenheit vergeben.
+  - Ikonische Karten erhalten die niedrigsten Nummern (001, 002...), gefolgt von Legendär, Mythisch, Episch, Selten und Gewöhnlich.
+  - Neue Funktion "Neu nummerieren" im Pool-Manager hinzugefügt, um alle Karten im Pool automatisch nach Seltenheit und Name zu sortieren und neu zu indizieren.
+  - Die Standard-Sortierung im Pool-Manager wurde auf den Karten-Index (`cardNumber`) umgestellt.
+- **Admin-Pool**: Die Seltenheits-Sortierung wurde vereinheitlicht, sodass seltenere Karten (Ikonisch zuerst) nun bei aufsteigender Sortierung am Anfang der Liste stehen.
+
+## [1.34.4.0] - 2026-04-29
+
+### Added
+- **Umfrage-Export**: Umfrageergebnisse können nun als CSV-Datei exportiert werden.
+  - Der Export enthält alle Antwortmöglichkeiten, Stimmenanzahlen und die Namen der Teilnehmer.
+  - Eigene Vorschläge (Submissions) werden ebenfalls im Export berücksichtigt und gruppiert dargestellt.
+  - Zugriff auf den Export haben Planer, Administratoren und der jeweilige Ersteller der Umfrage.
+
+## [1.34.3.2] - 2026-04-29
+
+### Fixed
+- **Export**: Überarbeitung der Druck-Sichtbarkeit mit einem robusteren `visibility`-Ansatz. Dies behebt das Problem der leeren Seiten bei beiden Export-Größen (Fullsize & Poker), indem die Export-Ansicht gezielt eingeblendet wird, während der Rest der App während des Drucks unsichtbar bleibt.
+
+## [1.34.3.1] - 2026-04-29
+
+### Fixed
+- **Export**: Behebung eines Fehlers, bei dem der Poker-Karten-Export (Originalgröße) eine leere Seite erzeugte. Die Print-Sichtbarkeit wurde optimiert, um sicherzustellen, dass die Karten unabhängig von der Verschachtelung im DOM korrekt gerendert werden.
+
+## [1.34.3.0] - 2026-04-29
+
+### Added
+- **Sammelkarten-Export**: Einführung von Export-Größenoptionen im PDF-Dialog.
+  - **Fullsize**: Die bisherige postergroße Ansicht (skaliert auf A4).
+  - **Originalgröße**: Export in exakten Poker-Karten-Maßen (63mm x 88mm), ideal für den direkten Druck auf Karten-Rohlinge oder Bastelbögen.
+
+## [1.34.2.16] - 2026-04-29
+
+### Fixed
+- **Export**: Radikale Lösung des „Zwei-Seiten-Problems“. Die Export-Ansicht wird nun absolut auf der Seite fixiert und alle anderen Seitenelemente werden während des Drucks zwangsweise ausgeblendet. Die Skalierung wurde auf 2.05 optimiert, um jeglichen Überlauf (Overflow) zu eliminieren.
+
+## [1.34.2.15] - 2026-04-29
+
+### Fixed
+- **UI/UX**: Die Varianten-Auswahl im Export-Dialog wurde komplett überarbeitet. Conflicting Event-Handler wurden entfernt und visuelles Feedback (Farben, Animationen) hinzugefügt, damit sich die Auswahl „snappy“ und direkt anfühlt.
+
+## [1.34.2.14] - 2026-04-29
+
+### Fixed
+- **Code**: Syntax-Fehler in der `layout.tsx` behoben, der durch eine fehlerhafte Text-Ersetzung in den Druck-Styles verursacht wurde.
+
+## [1.34.2.13] - 2026-04-29
+
+### Fixed
+- **Export**: Ein „Print Lock“ verhindert nun, dass Karten beim PDF-Export doppelt getriggert werden (behebt das Problem der mehrfachen PDF-Dialoge).
+- **Export**: Durch striktere CSS-Höhenbeschränkungen (`100vh`) und `overflow: hidden` im Druck-View wird die Erstellung einer unnötigen zweiten Leerseite im PDF unterbunden.
+
+## [1.34.2.12] - 2026-04-29
+
+### Fixed
+- **Sammelkarten-Design**: Die Position der Kartennummer wurde auf den vorherigen Stand zurückgesetzt, da dieser bereits als optimal bewertet wurde.
+
+## [1.34.2.11] - 2026-04-29
+
+### Changed
+- **Sammelkarten-Design**: Die Position der Kartennummer wurde final angepasst (Nudge) und über alle Komponenten hinweg harmonisiert.
+- **Sammelkarten-Design**: Das Muster-Overlay wurde nun auch bei der „Iconic“ (Ikonen) Rarity entfernt, um ein ruhigeres Gesamtbild zu gewährleisten.
+- **Export**: Der Skalierungsfaktor im PDF-Export wurde von 2,2 auf 2,1 reduziert, um einen sichereren Druckbereich zu garantieren und potenzielle Rendering-Artefakte zu minimieren.
+
+## [1.34.2.10] - 2026-04-29
+
+### Fixed
+- **Sammelkarten-Design**: Das Hexagon-Muster im Hintergrund der „seltenen“ Karten-Variante wurde entfernt, um ein klareres Erscheinungsbild zu erzielen.
+
+## [1.34.2.6] - 2026-04-29
+
+### Changed
+- **Sammelkarten-Manager**: Der Manager ist nicht mehr exklusiv für Admins zugänglich, sondern kann nun auch von Benutzern mit der Rolle „Planer“ verwendet werden.
+- **Berechtigungen**: Einführung des `StaffGuard` zur konsistenten Verwaltung von Admin- und Planer-Zugriffen.
+- **Navigation**: Der Sammelkarten-Manager wurde als Unterpunkt im Bereich „Sammelkarten“ in der Sidebar für berechtigte Rollen hinzugefügt.
+
+## [1.34.2.5] - 2026-04-29
+
+### Fixed
+- **Sammelkarten-Manager (Matrix)**: Die Position der Kartennummer auf den Lehrer-Sammelkarten wurde symmetrisiert. Der Abstand zum rechten Rand entspricht nun dem Abstand zum oberen Rand.
+
+## [1.34.2.7] - 2026-04-29
+
+### Changed
+- **Marketing/Dokumentation**: Das Pitch-Dokument wurde um konkrete Produktionszahlen, die Seltenheits- und Variantenstruktur sowie einen realistischen Kostenrahmen für Karten- und Effektfoliendruck ergänzt.
+
+## [1.34.2.6] - 2026-04-29
+
+### Changed
+- **Marketing/Dokumentation**: Das Pitch-Dokument für das Sammelkarten-Konzept wurde zu einem mehrseitigen, schulleitungstauglichen Konzeptpapier ausgebaut, mit Fokus auf Freiwilligkeit, Datenschutz, Fairness und Kostenrahmen.
+
+## [1.34.2.8] - 2026-04-29
+
+### Changed
+- **Marketing/Dokumentation**: Pitch-Dokument um verbindliche rechtliche Leitplanken, Einwilligungs- und Proof-Prozess sowie konkreten Ablauf (Fragebögen, Foto-Termine, Datenaufbewahrung) ergänzt.
+
+## [1.34.2.9] - 2026-04-29
+
+### Changed
+- **Marketing/Dokumentation**: Pitch-Dokument um Finanzierungshinweis, Lessons-Learned (früherer Versuch) und Maßnahmen zur finanziellen Absicherung ergänzt.
+
+## [1.34.2.4] - 2026-04-29
+
+### Added
+- **Sammelkarten-Manager**: Auswahl-Dialog für PDF-Export-Varianten (Standard, Holo, Selten).
+- **Sammelkarten-Manager**: Unterstützung für sequenziellen PDF-Export mehrerer Varianten (Print-Queue), wobei jede Variante als eigene PDF-Datei ausgegeben wird.
+
+## [1.34.2.3] - 2026-04-27
+
+### Added
+- **Sammelkarten-Manager**: Dynamische Benennung der PDF-Export-Dateien. Exportierte Einzelkarten werden nun automatisch nach dem Format `Nachname_Seltenheit_Variante.pdf` benannt.
+
+## [1.34.2.2] - 2026-04-27
+
+### Changed
+- **Sammelkarten-Manager**: Die Karten im Einzelkarten-PDF-Export wurden um den Faktor 2,2 skaliert, um die DIN-A4-Seite im Querformat optimal auszufüllen.
+
+## [1.34.2.1] - 2026-04-27
+
+### Fixed
+- **Sammelkarten-Manager**: Korrektur der Spiegelung der Kartenrückseite beim Einzelkarten-PDF-Export. Die Rückseite wird nun lesbar und ungespiegelt dargestellt.
+
+## [1.34.2.0] - 2026-04-27
+
+### Added
+- **Sammelkarten-Manager**: Implementierung eines Einzelkarten-PDF-Exports im Querformat.
+  - Neuer "Export PDF" Button für jede Karte im Pool (Grid- und Tabellenansicht).
+  - Automatischer Druckdialog mit optimiertem Landscape-Layout, das Vorder- und Rückseite der Karte nebeneinander darstellt.
+  - Isolierte Druckansicht, die das restliche UI während des Exports ausblendet.
+
+## [1.34.1.24] - 2026-04-26
+
+### Fixed
+- **Build**: Korrektur eines TypeScript-Fehlers in `firebase-admin-server.ts`. Die `firestore()`-Methode des Admin-Apps wurde durch den expliziten `getFirestore`-Import ersetzt, um die korrekte Typisierung für die Datenbank-ID `abi-data` sicherzustellen.
+
+## [1.34.1.23] - 2026-04-26
+
+### Fixed
+- **Datenbank (Firestore)**: Behebung von kritischen Fehlern in der Produktionsumgebung basierend auf Log-Analysen.
+  - Hinzufügen des fehlenden zusammengesetzten Index für `matches` (Status + turnStartTime), um die Timeout-Prüfung im Combat-System zu reparieren.
+  - Korrektur der Datenbank-Initialisierung: Alle Admin-API-Routen nutzen nun explizit die Datenbank `abi-data`, was 502/NOT_FOUND Fehler bei der Sitzungsbeendigung (`close-session`) behebt.
+  - Robusteres Fallback für Firebase Admin: In Produktionsumgebungen wird nun automatisch auf `applicationDefault()` zurückgegriffen, falls explizite Service-Account-Umgebungsvariablen fehlen.
+
+## [1.34.1.22] - 2026-04-26
+
+### Fixed
+- **Admin/Benutzerverwaltung**: Verbesserung der mobilen Nutzbarkeit.
+  - Das Drei-Punkte-Aktionsmenü wurde in die mobile Listenansicht integriert, sodass Nutzeraktionen (Sperren, Löschen, Rollenänderung) nun auch auf kleinen Bildschirmen verfügbar sind.
+  - Die Kurs- und Gruppenauswahl wurde zur mobilen Ansicht hinzugefügt, um die vollständige Profilverwaltung auf mobilen Endgeräten zu ermöglichen.
+  - Optimierung des mobilen Layouts der Benutzerkarten für bessere Übersichtlichkeit.
+
+## [1.34.1.21] - 2026-04-26
+
+### Added
+- **Kalender**: Einführung einer Löschfunktion für Termine. Termine können nun direkt über den Bearbeiten-Dialog gelöscht werden (nur für Planer/Admins).
+
+### Fixed
+- **Kalender**: Wiederherstellung der Bearbeitbarkeit von Terminen. 
+  - Die Bearbeitungs-Schaltfläche (Stift-Icon) wurde in die Termin-Karten der Seitenleiste integriert.
+  - Der Bearbeiten-Dialog wurde zusätzlich auf der Termin-Detailseite verfügbar gemacht.
+  - Jede Termin-Karte im Kalender verlinkt nun korrekt auf die entsprechende Detailseite.
+
 ## [1.34.1.20] - 2026-04-26
 
 ### Fixed

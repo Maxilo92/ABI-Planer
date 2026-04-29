@@ -68,6 +68,7 @@ interface NavItem {
     isExternal?: boolean; 
     notify?: boolean;
     feature?: string;
+    roles?: string[];
   }[];
   feature?: string;
   notify?: boolean;
@@ -113,6 +114,7 @@ export const Sidebar: React.FC = () => {
   };
 
   const isAdmin = ['admin_main', 'admin', 'admin_co'].includes(profile?.role || '');
+  const isStaff = isAdmin || profile?.role === 'planner';
   
   const dashboardUrl = getDashboardBaseUrl();
   const tcgUrl = getTcgBaseUrl();
@@ -165,6 +167,7 @@ export const Sidebar: React.FC = () => {
             { id: 'booster', label: 'Booster', icon: Gift, href: `${tcgUrl}/booster`, isExternal: true },
             { id: 'album', label: 'Album', icon: Trophy, href: `${tcgUrl}/album`, isExternal: true },
             { id: 'trading', label: 'Trading', icon: ArrowLeftRight, href: `${tcgUrl}/sammelkarten/tausch`, isExternal: true, feature: 'trading_status', notify: notifications.karten },
+            { id: 'manager', label: 'Manager (Staff)', icon: Settings, href: '/sammelkarten-manager', roles: ['admin_main', 'admin_co', 'admin', 'planner'] },
           ]
         }
       ]
@@ -225,7 +228,11 @@ export const Sidebar: React.FC = () => {
       if (item.feature && !isEnabled(item.feature as any)) return null;
       
       if (item.subItems) {
-        const filteredSubs = item.subItems.filter(sub => !sub.feature || isEnabled(sub.feature as any));
+        const filteredSubs = item.subItems.filter(sub => {
+          if (sub.feature && !isEnabled(sub.feature as any)) return false;
+          if (sub.roles && (!profile?.role || !sub.roles.includes(profile.role))) return false;
+          return true;
+        });
         if (filteredSubs.length === 0) return null;
         return { ...item, subItems: filteredSubs };
       }
