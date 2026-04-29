@@ -7,7 +7,7 @@ import { useManager } from '@/components/sammelkarten/SammelkartenManagerContext
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Trash2, Wand2, Grid as GridIcon, Table as TableIcon, Loader2 } from 'lucide-react';
+import { Trash2, Wand2, Grid as GridIcon, Table as TableIcon, Loader2, Printer } from 'lucide-react';
 import { PrintableTeacherCard } from '../../../../CardMockUp/PrintableTeacherCard';
 import { cn } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
@@ -23,7 +23,7 @@ const RARITY_OPTIONS = [
 
 export default function PoolPage() {
   const router = useRouter();
-  const { approvedCards, loading, setFormData, setActiveDraftId } = useManager();
+  const { approvedCards, loading, setFormData, setActiveDraftId, setSinglePrintCardId } = useManager();
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
@@ -96,6 +96,7 @@ export default function PoolPage() {
                    </TableCell>
                    <TableCell className="px-4 text-right">
                       <div className="flex justify-end gap-1">
+                         <Button variant="ghost" onClick={() => setSinglePrintCardId(card.dbId)} className="h-7 w-7 text-neutral-300 hover:text-primary"><Printer className="w-3.5 h-3.5" /></Button>
                          <Button variant="ghost" onClick={() => loadToEditor(card)} className="h-7 w-7 text-neutral-300 hover:text-blue-500"><Wand2 className="w-3.5 h-3.5" /></Button>
                          <Button variant="ghost" onClick={() => handleDeleteCard(card.dbId)} className="h-7 w-7 text-neutral-300 hover:text-red-500"><Trash2 className="w-3.5 h-3.5" /></Button>
                       </div>
@@ -110,6 +111,7 @@ export default function PoolPage() {
           {approvedCards.map((t_card, idx) => (
             <div key={t_card.dbId || idx} className="flex flex-col items-center gap-6 group relative hover:z-50">
               <div className="absolute -top-3 -right-3 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-all z-30">
+                 <button onClick={() => setSinglePrintCardId(t_card.dbId)} className="w-8 h-8 bg-white text-neutral-800 rounded-full flex items-center justify-center shadow-xl border-2 border-white hover:scale-110 hover:bg-neutral-50"><Printer className="w-4 h-4" /></button>
                  <button onClick={() => loadToEditor(t_card)} className="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center shadow-xl border-2 border-white hover:scale-110 hover:bg-blue-600"><Wand2 className="w-4 h-4" /></button>
                  <button onClick={() => handleDeleteCard(t_card.dbId)} className="w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center shadow-xl border-2 border-white hover:scale-110 hover:bg-red-600"><Trash2 className="w-4 h-4" /></button>
               </div>

@@ -6,6 +6,29 @@
 <!-- default_action: read newest entries only unless a regression requires older history -->
 <!-- index: docs/AGENT_CONTEXT_INDEX.md -->
 
+## [1.34.2.3] - 2026-04-27
+
+### Added
+- **Sammelkarten-Manager**: Dynamische Benennung der PDF-Export-Dateien. Exportierte Einzelkarten werden nun automatisch nach dem Format `Nachname_Seltenheit_Variante.pdf` benannt.
+
+## [1.34.2.2] - 2026-04-27
+
+### Changed
+- **Sammelkarten-Manager**: Die Karten im Einzelkarten-PDF-Export wurden um den Faktor 2,2 skaliert, um die DIN-A4-Seite im Querformat optimal auszufüllen.
+
+## [1.34.2.1] - 2026-04-27
+
+### Fixed
+- **Sammelkarten-Manager**: Korrektur der Spiegelung der Kartenrückseite beim Einzelkarten-PDF-Export. Die Rückseite wird nun lesbar und ungespiegelt dargestellt.
+
+## [1.34.2.0] - 2026-04-27
+
+### Added
+- **Sammelkarten-Manager**: Implementierung eines Einzelkarten-PDF-Exports im Querformat.
+  - Neuer "Export PDF" Button für jede Karte im Pool (Grid- und Tabellenansicht).
+  - Automatischer Druckdialog mit optimiertem Landscape-Layout, das Vorder- und Rückseite der Karte nebeneinander darstellt.
+  - Isolierte Druckansicht, die das restliche UI während des Exports ausblendet.
+
 ## [1.34.1.24] - 2026-04-26
 
 ### Fixed

@@ -44,6 +44,8 @@ interface ManagerContextType {
   calculating: boolean;
   setCalculating: (v: boolean) => void;
   nextAvailableNumber: string;
+  singlePrintCardId: string | null;
+  setSinglePrintCardId: (id: string | null) => void;
 }
 
 const DEFAULT_RARITY_QUOTAS = { common: 60, rare: 20, epic: 10, mythic: 6, legendary: 3, iconic: 1 };
@@ -60,6 +62,7 @@ export function SammelkartenManagerProvider({ children }: { children: ReactNode 
   const [activeDraftId, setActiveDraftId] = useState<string | null>(null);
   const [calculating, setCalculating] = useState(false);
   const [printStats, setPrintStats] = useState<any>(null);
+  const [singlePrintCardId, setSinglePrintCardId] = useState<string | null>(null);
 
   const [nextAvailableNumber, setNextAvailableNumber] = useState('001');
 
@@ -128,7 +131,7 @@ export function SammelkartenManagerProvider({ children }: { children: ReactNode 
       activeDraftId, setActiveDraftId, boosterCount, setBoosterCount, cardsPerBooster, setCardsPerBooster,
       godpackCount, setGodpackCount, rarityQuotas, setRarityQuotas, variantQuotas, setVariantQuotas,
       printStats, setPrintStats, calculating, setCalculating,
-      nextAvailableNumber
+      nextAvailableNumber, singlePrintCardId, setSinglePrintCardId
     }}>
       {children}
     </ManagerContext.Provider>
