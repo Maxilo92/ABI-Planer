@@ -6,6 +6,12 @@
 <!-- default_action: read newest entries only unless a regression requires older history -->
 <!-- index: docs/AGENT_CONTEXT_INDEX.md -->
 
+## [1.34.4.3] - 2026-04-29
+
+### Fixed
+- **Logo**: Die Logo-Assets wurden in den `src`-Ordner verschoben (`src/assets/logos/`) und die Importe in `Logo.tsx` wurden auf `@/assets/...` umgestellt, um die Zuverlässigkeit der Modulauflösung in TypeScript zu verbessern.
+- **Config**: `baseUrl` wurde zur `tsconfig.json` hinzugefügt, um eine konsistente Auflösung von Pfad-Aliasen zu gewährleisten.
+
 ## [1.34.4.2] - 2026-04-29
 
 ### Fixed
