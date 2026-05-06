@@ -511,18 +511,19 @@ export default function SettingsPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <h1 className="text-3xl font-extrabold tracking-tight">{t('settings.title')}</h1>
-              <p className="text-sm text-muted-foreground mt-1">Verwalte deine Kontoeinstellungen und Präferenzen</p>
+      <div className="fixed top-0 left-0 right-0 z-40 border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-4">
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight truncate">{t('settings.title')}</h1>
+              <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 hidden sm:block">Verwalte deine Kontoeinstellungen und Präferenzen</p>
             </div>
             <Button
               variant="ghost"
               size="icon"
-              className="md:hidden"
+              className="md:hidden h-9 w-9 flex-shrink-0"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-label="Menü"
             >
               {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </Button>
@@ -530,50 +531,66 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      {/* Content Area */}
-      <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-8">
-          {/* Sidebar Navigation */}
-          <aside className={`${mobileMenuOpen ? 'block' : 'hidden'} md:block`}>
-            <nav className="sticky top-24 space-y-1">
+      {/* Content Area - with top padding for fixed header */}
+      <div className="mt-[60px] sm:mt-[76px]">
+        {/* Mobile Menu Overlay */}
+        {mobileMenuOpen && (
+          <div
+            className="fixed inset-0 z-30 bg-black/20 md:hidden"
+            onClick={() => setMobileMenuOpen(false)}
+          />
+        )}
+
+        <div className="mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8">
+          <div className="grid grid-cols-1 md:grid-cols-[200px_1fr] lg:grid-cols-[240px_1fr] gap-4 sm:gap-8">
+            {/* Sidebar Navigation */}
+            <aside
+              className={`${
+                mobileMenuOpen
+                  ? 'fixed left-0 top-[60px] sm:top-[76px] bottom-0 w-56 z-30 bg-background border-r border-border/40 overflow-y-auto'
+                  : 'hidden'
+              } md:static md:display md:z-auto md:w-auto md:top-auto md:bottom-auto md:border-r-0 md:bg-transparent md:overflow-visible`}
+            >
+              <nav className="md:sticky md:top-24 space-y-1 p-4 md:p-0">
               {navItems.map((item) => (
                 <button
                   key={item.id}
                   onClick={() => navigateToSection(item.id)}
                   disabled={item.disabled}
-                  className={`w-full text-left px-4 py-3 rounded-lg font-medium text-sm transition-colors flex items-center gap-2 ${
+                  className={`w-full text-left px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg font-medium text-xs sm:text-sm transition-colors flex items-center gap-2 ${
                     activeSection === item.id
                       ? 'bg-accent text-accent-foreground'
                       : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                   } ${item.disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
                 >
-                  {item.icon}
-                  <span>{item.label}</span>
-                  {activeSection === item.id && <ChevronRight className="h-4 w-4 ml-auto" />}
+                  <span className="flex-shrink-0">{item.icon}</span>
+                  <span className="truncate">{item.label}</span>
+                  {activeSection === item.id && <ChevronRight className="h-4 w-4 ml-auto flex-shrink-0" />}
                 </button>
               ))}
             </nav>
+            
           </aside>
 
           {/* Main Content */}
-          <main className="space-y-6">
+          <main className="space-y-4 sm:space-y-6 pb-8">
             {/* Profile Section */}
             {activeSection === 'personal' && (
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 <div>
-                  <h2 className="text-xl font-bold">{t('settings.sections.personal')}</h2>
-                  <p className="text-sm text-muted-foreground">Verwalte deine persönlichen Daten</p>
+                  <h2 className="text-lg sm:text-xl font-bold">{t('settings.sections.personal')}</h2>
+                  <p className="text-xs sm:text-sm text-muted-foreground">Verwalte deine persönlichen Daten</p>
                 </div>
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-lg">
-                      <User className="h-4 w-4" /> {t('settings.profile.title')}
+                <Card className="overflow-hidden">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                      <User className="h-4 w-4 flex-shrink-0" /> {t('settings.profile.title')}
                     </CardTitle>
-                    <CardDescription>{t('settings.profile.desc')}</CardDescription>
+                    <CardDescription className="text-xs sm:text-sm">{t('settings.profile.desc')}</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <Button
-                      className="w-full sm:w-auto"
+                      className="w-full sm:w-auto h-9 sm:h-10"
                       render={
                         <Link href="/profil">
                           {t('settings.profile.button')}
@@ -587,30 +604,30 @@ export default function SettingsPage() {
 
             {/* Appearance Section */}
             {activeSection === 'appearance' && (
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 <div>
-                  <h2 className="text-xl font-bold">{t('settings.sections.appearance')}</h2>
-                  <p className="text-sm text-muted-foreground">Passe das Aussehen an deine Vorlieben an</p>
+                  <h2 className="text-lg sm:text-xl font-bold">{t('settings.sections.appearance')}</h2>
+                  <p className="text-xs sm:text-sm text-muted-foreground">Passe das Aussehen an deine Vorlieben an</p>
                 </div>
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">{t('settings.appearance.title')}</CardTitle>
-                    <CardDescription>{t('settings.appearance.desc')}</CardDescription>
+                <Card className="overflow-hidden">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base sm:text-lg">{t('settings.appearance.title')}</CardTitle>
+                    <CardDescription className="text-xs sm:text-sm">{t('settings.appearance.desc')}</CardDescription>
                   </CardHeader>
-                  <CardContent className="space-y-6">
-                    <div className="space-y-3">
-                      <Label className="text-base font-semibold">Farbschema</Label>
+                  <CardContent className="space-y-4 sm:space-y-6">
+                    <div className="space-y-2 sm:space-y-3">
+                      <Label className="text-sm font-semibold">Farbschema</Label>
                       <ThemeToggle />
                     </div>
-                    <div className="border-t pt-6 space-y-3">
-                      <Label className="text-base font-semibold">Akzentfarbe</Label>
+                    <div className="border-t pt-4 sm:pt-6 space-y-2 sm:space-y-3">
+                      <Label className="text-sm font-semibold">Akzentfarbe</Label>
                       <AccentThemeSelector />
                     </div>
-                    <div className="rounded-lg border border-border/60 bg-muted/30 p-4 space-y-4 mt-6">
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="space-y-1">
-                          <p className="text-sm font-semibold flex items-center gap-2">
-                            <ImageIcon className="h-4 w-4" /> Custom User Icon
+                    <div className="rounded-lg border border-border/60 bg-muted/30 p-3 sm:p-4 space-y-3 sm:space-y-4 mt-4 sm:mt-6">
+                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+                        <div className="space-y-1 min-w-0">
+                          <p className="text-xs sm:text-sm font-semibold flex items-center gap-2">
+                            <ImageIcon className="h-4 w-4 flex-shrink-0" /> Custom User Icon
                           </p>
                           <p className="text-xs text-muted-foreground">
                             {profile.cosmetics?.custom_avatar
@@ -619,26 +636,27 @@ export default function SettingsPage() {
                           </p>
                         </div>
                         {!profile.cosmetics?.custom_avatar && (
-                          <Button variant="outline" size="sm" render={<Link href="/shop?category=cosmetics">Im Shop freischalten</Link>} />
+                          <Button variant="outline" size="sm" className="h-8 text-xs sm:text-sm flex-shrink-0" render={<Link href="/shop?category=cosmetics">Im Shop freischalten</Link>} />
                         )}
                       </div>
 
                       {profile.cosmetics?.custom_avatar ? (
-                        <div className="space-y-3 pt-4 border-t">
+                        <div className="space-y-3 pt-3 sm:pt-4 border-t">
                           <div className="space-y-2">
-                            <Label htmlFor="custom-avatar-url" className="text-sm">Bild-URL</Label>
+                            <Label htmlFor="custom-avatar-url" className="text-xs sm:text-sm">Bild-URL</Label>
                             <Input
                               id="custom-avatar-url"
                               value={customAvatarUrl}
                               onChange={(e) => setCustomAvatarUrl(e.target.value)}
                               placeholder="https://.../mein-icon.png"
+                              className="text-sm"
                             />
                           </div>
-                          <div className="flex items-center gap-3">
-                            <Button onClick={handleSaveCustomAvatar} disabled={savingAvatar} size="sm">
+                          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                            <Button onClick={handleSaveCustomAvatar} disabled={savingAvatar} size="sm" className="h-9 sm:h-10 text-xs sm:text-sm">
                               {savingAvatar ? 'Speichere...' : 'User Icon speichern'}
                             </Button>
-                            <Button variant="ghost" onClick={() => setCustomAvatarUrl(profile.photo_url || '')} disabled={savingAvatar} size="sm">
+                            <Button variant="ghost" onClick={() => setCustomAvatarUrl(profile.photo_url || '')} disabled={savingAvatar} size="sm" className="h-9 sm:h-10 text-xs sm:text-sm">
                               Zurücksetzen
                             </Button>
                           </div>
@@ -652,41 +670,41 @@ export default function SettingsPage() {
 
             {/* Language Section */}
             {activeSection === 'language' && (
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 <div>
-                  <h2 className="text-xl font-bold">{t('settings.sections.language')}</h2>
-                  <p className="text-sm text-muted-foreground">Wähle deine bevorzugte Sprache</p>
+                  <h2 className="text-lg sm:text-xl font-bold">{t('settings.sections.language')}</h2>
+                  <p className="text-xs sm:text-sm text-muted-foreground">Wähle deine bevorzugte Sprache</p>
                 </div>
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">{t('settings.language.title')}</CardTitle>
-                    <CardDescription>{t('settings.language.desc')}</CardDescription>
+                <Card className="overflow-hidden">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base sm:text-lg">{t('settings.language.title')}</CardTitle>
+                    <CardDescription className="text-xs sm:text-sm">{t('settings.language.desc')}</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                       <Button
                         variant={language === 'de-DE' ? 'default' : 'outline'}
                         onClick={() => setLanguage('de-DE')}
-                        className="justify-start gap-2"
+                        className="justify-start sm:justify-center gap-2 h-9 sm:h-10 text-xs sm:text-sm"
                       >
-                        <span className="text-xs font-bold bg-muted px-1.5 rounded">DE</span>
-                        Deutsch
+                        <span className="text-xs font-bold bg-muted px-1.5 rounded flex-shrink-0">DE</span>
+                        <span className="hidden sm:inline">Deutsch</span>
                       </Button>
                       <Button
                         variant={language === 'en-US' ? 'default' : 'outline'}
                         onClick={() => setLanguage('en-US')}
-                        className="justify-start gap-2"
+                        className="justify-start sm:justify-center gap-2 h-9 sm:h-10 text-xs sm:text-sm"
                       >
-                        <span className="text-xs font-bold bg-muted px-1.5 rounded">EN</span>
-                        English
+                        <span className="text-xs font-bold bg-muted px-1.5 rounded flex-shrink-0">EN</span>
+                        <span className="hidden sm:inline">English</span>
                       </Button>
                       <Button
                         variant={language === 'es-ES' ? 'default' : 'outline'}
                         onClick={() => setLanguage('es-ES')}
-                        className="justify-start gap-2"
+                        className="justify-start sm:justify-center gap-2 h-9 sm:h-10 text-xs sm:text-sm"
                       >
-                        <span className="text-xs font-bold bg-muted px-1.5 rounded">ES</span>
-                        Español
+                        <span className="text-xs font-bold bg-muted px-1.5 rounded flex-shrink-0">ES</span>
+                        <span className="hidden sm:inline">Español</span>
                       </Button>
                     </div>
                   </CardContent>
@@ -696,23 +714,23 @@ export default function SettingsPage() {
 
             {/* Notifications Section */}
             {activeSection === 'notifications' && (
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 <div>
-                  <h2 className="text-xl font-bold">Benachrichtigungen</h2>
-                  <p className="text-sm text-muted-foreground">Verwalte deine Benachrichtigungseinstellungen</p>
+                  <h2 className="text-lg sm:text-xl font-bold">Benachrichtigungen</h2>
+                  <p className="text-xs sm:text-sm text-muted-foreground">Verwalte deine Benachrichtigungseinstellungen</p>
                 </div>
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Push-Benachrichtigungen</CardTitle>
-                    <CardDescription>Erhalte Push-Benachrichtigungen bei neuen News, Todos oder DMs.</CardDescription>
+                <Card className="overflow-hidden">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base sm:text-lg">Push-Benachrichtigungen</CardTitle>
+                    <CardDescription className="text-xs sm:text-sm">Erhalte Push-Benachrichtigungen bei neuen News, Todos oder DMs.</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     {!isSupported ? (
-                      <p className="text-sm text-muted-foreground italic">Push-Benachrichtigungen werden von deinem Browser leider nicht unterstützt.</p>
+                      <p className="text-xs sm:text-sm text-muted-foreground italic">Push-Benachrichtigungen werden von deinem Browser leider nicht unterstützt.</p>
                     ) : (
-                      <div className="flex items-center justify-between space-x-2">
-                        <div className="flex flex-col space-y-1">
-                          <Label htmlFor="push-notifications" className="text-base font-semibold">Native Push-Benachrichtigungen</Label>
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+                        <div className="flex flex-col space-y-1 min-w-0">
+                          <Label htmlFor="push-notifications" className="text-xs sm:text-sm font-semibold">Native Push-Benachrichtigungen</Label>
                           <p className="text-xs text-muted-foreground">
                             {permission === 'granted'
                               ? 'Aktiviert. Du erhältst Benachrichtigungen direkt auf dein Gerät.'
@@ -744,15 +762,15 @@ export default function SettingsPage() {
 
             {/* Feedback Section */}
             {activeSection === 'feedback' && (
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 <div>
-                  <h2 className="text-xl font-bold">{t('settings.sections.feedback')}</h2>
-                  <p className="text-sm text-muted-foreground">Teile dein Feedback und deine Ideen mit uns</p>
+                  <h2 className="text-lg sm:text-xl font-bold">{t('settings.sections.feedback')}</h2>
+                  <p className="text-xs sm:text-sm text-muted-foreground">Teile dein Feedback und deine Ideen mit uns</p>
                 </div>
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">{t('settings.feedback.title')}</CardTitle>
-                    <CardDescription>{t('settings.feedback.desc')}</CardDescription>
+                <Card className="overflow-hidden">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base sm:text-lg">{t('settings.feedback.title')}</CardTitle>
+                    <CardDescription className="text-xs sm:text-sm">{t('settings.feedback.desc')}</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <AddFeedbackDialog />
@@ -763,23 +781,23 @@ export default function SettingsPage() {
 
             {/* Bonuses Section */}
             {activeSection === 'bonuses' && (
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 <div>
-                  <h2 className="text-xl font-bold">{t('settings.sections.bonuses')}</h2>
-                  <p className="text-sm text-muted-foreground">Verdiene Boni durch Einladungen</p>
+                  <h2 className="text-lg sm:text-xl font-bold">{t('settings.sections.bonuses')}</h2>
+                  <p className="text-xs sm:text-sm text-muted-foreground">Verdiene Boni durch Einladungen</p>
                 </div>
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-lg">
-                      <Sparkles className="h-4 w-4 text-primary" /> {t('settings.bonuses.title')}
+                <Card className="overflow-hidden">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                      <Sparkles className="h-4 w-4 text-primary flex-shrink-0" /> {t('settings.bonuses.title')}
                     </CardTitle>
-                    <CardDescription>{t('settings.bonuses.desc')}</CardDescription>
+                    <CardDescription className="text-xs sm:text-sm">{t('settings.bonuses.desc')}</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <Button
-                      className="w-full sm:w-auto gap-2"
+                      className="w-full sm:w-auto h-9 sm:h-10 text-xs sm:text-sm gap-2"
                       render={
-                        <Link href="/einstellungen/referrals">
+                        <Link href="/einstellungen/referrals" className="flex items-center gap-2">
                           <Users className="h-4 w-4" /> {t('settings.bonuses.button')}
                         </Link>
                       }
@@ -791,43 +809,44 @@ export default function SettingsPage() {
 
             {/* Account Management Section */}
             {activeSection === 'account' && (
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 <div>
-                  <h2 className="text-xl font-bold">Kontoverwaltung</h2>
-                  <p className="text-sm text-muted-foreground">Verwalte deine Sicherheit und persönliche Daten</p>
+                  <h2 className="text-lg sm:text-xl font-bold">Kontoverwaltung</h2>
+                  <p className="text-xs sm:text-sm text-muted-foreground">Verwalte deine Sicherheit und persönliche Daten</p>
                 </div>
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Account-Einstellungen</CardTitle>
-                    <CardDescription>Verwalte deine persönlichen Daten und Sicherheitseinstellungen.</CardDescription>
+                <Card className="overflow-hidden">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base sm:text-lg">Account-Einstellungen</CardTitle>
+                    <CardDescription className="text-xs sm:text-sm">Verwalte deine persönlichen Daten und Sicherheitseinstellungen.</CardDescription>
                   </CardHeader>
-                  <CardContent className="space-y-6">
+                  <CardContent className="space-y-4 sm:space-y-6">
                     {/* Name Settings */}
-                    <form onSubmit={handleUpdateName} className="space-y-3">
-                      <Label htmlFor="profile-full-name">Name ändern</Label>
+                    <form onSubmit={handleUpdateName} className="space-y-2 sm:space-y-3">
+                      <Label htmlFor="profile-full-name" className="text-xs sm:text-sm">Name ändern</Label>
                       <div className="flex flex-col sm:flex-row gap-2">
                         <Input
                           id="profile-full-name"
                           value={fullName}
                           onChange={(e) => setFullName(e.target.value)}
                           placeholder="Dein vollständiger Name"
+                          className="text-sm h-9 sm:h-10"
                           required
                         />
-                        <Button type="submit" disabled={savingName} className="sm:w-auto">
+                        <Button type="submit" disabled={savingName} className="h-9 sm:h-10 text-xs sm:text-sm flex-shrink-0">
                           {savingName ? 'Speichern...' : 'Speichern'}
                         </Button>
                       </div>
                     </form>
 
                     {/* Course Settings */}
-                    <form onSubmit={handleUpdateCourse} className="space-y-3 border-t pt-4">
-                      <Label htmlFor="profile-course">Kurs ändern</Label>
+                    <form onSubmit={handleUpdateCourse} className="space-y-2 sm:space-y-3 border-t pt-3 sm:pt-4">
+                      <Label htmlFor="profile-course" className="text-xs sm:text-sm">Kurs ändern</Label>
                       <div className="flex flex-col sm:flex-row gap-2">
                         <select
                           id="profile-course"
                           value={selectedCourse}
                           onChange={(e) => setSelectedCourse(e.target.value)}
-                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                          className="flex h-9 sm:h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-xs sm:text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                           required
                         >
                           {availableCourses.map((course) => (
@@ -836,43 +855,43 @@ export default function SettingsPage() {
                             </option>
                           ))}
                         </select>
-                        <Button type="submit" disabled={savingCourse} className="sm:w-auto">
+                        <Button type="submit" disabled={savingCourse} className="h-9 sm:h-10 text-xs sm:text-sm flex-shrink-0">
                           {savingCourse ? 'Speichern...' : 'Speichern'}
                         </Button>
                       </div>
                     </form>
 
                     {/* Password Reset */}
-                    <div className="space-y-3 border-t pt-4">
-                      <Label>Passwort ändern</Label>
-                      <Button variant="outline" className="w-full sm:w-auto" onClick={handlePasswordReset} disabled={sendingReset}>
+                    <div className="space-y-2 sm:space-y-3 border-t pt-3 sm:pt-4">
+                      <Label className="text-xs sm:text-sm">Passwort ändern</Label>
+                      <Button variant="outline" className="w-full sm:w-auto h-9 sm:h-10 text-xs sm:text-sm" onClick={handlePasswordReset} disabled={sendingReset}>
                         {sendingReset ? 'Sende E-Mail...' : 'Passwort ändern'}
                       </Button>
                     </div>
 
                     {/* 2FA */}
-                    <div className="space-y-3 border-t pt-4">
-                      <Label>Zwei-Faktor-Authentisierung (2FA)</Label>
+                    <div className="space-y-2 sm:space-y-3 border-t pt-3 sm:pt-4">
+                      <Label className="text-xs sm:text-sm">Zwei-Faktor-Authentisierung (2FA)</Label>
                       <div className="w-full sm:w-auto">
                         <TOTPSetup profile={profile} />
                       </div>
                     </div>
 
                     {/* Sign Out */}
-                    <div className="space-y-3 border-t pt-4">
-                      <Label className="text-destructive">Abmelden</Label>
-                      <Button variant="outline" onClick={handleSignOut} className="w-full sm:w-auto gap-2">
+                    <div className="space-y-2 sm:space-y-3 border-t pt-3 sm:pt-4">
+                      <Label className="text-xs sm:text-sm text-destructive">Abmelden</Label>
+                      <Button variant="outline" onClick={handleSignOut} className="w-full sm:w-auto h-9 sm:h-10 text-xs sm:text-sm gap-2">
                         <LogOut className="h-4 w-4" /> {t('settings.account.button')}
                       </Button>
                     </div>
 
                     {/* Delete Account */}
-                    <div className="space-y-3 border-t pt-4">
-                      <Label className="text-destructive">Konto löschen</Label>
-                      <p className="text-sm text-muted-foreground mb-2">
+                    <div className="space-y-2 sm:space-y-3 border-t pt-3 sm:pt-4">
+                      <Label className="text-xs sm:text-sm text-destructive">Konto löschen</Label>
+                      <p className="text-xs sm:text-sm text-muted-foreground mb-2">
                         Dein Konto und alle damit verbundenen Daten werden unwiderruflich gelöscht.
                       </p>
-                      <Button variant="destructive" onClick={handleDeleteAccount} disabled={deletingAccount} className="w-full sm:w-auto">
+                      <Button variant="destructive" onClick={handleDeleteAccount} disabled={deletingAccount} className="w-full sm:w-auto h-9 sm:h-10 text-xs sm:text-sm">
                         {deletingAccount ? 'Lösche Konto...' : 'Konto löschen'}
                       </Button>
                     </div>
@@ -883,15 +902,15 @@ export default function SettingsPage() {
 
             {/* Courses Management Section */}
             {activeSection === 'courses' && canManageCourses && (
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 <div>
-                  <h2 className="text-xl font-bold">{t('settings.courseSystem.title')}</h2>
-                  <p className="text-sm text-muted-foreground">Verwalte die verfügbaren Kurse in deiner Klasse</p>
+                  <h2 className="text-lg sm:text-xl font-bold">{t('settings.courseSystem.title')}</h2>
+                  <p className="text-xs sm:text-sm text-muted-foreground">Verwalte die verfügbaren Kurse in deiner Klasse</p>
                 </div>
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">{t('settings.courseSystem.title')}</CardTitle>
-                    <CardDescription>
+                <Card className="overflow-hidden">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base sm:text-lg">{t('settings.courseSystem.title')}</CardTitle>
+                    <CardDescription className="text-xs sm:text-sm">
                       {t('settings.courseSystem.desc')}
                     </CardDescription>
                   </CardHeader>
@@ -903,11 +922,13 @@ export default function SettingsPage() {
                             value={row.after}
                             onChange={(e) => updateCourseRow(row.id, e.target.value)}
                             placeholder={t('settings.courseSystem.placeholder')}
+                            className="text-sm h-9 sm:h-10"
                             disabled={!canManageCourses}
                           />
                           <Button
                             variant="ghost"
                             size="icon"
+                            className="h-9 w-9 sm:h-10 sm:w-10 flex-shrink-0"
                             onClick={() => removeCourseRow(row.id)}
                             disabled={!canManageCourses || courseRows.length <= 1}
                             title={t('settings.courseSystem.remove')}
@@ -917,10 +938,10 @@ export default function SettingsPage() {
                         </div>
                       ))}
                     </div>
-                    <Button variant="outline" onClick={addCourseRow} disabled={!canManageCourses} className="gap-2">
+                    <Button variant="outline" onClick={addCourseRow} disabled={!canManageCourses} className="gap-2 w-full sm:w-auto text-xs sm:text-sm h-9 sm:h-10">
                       <Plus className="h-4 w-4" /> {t('settings.courseSystem.add')}
                     </Button>
-                    <div className="flex items-center justify-between gap-3 pt-4 border-t">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-3 sm:pt-4 border-t">
                       <p className="text-xs text-muted-foreground">
                         {canManageCourses
                           ? canMigrateCourses
@@ -928,7 +949,7 @@ export default function SettingsPage() {
                             : t('settings.courseSystem.plannerHint')
                           : t('settings.courseSystem.restrictedHint')}
                       </p>
-                      <Button onClick={handleSaveCourses} disabled={!canManageCourses || savingCourses} className="gap-2">
+                      <Button onClick={handleSaveCourses} disabled={!canManageCourses || savingCourses} className="gap-2 w-full sm:w-auto text-xs sm:text-sm h-9 sm:h-10">
                         <Save className="h-4 w-4" /> {savingCourses ? t('settings.courseSystem.saving') : t('settings.courseSystem.save')}
                       </Button>
                     </div>
