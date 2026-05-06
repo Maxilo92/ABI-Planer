@@ -538,7 +538,7 @@ export default function SettingsPage() {
           <div
             className="fixed inset-0 z-30 bg-black/20 md:hidden"
             onClick={() => setMobileMenuOpen(false)}
-          />
+          ></div>
         )}
 
         <div className="mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8">
@@ -985,6 +985,7 @@ export default function SettingsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+    </div>
     </div>
   )
 }
