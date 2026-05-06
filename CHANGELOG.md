@@ -6,6 +6,64 @@
 <!-- default_action: read newest entries only unless a regression requires older history -->
 <!-- index: docs/AGENT_CONTEXT_INDEX.md -->
 
+## [1.34.4.13] - 2026-05-06
+
+### Changed
+- **Settings Layout**: Komplett neue GitHub-ähnliche 2-Spalten-Navigation in den Einstellungen implementiert. Linke Sidebar mit Navigationsmenu, rechts Hauptinhalt. Mobile-responsiv mit Hamburger-Menu auf kleinen Geräten.
+- **Settings UX**: Jede Einstellung hat jetzt eine eigene Sektion mit Überschrift und Beschreibung. Bessere visuelle Hierarchie und Navigation zwischen Sections.
+
+## [1.34.4.12] - 2026-05-06
+
+### Changed
+- **Footer**: Der Status-Hinweis "SYSTEMS OPERATIONAL" wurde aus dem Footer entfernt.
+
+## [1.34.4.11] - 2026-05-06
+
+### Fixed
+- **Dashboard**: Die Progressbar des Finanzierungsziels zeigt nun auch auf dem Dashboard die detaillierte Kurs-Verteilung und Farben analog zur Finanzseite an.
+- **Finance Utils**: Berechnung der Finanz-Verteilung in eine zentrale Utility-Funktion ausgelagert.
+
+## [1.34.4.10] - 2026-05-01
+
+### Changed
+- **Vault Depth**: Der Obsidian-Vault wurde um Systems-, Meta- und Decisions-Notizen erweitert, damit Beiträge fuer alle relevanten Faelle eine klare Anlaufstelle haben.
+- **Vault Hygiene**: Bestehende Vault- und Leitnotizen wurden auf konsistente Markdown-Struktur gebracht.
+
+## [1.34.4.9] - 2026-05-01
+
+### Changed
+- **Project Knowledge**: `docs/PROJECT_KNOWLEDGE.md` nennt jetzt den Vault als zentrales Handbuch und setzt ihn an den Anfang der Quellen.
+
+## [1.34.4.8] - 2026-05-01
+
+### Changed
+- **Agent Entry**: `GEMINI.md` weist nun ebenfalls direkt auf den Vault als ersten Arbeitsschritt hin.
+
+## [1.34.4.7] - 2026-05-01
+
+### Changed
+- **Vault First**: Der Obsidian-Vault ist nun in den Haupt-Einstiegen als erster Startpunkt verankert, damit alle Contributors dort beginnen.
+
+## [1.34.4.6] - 2026-05-01
+
+### Added
+- **Obsidian-Vault**: Neuer Vault unter `vault/` als zentrales Handbuch fuer Agenten, Architektur, Design, Prozesse, Testing und Compliance angelegt.
+- **Navigation**: Die Einstiegspunkte in `README.md`, `GEMINI.md`, `docs/AGENT_CONTEXT_INDEX.md` und `docs/PROJECT_KNOWLEDGE.md` verweisen jetzt auf den Vault.
+
+## [1.34.4.5] - 2026-05-01
+
+### Added
+- **TCG Dashboard**: Neuer News-Banner im TCG-Dashboard integriert, der direkt auf wichtige Season-Ankündigungen verlinkt.
+
+## [1.34.4.4] - 2026-04-29
+
+### Added
+- **Benachrichtigungen**: Implementierung eines nativen Push-Benachrichtigungs-Systems (Web Push) via Firebase Cloud Messaging (FCM).
+  - Nutzer können nun Push-Benachrichtigungen für neue News, zugewiesene Aufgaben (Todos), neue Termine und Direktnachrichten (Gruppen-Messages) aktivieren.
+  - Neuer Service Worker für den Empfang von Nachrichten im Hintergrund.
+  - Opt-In Schalter in den Einstellungen zur Verwaltung der Benachrichtigungen hinzugefügt.
+  - Backend-Trigger (Cloud Functions) zum automatischen Versenden der Benachrichtigungen bei neuen Einträgen integriert.
+
 ## [1.34.4.3] - 2026-04-29
 
 ### Fixed

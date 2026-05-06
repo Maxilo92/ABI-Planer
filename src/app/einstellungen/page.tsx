@@ -4,14 +4,16 @@ import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { deleteUser, sendPasswordResetEmail, signOut, updateProfile } from 'firebase/auth'
-import { User, MoonStar, MessageSquarePlus, LogOut, Users, Save, Plus, Trash2, Sparkles, AlertTriangle, Globe, ShieldCheck } from 'lucide-react'
+import { User, MoonStar, MessageSquarePlus, LogOut, Users, Save, Plus, Trash2, Sparkles, AlertTriangle, Globe, ShieldCheck, Bell, BellOff, Image as ImageIcon, Menu, X, ChevronRight } from 'lucide-react'
 import { collection, doc, getDoc, getDocs, onSnapshot, query, setDoc, updateDoc, where, writeBatch, deleteDoc } from 'firebase/firestore'
 
 import { auth, db } from '@/lib/firebase'
 import { useAuth } from '@/context/AuthContext'
 import { useLanguage } from '@/context/LanguageContext'
+import { useFCM } from '@/hooks/useFCM'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Switch } from '@/components/ui/switch'
 import { 
   Dialog, 
   DialogContent, 
@@ -30,6 +32,20 @@ import { logAction } from '@/lib/logging'
 import { TOTPSetup } from '@/components/admin/TOTPSetup'
 import { usePopupManager } from '@/modules/popup/usePopupManager'
 
+interface SettingsNavItem {
+  id: string
+  label: string
+  icon: React.ReactNode
+  disabled?: boolean
+}
+
+interface SettingsNavItem {
+  id: string
+  label: string
+  icon: React.ReactNode
+  disabled?: boolean
+}
+
 interface CourseRow {
   id: string
   before: string
@@ -39,6 +55,7 @@ interface CourseRow {
 export default function SettingsPage() {
   const { user, profile, loading } = useAuth()
   const { t, language, setLanguage } = useLanguage()
+  const { permission, requestPermission, disableNotifications, isSupported } = useFCM()
   const { prompt } = usePopupManager()
   const [courseRows, setCourseRows] = useState<CourseRow[]>([])
   const [originalCourses, setOriginalCourses] = useState<string[]>([])
@@ -49,7 +66,9 @@ export default function SettingsPage() {
 
   // Account management state
   const [fullName, setFullName] = useState('')
+  const [customAvatarUrl, setCustomAvatarUrl] = useState('')
   const [savingName, setSavingName] = useState(false)
+  const [savingAvatar, setSavingAvatar] = useState(false)
   const [availableCourses, setAvailableCourses] = useState<string[]>(['Kurs 1', 'Kurs 2', 'Kurs 3', 'Kurs 4', 'Kurs 5', 'Kurs 6', 'Kurs 7'])
   const [selectedCourse, setSelectedCourse] = useState('')
   const [savingCourse, setSavingCourse] = useState(false)
@@ -169,7 +188,8 @@ export default function SettingsPage() {
   useEffect(() => {
     setFullName(profile?.full_name || '')
     setSelectedCourse(profile?.class_name || '')
-  }, [profile?.full_name, profile?.class_name])
+    setCustomAvatarUrl(profile?.photo_url || '')
+  }, [profile?.full_name, profile?.class_name, profile?.photo_url])
 
   const handleUpdateName = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -244,6 +264,36 @@ export default function SettingsPage() {
       toast.error('Passwort-E-Mail konnte nicht gesendet werden.')
     } finally {
       setSendingReset(false)
+    }
+  }
+
+  const handleSaveCustomAvatar = async () => {
+    if (!user || !profile) return
+
+    if (!profile.cosmetics?.custom_avatar) {
+      toast.error('Custom User Icons sind ein kostenpflichtiges Cosmetic-Feature.')
+      return
+    }
+
+    const normalizedUrl = customAvatarUrl.trim()
+
+    try {
+      setSavingAvatar(true)
+      await updateDoc(doc(db, 'profiles', user.uid), {
+        photo_url: normalizedUrl || null,
+      })
+
+      await logAction('PROFILE_UPDATED', user.uid, profile.full_name, {
+        field: 'photo_url',
+        value: normalizedUrl || null,
+      })
+
+      toast.success('Custom User Icon gespeichert.')
+    } catch (error) {
+      console.error('Error updating custom avatar:', error)
+      toast.error('User Icon konnte nicht gespeichert werden.')
+    } finally {
+      setSavingAvatar(false)
     }
   }
 
@@ -417,6 +467,39 @@ export default function SettingsPage() {
     }
   }
 
+  const [activeSection, setActiveSection] = useState<string>('personal')
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+
+  // Build navigation items
+  const navItems: SettingsNavItem[] = [
+    { id: 'personal', label: t('settings.sections.personal'), icon: <User className="h-4 w-4" /> },
+    { id: 'appearance', label: t('settings.sections.appearance'), icon: <MoonStar className="h-4 w-4" /> },
+    { id: 'language', label: t('settings.sections.language'), icon: <Globe className="h-4 w-4" /> },
+    { id: 'notifications', label: 'Benachrichtigungen', icon: <Bell className="h-4 w-4" /> },
+    { id: 'feedback', label: t('settings.sections.feedback'), icon: <MessageSquarePlus className="h-4 w-4" /> },
+    { id: 'bonuses', label: t('settings.sections.bonuses'), icon: <Sparkles className="h-4 w-4" /> },
+    { id: 'account', label: 'Kontoverwaltung', icon: <ShieldCheck className="h-4 w-4" /> },
+    ...(canManageCourses ? [{ id: 'courses', label: t('settings.courseSystem.title'), icon: <Users className="h-4 w-4" /> }] : []),
+  ]
+
+  // Sync active section with hash
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash.slice(1)
+      if (hash) setActiveSection(hash)
+    }
+
+    window.addEventListener('hashchange', handleHashChange)
+    return () => window.removeEventListener('hashchange', handleHashChange)
+  }, [])
+
+  // Navigate to section
+  const navigateToSection = (id: string) => {
+    setActiveSection(id)
+    window.location.hash = id
+    setMobileMenuOpen(false)
+  }
+
   if (loading) {
     return <div className="py-8 text-center text-muted-foreground">{t('settings.messages.loading')}</div>
   }
@@ -426,281 +509,436 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
-      <div>
-        <h1 className="text-3xl font-extrabold tracking-tight">{t('settings.title')}</h1>
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <div className="border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <h1 className="text-3xl font-extrabold tracking-tight">{t('settings.title')}</h1>
+              <p className="text-sm text-muted-foreground mt-1">Verwalte deine Kontoeinstellungen und Präferenzen</p>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="md:hidden"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            >
+              {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </Button>
+          </div>
+        </div>
       </div>
 
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">{t('settings.quickAccess')}</CardTitle>
-        </CardHeader>
-        <CardContent className="pt-0 flex flex-wrap gap-2">
-          <a href="#profil" className="inline-flex"><Button variant="outline" size="sm">{t('settings.sections.personal')}</Button></a>
-          <a href="#darstellung" className="inline-flex"><Button variant="outline" size="sm">{t('settings.sections.appearance')}</Button></a>
-          <a href="#sprache" className="inline-flex"><Button variant="outline" size="sm">{t('settings.sections.language')}</Button></a>
-          <a href="#feedback" className="inline-flex"><Button variant="outline" size="sm">{t('settings.sections.feedback')}</Button></a>
-          <a href="#boni" className="inline-flex"><Button variant="outline" size="sm">{t('settings.sections.bonuses')}</Button></a>
-          <a href="#kontoverwaltung" className="inline-flex"><Button variant="outline" size="sm">Kontoverwaltung</Button></a>
-          {canManageCourses && (
-            <a href="#kurssystem" className="inline-flex"><Button variant="outline" size="sm">{t('settings.courseSystem.title')}</Button></a>
-          )}
-        </CardContent>
-      </Card>
-
-      <section className="space-y-3" id="profil">
-        <h2 className="text-lg font-bold tracking-tight">{t('settings.sections.personal')}</h2>
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-xl">
-              <User className="h-5 w-5" /> {t('settings.profile.title')}
-            </CardTitle>
-            <CardDescription>{t('settings.profile.desc')}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button
-              variant="outline"
-              className="w-full sm:w-auto"
-              render={
-                <Link href="/profil">
-                  {t('settings.profile.button')}
-                </Link>
-              }
-            />
-          </CardContent>
-        </Card>
-      </section>
-
-      <section className="space-y-3" id="darstellung">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-xl">
-              <MoonStar className="h-5 w-5" /> {t('settings.appearance.title')}
-            </CardTitle>
-            <CardDescription>{t('settings.appearance.desc')}</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <ThemeToggle />
-            <AccentThemeSelector />
-          </CardContent>
-        </Card>
-      </section>
-
-      <section className="space-y-3" id="sprache">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-xl">
-              <Globe className="h-5 w-5" /> {t('settings.language.title')}
-            </CardTitle>
-            <CardDescription>{t('settings.language.desc')}</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex flex-wrap gap-2">
-              <Button 
-                variant={language === 'de-DE' ? 'default' : 'outline'} 
-                size="sm" 
-                onClick={() => setLanguage('de-DE')}
-                className="gap-2"
-              >
-                <span className="text-[10px] font-bold bg-muted px-1 rounded text-muted-foreground">DE</span>
-                {t('settings.language.de')}
-              </Button>
-              <Button 
-                variant={language === 'en-US' ? 'default' : 'outline'} 
-                size="sm" 
-                onClick={() => setLanguage('en-US')}
-                className="gap-2"
-              >
-                <span className="text-[10px] font-bold bg-muted px-1 rounded text-muted-foreground">EN</span>
-                {t('settings.language.en')}
-              </Button>
-              <Button 
-                variant={language === 'es-ES' ? 'default' : 'outline'} 
-                size="sm" 
-                onClick={() => setLanguage('es-ES')}
-                className="gap-2"
-              >
-                <span className="text-[10px] font-bold bg-muted px-1 rounded text-muted-foreground">ES</span>
-                {t('settings.language.es')}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </section>
-
-      <section className="space-y-3" id="feedback">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-xl">
-              <MessageSquarePlus className="h-5 w-5" /> {t('settings.feedback.title')}
-            </CardTitle>
-            <CardDescription>{t('settings.feedback.desc')}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <AddFeedbackDialog />
-          </CardContent>
-        </Card>
-      </section>
-
-      <section className="space-y-3" id="boni">
-        <h2 className="text-lg font-bold tracking-tight">{t('settings.sections.bonuses')}</h2>
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-xl">
-              <Sparkles className="h-5 w-5 text-primary" /> {t('settings.bonuses.title')}
-            </CardTitle>
-            <CardDescription>{t('settings.bonuses.desc')}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button 
-              variant="outline" 
-              className="w-full sm:w-auto gap-2"
-              render={
-                <Link href="/einstellungen/referrals">
-                  <Users className="h-4 w-4" /> {t('settings.bonuses.button')}
-                </Link>
-              }
-            />
-          </CardContent>
-        </Card>
-      </section>
-
-      <section className="space-y-3" id="kontoverwaltung">
-        <h2 className="text-lg font-bold tracking-tight">Kontoverwaltung</h2>
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-xl">
-              <User className="h-5 w-5" /> Account-Einstellungen
-            </CardTitle>
-            <CardDescription>Verwalte deine persönlichen Daten und Sicherheitseinstellungen.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <form onSubmit={handleUpdateName} className="space-y-3">
-              <Label htmlFor="profile-full-name">Name ändern</Label>
-              <div className="flex flex-col sm:flex-row gap-2">
-                <Input
-                  id="profile-full-name"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  placeholder="Dein vollständiger Name"
-                  required
-                />
-                <Button type="submit" disabled={savingName}>
-                  {savingName ? 'Speichere...' : 'Name speichern'}
-                </Button>
-              </div>
-            </form>
-
-            <form onSubmit={handleUpdateCourse} className="space-y-3 border-t pt-4">
-              <Label htmlFor="profile-course">Kurs ändern</Label>
-              <div className="flex flex-col sm:flex-row gap-2">
-                <select
-                  id="profile-course"
-                  value={selectedCourse}
-                  onChange={(e) => setSelectedCourse(e.target.value)}
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                  required
+      {/* Content Area */}
+      <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-8">
+          {/* Sidebar Navigation */}
+          <aside className={`${mobileMenuOpen ? 'block' : 'hidden'} md:block`}>
+            <nav className="sticky top-24 space-y-1">
+              {navItems.map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => navigateToSection(item.id)}
+                  disabled={item.disabled}
+                  className={`w-full text-left px-4 py-3 rounded-lg font-medium text-sm transition-colors flex items-center gap-2 ${
+                    activeSection === item.id
+                      ? 'bg-accent text-accent-foreground'
+                      : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                  } ${item.disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
                 >
-                  {availableCourses.map((course) => (
-                    <option key={course} value={course}>
-                      {course}
-                    </option>
-                  ))}
-                </select>
-                <Button type="submit" disabled={savingCourse}>
-                  {savingCourse ? 'Speichere...' : 'Kurs speichern'}
-                </Button>
-              </div>
-            </form>
+                  {item.icon}
+                  <span>{item.label}</span>
+                  {activeSection === item.id && <ChevronRight className="h-4 w-4 ml-auto" />}
+                </button>
+              ))}
+            </nav>
+          </aside>
 
-            <div className="space-y-3 border-t pt-4">
-              <Label>Passwort ändern</Label>
-              <Button variant="outline" className="w-full sm:w-auto" onClick={handlePasswordReset} disabled={sendingReset}>
-                {sendingReset ? 'Sende E-Mail...' : 'Passwort ändern'}
-              </Button>
-            </div>
-
-            <div className="space-y-3 border-t pt-4">
-              <Label>Zwei-Faktor-Authentisierung (2FA)</Label>
-              <div className="w-full sm:w-auto">
-                <TOTPSetup profile={profile} />
-              </div>
-            </div>
-
-            <div className="space-y-3 border-t pt-4">
-              <Label className="text-destructive">Abmelden</Label>
-              <Button variant="outline" onClick={handleSignOut} className="w-full sm:w-auto gap-2">
-                <LogOut className="h-4 w-4" /> {t('settings.account.button')}
-              </Button>
-            </div>
-
-            <div className="space-y-3 border-t pt-4">
-              <Label className="text-destructive">Konto löschen</Label>
-              <p className="text-sm text-muted-foreground mb-2">
-                Dein Konto und alle damit verbundenen Daten werden unwiderruflich gelöscht.
-              </p>
-              <Button variant="destructive" onClick={handleDeleteAccount} disabled={deletingAccount} className="w-full sm:w-auto">
-                {deletingAccount ? 'Lösche Konto...' : 'Konto löschen'}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </section>
-
-      {canManageCourses && (
-        <section className="space-y-6" id="verwaltung">
-          <h2 className="text-lg font-bold tracking-tight">{t('settings.sections.administration')}</h2>
-          <Card id="kurssystem">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-xl">
-                <Users className="h-5 w-5" /> {t('settings.courseSystem.title')}
-              </CardTitle>
-              <CardDescription>
-                {t('settings.courseSystem.desc')}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                {courseRows.map((row) => (
-                  <div key={row.id} className="flex items-center gap-2">
-                    <Input
-                      value={row.after}
-                      onChange={(e) => updateCourseRow(row.id, e.target.value)}
-                      placeholder={t('settings.courseSystem.placeholder')}
-                      disabled={!canManageCourses}
-                    />
+          {/* Main Content */}
+          <main className="space-y-6">
+            {/* Profile Section */}
+            {activeSection === 'personal' && (
+              <div className="space-y-4">
+                <div>
+                  <h2 className="text-xl font-bold">{t('settings.sections.personal')}</h2>
+                  <p className="text-sm text-muted-foreground">Verwalte deine persönlichen Daten</p>
+                </div>
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      <User className="h-4 w-4" /> {t('settings.profile.title')}
+                    </CardTitle>
+                    <CardDescription>{t('settings.profile.desc')}</CardDescription>
+                  </CardHeader>
+                  <CardContent>
                     <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => removeCourseRow(row.id)}
-                      disabled={!canManageCourses || courseRows.length <= 1}
-                      title={t('settings.courseSystem.remove')}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ))}
+                      className="w-full sm:w-auto"
+                      render={
+                        <Link href="/profil">
+                          {t('settings.profile.button')}
+                        </Link>
+                      }
+                    />
+                  </CardContent>
+                </Card>
               </div>
-              <Button variant="outline" onClick={addCourseRow} disabled={!canManageCourses} className="gap-2">
-                <Plus className="h-4 w-4" /> {t('settings.courseSystem.add')}
-              </Button>
-              <div className="flex items-center justify-between gap-3">
-                <p className="text-xs text-muted-foreground">
-                  {canManageCourses
-                    ? canMigrateCourses
-                      ? t('settings.courseSystem.adminHint')
-                      : t('settings.courseSystem.plannerHint')
-                    : t('settings.courseSystem.restrictedHint')}
-                </p>
-                <Button onClick={handleSaveCourses} disabled={!canManageCourses || savingCourses} className="gap-2">
-                  <Save className="h-4 w-4" /> {savingCourses ? t('settings.courseSystem.saving') : t('settings.courseSystem.save')}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+            )}
 
-        </section>
-      )}
+            {/* Appearance Section */}
+            {activeSection === 'appearance' && (
+              <div className="space-y-4">
+                <div>
+                  <h2 className="text-xl font-bold">{t('settings.sections.appearance')}</h2>
+                  <p className="text-sm text-muted-foreground">Passe das Aussehen an deine Vorlieben an</p>
+                </div>
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">{t('settings.appearance.title')}</CardTitle>
+                    <CardDescription>{t('settings.appearance.desc')}</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div className="space-y-3">
+                      <Label className="text-base font-semibold">Farbschema</Label>
+                      <ThemeToggle />
+                    </div>
+                    <div className="border-t pt-6 space-y-3">
+                      <Label className="text-base font-semibold">Akzentfarbe</Label>
+                      <AccentThemeSelector />
+                    </div>
+                    <div className="rounded-lg border border-border/60 bg-muted/30 p-4 space-y-4 mt-6">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="space-y-1">
+                          <p className="text-sm font-semibold flex items-center gap-2">
+                            <ImageIcon className="h-4 w-4" /> Custom User Icon
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {profile.cosmetics?.custom_avatar
+                              ? 'Freigeschaltet. Du kannst eine eigene Bild-URL speichern.'
+                              : 'Premium-Cosmetic. Freischalten im Shop, danach hier nutzbar.'}
+                          </p>
+                        </div>
+                        {!profile.cosmetics?.custom_avatar && (
+                          <Button variant="outline" size="sm" render={<Link href="/shop?category=cosmetics">Im Shop freischalten</Link>} />
+                        )}
+                      </div>
+
+                      {profile.cosmetics?.custom_avatar ? (
+                        <div className="space-y-3 pt-4 border-t">
+                          <div className="space-y-2">
+                            <Label htmlFor="custom-avatar-url" className="text-sm">Bild-URL</Label>
+                            <Input
+                              id="custom-avatar-url"
+                              value={customAvatarUrl}
+                              onChange={(e) => setCustomAvatarUrl(e.target.value)}
+                              placeholder="https://.../mein-icon.png"
+                            />
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <Button onClick={handleSaveCustomAvatar} disabled={savingAvatar} size="sm">
+                              {savingAvatar ? 'Speichere...' : 'User Icon speichern'}
+                            </Button>
+                            <Button variant="ghost" onClick={() => setCustomAvatarUrl(profile.photo_url || '')} disabled={savingAvatar} size="sm">
+                              Zurücksetzen
+                            </Button>
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+
+            {/* Language Section */}
+            {activeSection === 'language' && (
+              <div className="space-y-4">
+                <div>
+                  <h2 className="text-xl font-bold">{t('settings.sections.language')}</h2>
+                  <p className="text-sm text-muted-foreground">Wähle deine bevorzugte Sprache</p>
+                </div>
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">{t('settings.language.title')}</CardTitle>
+                    <CardDescription>{t('settings.language.desc')}</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                      <Button
+                        variant={language === 'de-DE' ? 'default' : 'outline'}
+                        onClick={() => setLanguage('de-DE')}
+                        className="justify-start gap-2"
+                      >
+                        <span className="text-xs font-bold bg-muted px-1.5 rounded">DE</span>
+                        Deutsch
+                      </Button>
+                      <Button
+                        variant={language === 'en-US' ? 'default' : 'outline'}
+                        onClick={() => setLanguage('en-US')}
+                        className="justify-start gap-2"
+                      >
+                        <span className="text-xs font-bold bg-muted px-1.5 rounded">EN</span>
+                        English
+                      </Button>
+                      <Button
+                        variant={language === 'es-ES' ? 'default' : 'outline'}
+                        onClick={() => setLanguage('es-ES')}
+                        className="justify-start gap-2"
+                      >
+                        <span className="text-xs font-bold bg-muted px-1.5 rounded">ES</span>
+                        Español
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+
+            {/* Notifications Section */}
+            {activeSection === 'notifications' && (
+              <div className="space-y-4">
+                <div>
+                  <h2 className="text-xl font-bold">Benachrichtigungen</h2>
+                  <p className="text-sm text-muted-foreground">Verwalte deine Benachrichtigungseinstellungen</p>
+                </div>
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Push-Benachrichtigungen</CardTitle>
+                    <CardDescription>Erhalte Push-Benachrichtigungen bei neuen News, Todos oder DMs.</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {!isSupported ? (
+                      <p className="text-sm text-muted-foreground italic">Push-Benachrichtigungen werden von deinem Browser leider nicht unterstützt.</p>
+                    ) : (
+                      <div className="flex items-center justify-between space-x-2">
+                        <div className="flex flex-col space-y-1">
+                          <Label htmlFor="push-notifications" className="text-base font-semibold">Native Push-Benachrichtigungen</Label>
+                          <p className="text-xs text-muted-foreground">
+                            {permission === 'granted'
+                              ? 'Aktiviert. Du erhältst Benachrichtigungen direkt auf dein Gerät.'
+                              : permission === 'denied'
+                                ? 'Blockiert. Bitte aktiviere Benachrichtigungen in deinen Browser-Einstellungen.'
+                                : 'Deaktiviert. Klicke zum Aktivieren.'}
+                          </p>
+                        </div>
+                        <Switch
+                          id="push-notifications"
+                          checked={permission === 'granted' && !!profile?.isPushEnabled}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              requestPermission().then(success => {
+                                if (success) toast.success('Benachrichtigungen aktiviert!')
+                                else toast.error('Aktivierung fehlgeschlagen.')
+                              })
+                            } else {
+                              disableNotifications().then(() => toast.info('Benachrichtigungen deaktiviert.'))
+                            }
+                          }}
+                        />
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+
+            {/* Feedback Section */}
+            {activeSection === 'feedback' && (
+              <div className="space-y-4">
+                <div>
+                  <h2 className="text-xl font-bold">{t('settings.sections.feedback')}</h2>
+                  <p className="text-sm text-muted-foreground">Teile dein Feedback und deine Ideen mit uns</p>
+                </div>
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">{t('settings.feedback.title')}</CardTitle>
+                    <CardDescription>{t('settings.feedback.desc')}</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <AddFeedbackDialog />
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+
+            {/* Bonuses Section */}
+            {activeSection === 'bonuses' && (
+              <div className="space-y-4">
+                <div>
+                  <h2 className="text-xl font-bold">{t('settings.sections.bonuses')}</h2>
+                  <p className="text-sm text-muted-foreground">Verdiene Boni durch Einladungen</p>
+                </div>
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      <Sparkles className="h-4 w-4 text-primary" /> {t('settings.bonuses.title')}
+                    </CardTitle>
+                    <CardDescription>{t('settings.bonuses.desc')}</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Button
+                      className="w-full sm:w-auto gap-2"
+                      render={
+                        <Link href="/einstellungen/referrals">
+                          <Users className="h-4 w-4" /> {t('settings.bonuses.button')}
+                        </Link>
+                      }
+                    />
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+
+            {/* Account Management Section */}
+            {activeSection === 'account' && (
+              <div className="space-y-4">
+                <div>
+                  <h2 className="text-xl font-bold">Kontoverwaltung</h2>
+                  <p className="text-sm text-muted-foreground">Verwalte deine Sicherheit und persönliche Daten</p>
+                </div>
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Account-Einstellungen</CardTitle>
+                    <CardDescription>Verwalte deine persönlichen Daten und Sicherheitseinstellungen.</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    {/* Name Settings */}
+                    <form onSubmit={handleUpdateName} className="space-y-3">
+                      <Label htmlFor="profile-full-name">Name ändern</Label>
+                      <div className="flex flex-col sm:flex-row gap-2">
+                        <Input
+                          id="profile-full-name"
+                          value={fullName}
+                          onChange={(e) => setFullName(e.target.value)}
+                          placeholder="Dein vollständiger Name"
+                          required
+                        />
+                        <Button type="submit" disabled={savingName} className="sm:w-auto">
+                          {savingName ? 'Speichern...' : 'Speichern'}
+                        </Button>
+                      </div>
+                    </form>
+
+                    {/* Course Settings */}
+                    <form onSubmit={handleUpdateCourse} className="space-y-3 border-t pt-4">
+                      <Label htmlFor="profile-course">Kurs ändern</Label>
+                      <div className="flex flex-col sm:flex-row gap-2">
+                        <select
+                          id="profile-course"
+                          value={selectedCourse}
+                          onChange={(e) => setSelectedCourse(e.target.value)}
+                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                          required
+                        >
+                          {availableCourses.map((course) => (
+                            <option key={course} value={course}>
+                              {course}
+                            </option>
+                          ))}
+                        </select>
+                        <Button type="submit" disabled={savingCourse} className="sm:w-auto">
+                          {savingCourse ? 'Speichern...' : 'Speichern'}
+                        </Button>
+                      </div>
+                    </form>
+
+                    {/* Password Reset */}
+                    <div className="space-y-3 border-t pt-4">
+                      <Label>Passwort ändern</Label>
+                      <Button variant="outline" className="w-full sm:w-auto" onClick={handlePasswordReset} disabled={sendingReset}>
+                        {sendingReset ? 'Sende E-Mail...' : 'Passwort ändern'}
+                      </Button>
+                    </div>
+
+                    {/* 2FA */}
+                    <div className="space-y-3 border-t pt-4">
+                      <Label>Zwei-Faktor-Authentisierung (2FA)</Label>
+                      <div className="w-full sm:w-auto">
+                        <TOTPSetup profile={profile} />
+                      </div>
+                    </div>
+
+                    {/* Sign Out */}
+                    <div className="space-y-3 border-t pt-4">
+                      <Label className="text-destructive">Abmelden</Label>
+                      <Button variant="outline" onClick={handleSignOut} className="w-full sm:w-auto gap-2">
+                        <LogOut className="h-4 w-4" /> {t('settings.account.button')}
+                      </Button>
+                    </div>
+
+                    {/* Delete Account */}
+                    <div className="space-y-3 border-t pt-4">
+                      <Label className="text-destructive">Konto löschen</Label>
+                      <p className="text-sm text-muted-foreground mb-2">
+                        Dein Konto und alle damit verbundenen Daten werden unwiderruflich gelöscht.
+                      </p>
+                      <Button variant="destructive" onClick={handleDeleteAccount} disabled={deletingAccount} className="w-full sm:w-auto">
+                        {deletingAccount ? 'Lösche Konto...' : 'Konto löschen'}
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+
+            {/* Courses Management Section */}
+            {activeSection === 'courses' && canManageCourses && (
+              <div className="space-y-4">
+                <div>
+                  <h2 className="text-xl font-bold">{t('settings.courseSystem.title')}</h2>
+                  <p className="text-sm text-muted-foreground">Verwalte die verfügbaren Kurse in deiner Klasse</p>
+                </div>
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">{t('settings.courseSystem.title')}</CardTitle>
+                    <CardDescription>
+                      {t('settings.courseSystem.desc')}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                      {courseRows.map((row) => (
+                        <div key={row.id} className="flex items-center gap-2">
+                          <Input
+                            value={row.after}
+                            onChange={(e) => updateCourseRow(row.id, e.target.value)}
+                            placeholder={t('settings.courseSystem.placeholder')}
+                            disabled={!canManageCourses}
+                          />
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => removeCourseRow(row.id)}
+                            disabled={!canManageCourses || courseRows.length <= 1}
+                            title={t('settings.courseSystem.remove')}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                    <Button variant="outline" onClick={addCourseRow} disabled={!canManageCourses} className="gap-2">
+                      <Plus className="h-4 w-4" /> {t('settings.courseSystem.add')}
+                    </Button>
+                    <div className="flex items-center justify-between gap-3 pt-4 border-t">
+                      <p className="text-xs text-muted-foreground">
+                        {canManageCourses
+                          ? canMigrateCourses
+                            ? t('settings.courseSystem.adminHint')
+                            : t('settings.courseSystem.plannerHint')
+                          : t('settings.courseSystem.restrictedHint')}
+                      </p>
+                      <Button onClick={handleSaveCourses} disabled={!canManageCourses || savingCourses} className="gap-2">
+                        <Save className="h-4 w-4" /> {savingCourses ? t('settings.courseSystem.saving') : t('settings.courseSystem.save')}
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+          </main>
+        </div>
+      </div>
 
       {/* Navigation Guard Dialog */}
       <Dialog open={isGuardOpen} onOpenChange={setIsGuardOpen}>
