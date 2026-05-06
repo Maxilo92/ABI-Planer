@@ -6,6 +6,25 @@
 <!-- default_action: read newest entries only unless a regression requires older history -->
 <!-- index: docs/AGENT_CONTEXT_INDEX.md -->
 
+## [1.34.4.15] - 2026-05-06
+
+### Fixed
+- **Settings Layout**: Behobene ungültige Button-Props und Header-Padding für bessere Content-Sichtbarkeit
+  - Entfernte ungültige `render=` Props auf Link-Buttons (Profil, Shop, Referrals)
+  - Erhöhte Header-Padding von 60px/76px auf 72px/84px
+  - Korrigierte mobile Sidebar-Position zur Header-Höhe
+- **Settings Page**: JSX Parsing-Fehler behoben (fehlende div-Schließung)
+
+## [1.34.4.14] - 2026-05-06
+
+### Added
+- **Hype Update**: Trading Hub Alpha und Kampf-System offiziell für alle Nutzer freigeschaltet.
+- **Social Loop**: Neue News-Ankündigung im Dashboard integriert, um Nutzer über die neuen Interaktionsmöglichkeiten zu informieren.
+
+### Changed
+- **Trading**: Die Mindestanforderung für die Teilnahme am Tausch wurde von 100 auf 10 Karten gesenkt, um die soziale Interaktion für neue Nutzer massiv zu vereinfachen.
+- **System Control**: Combat-Status von `admins_only` auf `enabled` gesetzt.
+
 ## [1.34.4.13] - 2026-05-06
 
 ### Changed
