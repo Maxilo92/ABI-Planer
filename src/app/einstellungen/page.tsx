@@ -512,11 +512,11 @@ export default function SettingsPage() {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <div className="fixed top-0 left-0 right-0 z-40 border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-4">
+        <div className="mx-auto w-full px-3 sm:px-6 lg:px-8 py-2 sm:py-2.5">
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0 flex-1">
-              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight truncate">{t('settings.title')}</h1>
-              <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 hidden sm:block">Verwalte deine Kontoeinstellungen und Präferenzen</p>
+              <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight truncate">{t('settings.title')}</h1>
+              <p className="text-xs text-muted-foreground hidden sm:block">Verwalte deine Kontoeinstellungen und Präferenzen</p>
             </div>
             <Button
               variant="ghost"
@@ -532,7 +532,7 @@ export default function SettingsPage() {
       </div>
 
       {/* Content Area - with top padding for fixed header */}
-      <div className="mt-[72px] sm:mt-[84px]">
+      <div className="mt-[56px] sm:mt-[64px]">
         {/* Mobile Menu Overlay */}
         {mobileMenuOpen && (
           <div
@@ -541,17 +541,17 @@ export default function SettingsPage() {
           ></div>
         )}
 
-        <div className="mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8">
-          <div className="grid grid-cols-1 md:grid-cols-[200px_1fr] lg:grid-cols-[240px_1fr] gap-4 sm:gap-8">
+        <div className="mx-auto w-full px-3 sm:px-6 lg:px-8 py-3 sm:py-6">
+          <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] lg:grid-cols-[200px_1fr] gap-3 md:gap-4 lg:gap-6">
             {/* Sidebar Navigation */}
             <aside
               className={`${
                 mobileMenuOpen
-                  ? 'fixed left-0 top-[72px] sm:top-[84px] bottom-0 w-56 z-30 bg-background border-r border-border/40 overflow-y-auto'
-                  : 'hidden'
-              } md:static md:display md:z-auto md:w-auto md:top-auto md:bottom-auto md:border-r-0 md:bg-transparent md:overflow-visible`}
+                  ? 'fixed left-0 top-[56px] sm:top-[64px] bottom-0 w-56 z-30 bg-background border-r border-border/40 overflow-y-auto'
+                  : 'hidden md:block'
+              } md:static md:z-auto md:w-auto md:top-auto md:bottom-auto md:border-r-0 md:bg-transparent md:overflow-visible`}
             >
-              <nav className="md:sticky md:top-24 space-y-1 p-4 md:p-0">
+              <nav className="space-y-1 p-4 md:p-0 md:pt-2">
               {navItems.map((item) => (
                 <button
                   key={item.id}
@@ -573,10 +573,10 @@ export default function SettingsPage() {
           </aside>
 
           {/* Main Content */}
-          <main className="space-y-4 sm:space-y-6 pb-8">
+          <main className="space-y-4 sm:space-y-5 pb-6 md:pb-8 min-h-screen">
             {/* Profile Section */}
             {activeSection === 'personal' && (
-              <div className="space-y-3 sm:space-y-4">
+              <div className="space-y-3 sm:space-y-4 animate-in fade-in">
                 <div>
                   <h2 className="text-lg sm:text-xl font-bold">{t('settings.sections.personal')}</h2>
                   <p className="text-xs sm:text-sm text-muted-foreground">Verwalte deine persönlichen Daten</p>
