@@ -532,7 +532,7 @@ export default function SettingsPage() {
       </div>
 
       {/* Content Area - with top padding for fixed header */}
-      <div className="mt-[60px] sm:mt-[76px]">
+      <div className="mt-[72px] sm:mt-[84px]">
         {/* Mobile Menu Overlay */}
         {mobileMenuOpen && (
           <div
@@ -547,7 +547,7 @@ export default function SettingsPage() {
             <aside
               className={`${
                 mobileMenuOpen
-                  ? 'fixed left-0 top-[60px] sm:top-[76px] bottom-0 w-56 z-30 bg-background border-r border-border/40 overflow-y-auto'
+                  ? 'fixed left-0 top-[72px] sm:top-[84px] bottom-0 w-56 z-30 bg-background border-r border-border/40 overflow-y-auto'
                   : 'hidden'
               } md:static md:display md:z-auto md:w-auto md:top-auto md:bottom-auto md:border-r-0 md:bg-transparent md:overflow-visible`}
             >
@@ -589,14 +589,11 @@ export default function SettingsPage() {
                     <CardDescription className="text-xs sm:text-sm">{t('settings.profile.desc')}</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <Button
-                      className="w-full sm:w-auto h-9 sm:h-10"
-                      render={
-                        <Link href="/profil">
-                          {t('settings.profile.button')}
-                        </Link>
-                      }
-                    />
+                    <Button asChild className="w-full sm:w-auto h-9 sm:h-10">
+                      <Link href="/profil">
+                        {t('settings.profile.button')}
+                      </Link>
+                    </Button>
                   </CardContent>
                 </Card>
               </div>
@@ -636,7 +633,9 @@ export default function SettingsPage() {
                           </p>
                         </div>
                         {!profile.cosmetics?.custom_avatar && (
-                          <Button variant="outline" size="sm" className="h-8 text-xs sm:text-sm flex-shrink-0" render={<Link href="/shop?category=cosmetics">Im Shop freischalten</Link>} />
+                          <Button asChild variant="outline" size="sm" className="h-8 text-xs sm:text-sm flex-shrink-0">
+                            <Link href="/shop?category=cosmetics">Im Shop freischalten</Link>
+                          </Button>
                         )}
                       </div>
 
@@ -794,14 +793,11 @@ export default function SettingsPage() {
                     <CardDescription className="text-xs sm:text-sm">{t('settings.bonuses.desc')}</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <Button
-                      className="w-full sm:w-auto h-9 sm:h-10 text-xs sm:text-sm gap-2"
-                      render={
-                        <Link href="/einstellungen/referrals" className="flex items-center gap-2">
-                          <Users className="h-4 w-4" /> {t('settings.bonuses.button')}
-                        </Link>
-                      }
-                    />
+                    <Button asChild className="w-full sm:w-auto h-9 sm:h-10 text-xs sm:text-sm gap-2">
+                      <Link href="/einstellungen/referrals" className="flex items-center gap-2">
+                        <Users className="h-4 w-4" /> {t('settings.bonuses.button')}
+                      </Link>
+                    </Button>
                   </CardContent>
                 </Card>
               </div>
