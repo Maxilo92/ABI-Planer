@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { db } from '@/lib/firebase'
+import { db, functions } from '@/lib/firebase'
 import { doc, onSnapshot, updateDoc, serverTimestamp, deleteDoc } from 'firebase/firestore'
+import { httpsCallable } from 'firebase/functions'
 import { useAuth } from '@/context/AuthContext'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
@@ -21,7 +22,8 @@ import {
   ImageIcon,
   Trophy,
   Trash2,
-  Swords
+  Swords,
+  Gift
 } from 'lucide-react'
 import Link from 'next/link'
 import { Task } from '@/types/database'
@@ -30,6 +32,7 @@ import { toast } from 'sonner'
 import { uploadTaskProof, deleteTaskFile } from '@/lib/taskMediaUpload'
 import { getTaskStatusMeta } from '@/modules/shared/status'
 
+import { DopamineBurst } from '@/components/ui/DopamineBurst'
 import { ImageCarousel } from '@/components/aufgaben/ImageCarousel'
 import {
   Dialog,
@@ -48,19 +51,35 @@ export default function TaskDetailPage() {
   const { profile, loading: authLoading } = useAuth()
   
   const [task, setTask] = useState<Task | null>(null)
+  const [categoryName, setCategoryName] = useState<string>('')
   const [loading, setLoading] = useState(true)
   const [uploading, setUploading] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [proofText, setProofText] = useState('')
   const [showClaimDialog, setShowClaimDialog] = useState(false)
+  const [showSubmitBurst, setShowSubmitBurst] = useState(false)
+  const [showCompleteBurst, setShowCompleteBurst] = useState(false)
+  const [claiming, setClaiming] = useState(false)
 
   useEffect(() => {
     if (!id) return
 
-    const unsubscribe = onSnapshot(doc(db, 'tasks', id as string), (doc) => {
-      if (doc.exists()) {
-        setTask({ id: doc.id, ...doc.data() } as Task)
+    const unsubscribe = onSnapshot(doc(db, 'tasks', id as string), (taskDoc) => {
+      if (taskDoc.exists()) {
+        const taskData = { id: taskDoc.id, ...taskDoc.data() } as Task
+        setTask(taskData)
+
+        // Fetch Category Name
+        if (taskData.category_id) {
+          onSnapshot(doc(db, 'settings', 'config'), (settingsDoc) => {
+            if (settingsDoc.exists()) {
+              const cats = (settingsDoc.data() as any).task_categories || []
+              const cat = cats.find((c: any) => c.id === taskData.category_id)
+              if (cat) setCategoryName(cat.name)
+            }
+          })
+        }
       } else {
         // Only redirect if not already deleting
         if (!deleting) {
@@ -75,7 +94,7 @@ export default function TaskDetailPage() {
     })
 
     return () => unsubscribe()
-  }, [id, router, deleting])
+  }, [id, router, deleting, profile?.id])
 
   if (authLoading || loading) {
     return (
@@ -90,6 +109,8 @@ export default function TaskDetailPage() {
   }
 
   if (!task) return null
+
+  const placeholderImage = `https://loremflickr.com/1200/800/city,abstract,modern?lock=${task.id.slice(0, 5)}`
 
   const isPlanner = (profile?.role === 'planner' || profile?.role === 'admin' || profile?.role === 'admin_main' || profile?.role === 'admin_co') && profile?.is_approved
   const isAssignee = task.assignee_id === profile?.id
@@ -110,6 +131,22 @@ export default function TaskDetailPage() {
     } catch (error) {
       console.error('Error claiming task:', error)
       toast.error('Fehler beim Annehmen der Aufgabe.')
+    }
+  }
+
+  const handleClaimReward = async () => {
+    if (!task || claiming) return
+    setClaiming(true)
+    try {
+      const claimTaskReward = httpsCallable(functions, 'claimTaskReward')
+      await claimTaskReward({ taskId: task.id })
+      setShowCompleteBurst(true)
+      toast.success('Belohnung erhalten! Deine Booster wurden gutgeschrieben.')
+    } catch (error) {
+      console.error('Error claiming reward:', error)
+      toast.error('Fehler beim Abholen der Belohnung.')
+    } finally {
+      setClaiming(false)
     }
   }
 
@@ -167,6 +204,7 @@ export default function TaskDetailPage() {
       
       setSelectedFile(null)
       setProofText('')
+      setShowSubmitBurst(true)
       toast.success('Beweis eingereicht! Ein Admin wird ihn prüfen.')
     } catch (error) {
       console.error('Error submitting proof:', error)
@@ -206,9 +244,27 @@ export default function TaskDetailPage() {
           {task.task_image_urls && task.task_image_urls.length > 0 ? (
             <ImageCarousel images={task.task_image_urls} title={task.title} />
           ) : (
-            <div className="aspect-video w-full rounded-xl bg-muted flex flex-col items-center justify-center text-muted-foreground/30 border-2 border-dashed">
-              <ImageIcon className="h-16 w-16 mb-2" />
-              <span className="font-medium uppercase tracking-wider">Keine Bilder vorhanden</span>
+            <div className="relative aspect-video w-full rounded-xl overflow-hidden bg-muted border border-border shadow-sm group">
+              <Image 
+                src={placeholderImage} 
+                alt={task.title} 
+                fill
+                className="object-cover brightness-[0.9] contrast-[1.05] transition-all duration-1000" 
+                priority
+                sizes="(max-width: 1200px) 100vw, 800px"
+              />
+              {/* Permanent "No Photo" hint icon */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-muted-foreground/20 pointer-events-none transition-opacity duration-300 group-hover:opacity-0">
+                <ImageIcon className="h-12 w-12 opacity-50" />
+              </div>
+              {/* Watermark Overlay for placeholders - shown on hover */}
+              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 bg-black/20 backdrop-blur-[1px] pointer-events-none">
+                <div className="border-2 border-white/40 px-4 py-2 rotate-[-8deg] bg-black/20">
+                  <span className="text-white text-xs font-black uppercase tracking-[0.2em] whitespace-nowrap shadow-sm">
+                    Beispielbild
+                  </span>
+                </div>
+              </div>
             </div>
           )}
 
@@ -273,8 +329,14 @@ export default function TaskDetailPage() {
                     {selectedFile ? (
                       <div className="flex flex-col items-center text-center">
                         {selectedFile.type.startsWith('image/') ? (
-                          <div className="relative h-40 w-40 rounded-lg overflow-hidden mb-4 border shadow-sm">
-                            <Image src={URL.createObjectURL(selectedFile)} alt="Preview" fill className="object-cover" />
+                          <div className="relative h-40 w-40 rounded-lg overflow-hidden mb-4 border shadow-sm bg-muted">
+                            <Image 
+                              src={URL.createObjectURL(selectedFile)} 
+                              alt="Preview" 
+                              fill 
+                              className="object-contain" 
+                              sizes="160px"
+                            />
                           </div>
                         ) : (
                           <div className="h-40 w-40 flex items-center justify-center rounded-lg bg-muted mb-4 border shadow-sm">
@@ -300,7 +362,14 @@ export default function TaskDetailPage() {
                   </div>
                 </div>
               </CardContent>
-              <CardFooter className="p-6 pt-0">
+              <CardFooter className="p-6 pt-0 relative">
+                <div className="absolute inset-0 pointer-events-none z-50">
+                  <DopamineBurst 
+                    trigger={showSubmitBurst} 
+                    onComplete={() => setShowSubmitBurst(false)} 
+                    particleCount={40}
+                  />
+                </div>
                 <Button 
                   className="w-full h-12 text-lg font-bold shadow-md shadow-primary/20 rounded-xl" 
                   disabled={!selectedFile || uploading}
@@ -338,6 +407,13 @@ export default function TaskDetailPage() {
 
           {task.status === 'completed' && (
             <Card className="bg-primary/5 border-primary/10 p-6 md:p-10 overflow-hidden relative">
+              <div className="absolute inset-0 pointer-events-none z-50">
+                <DopamineBurst 
+                  trigger={showCompleteBurst} 
+                  onComplete={() => setShowCompleteBurst(false)} 
+                  particleCount={100}
+                />
+              </div>
               <div className="absolute top-0 right-0 p-4 opacity-10">
                 <Trophy className="h-24 w-24 rotate-12" />
               </div>
@@ -346,14 +422,38 @@ export default function TaskDetailPage() {
                   <CheckCircle2 className="h-10 w-10 text-primary" />
                 </div>
                 <div className="space-y-2">
-                  <h3 className="text-2xl font-bold text-primary">Erfolgreich abgeschlossen!</h3>
+                  <h3 className="text-2xl font-bold text-primary">
+                    {task.reward_claimed ? 'Erfolgreich abgeschlossen!' : 'Aufgabe abgeschlossen!'}
+                  </h3>
                   <p className="text-muted-foreground">
-                    {isAssignee ? 'Gute Arbeit! Du hast deinen Teil für das Abi beigetragen.' : 'Diese Aufgabe wurde bereits von jemandem erledigt.'}
+                    {task.reward_claimed 
+                      ? (isAssignee ? 'Gute Arbeit! Du hast deinen Teil für das Abi beigetragen.' : 'Diese Aufgabe wurde bereits von jemandem erledigt.')
+                      : (isAssignee ? 'Dein Beweis wurde akzeptiert! Hol dir jetzt deine Belohnung ab.' : 'Diese Aufgabe wurde bereits von jemandem erledigt.')
+                    }
                   </p>
                 </div>
-                <div className="flex items-center gap-2 text-primary font-bold text-xl bg-background px-6 py-3 rounded-xl border shadow-sm">
-                  <span>+{task.reward_boosters} Booster erhalten</span>
-                </div>
+
+                {!task.reward_claimed && isAssignee ? (
+                  <Button 
+                    size="lg" 
+                    className="gap-2 h-14 px-8 text-xl font-black bg-primary hover:bg-primary/90 shadow-xl shadow-primary/20 animate-bounce"
+                    onClick={handleClaimReward}
+                    disabled={claiming}
+                  >
+                    {claiming ? (
+                      <Loader2 className="h-6 w-6 animate-spin" />
+                    ) : (
+                      <>
+                        <Gift className="h-6 w-6" />
+                        Belohnung abholen
+                      </>
+                    )}
+                  </Button>
+                ) : (
+                  <div className="flex items-center gap-2 text-primary font-bold text-xl bg-background px-6 py-3 rounded-xl border shadow-sm">
+                    <span>+{task.reward_boosters} Booster erhalten</span>
+                  </div>
+                )}
               </CardContent>
             </Card>
           )}
@@ -380,6 +480,12 @@ export default function TaskDetailPage() {
                   <span className="text-muted-foreground font-medium text-xs">Schwierigkeit</span>
                   <Badge variant="secondary" className="font-bold text-[10px] px-2 py-0 border-none">Lvl {task.complexity}</Badge>
                 </div>
+                {task.ticket_reduction !== undefined && (
+                  <div className="flex justify-between items-center py-2 border-b border-muted/30">
+                    <span className="text-muted-foreground font-medium text-xs">Ticket-Abzug</span>
+                    <Badge variant="outline" className="font-bold text-[10px] px-2 py-0 border-success text-success bg-success/5">-{task.ticket_reduction} €</Badge>
+                  </div>
+                )}
                 {task.assignee_id && (
                   <div className="flex justify-between items-center py-2 border-b border-muted/30">
                     <span className="text-muted-foreground font-medium text-xs">Bearbeiter</span>

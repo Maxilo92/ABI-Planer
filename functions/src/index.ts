@@ -29,3 +29,4 @@ export * from "./npAdmin";
 export * from "./combat";
 export * from "./feedback";
 export * from "./tasks";
+export * from "./pushNotifications";

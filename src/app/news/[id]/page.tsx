@@ -109,10 +109,15 @@ export default function NewsDetailPage({ params }: { params: Promise<{ id: strin
   }, [id, user, profile, authLoading])
 
   const handleReaction = async (emoji: string) => {
-    if (!user || !news) {
-      toast.error('Anmeldung erforderlich', {
-        description: 'Um auf News zu reagieren, musst du angemeldet sein.'
-      })
+    if (!user || !news || !emoji || !emoji.trim()) {
+      if (emoji && !emoji.trim()) {
+        console.warn('handleReaction: Attempted to react with empty emoji string')
+      }
+      if (!user || !news) {
+        toast.error('Anmeldung erforderlich', {
+          description: 'Um auf News zu reagieren, musst du angemeldet sein.'
+        })
+      }
       return
     }
 
@@ -123,28 +128,37 @@ export default function NewsDetailPage({ params }: { params: Promise<{ id: strin
 
     try {
       const reactions = news.reactions || {}
-      const userReactionsForEmoji = reactions[emoji] || []
-      const hasReacted = userReactionsForEmoji.includes(user.uid)
-      
       const newReactions = { ...reactions }
-      
-      if (hasReacted) {
-        // Remove reaction
-        newReactions[emoji] = userReactionsForEmoji.filter(uid => uid !== user.uid)
-        // Cleanup empty emoji lists
-        if (newReactions[emoji].length === 0) {
-          delete newReactions[emoji]
+      let hasReactedWithThisEmoji = false
+
+      // Check for existing reactions by the user and remove them
+      Object.keys(newReactions).forEach(key => {
+        if (Array.isArray(newReactions[key])) {
+          if (key === emoji && newReactions[key].includes(user.uid)) {
+            hasReactedWithThisEmoji = true
+          }
+          // Remove user from all emoji lists
+          newReactions[key] = newReactions[key].filter(uid => uid !== user.uid)
+          // Cleanup empty lists
+          if (newReactions[key].length === 0) {
+            delete newReactions[key]
+          }
         }
-      } else {
-        // Add reaction
-        newReactions[emoji] = [...userReactionsForEmoji, user.uid]
+      })
+      
+      if (!hasReactedWithThisEmoji) {
+        // Add new reaction
+        if (!newReactions[emoji]) {
+          newReactions[emoji] = []
+        }
+        newReactions[emoji] = [...newReactions[emoji], user.uid]
       }
 
       await updateDoc(doc(db, 'news', id), {
         reactions: newReactions
       })
 
-      if (!hasReacted) {
+      if (!hasReactedWithThisEmoji) {
         logAction('NEWS_REACTION', user.uid, profile?.full_name, { id, emoji })
       }
       
@@ -294,15 +308,15 @@ export default function NewsDetailPage({ params }: { params: Promise<{ id: strin
 
   const reactions = news.reactions || {}
   // Daumen hoch/runter sind immer da, andere Emojis kommen dynamisch dazu
-  const defaultEmojis = ['', '']
+  const defaultEmojis = ['👍', '👎']
   const otherActiveEmojis = Object.keys(reactions)
-    .filter(key => Array.isArray(reactions[key]) && !defaultEmojis.includes(key))
+    .filter(key => key && key.trim() !== '' && Array.isArray(reactions[key]) && !defaultEmojis.includes(key))
     .sort((a, b) => (reactions[b]?.length || 0) - (reactions[a]?.length || 0))
   
   const activeEmojis = [...defaultEmojis, ...otherActiveEmojis]
   const canSummarize = !!user && !!profile?.is_approved
   
-  const quickEmojis = ['', '️', '', '', '', '', '', '', '', '', '', '', '', '', '', '']
+  const quickEmojis = ['👍', '❤️', '😂', '😮', '😢', '🔥', '🎉', '💯', '🙌', '👏', '✅', '🚀', '👀', '✨', '💡', '🤔']
 
   if (rootMode === 'landing') {
     return (

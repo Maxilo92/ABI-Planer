@@ -279,10 +279,7 @@ export function Footer() {
               <a href={`${mainBaseUrl}/legal/datenschutz`} className="hover:text-primary transition-colors underline-offset-4 hover:underline">Datenschutz</a>
               <a href={`${mainBaseUrl}/legal/agb`} className="hover:text-primary transition-colors underline-offset-4 hover:underline">AGB</a>
             </div>
-            <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-muted/50 border">
-              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-              <span className="tracking-wide">SYSTEMS OPERATIONAL</span>
-            </div>
+
           </div>
         </div>
       </div>

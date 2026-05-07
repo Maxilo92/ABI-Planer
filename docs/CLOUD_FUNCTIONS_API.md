@@ -48,6 +48,15 @@ Dateien: `functions/src/npAdmin.ts`, `functions/src/shop.ts`
 - `adminGetNPMetrics`
 - `adminExportNPTransactions`
 
+### Push Benachrichtigungen
+Datei: `functions/src/pushNotifications.ts`
+- `onNewsCreatedPush`: Versendet Push bei neuen News.
+- `onEventCreatedPush`: Versendet Push bei neuen Kalender-Terminen.
+- `onTodoCreatedPush`: Versendet Push bei neuen (zugewiesenen) Aufgaben.
+- `onGroupMessageCreatedPush`: Versendet Push bei neuen Gruppen-Nachrichten.
+
+Hinweis: Erfordert Opt-In des Nutzers in den Einstellungen.
+
 ## Weitere zentrale Domains
 - MFA: `functions/src/mfa.ts`
 - Users: `functions/src/users.ts`

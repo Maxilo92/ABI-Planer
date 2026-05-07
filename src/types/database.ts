@@ -27,6 +27,7 @@ export interface Profile {
   timeout_reason?: string | null;
   is_approved: boolean;
   is_group_leader?: boolean | null;
+  school_name?: string | null;
   easter_egg_unlocked?: boolean;
   is_2fa_enabled?: boolean;
   two_factor_secret_id?: string | null;
@@ -64,6 +65,7 @@ export interface Profile {
   is_referral_claimed?: boolean;
   total_referrals?: number;
   total_referral_boosters?: number;
+  participation_manual_credit?: number;
   school_year?: number;
   dashboard_layout?: DashboardComponentKey[];
   theme?: 'light' | 'dark' | 'system';
@@ -76,6 +78,7 @@ export interface Profile {
   task_stats?: {
     completed_count: number;
     earned_boosters: number;
+    total_penalty_reduction?: number;
   } | null;
   currencies?: {
     notepunkte: number; // NP balance, default 0
@@ -86,6 +89,13 @@ export interface Profile {
     stripe_subscription_id?: string;
     renewal_count?: number;
   };
+  cosmetics?: {
+    premium_themes?: boolean;
+    custom_avatar?: boolean;
+    unlocked_at?: string | null;
+  } | null;
+  fcmTokens?: string[];
+  isPushEnabled?: boolean;
 }
 
 export type FriendRequestStatus = 'pending' | 'accepted' | 'declined' | 'cancelled';
@@ -228,6 +238,13 @@ export interface CustomPopupMessage {
   routes?: string[];
 }
 
+export interface TaskCategory {
+  id: string;
+  name: string;
+  image_url?: string;
+  is_active: boolean;
+}
+
 export interface Settings {
   id: number;
   ball_date: string;
@@ -238,10 +255,13 @@ export interface Settings {
   leaderboard_adjustments?: Record<string, number>;
   expected_ticket_sales?: number;
   expected_ticket_price?: number;
+  ticket_penalty_base?: number;
+  ticket_penalty_reduction?: number;
   planning_groups?: PlanningGroup[];
   loot_teachers?: LootTeacher[];
   custom_popup_messages?: CustomPopupMessage[];
   rarity_limits?: Record<TeacherRarity, number>;
+  task_categories?: TaskCategory[];
   maintenance?: {
     start: string | null;
     end?: string | null;
@@ -512,9 +532,11 @@ export interface Task {
   title: string;
   description: string;
   reward_boosters: number;
+  ticket_reduction?: number;
   complexity: number; // 1-10
   status: 'open' | 'claimed' | 'in_review' | 'completed' | 'rejected';
   task_image_urls: string[]; // Max 3 Bilder zur Erklärung
+  category_id?: string;
   
   // Zuweisung
   assignee_id?: string | null;
@@ -533,6 +555,7 @@ export interface Task {
   rejected_at?: string | Timestamp | Date | null;
   completed_at?: string | Timestamp | Date | null;
   reviewed_by?: string | null;
+  reward_claimed?: boolean;
 
   created_by: string;
   created_at: string | Timestamp | Date;

@@ -50,7 +50,7 @@ export function ImageCarousel({ images, title }: ImageCarouselProps) {
   }
 
   return (
-    <div className="relative group aspect-video md:aspect-[16/9] w-full overflow-hidden rounded-xl bg-muted border">
+    <div className="relative group aspect-video md:aspect-[16/9] w-full overflow-hidden rounded-xl bg-muted border shadow-inner">
       <AnimatePresence initial={false} custom={direction}>
         <motion.div
           key={currentIndex}
@@ -81,9 +81,10 @@ export function ImageCarousel({ images, title }: ImageCarouselProps) {
             src={images[currentIndex]}
             alt={`${title} - Bild ${currentIndex + 1}`}
             fill
-            className="object-cover"
+            className="object-contain"
             priority
             draggable={false}
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 70vw, 50vw"
           />
         </motion.div>
       </AnimatePresence>

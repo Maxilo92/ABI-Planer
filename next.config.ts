@@ -19,6 +19,18 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "storage.googleapis.com",
       },
+      {
+        protocol: "https",
+        hostname: "api.dicebear.com",
+      },
+      {
+        protocol: "https",
+        hostname: "loremflickr.com",
+      },
+      {
+        protocol: "https",
+        hostname: "images.unsplash.com",
+      },
     ],
   },
   allowedDevOrigins: ['dashboard.abi-planer-27.localhost', 'shop.abi-planer-27.localhost'],

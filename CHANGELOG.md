@@ -6,6 +6,232 @@
 <!-- default_action: read newest entries only unless a regression requires older history -->
 <!-- index: docs/AGENT_CONTEXT_INDEX.md -->
 
+## [1.34.4.41] - 2026-05-07
+
+### Fixed
+- **MarketplaceCard**: Kritischer Fehler behoben, bei dem die Variable `secondaryReward` nicht definiert war (ReferenceError).
+
+## [1.34.4.40] - 2026-05-07
+
+### Fixed
+- **Placeholder-Bilder (Aufgaben)**: Unerwünschte Rahmen und Artefakte bei API-generierten Platzhalter-Bildern entfernt.
+  - Platzhalter nutzen nun wieder `object-cover`, um den Rahmen sauber auszufüllen (keine Balken mehr für generic Content).
+  - Die Such-Keywords für die Bild-API wurden verfeinert, um modernere und fehlerfreie Bilder zu erhalten.
+  - Echte Aufgaben-Bilder nutzen weiterhin `object-contain` für maximale Sichtbarkeit ohne Beschnitt.
+
+## [1.34.4.39] - 2026-05-07
+
+### Fixed
+- **Bilddarstellung (Aufgaben)**: Die Balken (Letterboxing), die bei nicht füllenden Bildern entstehen, passen sich nun dem gewählten Theme an (`bg-muted`), anstatt fest auf Schwarz eingestellt zu sein. Dies sorgt für eine harmonischere Integration in das Gesamtdesign.
+
+## [1.34.4.38] - 2026-05-07
+
+### Fixed
+- **Bilddarstellung (Aufgaben)**: Bilder in den Marketplace-Cards, der Detailansicht und dem ImageCarousel werden nun nicht mehr abgeschnitten (`object-contain`). Falls ein Bild den Rahmen nicht ausfüllt, werden nun schwarze Balken (Letterboxing) angezeigt, um die vollständige Sichtbarkeit des Bildes zu garantieren.
+
+## [1.34.4.37] - 2026-05-07
+
+### Changed
+- **Theme-System (Aufgaben)**: Das Aufgaben-Modul (`/aufgaben`, Detailansicht und Admin-Bereich) ist nun vollständig theme-aware.
+  - Hardcodierte dunkle Hintergründe und Slate-Farben wurden durch semantische Variablen (`bg-card`, `text-foreground`, `border-border`) ersetzt.
+  - Der Ticket-Bonus-Fortschrittsbalken passt sich nun dynamisch an das gewählte Theme an.
+- **Konsistente Widget-Größen**: Alle Angebots-Karten (MarketplaceCards) haben nun eine einheitliche Höhe, unabhängig von der Textlänge. Dies sorgt für ein sauberes Grid-Layout und eine ruhige Optik im horizontalen Scroller.
+
+## [1.34.4.36] - 2026-05-07
+
+### Fixed
+- **Aufgaben-Detailansicht**: Korrektur doppelt angezeigter Wasserzeichen bei Platzhalter-Bildern.
+- **Code-Qualität**: Migration von Standard-`<img>`-Tags auf die Next.js-`Image`-Komponente für Platzhalter-Bilder zur besseren Performance und SEO. Bereinigung ungenutzter Imports in den Aufgaben-Modulen.
+
+## [1.34.4.35] - 2026-05-07
+
+### Fixed
+- **Aufgaben-Detailansicht**: Platzhalter-Bilder zeigen nun auch in der Detailansicht das "Beispielbild"-Wasserzeichen bei Hover.
+- **Konsistente Bilddarstellung**: Umstellung des `ImageCarousel` auf `object-cover`, um eine einheitliche Größe über alle Inserate hinweg zu gewährleisten (keine schwarzen Balken mehr bei unterschiedlichen Formaten).
+
+## [1.34.4.34] - 2026-05-07
+
+### Fixed
+- **Aufgaben-Karten Design**: Die Bildgrößen im Marktplatz sind nun konsistent (Square Aspect Ratio + Object-Cover) für alle Inserate.
+- **Platzhalter-Kennzeichnung**: Zufällige API-Bilder zeigen nun bei Hover ein "Beispielbild"-Wasserzeichen, um sie klar von echten Fotos abzugrenzen.
+- **Horizontaler Scroll**: Einheitliche Kartenbreiten in der Sektion "Neu eingetroffen".
+
+## [1.34.4.32] - 2026-05-07
+
+### Added
+- **On-the-fly Kategorien**: Neue Aufgaben-Kategorien können jetzt direkt im Erstellungsprozess hinzugefügt werden, ohne den Flow zu unterbrechen. Ein neuer Plus-Button neben der Kategoriewahl öffnet einen Dialog zur schnellen Erstellung.
+
+### Changed
+- **Booster-Slider**: Der Slider für die Booster-Belohnung bei neuen Aufgaben lässt sich nun bis auf 0 reduzieren, um Aufgaben ohne Belohnung zu ermöglichen.
+
+## [1.34.4.31] - 2026-05-07
+
+### Added
+- **Dynamische Platzhalter-Bilder**: Aufgaben ohne eigene Fotos nutzen nun einen intelligenten Platzhalter-Dienst (LoremFlickr).
+  - Die Bilder werden basierend auf der Kategorie oder dem Titel der Aufgabe ausgewählt, um thematische Relevanz zu gewährleisten.
+  - Das visuelle Design der Platzhalter wurde mit Filtern (Helligkeit/Kontrast) an den modernen Stil des Marktplatzes angepasst.
+  - Gilt sowohl für die Marktplatz-Übersicht als auch für die Detailansichten.
+
+## [1.34.4.30] - 2026-05-07
+
+### Fixed
+- **Tabs UI Fix**: Die Tabs für den Marktplatz wurden repariert und nutzen nun das konsistente "Compact Toggle" Design (zentriert, abgerundet, mit Schatten).
+- **Mobile Optimierung**: Komplette Überarbeitung der Aufgaben-Seite für Handys.
+  - Schriftgrößen und Abstände wurden für kleine Bildschirme reduziert.
+  - Kategorie-Icons und Header passen sich nun dynamisch an.
+  - Grid-Layouts wurden für bessere Lesbarkeit auf Mobilgeräten optimiert.
+- **Bugfix**: Fehler beim Speichern von Favoriten behoben (korrekte Datenbankreferenz).
+
+## [1.34.4.29] - 2026-05-07
+
+### Changed
+- **Layout Refactoring (Aufgaben)**: Die Anordnung auf der Aufgaben-Seite wurde für einen intuitiveren Flow optimiert.
+  - **Kategorie-Navigation zuerst**: Die Kategorien (Highlights) stehen nun ganz oben als primäres Navigations-Element.
+  - **Kompakter Header**: Reduzierung der vertikalen Abstände und Integration von Suche und Ticket-Status in einen gemeinsamen Bereich.
+  - **Smarter Ticket-Status**: Die Spar-Fortschrittsanzeige ist nun kompakter und fügt sich besser in die Seite ein.
+  - **Verbesserte Hierarchie**: Klare Trennung zwischen "Entdecken" (Kategorien), "Suche" und "Neuheiten" (Featured Scroller).
+
+## [1.34.4.28] - 2026-05-07
+
+### Added
+- **Dynamische Aufgaben-Kategorien**: Admins können nun Kategorien im Aufgaben-Bereich flexibel verwalten.
+- **eBay-Style Layout**: Der Marktplatz (`/aufgaben`) wurde komplett überarbeitet.
+  - **Aktuelle Angebote**: Ein horizontaler Slider zeigt die neuesten Inserate.
+  - **Highlights**: Kategorien werden als Bild-Kacheln (ähnlich eBay) angezeigt und dienen als Schnellfilter.
+  - **Kategorien-Badge**: Jede Aufgabe zeigt nun ihre Kategorie direkt auf der Karte an.
+- **Admin-Kategorien-Verwaltung**: In `/admin/aufgaben` können Kategorien erstellt, mit Icons versehen und gelöscht werden.
+
+### Changed
+- **Aufgaben-Erstellung**: Beim Erstellen einer Aufgabe kann nun direkt eine Kategorie ausgewählt werden.
+
+## [1.34.4.33] - 2026-05-07
+
+### Fixed
+- **Image Scaling Fix**: Bilder werden nun nicht mehr beschnitten (gezoomt). Alle Aufgaben-Bilder nutzen jetzt `object-contain` mit schwarzen Balken (Letterboxing), um sicherzustellen, dass das gesamte Bild unabhängig vom Format sichtbar ist.
+
+## [1.34.4.27] - 2026-05-07
+
+### Changed
+- **Mobile-First Optimierung**: Der Aufgaben-Marktplatz wurde für Mobilgeräte perfektioniert.
+  - **Kompakter Mobile-Header**: Das Ticket-Banner passt sich nun intelligent an kleine Bildschirme an.
+  - **Responsive Grid**: Die Karten nutzen nun 2 Spalten auf dem Handy für bessere Übersicht.
+  - **Touch-Optimierte Cards**: Schriftgrößen und Abstände wurden für die mobile Nutzung angepasst; wichtige Infos sind ohne Hover sichtbar.
+
+## [1.34.4.26] - 2026-05-07
+
+### Fixed
+- **Firebase Permissions**: Fehler beim Speichern von Favoriten behoben (korrekte Collection-Referenz auf `profiles`).
+- **Next.js Performance**: Mehrere Warnungen bezüglich `Image` (fehlende `sizes`, ungültige `position`) in den Aufgaben-Komponenten behoben.
+
+## [1.34.4.25] - 2026-05-07
+
+### Added
+- **Marketplace Suche & Filter**: Neue Suchleiste und Schwierigkeits-Filter (Complexity) zur gezielten Suche nach Aufgaben.
+- **Priority Sorting**: Gelikte Aufgaben (Favoriten) werden nun automatisch an den Anfang der Liste sortiert.
+
+### Changed
+- **Responsive Grid-Optimierung**: Verbessertes Skalierungsverhalten auf großen Bildschirmen. Die Karten sind nun kleiner und übersichtlicher (bis zu 6 Spalten auf 2K-Monitoren).
+- **Tight Layout**: Header und Abstände wurden optimiert, um mehr Inhalt "Above the Fold" sichtbar zu machen.
+
+## [1.34.4.24] - 2026-05-07
+
+### Added
+- **Funktionale Merkliste**: Der Herz-Button in den Aufgaben-Karten ist nun voll funktionsfähig und speichert Favoriten dauerhaft im Nutzerprofil (Firestore).
+
+### Changed
+- **Minimalistischer Aufgaben-Header**: Das klobige Dashboard wurde durch ein schlankes, platzsparendes Banner am oberen Rand ersetzt. Dies reduziert Scroll-Aufwand und rückt die Marktplatz-Angebote sofort ins Blickfeld.
+- **UX-Optimierung**: Schnellzugriff auf Finanzen direkt aus dem Aufgaben-Banner.
+
+## [1.34.4.23] - 2026-05-07
+
+### Changed
+- **Premium Aufgaben Marktplatz**: Kompletter Redesign des Aufgaben-Bereichs für ein modernes "Marketplace"-Gefühl (inspiriert von eBay Kleinanzeigen/Facebook Marketplace).
+  - **Neue Marketplace-Cards**: Fokus auf quadratische Produktbilder, fette Belohnungs-Anzeigen ("Preis") und cleane Typografie ohne störende Footer.
+  - **Interaktive Herz-Icons**: Nutzer können Aufgaben visuell "merken" (Favoriten-Vorschau).
+  - **Neues Progress-Dashboard**: Elegante Visualisierung des Ticket-Status mit Fokus auf Ersparnis und Fortschritt.
+  - **Motion-Experience**: Staggered Grid-Animationen für das Laden der Aufgaben-Listen.
+
+## [1.34.4.23] - 2026-05-07
+
+### Added
+- **Manuelle Belohnungs-Abholung**: Aufgaben-Belohnungen (Booster) werden nun nicht mehr automatisch vergeben.
+  - Nutzer müssen ihre Belohnung nach der Admin-Freigabe manuell über einen neuen "Belohnung abholen" Button abholen.
+  - Dies maximiert den "Dopamin-Effekt" durch eine gezielte Interaktion und eine große "Fette Animation" beim Abholen.
+  - Neue Cloud Function `claimTaskReward` zur sicheren Abwicklung der Belohnungsvergabe.
+
+## [1.34.4.22] - 2026-05-07
+
+### Added
+- **Dopamine-Animationen**: Einführung von feierlichen Partikel-Effekten (Bursts) zur Belohnung von Nutzeraktionen.
+  - Neuer `DopamineBurst`-Komponente basierend auf Framer Motion.
+  - Automatischer Burst-Effekt beim erfolgreichen Einreichen eines Aufgaben-Beweises.
+  - Einmaliger feierlicher Burst beim Betrachten einer erfolgreich abgeschlossenen Aufgabe.
+
+## [1.34.4.21] - 2026-05-07
+
+### Added
+- **Einheitliches Profilsystem**: Einführung einer konsistenten Profilansicht für das eigene und öffentliche Profile.
+  - Neues, modernes "Shared Design" mit Banner-Layout, großen Avataren und klarer Informationsstruktur.
+  - Integriertes Sammelkarten-Album und Community-Status in beiden Ansichten.
+- **Profil-Personalisierung**:
+  - Nutzer können nun ihren Schulnamen in den Einstellungen frei bearbeiten (Standard: Gymnasial-Schule am See).
+  - Das Ändern des Profilbildes (Avatar-URL) ist nun für alle Nutzer kostenlos möglich (bisher Premium-Feature).
+
+### Changed
+- **Ticket-Preissystem**: Verfeinerung der Strafreduktion.
+  - Aufgaben haben nun einen individuellen Euro-Wert für den Ticket-Abzug (statt pauschal 10€).
+  - Beim Erstellen einer Aufgabe kann der Abzugsbetrag (0-30€) festgelegt werden.
+  - Automatisches Tracking der gesamten Reduktion im Nutzerprofil über Cloud Functions.
+  - UI-Anpassungen im Marktplatz und in der Status-Übersicht zur Anzeige der spezifischen Geldbeträge.
+
+## [1.34.4.20] - 2026-05-07
+
+### Changed
+- **Theme-System**: Grüner Akzent-Theme (Classic Green) ist jetzt kostenpflichtig
+  - Kostenlose Basis-Themes: Pure White (Light) und Midnight Black (Dark)
+  - Alle anderen Premium-Themes erfordern Freischaltung im Shop
+  - Alte Benutzer mit Classic Green werden automatisch zu Pure White downgraded
+- **Shop**: Cosmetics können jetzt gekauft werden
+  - Premium Theme Pack (4,99€) – Schaltet alle Premium-Akzentthemen frei
+  - Custom User Icon (2,99€) – Erlaubt eigene Avatar-URLs
+  - Nach dem Kauf sind die Features sofort verfügbar
+- **Stripe Integration**: Cosmetics jetzt vollständig in die Stripe-Checkout-Integration integriert
+
+## [1.34.4.19] - 2026-05-07
+
+### Added
+- **Ticket-Preissystem**: Implementierung eines dynamischen Straf- und Rabattsystems für Ticketpreise.
+  - Standardmäßig 30€ Aufschlag für fehlende Mitarbeit.
+  - Jede erledigte Aufgabe im Marktplatz reduziert den Aufschlag um 10€.
+  - Admins können manuelle Gutschriften für externes Engagement vergeben.
+  - Anzeige des individuellen Ticketpreises (UVP + Strafe) im Finanzwidget.
+  - Status-Widget auf der Aufgaben-Seite zur Verfolgung der Preisreduktion.
+- **Einstellungen**: Globale Konfiguration für Basis-Strafe und Abzugsbetrag in den Finanz-Einstellungen hinzugefügt.
+
+## [1.34.4.18] - 2026-05-07
+
+### Fixed
+
+- **Avatare**: Externe DiceBear-Avatare können jetzt wieder über `next/image` geladen werden, indem `api.dicebear.com` in der Next.js-Bildkonfiguration erlaubt ist.
+
+## [1.34.4.17] - 2026-05-06
+
+### Changed
+- **Trading**: Mindestanforderung für Tausch wieder auf 100 Karten angehoben (für maximale Exklusivität).
+- **News Reactions**: Nutzer können nun nur noch EINE Reaktion pro News-Beitrag abgeben. Bei Auswahl eines neuen Emojis wird die vorherige Reaktion automatisch entfernt.
+- **News**: Korrektur der Hype-Ankündigung (Limit & Rarity-Wording).
+
+## [1.34.4.16] - 2026-05-06
+
+### Fixed
+- **Settings Layout (Desktop/Mobile)**: Drastisch verbesserte Sichtbarkeit und Navigation
+  - Header-Höhe reduziert (kleiner Padding, kleinere Schriften)
+  - Sidebar ist jetzt auf Desktop sichtbar und funktionsfähig
+  - Content-Padding korrekt angepasst - kein Overlap mit Header mehr
+  - Mobile Sidebar-Position synchronisiert mit neuem Header
+  - Alle 8 Einstellungen-Sections jetzt vollständig zugreifbar
+- **Settings Navigation**: Behoben dass Sidebar auf Desktop nicht angezeigt wurde (`md:display` → `md:block`)
+
 ## [1.34.4.15] - 2026-05-06
 
 ### Fixed
@@ -14,6 +240,11 @@
   - Erhöhte Header-Padding von 60px/76px auf 72px/84px
   - Korrigierte mobile Sidebar-Position zur Header-Höhe
 - **Settings Page**: JSX Parsing-Fehler behoben (fehlende div-Schließung)
+
+## [1.34.4.15] - 2026-05-06
+
+### Fixed
+- **News Reactions**: Kritischer Fehler behoben, bei dem leere Emojis in den News-Reaktionen zu Firebase-Fehlern und React-Key-Konflikten führten. Die Emoji-Listen wurden mit validen Standard-Emojis gefüllt und eine Validierung gegen leere Eingaben hinzugefügt.
 
 ## [1.34.4.14] - 2026-05-06
 

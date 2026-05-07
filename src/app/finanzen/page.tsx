@@ -25,6 +25,8 @@ import { ProtectedSystemGate } from '@/components/ui/ProtectedSystemGate'
 import { usePopupManager } from '@/modules/popup/usePopupManager'
 import { FinanceChart } from '@/components/dashboard/FinanceChart'
 
+import { calculateFinanceBreakdown } from '@/lib/finance-utils'
+
 export default function FinancePage() {
   const { user, profile, loading: authLoading } = useAuth()
   const { confirm } = usePopupManager()
@@ -222,52 +224,7 @@ export default function FinancePage() {
   const fundingGoal = settings?.funding_goal ?? 10000
 
   // Calculate course breakdown for progress bar
-  const COURSE_COLORS = [
-    'bg-primary',
-    'bg-success',
-    'bg-brand',
-    'bg-info',
-    'bg-warning',
-    'bg-orange-500',
-    'bg-pink-500',
-    'bg-cyan-500',
-  ]
-
-  const courseContributions: Record<string, number> = {}
-  
-  // Add contributions from finance entries (income only for better visualization)
-  finances.forEach(entry => {
-    if (entry.responsible_class && entry.amount > 0) {
-      const course = String(entry.responsible_class)
-      courseContributions[course] = (courseContributions[course] || 0) + entry.amount
-    }
-  })
-
-  // Add contributions from shop earnings
-  shopEarnings.forEach(earning => {
-    if (earning.selected_course && earning.abi_share_eur > 0) {
-      const course = String(earning.selected_course)
-      courseContributions[course] = (courseContributions[course] || 0) + earning.abi_share_eur
-    }
-  })
-
-  // Add manual adjustments if they exist
-  if (settings?.leaderboard_adjustments) {
-    Object.entries(settings.leaderboard_adjustments).forEach(([course, amount]) => {
-      if (amount > 0) {
-        courseContributions[course] = (courseContributions[course] || 0) + amount
-      }
-    })
-  }
-
-  const breakdown = Object.entries(courseContributions)
-    .filter(([_, amount]) => amount > 0)
-    .sort((a, b) => b[1] - a[1])
-    .map(([course, amount], index) => ({
-      label: `Kurs ${course}`,
-      amount,
-      color: COURSE_COLORS[index % COURSE_COLORS.length]
-    }))
+  const breakdown = calculateFinanceBreakdown(finances, shopEarnings, settings)
 
   // Checksum calculation
   const diff = lastVerification ? lastVerification.amount - currentBalance : null
@@ -291,7 +248,7 @@ export default function FinancePage() {
             <Link href="/finanzen/spenden/entwickler">
               <Button variant="outline" size="sm" className="gap-2 border-brand/20 hover:border-brand hover:text-brand transition-all">
                 <Coffee className="h-4 w-4 fill-brand/10" />
-                Support App
+                Entwickler
               </Button>
             </Link>
             {isPlanner && (
@@ -410,6 +367,8 @@ export default function FinancePage() {
         onTicketSalesChange={canEditTicketSales ? handleTicketSalesChange : undefined}
         canEditTicketSales={canEditTicketSales}
         isAuthenticated={!!user}
+        profile={profile}
+        settings={settings}
       />
 
       <div className="grid grid-cols-1 md:grid-cols-1 gap-6">

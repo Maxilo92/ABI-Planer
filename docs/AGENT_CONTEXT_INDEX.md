@@ -4,14 +4,16 @@ Purpose: Help future coding agents load only the minimum relevant context.
 
 ## Fast Start (Default)
 
-1. Read root project orientation:
-   - README.md
-   - INSTALL.md
-   - GEMINI.md
-2. Read domain overview:
-   - docs/PROJECT_KNOWLEDGE.md
-3. Read recent product change history:
-   - CHANGELOG.md (latest sections only)
+1. Read the vault first:
+  - vault/README.md
+2. Read root project orientation:
+  - README.md
+  - INSTALL.md
+  - GEMINI.md
+3. Read domain overview:
+  - docs/PROJECT_KNOWLEDGE.md
+4. Read recent product change history:
+  - CHANGELOG.md (latest sections only)
 
 ## Context Budget Rules
 
@@ -36,6 +38,8 @@ Purpose: Help future coding agents load only the minimum relevant context.
   - README.md
   - docs/PROJECT_KNOWLEDGE.md
   - CHANGELOG.md
+- Handbook, design system, agent guidance:
+  - vault/**
 - Implementation planning process:
   - docs/maestro/plans/*.md (non-archive first)
 - Historical regressions and prior attempts:

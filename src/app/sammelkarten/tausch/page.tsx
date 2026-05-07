@@ -89,7 +89,7 @@ export default function TradeCenterPage() {
     return profile?.booster_stats?.total_cards || 0
   }, [teachers, profile?.booster_stats?.total_cards])
 
-  const canTrade = totalCards >= 100
+  const canTrade = totalCards >= 10
   const showLockedBanner = !teachersLoading && !canTrade
 
   const getStatusBadge = (status: string) => {
@@ -134,7 +134,7 @@ export default function TradeCenterPage() {
             <div className="space-y-1">
               <p className="font-bold text-amber-900 uppercase text-sm tracking-tight">Tauschen noch gesperrt</p>
               <p className="text-amber-800 text-sm">
-                Du benötigst mindestens 100 Karten in deiner Sammlung, um am Trading teilzunehmen. 
+                Du benötigst mindestens 10 Karten in deiner Sammlung, um am Trading teilzunehmen. 
                 Du hast aktuell <strong>{totalCards}</strong> Karten. Sammle mehr Booster, um diese Funktion freizuschalten!
               </p>
             </div>

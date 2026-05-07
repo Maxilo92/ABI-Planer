@@ -15,6 +15,7 @@ export interface Task {
   title: string;
   description: string;
   reward_boosters: number;
+  ticket_reduction?: number;
   complexity: number;
   status: 'open' | 'claimed' | 'in_review' | 'completed' | 'rejected';
   task_image_urls: string[];
@@ -30,6 +31,8 @@ export interface Task {
   rejected_at?: any;
   completed_at?: any;
   reviewed_by?: string | null;
+  reward_claimed?: boolean;
+  reward_claimed_at?: any;
   created_by: string;
   created_at: any;
 }
@@ -80,77 +83,30 @@ export const adminReviewTask = onCall({
       throw new HttpsError("failed-precondition", "Aufgabe ist nicht im Status 'in_review'.");
     }
 
-    const assigneeId = taskData.assignee_id;
-    if (!assigneeId) {
-      throw new HttpsError("failed-precondition", "Aufgabe hat keinen Bearbeiter.");
-    }
-
-    const rewardBoosters = Number(taskData.reward_boosters);
-    const safeRewardBoosters = Number.isFinite(rewardBoosters) && rewardBoosters >= 0 ? rewardBoosters : 0;
-
     if (action === "approve") {
       logger.info("task_review_approve_started", {
         taskId,
-        assigneeUid: assigneeId,
-        assigneeName: taskData.assignee_name,
-        rewardBoosters: safeRewardBoosters,
+        assigneeUid: taskData.assignee_id,
         adminUid: request.auth.uid,
-        adminRole,
       });
 
-      // 1. Update Profile: Award boosters and increment task count
-      const profileRef = db.collection("profiles").doc(assigneeId);
-
-      await db.runTransaction(async (transaction) => {
-        const profileDoc = await transaction.get(profileRef);
-        if (!profileDoc.exists) {
-          throw new HttpsError("not-found", "Profil des Bearbeiters nicht gefunden.");
-        }
-
-        transaction.update(profileRef, {
-          "booster_stats.extra_available": FieldValue.increment(safeRewardBoosters),
-          "task_stats.completed_count": FieldValue.increment(1),
-          "task_stats.earned_boosters": FieldValue.increment(safeRewardBoosters),
-        });
-
-        // 2. Update Task Status
-        transaction.update(db.collection("tasks").doc(taskId), {
-          status: "completed",
-          completed_at: FieldValue.serverTimestamp(),
-          reviewed_by: request.auth?.uid,
-        });
+      // Update Task Status - Reward will be claimed manually by user
+      await db.collection("tasks").doc(taskId).update({
+        status: "completed",
+        completed_at: FieldValue.serverTimestamp(),
+        reviewed_by: request.auth?.uid,
+        reward_claimed: false, // Explicitly set to false for manual claim
       });
 
-      logger.info("task_reward_granted", {
-        taskId,
-        assigneeUid: assigneeId,
-        rewardBoosters: safeRewardBoosters,
-        completedAt: new Date().toISOString(),
-      });
-
-      // 3. Delete Proof from Storage
+      // Delete Proof from Storage
       if (taskData.proof_storage_path) {
         try {
           const bucket = admin.storage().bucket();
           await bucket.file(taskData.proof_storage_path).delete();
-          logger.info("task_proof_deleted", {
-            taskId,
-            proofStoragePath: taskData.proof_storage_path,
-          });
         } catch (error) {
-          logger.warn("task_proof_deletion_failed", {
-            taskId,
-            proofStoragePath: taskData.proof_storage_path,
-            error: String(error),
-          });
-          // We don't throw here to ensure the DB update remains consistent
+          logger.warn("task_proof_deletion_failed", { taskId, error: String(error) });
         }
       }
-
-      logger.info("task_review_approve_completed", {
-        taskId,
-        assigneeUid: assigneeId,
-      });
 
       return { success: true, message: "Aufgabe erfolgreich genehmigt." };
     }
@@ -159,15 +115,6 @@ export const adminReviewTask = onCall({
       throw new HttpsError("invalid-argument", "Bei Ablehnung ist eine Begründung erforderlich.");
     }
 
-    logger.info("task_review_reject_started", {
-      taskId,
-      assigneeUid: assigneeId,
-      assigneeName: taskData.assignee_name,
-      rejectedReason: rejectedReason.trim().substring(0, 200),
-      adminUid: request.auth.uid,
-      adminRole,
-    });
-
     await db.collection("tasks").doc(taskId).update({
       status: "rejected",
       rejected_reason: rejectedReason.trim(),
@@ -175,23 +122,68 @@ export const adminReviewTask = onCall({
       reviewed_by: request.auth.uid,
     });
 
-    logger.info("task_review_reject_completed", {
-      taskId,
-      assigneeUid: assigneeId,
-      rejectionReason: rejectedReason.trim().substring(0, 200),
-    });
-
     return { success: true, message: "Aufgabe abgelehnt." };
   } catch (error) {
-    if (error instanceof HttpsError) {
-      throw error;
-    }
-    logger.error("task_review_failed", {
-      uid: request.auth?.uid ?? null,
-      data: request.data ?? null,
-      error,
-    });
+    if (error instanceof HttpsError) throw error;
+    logger.error("task_review_failed", { error });
     throw new HttpsError("internal", "Interner Fehler bei der Aufgabenprüfung.");
+  }
+});
+
+export const claimTaskReward = onCall({
+  cors: CALLABLE_CORS_ORIGINS,
+  region: "europe-west3",
+}, async (request) => {
+  try {
+    const { taskId } = request.data as { taskId?: unknown };
+
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "Nutzer nicht angemeldet.");
+    }
+
+    if (typeof taskId !== "string") {
+      throw new HttpsError("invalid-argument", "Ungültige taskId.");
+    }
+
+    const taskRef = db.collection("tasks").doc(taskId);
+    
+    return await db.runTransaction(async (transaction) => {
+      const taskDoc = await transaction.get(taskRef);
+      if (!taskDoc.exists) throw new HttpsError("not-found", "Aufgabe nicht gefunden.");
+
+      const taskData = taskDoc.data() as Task;
+      if (taskData.status !== "completed") {
+        throw new HttpsError("failed-precondition", "Aufgabe ist noch nicht abgeschlossen.");
+      }
+      if (taskData.assignee_id !== request.auth?.uid) {
+        throw new HttpsError("permission-denied", "Das ist nicht deine Aufgabe.");
+      }
+      if (taskData.reward_claimed) {
+        throw new HttpsError("already-exists", "Belohnung wurde bereits abgeholt.");
+      }
+
+      const profileRef = db.collection("profiles").doc(request.auth?.uid as string);
+      const rewardBoosters = Number(taskData.reward_boosters || 0);
+      const ticketReduction = Number(taskData.ticket_reduction || 0);
+
+      transaction.update(profileRef, {
+        "booster_stats.extra_available": FieldValue.increment(rewardBoosters),
+        "task_stats.completed_count": FieldValue.increment(1),
+        "task_stats.earned_boosters": FieldValue.increment(rewardBoosters),
+        "task_stats.total_penalty_reduction": FieldValue.increment(ticketReduction),
+      });
+
+      transaction.update(taskRef, {
+        reward_claimed: true,
+        reward_claimed_at: FieldValue.serverTimestamp(),
+      });
+
+      return { success: true, rewardBoosters };
+    });
+  } catch (error) {
+    if (error instanceof HttpsError) throw error;
+    logger.error("claim_reward_failed", { error });
+    throw new HttpsError("internal", "Fehler beim Abholen der Belohnung.");
   }
 });
 

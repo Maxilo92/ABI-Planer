@@ -24,11 +24,13 @@
 - **Rollenverwaltung** — Admin/Planner/Viewer mit granularer Berechtigung
 
 ##  Quick Start
-1. [Installation & Setup](./INSTALL.md) — Firebase-Projekt vorbereiten
-2. [Environment Variables](./docs/.env-reference.md) — zentrale Env-Referenz
-3. [Deployment Guide](./DEPLOYMENT.md) — Release-Workflow fuer Produktion
+1. [Obsidian Vault](./vault/README.md) — zuerst lesen, wenn du an diesem Repo arbeitest
+2. [Installation & Setup](./INSTALL.md) — Firebase-Projekt vorbereiten
+3. [Environment Variables](./docs/.env-reference.md) — zentrale Env-Referenz
+4. [Deployment Guide](./DEPLOYMENT.md) — Release-Workflow fuer Produktion
 
 ##  Complete Documentation
+- [Obsidian Vault](./vault/README.md) — primäres Handbuch fuer App, Architektur, Agenten und Design
 - [Agent Context Index](./docs/AGENT_CONTEXT_INDEX.md) — Startpunkt für Agenten mit Kontext-Sparstrategie (relevante Dateien zuerst)
 - [Testing Phase](./testing/README_TESTING_PHASE.md) — Ueberblick Testprozess
 - [Test Environment Setup](./testing/TEST_ENVIRONMENT_SETUP.md) — lokal starten und verifizieren
@@ -58,4 +60,4 @@
 - `npm run build` — Production Build für Deployment
 
 ---
-**Version:** 1.30.1.03 | **Status:** Active Development
+**Version:** 1.34.4.6 | **Status:** Active Development

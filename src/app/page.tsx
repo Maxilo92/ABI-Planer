@@ -45,6 +45,7 @@ import { useRouter } from 'next/navigation'
 import { useTheme } from 'next-themes'
 import { motion, useScroll, useSpring, AnimatePresence } from 'framer-motion'
 import { logAction } from '@/lib/logging'
+import { calculateFinanceBreakdown } from '@/lib/finance-utils'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { getDashboardBaseUrl, getDashboardRedirectUrl } from '@/lib/dashboard-url'
@@ -1390,6 +1391,7 @@ export default function Dashboard() {
 
     switch (key) {
       case 'funding':
+        const breakdown = calculateFinanceBreakdown(allFinances, allShopEarnings, settings)
         content = (
           <div className="flex flex-col">
             <Skeleton
@@ -1431,12 +1433,15 @@ export default function Dashboard() {
               key="funding"
               current={currentFunding}
               checksum={lastVerification?.amount}
+              breakdown={breakdown}
               goal={settings?.funding_goal ?? 10000}
               initialTicketSales={settings?.expected_ticket_sales ?? 150}
               onTicketSalesChange={canEditTicketSales ? handleTicketSalesChange : undefined}
               canEditTicketSales={canEditTicketSales}
               isAuthenticated={!!user}
               loading={(!initialLoadState.settings || !initialLoadState.finances || !initialLoadState.cashVerifications) && !timeoutReached}
+              profile={profile}
+              settings={settings}
             />
             </Skeleton>
           </div>
@@ -1719,6 +1724,8 @@ export default function Dashboard() {
               currentGoal={settings?.funding_goal ?? 10000}
               currentSupportGoal={settings?.support_goal ?? 100}
               currentSupportAmount={settings?.current_support_amount ?? 0}
+              currentPenaltyBase={settings?.ticket_penalty_base}
+              currentPenaltyReduction={settings?.ticket_penalty_reduction}
             />          )}
           {profile && (
             <div className="flex items-center gap-2">

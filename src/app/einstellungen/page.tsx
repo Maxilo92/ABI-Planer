@@ -66,8 +66,10 @@ export default function SettingsPage() {
 
   // Account management state
   const [fullName, setFullName] = useState('')
+  const [schoolName, setSchoolName] = useState('')
   const [customAvatarUrl, setCustomAvatarUrl] = useState('')
   const [savingName, setSavingName] = useState(false)
+  const [savingSchool, setSavingSchool] = useState(false)
   const [savingAvatar, setSavingAvatar] = useState(false)
   const [availableCourses, setAvailableCourses] = useState<string[]>(['Kurs 1', 'Kurs 2', 'Kurs 3', 'Kurs 4', 'Kurs 5', 'Kurs 6', 'Kurs 7'])
   const [selectedCourse, setSelectedCourse] = useState('')
@@ -187,9 +189,10 @@ export default function SettingsPage() {
 
   useEffect(() => {
     setFullName(profile?.full_name || '')
+    setSchoolName(profile?.school_name || '')
     setSelectedCourse(profile?.class_name || '')
     setCustomAvatarUrl(profile?.photo_url || '')
-  }, [profile?.full_name, profile?.class_name, profile?.photo_url])
+  }, [profile?.full_name, profile?.school_name, profile?.class_name, profile?.photo_url])
 
   const handleUpdateName = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -218,6 +221,30 @@ export default function SettingsPage() {
       toast.error('Name konnte nicht aktualisiert werden.')
     } finally {
       setSavingName(false)
+    }
+  }
+
+  const handleUpdateSchool = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!user || !profile) return
+    const normalizedSchool = schoolName.trim()
+
+    try {
+      setSavingSchool(true)
+      await updateDoc(doc(db, 'profiles', user.uid), { school_name: normalizedSchool || null })
+
+      await logAction('PROFILE_UPDATED', user.uid, profile.full_name, {
+        field: 'school_name',
+        value: normalizedSchool || null,
+      })
+
+      toast.success('Schulname aktualisiert.')
+      router.refresh()
+    } catch (error) {
+      console.error('Error updating school name:', error)
+      toast.error('Schulname konnte nicht aktualisiert werden.')
+    } finally {
+      setSavingSchool(false)
     }
   }
 
@@ -270,11 +297,6 @@ export default function SettingsPage() {
   const handleSaveCustomAvatar = async () => {
     if (!user || !profile) return
 
-    if (!profile.cosmetics?.custom_avatar) {
-      toast.error('Custom User Icons sind ein kostenpflichtiges Cosmetic-Feature.')
-      return
-    }
-
     const normalizedUrl = customAvatarUrl.trim()
 
     try {
@@ -288,10 +310,10 @@ export default function SettingsPage() {
         value: normalizedUrl || null,
       })
 
-      toast.success('Custom User Icon gespeichert.')
+      toast.success('Profilbild gespeichert.')
     } catch (error) {
       console.error('Error updating custom avatar:', error)
-      toast.error('User Icon konnte nicht gespeichert werden.')
+      toast.error('Profilbild konnte nicht gespeichert werden.')
     } finally {
       setSavingAvatar(false)
     }
@@ -624,43 +646,34 @@ export default function SettingsPage() {
                       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
                         <div className="space-y-1 min-w-0">
                           <p className="text-xs sm:text-sm font-semibold flex items-center gap-2">
-                            <ImageIcon className="h-4 w-4 flex-shrink-0" /> Custom User Icon
+                            <ImageIcon className="h-4 w-4 flex-shrink-0" /> Profilbild
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            {profile.cosmetics?.custom_avatar
-                              ? 'Freigeschaltet. Du kannst eine eigene Bild-URL speichern.'
-                              : 'Premium-Cosmetic. Freischalten im Shop, danach hier nutzbar.'}
+                            Gib eine Bild-URL ein, um dein Profilbild anzupassen.
                           </p>
                         </div>
-                        {!profile.cosmetics?.custom_avatar && (
-                          <Button asChild variant="outline" size="sm" className="h-8 text-xs sm:text-sm flex-shrink-0">
-                            <Link href="/shop?category=cosmetics">Im Shop freischalten</Link>
-                          </Button>
-                        )}
                       </div>
 
-                      {profile.cosmetics?.custom_avatar ? (
-                        <div className="space-y-3 pt-3 sm:pt-4 border-t">
-                          <div className="space-y-2">
-                            <Label htmlFor="custom-avatar-url" className="text-xs sm:text-sm">Bild-URL</Label>
-                            <Input
-                              id="custom-avatar-url"
-                              value={customAvatarUrl}
-                              onChange={(e) => setCustomAvatarUrl(e.target.value)}
-                              placeholder="https://.../mein-icon.png"
-                              className="text-sm"
-                            />
-                          </div>
-                          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                            <Button onClick={handleSaveCustomAvatar} disabled={savingAvatar} size="sm" className="h-9 sm:h-10 text-xs sm:text-sm">
-                              {savingAvatar ? 'Speichere...' : 'User Icon speichern'}
-                            </Button>
-                            <Button variant="ghost" onClick={() => setCustomAvatarUrl(profile.photo_url || '')} disabled={savingAvatar} size="sm" className="h-9 sm:h-10 text-xs sm:text-sm">
-                              Zurücksetzen
-                            </Button>
-                          </div>
+                      <div className="space-y-3 pt-3 sm:pt-4 border-t">
+                        <div className="space-y-2">
+                          <Label htmlFor="custom-avatar-url" className="text-xs sm:text-sm">Bild-URL</Label>
+                          <Input
+                            id="custom-avatar-url"
+                            value={customAvatarUrl}
+                            onChange={(e) => setCustomAvatarUrl(e.target.value)}
+                            placeholder="https://.../mein-icon.png"
+                            className="text-sm"
+                          />
                         </div>
-                      ) : null}
+                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                          <Button onClick={handleSaveCustomAvatar} disabled={savingAvatar} size="sm" className="h-9 sm:h-10 text-xs sm:text-sm">
+                            {savingAvatar ? 'Speichere...' : 'Profilbild speichern'}
+                          </Button>
+                          <Button variant="ghost" onClick={() => setCustomAvatarUrl(profile.photo_url || '')} disabled={savingAvatar} size="sm" className="h-9 sm:h-10 text-xs sm:text-sm">
+                            Zurücksetzen
+                          </Button>
+                        </div>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -830,6 +843,23 @@ export default function SettingsPage() {
                         />
                         <Button type="submit" disabled={savingName} className="h-9 sm:h-10 text-xs sm:text-sm flex-shrink-0">
                           {savingName ? 'Speichern...' : 'Speichern'}
+                        </Button>
+                      </div>
+                    </form>
+
+                    {/* School Settings */}
+                    <form onSubmit={handleUpdateSchool} className="space-y-2 sm:space-y-3 border-t pt-3 sm:pt-4">
+                      <Label htmlFor="profile-school-name" className="text-xs sm:text-sm">Schule ändern</Label>
+                      <div className="flex flex-col sm:flex-row gap-2">
+                        <Input
+                          id="profile-school-name"
+                          value={schoolName}
+                          onChange={(e) => setSchoolName(e.target.value)}
+                          placeholder="Gymnasial-Schule am See"
+                          className="text-sm h-9 sm:h-10"
+                        />
+                        <Button type="submit" disabled={savingSchool} className="h-9 sm:h-10 text-xs sm:text-sm flex-shrink-0">
+                          {savingSchool ? 'Speichern...' : 'Speichern'}
                         </Button>
                       </div>
                     </form>

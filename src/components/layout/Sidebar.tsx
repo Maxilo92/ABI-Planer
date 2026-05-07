@@ -243,7 +243,7 @@ export const Sidebar: React.FC = () => {
   const sections = isAdmin ? [...filteredSections, adminSection] : filteredSections;
 
   const userInitial = profile?.full_name?.substring(0, 1).toUpperCase() || 'U';
-  const avatarSeed = profile?.full_name || 'User';
+  const avatarSeed = profile?.photo_url || profile?.full_name || 'User';
 
   const SidebarContent = (
     <div className="flex flex-col h-full bg-card border-r border-border">
@@ -410,7 +410,7 @@ export const Sidebar: React.FC = () => {
             <div className="shrink-0 w-8 h-8 bg-muted rounded-md overflow-hidden ring-1 ring-border flex items-center justify-center">
               {profile?.full_name ? (
                 <img 
-                  src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${avatarSeed}`} 
+                  src={profile?.photo_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${avatarSeed}`} 
                   alt="Avatar" 
                   className="w-full h-full object-cover"
                 />

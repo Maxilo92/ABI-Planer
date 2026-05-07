@@ -7,7 +7,9 @@ import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { useState, useEffect } from 'react'
-import { AlertCircle, Info, TrendingUp } from 'lucide-react'
+import { AlertCircle, Info, TrendingUp, User as UserIcon } from 'lucide-react'
+import { Profile, Settings } from '@/types/database'
+import { calculateTicketPenalty } from '@/lib/finance-utils'
 
 const TICKET_SALES_SAVE_DEBOUNCE_MS = 500
 
@@ -25,6 +27,8 @@ interface FundingStatusProps {
     amount: number
     color: string
   }[]
+  profile?: Profile | null
+  settings?: Settings | null
 }
 
 export function FundingStatus({
@@ -36,7 +40,9 @@ export function FundingStatus({
   canEditTicketSales,
   isAuthenticated,
   loading,
-  breakdown
+  breakdown,
+  profile,
+  settings
 }: FundingStatusProps) {
   const [mounted, setHydrated] = useState(false)
   const [ticketSalesInput, setTicketSalesInput] = useState(String(initialTicketSales))
@@ -118,6 +124,10 @@ export function FundingStatus({
   // 1. Calculated needed price to reach goal exactly
   const neededPrice = ticketSales > 0 ? remaining / ticketSales : 0
   
+  // 1.1 Participation Penalty Calculation
+  const { currentPenalty } = calculateTicketPenalty(profile || null, settings || null)
+  const individualPrice = neededPrice + currentPenalty
+
   // 2. Projected outcome with planned price
   const projectedTicketIncome = ticketSales * neededPrice
   const projectedFinalBalance = displayCurrent + projectedTicketIncome
@@ -266,9 +276,32 @@ export function FundingStatus({
                   <div className="h-8 flex items-center">
                     <p className="text-lg font-bold text-foreground" suppressHydrationWarning>{formatCurrency(neededPrice, 2)}</p>
                   </div>
-                  <p className="text-[9px] text-muted-foreground leading-tight">Um das Ziel exakt zu erreichen.</p>
+                  <p className="text-[9px] text-muted-foreground leading-tight">UVP (Basispreis für alle).</p>
                 </div>
               </div>
+
+              {profile && (
+                <div className="p-3 rounded-2xl bg-primary/5 border border-primary/20">
+                  <div className="flex justify-between items-center mb-1">
+                    <p className="text-[10px] uppercase font-bold text-primary tracking-wider">Dein Ticketpreis</p>
+                    <UserIcon className="h-3 w-3 text-primary" />
+                  </div>
+                  <div className="flex items-baseline gap-2">
+                    <p className="text-xl font-black text-foreground" suppressHydrationWarning>
+                      {formatCurrency(individualPrice, 2)}
+                    </p>
+                    {currentPenalty > 0 && (
+                      <p className="text-[10px] text-destructive font-bold">
+                        (+ {formatCurrency(currentPenalty, 2)} Aufschlag)
+                      </p>
+                    )}
+                  </div>
+                  <p className="text-[9px] text-muted-foreground leading-tight mt-1">
+                    Zusammensetzung: {formatCurrency(neededPrice, 2)} UVP 
+                    {currentPenalty > 0 ? ` + ${formatCurrency(currentPenalty, 2)} Strafe für fehlende Mitarbeit` : ' (Keine Strafe)'}.
+                  </p>
+                </div>
+              )}
 
               <div className="grid grid-cols-1 gap-4 pt-2">
                 <div className={`p-3 rounded-2xl border ${projectedDiff >= 0 ? 'bg-success/5 border-success/20' : 'bg-destructive/5 border-destructive/20 hidden'}`}>

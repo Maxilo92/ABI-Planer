@@ -662,7 +662,11 @@ export function getAccentThemePresetsForMode(themeMode: ThemeMode) {
 }
 
 export function getFirstSupportedAccentThemeId(themeMode: ThemeMode) {
-  return getAccentThemePresetsForMode(themeMode)[0]?.id || DEFAULT_ACCENT_THEME_ID
+  // Prefer a free theme if available in this mode
+  const freeTheme = getAccentThemePresetsForMode(themeMode).find(
+    preset => FREE_ACCENT_THEME_IDS.includes(preset.id)
+  )
+  return freeTheme?.id || getAccentThemePresetsForMode(themeMode)[0]?.id || DEFAULT_ACCENT_THEME_ID
 }
 
 export const DEFAULT_ACCENT_THEME_ID = accentThemePresets[0].id
@@ -670,3 +674,15 @@ export const DEFAULT_ACCENT_THEME_ID = accentThemePresets[0].id
 export const accentThemePresetMap = new Map(
   accentThemePresets.map((preset) => [preset.id, preset])
 )
+
+// Free themes: Pure White (light) and Midnight Black (dark)
+export const FREE_ACCENT_THEME_IDS = ['pure-white', 'midnight-black']
+export const FREE_ACCENT_THEME_ID = FREE_ACCENT_THEME_IDS[0] // For backwards compatibility
+
+export function isPremiumAccentThemePreset(presetId: string) {
+  return !FREE_ACCENT_THEME_IDS.includes(presetId)
+}
+
+export function getFreeAccentThemePresetId() {
+  return FREE_ACCENT_THEME_ID
+}

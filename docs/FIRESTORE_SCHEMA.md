@@ -16,6 +16,8 @@ Kernfelder:
 - `planning_groups`, `led_groups`
 - `currencies` (inkl. NP)
 - `subscription`
+- `fcmTokens` (Array von Strings)
+- `isPushEnabled` (Boolean)
 
 Zugriff:
 - Lesen fuer authentifizierte Nutzer (laut Rules)

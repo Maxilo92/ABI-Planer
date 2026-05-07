@@ -362,9 +362,9 @@ export const translations = {
       noNews: 'Noch keine Neuigkeiten vorhanden.',
       viewAllNews: 'Alle News ansehen',
       supportBanner: {
-        title: 'Helft uns die Seite am Laufen zu halten',
-        description: 'Damit der ABI Planer werbefrei, stabil und für alle kostenlos bleibt, fallen monatliche Kosten für Server, Datenbanken und Hosting an. Da wir keine Daten verkaufen oder Werbung schalten, deckt dieser Support-Pool ausschließlich diese technischen Ausgaben. Sollte das Ziel nicht erreicht werden, müssten die Kosten privat getragen oder Funktionen eingeschränkt werden – jeder Euro sichert also den Betrieb eurer Plattform!',
-        cta: 'Support geben'
+        title: 'Unterstützt den Entwickler-Support',
+        description: 'Damit der ABI Planer werbefrei, stabil und für alle kostenlos bleibt, fallen monatliche Kosten für Server, Datenbanken, Hosting und Weiterentwicklung an. Dieser Pool ist strikt von der Abikasse getrennt und deckt ausschließlich den Betrieb der Plattform ab.',
+        cta: 'Entwickler unterstützen'
       }
     },
     designer: {
@@ -820,9 +820,9 @@ export const translations = {
       noNews: 'No news available yet.',
       viewAllNews: 'View all news',
       supportBanner: {
-        title: 'Help us keep the site running',
-        description: 'To keep ABI Planer ad-free, stable, and free for everyone, monthly costs for servers, databases, and hosting are incurred. Since we do not sell data or run ads, this support pool exclusively covers these technical expenses. If the goal is not reached, the costs would have to be borne privately or functions restricted – so every euro secures the operation of your platform!',
-        cta: 'Give support'
+        title: 'Support the developer pool',
+        description: 'To keep ABI Planer ad-free, stable, and free for everyone, monthly costs for servers, databases, hosting, and ongoing development are incurred. This pool is strictly separate from the ABI fund and covers only platform operation.',
+        cta: 'Support the developer'
       }
     },
     designer: {
@@ -1278,9 +1278,9 @@ export const translations = {
       noNews: 'Aún no hay noticias disponibles.',
       viewAllNews: 'Ver todas las noticias',
       supportBanner: {
-        title: 'Ayúdanos a mantener el sitio en funcionamiento',
-        description: 'Para que ABI Planer siga siendo libre de publicidad, estable y gratuito para todos, se incurre en costes mensuales de servidores, bases de datos y alojamiento. Como no vendemos datos ni publicamos anuncios, este fondo de apoyo cubre exclusivamente estos gastos técnicos. Si no se alcanza el objetivo, los costes tendrían que ser asumidos de forma privada o se restringirían las funciones, ¡así que cada euro asegura el funcionamiento de tu plataforma!',
-        cta: 'Dar apoyo'
+        title: 'Apoya el fondo del desarrollador',
+        description: 'Para que ABI Planer siga siendo sin anuncios, estable y gratuito para todos, se incurre en costes mensuales de servidores, bases de datos, alojamiento y desarrollo continuo. Este fondo está estrictamente separado de la caja del ABI y cubre solo el funcionamiento de la plataforma.',
+        cta: 'Apoyar al desarrollador'
       }
     },
     designer: {

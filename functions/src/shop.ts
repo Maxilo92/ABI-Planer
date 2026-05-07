@@ -49,6 +49,9 @@ const STRIPE_PRICES: Record<string, StripeShopProduct> = {
   "np-pack-550": { amount: 550, priceId: "price_np_550", productName: "550 Notenpunkte (10% Bonus)", productDescription: "550 NP für Shop und Battle Pass" },
   "np-pack-1500": { amount: 1500, priceId: "price_np_1500", productName: "1500 Notenpunkte (20% Bonus)", productDescription: "1500 NP für Shop und Battle Pass" },
   "np-pack-5000": { amount: 5000, priceId: "price_np_5000", productName: "5000 Notenpunkte (25% Bonus)", productDescription: "5000 NP für Shop und Battle Pass" },
+  // Cosmetics
+  "cosmetic-theme-pack": { amount: 1, unitAmountCents: 499, productName: "Premium Theme Pack", productDescription: "Schaltet alle Premium-Akzentthemen frei" },
+  "cosmetic-avatar-pack": { amount: 1, unitAmountCents: 299, productName: "Custom User Icon", productDescription: "Eigene Avatar-URL statt Standard-Icon" },
 };
 
 const SUPPORT_BONUS: Record<string, number> = {
@@ -271,8 +274,9 @@ export const stripeWebhook = onRequest({
       const amount = Number(session.metadata?.amount || 0);
       const isNPPack = itemId?.startsWith("np-pack-") || false;
       const isBoosterPurchase = itemId?.includes("booster") || false;
+      const isCosmetic = itemId?.startsWith("cosmetic-") || false;
       
-      if (!itemId || ((isNPPack || isBoosterPurchase) && !userId)) {
+      if (!itemId || ((isNPPack || isBoosterPurchase || isCosmetic) && !userId)) {
         logger.warn(`[STRIPE_WEBHOOK] Missing itemId or userId. Ignored.`);
         res.status(200).send({ received: true, status: "invalid_metadata" });
         return;
@@ -360,8 +364,38 @@ export const stripeWebhook = onRequest({
             logger.error(`[BOOSTER_PURCHASE_ERROR] ${boosterError.message}`);
             res.status(200).send({ received: true, status: "booster_error", error: boosterError.message });
           }
+        } else if (isCosmetic) {
+          // 7. Cosmetic purchases unlock features
+          const profileRef = db.collection("profiles").doc(safeUserId);
+
+          try {
+            await db.runTransaction(async (transaction) => {
+              const profileSnap = await transaction.get(profileRef);
+              if (!profileSnap.exists) throw new Error(`Profile ${safeUserId} not found`);
+
+              const updates: any = {
+                updated_at: FieldValue.serverTimestamp(),
+              };
+
+              if (itemId === "cosmetic-theme-pack") {
+                updates["cosmetics.premium_themes"] = true;
+              } else if (itemId === "cosmetic-avatar-pack") {
+                updates["cosmetics.custom_avatar"] = true;
+              }
+
+              transaction.update(profileRef, updates);
+              transaction.set(shopEarningRef, shopEarningPayload, { merge: true });
+            });
+
+            logger.info(`[COSMETIC_PURCHASE] Success. User: ${safeUserId}, Item: ${itemId}`);
+            await markWebhookProcessed(event.id);
+            res.status(200).send({ received: true, status: "processed" });
+          } catch (cosmeticError: any) {
+            logger.error(`[COSMETIC_PURCHASE_ERROR] ${cosmeticError.message}`);
+            res.status(200).send({ received: true, status: "cosmetic_error", error: cosmeticError.message });
+          }
         } else {
-          // 7. Non-booster purchases (e.g. Soli-Spende) are captured for earnings/leaderboard.
+          // 8. Non-booster purchases (e.g. Soli-Spende) are captured for earnings/leaderboard.
           try {
             await shopEarningRef.set(shopEarningPayload, { merge: true });
             logger.info(`[SHOP_EARNING_CAPTURED] Session: ${session.id}, Item: ${itemId}, Course: ${shopEarningPayload.selected_course || "none"}`);

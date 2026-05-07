@@ -892,6 +892,7 @@ export default function AdminUserPage() {
                   <TableHead>Rolle</TableHead>
                   <TableHead>Kurs</TableHead>
                   <TableHead>Gruppe</TableHead>
+                  <TableHead className="w-24 text-right">Mitarbeit (€)</TableHead>
                   <TableHead className="text-right">Aktionen</TableHead>
                 </TableRow>
               </TableHeader>
@@ -940,6 +941,19 @@ export default function AdminUserPage() {
                               availableGroups={planningGroups}
                               onAddGroup={(profileId, groupName) => handleUpdateProfile(profileId, { planning_groups: arrayUnion(groupName) })}
                               onRemoveGroup={(profileId, groupName) => handleUpdateProfile(profileId, { planning_groups: arrayRemove(groupName) })}
+                            />
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Input
+                              type="number"
+                              className="h-8 w-20 ml-auto text-right"
+                              defaultValue={p.participation_manual_credit || 0}
+                              onBlur={(e) => {
+                                const val = parseInt(e.target.value) || 0
+                                if (val !== (p.participation_manual_credit || 0)) {
+                                  handleUpdateProfile(p.id, { participation_manual_credit: val })
+                                }
+                              }}
                             />
                           </TableCell>
                           <TableCell className="text-right">
@@ -1017,7 +1031,7 @@ export default function AdminUserPage() {
                     )}
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-border/50">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-border/50">
                     <div className="space-y-1.5">
                       <Label className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground/70 ml-1">Kurs</Label>
                       <SearchableValuePicker
@@ -1037,6 +1051,20 @@ export default function AdminUserPage() {
                         availableGroups={planningGroups}
                         onAddGroup={(profileId, groupName) => handleUpdateProfile(profileId, { planning_groups: arrayUnion(groupName) })}
                         onRemoveGroup={(profileId, groupName) => handleUpdateProfile(profileId, { planning_groups: arrayRemove(groupName) })}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground/70 ml-1">Mitarbeit (€)</Label>
+                      <Input
+                        type="number"
+                        className="h-8 text-right text-xs"
+                        defaultValue={p.participation_manual_credit || 0}
+                        onBlur={(e) => {
+                          const val = parseInt(e.target.value) || 0
+                          if (val !== (p.participation_manual_credit || 0)) {
+                            handleUpdateProfile(p.id, { participation_manual_credit: val })
+                          }
+                        }}
                       />
                     </div>
                   </div>

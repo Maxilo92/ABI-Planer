@@ -24,7 +24,9 @@ import {
   Loader2,
   Calendar,
   MapPin,
-  Ticket
+  Ticket,
+  Palette,
+  UserRound,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import Link from 'next/link'
@@ -40,7 +42,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 
 type ShopItem = {
   id: string
-  category: 'sammelkarten' | 'extras' | 'merch' | 'tickets' | 'notenpunkte'
+  category: 'sammelkarten' | 'cosmetics' | 'extras' | 'merch' | 'tickets' | 'notenpunkte'
   name: string
   description: string
   price: string
@@ -78,6 +80,7 @@ const CATEGORIES = [
   { id: 'tickets', name: 'Tickets', icon: Ticket },
   { id: 'merch', name: 'Stufen-Merch', icon: ShoppingBag },
   { id: 'sammelkarten', name: 'Sammelkarten', icon: Sparkles },
+  { id: 'cosmetics', name: 'Cosmetics', icon: Palette },
   { id: 'extras', name: 'Sonstiges', icon: Tags },
 ]
 
@@ -109,6 +112,37 @@ const BUILTIN_BOOSTERS: ShopItem[] = BUNDLE_DEFS.map((def, idx) => ({
   supportBonus: SUPPORT_BONUS[def.amount],
   featured: def.amount === 10
 }))
+
+const BUILTIN_COSMETICS: ShopItem[] = [
+  {
+    id: 'cosmetic-theme-pack',
+    category: 'cosmetics',
+    name: 'Premium Theme Pack',
+    description: 'Schaltet alle Premium-Akzentthemen frei. Hell und Dunkel bleiben gratis.',
+    price: '4,99 €',
+    priceNum: 4.99,
+    amount: 1,
+    limit: 1,
+    color: 'indigo',
+    badge: 'Themes',
+    requireAuth: true,
+    featured: true,
+  },
+  {
+    id: 'cosmetic-avatar-pack',
+    category: 'cosmetics',
+    name: 'Custom User Icon',
+    description: 'Eigene Avatar-URL statt Standard-Icon. Ideal für Profile und Sidebar.',
+    price: '2,99 €',
+    priceNum: 2.99,
+    amount: 1,
+    limit: 1,
+    color: 'cyan',
+    badge: 'Avatar',
+    requireAuth: true,
+    featured: true,
+  },
+]
 
 const EXTERNAL_STORES: ShopItem[] = [
   {
@@ -231,8 +265,8 @@ function ShopContent() {
     
     if (!user) {
       items.sort((a, b) => {
-        const order = { 'merch': 0, 'tickets': 1, 'extras': 2, 'sammelkarten': 3, 'notenpunkte': 4 }
-        return (order[a.category] || 99) - (order[b.category] || 99)
+        const order = { 'merch': 0, 'tickets': 1, 'extras': 2, 'sammelkarten': 3, 'cosmetics': 4, 'notenpunkte': 5 }
+        return (order[a.category as keyof typeof order] || 99) - (order[b.category as keyof typeof order] || 99)
       })
     }
 

@@ -6,7 +6,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useUserTeachers } from '@/hooks/useUserTeachers'
 import { TeacherAlbum } from '@/components/dashboard/TeacherAlbum'
-import { Trophy, Gift, Swords, ArrowLeftRight, ShoppingBag, Sparkles, ChevronRight, Star, History, Play } from 'lucide-react'
+import { Trophy, Gift, Swords, ArrowLeftRight, ShoppingBag, Sparkles, ChevronRight, Star, History, Play, Newspaper } from 'lucide-react'
 import Link from 'next/link'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -121,6 +121,43 @@ export function TcgDashboard() {
           </div>
         </div>
       </section>
+
+      {/* NEWS BANNER */}
+      <motion.section 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.5 }}
+        className="px-4"
+      >
+        <Link 
+          href="https://dashboard.abi-planer-27.de/news/TN27HPCkfFvBhZ7Npyg4" 
+          target="_blank"
+          className="block group"
+        >
+          <div className="relative overflow-hidden rounded-[2rem] border border-primary/20 bg-primary/5 p-5 md:p-6 hover:border-primary/40 hover:bg-primary/[0.08] transition-all flex items-center justify-between gap-4 md:gap-6 shadow-sm hover:shadow-md">
+            {/* Background Glow */}
+            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl -mr-16 -mt-16 group-hover:bg-primary/20 transition-colors" />
+            
+            <div className="flex items-center gap-4 md:gap-6 relative z-10">
+              <div className="p-3 md:p-4 rounded-2xl bg-primary/10 text-primary group-hover:scale-110 transition-transform duration-500 shadow-inner">
+                <Newspaper className="h-6 w-6 md:h-7 md:w-7" />
+              </div>
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <Badge className="bg-primary text-primary-foreground text-[8px] font-black uppercase tracking-widest px-2 py-0 h-4 border-none shadow-sm">Update</Badge>
+                  <h3 className="text-lg md:text-xl font-black tracking-tight leading-none">Neue Ankündigung!</h3>
+                </div>
+                <p className="text-sm md:text-base text-muted-foreground font-medium line-clamp-1">Klick hier für alle Infos zum neuen Season-Update & den Sammelkarten.</p>
+              </div>
+            </div>
+            
+            <div className="hidden sm:flex items-center gap-2 relative z-10 font-black text-xs uppercase tracking-widest text-primary opacity-0 group-hover:opacity-100 group-hover:translate-x-0 translate-x-4 transition-all duration-500">
+              Lesen
+              <ChevronRight className="h-5 w-5" />
+            </div>
+          </div>
+        </Link>
+      </motion.section>
 
       {/* QUICK STATUS BAR - Responsive grid fixes */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 px-2 md:px-4">
