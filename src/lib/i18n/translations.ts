@@ -362,7 +362,7 @@ export const translations = {
       noNews: 'Noch keine Neuigkeiten vorhanden.',
       viewAllNews: 'Alle News ansehen',
       supportBanner: {
-        title: 'Unterstützt den Entwickler-Support',
+        title: 'Unterstützt den ABI-Planer',
         description: 'Damit der ABI Planer werbefrei, stabil und für alle kostenlos bleibt, fallen monatliche Kosten für Server, Datenbanken, Hosting und Weiterentwicklung an. Dieser Pool ist strikt von der Abikasse getrennt und deckt ausschließlich den Betrieb der Plattform ab.',
         cta: 'Entwickler unterstützen'
       }

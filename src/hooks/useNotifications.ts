@@ -57,6 +57,8 @@ export function useNotifications() {
       setNotifications((prev) => ({ ...prev, [source]: false }))
     }
 
+    let currentHasThreadReply = false
+
     // 1. Todos: New todos since last visit.
     const todosQuery = query(
       collection(db, 'todos'),
@@ -188,10 +190,31 @@ export function useNotifications() {
     // 5. Sammelkarten: New trade messages.
     const messagesQuery = query(collection(db, 'notifications', profileId, 'messages'), where('read', '==', false))
     const unsubscribeMessages = onSnapshot(messagesQuery, (snapshot) => {
-      const hasNewMessage = !snapshot.empty
+      const unreadDocs = snapshot.docs.map(d => d.data())
+      
+      const hasTradeMessage = unreadDocs.some(m => 
+        ['new_trade_offer', 'counter_trade_offer', 'trade_accepted', 'card_removal', 'admin_action'].includes(m.type)
+      )
+      
+      currentHasThreadReply = unreadDocs.some(m => m.type === 'thread_reply')
+
       setNotifications(prev => {
-        if (prev.karten === hasNewMessage) return prev
-        return { ...prev, karten: hasNewMessage }
+        let next = { ...prev }
+        let changed = false
+
+        if (prev.karten !== hasTradeMessage) {
+          next.karten = hasTradeMessage
+          changed = true
+        }
+        
+        // Thread replies also trigger 'gruppen' notification
+        const finalGruppen = currentHasThreadReply || Array.from(groupStates.values()).some(Boolean)
+        if (prev.gruppen !== finalGruppen) {
+          next.gruppen = finalGruppen
+          changed = true
+        }
+
+        return changed ? next : prev
       })
     }, (error) => {
       handleSnapshotError('karten', error)
@@ -203,9 +226,11 @@ export function useNotifications() {
 
     const syncGroupNotifications = () => {
       const hasNewGroupMessage = Array.from(groupStates.values()).some(Boolean)
+      
       setNotifications(prev => {
-        if (prev.gruppen === hasNewGroupMessage) return prev
-        return { ...prev, gruppen: hasNewGroupMessage }
+        const finalGruppen = currentHasThreadReply || hasNewGroupMessage
+        if (prev.gruppen === finalGruppen) return prev
+        return { ...prev, gruppen: finalGruppen }
       })
     }
 

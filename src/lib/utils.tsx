@@ -61,3 +61,16 @@ export function restoreGermanUmlauts(str: string): string {
     .replace(/oe/g, 'ö')
     .replace(/ue/g, 'ü')
 }
+
+/**
+ * Generiert einen deterministischen numerischen Seed aus einem String (z.B. einer ID).
+ * Nützlich für konsistente "zufällige" Werte wie Placeholder-Bilder.
+ */
+export function getDeterministicSeed(input: string): number {
+  let hash = 0
+  for (let i = 0; i < input.length; i++) {
+    hash = ((hash << 5) - hash) + input.charCodeAt(i)
+    hash |= 0 // Convert to 32bit integer
+  }
+  return Math.abs(hash)
+}

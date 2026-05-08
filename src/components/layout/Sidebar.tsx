@@ -135,6 +135,7 @@ export const Sidebar: React.FC = () => {
             { id: 'polls', label: 'Umfragen', icon: BarChart2, href: '/abstimmungen', feature: 'polls_status', notify: notifications.umfragen },
           ]
         },
+        { id: 'aufgaben', label: 'Aufgaben', icon: Briefcase, href: '/aufgaben' },
         { 
           id: 'planung', 
           label: 'Planung', 
@@ -143,7 +144,6 @@ export const Sidebar: React.FC = () => {
           subItems: [
             { id: 'kalender', label: 'Kalender', icon: Calendar, href: '/kalender', feature: 'calendar_status', notify: notifications.kalender },
             { id: 'todos', label: 'Todos', icon: CheckSquare, href: '/todos', feature: 'todos_status', notify: notifications.todos },
-            { id: 'aufgaben', label: 'Aufgaben', icon: Briefcase, href: '/aufgaben' },
             { id: 'gruppen', label: 'Gruppen', icon: Users, href: '/gruppen', notify: notifications.gruppen },
           ]
         },
@@ -446,7 +446,7 @@ export const Sidebar: React.FC = () => {
           </div>
           {!isSidebarCollapsed && (
             <div className="px-2 pt-1">
-              <p className="text-[10px] font-medium text-muted-foreground/50 uppercase tracking-[0.2em]">v1.34.1.3</p>
+              <p className="text-[10px] font-medium text-muted-foreground/50 uppercase tracking-[0.2em]">v1.35.1.2</p>
             </div>
           )}
         </div>

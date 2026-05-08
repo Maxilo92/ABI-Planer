@@ -2,8 +2,9 @@
 
 import { Suspense, useEffect, useMemo, useState } from 'react'
 import { db } from '@/lib/firebase'
-import { collection, doc, onSnapshot, query, updateDoc, where } from 'firebase/firestore'
+import { collection, doc, onSnapshot, query, updateDoc, where, getDocs, writeBatch } from 'firebase/firestore'
 import { useAuth } from '@/context/AuthContext'
+import { useSystemFeatures } from '@/hooks/useSystemFeatures'
 import { GroupMessage, PlanningGroup, Profile, Settings } from '@/types/database'
 import { 
   type LucideIcon, 
@@ -81,6 +82,7 @@ function getChatIcon(chat: ChatItem): { icon: LucideIcon; bg: string; text: stri
 
 function GroupsPageContent() {
   const { profile, user, loading: authLoading } = useAuth()
+  const { isEnabled } = useSystemFeatures()
   const [loading, setLoading] = useState(true)
   const [messages, setMessages] = useState<GroupMessage[]>([])
   const [presenceProfiles, setPresenceProfiles] = useState<Profile[]>([])
@@ -89,6 +91,49 @@ function GroupsPageContent() {
   const [planningGroups, setPlanningGroups] = useState<PlanningGroup[]>([])
   const [selectedJoinGroup, setSelectedJoinGroup] = useState('')
   const { joinGroup, leaveGroup, isJoining, isLeaving } = useGroupJoin()
+
+  // Return placeholder if feature is disabled
+  if (!isEnabled('groups_status')) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-140px)] gap-6 pb-20">
+        <div className="max-w-md text-center space-y-4">
+          <div className="bg-muted/30 p-8 rounded-3xl inline-block">
+            <Users className="h-12 w-12 text-muted-foreground/50" />
+          </div>
+          <h2 className="text-2xl font-black tracking-tight">Gruppen sind momentan deaktiviert</h2>
+          <p className="text-muted-foreground">Diese Funktion wird gerade überarbeitet und ist derzeit nicht verfügbar.</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Mark thread reply notifications as read when entering the groups page
+  useEffect(() => {
+    if (!user?.uid) return;
+
+    const markThreadNotificationsAsRead = async () => {
+      try {
+        const q = query(
+          collection(db, 'notifications', user.uid, 'messages'),
+          where('read', '==', false),
+          where('type', '==', 'thread_reply')
+        );
+        const snapshot = await getDocs(q);
+        
+        if (snapshot.empty) return;
+
+        const batch = writeBatch(db);
+        snapshot.docs.forEach((docSnap) => {
+          batch.update(docSnap.ref, { read: true });
+        });
+        await batch.commit();
+      } catch (err) {
+        console.error('[Groups] Error marking notifications as read:', err);
+      }
+    };
+
+    markThreadNotificationsAsRead();
+  }, [user?.uid]);
 
   useEffect(() => {
     if (authLoading) return

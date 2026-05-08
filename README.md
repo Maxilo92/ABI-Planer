@@ -6,7 +6,7 @@
 <!-- default_action: read before deeper file exploration -->
 <!-- index: docs/AGENT_CONTEXT_INDEX.md -->
 
-# ABI Planer v1.30.1.03
+# ABI Planer v1.35.0.1
 
  Zentrale Plattform fuer die Planung und Organisation des Abiturs 2027.
 

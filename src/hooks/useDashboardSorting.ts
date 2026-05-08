@@ -13,12 +13,13 @@ export function useDashboardSorting(
   todos: Todo[],
   events: Event[],
   polls: Poll[],
-  news: NewsEntry[]
+  news: NewsEntry[],
+  maxAdPriority: number = -1
 ): DashboardComponentKey[] {
   return useMemo(() => {
     // Guest View: News first, then Funding, then Polls (stable order)
     if (!profile) {
-      return ['news', 'funding', 'polls'];
+      return ['news', 'funding', 'polls', 'ads'];
     }
 
     // If the user has a custom layout, use it.
@@ -34,7 +35,8 @@ export function useDashboardSorting(
       'polls',
       'funding',
       'news',
-      'leaderboard'
+      'leaderboard',
+      'ads'
     ];
 
     const scores: Record<DashboardComponentKey, number> = {
@@ -44,16 +46,30 @@ export function useDashboardSorting(
       funding: 0,
       news: 0,
       leaderboard: 40, // Baseline for ranking
+      ads: -1 // -1 means hidden if no ads exist
     };
 
     // Only apply dynamic scores if we have data (stabilization)
     // If all inputs are empty, we might be in initial loading phase.
     // We use a baseline order instead of jumping around.
-    const isInitialLoad = todos.length === 0 && events.length === 0 && polls.length === 0 && news.length === 0;
+    const isInitialLoad = todos.length === 0 && events.length === 0 && polls.length === 0 && news.length === 0 && maxAdPriority === -1;
     
     if (isInitialLoad) {
       return componentKeys; // Stable baseline during load
     }
+
+    // Ads Score: Dynamic based on max priority
+    // Mapping:
+    // 0 (Niedrig) -> 20 (Ganz unten)
+    // 10 (Mittel) -> 65 (Unter Umfragen/Events)
+    // 50 (Hoch) -> 85 (Über Events, unter Aufgaben)
+    // 100 (Sehr Hoch) -> 110 (Über Aufgaben)
+    // 500 (Dringend) -> 999 (Ganz oben)
+    if (maxAdPriority >= 500) scores.ads = 999;
+    else if (maxAdPriority >= 100) scores.ads = 110;
+    else if (maxAdPriority >= 50) scores.ads = 85;
+    else if (maxAdPriority >= 10) scores.ads = 65;
+    else if (maxAdPriority >= 0) scores.ads = 20;
 
     // Todos Score: +100 if user has an open todo assigned to them, their group, or their class.
     const hasOpenTodo = todos.some(todo => 
@@ -101,5 +117,5 @@ export function useDashboardSorting(
     if (hasRecentNews) scores.news = 30;
 
     return componentKeys.sort((a, b) => scores[b] - scores[a]);
-  }, [profile, todos, events, polls, news]);
+  }, [profile, todos, events, polls, news, maxAdPriority]);
 }

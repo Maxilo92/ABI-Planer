@@ -6,6 +6,278 @@
 <!-- default_action: read newest entries only unless a regression requires older history -->
 <!-- index: docs/AGENT_CONTEXT_INDEX.md -->
 
+## [1.35.1.2] - 2026-05-08
+
+### Fixed
+- **Marktplatz**: Clipping-Fehler bei den Tabs auf kleinen Bildschirmen behoben (Tabs sind nun scrollbar).
+
+## [1.35.1.1] - 2026-05-08
+
+### Fixed
+- **Ad-Manager**: Bildskalierung in der Admin-Übersicht auf `object-contain` umgestellt, um abgeschnittene Bilder zu verhindern.
+
+## [1.35.1.0] - 2026-05-08
+
+### Added
+- **Aufgaben-Detailansicht**: Anzeige der Aufrufe (View Count) implementiert.
+- **Marktplatz-Empfehlungen**: Bereich "Das könnte dich auch interessieren" am Ende der Detailansicht hinzugefügt, um zum Entdecken weiterer Aufgaben anzuregen.
+
+### Changed
+- **Datenmodell**: `Task` Typ um `view_count` und `viewed_by` erweitert.
+
+## [1.35.0.13] - 2026-05-08
+
+### Changed
+- **Marktplatz**: Redundante "Sofort verfügbar" Labels durch aussagekräftige Call-to-Actions ersetzt ("Geld sparen", "Booster sammeln").
+- **Aufgaben-Status**: Status-Labels präzisiert ("Angenommen" -> "In Arbeit", "Nachbesserung nötig" -> "Überarbeiten").
+
+## [1.35.0.12] - 2026-05-08
+
+### Fixed
+- **Ad-Manager**: Crash durch fehlenden `cn`-Import behoben.
+
+## [1.35.0.11] - 2026-05-08
+
+### Changed
+- **Ad-Manager**: Modernisiertes Layout mit Tabs, Dialogen und integrierter Live-Vorschau.
+
+## [1.35.0.10] - 2026-05-08
+
+### Changed
+- **Dashboard**: Dynamisches Prioritätssystem für Werbung eingeführt.
+
+## [1.35.0.9] - 2026-05-08
+
+### Changed
+- **Ad-Tile**: Optisches Polishing des Werbe-Labels (Pill-Design & Zentrierung).
+
+## [1.35.0.8] - 2026-05-08
+
+### Added
+- **Ad-Manager**: Auto-Vervollständigung von `https://` für externe Links.
+
+### Changed
+- **Ad-Tile**: Verbesserte Erkennung externer Links.
+
+## [1.35.0.7] - 2026-05-08
+
+### Changed
+- **Ad-Tile**: Bildskalierung auf `object-contain` umgestellt (kein Beschnitt mehr).
+
+## [1.35.0.6] - 2026-05-08
+
+### Changed
+- **Ad-Tile**: Text unter das Bild verschoben und Werbe-Label nach links korrigiert.
+
+## [1.35.0.5] - 2026-05-08
+
+### Added
+- **Ad-Manager**: Vollständige Bearbeitungsfunktion für bestehende Anzeigen hinzugefügt.
+
+### Changed
+- **Ad-Tile**: Werbe-Label ("Anzeige") neben den Titel verschoben.
+
+## [1.35.0.7] - 2026-05-08
+
+### Fixed
+- **Logging**: Absturz beim Loggen von Task-Freigaben behoben (Firebase `undefined` Error).
+- **Logging**: Globaler Schutz gegen `undefined` Werte in Firestore-Logs implementiert.
+
+## [1.35.0.6] - 2026-05-08
+
+### Changed
+- **Marktplatz**: Sidebar-Status zeigt nun "Aktuell" vs. "Ziel" an.
+- **Marktplatz**: Fortschrittsbalken zur Status-Sektion hinzugefügt.
+
+## [1.35.0.5] - 2026-05-08
+
+### Fixed
+- **Marktplatz**: Tab-Indicator Ausrichtung korrigiert (kein "floating" mehr).
+- **Marktplatz**: Indicator-Farbe an das ABI Planer Branding angepasst.
+
+## [1.35.0.4] - 2026-05-08
+
+### Changed
+- **Marktplatz**: UI-Polishing der Toggles und Tabs auf der `/aufgaben` Seite.
+  - Tabs verwenden nun den `line` Variant für ein saubereres Design.
+  - Grid/List Toggle wurde zu einer einheitlichen Switcher-Komponente umgebaut.
+
+## [1.35.0.3] - 2026-05-08
+
+### Changed
+- **Marktplatz**: Umfassendes Redesign der `/aufgaben` Seite für ein echtes Marketplace-Erlebnis.
+  - Einführung eines hybriden Layouts mit einer permanenten Sidebar (Desktop) und einem Sheet-basierten Filter-Drawer (Mobil).
+  - Neue Top-Bar mit prominenter Suche und einem View-Mode-Toggle (Grid/List).
+  - Persistente Speicherung des View-Modes im `localStorage`.
+  - Optimierte Filter-Sidebar mit Kategorien-Navigation und Status-Übersicht (Ersparnis).
+  - Responsive Anpassungen für eine nahtlose Erfahrung auf allen Geräten.
+
+## [1.35.0.2] - 2026-05-08
+
+### Changed
+- **Marktplatz**: `MarketplaceCard` unterstützt nun `grid` und `list` Varianten.
+  - Die neue `list` Variante bietet ein horizontales Layout (eBay-Stil) mit optimierter Darstellung für Mobilgeräte und Desktop.
+  - Bereinigung ungenutzter Imports in der Komponente.
+
+## [1.35.0.1] - 2026-05-08
+
+### Changed
+- **Navigation**: Das **Aufgaben-Modul** wurde zum Hauptmenüpunkt befördert. Es ist nun nicht mehr unter "Planung" versteckt, sondern direkt als "Aushängeschild" in der Sidebar und Navbar verfügbar.
+
+## [1.35.0.0] - 2026-05-08
+
+### Added
+- **AD-Manager**: Neues Modul zur Verwaltung benutzerdefinierter Werbung und Hinweise auf dem Dashboard.
+  - Integration von Werbe-Kacheln (`AdTile`) direkt in das Dashboard-Layout.
+  - Vollständiges Admin-Interface (`/admin/ads`) zum Erstellen, Bearbeiten und Deaktivieren von Anzeigen.
+  - Integration in die Admin-Sidebar (`DashboardNavbar`) für schnellen Zugriff.
+  - Unterstützung für Bilder, Links, Beschreibungen und Priorisierung.
+  - Dynamische Rotation der Anzeigen bei mehreren aktiven Einträgen.
+  - Automatisches Score-basiertes Sorting im Dashboard (Priorität direkt unter Todos/Events).
+  - Firestore-Integration mit neuen Security-Rules für die `ads` Collection.
+
+## [1.34.4.55] - 2026-05-08
+
+### Changed
+- **Marktplatz**: Komplettes Redesign im klassischen, minimalistischen "eBay-Stil".
+  - Entfernung von massiven Drop-Shadows, Farbverläufen und großen Border-Radien.
+  - Fokus auf eine präsente, einfache Suchleiste ganz oben und klare Linien.
+  - Tabs in schlichter Unterstreichungs-Optik anstelle von großen Button-Toggles.
+  - `MarketplaceCard` radikal vereinfacht: Quadratisches Bild, fetter Preis, klares Layout ohne verspielte Animationen für eine authentische E-Commerce Erfahrung.
+
+## [1.34.4.54] - 2026-05-08
+
+### Fixed
+- **Marktplatz**: Fehlende Component- und Icon-Imports (`Badge`, `Sparkles`, `ChevronRight`) behoben, die zu Runtime-Errors führten.
+
+## [1.34.4.53] - 2026-05-08
+
+### Added
+- **Marktplatz**: Umfassendes Redesign der `/aufgaben` Seite für ein professionelles "Online Marketplace" Feeling.
+  - Neue Hero-Sektion mit dynamischem Design und verbesserter Nutzerführung.
+  - Überarbeiteter Kategorie-Carousel mit größeren Icons und interaktiven Effekten.
+  - Integration eines "Validierung" Tabs für Admins zur direkten Prüfung eingereichter Aufgaben.
+  - `MarketplaceCard` mit verbesserten Animationen, "Hot Deal" Badges für hohe Belohnungen und optimierter visueller Hierarchie.
+  - Implementierung des `w-fit` Musters für die `TabsList` Navigation gemäß Design-Guidelines.
+  - Neue `TaskValidationTab` Komponente für saubere Code-Struktur.
+
+## [1.34.4.52] - 2026-05-08
+
+### Fixed
+- **Benachrichtigungssystem**: "Hängende" rote Punkte (Notifications) behoben.
+  - `thread_reply` Benachrichtigungen werden nun korrekt der Kategorie "Gruppen" zugeordnet statt fälschlicherweise "Sammelkarten".
+  - Neue Logik zum automatischen Gelesen-Markieren von `card_removal` und `admin_action` Benachrichtigungen im Album und Trading Hub integriert.
+  - `thread_reply` Benachrichtigungen werden nun beim Betreten der Gruppen-Seite als gelesen markiert.
+  - Race-Condition im `useNotifications` Hook durch synchronisierte Status-Verwaltung behoben.
+
+## [1.34.4.51] - 2026-05-08
+
+### Fixed
+- **Kategorie-Navigation**: Definitive Lösung für das Badge-Clipping.
+  - Padding des Scroll-Containers massiv erhöht (`pt-8`), um Platz für Badges und Scale-Effekte zu schaffen.
+  - Horizontale Ausrichtung durch `px-4 -mx-4` optimiert, um Scroll-Anschnitt an den Seiten zu vermeiden.
+  - Badge-Offset auf `-top-1.5 -right-1.5` korrigiert für stabilere Darstellung innerhalb der Container-Safe-Zone.
+
+## [1.34.4.50] - 2026-05-08
+
+### Fixed
+- **Kategorie-Navigation**: Clipping-Fehler bei den Aufgaben-Zählern (Badges) behoben.
+  - `overflow-hidden` vom Hauptcontainer entfernt, um Badges und Auswahlringe vollständig anzuzeigen.
+  - Eigener Wrapper für Kategorie-Bilder implementiert, der die Abrundung korrekt übernimmt.
+  - Abstände nach oben (`pt-4`) korrigiert, um Clipping durch den Scale-Effekt zu verhindern.
+
+## [1.34.4.49] - 2026-05-08
+
+### Changed
+- **Kategorie-Navigation**: Umfassendes Redesign der Kategorien im Marktplatz für eine hochwertigere Optik.
+  - Hochkontrast-Status für aktive Kategorien (Schwarz/Weiß-Invertierung) mit Tiefenschatten.
+  - Integration von Live-Zählern (Badges) für verfügbare Aufgaben pro Kategorie.
+  - Optimierte Typografie und Abstände für ein professionelles "Segmented Control"-Feeling.
+  - Verbesserte Hover- und Aktivierungs-Animationen für direktes haptisches Feedback.
+
+## [1.34.4.48] - 2026-05-08
+
+### Added
+- **Ehrenpunkte-System**: Überhang aus dem Ticket-Rabatt wird nun als Ehrenpunkte (1€ = 1 Punkt) gutgeschrieben.
+  - Verhindert den Wertverlust von erledigten Aufgaben, wenn der Ticket-Rabatt bereits das Maximum (30€) erreicht hat.
+  - Anzeige der Ehrenpunkte im Marktplatz, in der Profil-Detailansicht und in der Admin-Nutzerverwaltung.
+- **Profil-Erweiterung**: Neue Karte "Engagement & Aufgaben" in der Profilansicht zur Darstellung von Statistiken.
+
+### Fixed
+- **Admin-UI**: Fehlende Komponenten und Badge-Varianten ergänzt, Typ-Fehler in der Nutzerverwaltung behoben.
+
+## [1.34.4.44] - 2026-05-08
+
+### Changed
+- **Benutzerverwaltung (Liste)**: Anpassung der angezeigten Spalten für eine bessere Übersicht im Arbeitsalltag.
+  - Entfernung der Status-Spalte (Aktiv/Wartet), da diese Information nun primär in der Detailansicht verwaltet wird.
+  - Wiedereinführung der Spalten **Kurs** und **Rolle** in der Hauptliste, um wichtige Zuordnungen auf einen Blick erfassbar zu machen.
+
+## [1.34.4.47] - 2026-05-08
+
+### Added
+- **Erweiterte Rabatt-Historie**: Die Ticket-Rabatt-Historie zeigt nun einen vollständigen chronologischen Verlauf.
+  - Integration von Aufgaben-Abschlüssen und Prämienteilungen (Claiming).
+  - Sichtbarkeit von Admin-Prüfungen: Wann und durch wen eine Aufgabe freigegeben wurde.
+  - Kombinierte Ansicht von manuellen Admin-Anpassungen und durch Eigenleistung gesammelten Rabatten.
+- **Logging**: Neue Log-Aktionen `TASK_REWARD_CLAIMED`, `TASK_APPROVED` und `TASK_REJECTED` für eine lückenlose Nachvollziehbarkeit im Belohnungssystem.
+
+## [1.34.4.47] - 2026-05-08
+
+### Changed
+- **Digitaler Fragebogen (Fallback)**: Kennzeichnung der Online-Anmeldung als "letzte Lösung" für abwesende oder kranke Lehrer.
+  - Anpassung der Einleitung auf `/lehrer-anmeldung`.
+  - Anpassung des QR-Code-Labels auf dem gedruckten Fragebogen zu "Für Abwesende: Digital nachreichen".
+
+## [1.34.4.46] - 2026-05-08
+
+### Changed
+- **Printable Fragebogen**: Umgestaltung des Lehrer-Anmeldeformulars zu einem "Fragebogen".
+  - Umbenennung aller Bezeichnungen von "Anmelde-Formular" zu "Fragebogen".
+  - Entfernung formaler Labels wie "Authorized Document" im Footer.
+  - Aktualisierung der Foto-Sektion: Information über Vor-Ort-Fotografie durch das Team mit optionalem späteren Termin.
+
+## [1.34.4.45] - 2026-05-08
+
+### Added
+- **User Settings Detail View**: Implementierung einer dedizierten Detailansicht für die Benutzerverwaltung unter `/admin/user/[id]`.
+  - Konsolidierung aller Benutzereinstellungen (Rollen, Kurse, Planungsgruppen, Finanzen) an einem zentralen Ort.
+  - Tab-basierte Navigation für Einstellungen, Statistiken und Sicherheit.
+  - Integration der Ticket-Rabatt-Historie und manuellen Anpassungen.
+- **Benutzerverwaltung (Übersicht)**:
+  - Streamlining der Benutzerliste durch Entfernung komplexer Eingabefelder zugunsten einer schnelleren Übersicht.
+  - Erweiterung des Kontextmenüs und des Aktionen-Dropdowns um einen Schnellzugriff auf die Detailansicht ("Details anzeigen").
+  - Verbesserte responsive Darstellung der Nutzerliste.
+
+### Fixed
+- **UI-Komponenten**: Die `Separator`-Komponente wurde optimiert, um Abhängigkeiten zu reduzieren und die Performance zu steigern.
+
+## [1.34.4.43] - 2026-05-08
+
+### Added
+- **Admin-Benutzerverwaltung**: Erweiterte Kontrolle über den manuellen Ticket-Rabatt.
+  - Admins können nun den Rabattbetrag (Mitarbeit-Gutschrift) manuell zwischen 0€ und 30€ anpassen.
+  - Einführung einer detaillierten Rabatt-Historie für jeden Nutzer, um vergangene Anpassungen und den verantwortlichen Admin nachvollziehen zu können.
+  - Validierung des Eingabebereichs (0-30€) sowohl im UI als auch in der Logik.
+- **Logging**: Neue Log-Aktion `TICKET_DISCOUNT_ADJUSTED` für präzisere Audit-Trails bei Rabattänderungen.
+- **Aufgaben-Kategorien Icons**: Admins können nun beim Erstellen einer Kategorie aus einer Liste von Icons wählen.
+- **Image Persistence**: Placeholder-Bilder für Aufgaben sind nun persistent durch einen permanenten Seed.
+
+### Changed
+- **Kategorien UI Redesign**: Komplette Überarbeitung der Kategorie-Navigation im Marktplatz zu modernen, abgerundeten Quadraten.
+
+### Fixed
+- **Belohnungsberechnung (Aufgaben)**: Die Berechnung der Ticket-Preisreduzierung wurde robuster gestaltet.
+- **Bugfix Merkliste**: Fehler beim Speichern der Merkliste behoben.
+
+## [1.34.4.42] - 2026-05-07
+
+### Fixed
+- **Belohnungsberechnung (Aufgaben)**: Die Berechnung der Ticket-Preisreduzierung wurde robuster gestaltet.
+  - Explizite Typ-Konvertierung zu `Number` stellt sicher, dass keine Berechnungsfehler bei unvollständigen Datenbank-Einträgen auftreten.
+  - Die Fallback-Logik für ältere Accounts wurde verfeinert, um präzisere Ergebnisse bei individuellen Aufgabenwerten zu liefern.
+- **Bugfix Merkliste**: Ein Fehler wurde behoben, bei dem die Merkliste (Favoriten) nicht korrekt gespeichert wurde (falscher Datenbank-Pfad).
+
 ## [1.34.4.41] - 2026-05-07
 
 ### Fixed

@@ -18,9 +18,10 @@ import { useDashboardSorting } from '@/hooks/useDashboardSorting'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn, toDate } from '@/lib/utils'
 import { FundingBanner } from '@/components/funding/FundingBanner'
-import { DashboardComponentKey, Poll, PollOption, PollVote, FinanceEntry, ShopEarning, CashVerification } from '@/types/database'
+import { DashboardComponentKey, Poll, PollOption, PollVote, FinanceEntry, ShopEarning, CashVerification, Ad } from '@/types/database'
 import type { SystemFeatures } from '@/types/system'
 import Link from 'next/link'
+import { AdTile } from '@/components/dashboard/AdTile'
 import { 
   ArrowRight, 
   Calendar, 
@@ -974,6 +975,7 @@ export default function Dashboard() {
   const [events, setEvents] = useState<any[]>([])
   const [news, setNews] = useState<any[]>([])
   const [polls, setPolls] = useState<Poll[]>([])
+  const [ads, setAds] = useState<Ad[]>([])
   const [allFinances, setAllFinances] = useState<FinanceEntry[]>([])
   const [allShopEarnings, setAllShopEarnings] = useState<ShopEarning[]>([])
   const [lastVerification, setLastVerification] = useState<CashVerification | null>(null)
@@ -990,6 +992,7 @@ export default function Dashboard() {
     shopEarnings: false,
     news: false,
     polls: false,
+    ads: false,
   })
 
   const markLoaded = (key: keyof typeof initialLoadState) => {
@@ -1078,6 +1081,17 @@ export default function Dashboard() {
     }, (error) => {
       console.error('Error listening to news:', error)
       markLoaded('news')
+    })
+
+    // 5b. Listen to Ads - PUBLIC
+    const adsRef = collection(db, 'ads')
+    const qAds = query(adsRef, where('is_active', '==', true), orderBy('priority', 'desc'))
+    const unsubscribeAds = onSnapshot(qAds, (snapshot) => {
+      setAds(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Ad)))
+      markLoaded('ads')
+    }, (error) => {
+      console.error('Error listening to ads:', error)
+      markLoaded('ads')
     })
 
     // Protected Listeners - Only for Authenticated Users
@@ -1223,6 +1237,7 @@ export default function Dashboard() {
       unsubscribeVerifications()
       unsubscribeShopEarnings()
       unsubscribeNews()
+      unsubscribeAds()
       unsubscribePolls()
     }
   }, [user?.uid, profile?.id, profile?.class_name, profile?.planning_groups, profile?.is_approved, authLoading, rootMode])
@@ -1252,7 +1267,9 @@ export default function Dashboard() {
     }
   }
 
-  const sortedComponents = useDashboardSorting(profile, todos, events, polls, news)
+  const activeAds = ads.filter(ad => ad.is_active)
+  const maxAdPriority = activeAds.length > 0 ? Math.max(...activeAds.map(ad => ad.priority || 0)) : -1
+  const sortedComponents = useDashboardSorting(profile, todos, events, polls, news, maxAdPriority)
   const currentUserId = user?.uid || profile?.id || ''
   const unvotedPolls = polls.filter((poll) => {
     if (!poll.is_active) return false
@@ -1266,7 +1283,8 @@ export default function Dashboard() {
     todos: '/todos',
     events: '/kalender',
     polls: '/abstimmungen',
-    leaderboard: '/finanzen'
+    leaderboard: '/finanzen',
+    ads: '/admin/ads'
   }
 
   const resolvedRootMode =
@@ -1603,6 +1621,31 @@ export default function Dashboard() {
           </div>
         )
         break
+      case 'ads':
+        content = (
+          <div className="flex flex-col">
+            <Skeleton
+              name="dashboard-ads"
+              loading={!initialLoadState.ads && !timeoutReached}
+              fixture={
+                <div className="w-full h-48 border-none shadow-card rounded-2xl bg-card p-6 flex flex-col justify-between">
+                  <div className="flex items-center justify-between">
+                    <Skeleton className="h-4 w-24 bg-muted/60" />
+                    <Skeleton className="h-4 w-4 bg-muted/60" />
+                  </div>
+                  <div className="space-y-2">
+                    <Skeleton className="h-6 w-3/4 bg-muted/60" />
+                    <Skeleton className="h-3 w-full bg-muted/40" />
+                  </div>
+                  <Skeleton className="h-10 w-full rounded bg-muted/60" />
+                </div>
+              }
+            >
+              <AdTile key="ads" ads={ads} />
+            </Skeleton>
+          </div>
+        )
+        break
       default:
         return null
     }
@@ -1610,8 +1653,14 @@ export default function Dashboard() {
     return (
       <div 
         key={key}
-        onClick={() => router.push(componentLinks[key])}
-        className="cursor-pointer transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] group rounded-xl"
+        onClick={() => {
+          if (key === 'ads') return
+          router.push(componentLinks[key])
+        }}
+        className={cn(
+          "transition-all duration-200 group rounded-xl",
+          key !== 'ads' && "cursor-pointer hover:scale-[1.01] active:scale-[0.99]"
+        )}
       >
         <div className="pointer-events-auto [&_button]:pointer-events-auto [&_a]:pointer-events-auto [&_input]:pointer-events-auto" onClick={(e) => {
           const target = e.target as HTMLElement
@@ -1708,6 +1757,7 @@ export default function Dashboard() {
     if (key === 'todos' && !isFeatureEnabled('todos_status', 'is_todos_enabled')) return items
     if (key === 'events' && !isFeatureEnabled('calendar_status', 'is_calendar_enabled')) return items
     if (key === 'news' && !isFeatureEnabled('news_status', 'is_news_enabled')) return items;
+    if (key === 'ads' && ads.length === 0) return items;
 
     return [...items, { type: 'component' as const, key }]
 

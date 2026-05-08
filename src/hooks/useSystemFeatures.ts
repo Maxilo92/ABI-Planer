@@ -26,6 +26,7 @@ export function useSystemFeatures() {
           todos_status: 'enabled',
           polls_status: 'enabled',
           sammelkarten_status: 'enabled',
+          groups_status: 'disabled',
           maintenance_mode: false
         })
       }

@@ -3,7 +3,7 @@
 import { useUserTeachers } from "@/hooks/useUserTeachers";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
-import { doc, onSnapshot } from "firebase/firestore";
+import { doc, onSnapshot, getDocs, query, collection, where, writeBatch } from "firebase/firestore";
 import { useEffect, useState, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -231,6 +231,35 @@ export function TeacherAlbum({
     targetProfile !== undefined ? targetProfile : currentProfile;
   const { teachers: userTeachers, loading: loadingUserTeachers } =
     useUserTeachers(userId);
+  const { user } = useAuth();
+
+  // Mark card-related notifications as read when entering the album
+  useEffect(() => {
+    if (!user?.uid) return;
+
+    const markNotificationsAsRead = async () => {
+      try {
+        const q = query(
+          collection(db, 'notifications', user.uid, 'messages'),
+          where('read', '==', false),
+          where('type', 'in', ['card_removal', 'admin_action'])
+        );
+        const snapshot = await getDocs(q);
+        
+        if (snapshot.empty) return;
+
+        const batch = writeBatch(db);
+        snapshot.docs.forEach((docSnap) => {
+          batch.update(docSnap.ref, { read: true });
+        });
+        await batch.commit();
+      } catch (err) {
+        console.error('[Album] Error marking notifications as read:', err);
+      }
+    };
+
+    markNotificationsAsRead();
+  }, [user?.uid]);
   const [globalTeachers, setGlobalTeachers] = useState<TeacherCatalogEntry[]>([]);
   const [loadingGlobal, setLoadingGlobal] = useState(true);
   const [visibleCount, setVisibleCount] = useState(

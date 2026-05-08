@@ -34,6 +34,7 @@ import {
 import { Settings, TaskCategory } from '@/types/database'
 import Image from 'next/image'
 import Link from 'next/link'
+import { CATEGORY_ICONS, CategoryIconName } from '@/lib/category-icons'
 
 export default function NewTaskPage() {
   const router = useRouter()
@@ -52,6 +53,7 @@ export default function NewTaskPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>('')
   const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false)
   const [newCategoryName, setNewCategoryName] = useState('')
+  const [selectedIcon, setSelectedIcon] = useState<CategoryIconName>('Tags')
   const [isCreatingCategory, setIsCreatingCategory] = useState(false)
 
   useEffect(() => {
@@ -115,6 +117,7 @@ export default function NewTaskPage() {
     const newCat: TaskCategory = {
       id: newCatId,
       name: newCategoryName.trim(),
+      icon: selectedIcon,
       is_active: true
     }
 
@@ -125,6 +128,7 @@ export default function NewTaskPage() {
       })
       setSelectedCategory(newCatId)
       setNewCategoryName('')
+      setSelectedIcon('Tags')
       setIsCategoryDialogOpen(false)
       toast.success(`Kategorie "${newCat.name}" erstellt.`)
     } catch (error) {
@@ -154,6 +158,7 @@ export default function NewTaskPage() {
         category_id: selectedCategory || 'sonstiges',
         status: 'open',
         task_image_urls: [],
+        placeholder_seed: Math.floor(Math.random() * 1000000),
         created_by: profile!.id,
         created_at: serverTimestamp(),
       })
@@ -260,6 +265,30 @@ export default function NewTaskPage() {
                               }
                             }}
                           />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label>Icon wählen</Label>
+                          <div className="grid grid-cols-5 gap-2 p-2 border rounded-xl bg-muted/30">
+                            {(Object.keys(CATEGORY_ICONS) as CategoryIconName[]).map((iconName) => {
+                              const IconComp = CATEGORY_ICONS[iconName]
+                              return (
+                                <button
+                                  key={iconName}
+                                  type="button"
+                                  onClick={() => setSelectedIcon(iconName)}
+                                  className={`flex items-center justify-center p-2 rounded-lg transition-all ${
+                                    selectedIcon === iconName 
+                                      ? 'bg-brand text-brand-foreground shadow-md scale-110' 
+                                      : 'hover:bg-muted text-muted-foreground'
+                                  }`}
+                                  title={iconName}
+                                >
+                                  <IconComp className="h-4 w-4" />
+                                </button>
+                              )
+                            })}
+                          </div>
                         </div>
                       </div>
                       <DialogFooter>

@@ -10,7 +10,7 @@ import {
   ArrowLeftRight, ShoppingBag, Megaphone, 
   Calendar, CheckSquare,
   RefreshCw, BarChart2,
-  Swords, Construction
+  Swords, Construction, Users
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAdminSystem } from '@/components/admin/AdminSystemContext'
@@ -152,6 +152,13 @@ export default function AdminSystemControl() {
                   icon={<BarChart2 className="w-4 h-4" />}
                   status={features?.polls_status}
                   onStatusChange={(s) => updateFeatureStatus('polls_status', s)}
+                />
+                <FeatureStatusToggle
+                  label="Gruppen & Chat"
+                  description="Team-Kommunikation & Gruppen"
+                  icon={<Users className="w-4 h-4" />}
+                  status={features?.groups_status}
+                  onStatusChange={(s) => updateFeatureStatus('groups_status', s)}
                 />
               </div>
             </div>

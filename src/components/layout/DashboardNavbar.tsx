@@ -113,6 +113,7 @@ export function DashboardNavbar() {
         ] : []),
       ],
     },
+    { href: '/aufgaben', label: 'Aufgaben', icon: Briefcase },
   ]
 
   if (profile) {
@@ -124,8 +125,7 @@ export function DashboardNavbar() {
       subItems: [
         ...(isEnabled('calendar_status') ? [{ href: '/kalender', label: 'Kalender', icon: Calendar, notify: notifications.kalender }] : []),
         ...(isEnabled('todos_status') ? [{ href: '/todos', label: 'Todos', icon: CheckSquare, notify: notifications.todos }] : []),
-        { href: '/aufgaben', label: 'Aufgaben', icon: Briefcase },
-        { href: '/gruppen', label: 'Gruppen', icon: Users, notify: notifications.gruppen },
+        ...(isEnabled('groups_status') ? [{ href: '/gruppen', label: 'Gruppen', icon: Users, notify: notifications.gruppen }] : []),
       ],
     })
 
@@ -200,6 +200,7 @@ export function DashboardNavbar() {
       subItems: [
         { href: '/admin', label: 'Admin Hub', icon: Server },
         { href: '/admin/user', label: 'Benutzerverwaltung', icon: Users },
+        { href: '/admin/ads', label: 'AD-Manager', icon: Megaphone },
         { href: '/admin/system', label: 'System Overview', icon: LayoutDashboard },
         { href: '/admin/changelog', label: 'Changelog', icon: FileText },
         { href: '/admin/sammelkarten', label: 'Sammelkarten (Digital)', icon: Sparkles },

@@ -77,6 +77,13 @@ export type LogActionType =
   | 'POLL_SUBMISSION_CREATED'
   | 'SCHOOL_YEAR_INCREMENTED'
   | 'CASH_VERIFIED'
+  | 'TICKET_DISCOUNT_ADJUSTED'
+  | 'TASK_REWARD_CLAIMED'
+  | 'TASK_APPROVED'
+  | 'TASK_REJECTED'
+  | 'AD_CREATED'
+  | 'AD_UPDATED'
+  | 'AD_DELETED'
 
 export interface LogEntry {
   action: LogActionType
@@ -90,6 +97,27 @@ export interface LogEntry {
  * Logs a significant action to the Firestore 'logs' collection.
  */
 import { doc, getDoc } from 'firebase/firestore'
+
+/**
+ * Sanitizes an object for Firestore by removing 'undefined' values recursively.
+ */
+const sanitizeForFirestore = (obj: any): any => {
+  if (obj === null || typeof obj !== 'object') {
+    return obj === undefined ? null : obj
+  }
+
+  if (Array.isArray(obj)) {
+    return obj.map(sanitizeForFirestore)
+  }
+
+  return Object.keys(obj).reduce((acc: any, key) => {
+    const val = obj[key]
+    if (val !== undefined) {
+      acc[key] = sanitizeForFirestore(val)
+    }
+    return acc
+  }, {})
+}
 
 /**
  * Logs a significant action to the Firestore 'logs' collection.
@@ -111,11 +139,14 @@ export const logAction = async (
         resolvedName = data.full_name || data.email || null
       }
     }
+
+    const sanitizedDetails = details ? sanitizeForFirestore(details) : null
+
     await addDoc(collection(db, 'logs'), {
       action,
       user_id: userId,
       user_name: resolvedName || null,
-      details: details || null,
+      details: sanitizedDetails,
       timestamp: serverTimestamp(),
     })
 
@@ -123,15 +154,15 @@ export const logAction = async (
     if (typeof window !== 'undefined') {
       try {
         // Sanitize details to remove PII before sending to PostHog
-        const sanitizedDetails = { ...(details || {}) }
+        const postHogDetails = { ...(sanitizedDetails || {}) }
         const piiKeys = ['email', 'full_name', 'name', 'password', 'phone', 'address']
         piiKeys.forEach(key => {
-          if (key in sanitizedDetails) delete sanitizedDetails[key]
+          if (key in postHogDetails) delete postHogDetails[key]
         })
 
         posthog.capture(action, {
           user_id: userId,
-          ...sanitizedDetails,
+          ...postHogDetails,
         })
       } catch (phError) {
         console.warn(`[Logging] PostHog capture failed for ${action}:`, phError)

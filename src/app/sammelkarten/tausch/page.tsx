@@ -62,7 +62,7 @@ export default function TradeCenterPage() {
         const q = query(
           collection(db, 'notifications', currentUserId, 'messages'),
           where('read', '==', false),
-          where('type', 'in', ['new_trade_offer', 'counter_trade_offer', 'trade_accepted'])
+          where('type', 'in', ['new_trade_offer', 'counter_trade_offer', 'trade_accepted', 'card_removal', 'admin_action'])
         );
         const snapshot = await getDocs(q);
         

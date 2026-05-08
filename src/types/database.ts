@@ -3,7 +3,19 @@ import { Timestamp } from 'firebase/firestore';
 export type UserRole = 'viewer' | 'planner' | 'admin' | 'admin_main' | 'admin_co';
 export type TodoStatus = 'open' | 'in_progress' | 'done';
 export type ClassName = string;
-export type DashboardComponentKey = 'funding' | 'news' | 'todos' | 'events' | 'polls' | 'leaderboard';
+export type DashboardComponentKey = 'funding' | 'news' | 'todos' | 'events' | 'polls' | 'leaderboard' | 'ads';
+
+export interface Ad {
+  id: string;
+  title: string;
+  description: string;
+  image_url?: string;
+  link_url?: string;
+  is_active: boolean;
+  priority: number;
+  created_at: string | Timestamp | Date;
+  target_groups?: string[];
+}
 
 export interface PlanningGroup {
   name: string;
@@ -79,6 +91,7 @@ export interface Profile {
     completed_count: number;
     earned_boosters: number;
     total_penalty_reduction?: number;
+    ehrenpunkte?: number;
   } | null;
   currencies?: {
     notepunkte: number; // NP balance, default 0
@@ -242,6 +255,7 @@ export interface TaskCategory {
   id: string;
   name: string;
   image_url?: string;
+  icon?: string; // Lucide icon name
   is_active: boolean;
 }
 
@@ -556,6 +570,9 @@ export interface Task {
   completed_at?: string | Timestamp | Date | null;
   reviewed_by?: string | null;
   reward_claimed?: boolean;
+  placeholder_seed?: number; // Permanenter Seed für Platzhalter-Bilder
+  view_count?: number;
+  viewed_by?: string[];
 
   created_by: string;
   created_at: string | Timestamp | Date;

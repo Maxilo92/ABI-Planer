@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Mail, Shield, Award, MapPin, Users, ShieldCheck, UserPlus, UserX, UserCheck, Settings as SettingsIcon, Calendar, User } from 'lucide-react'
+import { Mail, Shield, Award, MapPin, Users, ShieldCheck, UserPlus, UserX, UserCheck, Settings as SettingsIcon, Calendar, User, Star } from 'lucide-react'
 import { format } from 'date-fns'
 import { de } from 'date-fns/locale'
 import { toDate, getOnlineStatus, cn } from '@/lib/utils'
@@ -220,6 +220,37 @@ export function ProfileView({
       )}
 
       <div className="space-y-6">
+        {profile.task_stats && (
+          <Card className="border-none shadow-sm bg-muted/20">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Award className="h-5 w-5 text-brand" />
+                Engagement & Aufgaben
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+               <div className="grid grid-cols-2 sm:grid-cols-3 gap-6">
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Aufgaben</p>
+                    <p className="text-2xl font-black">{profile.task_stats.completed_count}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Ersparnis</p>
+                    <p className="text-2xl font-black text-emerald-600">{profile.task_stats.total_penalty_reduction || 0}€</p>
+                  </div>
+                  {(profile.task_stats.ehrenpunkte ?? 0) > 0 && (
+                     <div className="space-y-1">
+                      <p className="text-[10px] font-bold text-yellow-600 uppercase tracking-widest">Ehrenpunkte</p>
+                      <p className="text-2xl font-black text-yellow-500 flex items-center gap-2">
+                        <Star className="h-5 w-5 fill-current" /> {profile.task_stats.ehrenpunkte}
+                      </p>
+                    </div>
+                  )}
+               </div>
+            </CardContent>
+          </Card>
+        )}
+
         <h4 className="text-xl font-black text-foreground tracking-tight flex items-center gap-2">
           <Award className="h-6 w-6 text-primary" /> Sammelkarten Album
         </h4>

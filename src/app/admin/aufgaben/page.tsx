@@ -44,6 +44,8 @@ import { Label } from '@/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Input } from '@/components/ui/input'
 import { compressImage } from '@/lib/taskMediaUpload'
+import { CATEGORY_ICONS, CategoryIconName, getCategoryIcon } from '@/lib/category-icons'
+import { logAction } from '@/lib/logging'
 
 export default function AdminTasksPage() {
   const { profile, loading: authLoading } = useAuth()
@@ -57,6 +59,7 @@ export default function AdminTasksPage() {
   // Category State
   const [newCatName, setNewCatName] = useState('')
   const [newCatImage, setNewCatImage] = useState<File | null>(null)
+  const [selectedIcon, setSelectedIcon] = useState<CategoryIconName>('Tags')
   const [isAddingCat, setIsAddingCat] = useState(false)
 
   useEffect(() => {
@@ -123,6 +126,9 @@ export default function AdminTasksPage() {
   }
 
   const handleAction = async (taskId: string, action: 'approve' | 'reject') => {
+    const task = tasks.find(t => t.id === taskId) || reviewingTask
+    if (!task) return
+
     setActionLoading(true)
     try {
       const adminReviewTask = httpsCallable(functions, 'adminReviewTask')
@@ -132,6 +138,21 @@ export default function AdminTasksPage() {
         rejectedReason: action === 'reject' ? rejectReason : undefined 
       })
       
+      if (profile) {
+        await logAction(
+          action === 'approve' ? 'TASK_APPROVED' : 'TASK_REJECTED',
+          profile.id,
+          profile.full_name,
+          {
+            task_id: taskId,
+            task_title: task.title,
+            target_user_id: task.assignee_id,
+            target_user_name: task.assignee_name,
+            reason: action === 'reject' ? rejectReason : null
+          }
+        )
+      }
+
       toast.success(action === 'approve' ? 'Aufgabe genehmigt!' : 'Aufgabe abgelehnt.')
       setReviewingTask(null)
       setRejectReason('')
@@ -159,6 +180,7 @@ export default function AdminTasksPage() {
         id: crypto.randomUUID(),
         name: newCatName.trim(),
         image_url,
+        icon: selectedIcon,
         is_active: true
       }
 
@@ -168,6 +190,7 @@ export default function AdminTasksPage() {
 
       setNewCatName('')
       setNewCatImage(null)
+      setSelectedIcon('Tags')
       toast.success('Kategorie hinzugefügt!')
     } catch (e) {
       console.error('Error adding category:', e)
@@ -334,8 +357,32 @@ export default function AdminTasksPage() {
                     onChange={(e) => setNewCatName(e.target.value)}
                   />
                 </div>
+
                 <div className="space-y-2">
-                  <Label>Icon/Bild</Label>
+                  <Label>Icon wählen</Label>
+                  <div className="grid grid-cols-5 gap-2 p-2 border rounded-xl bg-muted/30">
+                    {(Object.keys(CATEGORY_ICONS) as CategoryIconName[]).map((iconName) => {
+                      const IconComp = CATEGORY_ICONS[iconName]
+                      return (
+                        <button
+                          key={iconName}
+                          onClick={() => setSelectedIcon(iconName)}
+                          className={`flex items-center justify-center p-2 rounded-lg transition-all ${
+                            selectedIcon === iconName 
+                              ? 'bg-brand text-brand-foreground shadow-md scale-110' 
+                              : 'hover:bg-muted text-muted-foreground'
+                          }`}
+                          title={iconName}
+                        >
+                          <IconComp className="h-4 w-4" />
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Optionales Hintergrundbild</Label>
                   <div className="flex items-center gap-4">
                     {newCatImage ? (
                       <div className="relative h-16 w-16 rounded-xl overflow-hidden border">
@@ -384,31 +431,37 @@ export default function AdminTasksPage() {
               </h3>
               
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {(settings?.task_categories || []).map((cat) => (
-                  <Card key={cat.id} className="flex items-center p-3 gap-3 border-border hover:border-border/80 transition-colors shadow-none">
-                    <div className="h-12 w-12 rounded-lg bg-muted relative overflow-hidden flex-shrink-0">
-                      {cat.image_url ? (
-                        <Image src={cat.image_url} alt={cat.name} fill className="object-cover" />
-                      ) : (
-                        <Tags className="h-5 w-5 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-muted-foreground/30" />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-bold truncate">{cat.name}</p>
-                      <p className="text-[11px] text-muted-foreground uppercase tracking-wider font-bold">
-                        {cat.is_active ? 'Aktiv' : 'Inaktiv'}
-                      </p>
-                    </div>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="text-muted-foreground/40 hover:text-destructive h-8 w-8"
-                      onClick={() => handleDeleteCategory(cat)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </Card>
-                ))}
+                {(settings?.task_categories || []).map((cat) => {
+                  const IconComp = getCategoryIcon(cat.icon)
+                  return (
+                    <Card key={cat.id} className="flex items-center p-3 gap-3 border-border hover:border-border/80 transition-colors shadow-none">
+                      <div className="h-12 w-12 rounded-lg bg-muted relative overflow-hidden flex-shrink-0 flex items-center justify-center border border-border/50">
+                        {cat.image_url ? (
+                          <Image src={cat.image_url} alt={cat.name} fill className="object-cover" />
+                        ) : (
+                          <IconComp className="h-5 w-5 text-muted-foreground/50" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          {!cat.image_url && <IconComp className="h-3 w-3 text-brand" />}
+                          <p className="font-bold truncate">{cat.name}</p>
+                        </div>
+                        <p className="text-[11px] text-muted-foreground uppercase tracking-wider font-bold">
+                          {cat.is_active ? 'Aktiv' : 'Inaktiv'}
+                        </p>
+                      </div>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="text-muted-foreground/40 hover:text-destructive h-8 w-8"
+                        onClick={() => handleDeleteCategory(cat)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </Card>
+                  )
+                })}
                 
                 {(settings?.task_categories || []).length === 0 && (
                   <div className="sm:col-span-2 py-12 text-center border-2 border-dashed rounded-xl text-muted-foreground/40">

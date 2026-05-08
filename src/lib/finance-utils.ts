@@ -58,15 +58,23 @@ export function calculateFinanceBreakdown(
 }
 
 export function calculateTicketPenalty(
-  profile: { task_stats?: { completed_count: number, total_penalty_reduction?: number } | null, participation_manual_credit?: number } | null,
+  profile: { task_stats?: { completed_count: number, total_penalty_reduction?: number, ehrenpunkte?: number } | null, participation_manual_credit?: number } | null,
   settings: { ticket_penalty_base?: number, ticket_penalty_reduction?: number } | null
 ) {
-  const penaltyBase = settings?.ticket_penalty_base ?? 30
-  const penaltyReductionSetting = settings?.ticket_penalty_reduction ?? 10
+  const penaltyBase = Number(settings?.ticket_penalty_base ?? 30)
+  const penaltyReductionSetting = Number(settings?.ticket_penalty_reduction ?? 10)
   
   const completedCount = profile?.task_stats?.completed_count ?? 0
-  const totalTaskReduction = profile?.task_stats?.total_penalty_reduction ?? (completedCount * penaltyReductionSetting)
-  const manualCredit = profile?.participation_manual_credit ?? 0
+  const manualCredit = Number(profile?.participation_manual_credit ?? 0)
+  const ehrenpunkte = Number(profile?.task_stats?.ehrenpunkte ?? 0)
+
+  // Use stored total reduction, or fallback for old accounts that only have count
+  let totalTaskReduction = 0
+  if (typeof profile?.task_stats?.total_penalty_reduction === 'number') {
+    totalTaskReduction = profile.task_stats.total_penalty_reduction
+  } else if (completedCount > 0) {
+    totalTaskReduction = completedCount * penaltyReductionSetting
+  }
 
   const currentPenalty = Math.max(0, penaltyBase - totalTaskReduction - manualCredit)
 
@@ -75,6 +83,7 @@ export function calculateTicketPenalty(
     completedTasks: completedCount,
     totalTaskReduction,
     manualCredit,
+    ehrenpunkte,
     penaltyBase,
     penaltyReductionSetting,
     isFullyReduced: currentPenalty === 0

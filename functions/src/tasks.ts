@@ -146,9 +146,14 @@ export const claimTaskReward = onCall({
     }
 
     const taskRef = db.collection("tasks").doc(taskId);
+    const settingsRef = db.collection("settings").doc("config");
     
     return await db.runTransaction(async (transaction) => {
-      const taskDoc = await transaction.get(taskRef);
+      const [taskDoc, settingsSnap] = await Promise.all([
+        transaction.get(taskRef),
+        transaction.get(settingsRef),
+      ]);
+
       if (!taskDoc.exists) throw new HttpsError("not-found", "Aufgabe nicht gefunden.");
 
       const taskData = taskDoc.data() as Task;
@@ -163,14 +168,35 @@ export const claimTaskReward = onCall({
       }
 
       const profileRef = db.collection("profiles").doc(request.auth?.uid as string);
+      const profileDoc = await transaction.get(profileRef);
+      const profileData = profileDoc.data();
+
       const rewardBoosters = Number(taskData.reward_boosters || 0);
       const ticketReduction = Number(taskData.ticket_reduction || 0);
+
+      // Overflow Logic
+      const settings = settingsSnap.exists ? settingsSnap.data() : {};
+      const penaltyBase = Number(settings?.ticket_penalty_base ?? 30);
+      const currentTaskReduction = Number(profileData?.task_stats?.total_penalty_reduction || 0);
+      const manualCredit = Number(profileData?.participation_manual_credit || 0);
+      
+      const totalBefore = currentTaskReduction + manualCredit;
+      const remainingPenalty = Math.max(0, penaltyBase - totalBefore);
+
+      let appliedReduction = ticketReduction;
+      let surplusHonorPoints = 0;
+
+      if (ticketReduction > remainingPenalty) {
+        appliedReduction = remainingPenalty;
+        surplusHonorPoints = ticketReduction - remainingPenalty;
+      }
 
       transaction.update(profileRef, {
         "booster_stats.extra_available": FieldValue.increment(rewardBoosters),
         "task_stats.completed_count": FieldValue.increment(1),
         "task_stats.earned_boosters": FieldValue.increment(rewardBoosters),
-        "task_stats.total_penalty_reduction": FieldValue.increment(ticketReduction),
+        "task_stats.total_penalty_reduction": FieldValue.increment(appliedReduction),
+        "task_stats.ehrenpunkte": FieldValue.increment(surplusHonorPoints),
       });
 
       transaction.update(taskRef, {
@@ -178,7 +204,7 @@ export const claimTaskReward = onCall({
         reward_claimed_at: FieldValue.serverTimestamp(),
       });
 
-      return { success: true, rewardBoosters };
+      return { success: true, rewardBoosters, appliedReduction, surplusHonorPoints };
     });
   } catch (error) {
     if (error instanceof HttpsError) throw error;

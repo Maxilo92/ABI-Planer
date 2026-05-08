@@ -9,6 +9,7 @@ export interface SystemFeatures {
   todos_status: FeatureStatus;
   polls_status: FeatureStatus;
   sammelkarten_status: FeatureStatus;
+  groups_status?: FeatureStatus;
   battle_pass_status?: FeatureStatus;
   
   // Legacy support for older builds/components
