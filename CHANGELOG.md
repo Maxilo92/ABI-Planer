@@ -16,6 +16,21 @@
 ### Fixed
 - **Ad-Manager**: Bildskalierung in der Admin-Übersicht auf `object-contain` umgestellt, um abgeschnittene Bilder zu verhindern.
 
+## [1.35.2.1] - 2026-05-08
+
+### Changed
+- **Aufgaben-Detailansicht**: Sparkles-Icon aus dem Empfehlungs-Bereich entfernt.
+
+## [1.35.2.0] - 2026-05-08
+
+### Added
+- **Infinite Scroll**: Endloses Scrollen für alle Tabs der Aufgaben-Seite (Angebote, Beobachtet, Validierung) implementiert. Dies verbessert die Ladezeiten und Performance bei einer großen Anzahl von Aufgaben erheblich.
+- **Paginiertes Laden**: Aufgaben werden nun in Häppchen von 12 Elementen geladen, was Bandbreite spart.
+
+### Changed
+- **Aufgaben-Seite**: Kompletter Refactor der Daten-Abfrage auf Firestore-Pagination (limit/startAfter).
+- **Validierungs-Tab**: Integration der Admin-Prüfungsfunktionen direkt in das paginierte System der Hauptseite.
+
 ## [1.35.1.0] - 2026-05-08
 
 ### Added

@@ -622,7 +622,6 @@ export default function TaskDetailPage() {
         <div className="flex items-center justify-between">
           <div className="space-y-1">
             <h2 className="text-2xl font-black flex items-center gap-2">
-              <Sparkles className="h-6 w-6 text-primary" />
               Das könnte dich auch interessieren
             </h2>
             <p className="text-muted-foreground text-sm font-medium">Entdecke weitere spannende Aufgaben im Marktplatz.</p>
