@@ -3,9 +3,10 @@
   "version": "1.34.4.41",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "node scripts/generate-sw.mjs && next dev",
     "sync:version": "node scripts/sync-version.mjs",
-    "prebuild": "npm run sync:version",
+    "generate:sw": "node scripts/generate-sw.mjs",
+    "prebuild": "npm run sync:version && npm run generate:sw",
     "build": "next build",
     "build:clean": "rm -rf .next && npm run build",
     "start": "node .next/standalone/server.js",

@@ -59,3 +59,6 @@ CardDesign/
 /docs/maestro/state/archive/
 /PHASE1_NP_SETUP.md
 /lehrer_export_*.csv
+
+# generated service worker (built from scripts/firebase-messaging-sw.template.js)
+/public/firebase-messaging-sw.js
