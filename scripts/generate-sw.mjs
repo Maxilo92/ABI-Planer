@@ -16,7 +16,11 @@ const requiredVars = [
 
 const missing = requiredVars.filter((v) => !process.env[v])
 if (missing.length > 0) {
-  console.warn(`[generate-sw] Missing env vars: ${missing.join(', ')} – service worker will not be functional.`)
+  const msg = `[generate-sw] Missing env vars: ${missing.join(', ')}.\nDefine them in your .env.local file (local dev) or in your CI/hosting environment.\nThe generated service worker will not be functional until these are set.`
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error(msg)
+  }
+  console.warn(msg)
 }
 
 let content = readFileSync(templatePath, 'utf8')
