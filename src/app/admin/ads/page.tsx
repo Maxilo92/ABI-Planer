@@ -210,7 +210,7 @@ export default function AdManagerPage() {
           <Label>Priorität</Label>
           <Select 
             value={String(data.priority || 0)} 
-            onValueChange={(val) => setData((prev: any) => ({ ...prev, priority: parseInt(val) }))}
+            onValueChange={(val) => setData((prev: any) => ({ ...prev, priority: parseInt(val || '0') }))}
           >
             <SelectTrigger>
               <SelectValue placeholder="Priorität wählen" />

@@ -104,9 +104,11 @@ function SheetOverlay({
 function SheetContent({
   className,
   children,
+  side = "right",
   showCloseButton = true,
   ...props
 }: DialogPrimitive.Popup.Props & {
+  side?: "top" | "bottom" | "left" | "right"
   showCloseButton?: boolean
 }) {
   return (
@@ -115,7 +117,11 @@ function SheetContent({
       <DialogPrimitive.Popup
         data-slot="sheet-content"
         className={cn(
-          "fixed top-0 right-0 z-50 h-full w-full bg-background p-6 shadow-lg transition-transform duration-300 ease-in-out sm:max-w-md border-l border-border data-open:animate-in data-open:slide-in-from-right data-closed:animate-out data-closed:slide-out-to-right overflow-y-auto",
+          "fixed z-50 bg-background p-6 shadow-lg transition-transform duration-300 ease-in-out border-border overflow-y-auto",
+          side === "right" && "top-0 right-0 h-full w-full sm:max-w-md border-l data-open:animate-in data-open:slide-in-from-right data-closed:animate-out data-closed:slide-out-to-right",
+          side === "left" && "top-0 left-0 h-full w-full sm:max-w-md border-r data-open:animate-in data-open:slide-in-from-left data-closed:animate-out data-closed:slide-out-to-left",
+          side === "top" && "top-0 left-0 w-full border-b data-open:animate-in data-open:slide-in-from-top data-closed:animate-out data-closed:slide-out-to-top",
+          side === "bottom" && "bottom-0 left-0 w-full border-t data-open:animate-in data-open:slide-in-from-bottom data-closed:animate-out data-closed:slide-out-to-bottom",
           className
         )}
         {...props}

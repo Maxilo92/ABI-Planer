@@ -16,6 +16,13 @@
 ### Fixed
 - **Ad-Manager**: Bildskalierung in der Admin-Übersicht auf `object-contain` umgestellt, um abgeschnittene Bilder zu verhindern.
 
+## [1.35.2.2] - 2026-05-08
+
+### Fixed
+- **Ad-Manager**: TypeScript-Fehler bei der Prioritäts-Auswahl behoben (null-Safety für `parseInt`).
+- **Aufgaben-Seite**: Fehlende `Badge`-Komponente importiert und `SheetContent`-Unterstützung für die linke Seite (`side="left"`) implementiert.
+- **Dashboard**: Fehlender `ads`-Key im Dashboard-Layout-Manager (`CustomizeDashboardDialog`) hinzugefügt.
+
 ## [1.35.2.1] - 2026-05-08
 
 ### Changed
