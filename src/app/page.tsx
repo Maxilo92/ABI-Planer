@@ -65,6 +65,7 @@ import { Line } from 'react-chartjs-2'
 
 import { useLanguage } from '@/context/LanguageContext'
 import { LanguageToggle } from '@/components/ui/LanguageToggle'
+import { useFeatureFlagVariantKey } from 'posthog-js/react'
 
 ChartJS.register(
   CategoryScale,
@@ -79,6 +80,17 @@ ChartJS.register(
 
 function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
   const { t, language } = useLanguage()
+  
+  // A/B Test: Hero Section Variant
+  // We only want to run the test for unauthenticated users to keep data clean.
+  // The hook is called but we force 'control' behavior if authenticated.
+  const variant = useFeatureFlagVariantKey('landing-page-hero-test')
+  const showGamification = !isAuthenticated && variant === 'gamification'
+
+  const heroTitle1 = showGamification ? t('landing.hero.gamified.title1') : t('landing.hero.title1')
+  const heroTitle2 = showGamification ? t('landing.hero.gamified.title2') : t('landing.hero.title2')
+  const heroDesc = showGamification ? t('landing.hero.gamified.desc') : t('landing.hero.desc')
+
   const [landingNews, setLandingNews] = useState<any[]>([])
   const [landingNewsLoading, setLandingNewsLoading] = useState(true)
   const [dashboardBaseUrl, setDashboardBaseUrl] = useState('')
@@ -160,12 +172,12 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
         totalCards: typeof data?.total_cards_count === 'number' ? data.total_cards_count : null,
         newsCount: typeof data?.news_count === 'number' ? data.news_count : null,
         currentFunding: typeof data?.current_funding === 'number' ? data.current_funding : null,
-        fundingGoal: typeof data?.funding_goal === 'number' ? data.funding_goal : null,
-        supportGoal: typeof data?.support_goal === 'number' ? data.support_goal : null,
-        globalManagedBudget: typeof data?.global_managed_budget === 'number' ? data.global_managed_budget : null,
-        globalCompletedTasks: typeof data?.global_completed_tasks === 'number' ? data.global_completed_tasks : null,
-        userGrowth: Array.isArray(data?.user_growth) ? data.user_growth : [],
-        budgetGrowth: Array.isArray(data?.budget_growth) ? data.budget_growth : [],
+        funding_goal: typeof data?.funding_goal === 'number' ? data.funding_goal : null,
+        support_goal: typeof data?.support_goal === 'number' ? data.support_goal : null,
+        global_managed_budget: typeof data?.global_managed_budget === 'number' ? data.global_managed_budget : null,
+        global_completed_tasks: typeof data?.global_completed_tasks === 'number' ? data.global_completed_tasks : null,
+        user_growth: Array.isArray(data?.user_growth) ? data.user_growth : [],
+        budget_growth: Array.isArray(data?.budget_growth) ? data.budget_growth : [],
       })
       setLandingStatsLoading(false)
     }, (error) => {
@@ -175,12 +187,12 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
         totalCards: null,
         newsCount: null,
         currentFunding: null,
-        fundingGoal: null,
-        supportGoal: null,
-        globalManagedBudget: null,
-        globalCompletedTasks: null,
-        userGrowth: [],
-        budgetGrowth: [],
+        funding_goal: null,
+        support_goal: null,
+        global_managed_budget: null,
+        global_completed_tasks: null,
+        user_growth: [],
+        budget_growth: [],
       })
       setLandingStatsLoading(false)
     })
@@ -266,11 +278,11 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
             
             <div className="max-w-4xl mx-auto space-y-6 relative">
               <motion.h1 variants={itemVariants} className="text-5xl md:text-7xl lg:text-8xl font-extrabold tracking-tight leading-[1.05]">
-                {t('landing.hero.title1')} <br />
-                <span className="text-brand">{t('landing.hero.title2')}</span>
+                {heroTitle1} <br />
+                <span className="text-brand">{heroTitle2}</span>
               </motion.h1>
               <motion.p variants={itemVariants} className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed font-medium">
-                {t('landing.hero.desc')}
+                {heroDesc}
               </motion.p>
               
               {/* Floating Icons Decor */}
@@ -395,15 +407,19 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
 
             <div className="grid gap-12 grid-cols-2 xl:grid-cols-4 text-center">
               {[
-                { label: t('landing.stats.budget'), value: landingStatsLoading ? '...' : formatCurrency((landingStats.globalManagedBudget ?? 0) + 54320) },
-                { label: t('landing.stats.completedTasks'), value: landingStatsLoading ? '...' : formatMetric((landingStats.globalCompletedTasks ?? 0) + 1240) },
-                { label: t('landing.stats.users'), value: landingStatsLoading ? '...' : formatMetric((landingStats.totalUsers ?? 0) + 120) },
-                { label: t('landing.stats.cards'), value: landingStatsLoading ? '...' : formatMetric((landingStats.totalCards ?? 0) + 1200) },
+                { label: t('landing.stats.budget'), value: landingStatsLoading ? null : formatCurrency((landingStats.globalManagedBudget ?? 0) + 54320) },
+                { label: t('landing.stats.completedTasks'), value: landingStatsLoading ? null : formatMetric((landingStats.globalCompletedTasks ?? 0) + 1240) },
+                { label: t('landing.stats.users'), value: landingStatsLoading ? null : formatMetric((landingStats.totalUsers ?? 0) + 120) },
+                { label: t('landing.stats.cards'), value: landingStatsLoading ? null : formatMetric((landingStats.totalCards ?? 0) + 1200) },
               ].map((item) => (
-                <div key={item.label} className="space-y-2">
-                  <p className="text-4xl md:text-5xl font-extrabold tracking-tight text-foreground">
-                    {item.value}
-                  </p>
+                <div key={item.label} className="space-y-2 flex flex-col items-center">
+                  {item.value === null ? (
+                    <Skeleton className="h-12 w-32 bg-muted/40" />
+                  ) : (
+                    <p className="text-4xl md:text-5xl font-extrabold tracking-tight text-foreground">
+                      {item.value}
+                    </p>
+                  )}
                   <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{item.label}</p>
                 </div>
               ))}
@@ -420,7 +436,11 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
                   {landingStatsLoading && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
                 </div>
                 <div className="h-[350px] w-full bg-card/50 rounded-[2.5rem] border border-border/50 p-8 shadow-subtle backdrop-blur-sm relative overflow-hidden">
-                  {landingStats.userGrowth.length > 0 ? (
+                  {landingStatsLoading ? (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <Skeleton className="w-full h-full rounded-xl opacity-30" />
+                    </div>
+                  ) : landingStats.userGrowth.length > 0 ? (
                     <Line 
                       options={{
                         responsive: true,
@@ -487,7 +507,11 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
                   {landingStatsLoading && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
                 </div>
                 <div className="h-[350px] w-full bg-card/50 rounded-[2.5rem] border border-border/50 p-8 shadow-subtle backdrop-blur-sm relative overflow-hidden">
-                  {landingStats.budgetGrowth.length > 0 ? (
+                  {landingStatsLoading ? (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <Skeleton className="w-full h-full rounded-xl opacity-30" />
+                    </div>
+                  ) : landingStats.budgetGrowth.length > 0 ? (
                     <Line 
                       options={{
                         responsive: true,
@@ -935,12 +959,24 @@ export default function Dashboard() {
   const { t, language } = useLanguage()
   const router = useRouter()
   const { user, profile, loading: authLoading } = useAuth()
-  const [rootMode, setRootMode] = useState<'unknown' | 'landing' | 'dashboard'>('unknown')
+  
+  // Heuristic initialization to avoid flicker where possible
+  const [rootMode, setRootMode] = useState<'unknown' | 'landing' | 'dashboard'>(() => {
+    if (typeof window === 'undefined') return 'unknown'
+    const host = window.location.hostname
+    const isDashboardHost = host.startsWith('dashboard.') || 
+                            host.startsWith('app.') || 
+                            host.includes('.dashboard.') ||
+                            host.startsWith('support.') ||
+                            host.includes('.support.')
+    return isDashboardHost ? 'dashboard' : 'landing'
+  })
+  
   const [features, setFeatures] = useState<SystemFeatures | null>(null)
   const [settings, setSettings] = useState<any>(null)
   const isBoneyardBuild = typeof window !== 'undefined' && Boolean((window as any).__BONEYARD_BUILD)
 
-  // Initialize rootMode as soon as possible
+  // Ensure rootMode is correct after hydration
   useEffect(() => {
     if (typeof window === 'undefined') return
     const host = window.location.hostname
@@ -949,8 +985,11 @@ export default function Dashboard() {
                             host.includes('.dashboard.') ||
                             host.startsWith('support.') ||
                             host.includes('.support.')
-    setRootMode(isDashboardHost ? 'dashboard' : 'landing')
-  }, [])
+    const detectedMode = isDashboardHost ? 'dashboard' : 'landing'
+    if (rootMode !== detectedMode) {
+      setRootMode(detectedMode)
+    }
+  }, [rootMode])
 
   // Redirect non-logged-in users from dashboard root to login
   useEffect(() => {

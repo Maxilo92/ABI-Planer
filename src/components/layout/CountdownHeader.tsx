@@ -41,7 +41,16 @@ export function CountdownHeader({ collapsed = false }: { collapsed?: boolean }) 
     return () => unsubscribe()
   }, [loading, profile?.is_approved])
 
-  if (!mounted || !targetDate) return null
+  if (!mounted || !targetDate) {
+    return (
+      <div className={cn(
+        "flex items-center bg-secondary/50 rounded-full border border-border/50 p-2.5",
+        collapsed ? "w-9 h-9" : "w-32 h-8"
+      )}>
+        <Clock className="h-3.5 w-3.5 text-primary/20 animate-pulse" />
+      </div>
+    )
+  }
 
   const targetDateObj = new Date(targetDate)
   const diffMs = targetDateObj.getTime() - new Date().getTime()

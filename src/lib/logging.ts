@@ -164,6 +164,10 @@ export const logAction = async (
           user_id: userId,
           ...postHogDetails,
         })
+
+        if (action === 'ACCOUNT_CREATED') {
+          posthog.setPersonProperties({ has_account: true })
+        }
       } catch (phError) {
         console.warn(`[Logging] PostHog capture failed for ${action}:`, phError)
       }

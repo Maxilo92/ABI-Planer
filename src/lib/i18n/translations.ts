@@ -7,7 +7,12 @@ export const translations = {
         title2: 'Gemeinsam feiern.',
         desc: 'Der ABI Planer ist das verlässliche Fundament für euren Abschluss. Stressfrei, transparent und 100% DSGVO-konform organisiert ihr euren gesamten Jahrgang an einem Ort.',
         ctaPrimary: 'Jahrgang einrichten',
-        ctaSecondary: 'Funktionen ansehen'
+        ctaSecondary: 'Funktionen ansehen',
+        gamified: {
+          title1: 'Sammeln. Tauschen.',
+          title2: 'Gemeinsam feiern.',
+          desc: 'Erlebt euren Jahrgang als interaktives Sammelkartenspiel. Tauscht Karten mit Mitschülern, sammelt eure Lehrer und organisiert gleichzeitig euren gesamten Abschluss an einem Ort.'
+        }
       },
       dualFocus: {
         planner: {
@@ -465,7 +470,12 @@ export const translations = {
         title2: 'Celebrate together.',
         desc: 'ABI Planer is the reliable foundation for your graduation. Stress-free, transparent, and 100% GDPR-compliant, you organize your entire class in one place.',
         ctaPrimary: 'Set up class',
-        ctaSecondary: 'View features'
+        ctaSecondary: 'View features',
+        gamified: {
+          title1: 'Collect. Trade.',
+          title2: 'Celebrate together.',
+          desc: 'Experience your class as an interactive trading card game. Trade cards with classmates, collect your teachers, and organize your entire graduation in one place.'
+        }
       },
       dualFocus: {
         planner: {
@@ -923,7 +933,12 @@ export const translations = {
         title2: 'Celebrad juntos.',
         desc: 'ABI Planer es la base confiable para vuestra graduación. Sin estrés, transparente y 100% conforme al RGPD, organizáis todo vuestro curso en un solo lugar.',
         ctaPrimary: 'Configurar curso',
-        ctaSecondary: 'Ver funciones'
+        ctaSecondary: 'Ver funciones',
+        gamified: {
+          title1: 'Colecciona. Intercambia.',
+          title2: 'Celebrad juntos.',
+          desc: 'Vive tu curso como un juego de cartas coleccionables interactivo. Intercambia cartas con tus compañeros, colecciona a tus profesores y organiza toda tu graduación en un solo lugar.'
+        }
       },
       dualFocus: {
         planner: {

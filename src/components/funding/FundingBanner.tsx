@@ -30,18 +30,26 @@ export function FundingBanner({
   bannerId,
   className,
 }: FundingBannerProps) {
-  const [collapsed, setCollapsed] = useState(false)
+  const [collapsed, setCollapsed] = useState(() => {
+    if (typeof window === 'undefined') return false
+    try {
+      return window.localStorage.getItem(storageKey) === '1'
+    } catch (e) {
+      return false
+    }
+  })
 
   useEffect(() => {
     try {
       const stored = window.localStorage.getItem(storageKey)
-      if (stored === '1') {
-        setCollapsed(true)
+      const isCollapsed = stored === '1'
+      if (collapsed !== isCollapsed) {
+        setCollapsed(isCollapsed)
       }
     } catch (error) {
       console.error('Error restoring funding banner state:', error)
     }
-  }, [storageKey])
+  }, [storageKey, collapsed])
 
   const toggleCollapsed = () => {
     setCollapsed((previous) => {

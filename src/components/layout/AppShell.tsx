@@ -34,14 +34,24 @@ export function AppShell({ children }: AppShellProps) {
   const { maintenance } = useSystemMessage()
   const { profile, user, loading: authLoading } = useAuth()
   const [dismissedBanner, setDismissedBanner] = useState<string | null>(null)
-  const [hostname, setHostname] = useState<string | null>(null)
+  
+  // Heuristic initialization to avoid flicker
+  const [hostname, setHostname] = useState<string | null>(() => {
+    if (typeof window === 'undefined') return null
+    return window.location.hostname
+  })
+  
   const isBoneyardBuild = typeof window !== 'undefined' && Boolean((window as any).__BONEYARD_BUILD)
 
+  // Ensure hostname is correct after hydration
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      setHostname(window.location.hostname)
+      const currentHost = window.location.hostname
+      if (hostname !== currentHost) {
+        setHostname(currentHost)
+      }
     }
-  }, [])
+  }, [hostname])
 
   const domainInfo = useMemo(() => {
     if (isBoneyardBuild || hostname === null) return { isDashboard: false, isTcg: false, isShop: false, isSupport: false, isAnySubdomain: false }

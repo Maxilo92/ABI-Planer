@@ -6,7 +6,23 @@
 <!-- default_action: read newest entries only unless a regression requires older history -->
 <!-- index: docs/AGENT_CONTEXT_INDEX.md -->
 
-## [1.35.1.2] - 2026-05-08
+## [1.35.4.0] - 2026-05-09
+
+### Added
+- **A/B-Testing (PostHog)**: Implementierung des ersten A/B-Tests für die Landingpage-Hero-Sektion (`landing-page-hero-test`).
+  - **Varianten**: Vergleicht "Planung" (Control) mit "Sammelkarten/Gamification" (Test).
+  - **Nutzer-Ausschluss**: Strikte Logik zur Exklusion bereits angemeldeter Nutzer vom Experiment, um Datenverfälschungen zu vermeiden.
+  - **Tracking-Erweiterung**: Neue PostHog-Properties `is_authenticated` und `has_account` zur präzisen Filterung von Experiment-Kohorten.
+  - **Lokalisierung**: Neue Texte für die gamifizierte Variante in Deutsch, Englisch und Spanisch hinzugefügt.
+
+### Fixed
+- **Layout & Flicker**: Umfassende Behebung von Layout-Shifts (Flicker) in der gesamten Anwendung.
+  - **Eager Hostname Detection**: `rootMode` und `hostname` werden nun sofort beim ersten Client-Render bestimmt, wodurch der initiale Full-Screen-Loader für die meisten Nutzer entfällt.
+  - **Landing Page**: Implementierung von Skeletons für Statistiken und Graphen zur Stabilisierung des Layouts während des Ladens von öffentlichen Daten.
+  - **Funding Banner**: Synchronisierte Initialisierung des Collapsed-Status aus dem `localStorage` zur Vermeidung von springenden Headern.
+  - **Countdown Header**: Einführung eines stabilen Placeholders während der Mounting-Phase, um Verschiebungen in der Navigation zu verhindern.
+
+## [1.35.3.0] - 2026-05-09
 
 ### Fixed
 - **Marktplatz**: Clipping-Fehler bei den Tabs auf kleinen Bildschirmen behoben (Tabs sind nun scrollbar).

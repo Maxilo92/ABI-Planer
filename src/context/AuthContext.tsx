@@ -263,6 +263,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         // Identify in PostHog
         posthog.identify(user.uid, {
           email: user.email,
+          is_authenticated: true,
         })
 
         // Create session cookie if it doesn't exist or just to keep it fresh
