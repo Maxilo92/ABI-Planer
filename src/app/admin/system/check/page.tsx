@@ -121,7 +121,7 @@ const KNOWN_ROUTES = [
   { id: '/feedback', name: 'Feedback', domain: 'main' },
   { id: '/support', name: 'Support / FAQ', domain: 'main' },
   { id: '/uber', name: 'Über uns', domain: 'main' },
-  { id: '/uber/join', name: 'Karriere / Jobs', domain: 'main' },
+  { id: '/jobs', name: 'Karriere / Jobs', domain: 'main' },
   { id: '/vorteile', name: 'Vorteile & Features', domain: 'main' },
   { id: '/zugang', name: 'Zugangs-Verwaltung', domain: 'main' },
   { id: '/unauthorized', name: '403 Seite', domain: 'main' },

@@ -66,6 +66,7 @@ import { Line } from 'react-chartjs-2'
 import { useLanguage } from '@/context/LanguageContext'
 import { LanguageToggle } from '@/components/ui/LanguageToggle'
 import { useFeatureFlagVariantKey } from 'posthog-js/react'
+import { SoftwareApplicationJsonLd } from '@/components/seo/SoftwareApplicationJsonLd'
 
 ChartJS.register(
   CategoryScale,
@@ -248,8 +249,9 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
   }
 
   return (
-    <div className="relative min-h-screen bg-background text-foreground selection:bg-brand/30 overflow-hidden">
-      {/* Dynamic Progress Bar */}
+    <div className="relative min-h-screen bg-background text-foreground selection:bg-brand/30 overflow-x-hidden">
+      <SoftwareApplicationJsonLd />
+      {/* Progress Bar */}
       <motion.div
         className="fixed top-0 left-0 right-0 h-1 bg-brand z-[60] origin-left"
         style={{ scaleX }}

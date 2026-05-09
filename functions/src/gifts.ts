@@ -201,12 +201,23 @@ export const giftBoosterPack = onCall({
             const chunk = recipients.slice(i, i + chunkSize);
 
             await db.runTransaction(async (transaction) => {
-                const refs = chunk.map((targetUserId) => db.collection("profiles").doc(targetUserId));
-                const docs = await Promise.all(refs.map((ref) => transaction.get(ref)));
+                const profileRefs = chunk.map((targetUserId) => db.collection("profiles").doc(targetUserId));
+                const dedupeDocId = normalizedRequestId ? `gift_${normalizedRequestId}` : undefined;
+                
+                // 1. Collect all refs to read
+                const giftRefs = dedupeDocId 
+                    ? profileRefs.map(ref => ref.collection("unseen_gifts").doc(dedupeDocId))
+                    : [];
 
-                for (let index = 0; index < refs.length; index += 1) {
-                    const profileRef = refs[index];
-                    const profileDoc = docs[index];
+                // 2. Perform all reads
+                const [profileSnaps, giftSnaps] = await Promise.all([
+                    Promise.all(profileRefs.map(ref => transaction.get(ref))),
+                    Promise.all(giftRefs.map(ref => transaction.get(ref)))
+                ]);
+
+                for (let index = 0; index < profileRefs.length; index += 1) {
+                    const profileRef = profileRefs[index];
+                    const profileDoc = profileSnaps[index];
                     const targetUserId = chunk[index];
 
                     if (!profileDoc.exists) {
@@ -214,16 +225,8 @@ export const giftBoosterPack = onCall({
                         continue;
                     }
 
-                    const dedupeDocId = normalizedRequestId ? `gift_${normalizedRequestId}` : undefined;
-                    const giftRef = dedupeDocId
-                        ? profileRef.collection("unseen_gifts").doc(dedupeDocId)
-                        : profileRef.collection("unseen_gifts").doc();
-
-                    if (dedupeDocId) {
-                        const existingGift = await transaction.get(giftRef);
-                        if (existingGift.exists) {
-                            continue;
-                        }
+                    if (dedupeDocId && giftSnaps[index]?.exists) {
+                        continue;
                     }
 
                     if (safePackCount > 0) {
@@ -255,6 +258,10 @@ export const giftBoosterPack = onCall({
                             packId: normalizedPackId || TEACHER_PACK_ID,
                         });
                     }
+
+                    const giftRef = dedupeDocId
+                        ? profileRef.collection("unseen_gifts").doc(dedupeDocId)
+                        : profileRef.collection("unseen_gifts").doc();
 
                     transaction.set(giftRef, {
                         packCount: safePackCount,

@@ -6,6 +6,25 @@
 <!-- default_action: read newest entries only unless a regression requires older history -->
 <!-- index: docs/AGENT_CONTEXT_INDEX.md -->
 
+## [1.35.4.4] - 2026-05-09
+
+### Fixed
+- **Cloud Functions**: Kritischer Bug in `applyAiLearningFromMatch` und `gifts` behoben, bei dem Firestore-Transaktionsregeln verletzt wurden (Interleaved Reads/Writes).
+- **Combat**: Logging in `joinMatchByCode` optimiert. Erwartete Nutzerfehler (z.B. falscher Code) werden nun als Warnung statt als Fehler geloggt, um die Log-Sauberkeit zu erhöhen.
+- **Transaktionen**: Systemweite Überprüfung und Absicherung von Datenbank-Transaktionen zur Einhaltung der "Reads-Before-Writes" Regel.
+
+## [1.35.4.3] - 2026-05-09
+
+### Added
+- **News SEO**: Dynamische Metadaten (Titel, Beschreibung, OG-Bilder) für einzelne News-Beiträge via Server-Side `generateMetadata`.
+- **Strukturierte Daten**: Automatische Generierung von `NewsArticle` JSON-LD für News-Beiträge zur besseren Indizierung durch Suchmaschinen.
+
+## [1.35.4.2] - 2026-05-09
+
+### Added
+- **SEO-Optimierung**: Implementierung von OpenGraph- und Twitter-Metadaten im globalen Layout zur Verbesserung der Social-Media-Vorschau.
+- **Dynamische Sitemap**: Die Sitemap (`/sitemap.xml`) wird nun dynamisch generiert und enthält alle News-Beiträge direkt aus der Firestore-Datenbank.
+
 ## [1.35.4.1] - 2026-05-09
 
 ### Fixed
