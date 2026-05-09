@@ -172,12 +172,12 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
         totalCards: typeof data?.total_cards_count === 'number' ? data.total_cards_count : null,
         newsCount: typeof data?.news_count === 'number' ? data.news_count : null,
         currentFunding: typeof data?.current_funding === 'number' ? data.current_funding : null,
-        funding_goal: typeof data?.funding_goal === 'number' ? data.funding_goal : null,
-        support_goal: typeof data?.support_goal === 'number' ? data.support_goal : null,
-        global_managed_budget: typeof data?.global_managed_budget === 'number' ? data.global_managed_budget : null,
-        global_completed_tasks: typeof data?.global_completed_tasks === 'number' ? data.global_completed_tasks : null,
-        user_growth: Array.isArray(data?.user_growth) ? data.user_growth : [],
-        budget_growth: Array.isArray(data?.budget_growth) ? data.budget_growth : [],
+        fundingGoal: typeof data?.funding_goal === 'number' ? data.funding_goal : null,
+        supportGoal: typeof data?.support_goal === 'number' ? data.support_goal : null,
+        globalManagedBudget: typeof data?.global_managed_budget === 'number' ? data.global_managed_budget : null,
+        globalCompletedTasks: typeof data?.global_completed_tasks === 'number' ? data.global_completed_tasks : null,
+        userGrowth: Array.isArray(data?.user_growth) ? data.user_growth : [],
+        budgetGrowth: Array.isArray(data?.budget_growth) ? data.budget_growth : [],
       })
       setLandingStatsLoading(false)
     }, (error) => {
@@ -187,12 +187,12 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
         totalCards: null,
         newsCount: null,
         currentFunding: null,
-        funding_goal: null,
-        support_goal: null,
-        global_managed_budget: null,
-        global_completed_tasks: null,
-        user_growth: [],
-        budget_growth: [],
+        fundingGoal: null,
+        supportGoal: null,
+        globalManagedBudget: null,
+        globalCompletedTasks: null,
+        userGrowth: [],
+        budgetGrowth: [],
       })
       setLandingStatsLoading(false)
     })

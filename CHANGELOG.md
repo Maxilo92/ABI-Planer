@@ -6,6 +6,11 @@
 <!-- default_action: read newest entries only unless a regression requires older history -->
 <!-- index: docs/AGENT_CONTEXT_INDEX.md -->
 
+## [1.35.4.1] - 2026-05-09
+
+### Fixed
+- **Build**: TypeScript-Fehler in `src/app/page.tsx` behoben (inkonsistente Property-Namen im `landingStats` State).
+
 ## [1.35.4.0] - 2026-05-09
 
 ### Added
