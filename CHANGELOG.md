@@ -8,14 +8,13 @@
 <!-- default_action: read newest entries only unless a regression requires older history -->
 <!-- index: docs/AGENT_CONTEXT_INDEX.md -->
 
+## [1.37.2.90] - 2026-05-10
+
+### Fixed
+
+- **Build – Duplicate Variable Fix**: Ein kritischer Build-Fehler im KI-Assistenten-Backend wurde behoben. Eine doppelte Definition der Variable `contextState` (verursacht durch das Token-Optimierungs-Update) wurde entfernt, um die Kompilierung in der Produktionsumgebung wieder zu ermöglichen.
+
 ## [1.37.2.89] - 2026-05-10
-
-### Changed
-
-- **ABI Bot – Extreme Token-Optimierung**: Der Assistent arbeitet nun nach dem Prinzip "Just-in-Time Context". 
-    - **Intelligente Kontext-Injektion**: Detaillierte Listen (Finanzen, Aufgaben, Termine) werden nur noch dann in den KI-Prompt geladen, wenn die Nachricht des Nutzers entsprechende Schlüsselwörter enthält (z.B. "Geld", "Termin", "Todo").
-    - **Kompakte Status-Zusammenfassung**: Bei allgemeinen Anfragen oder Smalltalk erhält der Bot nur noch eine minimale Zusammenfassung (Kontostand, Anzahl offener Aufgaben), was den Token-Verbrauch pro Nachricht um bis zu 80% senkt.
-    - **Reduzierte Datenmenge**: Die Anzahl der mitgesendeten Transaktionen und Termine wurde im Detail-Modus halbiert, um auch bei komplexen Anfragen sicher unter den Limits der Dev-Tier zu bleiben.
 
 ## [1.37.2.88] - 2026-05-10
 
