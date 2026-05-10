@@ -8,6 +8,12 @@
 <!-- default_action: read newest entries only unless a regression requires older history -->
 <!-- index: docs/AGENT_CONTEXT_INDEX.md -->
 
+## [1.37.2.81] - 2026-05-10
+
+### Changed
+
+- **Finanzen – Intelligentes Container-Layout**: Die Finanzseite nutzt nun Tailwind v4 Container Queries (`@container`). Das Layout entscheidet nun nicht mehr nur anhand der Bildschirmbreite, sondern anhand des **tatsächlich verfügbaren Platzes**, ob es ein- oder zweispaltig angezeigt wird. Dies behebt das Problem, dass die Sidebar bei geöffnetem ABI Bot Assistenten gequetscht wurde.
+
 ## [1.37.2.80] - 2026-05-10
 
 ### Changed

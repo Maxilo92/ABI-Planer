@@ -246,7 +246,7 @@ export function AppShell({ children }: AppShellProps) {
                 </SchoolYearTransitionGate>
               </FeatureGate>
             ) : (
-              <div className="mx-auto max-w-7xl w-full">
+              <div className="mx-auto max-w-7xl w-full @container" style={{ containerType: 'inline-size' }}>
                 <FeatureGate>
                   <SchoolYearTransitionGate>
                     {children}

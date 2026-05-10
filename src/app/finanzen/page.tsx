@@ -120,7 +120,7 @@ export default function FinancePage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 @md:grid-cols-2 @xl:grid-cols-4 gap-4">
           {[1, 2, 3, 4].map((i) => (
             <Card key={i}>
               <CardHeader className="pb-2">
@@ -133,12 +133,12 @@ export default function FinancePage() {
           ))}
         </div>
 
-        <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
-          <div className="xl:col-span-8 space-y-6">
+        <div className="grid grid-cols-1 @xl:grid-cols-12 gap-6">
+          <div className="@xl:col-span-8 space-y-6">
             <Skeleton className="h-[350px] w-full rounded-xl" />
             <Skeleton className="h-[400px] w-full rounded-xl" />
           </div>
-          <div className="xl:col-span-4 space-y-6">
+          <div className="@xl:col-span-4 space-y-6">
             <Skeleton className="h-[300px] w-full rounded-xl" />
             <Skeleton className="h-[400px] w-full rounded-xl" />
           </div>
@@ -253,7 +253,7 @@ export default function FinancePage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4">
+      <div className="grid grid-cols-1 @md:grid-cols-2 @xl:grid-cols-4 gap-3 sm:gap-4">
         <Card className="p-3 sm:p-4">
           <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider mb-1">Einnahmen</p>
           <div className="text-xl sm:text-2xl font-bold text-success truncate">
@@ -287,9 +287,9 @@ export default function FinancePage() {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 sm:gap-6 items-start">
+      <div className="grid grid-cols-1 @xl:grid-cols-12 gap-4 sm:gap-6 items-start">
         {/* Main Column */}
-        <div className="xl:col-span-8 space-y-4 sm:space-y-6">
+        <div className="@xl:col-span-8 space-y-4 sm:space-y-6">
           <FinanceChart 
             finances={finances} 
             shopEarnings={shopEarnings} 
@@ -392,7 +392,7 @@ export default function FinancePage() {
         </div>
 
         {/* Sidebar */}
-        <div className="xl:col-span-4 space-y-6">
+        <div className="@xl:col-span-4 space-y-6">
           <FundingStatus
             current={currentBalance}
             checksum={lastVerification?.amount}
