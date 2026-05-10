@@ -8,6 +8,12 @@
 <!-- default_action: read newest entries only unless a regression requires older history -->
 <!-- index: docs/AGENT_CONTEXT_INDEX.md -->
 
+## [1.37.2.86] - 2026-05-10
+
+### Fixed
+
+- **UI – NftAvatar TypeScript Fix**: Ein Build-Fehler wurde behoben, bei dem der `className` des `NftAvatar` fälschlicherweise als Funktion interpretiert werden konnte. Durch eine explizite Typisierung auf `string` wurde die Kompatibilität mit den zugrunde liegenden Canvas-Renderern (`AbiBotAvatar`, `AnimatedNftAvatar`) sichergestellt, was den Produktions-Build stabilisiert.
+
 ## [1.37.2.85] - 2026-05-10
 
 ### Fixed

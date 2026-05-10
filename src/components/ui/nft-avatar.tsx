@@ -12,11 +12,12 @@ import { Sparkles, Fingerprint, ChevronDown } from "lucide-react"
 import { AbiBotAvatar } from "@/components/ui/abi-bot-avatar"
 import { AnimatedNftAvatar } from "@/components/ui/animated-nft-avatar"
 
-interface NftAvatarProps extends React.ComponentPropsWithoutRef<typeof Avatar> {
+interface NftAvatarProps extends Omit<React.ComponentPropsWithoutRef<typeof Avatar>, 'className'> {
   url?: string | null
   fallback?: string
   interactive?: boolean
   isBot?: boolean
+  className?: string
 }
 
 export function NftAvatar({ url, fallback, interactive = true, isBot, className, ...props }: NftAvatarProps) {
