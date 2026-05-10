@@ -88,8 +88,9 @@ export function AddFinanceDialog() {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger
         render={
-          <Button size="sm" className="gap-2">
-            <Plus className="h-4 w-4" /> Betrag erfassen
+          <Button size="sm" className="gap-2 max-w-[120px] @md:max-w-none overflow-hidden">
+            <Plus className="h-4 w-4 shrink-0" /> 
+            <span className="truncate">Betrag erfassen</span>
           </Button>
         }
       />

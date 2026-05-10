@@ -8,6 +8,18 @@
 <!-- default_action: read newest entries only unless a regression requires older history -->
 <!-- index: docs/AGENT_CONTEXT_INDEX.md -->
 
+## [1.37.2.85] - 2026-05-10
+
+### Fixed
+
+- **Finanzen – Überlappungs-Fix**: Ein Fehler wurde behoben, bei dem die Buttons den Titel überlagerten. Aktionen werden nun bei Platzmangel intelligent gekürzt (z. B. "Betrag erf..."), und das Layout stapelt sich nun noch früher (`@xl`), um maximale Lesbarkeit zu garantieren.
+
+## [1.37.2.84] - 2026-05-10
+
+### Fixed
+
+- **ABI Bot – TypeScript Stability**: Ein kritischer Build-Fehler wurde behoben, der durch implizite `any`-Typen in den Finanzanalyse-Funktionen des Backends verursacht wurde. Durch die Einführung eines expliziten `FinanceEntry` Interfaces und präziser Typisierung der `filter`- und `reduce`-Operationen ist das Deployment nun wieder stabil.
+
 ## [1.37.2.83] - 2026-05-10
 
 ### Added

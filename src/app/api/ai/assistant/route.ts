@@ -115,6 +115,15 @@ async function checkAndIncrementRateLimit(uid: string) {
 
 type ChatMessage = { role: 'user' | 'assistant' | 'system'; content: string }
 
+interface FinanceEntry {
+  id: string
+  amount: number
+  description: string
+  date: string
+  class: string | null
+  category: string | null
+}
+
 function sanitizeMessages(messages: unknown): ChatMessage[] {
   if (!Array.isArray(messages)) return []
   return messages
@@ -310,7 +319,7 @@ export async function POST(request: NextRequest) {
       const settings = settingsDoc && 'data' in settingsDoc ? settingsDoc.data() : null
 
       // --- Comprehensive Finance Analysis ---
-      const financeEntries = (financesSnap as any).docs.map((d: any) => {
+      const financeEntries: FinanceEntry[] = (financesSnap as any).docs.map((d: any) => {
         const data = d.data()
         return { 
           id: d.id,
@@ -322,15 +331,15 @@ export async function POST(request: NextRequest) {
         }
       })
 
-      const totalIncome = financeEntries.filter(e => e.amount > 0).reduce((s, e) => s + e.amount, 0)
-      const totalExpenses = financeEntries.filter(e => e.amount < 0).reduce((s, e) => s + Math.abs(e.amount), 0)
+      const totalIncome = financeEntries.filter((e: FinanceEntry) => e.amount > 0).reduce((s: number, e: FinanceEntry) => s + e.amount, 0)
+      const totalExpenses = financeEntries.filter((e: FinanceEntry) => e.amount < 0).reduce((s: number, e: FinanceEntry) => s + Math.abs(e.amount), 0)
       const currentBalance = totalIncome - totalExpenses
       const fundingGoal = Number(settings?.funding_goal) || 10000
       const progressPercent = Math.min(100, Math.round((currentBalance / fundingGoal) * 100))
 
       // Per-course breakdown
       const courseMap: Record<string, number> = {}
-      financeEntries.forEach(e => {
+      financeEntries.forEach((e: FinanceEntry) => {
         if (e.class && e.amount > 0) {
           courseMap[e.class] = (courseMap[e.class] || 0) + e.amount
         }
@@ -338,7 +347,7 @@ export async function POST(request: NextRequest) {
 
       // Per-category breakdown
       const catMap: Record<string, { income: number; expense: number }> = {}
-      financeEntries.forEach(e => {
+      financeEntries.forEach((e: FinanceEntry) => {
         const cat = e.category || (e.amount >= 0 ? 'Sonstige Einnahmen' : 'Sonstige Ausgaben')
         if (!catMap[cat]) catMap[cat] = { income: 0, expense: 0 }
         if (e.amount >= 0) catMap[cat].income += e.amount

@@ -68,8 +68,9 @@ export function VerifyCashDialog() {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger
         render={
-          <Button variant="outline" size="sm" className="gap-2 border-success/20 hover:border-success hover:text-success transition-all">
-            <ShieldCheck className="h-4 w-4" /> Kassenstand abgleichen
+          <Button variant="outline" size="sm" className="gap-2 border-success/20 hover:border-success hover:text-success transition-all max-w-[140px] @md:max-w-none overflow-hidden">
+            <ShieldCheck className="h-4 w-4 shrink-0" /> 
+            <span className="truncate">Kassenstand abgleichen</span>
           </Button>
         }
       />

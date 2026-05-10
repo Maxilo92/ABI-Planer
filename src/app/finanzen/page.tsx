@@ -225,12 +225,12 @@ export default function FinancePage() {
   return (
     <div className="space-y-4 sm:space-y-6">
       <div className="rounded-3xl border border-border bg-card px-4 py-4 sm:px-6 sm:py-5 shadow-sm overflow-hidden">
-        <div className="flex flex-col @lg:flex-row @lg:items-center justify-between gap-4">
-          <div className="shrink-0">
+        <div className="flex flex-col @xl:flex-row @xl:items-center justify-between gap-4">
+          <div className="min-w-0 shrink-0">
             <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-muted-foreground">Finanzen</p>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">Budgetplanung</h1>
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight truncate">Budgetplanung</h1>
           </div>
-          <div className="flex flex-wrap items-center gap-2 @md:gap-4 justify-start @md:justify-end w-full @md:w-auto min-w-0">
+          <div className="flex flex-wrap items-center gap-2 @md:gap-4 justify-start @xl:justify-end w-full @xl:w-auto min-w-0">
             {/* Support/Donation Group */}
             <div className="flex items-center bg-muted/40 p-1 rounded-full border border-border/50 shrink-0">
               <Link href="/finanzen/spenden/abi">
@@ -251,7 +251,7 @@ export default function FinancePage() {
             {/* Main Admin Actions */}
             {isPlanner && (
               <div className="flex items-center gap-2 shrink-0">
-                <div className="w-px h-5 bg-border/60 mx-1 hidden @md:block" />
+                <div className="w-px h-5 bg-border/60 mx-1 hidden @xl:block" />
                 <div className="flex items-center gap-2">
                   <VerifyCashDialog />
                   <AddFinanceDialog />
