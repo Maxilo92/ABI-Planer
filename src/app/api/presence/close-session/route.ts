@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
 
     const app = getAdminApp()
     const auth = getAuth(app)
-    const db = getFirestore(app)
+    const db = getFirestore(app, 'abi-data')
 
     const decodedToken = await auth.verifyIdToken(idToken)
     const uid = decodedToken.uid

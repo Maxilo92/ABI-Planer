@@ -37,6 +37,7 @@ interface AdminSystemContextType {
   loadingCardsByUser: boolean
   isMaintenanceActive: boolean
   isAdmin: boolean
+  availableGroups: string[]
   analyticsWindowDays: number
   setAnalyticsWindowDays: (days: number) => void
   loadData: () => Promise<void>
@@ -75,6 +76,7 @@ export function AdminSystemProvider({ children }: { children: React.ReactNode })
   const [resettingSessionStats, setResettingSessionStats] = useState(false)
   const [cardsByUser, setCardsByUser] = useState<Array<{ label: string; value: number }>>([])
   const [loadingCardsByUser, setLoadingCardsByUser] = useState(false)
+  const [availableGroups, setAvailableGroups] = useState<string[]>([])
   const [now, setNow] = useState(new Date())
 
   const isAdmin = profile?.role === 'admin' || profile?.role === 'admin_main' || profile?.role === 'admin_co'
@@ -661,7 +663,7 @@ export function AdminSystemProvider({ children }: { children: React.ReactNode })
         'Content-Type': 'application/json',
       }
 
-      const [statsResponse, analyticsResponse] = await Promise.all([
+      const [statsResponse, analyticsResponse, configSnap] = await Promise.all([
         postWithResilientFallback(
           ['/api/admin/system/global-stats', '/api/admin/system/global-stats'],
           headers
@@ -671,7 +673,14 @@ export function AdminSystemProvider({ children }: { children: React.ReactNode })
           headers,
           { window_days: windowDays }
         ),
+        getDoc(doc(db, 'settings', 'config'))
       ])
+
+      if (configSnap.exists()) {
+        const configData = configSnap.data()
+        const groups = (configData.planning_groups || []).map((g: any) => g.name)
+        setAvailableGroups(groups)
+      }
 
       if (!statsResponse || !analyticsResponse) {
         throw new Error('System-API nicht erreichbar.')
@@ -766,7 +775,9 @@ export function AdminSystemProvider({ children }: { children: React.ReactNode })
         updated_at: new Date().toISOString()
       }
       await updateDoc(doc(db, 'settings', 'features'), featureUpdate)
-      toast.success(`${key} wurde auf '${status}' gesetzt`)
+      
+      const statusLabel = typeof status === 'string' ? status : 'specific'
+      toast.success(`${key} wurde auf '${statusLabel}' gesetzt`)
     } catch (error) {
       console.error('Error updating feature status:', error)
       toast.error('Fehler beim Aktualisieren des Status.')
@@ -938,6 +949,7 @@ export function AdminSystemProvider({ children }: { children: React.ReactNode })
     loadingCardsByUser,
     isMaintenanceActive,
     isAdmin,
+    availableGroups,
     analyticsWindowDays,
     setAnalyticsWindowDays,
     loadData,

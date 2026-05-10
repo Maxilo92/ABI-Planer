@@ -26,15 +26,26 @@ interface EditSettingsDialogProps {
   currentGoal: number
   currentSupportGoal: number
   currentSupportAmount?: number
+  currentPenaltyBase?: number
+  currentPenaltyReduction?: number
 }
 
-export function EditSettingsDialog({ currentDate, currentGoal, currentSupportGoal, currentSupportAmount = 0 }: EditSettingsDialogProps) {
+export function EditSettingsDialog({ 
+  currentDate, 
+  currentGoal, 
+  currentSupportGoal, 
+  currentSupportAmount = 0,
+  currentPenaltyBase = 30,
+  currentPenaltyReduction = 10
+}: EditSettingsDialogProps) {
   const { user, profile } = useAuth()
   
   const [date, setDate] = useState('')
   const [goal, setGoal] = useState(currentGoal.toString())
   const [supportGoal, setSupportGoal] = useState(currentSupportGoal.toString())
   const [supportAmount, setSupportAmount] = useState(currentSupportAmount.toString())
+  const [penaltyBase, setPenaltyBase] = useState(currentPenaltyBase.toString())
+  const [penaltyReduction, setPenaltyReduction] = useState(currentPenaltyReduction.toString())
   const [loading, setLoading] = useState(false)
   const [open, setOpen] = useState(false)
   const router = useRouter()
@@ -51,7 +62,9 @@ export function EditSettingsDialog({ currentDate, currentGoal, currentSupportGoa
     setGoal(currentGoal.toString())
     setSupportGoal(currentSupportGoal.toString())
     setSupportAmount(currentSupportAmount.toString())
-  }, [currentDate, currentGoal, currentSupportGoal, currentSupportAmount])
+    setPenaltyBase(currentPenaltyBase.toString())
+    setPenaltyReduction(currentPenaltyReduction.toString())
+  }, [currentDate, currentGoal, currentSupportGoal, currentSupportAmount, currentPenaltyBase, currentPenaltyReduction])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -63,15 +76,19 @@ export function EditSettingsDialog({ currentDate, currentGoal, currentSupportGoa
         funding_goal: parseFloat(goal),
         support_goal: parseFloat(supportGoal),
         current_support_amount: parseFloat(supportAmount),
+        ticket_penalty_base: parseFloat(penaltyBase),
+        ticket_penalty_reduction: parseFloat(penaltyReduction),
       }, { merge: true })
 
       if (user) {
         await logAction('SETTINGS_UPDATED', user.uid, profile?.full_name, {
-          fields: ['ball_date', 'funding_goal', 'support_goal', 'current_support_amount'],
+          fields: ['ball_date', 'funding_goal', 'support_goal', 'current_support_amount', 'ticket_penalty_base', 'ticket_penalty_reduction'],
           ball_date: new Date(date).toISOString(),
           funding_goal: parseFloat(goal),
           support_goal: parseFloat(supportGoal),
           current_support_amount: parseFloat(supportAmount),
+          ticket_penalty_base: parseFloat(penaltyBase),
+          ticket_penalty_reduction: parseFloat(penaltyReduction),
           source: 'edit-settings-dialog',
         })
       }
@@ -143,6 +160,28 @@ export function EditSettingsDialog({ currentDate, currentGoal, currentSupportGoa
                 required 
               />
               <p className="text-[10px] text-muted-foreground">Manueller Stand (BMAC + Überweisungen).</p>
+            </div>
+            <div className="grid grid-cols-2 gap-4 border-t pt-4">
+              <div className="space-y-2">
+                <Label htmlFor="penaltyBase">Basis-Strafe in €</Label>
+                <Input 
+                  id="penaltyBase" 
+                  type="number"
+                  value={penaltyBase}
+                  onChange={(e) => setPenaltyBase(e.target.value)}
+                  required 
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="penaltyReduction">Abzug pro Aufgabe in €</Label>
+                <Input 
+                  id="penaltyReduction" 
+                  type="number"
+                  value={penaltyReduction}
+                  onChange={(e) => setPenaltyReduction(e.target.value)}
+                  required 
+                />
+              </div>
             </div>
           </div>
           <DialogFooter>

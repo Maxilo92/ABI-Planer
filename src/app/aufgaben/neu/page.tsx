@@ -1,9 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { db } from '@/lib/firebase'
-import { collection, addDoc, serverTimestamp, updateDoc, doc } from 'firebase/firestore'
+import { collection, addDoc, serverTimestamp, updateDoc, doc, onSnapshot, arrayUnion } from 'firebase/firestore'
 import { useAuth } from '@/context/AuthContext'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -11,12 +11,30 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Slider } from '@/components/ui/slider'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-import { ArrowLeft, ImagePlus, Loader2, Plus, Trash2, X } from 'lucide-react'
+import { ArrowLeft, ImagePlus, Loader2, Plus, Trash2, X, Tags } from 'lucide-react'
 import { toast } from 'sonner'
 import { uploadTaskImage } from '@/lib/taskMediaUpload'
 import { ProtectedSystemGate } from '@/components/ui/ProtectedSystemGate'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import { Settings, TaskCategory } from '@/types/database'
 import Image from 'next/image'
 import Link from 'next/link'
+import { CATEGORY_ICONS, CategoryIconName } from '@/lib/category-icons'
 
 export default function NewTaskPage() {
   const router = useRouter()
@@ -25,9 +43,35 @@ export default function NewTaskPage() {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [reward, setReward] = useState(1)
+  const [ticketReduction, setTicketReduction] = useState(10)
   const [complexity, setComplexity] = useState(5)
   const [images, setImages] = useState<File[]>([])
   const [loading, setLoading] = useState(false)
+  
+  // Category State
+  const [categories, setCategories] = useState<TaskCategory[]>([])
+  const [selectedCategory, setSelectedCategory] = useState<string>('')
+  const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false)
+  const [newCategoryName, setNewCategoryName] = useState('')
+  const [selectedIcon, setSelectedIcon] = useState<CategoryIconName>('Tags')
+  const [isCreatingCategory, setIsCreatingCategory] = useState(false)
+
+  useEffect(() => {
+    if (authLoading || !profile) return
+
+    const unsubscribe = onSnapshot(doc(db, 'settings', 'config'), (snapshot) => {
+      if (snapshot.exists()) {
+        const data = snapshot.data() as Settings
+        const cats = data.task_categories || []
+        setCategories(cats)
+        if (cats.length > 0 && !selectedCategory) {
+          setSelectedCategory(cats[0].id)
+        }
+      }
+    })
+
+    return () => unsubscribe()
+  }, [authLoading, profile, selectedCategory])
 
   if (authLoading) return null
 
@@ -57,6 +101,44 @@ export default function NewTaskPage() {
     setImages(prev => prev.filter((_, i) => i !== index))
   }
 
+  const handleCreateCategory = async () => {
+    if (!newCategoryName.trim()) return
+    
+    setIsCreatingCategory(true)
+    const newCatId = newCategoryName.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
+    
+    // Check if exists
+    if (categories.find(c => c.id === newCatId)) {
+      toast.error('Kategorie existiert bereits.')
+      setIsCreatingCategory(false)
+      return
+    }
+
+    const newCat: TaskCategory = {
+      id: newCatId,
+      name: newCategoryName.trim(),
+      icon: selectedIcon,
+      is_active: true
+    }
+
+    try {
+      const configRef = doc(db, 'settings', 'config')
+      await updateDoc(configRef, {
+        task_categories: arrayUnion(newCat)
+      })
+      setSelectedCategory(newCatId)
+      setNewCategoryName('')
+      setSelectedIcon('Tags')
+      setIsCategoryDialogOpen(false)
+      toast.success(`Kategorie "${newCat.name}" erstellt.`)
+    } catch (error) {
+      console.error('Error creating category:', error)
+      toast.error('Fehler beim Erstellen der Kategorie.')
+    } finally {
+      setIsCreatingCategory(false)
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!title.trim() || !description.trim()) {
@@ -71,9 +153,12 @@ export default function NewTaskPage() {
         title: title.trim(),
         description: description.trim(),
         reward_boosters: reward,
+        ticket_reduction: ticketReduction,
         complexity: complexity,
+        category_id: selectedCategory || 'sonstiges',
         status: 'open',
         task_image_urls: [],
+        placeholder_seed: Math.floor(Math.random() * 1000000),
         created_by: profile!.id,
         created_at: serverTimestamp(),
       })
@@ -133,6 +218,91 @@ export default function NewTaskPage() {
               />
             </div>
 
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="category">Kategorie</Label>
+                <div className="flex gap-2">
+                  <Select value={selectedCategory} onValueChange={(value) => setSelectedCategory(value ?? '')}>
+                    <SelectTrigger id="category" className="w-full">
+                      <SelectValue placeholder="Kategorie wählen" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories.length > 0 ? (
+                        categories.map(cat => (
+                          <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="sonstiges">Sonstiges</SelectItem>
+                      )}
+                    </SelectContent>
+                  </Select>
+
+                  <Dialog open={isCategoryDialogOpen} onOpenChange={setIsCategoryDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button type="button" variant="outline" size="icon" className="shrink-0" title="Neue Kategorie">
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Neue Kategorie erstellen</DialogTitle>
+                        <DialogDescription>
+                          Füge eine neue Kategorie für Aufgaben hinzu. Diese ist dann für alle sichtbar.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="space-y-4 py-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="new-category-name">Name der Kategorie</Label>
+                          <Input 
+                            id="new-category-name" 
+                            placeholder="z.B. IT & Technik" 
+                            value={newCategoryName}
+                            onChange={(e) => setNewCategoryName(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault()
+                                handleCreateCategory()
+                              }
+                            }}
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label>Icon wählen</Label>
+                          <div className="grid grid-cols-5 gap-2 p-2 border rounded-xl bg-muted/30">
+                            {(Object.keys(CATEGORY_ICONS) as CategoryIconName[]).map((iconName) => {
+                              const IconComp = CATEGORY_ICONS[iconName]
+                              return (
+                                <button
+                                  key={iconName}
+                                  type="button"
+                                  onClick={() => setSelectedIcon(iconName)}
+                                  className={`flex items-center justify-center p-2 rounded-lg transition-all ${
+                                    selectedIcon === iconName 
+                                      ? 'bg-brand text-brand-foreground shadow-md scale-110' 
+                                      : 'hover:bg-muted text-muted-foreground'
+                                  }`}
+                                  title={iconName}
+                                >
+                                  <IconComp className="h-4 w-4" />
+                                </button>
+                              )
+                            })}
+                          </div>
+                        </div>
+                      </div>
+                      <DialogFooter>
+                        <Button type="button" variant="ghost" onClick={() => setIsCategoryDialogOpen(false)}>Abbrechen</Button>
+                        <Button type="button" onClick={handleCreateCategory} disabled={isCreatingCategory || !newCategoryName.trim()}>
+                          {isCreatingCategory ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Kategorie erstellen'}
+                        </Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+              </div>
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="description">Beschreibung</Label>
               <Textarea 
@@ -145,7 +315,7 @@ export default function NewTaskPage() {
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="space-y-4">
                 <div className="flex justify-between">
                   <Label>Booster Belohnung</Label>
@@ -154,9 +324,23 @@ export default function NewTaskPage() {
                 <Slider 
                   value={[reward]} 
                   onValueChange={(vals: number[]) => setReward(vals[0])}
-                  min={1} 
+                  min={0} 
                   max={20} 
                   step={1}
+                />
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex justify-between">
+                  <Label>Ticket-Abzug</Label>
+                  <span className="text-sm font-medium text-success">-{ticketReduction} €</span>
+                </div>
+                <Slider 
+                  value={[ticketReduction]} 
+                  onValueChange={(vals: number[]) => setTicketReduction(vals[0])}
+                  min={0} 
+                  max={30} 
+                  step={5}
                 />
               </div>
 
@@ -179,12 +363,13 @@ export default function NewTaskPage() {
               <Label>Bilder zur Erklärung (max. 3)</Label>
               <div className="grid grid-cols-3 gap-4">
                 {images.map((file, index) => (
-                  <div key={index} className="relative aspect-square rounded-md overflow-hidden border">
+                  <div key={index} className="relative aspect-square rounded-md overflow-hidden border bg-black">
                     <Image 
                       src={URL.createObjectURL(file)} 
                       alt="Preview" 
                       fill 
-                      className="object-cover"
+                      className="object-contain"
+                      sizes="(max-width: 768px) 33vw, 150px"
                     />
                     <Button 
                       type="button"

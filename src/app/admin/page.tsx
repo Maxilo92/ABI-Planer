@@ -11,6 +11,7 @@ import {
   CreditCard, 
   History,
   Send,
+  Megaphone,
   Database,
   RefreshCw,
   Layout,
@@ -135,6 +136,14 @@ const adminModules = [
     icon: Layout,
     color: 'text-teal-500',
     bgColor: 'bg-teal-500/10'
+  },
+  {
+    title: 'AD-Manager',
+    description: 'Custom Dashboard-Werbung verwalten.',
+    href: '/admin/ads',
+    icon: Megaphone,
+    color: 'text-orange-500',
+    bgColor: 'bg-orange-500/10'
   },
   {
     title: 'Design Matrix',

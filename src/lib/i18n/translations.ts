@@ -7,7 +7,12 @@ export const translations = {
         title2: 'Gemeinsam feiern.',
         desc: 'Der ABI Planer ist das verlässliche Fundament für euren Abschluss. Stressfrei, transparent und 100% DSGVO-konform organisiert ihr euren gesamten Jahrgang an einem Ort.',
         ctaPrimary: 'Jahrgang einrichten',
-        ctaSecondary: 'Funktionen ansehen'
+        ctaSecondary: 'Funktionen ansehen',
+        gamified: {
+          title1: 'Sammeln. Tauschen.',
+          title2: 'Gemeinsam feiern.',
+          desc: 'Erlebt euren Jahrgang als interaktives Sammelkartenspiel. Tauscht Karten mit Mitschülern, sammelt eure Lehrer und organisiert gleichzeitig euren gesamten Abschluss an einem Ort.'
+        }
       },
       dualFocus: {
         planner: {
@@ -93,13 +98,6 @@ export const translations = {
         empty: 'Keine aktuellen Updates verfügbar.',
         new: 'Neu'
       },
-      support: {
-        badge: 'Projekt-Support',
-        title1: 'Unterstützt die',
-        title2: 'Weiterentwicklung.',
-        desc: 'Der ABI Planer ist für Schüler kostenlos. Wer uns unterstützen möchte, kann dies durch eine freiwillige Förderung tun. So bleiben wir unabhängig und werbefrei.',
-        cta: 'Projekt unterstützen'
-      },
       finalCta: {
         title1: 'Bereit für',
         title2: 'den Start?',
@@ -107,6 +105,87 @@ export const translations = {
         ctaPrimary: 'Jetzt starten',
         ctaSecondary: 'Einloggen'
       }
+    },
+    supportCenter: {
+      hero: {
+        title: 'Wie können wir helfen?',
+        subtitle: 'Durchsuche unsere FAQs oder wähle eine Kategorie, um Antworten zu finden.',
+        placeholder: 'Stichwort eingeben (z.B. Registrierung, Karten, Stripe)...'
+      },
+      search: {
+        topHits: 'Häufigste Treffer',
+        noHits: 'Keine genauen Treffer gefunden.',
+        results: 'Suchergebnisse'
+      },
+      sections: {
+        browse: 'Themen durchsuchen',
+        articles: 'Artikel verfügbar',
+        view: 'Ansehen'
+      },
+      contact: {
+        title: 'Immer noch Fragen?',
+        subtitle: 'Unser Team ist bereit, dir zu helfen. Wenn du in den FAQs nicht fündig geworden bist, kannst du uns direkt kontaktieren.',
+        direct: {
+          title: 'Direkter Kontakt',
+          subtitle: 'Sende uns eine Nachricht mit deinem Anliegen. Wir antworten dir so schnell wie möglich per E-Mail.',
+          cta: 'Ticket senden'
+        },
+        complaint: {
+          title: 'Beschwerde',
+          subtitle: 'Als Lehrer kannst du Korrekturen an deinen Sammelkarten beantragen oder Löschungen anfordern.',
+          cta: 'Beschwerde einreichen'
+        },
+        community: {
+          title: 'Community Support',
+          subtitle: 'Nutze das Feedback-Feature in der App oder frage im Planner-Team-Chat nach Hilfe.',
+          badge: 'Verfügbar in der Haupt-App'
+        }
+      },
+      subPages: {
+        backHome: 'Zurück zur Startseite',
+        backOverview: 'Zurück zur Übersicht',
+        notFound: 'Inhalt nicht gefunden.',
+        article: {
+          helpful: 'War dieser Artikel hilfreich?',
+          helpfulSub: 'Dein Feedback hilft uns, den Support zu verbessern.',
+          yes: 'Ja',
+          no: 'Nein',
+          thanks: 'Danke für dein Feedback!',
+          related: 'Ähnliche Artikel',
+          questions: 'Noch Fragen?',
+          questionsSub: 'Nicht das Richtige gefunden? Unser Team hilft dir gerne weiter.',
+          contact: 'Support kontaktieren',
+          share: 'Artikel teilen',
+          copied: 'Link kopiert!'
+        },
+        category: {
+          allArticles: 'Alle Artikel zum Thema',
+          noArticles: 'Noch keine Artikel in dieser Kategorie vorhanden.'
+        }
+      },
+      supportBot: {
+        title: 'ABI Support Bot',
+        welcome: 'Hallo! Ich bin der ABI Support Bot. Wie kann ich dir heute helfen?',
+        placeholder: 'Frage stellen...',
+        thinking: 'Überlegt...',
+        error: 'Fehler beim Antworten.',
+        rateLimit: 'Rate-Limit erreicht. Bitte warte eine Minute.'
+      },
+      aiAssistant: {
+        title: 'ABI Bot',
+        welcome: 'Hallo! Ich bin dein persönlicher ABI Bot. Wie kann ich dir heute bei der Planung helfen?',
+        placeholder: 'Frage stellen...',
+        thinking: 'Überlegt...',
+        error: 'Fehler beim Antworten.',
+        rateLimit: 'Rate-Limit erreicht. Bitte warte eine Minute.'
+      }
+    },
+    support: {
+      badge: 'Projekt-Support',
+      title1: 'Unterstützt die',
+      title2: 'Weiterentwicklung.',
+      desc: 'Der ABI Planer ist für Schüler kostenlos. Wer uns unterstützen möchte, kann dies durch eine freiwillige Förderung tun. So bleiben wir unabhängig und werbefrei.',
+      cta: 'Projekt unterstützen'
     },
     auth: {
       login: {
@@ -245,10 +324,12 @@ export const translations = {
       quickAccess: 'Schnellzugriff',
       sections: {
         personal: 'Persönlich',
+        profile: 'Profil',
         appearance: 'Darstellung',
         feedback: 'Feedback',
         bonuses: 'Boni',
         account: 'Konto',
+        security: 'Sicherheit',
         administration: 'Verwaltung',
         language: 'Sprache'
       },
@@ -362,9 +443,9 @@ export const translations = {
       noNews: 'Noch keine Neuigkeiten vorhanden.',
       viewAllNews: 'Alle News ansehen',
       supportBanner: {
-        title: 'Helft uns die Seite am Laufen zu halten',
-        description: 'Damit der ABI Planer werbefrei, stabil und für alle kostenlos bleibt, fallen monatliche Kosten für Server, Datenbanken und Hosting an. Da wir keine Daten verkaufen oder Werbung schalten, deckt dieser Support-Pool ausschließlich diese technischen Ausgaben. Sollte das Ziel nicht erreicht werden, müssten die Kosten privat getragen oder Funktionen eingeschränkt werden – jeder Euro sichert also den Betrieb eurer Plattform!',
-        cta: 'Support geben'
+        title: 'Unterstützt den ABI-Planer',
+        description: 'Damit der ABI Planer werbefrei, stabil und für alle kostenlos bleibt, fallen monatliche Kosten für Server, Datenbanken, Hosting und Weiterentwicklung an. Dieser Pool ist strikt von der Abikasse getrennt und deckt ausschließlich den Betrieb der Plattform ab.',
+        cta: 'Entwickler unterstützen'
       }
     },
     designer: {
@@ -465,7 +546,12 @@ export const translations = {
         title2: 'Celebrate together.',
         desc: 'ABI Planer is the reliable foundation for your graduation. Stress-free, transparent, and 100% GDPR-compliant, you organize your entire class in one place.',
         ctaPrimary: 'Set up class',
-        ctaSecondary: 'View features'
+        ctaSecondary: 'View features',
+        gamified: {
+          title1: 'Collect. Trade.',
+          title2: 'Celebrate together.',
+          desc: 'Experience your class as an interactive trading card game. Trade cards with classmates, collect your teachers, and organize your entire graduation in one place.'
+        }
       },
       dualFocus: {
         planner: {
@@ -551,13 +637,6 @@ export const translations = {
         empty: 'No current updates available.',
         new: 'New'
       },
-      support: {
-        badge: 'Project Support',
-        title1: 'Support the',
-        title2: 'further development.',
-        desc: 'ABI Planer is free for students. Those who want to support us can do so through voluntary funding. This way we remain independent and ad-free.',
-        cta: 'Support project'
-      },
       finalCta: {
         title1: 'Ready for',
         title2: 'the start?',
@@ -565,6 +644,87 @@ export const translations = {
         ctaPrimary: 'Start now',
         ctaSecondary: 'Login'
       }
+    },
+    supportCenter: {
+      hero: {
+        title: 'How can we help?',
+        subtitle: 'Search our FAQs or choose a category to find answers.',
+        placeholder: 'Enter keyword (e.g., registration, cards, stripe)...'
+      },
+      search: {
+        topHits: 'Top Results',
+        noHits: 'No exact matches found.',
+        results: 'Search Results'
+      },
+      sections: {
+        browse: 'Browse Themes',
+        articles: 'articles available',
+        view: 'View'
+      },
+      contact: {
+        title: 'Still have questions?',
+        subtitle: 'Our team is ready to help. If you didn\'t find what you were looking for in the FAQs, you can contact us directly.',
+        direct: {
+          title: 'Direct Contact',
+          subtitle: 'Send us a message with your concern. We will get back to you as soon as possible via email.',
+          cta: 'Send Ticket'
+        },
+        complaint: {
+          title: 'Complaint',
+          subtitle: 'As a teacher, you can request corrections to your trading cards or request deletions.',
+          cta: 'Submit a complaint'
+        },
+        community: {
+          title: 'Community Support',
+          subtitle: 'Use the feedback feature in the app or ask for help in the Planner team chat.',
+          badge: 'Available in the main app'
+        }
+      },
+      subPages: {
+        backHome: 'Back to Home',
+        backOverview: 'Back to Overview',
+        notFound: 'Content not found.',
+        article: {
+          helpful: 'Was this article helpful?',
+          helpfulSub: 'Your feedback helps us improve our support.',
+          yes: 'Yes',
+          no: 'No',
+          thanks: 'Thanks for your feedback!',
+          related: 'Related Articles',
+          questions: 'Still have questions?',
+          questionsSub: 'Didn\'t find what you were looking for? Our team is happy to help.',
+          contact: 'Contact Support',
+          share: 'Share article',
+          copied: 'Link copied!'
+        },
+        category: {
+          allArticles: 'All articles about',
+          noArticles: 'No articles available in this category yet.'
+        }
+      },
+      supportBot: {
+        title: 'ABI Support Bot',
+        welcome: 'Hello! I am the ABI Support Bot. How can I help you today?',
+        placeholder: 'Ask a question...',
+        thinking: 'Thinking...',
+        error: 'Failed to respond.',
+        rateLimit: 'Rate limit reached. Please wait a minute.'
+      },
+      aiAssistant: {
+        title: 'ABI Bot',
+        welcome: 'Hello! I am your personal ABI Bot. How can I help you with your planning today?',
+        placeholder: 'Ask a question...',
+        thinking: 'Thinking...',
+        error: 'Failed to respond.',
+        rateLimit: 'Rate limit reached. Please wait a minute.'
+      }
+    },
+    support: {
+      badge: 'Project Support',
+      title1: 'Support the',
+      title2: 'further development.',
+      desc: 'ABI Planer is free for students. Those who want to support us can do so through voluntary funding. This way we remain independent and ad-free.',
+      cta: 'Support project'
     },
     auth: {
       login: {
@@ -703,10 +863,12 @@ export const translations = {
       quickAccess: 'Quick Access',
       sections: {
         personal: 'Personal',
+        profile: 'Profile',
         appearance: 'Appearance',
         feedback: 'Feedback',
         bonuses: 'Bonuses',
         account: 'Account',
+        security: 'Security',
         administration: 'Administration',
         language: 'Language'
       },
@@ -820,9 +982,9 @@ export const translations = {
       noNews: 'No news available yet.',
       viewAllNews: 'View all news',
       supportBanner: {
-        title: 'Help us keep the site running',
-        description: 'To keep ABI Planer ad-free, stable, and free for everyone, monthly costs for servers, databases, and hosting are incurred. Since we do not sell data or run ads, this support pool exclusively covers these technical expenses. If the goal is not reached, the costs would have to be borne privately or functions restricted – so every euro secures the operation of your platform!',
-        cta: 'Give support'
+        title: 'Support the developer pool',
+        description: 'To keep ABI Planer ad-free, stable, and free for everyone, monthly costs for servers, databases, hosting, and ongoing development are incurred. This pool is strictly separate from the ABI fund and covers only platform operation.',
+        cta: 'Support the developer'
       }
     },
     designer: {
@@ -923,7 +1085,12 @@ export const translations = {
         title2: 'Celebrad juntos.',
         desc: 'ABI Planer es la base confiable para vuestra graduación. Sin estrés, transparente y 100% conforme al RGPD, organizáis todo vuestro curso en un solo lugar.',
         ctaPrimary: 'Configurar curso',
-        ctaSecondary: 'Ver funciones'
+        ctaSecondary: 'Ver funciones',
+        gamified: {
+          title1: 'Colecciona. Intercambia.',
+          title2: 'Celebrad juntos.',
+          desc: 'Vive tu curso como un juego de cartas coleccionables interactivo. Intercambia cartas con tus compañeros, colecciona a tus profesores y organiza toda tu graduación en un solo lugar.'
+        }
       },
       dualFocus: {
         planner: {
@@ -1009,13 +1176,6 @@ export const translations = {
         empty: 'No hay actualizaciones actuales disponibles.',
         new: 'Nuevo'
       },
-      support: {
-        badge: 'Soporte del Proyecto',
-        title1: 'Apoya el',
-        title2: 'desarrollo continuo.',
-        desc: 'ABI Planer es gratuito para los estudiantes. Quienes deseen apoyarnos pueden hacerlo mediante financiación voluntaria. De esta manera seguimos siendo independientes y sin publicidad.',
-        cta: 'Apoyar proyecto'
-      },
       finalCta: {
         title1: '¿Listo para',
         title2: 'empezar?',
@@ -1023,6 +1183,87 @@ export const translations = {
         ctaPrimary: 'Empezar ahora',
         ctaSecondary: 'Iniciar sesión'
       }
+    },
+    supportCenter: {
+      hero: {
+        title: '¿Cómo podemos ayudarte?',
+        subtitle: 'Busca en nuestras preguntas frecuentes o elige una categoría para encontrar respuestas.',
+        placeholder: 'Introduce una palabra clave (p. ej., registro, tarjetas, Stripe)...'
+      },
+      search: {
+        topHits: 'Resultados principales',
+        noHits: 'No se han encontrado coincidencias exactas.',
+        results: 'Resultados de búsqueda'
+      },
+      sections: {
+        browse: 'Explorar temas',
+        articles: 'artículos disponibles',
+        view: 'Ver'
+      },
+      contact: {
+        title: '¿Todavía tienes preguntas?',
+        subtitle: 'Nuestro equipo está listo para ayudarte. Si no has encontrado lo que buscabas en las preguntas frecuentes, puedes ponerte en contacto con nosotros directamente.',
+        direct: {
+          title: 'Contacto directo',
+          subtitle: 'Envíanos un message con tu consulta. Te responderemos lo antes posible por correo electrónico.',
+          cta: 'Enviar ticket'
+        },
+        complaint: {
+          title: 'Reclamación',
+          subtitle: 'Como profesor, puedes solicitar correcciones en tus tarjetas de intercambio o pedir eliminaciones.',
+          cta: 'Enviar una reclamación'
+        },
+        community: {
+          title: 'Soporte de la comunidad',
+          subtitle: 'Utiliza la función de comentarios en la aplicación o pide ayuda en el chat del equipo del Planner.',
+          badge: 'Disponible en la aplicación principal'
+        }
+      },
+      subPages: {
+        backHome: 'Volver al Inicio',
+        backOverview: 'Volver a la Vista General',
+        notFound: 'Contenido no encontrado.',
+        article: {
+          helpful: '¿Fue útil este artículo?',
+          helpfulSub: 'Tus comentarios nos ayudan a mejorar el soporte.',
+          yes: 'Sí',
+          no: 'No',
+          thanks: '¡Gracias por tus comentarios!',
+          related: 'Artículos Relacionados',
+          questions: '¿Aún tienes preguntas?',
+          questionsSub: '¿No encontraste lo que buscabas? Nuestro equipo estará encantado de ayudarte.',
+          contact: 'Contactar Soporte',
+          share: 'Compartir artículo',
+          copied: '¡Enlace copiado!'
+        },
+        category: {
+          allArticles: 'Todos los artículos sobre',
+          noArticles: 'Aún no hay artículos en esta categoría.'
+        }
+      },
+      supportBot: {
+        title: 'ABI Support Bot',
+        welcome: '¡Hola! Soy el ABI Support Bot. ¿Cómo puedo ayudarte hoy?',
+        placeholder: 'Hacer una pregunta...',
+        thinking: 'Pensando...',
+        error: 'Error al responder.',
+        rateLimit: 'Límite de velocidad alcanzado. Por favor, espera un minuto.'
+      },
+      aiAssistant: {
+        title: 'ABI Bot',
+        welcome: '¡Hola! Soy tu ABI Bot personal. ¿Cómo puedo ayudarte con tu planificación hoy?',
+        placeholder: 'Hacer una pregunta...',
+        thinking: 'Pensando...',
+        error: 'Error al responder.',
+        rateLimit: 'Límite de velocidad alcanzado. Por favor, espera un minuto.'
+      }
+    },
+    support: {
+      badge: 'Soporte del Proyecto',
+      title1: 'Apoya el',
+      title2: 'desarrollo continuo.',
+      desc: 'ABI Planer es gratuito para los estudiantes. Quienes deseen apoyarnos pueden hacerlo mediante financiación voluntaria. De esta manera seguimos siendo independientes y sin publicidad.',
+      cta: 'Apoyar proyecto'
     },
     auth: {
       login: {
@@ -1161,10 +1402,12 @@ export const translations = {
       quickAccess: 'Acceso Rápido',
       sections: {
         personal: 'Personal',
+        profile: 'Perfil',
         appearance: 'Apariencia',
         feedback: 'Comentarios',
         bonuses: 'Bonos',
         account: 'Cuenta',
+        security: 'Seguridad',
         administration: 'Administración',
         language: 'Idioma'
       },
@@ -1278,9 +1521,9 @@ export const translations = {
       noNews: 'Aún no hay noticias disponibles.',
       viewAllNews: 'Ver todas las noticias',
       supportBanner: {
-        title: 'Ayúdanos a mantener el sitio en funcionamiento',
-        description: 'Para que ABI Planer siga siendo libre de publicidad, estable y gratuito para todos, se incurre en costes mensuales de servidores, bases de datos y alojamiento. Como no vendemos datos ni publicamos anuncios, este fondo de apoyo cubre exclusivamente estos gastos técnicos. Si no se alcanza el objetivo, los costes tendrían que ser asumidos de forma privada o se restringirían las funciones, ¡así que cada euro asegura el funcionamiento de tu plataforma!',
-        cta: 'Dar apoyo'
+        title: 'Apoya el fondo del desarrollador',
+        description: 'Para que ABI Planer siga siendo sin anuncios, estable y gratuito para todos, se incurre en costes mensuales de servidores, bases de datos, alojamiento y desarrollo continuo. Este fondo está estrictamente separado de la caja del ABI y cubre solo el funcionamiento de la plataforma.',
+        cta: 'Apoyar al desarrollador'
       }
     },
     designer: {

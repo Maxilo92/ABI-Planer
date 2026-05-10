@@ -8,8 +8,8 @@ if (admin.apps.length === 0) {
   admin.initializeApp();
 }
 
-const isAdminRole = (role: unknown): boolean => {
-  return role === "admin" || role === "admin_main" || role === "admin_co";
+const isAuthorizedRole = (role: unknown): boolean => {
+  return role === "admin" || role === "admin_main" || role === "admin_co" || role === "planer";
 };
 
 interface UserCards {
@@ -161,7 +161,7 @@ export const removeTeacherCards = onCall({
   const callerProfileRef = db.collection("profiles").doc(request.auth.uid);
   const callerProfileDoc = await callerProfileRef.get();
 
-  if (!isAdminRole(callerProfileDoc.data()?.role)) {
+  if (!isAuthorizedRole(callerProfileDoc.data()?.role)) {
     throw new HttpsError(
       "permission-denied",
       "Must be an administrative user to call this function."
@@ -369,7 +369,7 @@ export const validateAndFixRarities = onCall({
   const callerProfileRef = db.collection("profiles").doc(request.auth.uid);
   const callerProfileDoc = await callerProfileRef.get();
 
-  if (!isAdminRole(callerProfileDoc.data()?.role)) {
+  if (!isAuthorizedRole(callerProfileDoc.data()?.role)) {
     throw new HttpsError(
       "permission-denied",
       "Must be an administrative user to call this function."
@@ -633,7 +633,7 @@ export const syncOpenedPacksToInventory = onCall({
   const callerProfileRef = db.collection("profiles").doc(request.auth.uid);
   const callerProfileDoc = await callerProfileRef.get();
 
-  if (!isAdminRole(callerProfileDoc.data()?.role)) {
+  if (!isAuthorizedRole(callerProfileDoc.data()?.role)) {
     throw new HttpsError("permission-denied", "Must be an administrative user to call this function.");
   }
 
@@ -757,7 +757,7 @@ export const migrateTeacherVol1Inventory = onCall({
   const callerProfileRef = db.collection("profiles").doc(request.auth.uid);
   const callerProfileDoc = await callerProfileRef.get();
 
-  if (!isAdminRole(callerProfileDoc.data()?.role)) {
+  if (!isAuthorizedRole(callerProfileDoc.data()?.role)) {
     throw new HttpsError("permission-denied", "Must be an administrative user to call this function.");
   }
 
@@ -902,7 +902,7 @@ export const cleanupLegacyTeachersVoted = onCall({
   const callerProfileRef = db.collection("profiles").doc(request.auth.uid);
   const callerProfileDoc = await callerProfileRef.get();
 
-  if (!isAdminRole(callerProfileDoc.data()?.role)) {
+  if (!isAuthorizedRole(callerProfileDoc.data()?.role)) {
     throw new HttpsError("permission-denied", "Must be an administrative user to call this function.");
   }
 
@@ -1002,7 +1002,7 @@ export const moderateCardProposal = onCall({
   const callerProfileRef = db.collection("profiles").doc(callerUid);
   const callerProfileDoc = await callerProfileRef.get();
 
-  if (!isAdminRole(callerProfileDoc.data()?.role)) {
+  if (!isAuthorizedRole(callerProfileDoc.data()?.role)) {
     throw new HttpsError("permission-denied", "Must be an administrative user to call this function.");
   }
 
@@ -1175,7 +1175,7 @@ export const backfillCardProposalUsageStatus = onCall({
   const callerProfileRef = db.collection("profiles").doc(callerUid);
   const callerProfileDoc = await callerProfileRef.get();
 
-  if (!isAdminRole(callerProfileDoc.data()?.role)) {
+  if (!isAuthorizedRole(callerProfileDoc.data()?.role)) {
     throw new HttpsError("permission-denied", "Must be an administrative user to call this function.");
   }
 

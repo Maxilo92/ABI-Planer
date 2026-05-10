@@ -1,3 +1,4 @@
+import { getFirestore } from 'firebase-admin/firestore'
 import * as admin from 'firebase-admin'
 
 const project_id = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || process.env.FIREBASE_PROJECT_ID
@@ -8,6 +9,14 @@ export function initAdmin() {
   if (admin.apps.length > 0) return admin.app()
 
   if (!project_id || !client_email || !private_key) {
+    if (process.env.NODE_ENV === 'production' && project_id) {
+       console.warn('Firebase Admin: Missing explicit credentials, attempting applicationDefault fallback.')
+       return admin.initializeApp({
+         credential: admin.credential.applicationDefault(),
+         projectId: project_id,
+       })
+    }
+
     console.error('Firebase Admin Init Error: Missing credentials', { 
       hasProjectId: !!project_id, 
       hasClientEmail: !!client_email, 
@@ -38,4 +47,4 @@ export function initAdmin() {
 }
 
 export const adminAuth = () => initAdmin().auth()
-export const adminDb = () => initAdmin().firestore()
+export const adminDb = () => getFirestore(initAdmin(), 'abi-data')

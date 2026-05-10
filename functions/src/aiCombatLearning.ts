@@ -388,59 +388,95 @@ export async function applyAiLearningFromMatch(db: any, matchId: string, matchDa
   const attackActions = Array.isArray(matchData.actionLog) ? matchData.actionLog.filter((entry: any) => entry?.type === "attack" && entry?.attackName && entry?.attackerCardId) : [];
 
   await db.runTransaction(async (transaction: any) => {
-    const guardSnap = await transaction.get(guardRef);
+    // 1. Collect all unique document references
+    const playerCardEntries: Array<{ cardId: string; outcome: LearningOutcome }> = [
+      ...cardIdsA.map((cardId) => ({ cardId, outcome: outcomeA })),
+      ...cardIdsB.map((cardId) => ({ cardId, outcome: outcomeB })),
+    ];
+    const uniqueCardIds = [...new Set(playerCardEntries.map((e) => e.cardId))];
+    const cardRefs = uniqueCardIds.map((id) => db.collection(AI_CARD_STATS_COLLECTION).doc(toLearningDocId(id)));
+
+    const deckRefs = [
+      { signature: deckSignatureA, outcome: outcomeA },
+      { signature: deckSignatureB, outcome: outcomeB },
+    ];
+    const uniqueDeckSignatures = [...new Set(deckRefs.map((d) => d.signature))];
+    const deckDbRefs = uniqueDeckSignatures.map((sig) => db.collection(AI_DECK_STATS_COLLECTION).doc(toLearningDocId(sig)));
+
+    const uniqueAttackKeys = [...new Set(attackActions.map((a: any) => buildAttackKey(a.attackerCardId, a.attackName)))] as string[];
+    const attackRefs = uniqueAttackKeys.map((key: string) => db.collection(AI_ATTACK_STATS_COLLECTION).doc(toLearningDocId(key)));
+
+    // 2. Perform all reads
+    const [guardSnap, cardSnaps, deckSnaps, attackSnaps] = await Promise.all([
+      transaction.get(guardRef),
+      Promise.all(cardRefs.map((ref: any) => transaction.get(ref))),
+      Promise.all(deckDbRefs.map((ref: any) => transaction.get(ref))),
+      Promise.all(attackRefs.map((ref: any) => transaction.get(ref))),
+    ]);
+
     if (guardSnap.exists) return;
 
+    // 3. Prepare data maps for easy access
+    const cardDataMap: Record<string, any> = {};
+    cardSnaps.forEach((snap: any, i: number) => {
+      cardDataMap[uniqueCardIds[i]] = snap.exists ? snap.data() : {};
+    });
+
+    const deckDataMap: Record<string, any> = {};
+    deckSnaps.forEach((snap: any, i: number) => {
+      deckDataMap[uniqueDeckSignatures[i]] = snap.exists ? snap.data() : {};
+    });
+
+    const attackDataMap: Record<string, any> = {};
+    attackSnaps.forEach((snap: any, i: number) => {
+      attackDataMap[uniqueAttackKeys[i] as string] = snap.exists ? snap.data() : {};
+    });
+
+    // 4. Perform all writes
     transaction.set(guardRef, {
       matchId,
       processedAt: new Date().toISOString(),
     });
 
-    const playerCardEntries: Array<{ cardId: string; outcome: LearningOutcome }> = [
-      ...cardIdsA.map((cardId) => ({ cardId, outcome: outcomeA })),
-      ...cardIdsB.map((cardId) => ({ cardId, outcome: outcomeB })),
-    ];
-
     for (const { cardId, outcome } of playerCardEntries) {
+      const current = cardDataMap[cardId];
+      const updated = mergeStat(current, outcome);
       const ref = db.collection(AI_CARD_STATS_COLLECTION).doc(toLearningDocId(cardId));
-      const snap = await transaction.get(ref);
-      const updated = mergeStat(snap.exists ? snap.data() : {}, outcome);
       transaction.set(ref, {
         ...updated,
         lastMatchId: matchId,
         updatedAt: new Date().toISOString(),
       }, { merge: true });
+      // Update local map in case the same card appears multiple times (e.g. mirror match card ids)
+      cardDataMap[cardId] = updated;
     }
 
-    const deckRefs = [
-      { deckSignature: deckSignatureA, outcome: outcomeA },
-      { deckSignature: deckSignatureB, outcome: outcomeB },
-    ];
-
     for (const deckEntry of deckRefs) {
-      const ref = db.collection(AI_DECK_STATS_COLLECTION).doc(toLearningDocId(deckEntry.deckSignature));
-      const snap = await transaction.get(ref);
-      const updated = mergeStat(snap.exists ? snap.data() : {}, deckEntry.outcome, 0, deckEntry.outcome === "win" ? 1 : 0);
+      const current = deckDataMap[deckEntry.signature];
+      const updated = mergeStat(current, deckEntry.outcome, 0, deckEntry.outcome === "win" ? 1 : 0);
+      const ref = db.collection(AI_DECK_STATS_COLLECTION).doc(toLearningDocId(deckEntry.signature));
       transaction.set(ref, {
         ...updated,
-        signature: deckEntry.deckSignature,
+        signature: deckEntry.signature,
         lastMatchId: matchId,
         updatedAt: new Date().toISOString(),
       }, { merge: true });
+      deckDataMap[deckEntry.signature] = updated;
     }
 
     for (const action of attackActions) {
       const ownerOutcome = action.actor === playerAUid ? outcomeA : (action.actor === playerBUid ? outcomeB : "draw");
       const attackKey = buildAttackKey(action.attackerCardId, action.attackName);
+      const current = attackDataMap[attackKey];
+      const updated = mergeStat(current, ownerOutcome, safeNumber(action.value, 0), action.cardDied ? 1 : 0);
       const ref = db.collection(AI_ATTACK_STATS_COLLECTION).doc(toLearningDocId(attackKey));
-      const snap = await transaction.get(ref);
-      const updated = mergeStat(snap.exists ? snap.data() : {}, ownerOutcome, safeNumber(action.value, 0), action.cardDied ? 1 : 0);
       transaction.set(ref, {
         ...updated,
         attackKey,
         lastMatchId: matchId,
         updatedAt: new Date().toISOString(),
       }, { merge: true });
+      attackDataMap[attackKey] = updated;
     }
   });
 

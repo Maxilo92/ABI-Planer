@@ -68,6 +68,7 @@ interface NavItem {
     isExternal?: boolean; 
     notify?: boolean;
     feature?: string;
+    roles?: string[];
   }[];
   feature?: string;
   notify?: boolean;
@@ -113,6 +114,7 @@ export const Sidebar: React.FC = () => {
   };
 
   const isAdmin = ['admin_main', 'admin', 'admin_co'].includes(profile?.role || '');
+  const isStaff = isAdmin || profile?.role === 'planner';
   
   const dashboardUrl = getDashboardBaseUrl();
   const tcgUrl = getTcgBaseUrl();
@@ -133,6 +135,7 @@ export const Sidebar: React.FC = () => {
             { id: 'polls', label: 'Umfragen', icon: BarChart2, href: '/abstimmungen', feature: 'polls_status', notify: notifications.umfragen },
           ]
         },
+        { id: 'aufgaben', label: 'Aufgaben', icon: Briefcase, href: '/aufgaben' },
         { 
           id: 'planung', 
           label: 'Planung', 
@@ -141,7 +144,6 @@ export const Sidebar: React.FC = () => {
           subItems: [
             { id: 'kalender', label: 'Kalender', icon: Calendar, href: '/kalender', feature: 'calendar_status', notify: notifications.kalender },
             { id: 'todos', label: 'Todos', icon: CheckSquare, href: '/todos', feature: 'todos_status', notify: notifications.todos },
-            { id: 'aufgaben', label: 'Aufgaben', icon: Briefcase, href: '/aufgaben' },
             { id: 'gruppen', label: 'Gruppen', icon: Users, href: '/gruppen', notify: notifications.gruppen },
           ]
         },
@@ -165,6 +167,7 @@ export const Sidebar: React.FC = () => {
             { id: 'booster', label: 'Booster', icon: Gift, href: `${tcgUrl}/booster`, isExternal: true },
             { id: 'album', label: 'Album', icon: Trophy, href: `${tcgUrl}/album`, isExternal: true },
             { id: 'trading', label: 'Trading', icon: ArrowLeftRight, href: `${tcgUrl}/sammelkarten/tausch`, isExternal: true, feature: 'trading_status', notify: notifications.karten },
+            { id: 'manager', label: 'Manager (Staff)', icon: Settings, href: '/sammelkarten-manager', roles: ['admin_main', 'admin_co', 'admin', 'planner'] },
           ]
         }
       ]
@@ -225,7 +228,11 @@ export const Sidebar: React.FC = () => {
       if (item.feature && !isEnabled(item.feature as any)) return null;
       
       if (item.subItems) {
-        const filteredSubs = item.subItems.filter(sub => !sub.feature || isEnabled(sub.feature as any));
+        const filteredSubs = item.subItems.filter(sub => {
+          if (sub.feature && !isEnabled(sub.feature as any)) return false;
+          if (sub.roles && (!profile?.role || !sub.roles.includes(profile.role))) return false;
+          return true;
+        });
         if (filteredSubs.length === 0) return null;
         return { ...item, subItems: filteredSubs };
       }
@@ -236,7 +243,7 @@ export const Sidebar: React.FC = () => {
   const sections = isAdmin ? [...filteredSections, adminSection] : filteredSections;
 
   const userInitial = profile?.full_name?.substring(0, 1).toUpperCase() || 'U';
-  const avatarSeed = profile?.full_name || 'User';
+  const avatarSeed = profile?.photo_url || profile?.full_name || 'User';
 
   const SidebarContent = (
     <div className="flex flex-col h-full bg-card border-r border-border">
@@ -403,7 +410,7 @@ export const Sidebar: React.FC = () => {
             <div className="shrink-0 w-8 h-8 bg-muted rounded-md overflow-hidden ring-1 ring-border flex items-center justify-center">
               {profile?.full_name ? (
                 <img 
-                  src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${avatarSeed}`} 
+                  src={profile?.photo_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${avatarSeed}`} 
                   alt="Avatar" 
                   className="w-full h-full object-cover"
                 />
@@ -439,7 +446,7 @@ export const Sidebar: React.FC = () => {
           </div>
           {!isSidebarCollapsed && (
             <div className="px-2 pt-1">
-              <p className="text-[10px] font-medium text-muted-foreground/50 uppercase tracking-[0.2em]">v1.34.1.3</p>
+              <p className="text-[10px] font-medium text-muted-foreground/50 uppercase tracking-[0.2em]">v1.35.1.2</p>
             </div>
           )}
         </div>

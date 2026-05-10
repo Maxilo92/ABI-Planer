@@ -122,9 +122,9 @@ export default function AbiSpendenPage() {
 
       <div className="text-center py-4">
         <p className="text-sm text-muted-foreground">
-          Du möchtest stattdessen den Betrieb der Webseite unterstützen? <br />
+          Du möchtest stattdessen den Entwickler unterstützen? <br />
           <Link href="/finanzen/spenden/entwickler" className="text-primary font-bold hover:underline underline-offset-4">
-            Hier geht es zum App-Support &rarr;
+            Hier geht es zum Entwickler-Support &rarr;
           </Link>
         </p>
       </div>

@@ -26,6 +26,7 @@ export function useSystemFeatures() {
           todos_status: 'enabled',
           polls_status: 'enabled',
           sammelkarten_status: 'enabled',
+          groups_status: 'disabled',
           maintenance_mode: false
         })
       }
@@ -48,6 +49,18 @@ export function useSystemFeatures() {
     if (status === 'enabled') return true
     if (status === 'admins_only') return isAdmin
     if (status === 'disabled') return false
+    
+    // Handle specific status object
+    if (typeof status === 'object' && status !== null && 'type' in status && status.type === 'specific') {
+      if (isAdmin) return true;
+      
+      const hasRole = status.allowed_roles.includes(profile?.role || '');
+      const hasGroup = (profile?.planning_groups || []).some(group => 
+        status.allowed_groups.includes(group)
+      );
+      
+      return hasRole || hasGroup;
+    }
     
     // Fallback for boolean keys
     if (typeof status === 'boolean') return status

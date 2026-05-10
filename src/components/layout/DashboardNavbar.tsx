@@ -1,11 +1,11 @@
 'use client'
 
 import Link from 'next/link'
-import { LayoutDashboard, CheckSquare, Calendar, Euro, DollarSign, Megaphone, BarChart2, LogOut, Menu, X, ShieldCheck, User, MessageSquareHeart, Settings, Users, ChevronRight, ChevronLeft, Sparkles, HelpCircle, Trophy, AlertTriangle, ShoppingBag, UserPlus, Server, ArrowLeftRight, Pin, PinOff, Briefcase, Home, ShieldAlert, FileText, Wand2, Package, Printer, LayoutGrid, List } from 'lucide-react'
+import { LayoutDashboard, CheckSquare, Calendar, Euro, DollarSign, Megaphone, BarChart2, LogOut, Menu, X, ShieldCheck, User, MessageSquareHeart, Settings, Users, ChevronRight, ChevronLeft, Sparkles, HelpCircle, Trophy, AlertTriangle, ShoppingBag, UserPlus, Server, ArrowLeftRight, Pin, PinOff, Briefcase, Home, ShieldAlert, FileText, Wand2, Package, Printer, LayoutGrid, List, Gift } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button, buttonVariants } from '@/components/ui/button'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { NftAvatar } from '@/components/ui/nft-avatar'
 import { Badge } from '@/components/ui/badge'
 import { db, getFirebaseAuth } from '@/lib/firebase'
 import { signOut } from 'firebase/auth'
@@ -113,6 +113,7 @@ export function DashboardNavbar() {
         ] : []),
       ],
     },
+    { href: '/aufgaben', label: 'Aufgaben', icon: Briefcase },
   ]
 
   if (profile) {
@@ -124,8 +125,7 @@ export function DashboardNavbar() {
       subItems: [
         ...(isEnabled('calendar_status') ? [{ href: '/kalender', label: 'Kalender', icon: Calendar, notify: notifications.kalender }] : []),
         ...(isEnabled('todos_status') ? [{ href: '/todos', label: 'Todos', icon: CheckSquare, notify: notifications.todos }] : []),
-        { href: '/aufgaben', label: 'Aufgaben', icon: Briefcase },
-        { href: '/gruppen', label: 'Gruppen', icon: Users, notify: notifications.gruppen },
+        ...(isEnabled('groups_status') ? [{ href: '/gruppen', label: 'Gruppen', icon: Users, notify: notifications.gruppen }] : []),
       ],
     })
 
@@ -138,6 +138,21 @@ export function DashboardNavbar() {
         ...(isEnabled('shop_status') ? [{ href: resolveHref('/shop', 'shop'), label: 'ABISHOP', icon: ShoppingBag, isExternal: true }] : []),
       ],
     })
+
+    if (isEnabled('sammelkarten_status')) {
+      navItems.push({
+        href: '/sammelkarten-root',
+        label: 'Sammelkarten',
+        icon: Package,
+        notify: notifications.karten,
+        subItems: [
+          { href: `${tcgUrl}/home`, label: 'TCG Home', icon: Home, isExternal: true },
+          { href: `${tcgUrl}/booster`, label: 'Booster', icon: Gift, isExternal: true },
+          { href: `${tcgUrl}/album`, label: 'Album', icon: Trophy, isExternal: true },
+          ...(isEnabled('trading_status') ? [{ href: `${tcgUrl}/sammelkarten/tausch`, label: 'Trading', icon: ArrowLeftRight, isExternal: true, notify: notifications.karten }] : []),
+        ],
+      })
+    }
 
     if (isEnabled('sammelkarten_status')) {
       navItems.push({
@@ -185,6 +200,7 @@ export function DashboardNavbar() {
       subItems: [
         { href: '/admin', label: 'Admin Hub', icon: Server },
         { href: '/admin/user', label: 'Benutzerverwaltung', icon: Users },
+        { href: '/admin/ads', label: 'AD-Manager', icon: Megaphone },
         { href: '/admin/system', label: 'System Overview', icon: LayoutDashboard },
         { href: '/admin/changelog', label: 'Changelog', icon: FileText },
         { href: '/admin/sammelkarten', label: 'Sammelkarten (Digital)', icon: Sparkles },
@@ -358,7 +374,7 @@ export function DashboardNavbar() {
 
           <div className="p-4 border-t space-y-2">
             <Link href="/profil" className={cn("flex items-center rounded-md hover:bg-secondary p-2.5", isDesktopCollapsed ? "justify-center" : "gap-3")}>
-              <Avatar size="default"><AvatarFallback>{userInitial}</AvatarFallback></Avatar>
+              <NftAvatar url={profile?.photo_url} fallback={userInitial} interactive={false} className="w-8 h-8" />
               {!isDesktopCollapsed && <span className="font-semibold truncate">{profile?.full_name}</span>}
             </Link>
             <Button variant="ghost" className={cn("text-destructive w-full", isDesktopCollapsed ? "justify-center" : "justify-start gap-3")} onClick={handleSignOut}>

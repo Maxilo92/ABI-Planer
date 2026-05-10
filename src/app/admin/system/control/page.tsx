@@ -1,5 +1,7 @@
 'use client'
 
+import * as React from 'react'
+
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -10,12 +12,15 @@ import {
   ArrowLeftRight, ShoppingBag, Megaphone, 
   Calendar, CheckSquare,
   RefreshCw, BarChart2,
-  Swords, Construction
+  Swords, Construction, Users,
+  LayoutGrid, MessageSquare
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAdminSystem } from '@/components/admin/AdminSystemContext'
-import { FeatureStatusToggle } from '@/components/admin/system/SystemComponents'
+import { CompactFeatureToggleRow } from '@/components/admin/system/SystemComponents'
 import { usePopupManager } from '@/modules/popup/usePopupManager'
+import { Separator } from '@/components/ui/separator'
+import { toast } from 'sonner'
 
 /**
  * Formats an ISO string for use in a datetime-local input.
@@ -42,10 +47,37 @@ export default function AdminSystemControl() {
     isMaintenanceActive,
     updateFeatureStatus,
     handleSaveMaintenance,
-    resetSessionStatistics
+    resetSessionStatistics,
+    availableGroups
   } = useAdminSystem()
   
   const { confirm } = usePopupManager()
+  const [migratingAvatars, setMigratingAvatars] = React.useState(false)
+
+  const handleMigrateAvatars = async () => {
+    const confirmed = await confirm({
+      title: 'NFT-Avatare generieren?',
+      content: 'Dies überschreibt alle bestehenden Profilbilder der Nutzer mit neuen, einzigartigen Pixel-Avataren (NFT-Style). Möchtest du fortfahren?',
+      priority: 'high',
+      confirmLabel: 'Ja, migrieren',
+    })
+    if (!confirmed) return
+
+    setMigratingAvatars(true)
+    try {
+      const res = await fetch('/api/admin/avatars/migrate', { method: 'POST' })
+      const data = await res.json()
+      if (data.success) {
+        toast.success(`Erfolgreich migriert: ${data.count} Profile aktualisiert.`)
+      } else {
+        toast.error('Fehler bei der Migration: ' + data.error)
+      }
+    } catch (err: any) {
+      toast.error('Netzwerkfehler: ' + err.message)
+    } finally {
+      setMigratingAvatars(false)
+    }
+  }
 
   const handleClearMaintenancePlan = async () => {
     const confirmed = await confirm({
@@ -67,97 +99,118 @@ export default function AdminSystemControl() {
   return (
     <div className="space-y-8">
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-        <Card className="xl:col-span-3 border-2">
-          <CardHeader className="bg-muted/30 border-b">
-            <div className="flex items-center justify-between gap-4">
-              <div className="space-y-1">
-                <CardTitle className="flex items-center gap-2 uppercase tracking-tighter font-black">
-                  <ShieldAlert className="w-5 h-5 text-red-500" />
-                  Emergency Feature Toggles
-                </CardTitle>
-                <CardDescription>Zentrale Steuerung der App-Module. Deaktivierte Module zeigen Nutzern eine Wartungsmeldung.</CardDescription>
-              </div>
+        <div className="xl:col-span-3 space-y-6">
+          <div className="flex items-center justify-between gap-4">
+            <div className="space-y-1">
+              <h2 className="flex items-center gap-2 text-lg uppercase tracking-tighter font-black">
+                <ShieldAlert className="w-5 h-5 text-red-500" />
+                System Control
+              </h2>
+              <p className="text-xs text-muted-foreground font-medium">Zentrale Steuerung der App-Module und Zugriffsberechtigungen.</p>
             </div>
-          </CardHeader>
-          <CardContent className="pt-8 space-y-10">
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Sammelkarten Ökosystem */}
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 pb-2 border-b">
-                <Sparkles className="w-4 h-4 text-primary" />
-                <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground">Sammelkarten-Ökosystem</h3>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <FeatureStatusToggle
+            <Card className="border-2 overflow-hidden">
+              <CardHeader className="py-3 px-4 bg-muted/30 border-b">
+                <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                  <Sparkles className="w-3 h-3" />
+                  Sammelkarten-Ökosystem
+                </h3>
+              </CardHeader>
+              <div className="divide-y">
+                <CompactFeatureToggleRow
                   label="Karten & Album"
                   description="Zugriff auf die Sammlungen"
                   icon={<Sparkles className="w-4 h-4" />}
                   status={features?.sammelkarten_status}
-                  onStatusChange={(s) => updateFeatureStatus('sammelkarten_status', s)}
+                  onUpdate={(s) => updateFeatureStatus('sammelkarten_status', s)}
+                  availableGroups={availableGroups}
                 />
-                <FeatureStatusToggle
+                <CompactFeatureToggleRow
                   label="Trading & Tausch"
                   description="Interaktion zwischen Spielern"
                   icon={<ArrowLeftRight className="w-4 h-4" />}
                   status={features?.trading_status}
-                  onStatusChange={(s) => updateFeatureStatus('trading_status', s)}
+                  onUpdate={(s) => updateFeatureStatus('trading_status', s)}
+                  availableGroups={availableGroups}
                 />
-                <FeatureStatusToggle
+                <CompactFeatureToggleRow
                   label="Kampf-System"
                   description="Duelle gegen andere Schüler"
                   icon={<Swords className="w-4 h-4" />}
                   status={features?.combat_status}
-                  onStatusChange={(s) => updateFeatureStatus('combat_status', s)}
+                  onUpdate={(s) => updateFeatureStatus('combat_status', s)}
+                  availableGroups={availableGroups}
                 />
-                <FeatureStatusToggle
+                <CompactFeatureToggleRow
                   label="Shop & Stripe"
                   description="Finanztransaktionen & Booster"
                   icon={<ShoppingBag className="w-4 h-4" />}
                   status={features?.shop_status}
-                  onStatusChange={(s) => updateFeatureStatus('shop_status', s)}
+                  onUpdate={(s) => updateFeatureStatus('shop_status', s)}
+                  availableGroups={availableGroups}
                 />
               </div>
-            </div>
+            </Card>
 
             {/* Planungs-Tools */}
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 pb-2 border-b">
-                <Calendar className="w-4 h-4 text-primary" />
-                <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground">Planungs-Tools & Kommunikation</h3>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <FeatureStatusToggle
+            <Card className="border-2 overflow-hidden">
+              <CardHeader className="py-3 px-4 bg-muted/30 border-b">
+                <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                  <Calendar className="w-3 h-3" />
+                  Planungs-Tools & Kommunikation
+                </h3>
+              </CardHeader>
+              <div className="divide-y">
+                <CompactFeatureToggleRow
                   label="News Feed"
                   description="Ankündigungen & Push-Infos"
                   icon={<Megaphone className="w-4 h-4" />}
                   status={features?.news_status}
-                  onStatusChange={(s) => updateFeatureStatus('news_status', s)}
+                  onUpdate={(s) => updateFeatureStatus('news_status', s)}
+                  availableGroups={availableGroups}
                 />
-                <FeatureStatusToggle
+                <CompactFeatureToggleRow
                   label="Terminkalender"
                   description="Event-Planung & Deadlines"
                   icon={<Calendar className="w-4 h-4" />}
                   status={features?.calendar_status}
-                  onStatusChange={(s) => updateFeatureStatus('calendar_status', s)}
+                  onUpdate={(s) => updateFeatureStatus('calendar_status', s)}
+                  availableGroups={availableGroups}
                 />
-                <FeatureStatusToggle
+                <CompactFeatureToggleRow
                   label="Todo-Listen"
                   description="Aufgabenmanagement"
                   icon={<CheckSquare className="w-4 h-4" />}
                   status={features?.todos_status}
-                  onStatusChange={(s) => updateFeatureStatus('todos_status', s)}
+                  onUpdate={(s) => updateFeatureStatus('todos_status', s)}
+                  availableGroups={availableGroups}
                 />
-                <FeatureStatusToggle
+                <CompactFeatureToggleRow
                   label="Umfragen"
                   description="Interaktive Abstimmungen"
                   icon={<BarChart2 className="w-4 h-4" />}
                   status={features?.polls_status}
-                  onStatusChange={(s) => updateFeatureStatus('polls_status', s)}
+                  onUpdate={(s) => updateFeatureStatus('polls_status', s)}
+                  availableGroups={availableGroups}
+                />
+                <CompactFeatureToggleRow
+                  label="Gruppen & Chat"
+                  description="Team-Kommunikation & Gruppen"
+                  icon={<Users className="w-4 h-4" />}
+                  status={features?.groups_status}
+                  onUpdate={(s) => updateFeatureStatus('groups_status', s)}
+                  availableGroups={availableGroups}
                 />
               </div>
-            </div>
-            
-            <div className="pt-6 border-t space-y-6">
-              <div className="flex items-center justify-between gap-2 mb-2">
+            </Card>
+          </div>
+          
+          <Card className="border-2">
+            <CardHeader className="bg-muted/30 border-b py-4">
+              <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
                   <Construction className="w-5 h-5 text-amber-500" />
                   <h3 className="font-black uppercase tracking-tight text-sm">Wartungspause & Sperre</h3>
@@ -173,7 +226,8 @@ export default function AdminSystemControl() {
                   </Button>
                 )}
               </div>
-
+            </CardHeader>
+            <CardContent className="pt-6 space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Beginn der Wartung</Label>
@@ -207,9 +261,8 @@ export default function AdminSystemControl() {
                   placeholder="Wir führen Wartungsarbeiten durch..."
                   value={maintenance?.message || ''}
                   className="min-h-[80px] text-xs"
-                  onChange={() => {
-                    // We use a local state or just call handleSaveMaintenance on blur
-                    // For simplicity, we'll just use the context's maintenance and call handleSaveMaintenance
+                  onChange={(e) => {
+                    // Local update for UI responsiveness if needed, but here we just update on blur
                   }}
                   onBlur={(e) => handleSaveMaintenance({ ...maintenance, message: e.target.value })}
                 />
@@ -267,10 +320,27 @@ export default function AdminSystemControl() {
                     Reset
                   </Button>
                 </div>
+
+                <div className="flex items-center justify-between p-4 rounded-xl border border-muted/30 bg-muted/10">
+                  <div className="space-y-0.5">
+                    <p className="text-xs font-black uppercase tracking-tight">NFT Avatare</p>
+                    <p className="text-[10px] text-muted-foreground">Alle Profilbilder neu generieren.</p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 text-[10px] font-black uppercase tracking-widest border-primary/20 text-primary hover:bg-primary/5"
+                    onClick={handleMigrateAvatars}
+                    disabled={migratingAvatars}
+                  >
+                    <RefreshCw className={cn('w-3 h-3 mr-1.5', migratingAvatars && 'animate-spin')} />
+                    Migrieren
+                  </Button>
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   )

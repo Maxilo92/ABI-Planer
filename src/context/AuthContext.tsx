@@ -128,15 +128,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const syncSession = async () => {
         if (!auth.currentUser) {
           try {
+            console.log('[AuthContext] Checking cross-subdomain session sync...')
             const res = await fetch('/api/auth/session')
             const data = await res.json()
+            
             if (data.isOnline && data.customToken) {
-              console.log('[AuthContext] Syncing session from cross-subdomain cookie...')
+              console.log('[AuthContext] Syncing session from cross-subdomain cookie... UID:', data.uid)
               await signInWithCustomToken(auth, data.customToken)
+              console.log('[AuthContext] Session sync successful.')
+            } else {
+              console.log('[AuthContext] No valid cross-subdomain session found.', data)
             }
           } catch (err) {
             console.error('[AuthContext] Session sync failed:', err)
           }
+        } else {
+          console.log('[AuthContext] Already logged in, skipping session sync.')
         }
       }
       syncSession()
@@ -263,6 +270,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         // Identify in PostHog
         posthog.identify(user.uid, {
           email: user.email,
+          is_authenticated: true,
         })
 
         // Create session cookie if it doesn't exist or just to keep it fresh

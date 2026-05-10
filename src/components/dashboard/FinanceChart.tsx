@@ -439,83 +439,80 @@ export function FinanceChart({ finances, shopEarnings, settings, loading }: Fina
 
   return (
     <Card className="overflow-hidden border-none shadow-card">
-      <CardHeader className="flex flex-col space-y-4 pb-4 sm:pb-7">
-        <div className="flex flex-row items-center justify-between gap-2">
-          <div className="space-y-0.5">
-            <CardTitle className="text-sm sm:text-base font-bold flex items-center gap-2">
-              <TrendingUp className="h-4 w-4 text-primary shrink-0" />
-              <span className="truncate">Entwicklung</span>
-            </CardTitle>
-            <p className="hidden sm:block text-xs text-muted-foreground">Historischer Verlauf und Prognose</p>
-          </div>
-          <div className="flex flex-col items-end gap-2">
-            <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as ViewMode)} className="w-fit">
-              <TabsList className="h-7 sm:h-8 bg-muted/50 p-0.5 sm:p-1">
-                <TabsTrigger value="week" className="text-[9px] sm:text-[10px] px-1.5 sm:px-2 h-6">Woche</TabsTrigger>
-                <TabsTrigger value="month" className="text-[9px] sm:text-[10px] px-1.5 sm:px-2 h-6">Monat</TabsTrigger>
-                <TabsTrigger value="year" className="text-[9px] sm:text-[10px] px-1.5 sm:px-2 h-6">Jahr</TabsTrigger>
-              </TabsList>
-            </Tabs>
-            {chartData?.projectedDate && (
-              <p className="text-[9px] sm:text-[10px] font-medium text-warning bg-warning/5 px-2 py-0.5 rounded-full border border-warning/10 whitespace-nowrap">
-                Ziel-Erreichung: {format(chartData.projectedDate, 'dd.MM.yyyy', { locale: de })}
-              </p>
-            )}
-          </div>
-        </div>
-
-        <div className="flex items-center justify-between gap-2 bg-muted/30 p-1 sm:p-1.5 rounded-xl border border-border/40">
-          <div className="flex items-center">
-            <Button variant="ghost" size="icon" className="h-7 w-7 sm:h-8 sm:w-8" onClick={() => navigate(-1)}>
-              <ChevronLeft className="h-3.5 w-3.5" />
-            </Button>
-            <div className="flex items-center gap-1.5 px-1 sm:px-2 min-w-[80px] sm:min-w-[120px] justify-center">
-              <CalendarIcon className="hidden xs:block h-3 w-3 text-muted-foreground" />
-              <span className="text-[10px] sm:text-xs font-bold whitespace-nowrap">
+      <CardHeader className="p-2 sm:p-3 space-y-0">
+        <div className="flex flex-wrap items-center justify-between gap-y-2 gap-x-3">
+          {/* Left: Title & Navigation */}
+          <div className="flex items-center gap-2 bg-muted/30 p-1 pr-2 rounded-lg border border-border/40">
+            <div className="flex items-center">
+              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => navigate(-1)}>
+                <ChevronLeft className="h-3.5 w-3.5" />
+              </Button>
+              <span className="text-[11px] font-bold uppercase tracking-tight min-w-[70px] text-center">
                 {viewMode === 'week' && `KW ${format(startDate, 'w')}`}
                 {viewMode === 'month' && format(startDate, 'MMM yy', { locale: de })}
                 {viewMode === 'year' && format(startDate, 'yyyy')}
               </span>
+              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => navigate(1)}>
+                <ChevronRight className="h-3.5 w-3.5" />
+              </Button>
             </div>
-            <Button variant="ghost" size="icon" className="h-7 w-7 sm:h-8 sm:w-8" onClick={() => navigate(1)}>
-              <ChevronRight className="h-3.5 w-3.5" />
+            <div className="h-4 w-[1px] bg-border/60 mx-1" />
+            <CardTitle className="text-[10px] font-bold flex items-center gap-1.5 uppercase tracking-wider text-muted-foreground">
+              <TrendingUp className="h-3.5 w-3.5 text-primary shrink-0" />
+              Entwicklung
+            </CardTitle>
+          </div>
+
+          {/* Right: Tabs & Today Button */}
+          <div className="flex items-center gap-2">
+            <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as ViewMode)} className="w-fit">
+              <TabsList className="h-6 bg-muted/50 p-0.5">
+                <TabsTrigger value="week" className="text-[9px] sm:text-xs px-2 h-5">W</TabsTrigger>
+                <TabsTrigger value="month" className="text-[9px] sm:text-xs px-2 h-5">M</TabsTrigger>
+                <TabsTrigger value="year" className="text-[9px] sm:text-xs px-2 h-5">J</TabsTrigger>
+              </TabsList>
+            </Tabs>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="h-6 text-[10px] uppercase font-bold tracking-widest px-2.5 text-primary hover:bg-primary/5 border border-primary/10 rounded-md"
+              onClick={() => setReferenceDate(new Date())}
+              disabled={isSameDay(referenceDate, new Date())}
+            >
+              Heute
             </Button>
           </div>
-          
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="h-7 sm:h-8 text-[9px] sm:text-[10px] uppercase font-black tracking-widest px-2 sm:px-3 text-primary hover:bg-primary/5"
-            onClick={() => setReferenceDate(new Date())}
-            disabled={isSameDay(referenceDate, new Date())}
-          >
-            Heute
-          </Button>
         </div>
       </CardHeader>
-      <CardContent className="px-1 sm:px-2">
-        <div className="h-[280px] w-full">
+
+      <CardContent className="px-1 pb-1 pt-0">
+        <div className="h-[160px] sm:h-[180px] w-full">
           {loading ? (
             <div className="flex h-full w-full items-center justify-center">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground/20" />
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground/20" />
             </div>
           ) : chartData ? (
             <Line data={chartData as any} options={options} />
           ) : (
-            <div className="flex h-full w-full flex-col items-center justify-center text-muted-foreground italic text-sm">
-              Keine Daten für diesen Zeitraum vorhanden.
+            <div className="flex h-full w-full flex-col items-center justify-center text-muted-foreground italic text-xs">
+              Keine Daten.
             </div>
           )}
         </div>
-        <div className="mt-4 flex items-center justify-center gap-6 pb-2">
-          <div className="flex items-center gap-2">
-            <div className="h-0.5 w-4 bg-blue-500" />
-            <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Verlauf</span>
+        <div className="flex items-center justify-center gap-4 py-1.5">
+          <div className="flex items-center gap-1.5">
+            <div className="h-0.5 w-3 bg-blue-500" />
+            <span className="text-[9px] text-muted-foreground uppercase font-bold tracking-wider">Verlauf</span>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="h-0.5 w-4 border-t-2 border-dashed border-blue-500" />
-            <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Prognose</span>
+          <div className="flex items-center gap-1.5">
+            <div className="h-0.5 w-3 border-t border-dashed border-blue-500" />
+            <span className="text-[9px] text-muted-foreground uppercase font-bold tracking-wider">Prognose</span>
           </div>
+          {chartData?.projectedDate && (
+            <span className="text-[9px] font-bold text-warning uppercase ml-2 bg-warning/5 px-1.5 py-0.5 rounded border border-warning/10">
+              Ziel: {format(chartData.projectedDate, 'dd.MM.yy', { locale: de })}
+            </span>
+          )}
         </div>
       </CardContent>
     </Card>

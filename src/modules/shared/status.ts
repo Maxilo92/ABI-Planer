@@ -71,7 +71,7 @@ const TASK_STATUS_META: Record<Task['status'], TaskStatusMeta> = {
     variant: 'secondary',
   },
   claimed: {
-    label: 'Angenommen',
+    label: 'In Arbeit',
     variant: 'secondary',
     className: 'bg-blue-500 hover:bg-blue-600 text-white',
   },
@@ -81,7 +81,7 @@ const TASK_STATUS_META: Record<Task['status'], TaskStatusMeta> = {
     className: 'bg-yellow-500 hover:bg-yellow-600 text-white',
   },
   rejected: {
-    label: 'Nachbesserung nötig',
+    label: 'Überarbeiten',
     variant: 'destructive',
   },
   completed: {

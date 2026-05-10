@@ -14,6 +14,8 @@ import { Badge } from '@/components/ui/badge'
 import { ShareResourceButton } from '@/components/ui/share-resource-button'
 import { downloadICS } from '@/lib/icsGenerator'
 import { Skeleton } from '@/components/ui/skeleton'
+import { useAuth } from '@/context/AuthContext'
+import { EditEventDialog } from '@/components/modals/EditEventDialog'
 
 function toGoogleDate(date: Date) {
   return date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z')
@@ -21,8 +23,11 @@ function toGoogleDate(date: Date) {
 
 export default function CalendarEventPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
+  const { profile } = useAuth()
   const [event, setEvent] = useState<Event | null>(null)
   const [loading, setLoading] = useState(true)
+
+  const isPlanner = (profile?.role === 'planner' || profile?.role === 'admin_co' || profile?.role === 'admin_main' || profile?.role === 'admin') && profile?.is_approved
 
   useEffect(() => {
     const eventRef = doc(db, 'events', id)
@@ -131,14 +136,19 @@ export default function CalendarEventPage({ params }: { params: Promise<{ id: st
             </Link>
           }
         />
-        <ShareResourceButton
-          resourcePath={`/kalender/${event.id}`}
-          title={event.title}
-          text="Schau dir diesen Termin im ABI Planer an."
-          variant="outline"
-          size="sm"
-          className="gap-2"
-        />
+        <div className="flex items-center gap-2">
+          <ShareResourceButton
+            resourcePath={`/kalender/${event.id}`}
+            title={event.title}
+            text="Schau dir diesen Termin im ABI Planer an."
+            variant="outline"
+            size="sm"
+            className="gap-2"
+          />
+          {isPlanner && (
+            <EditEventDialog event={event} />
+          )}
+        </div>
       </div>
 
       <article className="rounded-2xl border bg-card/65 p-5 md:p-8 space-y-6">

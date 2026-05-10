@@ -10,7 +10,7 @@
 
 Stand: 22. April 2026
 
-Dieses Dokument ist der technische Index fuer Entwickler. Detaillierte Prozesse sind in spezialisierten Dokumenten ausgelagert.
+Dieses Dokument ist der technische Index fuer Entwickler. Das zentrale Handbuch ist `vault/README.md`; detaillierte Prozesse sind in spezialisierten Dokumenten ausgelagert.
 
 ## 1. Technische Kernfakten
 - Frontend: Next.js 16 (App Router), React 19, TypeScript 5, Tailwind CSS 4
@@ -30,6 +30,7 @@ Details:
 - `docs/SECURITY_GUIDE.md`
 - `docs/FIRESTORE_SCHEMA.md`
 - `docs/CLOUD_FUNCTIONS_API.md`
+- `docs/PUSH_NOTIFICATIONS_SETUP.md`
 
 ## 3. Deployment und CI/CD
 - Standard-Workflow: Entwicklung auf `main`.
@@ -61,6 +62,7 @@ Details:
 - `docs/TROUBLESHOOTING.md`
 
 ## 7. Weitere wichtige Quellen
+- `vault/README.md` (zentrales Handbuch fuer Agenten, Architektur, Design und Prozesse)
 - `README.md` (Einstieg)
 - `INSTALL.md` (Setup)
 - `CHANGELOG.md` (Aenderungshistorie)

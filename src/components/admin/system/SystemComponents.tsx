@@ -5,6 +5,18 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Switch } from '@/components/ui/switch'
 import { cn } from '@/lib/utils'
 import { motion, type Variants } from 'framer-motion'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from '@/components/ui/dialog'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Badge } from '@/components/ui/badge'
+import { Label } from '@/components/ui/label'
+import { Button } from '@/components/ui/button'
 import { 
   LineChart as LineChartIcon, 
   BarChart3, 
@@ -16,7 +28,13 @@ import {
   MessageSquare,
   Sparkles,
   TrendingUp,
-  History
+  History,
+  Settings2, 
+  ShieldCheck, 
+  ShieldAlert as ShieldAlertIcon, 
+  Lock, 
+  CheckCircle2,
+  AlertCircle
 } from 'lucide-react'
 import {
   Chart as ChartJS,
@@ -32,7 +50,7 @@ import {
   type ChartOptions,
 } from 'chart.js'
 import { Line, Bar, Pie } from 'react-chartjs-2'
-import type { FeatureStatus, SystemAnalyticsTimelinePoint, SystemAnalyticsActionStat } from '@/types/system'
+import type { FeatureStatus, SystemAnalyticsTimelinePoint, SystemAnalyticsActionStat, SpecificFeatureStatus } from '@/types/system'
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, ArcElement, Filler, Tooltip, Legend)
 
@@ -316,6 +334,227 @@ export function ChartCard({
   )
 }
 
+export function FeatureStatusDialog({
+  label,
+  status,
+  onUpdate,
+  availableGroups = [],
+  children
+}: {
+  label: string
+  status: FeatureStatus | undefined
+  onUpdate: (status: FeatureStatus) => void
+  availableGroups?: string[]
+  children: ReactNode
+}) {
+  const currentStatus = status || 'enabled'
+  const isSpecific = typeof currentStatus === 'object' && currentStatus !== null && currentStatus.type === 'specific'
+  
+  const [localStatus, setLocalStatus] = useState<FeatureStatus>(currentStatus)
+  const [open, setOpen] = useState(false)
+
+  // Sync local status when dialog opens
+  useEffect(() => {
+    if (open) setLocalStatus(currentStatus)
+  }, [open, currentStatus])
+
+  const handleSave = () => {
+    onUpdate(localStatus)
+    setOpen(false)
+  }
+
+  const toggleRole = (role: string) => {
+    if (typeof localStatus !== 'object') return
+    const roles = localStatus.allowed_roles.includes(role)
+      ? localStatus.allowed_roles.filter(r => r !== role)
+      : [...localStatus.allowed_roles, role]
+    setLocalStatus({ ...localStatus, allowed_roles: roles })
+  }
+
+  const toggleGroup = (group: string) => {
+    if (typeof localStatus !== 'object') return
+    const groups = localStatus.allowed_groups.includes(group)
+      ? localStatus.allowed_groups.filter(g => g !== group)
+      : [...localStatus.allowed_groups, group]
+    setLocalStatus({ ...localStatus, allowed_groups: groups })
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        {children}
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle className="text-sm font-black uppercase tracking-widest">Konfiguration: {label}</DialogTitle>
+        </DialogHeader>
+        
+        <div className="py-4 space-y-6">
+          <div className="space-y-3">
+            <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Status</Label>
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                { id: 'enabled', label: 'Aktiv', icon: <CheckCircle2 className="w-3 h-3" /> },
+                { id: 'disabled', label: 'Deaktiviert', icon: <Lock className="w-3 h-3" /> },
+                { id: 'admins_only', label: 'Nur Admins', icon: <ShieldCheck className="w-3 h-3" /> },
+                { id: 'specific', label: 'Spezifisch', icon: <Settings2 className="w-3 h-3" /> },
+              ].map((s) => (
+                <Button
+                  key={s.id}
+                  variant={
+                    (s.id === 'specific' && typeof localStatus === 'object') || localStatus === s.id 
+                      ? 'default' 
+                      : 'outline'
+                  }
+                  size="sm"
+                  className="h-9 text-[10px] font-black uppercase tracking-widest justify-start gap-2"
+                  onClick={() => {
+                    if (s.id === 'specific') {
+                      setLocalStatus({ type: 'specific', allowed_roles: [], allowed_groups: [] })
+                    } else {
+                      setLocalStatus(s.id as FeatureStatus)
+                    }
+                  }}
+                >
+                  {s.icon}
+                  {s.label}
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          {typeof localStatus === 'object' && (
+            <motion.div 
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="space-y-6 border-t pt-6"
+            >
+              <div className="space-y-3">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Erlaubte Rollen</Label>
+                <div className="grid grid-cols-2 gap-3">
+                  {[
+                    { id: 'admin_main', label: 'Haupt-Admin' },
+                    { id: 'admin_co', label: 'Co-Admin' },
+                    { id: 'admin', label: 'Admin' },
+                    { id: 'planner', label: 'Planer' },
+                    { id: 'student', label: 'Schüler' },
+                  ].map((role) => (
+                    <div key={role.id} className="flex items-center space-x-2">
+                      <Checkbox 
+                        id={`role-${role.id}`} 
+                        checked={localStatus.allowed_roles.includes(role.id)}
+                        onCheckedChange={() => toggleRole(role.id)}
+                      />
+                      <label 
+                        htmlFor={`role-${role.id}`}
+                        className="text-[10px] font-bold uppercase tracking-tight cursor-pointer"
+                      >
+                        {role.label}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {availableGroups.length > 0 && (
+                <div className="space-y-3">
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Erlaubte Gruppen</Label>
+                  <div className="grid grid-cols-2 gap-3 max-h-[120px] overflow-y-auto pr-2">
+                    {availableGroups.map((group) => (
+                      <div key={group} className="flex items-center space-x-2">
+                        <Checkbox 
+                          id={`group-${group}`} 
+                          checked={localStatus.allowed_groups.includes(group)}
+                          onCheckedChange={() => toggleGroup(group)}
+                        />
+                        <label 
+                          htmlFor={`group-${group}`}
+                          className="text-[10px] font-bold uppercase tracking-tight cursor-pointer truncate"
+                        >
+                          {group}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </motion.div>
+          )}
+        </div>
+
+        <DialogFooter>
+          <Button 
+            className="w-full text-[10px] font-black uppercase tracking-widest"
+            onClick={handleSave}
+          >
+            Konfiguration Speichern
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+export function CompactFeatureToggleRow({
+  label,
+  description,
+  icon,
+  status,
+  onUpdate,
+  availableGroups = []
+}: {
+  label: string
+  description: string
+  icon: ReactNode
+  status: FeatureStatus | undefined
+  onUpdate: (status: FeatureStatus) => void
+  availableGroups?: string[]
+}) {
+  const currentStatus = status || 'enabled'
+  const isSpecific = typeof currentStatus === 'object' && currentStatus !== null && currentStatus.type === 'specific'
+  
+  const getStatusBadge = () => {
+    if (currentStatus === 'enabled') {
+      return <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20 hover:bg-emerald-500/20 text-[9px] font-black uppercase tracking-widest">Aktiv</Badge>
+    }
+    if (currentStatus === 'disabled') {
+      return <Badge className="bg-red-500/10 text-red-600 border-red-500/20 hover:bg-red-500/20 text-[9px] font-black uppercase tracking-widest">Gesperrt</Badge>
+    }
+    if (currentStatus === 'admins_only') {
+      return <Badge className="bg-amber-500/10 text-amber-600 border-amber-500/20 hover:bg-amber-500/20 text-[9px] font-black uppercase tracking-widest">Nur Admins</Badge>
+    }
+    if (isSpecific) {
+      return <Badge className="bg-blue-500/10 text-blue-600 border-blue-500/20 hover:bg-blue-500/20 text-[9px] font-black uppercase tracking-widest">Spezifisch</Badge>
+    }
+    return null
+  }
+
+  return (
+    <div className="flex items-center justify-between py-3 px-4 hover:bg-muted/30 transition-colors group">
+      <div className="flex items-center gap-4 min-w-0">
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/5 text-primary group-hover:bg-primary/10 transition-colors">
+          {icon}
+        </div>
+        <div className="min-w-0">
+          <p className="text-xs font-black uppercase tracking-tight truncate">{label}</p>
+          <p className="text-[10px] text-muted-foreground line-clamp-1">{description}</p>
+        </div>
+      </div>
+      
+      <FeatureStatusDialog 
+        label={label} 
+        status={currentStatus} 
+        onUpdate={onUpdate} 
+        availableGroups={availableGroups}
+      >
+        <button className="shrink-0 focus:outline-none">
+          {getStatusBadge()}
+        </button>
+      </FeatureStatusDialog>
+    </div>
+  )
+}
+
 export function FeatureStatusToggle({
   label,
   description,
@@ -330,6 +569,8 @@ export function FeatureStatusToggle({
   onStatusChange: (status: FeatureStatus) => void
 }) {
   const currentStatus = status || 'enabled'
+  const isSpecific = typeof currentStatus === 'object' && currentStatus !== null && currentStatus.type === 'specific'
+  const statusId = isSpecific ? 'specific' : currentStatus as string
 
   return (
     <div className="flex items-start gap-4 rounded-xl border bg-card p-4 transition-all hover:shadow-md">
@@ -345,14 +586,21 @@ export function FeatureStatusToggle({
           {[
             { id: 'disabled', label: 'Gesperrt', color: 'bg-red-500/10 text-red-600 border-red-500/20' },
             { id: 'admins_only', label: 'Nur Admins', color: 'bg-amber-500/10 text-amber-600 border-amber-500/20' },
+            { id: 'specific', label: 'Spezifisch', color: 'bg-blue-500/10 text-blue-600 border-blue-500/20' },
             { id: 'enabled', label: 'Aktiv', color: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' },
           ].map((s) => (
             <button
               key={s.id}
-              onClick={() => onStatusChange(s.id as FeatureStatus)}
+              onClick={() => {
+                if (s.id === 'specific') {
+                  onStatusChange({ type: 'specific', allowed_roles: [], allowed_groups: [] })
+                } else {
+                  onStatusChange(s.id as FeatureStatus)
+                }
+              }}
               className={cn(
                 'px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-widest border transition-all',
-                currentStatus === s.id
+                statusId === s.id
                   ? s.color
                   : 'bg-secondary text-muted-foreground border-transparent hover:border-border'
               )}

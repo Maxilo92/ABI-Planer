@@ -1,11 +1,13 @@
 'use client'
 
 import { useMemo } from 'react'
-import { Check, ChevronDown } from 'lucide-react'
+import { Check, ChevronDown, Lock, Sparkles } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { doc, updateDoc } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import { useAuth } from '@/context/AuthContext'
+import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
 
 import { useAccentTheme } from '@/context/AccentThemeProvider'
 import { Button } from '@/components/ui/button'
@@ -15,17 +17,27 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { getAccentThemePresetsForMode } from '@/lib/accentThemePresets'
+import { getAccentThemePresetsForMode, isPremiumAccentThemePreset } from '@/lib/accentThemePresets'
 import { cn } from '@/lib/utils'
 
 export function AccentThemeSelector() {
   const { presetId, activePreset, setPresetId } = useAccentTheme()
-  const { user } = useAuth()
+  const { user, profile } = useAuth()
+  const router = useRouter()
   const { resolvedTheme } = useTheme()
   const themeMode = resolvedTheme === 'dark' ? 'dark' : 'light'
   const availablePresets = useMemo(() => getAccentThemePresetsForMode(themeMode), [themeMode])
+  const hasPremiumThemes = Boolean(profile?.cosmetics?.premium_themes)
 
   const handleSetPreset = async (id: string) => {
+    if (isPremiumAccentThemePreset(id) && !hasPremiumThemes) {
+      toast.info('Premium-Themes sind kostenpflichtig.', {
+        description: 'Du kannst sie im Cosmetics-Shop freischalten.',
+      })
+      router.push('/shop?category=cosmetics')
+      return
+    }
+
     setPresetId(id)
     if (user) {
       try {
@@ -67,6 +79,7 @@ export function AccentThemeSelector() {
         <DropdownMenuContent align="end" className="w-56">
           {availablePresets.map((preset) => {
             const isActive = preset.id === presetId
+            const isLocked = isPremiumAccentThemePreset(preset.id) && !hasPremiumThemes
 
             return (
               <DropdownMenuItem
@@ -74,7 +87,8 @@ export function AccentThemeSelector() {
                 onClick={() => handleSetPreset(preset.id)}
                 className={cn(
                   'flex flex-col gap-1 py-2 px-3 cursor-pointer',
-                  isActive && 'bg-brand/10'
+                  isActive && 'bg-brand/10',
+                  isLocked && 'opacity-70'
                 )}
               >
                 <div className="flex items-center justify-between gap-2 w-full">
@@ -92,8 +106,14 @@ export function AccentThemeSelector() {
                       />
                     </div>
                     <span className="text-sm font-medium">{preset.label}</span>
+                    {isLocked && (
+                      <span className="inline-flex items-center gap-1 rounded-full border border-border px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider text-muted-foreground">
+                        <Lock className="h-3 w-3" />
+                        Paid
+                      </span>
+                    )}
                   </div>
-                  {isActive ? <Check className="h-4 w-4 text-brand shrink-0" /> : null}
+                  {isActive ? <Check className="h-4 w-4 text-brand shrink-0" /> : isLocked ? <Sparkles className="h-4 w-4 text-muted-foreground shrink-0" /> : null}
                 </div>
                 <p className="text-xs text-muted-foreground pl-9 leading-snug">{preset.description}</p>
               </DropdownMenuItem>
@@ -106,6 +126,9 @@ export function AccentThemeSelector() {
           ) : null}
         </DropdownMenuContent>
       </DropdownMenu>
+      <p className="text-[11px] text-muted-foreground leading-relaxed">
+        Hell/Dunkel bleiben gratis. Premium-Themes und weitere Cosmetics schaltest du im Shop frei.
+      </p>
     </div>
   )
 }

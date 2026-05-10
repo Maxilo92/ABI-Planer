@@ -204,9 +204,9 @@ export function ClassRanking({
       </CardHeader>
       
       <CardContent className="p-0 flex-1 flex flex-col min-h-0 bg-card">
-        <div className={useScrollContainer ? "flex-1 overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-muted-foreground/20" : "overflow-x-hidden"}>
+        <div className={useScrollContainer ? "max-h-[320px] overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-muted-foreground/20" : "overflow-x-hidden"}>
           {displayedStats.map((s, index) => (
-            <div key={s.className} className="flex items-center justify-between p-3 min-h-[58px] transition-colors hover:bg-muted/20 group">
+            <div key={s.className} className="flex items-center justify-between p-2.5 min-h-[52px] transition-colors hover:bg-muted/20 group border-b border-border/10 last:border-0">
               <div className="flex items-center gap-3">
                 <div className={`flex items-center justify-center h-7 w-7 rounded-full text-[10px] font-bold ${
                   index === 0 ? 'bg-yellow-500/20 text-yellow-600 dark:text-yellow-500' : 
@@ -218,7 +218,7 @@ export function ClassRanking({
                 </div>
                 <div>
                   <p className="text-xs font-semibold tracking-tight leading-none">Kurs {s.className}</p>
-                  <div className="w-24 h-1 bg-muted rounded-full mt-1.5 overflow-hidden">
+                  <div className="w-18 h-1 bg-muted rounded-full mt-1.5 overflow-hidden">
                     <div 
                       className={`h-full rounded-full transition-all duration-500 ${
                         index === 0 ? 'bg-primary' : 'bg-primary/40'
@@ -241,40 +241,27 @@ export function ClassRanking({
         </div>
 
         {/* Tip section - sticky at bottom */}
-        <div className="p-3 bg-muted/20 border-t border-border/40 shrink-0 space-y-2">
-          <div className="flex items-start gap-2.5 bg-background/50 rounded-xl p-2.5 border border-border/40">
-            <div className="mt-0.5 bg-primary/10 p-1 rounded-lg shrink-0">
+        <div className="p-2.5 bg-muted/20 border-t border-border/40 shrink-0 space-y-2">
+          <div className="flex items-start gap-2.5 bg-background/50 rounded-lg p-2 border border-border/40">
+            <div className="mt-0.5 bg-primary/10 p-0.5 rounded shrink-0">
               <Lightbulb className="h-3.5 w-3.5 text-primary" />
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-extrabold text-primary uppercase tracking-[0.1em] leading-tight mb-0.5">Ranking-Tipp</p>
-              <p className="text-[11px] text-muted-foreground leading-normal">
-                Kurs <span className="font-bold text-foreground">{lastPlace.className}</span> ist aktuell das Schlusslicht.
-              </p>
-            </div>
+            <p className="text-[11px] text-muted-foreground leading-tight">
+              Kurs <span className="font-bold text-foreground">{lastPlace.className}</span> ist aktuell das Schlusslicht.
+            </p>
           </div>
-          <div className="flex items-start gap-2.5 bg-background/50 rounded-xl p-2.5 border border-border/40">
-            <div className="mt-0.5 bg-primary/10 p-1 rounded-lg shrink-0">
-              <Info className="h-3.5 w-3.5 text-primary" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-extrabold text-primary uppercase tracking-[0.1em] leading-tight mb-0.5">Kurs-Ziel</p>
-              <p className="text-[11px] text-muted-foreground leading-normal">
-                Jeder Kurs hat ein Ziel von <span className="font-bold text-foreground">{(goal / Math.max(courses.length, 1)).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}</span> ({goal.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })} Gesamtziel / {courses.length} Kurse).
-              </p>
-            </div>
-          </div>
+          
           {showManualCorrection && canEditLeaderboard && (
-            <div className="space-y-2.5 bg-background/50 rounded-xl p-2.5 border border-border/40">
-              <p className="text-[10px] font-extrabold text-primary uppercase tracking-[0.1em] leading-tight">Manuelle Korrektur (Leaderboard)</p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div className="space-y-2 bg-background/50 rounded-lg p-2 border border-border/40">
+              <p className="text-[9px] font-extrabold text-primary uppercase tracking-[0.1em] leading-tight">Korrektur</p>
+              <div className="grid grid-cols-1 gap-2">
                 {displayedStats.map((entry) => (
-                  <label key={`adjustment-${entry.className}`} className="flex items-center justify-between gap-2 rounded-lg border border-border/50 bg-card px-2 py-1.5">
-                    <span className="text-[11px] font-semibold text-foreground">Kurs {entry.className}</span>
+                  <label key={`adjustment-${entry.className}`} className="flex items-center justify-between gap-1.5 rounded border border-border/50 bg-card px-1.5 py-1">
+                    <span className="text-[10px] font-semibold text-foreground truncate">K {entry.className}</span>
                     <input
                       type="text"
                       inputMode="decimal"
-                      className="w-24 h-7 rounded-md border border-border bg-background px-2 text-right text-[11px] font-semibold outline-none focus:ring-2 focus:ring-primary/30"
+                      className="w-12 h-6 rounded border border-border bg-background px-1 text-right text-[10px] font-semibold outline-none focus:ring-1 focus:ring-primary/30"
                       value={adjustmentDrafts[entry.className] ?? ''}
                       onChange={(event) => handleAdjustmentInput(entry.className, event.target.value)}
                       placeholder="0"
@@ -284,19 +271,19 @@ export function ClassRanking({
               </div>
               <Button
                 type="button"
-                className="w-full h-8 text-[10px] font-black uppercase tracking-[0.14em]"
+                className="w-full h-7 text-[9px] font-black uppercase tracking-[0.1em]"
                 disabled={savingAdjustments}
                 onClick={handleSaveAdjustments}
               >
-                {savingAdjustments ? 'Speichert...' : 'Korrekturen speichern'}
+                {savingAdjustments ? '...' : 'Speichern'}
               </Button>
             </div>
           )}
           <Link 
             href={infoLink} 
-            className="flex items-center justify-center gap-1 w-full py-1.5 text-[10px] font-bold text-primary uppercase tracking-widest hover:bg-primary/5 rounded-lg transition-colors border border-primary/10"
+            className="flex items-center justify-center gap-1.5 w-full py-1.5 text-[10px] font-bold text-primary uppercase tracking-widest hover:bg-primary/5 rounded transition-colors border border-primary/10"
           >
-            Mehr Infos <ChevronRight className="h-3 w-3" />
+            Details <ChevronRight className="h-3 w-3" />
           </Link>
         </div>
       </CardContent>

@@ -154,7 +154,10 @@ service cloud.firestore {
         // Case 3: Submitting proof for a claimed task
         (resource.data.status in ['claimed', 'rejected'] && resource.data.assignee_id == request.auth.uid &&
          request.resource.data.status == 'in_review' &&
-         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'proof_media_url', 'proof_media_type', 'proof_storage_path', 'submitted_at']))
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'proof_media_url', 'proof_media_type', 'proof_storage_path', 'submitted_at'])) ||
+
+        // Case 4: Incrementing view count
+        (isApproved() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['view_count', 'viewed_by']))
       );
       allow delete: if isAdmin();
     }
@@ -499,6 +502,11 @@ service cloud.firestore {
       allow write: if isServiceAccount(); // Only Cloud Functions can write
     }
 
+    match /ai_chat_sessions/{sessionId} {
+      allow read, update, delete: if isAuthenticated() && resource.data.user_id == request.auth.uid;
+      allow create: if isAuthenticated() && request.resource.data.user_id == request.auth.uid;
+    }
+
     match /rate_limits/{docId} {
       allow read: if isServiceAccount() || isAdmin();
       allow write: if isServiceAccount(); // Only Cloud Functions can write
@@ -534,6 +542,11 @@ service cloud.firestore {
 
     match /system_checks/{checkId} {
       allow read, write: if isAdmin();
+    }
+
+    match /ads/{adId} {
+      allow read: if true;
+      allow write: if isPlanner();
     }
 
     match /custom_card_designs/{designId} {

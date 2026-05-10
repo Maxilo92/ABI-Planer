@@ -5,7 +5,7 @@ import { db } from '@/lib/firebase'
 import { doc, getDoc, collection, getDocs } from 'firebase/firestore'
 import { useAuth } from '@/context/AuthContext'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { BarChart2, ArrowLeft, Users, Lightbulb } from 'lucide-react'
+import { BarChart2, ArrowLeft, Users, Lightbulb, Download } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { PollList } from '@/components/dashboard/PollList'
 import { Poll, PollOption, PollVote } from '@/types/database'
@@ -13,14 +13,21 @@ import { ProtectedSystemGate } from '@/components/ui/ProtectedSystemGate'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import Link from 'next/link'
+import { toast } from 'sonner'
+
+interface PollSubmission {
+  id: string
+  text: string
+  user_name?: string
+  user_id?: string
+}
 
 export default function SinglePollPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const { user, profile, loading: authLoading } = useAuth()
   const [poll, setPoll] = useState<Poll | null>(null)
-  const [submissions, setSubmissions] = useState<any[]>([])
+  const [submissions, setSubmissions] = useState<PollSubmission[]>([])
   const [loading, setLoading] = useState(true)
-
   useEffect(() => {
     if (authLoading) return
 
@@ -49,7 +56,7 @@ export default function SinglePollPage({ params }: { params: Promise<{ id: strin
             
           if (canSeeDetailsLocal) {
             const subsSnap = await getDocs(collection(db, 'polls', id, 'submissions'))
-            setSubmissions(subsSnap.docs.map(d => ({ id: d.id, ...d.data() })))
+            setSubmissions(subsSnap.docs.map(d => ({ id: d.id, ...d.data() } as PollSubmission)))
           }
         }
         setLoading(false)
@@ -149,6 +156,50 @@ export default function SinglePollPage({ params }: { params: Promise<{ id: strin
     }
   })
 
+  const handleExportCsv = () => {
+    if (!poll) return
+
+    const csvEscape = (value: string) => `"${(value || '').replace(/"/g, '""')}"`
+
+    const header = ['Typ', 'Option / Vorschlag', 'Stimmenanzahl', 'Teilnehmer']
+    const rows: string[][] = []
+
+    // Standard Options
+    if (poll.options) {
+      poll.options.forEach(option => {
+        const optionVotes = poll.votes?.filter(v => 
+          v.option_ids ? v.option_ids.includes(option.id) : v.option_id === option.id
+        ) || []
+        
+        const voters = optionVotes.map(v => v.user_name || 'Unbekannt').join(', ')
+        rows.push(['Option', option.option_text, optionVotes.length.toString(), voters])
+      })
+    }
+
+    // Custom Submissions
+    Object.values(groupedSubmissions).forEach(group => {
+      rows.push(['Vorschlag', group.text, group.users.length.toString(), group.users.join(', ')])
+    })
+
+    const csv = [header, ...rows]
+      .map((row) => row.map((value) => csvEscape(value)).join(','))
+      .join('\n')
+    
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    const fileName = `abstimmung-${poll.question.toLowerCase().replace(/[^a-z0-9]/g, '-')}-${new Date().toISOString().slice(0, 10)}.csv`
+
+    link.href = url
+    link.setAttribute('download', fileName)
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
+
+    toast.success('Umfrageergebnisse erfolgreich exportiert.')
+  }
+
   return (
     <div className="space-y-6 max-w-2xl mx-auto pb-20">
       <div className="flex items-center gap-4">
@@ -173,14 +224,25 @@ export default function SinglePollPage({ params }: { params: Promise<{ id: strin
 
       {canSeeDetails && (
         <Card className="border-none shadow-none bg-transparent">
-          <CardHeader className="px-0">
-            <CardTitle className="text-xl flex items-center gap-2">
-              <BarChart2 className="h-5 w-5 text-primary" />
-              Ergebnisse & Teilnehmer
-            </CardTitle>
-            <CardDescription>
-              Hier siehst du, wer für welche Option gestimmt hat.
-            </CardDescription>
+          <CardHeader className="px-0 flex flex-row items-center justify-between">
+            <div className="space-y-1.5">
+              <CardTitle className="text-xl flex items-center gap-2">
+                <BarChart2 className="h-5 w-5 text-primary" />
+                Ergebnisse & Teilnehmer
+              </CardTitle>
+              <CardDescription>
+                Hier siehst du, wer für welche Option gestimmt hat.
+              </CardDescription>
+            </div>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="gap-2 rounded-xl"
+              onClick={handleExportCsv}
+            >
+              <Download className="h-4 w-4" />
+              Exportieren
+            </Button>
           </CardHeader>
           <CardContent className="px-0">
             <Tabs defaultValue="voters" className="w-full">

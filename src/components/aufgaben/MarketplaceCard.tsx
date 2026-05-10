@@ -1,93 +1,237 @@
 'use client'
 
 import { Task } from '@/types/database'
-import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Zap, Clock, ChevronRight, Briefcase } from 'lucide-react'
+import { Card } from '@/components/ui/card'
+import { Heart } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { motion } from 'framer-motion'
+import { getTaskPlaceholderImage } from '@/lib/utils'
+
 import { getTaskStatusMeta } from '@/modules/shared/status'
 
 interface MarketplaceCardProps {
   task: Task
+  categoryName?: string
+  isFavorite?: boolean
+  onToggleFavorite?: () => void
+  variant?: 'grid' | 'list'
 }
 
-export function MarketplaceCard({ task }: MarketplaceCardProps) {
-  const meta = getTaskStatusMeta(task.status, { completed: 'Erledigt' })
+export function MarketplaceCard({ 
+  task, 
+  categoryName, 
+  isFavorite, 
+  onToggleFavorite,
+  variant = 'grid'
+}: MarketplaceCardProps) {
   const hasImage = task.task_image_urls && task.task_image_urls.length > 0
   
-  return (
-    <motion.div
-      whileHover={{ y: -4 }}
-      transition={{ duration: 0.2 }}
-    >
-      <Link href={`/aufgaben/${task.id}`}>
-        <Card className="h-full overflow-hidden hover:shadow-xl transition-all border-muted-foreground/10 flex flex-col group">
-          {/* Image Section */}
-          <div className="relative aspect-[4/3] w-full bg-muted overflow-hidden">
+  // Status & Label Logic
+  const getStatusInfo = () => {
+    if (task.status === 'open') {
+      if (task.ticket_reduction && task.ticket_reduction > 0) {
+        return { label: 'Geld sparen', className: 'text-green-600' }
+      }
+      if (task.reward_boosters && task.reward_boosters > 0) {
+        return { label: 'Booster sammeln', className: 'text-green-600' }
+      }
+      return { label: 'Jetzt helfen', className: 'text-green-600' }
+    }
+    
+    const meta = getTaskStatusMeta(task.status)
+    const colorClass = task.status === 'completed' 
+      ? 'text-green-600' 
+      : task.status === 'rejected' 
+        ? 'text-destructive' 
+        : 'text-orange-600'
+    
+    return { label: meta.label, className: colorClass }
+  }
+
+  const { label: statusLabel, className: statusClassName } = getStatusInfo()
+
+  // Primary "Price" logic
+  const primaryReward = task.ticket_reduction 
+    ? `-${task.ticket_reduction}€` 
+    : task.reward_boosters 
+      ? `${task.reward_boosters} Booster` 
+      : 'Bonus'
+
+  const secondaryReward = task.ticket_reduction && task.reward_boosters 
+    ? `+ ${task.reward_boosters} Booster` 
+    : null
+
+  const placeholderImage = getTaskPlaceholderImage(task.id, task.placeholder_seed)
+
+  if (variant === 'list') {
+    return (
+      <Card className="overflow-hidden border border-border/60 hover:shadow-md transition-shadow duration-200 flex flex-row bg-white rounded-xl h-32 sm:h-40">
+        <div className="relative aspect-square h-full bg-muted shrink-0 border-r border-border/40">
+          <Link href={`/aufgaben/${task.id}`} className="relative block w-full h-full">
             {hasImage ? (
               <Image 
                 src={task.task_image_urls[0]} 
                 alt={task.title} 
                 fill 
-                className="object-cover group-hover:scale-105 transition-transform duration-500"
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                className="object-cover"
+                sizes="200px"
               />
             ) : (
-              <div className="absolute inset-0 flex flex-col items-center justify-center text-muted-foreground/40 bg-muted/50">
-                <Briefcase className="h-12 w-12 mb-2" />
-                <span className="text-xs font-medium uppercase tracking-wider">Kein Vorschaubild</span>
+              <div className="relative w-full h-full">
+                <Image 
+                  src={placeholderImage} 
+                  alt={task.title} 
+                  fill
+                  className="object-cover brightness-[0.98]"
+                  sizes="200px"
+                />
               </div>
             )}
-            
-            {/* Status Overlay */}
-            <div className="absolute top-2 left-2">
-              <Badge variant={meta.variant} className={`${meta.className} shadow-sm backdrop-blur-sm bg-opacity-90`}>
-                {meta.label}
-              </Badge>
+          </Link>
+
+          {/* Heart Button - Top Left (on image) */}
+          <button 
+            onClick={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              onToggleFavorite?.()
+            }}
+            className="absolute top-2 left-2 p-1.5 rounded-full bg-white/80 backdrop-blur-sm hover:bg-white transition-colors z-10 border border-border/20 shadow-sm"
+          >
+            <Heart 
+              className={`h-3.5 w-3.5 ${isFavorite ? 'fill-red-500 text-red-500' : 'text-muted-foreground'}`} 
+            />
+          </button>
+        </div>
+
+        <div className="flex-grow flex flex-col p-3 sm:p-4 min-w-0">
+          <Link href={`/aufgaben/${task.id}`} className="flex-grow flex flex-col group">
+            <div className="flex justify-between items-start gap-2">
+              <div className="min-w-0">
+                {/* Title */}
+                <h3 className="font-semibold text-sm sm:text-lg leading-tight line-clamp-1 sm:line-clamp-2 text-foreground group-hover:underline mb-0.5 sm:mb-1">
+                  {task.title}
+                </h3>
+
+                {/* Subtitle/Description */}
+                <p className="text-[10px] sm:text-xs text-muted-foreground line-clamp-1">
+                  {categoryName ? `${categoryName} • ` : ''}Lvl {task.complexity}
+                </p>
+              </div>
+
+              {/* Price/Reward Section - Desktop Right */}
+              <div className="hidden sm:flex flex-col items-end shrink-0">
+                <span className="text-xl font-bold text-foreground">
+                  {primaryReward}
+                </span>
+                {secondaryReward && (
+                  <span className="text-xs font-semibold text-muted-foreground">
+                    {secondaryReward}
+                  </span>
+                )}
+              </div>
             </div>
 
-            {/* Reward Badge Overlay */}
-            <div className="absolute bottom-2 right-2 flex items-center gap-1.5 bg-primary px-3 py-1.5 rounded-full text-primary-foreground font-bold shadow-lg animate-in fade-in zoom-in duration-300">
-              <Zap className="h-4 w-4 fill-primary-foreground" />
-              <span>{task.reward_boosters}</span>
+            {/* Price/Reward Section - Mobile Bottom */}
+            <div className="mt-auto flex items-end justify-between">
+              <div className="sm:hidden flex flex-col">
+                <span className="text-lg font-bold text-foreground leading-none">
+                  {primaryReward}
+                </span>
+                {secondaryReward && (
+                  <span className="text-[10px] font-semibold text-muted-foreground">
+                    {secondaryReward}
+                  </span>
+                )}
+              </div>
+
+              {/* Footer Info Row */}
+              <div className="flex items-center gap-1.5">
+                <span className={`text-[10px] sm:text-xs font-medium ${statusClassName}`}>
+                  {statusLabel}
+                </span>
+              </div>
             </div>
-          </div>
+          </Link>
+        </div>
+      </Card>
+    )
+  }
 
-          <CardHeader className="p-4 flex-grow space-y-2">
-            <h3 className="font-bold text-lg leading-tight line-clamp-2 group-hover:text-primary transition-colors">
-              {task.title}
-            </h3>
-            <p className="text-sm text-muted-foreground line-clamp-2">
-              {task.description}
-            </p>
-          </CardHeader>
+  return (
+    <Card className="h-full overflow-hidden border border-border/60 hover:shadow-md transition-shadow duration-200 flex flex-col bg-white rounded-xl">
+      <div className="relative aspect-square w-full bg-muted shrink-0 border-b border-border/40">
+        <Link href={`/aufgaben/${task.id}`} className="relative block w-full h-full">
+          {hasImage ? (
+            <Image 
+              src={task.task_image_urls[0]} 
+              alt={task.title} 
+              fill 
+              className="object-cover"
+              sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
+            />
+          ) : (
+            <div className="relative w-full h-full">
+              <Image 
+                src={placeholderImage} 
+                alt={task.title} 
+                fill
+                className="object-cover brightness-[0.98]"
+                sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
+              />
+            </div>
+          )}
+        </Link>
 
-          <CardContent className="px-4 pb-2 pt-0">
-            <div className="flex flex-wrap gap-2">
-              <Badge variant="outline" className="text-[10px] py-0 h-5">
-                Lvl {task.complexity}
-              </Badge>
-              {task.assignee_id && (
-                <Badge variant="secondary" className="text-[10px] py-0 h-5">
-                  Vergeben
-                </Badge>
+        {/* Heart Button - Top Right */}
+        <button 
+          onClick={(e) => {
+            e.preventDefault()
+            e.stopPropagation()
+            onToggleFavorite?.()
+          }}
+          className="absolute top-2 right-2 p-2 rounded-full bg-white/80 backdrop-blur-sm hover:bg-white transition-colors z-10 border border-border/20 shadow-sm"
+        >
+          <Heart 
+            className={`h-4 w-4 ${isFavorite ? 'fill-red-500 text-red-500' : 'text-muted-foreground'}`} 
+          />
+        </button>
+      </div>
+
+      <div className="flex-grow flex flex-col p-3">
+        <Link href={`/aufgaben/${task.id}`} className="flex-grow flex flex-col group">
+          {/* Title */}
+          <h3 className="font-semibold text-sm sm:text-base leading-snug line-clamp-2 text-foreground group-hover:underline mb-1">
+            {task.title}
+          </h3>
+
+          {/* Subtitle/Description */}
+          <p className="text-xs text-muted-foreground line-clamp-1 mb-2">
+            {categoryName ? `${categoryName} • ` : ''}Lvl {task.complexity}
+          </p>
+
+          {/* Price/Reward Section */}
+          <div className="mt-auto">
+            <div className="flex items-baseline gap-1.5 mb-1">
+              <span className="text-xl font-bold text-foreground">
+                {primaryReward}
+              </span>
+              {secondaryReward && (
+                <span className="text-xs font-semibold text-muted-foreground">
+                  {secondaryReward}
+                </span>
               )}
             </div>
-          </CardContent>
 
-          <CardFooter className="p-4 pt-2 border-t bg-muted/30 flex justify-between items-center text-xs text-muted-foreground">
-            <div className="flex items-center gap-1.5">
-              <Clock className="h-3.5 w-3.5" />
-              <span>{new Date(typeof task.created_at === 'object' && 'seconds' in task.created_at ? task.created_at.seconds * 1000 : task.created_at).toLocaleDateString()}</span>
+            {/* Footer Info Row */}
+            <div className="flex items-center gap-1.5 mt-2">
+              <span className={`text-[11px] font-medium ${statusClassName}`}>
+                {statusLabel}
+              </span>
             </div>
-            <div className="flex items-center gap-1 text-primary font-bold">
-              Details <ChevronRight className="h-3.5 w-3.5" />
-            </div>
-          </CardFooter>
-        </Card>
-      </Link>
-    </motion.div>
+          </div>
+        </Link>
+      </div>
+    </Card>
   )
 }

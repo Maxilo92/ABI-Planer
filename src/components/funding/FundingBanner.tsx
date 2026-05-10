@@ -30,18 +30,26 @@ export function FundingBanner({
   bannerId,
   className,
 }: FundingBannerProps) {
-  const [collapsed, setCollapsed] = useState(false)
+  const [collapsed, setCollapsed] = useState(() => {
+    if (typeof window === 'undefined') return false
+    try {
+      return window.localStorage.getItem(storageKey) === '1'
+    } catch (e) {
+      return false
+    }
+  })
 
   useEffect(() => {
     try {
       const stored = window.localStorage.getItem(storageKey)
-      if (stored === '1') {
-        setCollapsed(true)
+      const isCollapsed = stored === '1'
+      if (collapsed !== isCollapsed) {
+        setCollapsed(isCollapsed)
       }
     } catch (error) {
       console.error('Error restoring funding banner state:', error)
     }
-  }, [storageKey])
+  }, [storageKey, collapsed])
 
   const toggleCollapsed = () => {
     setCollapsed((previous) => {
@@ -127,7 +135,7 @@ export function FundingBanner({
           className={cn('border-t border-border/60 pt-4 mt-4 animate-in slide-in-from-top-2 duration-300', collapsed && 'hidden')}
         >
           <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed italic">
-            Dieser Pool ist strikt von eurer Abikasse getrennt. Während eure Beiträge hier die technische Infrastruktur (Server, Hosting, Domain) sichern, fließen alle regulären Einnahmen und direkten Spenden zu 100% in euer Budget für Abiball und Events.
+            Dieser Pool ist strikt von eurer Abikasse getrennt. Beiträge hier sichern die technische Infrastruktur, den Betrieb und die Weiterentwicklung der Seite. Alle Abi-Einnahmen bleiben dagegen vollständig beim Jahrgang.
           </p>
         </div>
       </CardContent>

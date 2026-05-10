@@ -1366,17 +1366,24 @@ export const joinMatchByCode = onCall({
   try {
     const q = db.collection("matches")
       .where("inviteCode", "==", inviteCode)
-      .where("status", "==", "waiting_for_opponent")
       .limit(1);
     
     const snapshot = await q.get();
-    if (snapshot.empty) throw new HttpsError("not-found", "Match not found or already full");
+    if (snapshot.empty) {
+      throw new HttpsError("not-found", "Match-Code ungültig oder Match existiert nicht.");
+    }
 
     const matchDoc = snapshot.docs[0];
     const matchId = matchDoc.id;
     const matchData = matchDoc.data() as any;
 
-    if (matchData.playerA_uid === uid) throw new HttpsError("failed-precondition", "You cannot join your own match");
+    if (matchData.status !== 'waiting_for_opponent') {
+      throw new HttpsError("failed-precondition", "Dieses Match ist bereits voll oder gestartet.");
+    }
+
+    if (matchData.playerA_uid === uid) {
+      throw new HttpsError("failed-precondition", "Du kannst deinem eigenen Match nicht beitreten.");
+    }
 
     const [deckSnap, statsSnap, profileSnap, teachersSnap] = await Promise.all([
       db.collection("user_decks").doc(deckId).get(),
@@ -1385,17 +1392,17 @@ export const joinMatchByCode = onCall({
       db.collection("user_teachers").doc(uid).get()
     ]);
 
-    if (!deckSnap.exists) throw new HttpsError("not-found", "Deck not found");
+    if (!deckSnap.exists) throw new HttpsError("not-found", "Deck nicht gefunden.");
 
-    const teachersData = teachersSnap.exists ? teachersSnap.data() : {};
+    const teachersData = teachersSnap.exists ? (teachersSnap.data()?.teachers || {}) : {};
     const playerElo = statsSnap.exists ? (statsSnap.data()?.elo || 1000) : 1000;
     const playerCards = (deckSnap.data()?.cardIds || []).map((id: string, i: number) => {
-      const teacherData = teachersData?.[id] || {};
+      const teacherData = teachersData[id] || {};
       const variant = getBestVariant(teacherData.variants);
       return createCombatCard(id, `p-${i}`, variant);
     }).filter(Boolean);
 
-    if (playerCards.length === 0) throw new HttpsError("failed-precondition", "Deck is empty or invalid");
+    if (playerCards.length === 0) throw new HttpsError("failed-precondition", "Deck ist leer oder ungültig.");
 
     // Shuffle cards for randomization
     const shuffledPlayerCards = shuffleArray(playerCards);
@@ -1430,9 +1437,16 @@ export const joinMatchByCode = onCall({
 
     return { matchId };
   } catch (error) {
-    logger.error("[Combat] Error in joinMatchByCode:", error);
-    if (error instanceof HttpsError) throw error;
-    throw new HttpsError("internal", "Error joining match");
+    if (error instanceof HttpsError) {
+      if (error.code === 'not-found' || error.code === 'failed-precondition') {
+        logger.warn(`[Combat] joinMatchByCode: ${error.message} (uid: ${request.auth?.uid}, code: ${inviteCode})`);
+      } else {
+        logger.error("[Combat] HttpsError in joinMatchByCode:", error);
+      }
+      throw error;
+    }
+    logger.error("[Combat] Unexpected error in joinMatchByCode:", error);
+    throw new HttpsError("internal", "Interner Fehler beim Beitreten des Matches.");
   }
 });
 

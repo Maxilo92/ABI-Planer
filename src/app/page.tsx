@@ -18,9 +18,10 @@ import { useDashboardSorting } from '@/hooks/useDashboardSorting'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn, toDate } from '@/lib/utils'
 import { FundingBanner } from '@/components/funding/FundingBanner'
-import { DashboardComponentKey, Poll, PollOption, PollVote, FinanceEntry, ShopEarning, CashVerification } from '@/types/database'
+import { DashboardComponentKey, Poll, PollOption, PollVote, FinanceEntry, ShopEarning, CashVerification, Ad } from '@/types/database'
 import type { SystemFeatures } from '@/types/system'
 import Link from 'next/link'
+import { AdTile } from '@/components/dashboard/AdTile'
 import { 
   ArrowRight, 
   Calendar, 
@@ -45,6 +46,7 @@ import { useRouter } from 'next/navigation'
 import { useTheme } from 'next-themes'
 import { motion, useScroll, useSpring, AnimatePresence } from 'framer-motion'
 import { logAction } from '@/lib/logging'
+import { calculateFinanceBreakdown } from '@/lib/finance-utils'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { getDashboardBaseUrl, getDashboardRedirectUrl } from '@/lib/dashboard-url'
@@ -63,6 +65,8 @@ import { Line } from 'react-chartjs-2'
 
 import { useLanguage } from '@/context/LanguageContext'
 import { LanguageToggle } from '@/components/ui/LanguageToggle'
+import { useFeatureFlagVariantKey } from 'posthog-js/react'
+import { SoftwareApplicationJsonLd } from '@/components/seo/SoftwareApplicationJsonLd'
 
 ChartJS.register(
   CategoryScale,
@@ -77,6 +81,17 @@ ChartJS.register(
 
 function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
   const { t, language } = useLanguage()
+  
+  // A/B Test: Hero Section Variant
+  // We only want to run the test for unauthenticated users to keep data clean.
+  // The hook is called but we force 'control' behavior if authenticated.
+  const variant = useFeatureFlagVariantKey('landing-page-hero-test')
+  const showGamification = !isAuthenticated && variant === 'gamification'
+
+  const heroTitle1 = showGamification ? t('landing.hero.gamified.title1') : t('landing.hero.title1')
+  const heroTitle2 = showGamification ? t('landing.hero.gamified.title2') : t('landing.hero.title2')
+  const heroDesc = showGamification ? t('landing.hero.gamified.desc') : t('landing.hero.desc')
+
   const [landingNews, setLandingNews] = useState<any[]>([])
   const [landingNewsLoading, setLandingNewsLoading] = useState(true)
   const [dashboardBaseUrl, setDashboardBaseUrl] = useState('')
@@ -234,8 +249,9 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
   }
 
   return (
-    <div className="relative min-h-screen bg-background text-foreground selection:bg-brand/30 overflow-hidden">
-      {/* Dynamic Progress Bar */}
+    <div className="relative min-h-screen bg-background text-foreground selection:bg-brand/30 overflow-x-hidden">
+      <SoftwareApplicationJsonLd />
+      {/* Progress Bar */}
       <motion.div
         className="fixed top-0 left-0 right-0 h-1 bg-brand z-[60] origin-left"
         style={{ scaleX }}
@@ -264,11 +280,11 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
             
             <div className="max-w-4xl mx-auto space-y-6 relative">
               <motion.h1 variants={itemVariants} className="text-5xl md:text-7xl lg:text-8xl font-extrabold tracking-tight leading-[1.05]">
-                {t('landing.hero.title1')} <br />
-                <span className="text-brand">{t('landing.hero.title2')}</span>
+                {heroTitle1} <br />
+                <span className="text-brand">{heroTitle2}</span>
               </motion.h1>
               <motion.p variants={itemVariants} className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed font-medium">
-                {t('landing.hero.desc')}
+                {heroDesc}
               </motion.p>
               
               {/* Floating Icons Decor */}
@@ -393,15 +409,19 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
 
             <div className="grid gap-12 grid-cols-2 xl:grid-cols-4 text-center">
               {[
-                { label: t('landing.stats.budget'), value: landingStatsLoading ? '...' : formatCurrency((landingStats.globalManagedBudget ?? 0) + 54320) },
-                { label: t('landing.stats.completedTasks'), value: landingStatsLoading ? '...' : formatMetric((landingStats.globalCompletedTasks ?? 0) + 1240) },
-                { label: t('landing.stats.users'), value: landingStatsLoading ? '...' : formatMetric((landingStats.totalUsers ?? 0) + 120) },
-                { label: t('landing.stats.cards'), value: landingStatsLoading ? '...' : formatMetric((landingStats.totalCards ?? 0) + 1200) },
+                { label: t('landing.stats.budget'), value: landingStatsLoading ? null : formatCurrency((landingStats.globalManagedBudget ?? 0) + 54320) },
+                { label: t('landing.stats.completedTasks'), value: landingStatsLoading ? null : formatMetric((landingStats.globalCompletedTasks ?? 0) + 1240) },
+                { label: t('landing.stats.users'), value: landingStatsLoading ? null : formatMetric((landingStats.totalUsers ?? 0) + 120) },
+                { label: t('landing.stats.cards'), value: landingStatsLoading ? null : formatMetric((landingStats.totalCards ?? 0) + 1200) },
               ].map((item) => (
-                <div key={item.label} className="space-y-2">
-                  <p className="text-4xl md:text-5xl font-extrabold tracking-tight text-foreground">
-                    {item.value}
-                  </p>
+                <div key={item.label} className="space-y-2 flex flex-col items-center">
+                  {item.value === null ? (
+                    <Skeleton className="h-12 w-32 bg-muted/40" />
+                  ) : (
+                    <p className="text-4xl md:text-5xl font-extrabold tracking-tight text-foreground">
+                      {item.value}
+                    </p>
+                  )}
                   <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{item.label}</p>
                 </div>
               ))}
@@ -418,7 +438,11 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
                   {landingStatsLoading && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
                 </div>
                 <div className="h-[350px] w-full bg-card/50 rounded-[2.5rem] border border-border/50 p-8 shadow-subtle backdrop-blur-sm relative overflow-hidden">
-                  {landingStats.userGrowth.length > 0 ? (
+                  {landingStatsLoading ? (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <Skeleton className="w-full h-full rounded-xl opacity-30" />
+                    </div>
+                  ) : landingStats.userGrowth.length > 0 ? (
                     <Line 
                       options={{
                         responsive: true,
@@ -485,7 +509,11 @@ function MainDomainLanding({ isAuthenticated }: { isAuthenticated: boolean }) {
                   {landingStatsLoading && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
                 </div>
                 <div className="h-[350px] w-full bg-card/50 rounded-[2.5rem] border border-border/50 p-8 shadow-subtle backdrop-blur-sm relative overflow-hidden">
-                  {landingStats.budgetGrowth.length > 0 ? (
+                  {landingStatsLoading ? (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <Skeleton className="w-full h-full rounded-xl opacity-30" />
+                    </div>
+                  ) : landingStats.budgetGrowth.length > 0 ? (
                     <Line 
                       options={{
                         responsive: true,
@@ -933,12 +961,24 @@ export default function Dashboard() {
   const { t, language } = useLanguage()
   const router = useRouter()
   const { user, profile, loading: authLoading } = useAuth()
-  const [rootMode, setRootMode] = useState<'unknown' | 'landing' | 'dashboard'>('unknown')
+  
+  // Heuristic initialization to avoid flicker where possible
+  const [rootMode, setRootMode] = useState<'unknown' | 'landing' | 'dashboard'>(() => {
+    if (typeof window === 'undefined') return 'unknown'
+    const host = window.location.hostname
+    const isDashboardHost = host.startsWith('dashboard.') || 
+                            host.startsWith('app.') || 
+                            host.includes('.dashboard.') ||
+                            host.startsWith('support.') ||
+                            host.includes('.support.')
+    return isDashboardHost ? 'dashboard' : 'landing'
+  })
+  
   const [features, setFeatures] = useState<SystemFeatures | null>(null)
   const [settings, setSettings] = useState<any>(null)
   const isBoneyardBuild = typeof window !== 'undefined' && Boolean((window as any).__BONEYARD_BUILD)
 
-  // Initialize rootMode as soon as possible
+  // Ensure rootMode is correct after hydration
   useEffect(() => {
     if (typeof window === 'undefined') return
     const host = window.location.hostname
@@ -947,8 +987,11 @@ export default function Dashboard() {
                             host.includes('.dashboard.') ||
                             host.startsWith('support.') ||
                             host.includes('.support.')
-    setRootMode(isDashboardHost ? 'dashboard' : 'landing')
-  }, [])
+    const detectedMode = isDashboardHost ? 'dashboard' : 'landing'
+    if (rootMode !== detectedMode) {
+      setRootMode(detectedMode)
+    }
+  }, [rootMode])
 
   // Redirect non-logged-in users from dashboard root to login
   useEffect(() => {
@@ -973,6 +1016,7 @@ export default function Dashboard() {
   const [events, setEvents] = useState<any[]>([])
   const [news, setNews] = useState<any[]>([])
   const [polls, setPolls] = useState<Poll[]>([])
+  const [ads, setAds] = useState<Ad[]>([])
   const [allFinances, setAllFinances] = useState<FinanceEntry[]>([])
   const [allShopEarnings, setAllShopEarnings] = useState<ShopEarning[]>([])
   const [lastVerification, setLastVerification] = useState<CashVerification | null>(null)
@@ -989,6 +1033,7 @@ export default function Dashboard() {
     shopEarnings: false,
     news: false,
     polls: false,
+    ads: false,
   })
 
   const markLoaded = (key: keyof typeof initialLoadState) => {
@@ -1077,6 +1122,17 @@ export default function Dashboard() {
     }, (error) => {
       console.error('Error listening to news:', error)
       markLoaded('news')
+    })
+
+    // 5b. Listen to Ads - PUBLIC
+    const adsRef = collection(db, 'ads')
+    const qAds = query(adsRef, where('is_active', '==', true), orderBy('priority', 'desc'))
+    const unsubscribeAds = onSnapshot(qAds, (snapshot) => {
+      setAds(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Ad)))
+      markLoaded('ads')
+    }, (error) => {
+      console.error('Error listening to ads:', error)
+      markLoaded('ads')
     })
 
     // Protected Listeners - Only for Authenticated Users
@@ -1222,6 +1278,7 @@ export default function Dashboard() {
       unsubscribeVerifications()
       unsubscribeShopEarnings()
       unsubscribeNews()
+      unsubscribeAds()
       unsubscribePolls()
     }
   }, [user?.uid, profile?.id, profile?.class_name, profile?.planning_groups, profile?.is_approved, authLoading, rootMode])
@@ -1251,7 +1308,9 @@ export default function Dashboard() {
     }
   }
 
-  const sortedComponents = useDashboardSorting(profile, todos, events, polls, news)
+  const activeAds = ads.filter(ad => ad.is_active)
+  const maxAdPriority = activeAds.length > 0 ? Math.max(...activeAds.map(ad => ad.priority || 0)) : -1
+  const sortedComponents = useDashboardSorting(profile, todos, events, polls, news, maxAdPriority)
   const currentUserId = user?.uid || profile?.id || ''
   const unvotedPolls = polls.filter((poll) => {
     if (!poll.is_active) return false
@@ -1265,7 +1324,8 @@ export default function Dashboard() {
     todos: '/todos',
     events: '/kalender',
     polls: '/abstimmungen',
-    leaderboard: '/finanzen'
+    leaderboard: '/finanzen',
+    ads: '/admin/ads'
   }
 
   const resolvedRootMode =
@@ -1390,6 +1450,7 @@ export default function Dashboard() {
 
     switch (key) {
       case 'funding':
+        const breakdown = calculateFinanceBreakdown(allFinances, allShopEarnings, settings)
         content = (
           <div className="flex flex-col">
             <Skeleton
@@ -1431,12 +1492,15 @@ export default function Dashboard() {
               key="funding"
               current={currentFunding}
               checksum={lastVerification?.amount}
+              breakdown={breakdown}
               goal={settings?.funding_goal ?? 10000}
               initialTicketSales={settings?.expected_ticket_sales ?? 150}
               onTicketSalesChange={canEditTicketSales ? handleTicketSalesChange : undefined}
               canEditTicketSales={canEditTicketSales}
               isAuthenticated={!!user}
               loading={(!initialLoadState.settings || !initialLoadState.finances || !initialLoadState.cashVerifications) && !timeoutReached}
+              profile={profile}
+              settings={settings}
             />
             </Skeleton>
           </div>
@@ -1598,6 +1662,31 @@ export default function Dashboard() {
           </div>
         )
         break
+      case 'ads':
+        content = (
+          <div className="flex flex-col">
+            <Skeleton
+              name="dashboard-ads"
+              loading={!initialLoadState.ads && !timeoutReached}
+              fixture={
+                <div className="w-full h-72 border-none shadow-card rounded-2xl bg-card p-6 flex flex-col justify-between">
+                  <div className="flex items-center justify-between">
+                    <Skeleton className="h-4 w-24 bg-muted/60" />
+                    <Skeleton className="h-4 w-4 bg-muted/60" />
+                  </div>
+                  <div className="space-y-2">
+                    <Skeleton className="h-6 w-3/4 bg-muted/60" />
+                    <Skeleton className="h-3 w-full bg-muted/40" />
+                  </div>
+                  <Skeleton className="h-10 w-full rounded bg-muted/60" />
+                </div>
+              }
+            >
+              <AdTile key="ads" ads={ads} />
+            </Skeleton>
+          </div>
+        )
+        break
       default:
         return null
     }
@@ -1605,8 +1694,14 @@ export default function Dashboard() {
     return (
       <div 
         key={key}
-        onClick={() => router.push(componentLinks[key])}
-        className="cursor-pointer transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] group rounded-xl"
+        onClick={() => {
+          if (key === 'ads') return
+          router.push(componentLinks[key])
+        }}
+        className={cn(
+          "transition-all duration-200 group rounded-xl",
+          key !== 'ads' && "cursor-pointer hover:scale-[1.01] active:scale-[0.99]"
+        )}
       >
         <div className="pointer-events-auto [&_button]:pointer-events-auto [&_a]:pointer-events-auto [&_input]:pointer-events-auto" onClick={(e) => {
           const target = e.target as HTMLElement
@@ -1703,6 +1798,7 @@ export default function Dashboard() {
     if (key === 'todos' && !isFeatureEnabled('todos_status', 'is_todos_enabled')) return items
     if (key === 'events' && !isFeatureEnabled('calendar_status', 'is_calendar_enabled')) return items
     if (key === 'news' && !isFeatureEnabled('news_status', 'is_news_enabled')) return items;
+    if (key === 'ads' && ads.length === 0) return items;
 
     return [...items, { type: 'component' as const, key }]
 
@@ -1719,6 +1815,8 @@ export default function Dashboard() {
               currentGoal={settings?.funding_goal ?? 10000}
               currentSupportGoal={settings?.support_goal ?? 100}
               currentSupportAmount={settings?.current_support_amount ?? 0}
+              currentPenaltyBase={settings?.ticket_penalty_base}
+              currentPenaltyReduction={settings?.ticket_penalty_reduction}
             />          )}
           {profile && (
             <div className="flex items-center gap-2">

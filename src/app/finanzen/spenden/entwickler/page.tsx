@@ -15,7 +15,7 @@ export default function EntwicklerSpendenPage() {
           </Button>
         </Link>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">App-Support & Infrastruktur</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Entwickler-Support & Infrastruktur</h1>
           <p className="text-muted-foreground">Sichere den Betrieb und die Weiterentwicklung des ABI Planers.</p>
         </div>
       </div>
@@ -26,7 +26,7 @@ export default function EntwicklerSpendenPage() {
             <div className="space-y-4">
               <div className="inline-flex items-center gap-2 rounded-full border border-brand/20 bg-background/80 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-brand">
                 <ShieldCheck className="h-3.5 w-3.5" />
-                Transparente Betriebskosten
+                Transparente Entwicklerkosten
               </div>
               <h2 className="text-2xl md:text-3xl font-bold tracking-tight">Warum wir eure Hilfe brauchen</h2>
               <p className="text-sm md:text-base text-muted-foreground leading-relaxed max-w-2xl">
@@ -78,7 +78,7 @@ export default function EntwicklerSpendenPage() {
             <div className="pt-4">
               <a href="https://buymeacoffee.com/maxilo" target="_blank" rel="noopener noreferrer" className="block">
                 <Button className="w-full gap-2 h-12 text-lg font-bold bg-brand hover:bg-brand/90 text-white border-none shadow-md">
-                  App-Support geben
+                  Entwickler unterstützen
                   <ExternalLink className="h-4 w-4 ml-1 opacity-50" />
                 </Button>
               </a>
@@ -116,7 +116,7 @@ export default function EntwicklerSpendenPage() {
               </div>
               <div className="space-y-1">
                 <p className="text-[10px] font-bold uppercase text-brand tracking-wider">Verwendungszweck</p>
-                <p className="text-sm font-medium italic">ABI Planer Infrastruktur</p>
+                <p className="text-sm font-medium italic">ABI Planer Entwickler-Support</p>
               </div>
             </div>
             <p className="text-xs text-muted-foreground">

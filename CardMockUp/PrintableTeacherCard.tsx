@@ -88,14 +88,14 @@ const darkenColor = (hex: string, amount: number) => {
   return `#${r}${g}${b}`;
 };
 
-export const PrintableTeacherCard: React.FC<PrintableTeacherCardProps> = ({
+export const PrintableTeacherCard = React.memo(({
   data,
   details,
   imageSettings,
   isFlipped: isFlippedExternal,
   onFlip,
   className
-}) => {
+}: PrintableTeacherCardProps) => {
   const [isFlippedInternal, setIsFlippedInternal] = useState(false);
   
   const isFlipped = isFlippedExternal !== undefined ? isFlippedExternal : isFlippedInternal;
@@ -218,12 +218,6 @@ export const PrintableTeacherCard: React.FC<PrintableTeacherCardProps> = ({
                 {/* Radial Glow and Vignette */}
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_45%,rgba(255,255,255,0.6)_0%,transparent_70%)] mix-blend-overlay" />
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,transparent_20%,rgba(0,0,0,0.4)_100%)] mix-blend-multiply" />
-                {/* Subtle Hexagon Pattern Overlay */}
-                <div className="absolute inset-0 opacity-[0.07] mix-blend-overlay" 
-                     style={{ 
-                       backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='49' viewBox='0 0 28 49'%3E%3Cpath fill='%23ffffff' fill-opacity='1' d='M13.99 9.25l13 7.5v15l-13 7.5L1 31.75v-15l12.99-7.5zM3 17.9v12.7l10.99 6.34 11-6.35V17.9l-11-6.34L3 17.9zM0 15l12.98-7.5V0h2v7.5L28 15v15l-12.98 7.5V45h-2v-7.5L0 30V15zm14 7.5L25 16.15v12.7L14 35.15l-11-6.3V16.15L14 22.5z'/%3E%3C/svg%3E")` 
-                     }} 
-                />
               </div>
             ) : isIconic ? (
               /* Special Iconic Background: Black & Gold Premium */
@@ -240,12 +234,6 @@ export const PrintableTeacherCard: React.FC<PrintableTeacherCardProps> = ({
               >
                 {/* Golden Radial Aura */}
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_40%,rgba(251,191,36,0.15)_0%,transparent_80%)] mix-blend-screen" />
-                {/* Golden Pattern Overlay */}
-                <div className="absolute inset-0 opacity-[0.12] mix-blend-overlay" 
-                     style={{ 
-                       backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Cpath fill='%23fbbf24' fill-opacity='1' d='M0 0h20v20H0V0zm10 17.32L18.66 12.32 10 7.32 1.34 12.32 10 17.32zM20 20h20v20H20V20zm10 17.32L38.66 32.32 30 27.32 21.34 32.32 30 17.32z'/%3E%3C/svg%3E")` 
-                     }} 
-                />
                 {/* Inner Golden Shine Border */}
                 <div className="absolute inset-[1mm] border border-amber-500/20 rounded-[0.5mm] pointer-events-none" />
                 {/* Vignette */}
@@ -296,9 +284,9 @@ export const PrintableTeacherCard: React.FC<PrintableTeacherCardProps> = ({
           )}
 
           {/* Large Outline Number - Symmetrical Corner Position */}
-          <div className="absolute top-1 right-1 flex items-start justify-end pointer-events-none z-20">
+          <div className="absolute top-[1.2mm] right-[-0.2mm] flex items-start justify-end pointer-events-none z-20">
             <span 
-              className="text-[52px] font-black text-transparent rotate-90 opacity-70 select-none translate-x-[16%] translate-y-[10%] [print-color-adjust:exact] drop-shadow-[0_4px_8px_rgba(0,0,0,0.5)]"
+              className="text-[52px] font-black text-transparent rotate-90 opacity-70 select-none translate-x-[18%] translate-y-[6%] [print-color-adjust:exact] drop-shadow-[0_4px_8px_rgba(0,0,0,0.5)]"
               style={{ 
                 WebkitTextStroke: '1.5px white',
                 fontFamily: 'sans-serif'
@@ -307,6 +295,7 @@ export const PrintableTeacherCard: React.FC<PrintableTeacherCardProps> = ({
               {data.cardNumber}
             </span>
           </div>
+
 
           {/* Text Block */}
           <div className="absolute top-3 left-3 z-10 flex flex-col gap-0 max-w-[60%] text-left">
@@ -442,4 +431,6 @@ export const PrintableTeacherCard: React.FC<PrintableTeacherCardProps> = ({
       </motion.div>
     </div>
   );
-};
+});
+
+PrintableTeacherCard.displayName = 'PrintableTeacherCard';

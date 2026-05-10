@@ -29,7 +29,8 @@ const WIDGET_LABELS: Record<DashboardComponentKey, string> = {
   todos: 'Meine Aufgaben',
   events: 'Anstehende Termine',
   polls: 'Abstimmungen',
-  leaderboard: 'Klassen-Ranking'
+  leaderboard: 'Klassen-Ranking',
+  ads: 'Ankündigungen'
 }
 
 export function CustomizeDashboardDialog({ profile, currentLayout }: CustomizeDashboardDialogProps) {

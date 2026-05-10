@@ -19,6 +19,8 @@ import { TradeNegotiationModal } from '@/components/cards/TradeNegotiationModal'
 import { useRouter } from 'next/navigation'
 import { useCountdown } from '@/hooks/useCountdown'
 import { getTradeStatusMeta } from '@/modules/shared/status'
+import { collection, query, where, getDocs, writeBatch } from 'firebase/firestore'
+import { db } from '@/lib/firebase'
 
 function TradeCountdown({ targetDate }: { targetDate: any }) {
   const dateStr = targetDate?.toDate ? targetDate.toDate().toISOString() : (targetDate instanceof Date ? targetDate.toISOString() : targetDate)
@@ -51,6 +53,34 @@ export default function TradeCenterPage() {
     }
   }, [isTradingEnabled, router])
 
+  // Mark trade notifications as read when entering the trade hub
+  useEffect(() => {
+    if (!currentUserId) return;
+
+    const markTradeNotificationsAsRead = async () => {
+      try {
+        const q = query(
+          collection(db, 'notifications', currentUserId, 'messages'),
+          where('read', '==', false),
+          where('type', 'in', ['new_trade_offer', 'counter_trade_offer', 'trade_accepted', 'card_removal', 'admin_action'])
+        );
+        const snapshot = await getDocs(q);
+        
+        if (snapshot.empty) return;
+
+        const batch = writeBatch(db);
+        snapshot.docs.forEach((docSnap) => {
+          batch.update(docSnap.ref, { read: true });
+        });
+        await batch.commit();
+      } catch (err) {
+        console.error('[TradeHub] Error marking notifications as read:', err);
+      }
+    };
+
+    markTradeNotificationsAsRead();
+  }, [currentUserId]);
+
   const totalCards = useMemo(() => {
     if (teachers) {
       return Object.values(teachers).reduce((sum, entry) => sum + (entry?.count || 0), 0)
@@ -59,7 +89,7 @@ export default function TradeCenterPage() {
     return profile?.booster_stats?.total_cards || 0
   }, [teachers, profile?.booster_stats?.total_cards])
 
-  const canTrade = totalCards >= 100
+  const canTrade = totalCards >= 10
   const showLockedBanner = !teachersLoading && !canTrade
 
   const getStatusBadge = (status: string) => {
@@ -104,7 +134,7 @@ export default function TradeCenterPage() {
             <div className="space-y-1">
               <p className="font-bold text-amber-900 uppercase text-sm tracking-tight">Tauschen noch gesperrt</p>
               <p className="text-amber-800 text-sm">
-                Du benötigst mindestens 100 Karten in deiner Sammlung, um am Trading teilzunehmen. 
+                Du benötigst mindestens 10 Karten in deiner Sammlung, um am Trading teilzunehmen. 
                 Du hast aktuell <strong>{totalCards}</strong> Karten. Sammle mehr Booster, um diese Funktion freizuschalten!
               </p>
             </div>

@@ -27,7 +27,7 @@ export default function PrintableFormPage() {
               className="gap-2 bg-black text-white hover:bg-neutral-800"
               onClick={() => window.print()}
             >
-              <Printer className="w-4 h-4" /> Formular Drucken (A4)
+              <Printer className="w-4 h-4" /> Fragebogen Drucken (A4)
             </Button>
           </div>
         </div>
@@ -47,14 +47,14 @@ export default function PrintableFormPage() {
                 <div className="text-[10px] font-black uppercase tracking-widest text-neutral-400">Trading Card Edition</div>
               </div>
               <h1 className="text-3xl font-black uppercase tracking-tighter leading-none">
-                ANMELDE-FORMULAR
+                FRAGEBOGEN
               </h1>
               <p className="text-sm font-bold italic text-neutral-600">Offizieller Beitrag zur Lehrer-Sammelkartenedition 2027</p>
             </div>
             
             <div className="text-right flex gap-4 items-center">
                <div className="text-right">
-                  <p className="text-[9px] font-black uppercase leading-tight mb-1">Alternativ:<br/>Digital ausfüllen</p>
+                  <p className="text-[9px] font-black uppercase leading-tight mb-1">Für Abwesende:<br/>Digital nachreichen</p>
                   <p className="text-[7px] font-mono text-neutral-400">{registrationUrl.replace('https://', '').replace('http://', '')}</p>
                </div>
                <div className="bg-white p-1 border-2 border-black">
@@ -65,7 +65,7 @@ export default function PrintableFormPage() {
 
           <p className="text-[11px] leading-relaxed mb-8 max-w-2xl">
             Liebe Lehrerinnen und Lehrer, werden Sie Teil unserer exklusiven Sammelkarten-Kollektion! 
-            Bitte füllen Sie dieses Formular leserlich in <b>Druckbuchstaben</b> aus. Diese Daten bilden die 
+            Bitte füllen Sie diesen Fragebogen leserlich in <b>Druckbuchstaben</b> aus. Diese Daten bilden die 
             Basis für Ihre persönliche Karte im ABI-TCG.
           </p>
 
@@ -141,15 +141,14 @@ export default function PrintableFormPage() {
             {/* Photo Section */}
             <div className="pt-4">
                <div className="space-y-4">
-                  <h2 className="text-xs font-black uppercase tracking-[0.2em] bg-neutral-100 px-3 py-1 inline-block">03. Das Foto (Digital erforderlich)</h2>
+                  <h2 className="text-xs font-black uppercase tracking-[0.2em] bg-neutral-100 px-3 py-1 inline-block">03. Das Foto</h2>
                   <p className="text-[10px] leading-relaxed text-neutral-600">
-                    Für eine hochwertige Druckqualität der Sammelkarten muss Ihr Portraitfoto <b className="text-black">digital</b> vorliegen. 
-                    Ein Aufkleben von physischen Fotos auf dieses Formular ist daher nicht möglich. Bitte wählen Sie einen der folgenden Wege:
+                    Unser Team hat eine <b className="text-black">Kamera dabei</b> und wird Ihr Portraitfoto direkt vor Ort aufnehmen. 
+                    So stellen wir eine optimale Qualität für Ihre Sammelkarte sicher. 
                   </p>
-                  <ul className="text-[10px] leading-relaxed text-neutral-600 space-y-2 list-disc pl-4">
-                    <li>Senden Sie ein digitales Foto (Dateiformat: JPG, PNG oder WebP) direkt an: <b className="text-black text-xs">Priesnitz.maximilian@hgr-web.lernsax.de</b></li>
-                    <li>Alternativ vereinbaren Sie per E-Mail einen kurzen <b className="text-black">Fototermin</b> im Schulhaus mit dem ABI-Team, damit wir ein professionelles Foto für Ihre Karte erstellen können.</li>
-                  </ul>
+                  <p className="text-[10px] leading-relaxed text-neutral-600">
+                    Sollten Sie gerade keine Zeit haben oder ein anderes Foto bevorzugen, kann der Fototermin <b className="text-black">auf Nachfrage</b> auch zu einem späteren Zeitpunkt nachgeholt werden.
+                  </p>
                   
                   <div className="pt-10 grid grid-cols-2 gap-16 max-w-2xl">
                     <div className="border-t border-black pt-1">
@@ -166,10 +165,9 @@ export default function PrintableFormPage() {
           {/* Footer Branding */}
           <div className="mt-8 pt-4 border-t border-neutral-100 flex justify-between items-end opacity-50">
              <div className="text-[8px] font-bold text-neutral-400">
-                &copy; 2027 ABI PLANER - TRADING CARD GENERATOR V1.34
+                &copy; 2027 ABI PLANER - TRADING CARD GENERATOR V1.34.4.47
              </div>
              <div className="flex items-center gap-1">
-               <span className="text-[8px] font-black uppercase tracking-widest text-neutral-400 italic">Authorized Document</span>
                <div className="w-2 h-2 bg-black rounded-full"></div>
              </div>
           </div>

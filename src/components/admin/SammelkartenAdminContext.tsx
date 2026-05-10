@@ -737,7 +737,7 @@ export function SammelkartenAdminProvider({ children }: { children: React.ReactN
       if (teacherSort === 'name-desc') return b.name.localeCompare(a.name)
       
       const rarityValue = (r: TeacherRarity) => {
-        const order: TeacherRarity[] = ['common', 'rare', 'epic', 'mythic', 'legendary', 'iconic']
+        const order: TeacherRarity[] = ['iconic', 'legendary', 'mythic', 'epic', 'rare', 'common']
         return order.indexOf(r)
       }
 

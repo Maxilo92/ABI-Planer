@@ -19,10 +19,13 @@ import {
   ArrowRight,
   ChevronRight,
   HelpCircle,
-  Mail
+  Mail,
+  Sparkles
 } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { motion, AnimatePresence } from 'framer-motion'
+import { translations } from '@/lib/i18n/translations'
 
 const categoryIcons: Record<string, any> = {
   registrierung: UserPlus,
@@ -37,12 +40,32 @@ const categoryIcons: Record<string, any> = {
   kontakt: MessageSquare
 }
 
+const container = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1
+    }
+  }
+}
+
+const item = {
+  hidden: { opacity: 0, y: 20 },
+  show: { opacity: 1, y: 0 }
+}
+
 export default function SupportPage({ params }: { params: Promise<{ locale: string }> }) {
   const router = useRouter()
   const { locale: localeRaw } = use(params)
   const locale = localeRaw as Locale
   const [search, setSearch] = useState('')
   const [results, setResults] = useState<HelpFaqItem[]>([])
+
+  // Map locale to translation key
+  const langKey = (locale === 'en' ? 'en-US' : locale === 'es' ? 'es-ES' : 'de-DE') as keyof typeof translations
+  const langTranslations = translations[langKey] || translations['de-DE']
+  const t = langTranslations?.supportCenter || translations['de-DE'].supportCenter
 
   useEffect(() => {
     if (search.trim().length > 2) {
@@ -53,243 +76,223 @@ export default function SupportPage({ params }: { params: Promise<{ locale: stri
     }
   }, [search, locale])
 
-  const t = {
-    de: {
-      heroTitle: 'Wie können wir helfen?',
-      heroSub: 'Durchsuche unsere FAQs oder wähle eine Kategorie, um Antworten zu finden.',
-      placeholder: 'Stichwort eingeben (z.B. Registrierung, Karten, Stripe)...',
-      topHits: 'Häufigste Treffer',
-      noHits: 'Keine genauen Treffer gefunden.',
-      browseThemes: 'Themen durchsuchen',
-      articles: 'Artikel verfügbar',
-      view: 'Ansehen',
-      moreQuestions: 'Immer noch Fragen?',
-      contactSub: 'Unser Team ist bereit, dir zu helfen. Wenn du in den FAQs nicht fündig geworden bist, kannst du uns direkt kontaktieren.',
-      directContact: 'Direkter Kontakt',
-      directContactSub: 'Sende uns eine Nachricht mit deinem Anliegen. Wir antworten dir so schnell wie möglich per E-Mail.',
-      sendTicket: 'Ticket senden',
-      complaint: 'Beschwerde',
-      complaintSub: 'Als Lehrer kannst du Korrekturen an deinen Sammelkarten beantragen oder Löschungen anfordern.',
-      submitComplaint: 'Beschwerde einreichen',
-      community: 'Community Support',
-      communitySub: 'Nutze das Feedback-Feature in der App oder frage im Planner-Team-Chat nach Hilfe.',
-      availableApp: 'Verfügbar in der Haupt-App'
-    },
-    en: {
-      heroTitle: 'How can we help?',
-      heroSub: 'Search our FAQs or choose a category to find answers.',
-      placeholder: 'Enter keyword (e.g., registration, cards, stripe)...',
-      topHits: 'Top Results',
-      noHits: 'No exact matches found.',
-      browseThemes: 'Browse Themes',
-      articles: 'articles available',
-      view: 'View',
-      moreQuestions: 'Still have questions?',
-      contactSub: 'Our team is ready to help. If you didn\'t find what you were looking for in the FAQs, you can contact us directly.',
-      directContact: 'Direct Contact',
-      directContactSub: 'Send us a message with your concern. We will get back to you as soon as possible via email.',
-      sendTicket: 'Send Ticket',
-      complaint: 'Complaint',
-      complaintSub: 'As a teacher, you can request corrections to your trading cards or request deletions.',
-      submitComplaint: 'Submit a complaint',
-      community: 'Community Support',
-      communitySub: 'Use the feedback feature in the app or ask for help in the Planner team chat.',
-      availableApp: 'Available in the main app'
-    }
-  }[locale] || {
-    es: {
-      heroTitle: '¿Cómo podemos ayudarte?',
-      heroSub: 'Busca en nuestras preguntas frecuentes o elige una categoría para encontrar respuestas.',
-      placeholder: 'Introduce una palabra clave (p. ej., registro, tarjetas, Stripe)...',
-      topHits: 'Resultados principales',
-      noHits: 'No se han encontrado coincidencias exactas.',
-      browseThemes: 'Explorar temas',
-      articles: 'artículos disponibles',
-      view: 'Ver',
-      moreQuestions: '¿Todavía tienes preguntas?',
-      contactSub: 'Nuestro equipo está listo para ayudarte. Si no has encontrado lo que buscabas en las preguntas frecuentes, puedes ponerte en contacto con nosotros directamente.',
-      directContact: 'Contacto directo',
-      directContactSub: 'Envíanos un mensaje con tu consulta. Te responderemos lo antes posible por correo electrónico.',
-      sendTicket: 'Enviar ticket',
-      complaint: 'Reclamación',
-      complaintSub: 'Como profesor, puedes solicitar correcciones en tus tarjetas de intercambio o pedir eliminaciones.',
-      submitComplaint: 'Enviar una reclamación',
-      community: 'Soporte de la comunidad',
-      communitySub: 'Utiliza la función de comentarios en la aplicación o pide ayuda en el chat del equipo del Planner.',
-      availableApp: 'Disponible en la aplicación principal'
-    }
-  }.es || {
-    de: {
-      heroTitle: 'Wie können wir helfen?',
-      heroSub: 'Durchsuche unsere FAQs oder wähle eine Kategorie, um Antworten zu finden.',
-      placeholder: 'Stichwort eingeben (z.B. Registrierung, Karten, Stripe)...',
-      topHits: 'Häufigste Treffer',
-      noHits: 'Keine genauen Treffer gefunden.',
-      browseThemes: 'Themen durchsuchen',
-      articles: 'Artikel verfügbar',
-      view: 'Ansehen',
-      moreQuestions: 'Immer noch Fragen?',
-      contactSub: 'Unser Team ist bereit, dir zu helfen. Wenn du in den FAQs nicht fündig geworden bist, kannst du uns direkt kontaktieren.',
-      directContact: 'Direkter Kontakt',
-      directContactSub: 'Sende uns eine Nachricht mit deinem Anliegen. Wir antworten dir so schnell wie möglich per E-Mail.',
-      sendTicket: 'Ticket senden',
-      complaint: 'Beschwerde',
-      complaintSub: 'Als Lehrer kannst du Korrekturen an deinen Sammelkarten beantragen oder Löschungen anfordern.',
-      submitComplaint: 'Beschwerde einreichen',
-      community: 'Community Support',
-      communitySub: 'Nutze das Feedback-Feature in der App oder frage im Planner-Team-Chat nach Hilfe.',
-      availableApp: 'Verfügbar in der Haupt-App'
-    }
-  }.de
-
   const sections = helpFaqSections[locale] || helpFaqSections.de
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen pt-20">
       {/* Hero Section */}
-      <section className="bg-primary/5 border-b py-20 px-4">
-        <div className="container mx-auto max-w-4xl text-center space-y-8">
-          <div className="space-y-4">
-            <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-foreground">
-              {t.heroTitle}
-            </h1>
-            <p className="text-xl text-muted-foreground">
-              {t.heroSub}
-            </p>
-          </div>
+      <section className="relative py-24 px-4 overflow-hidden">
+        {/* Background Elements */}
+        <div className="absolute inset-0 bg-primary/[0.02] -z-10" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-6xl h-full -z-10">
+          <div className="absolute top-1/4 left-0 w-64 h-64 bg-primary/5 rounded-full blur-[100px] animate-pulse" />
+          <div className="absolute bottom-1/4 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[100px] animate-pulse delay-700" />
+        </div>
 
-          <div className="max-w-2xl mx-auto relative group">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-6 w-6 text-muted-foreground group-focus-within:text-primary transition-colors" />
+        <div className="container mx-auto max-w-4xl text-center space-y-12">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-6"
+          >
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-widest">
+              <Sparkles className="h-3 w-3" />
+              Help Center
+            </div>
+            <h1 className="text-5xl md:text-7xl font-black tracking-tighter text-foreground leading-[0.9]">
+              {t.hero.title}
+            </h1>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto font-medium">
+              {t.hero.subtitle}
+            </p>
+          </motion.div>
+
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="max-w-2xl mx-auto relative group"
+          >
+            <Search className="absolute left-5 top-1/2 -translate-y-1/2 h-6 w-6 text-muted-foreground group-focus-within:text-primary transition-colors" />
             <Input
-              placeholder={t.placeholder}
-              className="h-16 pl-14 pr-6 text-lg rounded-2xl border-none shadow-xl bg-background focus-visible:ring-2 focus-visible:ring-primary transition-all"
+              placeholder={t.hero.placeholder}
+              className="h-16 pl-14 pr-6 text-lg rounded-3xl border-none shadow-2xl bg-background focus-visible:ring-2 focus-visible:ring-primary/20 transition-all"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
             
-            {search.length > 2 && (
-              <div className="absolute top-full left-0 w-full mt-4 bg-popover border rounded-2xl shadow-2xl p-4 z-10 text-left animate-in fade-in slide-in-from-top-2">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-4 px-2">{t.topHits}</p>
-                <div className="space-y-1">
-                  {results.length > 0 ? (
-                    results.map(item => (
-                      <button
-                        key={item.id}
-                        className="w-full text-left p-4 hover:bg-muted rounded-xl transition-colors group flex items-center justify-between"
-                        onClick={() => router.push(`/${locale}/artikel/${item.id}`)}
-                      >
-                        <div className="flex-1 pr-4">
-                          <p className="font-bold text-foreground group-hover:text-primary transition-colors">{item.question}</p>
-                          <p className="text-xs text-muted-foreground mt-1">{item.category}</p>
-                        </div>
-                        <ArrowRight className="h-5 w-5 text-muted-foreground opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all" />
-                      </button>
-                    ))
-                  ) : (
-                    <p className="p-4 text-center text-muted-foreground italic">{t.noHits}</p>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
+            <AnimatePresence>
+              {search.length > 2 && (
+                <motion.div 
+                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                  className="absolute top-full left-0 w-full mt-4 bg-popover/95 backdrop-blur-md border rounded-3xl shadow-2xl p-4 z-50 text-left overflow-hidden"
+                >
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-4 px-2 opacity-60">{t.search.topHits}</p>
+                  <div className="space-y-1 max-h-[50vh] overflow-y-auto pr-2 custom-scrollbar">
+                    {results.length > 0 ? (
+                      results.map(item => (
+                        <button
+                          key={item.id}
+                          className="w-full text-left p-4 hover:bg-muted rounded-2xl transition-all group flex items-center justify-between"
+                          onClick={() => router.push(`/${locale}/artikel/${item.id}`)}
+                        >
+                          <div className="flex-1 pr-4">
+                            <p className="font-bold text-foreground group-hover:text-primary transition-colors">{item.question}</p>
+                            <p className="text-[10px] text-muted-foreground uppercase tracking-wider mt-1 font-medium">{item.category}</p>
+                          </div>
+                          <ArrowRight className="h-5 w-5 text-muted-foreground opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all" />
+                        </button>
+                      ))
+                    ) : (
+                      <p className="p-8 text-center text-muted-foreground italic font-medium">{t.search.noHits}</p>
+                    )}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.div>
         </div>
       </section>
 
       {/* Category Grid */}
-      <section className="py-20 px-4 container mx-auto max-w-6xl">
-        <h2 className="text-2xl font-bold mb-10 px-2 flex items-center gap-3">
-          <div className="w-1 h-8 bg-primary rounded-full" />
-          {t.browseThemes}
-        </h2>
+      <section className="py-24 px-4 container mx-auto max-w-6xl">
+        <div className="flex items-center justify-between mb-12 px-2">
+          <h2 className="text-3xl font-black tracking-tight flex items-center gap-4">
+            <div className="w-1.5 h-10 bg-primary rounded-full shadow-lg shadow-primary/20" />
+            {t.sections.browse}
+          </h2>
+        </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <motion.div 
+          variants={container}
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true }}
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+        >
           {sections.map((section) => {
             const Icon = categoryIcons[section.id] || HelpCircle
             return (
-              <Link key={section.id} href={`/${locale}/kategorie/${section.id}`}>
-                <Card className="h-full hover:shadow-lg transition-all border-none bg-muted/30 hover:bg-muted/50 group cursor-pointer overflow-hidden relative">
-                  <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                    <Icon size={80} />
-                  </div>
-                  <CardContent className="p-8 space-y-4 relative z-10">
-                    <div className="p-3 bg-primary/10 rounded-xl w-fit group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
-                      <Icon className="h-6 w-6" />
+              <motion.div key={section.id} variants={item}>
+                <Link href={`/${locale}/kategorie/${section.id}`}>
+                  <Card className="h-full hover:shadow-2xl hover:shadow-primary/5 transition-all border border-border/50 bg-muted/20 hover:bg-background group cursor-pointer overflow-hidden relative rounded-3xl">
+                    <div className="absolute -top-6 -right-6 p-4 opacity-[0.03] group-hover:opacity-[0.08] group-hover:scale-110 transition-all duration-500">
+                      <Icon size={160} />
                     </div>
-                    <div className="space-y-2">
-                      <h3 className="text-xl font-bold">{section.category}</h3>
-                      <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
-                        {section.items.length} {t.articles}
-                      </p>
-                    </div>
-                    <div className="pt-4 flex items-center text-sm font-bold text-primary opacity-0 group-hover:opacity-100 transition-opacity translate-x-[-10px] group-hover:translate-x-0">
-                      {t.view} <ChevronRight className="h-4 w-4" />
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
+                    <CardContent className="p-8 space-y-6 relative z-10">
+                      <div className="p-4 bg-primary/10 rounded-2xl w-fit group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-primary/20">
+                        <Icon className="h-7 w-7" />
+                      </div>
+                      <div className="space-y-2">
+                        <h3 className="text-2xl font-black tracking-tight">{section.category}</h3>
+                        <p className="text-sm text-muted-foreground font-medium uppercase tracking-widest opacity-60">
+                          {section.items.length} {t.sections.articles}
+                        </p>
+                      </div>
+                      <div className="pt-4 flex items-center text-xs font-black uppercase tracking-widest text-primary opacity-0 group-hover:opacity-100 transition-all translate-x-[-10px] group-hover:translate-x-0">
+                        {t.sections.view} <ChevronRight className="h-4 w-4 ml-1" />
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
+              </motion.div>
             )
           })}
-        </div>
+        </motion.div>
       </section>
 
       {/* Contact Section */}
-      <section className="bg-muted/30 py-20 px-4 mt-auto border-t">
-        <div className="container mx-auto max-w-4xl text-center space-y-10">
-          <div className="space-y-4">
-            <h2 className="text-3xl font-bold">{t.moreQuestions}</h2>
-            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              {t.contactSub}
+      <section className="relative py-32 px-4 mt-auto border-t border-border/50 overflow-hidden">
+        <div className="absolute inset-0 bg-muted/20 -z-10" />
+        
+        <div className="container mx-auto max-w-5xl text-center space-y-16">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            className="space-y-6"
+          >
+            <h2 className="text-4xl md:text-5xl font-black tracking-tighter">{t.contact.title}</h2>
+            <p className="text-muted-foreground text-xl max-w-2xl mx-auto font-medium leading-relaxed">
+              {t.contact.subtitle}
             </p>
-          </div>
+          </motion.div>
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div className="p-8 bg-background border rounded-2xl space-y-4 text-left hover:border-primary/50 transition-colors group">
-              <div className="p-3 bg-primary/10 rounded-xl w-fit">
-                <Mail className="h-6 w-6 text-primary" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.1 }}
+              className="p-10 bg-background border border-border/50 rounded-[2.5rem] space-y-6 text-left hover:border-primary/50 transition-all hover:shadow-2xl hover:shadow-primary/5 group"
+            >
+              <div className="p-4 bg-primary/10 rounded-2xl w-fit group-hover:scale-110 transition-transform">
+                <Mail className="h-7 w-7 text-primary" />
               </div>
-              <h3 className="text-xl font-bold">{t.directContact}</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                {t.directContactSub}
-              </p>
+              <div className="space-y-3">
+                <h3 className="text-2xl font-black tracking-tight">{t.contact.direct.title}</h3>
+                <p className="text-sm text-muted-foreground font-medium leading-relaxed">
+                  {t.contact.direct.subtitle}
+                </p>
+              </div>
               <button 
                 onClick={() => router.push(`/${locale}/kontakt`)}
-                className="text-sm font-bold text-primary hover:underline flex items-center gap-1"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-2xl text-xs font-black uppercase tracking-widest hover:opacity-90 transition-all active:scale-95 shadow-lg shadow-primary/20"
               >
-                {t.sendTicket} <ArrowRight className="h-4 w-4" />
+                {t.contact.direct.cta} <ArrowRight className="h-4 w-4" />
               </button>
-            </div>
+            </motion.div>
 
-            <div className="p-8 bg-background border rounded-2xl space-y-4 text-left hover:border-primary/50 transition-colors group">
-              <div className="p-3 bg-destructive/10 rounded-xl w-fit">
-                <Bug className="h-6 w-6 text-destructive" />
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.2 }}
+              className="p-10 bg-background border border-border/50 rounded-[2.5rem] space-y-6 text-left hover:border-destructive/50 transition-all hover:shadow-2xl hover:shadow-destructive/5 group"
+            >
+              <div className="p-4 bg-destructive/10 rounded-2xl w-fit group-hover:scale-110 transition-transform">
+                <Bug className="h-7 w-7 text-destructive" />
               </div>
-              <h3 className="text-xl font-bold">{t.complaint}</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                {t.complaintSub}
-              </p>
+              <div className="space-y-3">
+                <h3 className="text-2xl font-black tracking-tight">{t.contact.complaint.title}</h3>
+                <p className="text-sm text-muted-foreground font-medium leading-relaxed">
+                  {t.contact.complaint.subtitle}
+                </p>
+              </div>
               <button 
                 onClick={() => router.push(`/${locale}/beschwerden`)}
-                className="text-sm font-bold text-destructive hover:underline flex items-center gap-1"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-destructive text-destructive-foreground rounded-2xl text-xs font-black uppercase tracking-widest hover:opacity-90 transition-all active:scale-95 shadow-lg shadow-destructive/20"
               >
-                {t.submitComplaint} <ArrowRight className="h-4 w-4" />
+                {t.contact.complaint.cta} <ArrowRight className="h-4 w-4" />
               </button>
-            </div>
+            </motion.div>
 
-            <div className="p-8 bg-background border rounded-2xl space-y-4 text-left hover:border-primary/50 transition-colors group">
-              <div className="p-3 bg-primary/10 rounded-xl w-fit">
-                <MessageSquare className="h-6 w-6 text-primary" />
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.3 }}
+              className="p-10 bg-background border border-border/50 rounded-[2.5rem] space-y-6 text-left hover:border-primary/50 transition-all hover:shadow-2xl hover:shadow-primary/5 group"
+            >
+              <div className="p-4 bg-primary/10 rounded-2xl w-fit group-hover:scale-110 transition-transform">
+                <MessageSquare className="h-7 w-7 text-primary" />
               </div>
-              <h3 className="text-xl font-bold">{t.community}</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                {t.communitySub}
-              </p>
-              <p className="text-xs font-bold text-muted-foreground italic">
-                {t.availableApp}
-              </p>
-            </div>
+              <div className="space-y-3">
+                <h3 className="text-2xl font-black tracking-tight">{t.contact.community.title}</h3>
+                <p className="text-sm text-muted-foreground font-medium leading-relaxed">
+                  {t.contact.community.subtitle}
+                </p>
+                <div className="inline-flex items-center gap-2 px-3 py-1 bg-muted rounded-full text-[9px] font-black uppercase tracking-widest text-muted-foreground mt-2">
+                  {t.contact.community.badge}
+                </div>
+              </div>
+            </motion.div>
           </div>
         </div>
       </section>
     </div>
   )
 }
+

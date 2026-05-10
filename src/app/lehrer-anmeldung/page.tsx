@@ -337,7 +337,8 @@ export default function LehrerAnmeldungPage() {
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-stone-500">Lehrer-Anmeldung</p>
           <h1 className="mt-2 text-3xl sm:text-4xl font-semibold tracking-tight text-stone-900">Sammelkarte einreichen</h1>
           <p className="mt-3 max-w-2xl text-sm sm:text-base text-stone-600">
-            Minimal, schnell und sicher: erst Daten ausfüllen, dann prüfen und mit Einwilligung absenden.
+            Diese digitale Anmeldung dient als <b className="text-stone-900">letzte Lösung</b> für Kolleginnen und Kollegen, die beim Vor-Ort-Termin krank oder abwesend waren. 
+            So stellen wir sicher, dass jeder (trotz Abwesenheit) mit einem hochwertigen Bild Teil der Kollektion wird.
           </p>
         </header>
 
