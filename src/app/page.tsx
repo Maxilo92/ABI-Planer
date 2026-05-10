@@ -1669,7 +1669,7 @@ export default function Dashboard() {
               name="dashboard-ads"
               loading={!initialLoadState.ads && !timeoutReached}
               fixture={
-                <div className="w-full h-48 border-none shadow-card rounded-2xl bg-card p-6 flex flex-col justify-between">
+                <div className="w-full h-72 border-none shadow-card rounded-2xl bg-card p-6 flex flex-col justify-between">
                   <div className="flex items-center justify-between">
                     <Skeleton className="h-4 w-24 bg-muted/60" />
                     <Skeleton className="h-4 w-4 bg-muted/60" />

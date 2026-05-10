@@ -74,3 +74,12 @@ export function getDeterministicSeed(input: string): number {
   }
   return Math.abs(hash)
 }
+
+/**
+ * Generiert eine konstante Platzhalter-Bild-URL für eine Aufgabe.
+ * Verwendet Picsum Photos für hohe Determinismus-Garantie.
+ */
+export function getTaskPlaceholderImage(taskId: string, seed?: number): string {
+  const hash = seed ?? getDeterministicSeed(taskId)
+  return `https://picsum.photos/seed/${hash}/800/800`
+}

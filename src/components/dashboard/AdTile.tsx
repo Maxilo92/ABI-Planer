@@ -33,13 +33,20 @@ export function AdTile({ ads }: AdTileProps) {
 
   const Content = (
     <div className="relative h-full w-full overflow-hidden rounded-3xl border border-border/40 shadow-card bg-card flex flex-col group">
-      <div className="relative h-44 w-full overflow-hidden bg-muted shrink-0">
+      <div className="relative h-52 w-full overflow-hidden bg-muted/30 shrink-0">
         {ad.image_url ? (
-          <img
-            src={ad.image_url}
-            alt={ad.title}
-            className="h-full w-full object-contain transition-transform duration-700 group-hover:scale-105"
-          />
+          <>
+            {/* Blurred Background to fill space */}
+            <div 
+              className="absolute inset-0 bg-cover bg-center blur-2xl opacity-50 scale-110 pointer-events-none"
+              style={{ backgroundImage: `url(${ad.image_url})` }}
+            />
+            <img
+              src={ad.image_url}
+              alt={ad.title}
+              className="relative h-full w-full object-contain transition-transform duration-700 group-hover:scale-105 z-10"
+            />
+          </>
         ) : (
           <div className="h-full w-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
             <Megaphone className="h-10 w-10 text-primary/40" />

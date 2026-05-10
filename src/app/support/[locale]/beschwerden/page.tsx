@@ -19,7 +19,8 @@ import {
   AlertCircle,
   Clock,
   Send,
-  RotateCcw
+  RotateCcw,
+  Sparkles
 } from 'lucide-react'
 import { db } from '@/lib/firebase'
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore'
@@ -27,6 +28,8 @@ import { toast } from 'sonner'
 import { logAction } from '@/lib/logging'
 import Link from 'next/link'
 import { Locale } from '@/lib/helpFaqs'
+import { motion, AnimatePresence } from 'framer-motion'
+import { translations } from '@/lib/i18n/translations'
 
 export default function SupportBeschwerdenPage({ params }: { params: Promise<{ locale: string }> }) {
   const router = useRouter()
@@ -38,6 +41,10 @@ export default function SupportBeschwerdenPage({ params }: { params: Promise<{ l
   const [reason, setReason] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isEmailSending, setIsEmailSending] = useState(false)
+
+  const langKey = (locale === 'en' ? 'en-US' : locale === 'es' ? 'es-ES' : 'de-DE') as keyof typeof translations
+  const langTranslations = translations[langKey] || translations['de-DE']
+  const commonT = langTranslations?.supportCenter || translations['de-DE'].supportCenter
 
   const t = {
     de: {
@@ -91,6 +98,32 @@ export default function SupportBeschwerdenPage({ params }: { params: Promise<{ l
       hint: 'Your complaint will be forwarded directly to the administrators with the highest priority. We process requests from verified teachers preferentially.',
       submitting: 'Sending...',
       submit: 'Submit complaint with priority'
+    },
+    es: {
+      authRequired: 'Inicio de sesión requerido',
+      authRequiredSub: 'Debes iniciar sesión con tu cuenta de profesor verificada para enviar una reclamación.',
+      backSupport: 'Volver a Soporte',
+      toLogin: 'Ir al Login',
+      title: 'Reclamaciones de Profesores',
+      description: 'Nos tomamos en serio la protección de tus derechos de privacidad. Aquí puedes enviar solicitudes de corrección o eliminación de tu tarjeta coleccionable.',
+      verifyTitle: 'Confirmar Identidad',
+      verifyDesc: 'Se requiere verificación de correo electrónico',
+      verifyText: 'Para asegurar que las reclamaciones solo sean enviadas por las personas afectadas, debes confirmar tu dirección de correo electrónico.',
+      sendVerify: 'Enviar correo de verificación',
+      checkStatus: 'Comprobar estado',
+      verifiedTitle: 'Identidad verificada',
+      verifiedDesc: 'Ahora puedes enviar una reclamación.',
+      step1: 'Seleccionar tarjeta afectada',
+      suggestions: 'Sugerencias para ti',
+      searchCard: 'Buscar tarjeta',
+      searchPlaceholder: 'Nombre del profesor...',
+      noCards: 'No se encontraron más tarjetas.',
+      step2: 'Motivo de la reclamación',
+      reasonLabel: '¿Qué quieres cambiar o eliminar? ¿Por qué?',
+      reasonPlaceholder: 'Por favor, describe tu inquietud con el mayor detalle posible...',
+      hint: 'Tu reclamación será enviada directamente a los administradores con la máxima prioridad. Procesamos preferentemente las solicitudes de profesores verificados.',
+      submitting: 'Enviando...',
+      submit: 'Enviar reclamación con prioridad'
     }
   }[locale] || {
     de: {
@@ -228,137 +261,157 @@ export default function SupportBeschwerdenPage({ params }: { params: Promise<{ l
 
   if (!user) {
     return (
-      <div className="max-w-2xl mx-auto py-20 px-4 text-center space-y-6 animate-in fade-in duration-500">
-        <AlertCircle className="h-16 w-16 text-muted-foreground mx-auto" />
-        <div className="space-y-2">
-          <h1 className="text-3xl font-bold">{t.authRequired}</h1>
-          <p className="text-muted-foreground text-lg">{t.authRequiredSub}</p>
+      <div className="max-w-2xl mx-auto py-32 px-4 text-center space-y-8 animate-in fade-in duration-500">
+        <div className="p-6 bg-muted w-fit mx-auto rounded-[2rem]">
+          <AlertCircle className="h-16 w-16 text-muted-foreground mx-auto" />
+        </div>
+        <div className="space-y-4">
+          <h1 className="text-4xl font-black tracking-tight">{t.authRequired}</h1>
+          <p className="text-muted-foreground text-xl font-medium max-w-md mx-auto">{t.authRequiredSub}</p>
         </div>
         <div className="flex justify-center gap-4">
-          <Button variant="outline" asChild><Link href={`/${locale}`}>{t.backSupport}</Link></Button>
-          <Button asChild><a href="/login">{t.toLogin}</a></Button>
+          <Button variant="outline" className="h-12 px-8 rounded-2xl font-bold" asChild><Link href={`/${locale}`}>{t.backSupport}</Link></Button>
+          <Button className="h-12 px-8 rounded-2xl font-bold shadow-xl shadow-primary/20" asChild><a href="/login">{t.toLogin}</a></Button>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="max-w-3xl mx-auto space-y-12 py-12 px-4 animate-in fade-in duration-500">
-      <div className="space-y-4">
+    <div className="max-w-3xl mx-auto space-y-16 py-12 px-4">
+      <motion.div 
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="space-y-8"
+      >
         <button 
           onClick={() => router.push(`/${locale}`)}
-          className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors group"
+          className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors group"
         >
-          <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />
+          <ArrowLeft className="h-3 w-3 group-hover:-translate-x-1 transition-transform" />
           {t.backSupport}
         </button>
 
-        <div className="space-y-2">
-          <h1 className="text-4xl font-extrabold tracking-tight">{t.title}</h1>
-          <p className="text-xl text-muted-foreground leading-relaxed">
+        <div className="space-y-4">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-destructive/10 text-destructive text-[10px] font-bold uppercase tracking-widest">
+            <ShieldAlert className="h-3 w-3" />
+            Legal & Privacy
+          </div>
+          <h1 className="text-4xl md:text-6xl font-black tracking-tighter leading-[0.9]">{t.title}</h1>
+          <p className="text-xl text-muted-foreground leading-relaxed font-medium">
             {t.description}
           </p>
         </div>
-      </div>
+      </motion.div>
 
       {!user.emailVerified ? (
-        <Card className="border-destructive/30 bg-destructive/5 overflow-hidden rounded-2xl">
-          <CardHeader className="border-b border-destructive/10">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-destructive/10 rounded-lg">
-                <ShieldAlert className="h-6 w-6 text-destructive" />
+        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
+          <Card className="border-destructive/30 bg-destructive/5 overflow-hidden rounded-[2rem] shadow-xl shadow-destructive/5">
+            <CardHeader className="border-b border-destructive/10 p-8 sm:p-10">
+              <div className="flex items-center gap-6">
+                <div className="p-4 bg-destructive/10 rounded-2xl">
+                  <ShieldAlert className="h-8 w-8 text-destructive" />
+                </div>
+                <div>
+                  <CardTitle className="text-2xl font-black tracking-tight text-destructive">{t.verifyTitle}</CardTitle>
+                  <CardDescription className="font-bold uppercase tracking-widest text-[10px] mt-1">{t.verifyDesc}</CardDescription>
+                </div>
               </div>
-              <div>
-                <CardTitle className="text-destructive">{t.verifyTitle}</CardTitle>
-                <CardDescription>{t.verifyDesc}</CardDescription>
+            </CardHeader>
+            <CardContent className="p-8 sm:p-10 space-y-8">
+              <p className="text-lg font-medium leading-relaxed">
+                {t.verifyText} (<strong>{user.email}</strong>).
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Button onClick={handleSendVerification} disabled={isEmailSending} className="h-12 gap-2 rounded-2xl px-8 font-black uppercase tracking-widest text-[10px] shadow-lg shadow-primary/20">
+                  <Mail className="h-4 w-4" />
+                  {isEmailSending ? t.submitting : t.sendVerify}
+                </Button>
+                <Button variant="outline" onClick={handleRefresh} className="h-12 gap-2 rounded-2xl px-8 font-black uppercase tracking-widest text-[10px] hover:bg-background">
+                  <RotateCcw className="h-4 w-4" />
+                  {t.checkStatus}
+                </Button>
               </div>
-            </div>
-          </CardHeader>
-          <CardContent className="p-6 space-y-4">
-            <p className="leading-relaxed">
-              {t.verifyText} (<strong>{user.email}</strong>).
-            </p>
-            <div className="flex flex-col sm:flex-row gap-3">
-              <Button onClick={handleSendVerification} disabled={isEmailSending} className="gap-2 rounded-xl">
-                <Mail className="h-4 w-4" />
-                {isEmailSending ? t.submitting : t.sendVerify}
-              </Button>
-              <Button variant="outline" onClick={handleRefresh} className="gap-2 rounded-xl">
-                <RotateCcw className="h-4 w-4" />
-                {t.checkStatus}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </motion.div>
       ) : (
-        <Card className="border-green-500/30 bg-green-500/5 rounded-2xl">
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-green-500/10 rounded-lg text-green-600">
-                <ShieldCheck className="h-6 w-6" />
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+          <Card className="border-green-500/30 bg-green-500/5 rounded-[2rem] shadow-xl shadow-green-500/5">
+            <CardHeader className="p-8">
+              <div className="flex items-center gap-6">
+                <div className="p-4 bg-green-500/10 rounded-2xl text-green-600 shadow-sm">
+                  <ShieldCheck className="h-8 w-8" />
+                </div>
+                <div>
+                  <CardTitle className="text-2xl font-black tracking-tight text-green-700 dark:text-green-400">{t.verifiedTitle}</CardTitle>
+                  <CardDescription className="font-bold uppercase tracking-widest text-[10px] mt-1">{t.verifiedDesc}</CardDescription>
+                </div>
               </div>
-              <div>
-                <CardTitle className="text-green-700 dark:text-green-400">{t.verifiedTitle}</CardTitle>
-                <CardDescription>{t.verifiedDesc}</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-        </Card>
+            </CardHeader>
+          </Card>
+        </motion.div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-12">
-        <section className="space-y-6">
-          <div className="flex items-center gap-3 text-2xl font-bold">
-            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary text-sm">1</div>
+      <form onSubmit={handleSubmit} className="space-y-16">
+        <section className="space-y-8">
+          <div className="flex items-center gap-4 text-2xl font-black tracking-tight">
+            <div className="w-10 h-10 rounded-2xl bg-primary/10 flex items-center justify-center text-primary text-sm shadow-sm">1</div>
             <span>{t.step1}</span>
           </div>
 
-          <div className="space-y-6">
+          <div className="space-y-8">
             {suggestions.length > 0 && (
-              <div className="space-y-3">
-                <Label className="text-xs uppercase tracking-wider text-muted-foreground font-bold">{t.suggestions}</Label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-4">
+                <Label className="text-[10px] uppercase tracking-widest text-muted-foreground font-black ml-1">{t.suggestions}</Label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {suggestions.map(card => (
-                    <div 
+                    <motion.div 
                       key={card.fullId}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
                       onClick={() => setSelectedCardId(card.fullId)}
                       className={`
-                        p-5 rounded-2xl border-2 cursor-pointer transition-all flex items-center justify-between
+                        p-6 rounded-[2rem] border-2 cursor-pointer transition-all flex items-center justify-between
                         ${selectedCardId === card.fullId 
-                          ? 'border-primary bg-primary/5 ring-4 ring-primary/10' 
-                          : 'border-muted hover:border-primary/40 bg-background'}
+                          ? 'border-primary bg-primary/5 ring-8 ring-primary/5 shadow-xl shadow-primary/5' 
+                          : 'border-border/50 hover:border-primary/40 bg-background shadow-sm'}
                       `}
                     >
                       <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center font-bold text-primary text-xl">
+                        <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center font-black text-primary text-2xl shadow-inner">
                           {card.name.charAt(0)}
                         </div>
                         <div>
-                          <p className="font-extrabold text-lg">{card.name}</p>
-                          <p className="text-xs text-muted-foreground">{card.cardNumber}</p>
+                          <p className="font-black text-xl tracking-tight leading-none">{card.name}</p>
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mt-1 opacity-60">{card.cardNumber}</p>
                         </div>
                       </div>
-                      {selectedCardId === card.fullId && <CheckCircle2 className="h-6 w-6 text-primary" />}
-                    </div>
+                      {selectedCardId === card.fullId && (
+                        <div className="p-1 bg-primary rounded-full">
+                          <CheckCircle2 className="h-5 w-5 text-primary-foreground" />
+                        </div>
+                      )}
+                    </motion.div>
                   ))}
                 </div>
               </div>
             )}
 
-            <div className="space-y-3 pt-4">
-              <Label htmlFor="search" className="font-bold">{t.searchCard}</Label>
-              <div className="relative">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+            <div className="space-y-4 pt-4">
+              <Label htmlFor="search" className="text-[10px] uppercase tracking-widest text-muted-foreground font-black ml-1">{t.searchCard}</Label>
+              <div className="relative group">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
                 <Input 
                   id="search"
                   placeholder={t.searchPlaceholder} 
-                  className="h-12 pl-12 rounded-xl bg-muted/20 border-none focus-visible:ring-2 focus-visible:ring-primary"
+                  className="h-14 pl-12 rounded-2xl bg-muted/20 border-none focus-visible:ring-2 focus-visible:ring-primary shadow-inner"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                 />
               </div>
 
-              <div className="max-h-[300px] overflow-y-auto rounded-2xl border bg-muted/10 p-2 space-y-1 scrollbar-thin">
+              <div className="max-h-[300px] overflow-y-auto rounded-[2rem] border border-border/50 bg-muted/10 p-3 space-y-1 scrollbar-thin">
                 {filteredCards.length > 0 ? (
                   filteredCards.map(card => (
                     <div 
@@ -367,53 +420,68 @@ export default function SupportBeschwerdenPage({ params }: { params: Promise<{ l
                       className={`
                         p-4 rounded-xl border flex items-center justify-between cursor-pointer transition-all
                         ${selectedCardId === card.fullId 
-                          ? 'bg-primary/10 border-primary/50 text-primary' 
+                          ? 'bg-primary/10 border-primary/50 text-primary shadow-sm' 
                           : 'bg-background border-transparent hover:border-muted-foreground/20'}
                       `}
                     >
-                      <span className="font-bold">{card.name} <span className="text-xs text-muted-foreground ml-2 font-medium">{card.cardNumber}</span></span>
+                      <span className="font-bold text-base tracking-tight">{card.name} <span className="text-[10px] uppercase tracking-widest text-muted-foreground ml-3 font-medium">{card.cardNumber}</span></span>
                       {selectedCardId === card.fullId && <CheckCircle2 className="h-5 w-5" />}
                     </div>
                   ))
                 ) : (
-                  <p className="text-sm text-muted-foreground text-center py-8">{t.noCards}</p>
+                  <div className="p-12 text-center space-y-2">
+                    <p className="text-sm text-muted-foreground font-medium italic">{t.noCards}</p>
+                  </div>
                 )}
               </div>
             </div>
           </div>
         </section>
 
-        <section className="space-y-6 border-t pt-12">
-          <div className="flex items-center gap-3 text-2xl font-bold">
-            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary text-sm">2</div>
+        <section className="space-y-8 border-t border-border/50 pt-16">
+          <div className="flex items-center gap-4 text-2xl font-black tracking-tight">
+            <div className="w-10 h-10 rounded-2xl bg-primary/10 flex items-center justify-center text-primary text-sm shadow-sm">2</div>
             <span>{t.step2}</span>
           </div>
           
-          <div className="space-y-3">
-            <Label htmlFor="reason" className="font-bold text-lg text-muted-foreground">{t.reasonLabel}</Label>
+          <div className="space-y-4">
+            <Label htmlFor="reason" className="text-[10px] uppercase tracking-widest text-muted-foreground font-black ml-1">{t.reasonLabel}</Label>
             <Textarea 
               id="reason"
               placeholder={t.reasonPlaceholder}
-              className="min-h-[200px] rounded-2xl bg-muted/20 border-none focus-visible:ring-2 focus-visible:ring-primary p-6 text-lg leading-relaxed"
+              className="min-h-[250px] rounded-[2rem] bg-muted/20 border-none focus-visible:ring-2 focus-visible:ring-primary p-8 text-lg font-medium leading-relaxed shadow-inner"
               value={reason}
               onChange={(e) => setReason(e.target.value)}
             />
-            <div className="bg-amber-500/10 border border-amber-500/20 p-4 rounded-xl flex gap-3">
-              <Clock className="h-5 w-5 text-amber-600 flex-shrink-0" />
-              <p className="text-xs text-amber-800 dark:text-amber-200 leading-relaxed font-medium">
-                <strong>{locale === 'en' ? 'Note:' : 'Hinweis:'}</strong> {t.hint}
+            <div className="bg-amber-500/10 border border-amber-500/20 p-6 rounded-[1.5rem] flex gap-4 shadow-sm">
+              <Clock className="h-6 w-6 text-amber-600 flex-shrink-0" />
+              <p className="text-sm text-amber-800 dark:text-amber-200 leading-relaxed font-bold">
+                <span className="uppercase tracking-widest text-[10px] block mb-1 opacity-70">{locale === 'en' ? 'Note' : 'Hinweis'}</span> 
+                {t.hint}
               </p>
             </div>
           </div>
         </section>
 
-        <Button 
-          type="submit" 
-          disabled={isSubmitting || !user.emailVerified || !selectedCardId || reason.trim().length < 10}
-          className="w-full h-16 text-xl font-extrabold gap-3 rounded-2xl shadow-2xl shadow-primary/20 transition-all hover:scale-[1.01] active:scale-[0.99]"
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="pt-8"
         >
-          {isSubmitting ? t.submitting : t.submit}
-        </Button>
+          <Button 
+            type="submit" 
+            disabled={isSubmitting || !user.emailVerified || !selectedCardId || reason.trim().length < 10}
+            className="w-full h-20 text-2xl font-black tracking-tighter gap-3 rounded-[2rem] shadow-2xl shadow-primary/20 transition-all hover:scale-[1.01] active:scale-[0.98] disabled:opacity-50"
+          >
+            {isSubmitting ? (
+               <RotateCcw className="h-6 w-6 animate-spin" />
+            ) : (
+              <Send className="h-6 w-6" />
+            )}
+            {isSubmitting ? t.submitting : t.submit}
+          </Button>
+        </motion.div>
       </form>
     </div>
   )

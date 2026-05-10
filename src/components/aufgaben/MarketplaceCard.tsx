@@ -5,7 +5,7 @@ import { Card } from '@/components/ui/card'
 import { Heart } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { getDeterministicSeed } from '@/lib/utils'
+import { getTaskPlaceholderImage } from '@/lib/utils'
 
 import { getTaskStatusMeta } from '@/modules/shared/status'
 
@@ -61,8 +61,7 @@ export function MarketplaceCard({
     ? `+ ${task.reward_boosters} Booster` 
     : null
 
-  const seed = task.placeholder_seed ?? getDeterministicSeed(task.id)
-  const placeholderImage = `https://loremflickr.com/800/800/city,abstract,modern?lock=${seed % 1000}`
+  const placeholderImage = getTaskPlaceholderImage(task.id, task.placeholder_seed)
 
   if (variant === 'list') {
     return (

@@ -133,24 +133,16 @@ export default function FinancePage() {
           ))}
         </div>
 
-        <FundingStatus current={0} goal={10000} isAuthenticated={true} loading={true} />
-
-        <div className="grid grid-cols-1 gap-6">
-          <ClassRanking finances={[]} goal={10000} loading={true} />
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div className="lg:col-span-8 space-y-6">
+            <Skeleton className="h-[350px] w-full rounded-xl" />
+            <Skeleton className="h-[400px] w-full rounded-xl" />
+          </div>
+          <div className="lg:col-span-4 space-y-6">
+            <Skeleton className="h-[300px] w-full rounded-xl" />
+            <Skeleton className="h-[400px] w-full rounded-xl" />
+          </div>
         </div>
-
-        <Card>
-          <CardHeader>
-            <Skeleton className="h-6 w-32" />
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <Skeleton key={i} className="h-12 w-full rounded-md" />
-              ))}
-            </div>
-          </CardContent>
-        </Card>
       </div>
     )
   }
@@ -231,217 +223,199 @@ export default function FinancePage() {
   const isDiffSignificant = diff !== null && Math.abs(diff) > 0.01
 
   return (
-    <div className="space-y-6">
-      <div className="rounded-[2rem] border border-border bg-card px-6 py-6 shadow-sm">
-        <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="rounded-3xl border border-border bg-card px-4 py-4 sm:px-6 sm:py-5 shadow-sm">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">Finanzen</p>
-            <h1 className="text-3xl font-extrabold tracking-tight">Budgetplanung</h1>
+            <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-muted-foreground">Finanzen</p>
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">Budgetplanung</h1>
           </div>
           <div className="flex w-full md:w-auto flex-wrap gap-2">
             <Link href="/finanzen/spenden/abi">
-              <Button variant="outline" size="sm" className="gap-2 border-primary/20 hover:border-primary hover:text-primary transition-all">
-                <Heart className="h-4 w-4 fill-primary/10" />
+              <Button variant="outline" size="sm" className="h-8 gap-2 border-primary/20 hover:border-primary hover:text-primary transition-all text-[11px] sm:text-xs">
+                <Heart className="h-3.5 w-3.5 fill-primary/10" />
                 Spende Abi
               </Button>
             </Link>
             <Link href="/finanzen/spenden/entwickler">
-              <Button variant="outline" size="sm" className="gap-2 border-brand/20 hover:border-brand hover:text-brand transition-all">
-                <Coffee className="h-4 w-4 fill-brand/10" />
+              <Button variant="outline" size="sm" className="h-8 gap-2 border-brand/20 hover:border-brand hover:text-brand transition-all text-[11px] sm:text-xs">
+                <Coffee className="h-3.5 w-3.5 fill-brand/10" />
                 Entwickler
               </Button>
             </Link>
             {isPlanner && (
-              <>
+              <div className="flex gap-2">
                 <VerifyCashDialog />
                 <AddFinanceDialog />
-              </>
+              </div>
             )}
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground uppercase">Gesamteinnahmen</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-success">
-              + {totalIncome.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
-            </div>
-          </CardContent>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <Card className="p-3 sm:p-4">
+          <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider mb-1">Einnahmen</p>
+          <div className="text-xl sm:text-2xl font-bold text-success truncate">
+            + {totalIncome.toLocaleString('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 })}
+          </div>
         </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground uppercase">Gesamtausgaben</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-destructive">
-              - {totalExpenses.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
-            </div>
-          </CardContent>
+        <Card className="p-3 sm:p-4">
+          <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider mb-1">Ausgaben</p>
+          <div className="text-xl sm:text-2xl font-bold text-destructive truncate">
+            - {totalExpenses.toLocaleString('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 })}
+          </div>
         </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground uppercase">Finanzierungsziel</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-foreground">
-              {fundingGoal.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
-            </div>
-          </CardContent>
+        <Card className="p-3 sm:p-4">
+          <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider mb-1">Ziel</p>
+          <div className="text-xl sm:text-2xl font-bold text-foreground truncate">
+            {fundingGoal.toLocaleString('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 })}
+          </div>
         </Card>
-        <Card className="bg-brand/5 border-brand/20">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-brand uppercase">Kontostand (Effektiv)</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-2">
-              <div className={`text-2xl font-bold ${currentBalance < 0 ? 'text-destructive' : 'text-foreground'}`}>
-                {Math.max(currentBalance, lastVerification?.amount || 0).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
-              </div>
-              {isDiffSignificant && (
-                <div className="text-warning animate-pulse">
-                  <AlertCircle className="h-5 w-5" />
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <FinanceChart 
-        finances={finances} 
-        shopEarnings={shopEarnings} 
-        settings={settings} 
-        loading={loading || !shopEarningsLoaded}
-      />
-
-      {lastVerification && (
-        <Card className={`border-l-4 ${isDiffSignificant ? 'border-l-warning bg-warning/5' : 'border-l-success bg-success/5'}`}>
-          <CardContent className="py-4">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <div className="flex items-start gap-3">
-                <div className={`mt-1 p-2 rounded-full ${isDiffSignificant ? 'bg-warning/10 text-warning' : 'bg-success/10 text-success'}`}>
-                  {isDiffSignificant ? <AlertCircle className="h-5 w-5" /> : <CheckCircle2 className="h-5 w-5" />}
-                </div>
-                <div>
-                  <h3 className="font-bold text-sm">Letzter Kassenabgleich (Prüfsumme)</h3>
-                  <p className="text-xs text-muted-foreground">
-                    Zuletzt am {format(toDate(lastVerification.verification_date), 'dd.MM.yyyy HH:mm', { locale: de })} von {lastVerification.verified_by_name}
-                  </p>
-                  {lastVerification.note && (
-                    <p className="text-[10px] mt-1 text-muted-foreground italic">"{lastVerification.note}"</p>
-                  )}
-                </div>
-              </div>
-              <div className="flex gap-6 items-center">
-                <div className="text-right">
-                  <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Physisch gezählt</p>
-                  <p className="text-lg font-bold">{lastVerification.amount.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Differenz</p>
-                  <p className={`text-lg font-black ${isDiffSignificant ? 'text-destructive' : 'text-success'}`}>
-                    {diff! > 0 ? '+' : ''}{diff?.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
-                  </p>
-                </div>
-              </div>
+        <Card className="p-3 sm:p-4 bg-brand/5 border-brand/20">
+          <p className="text-[9px] font-bold text-brand uppercase tracking-wider mb-1">Stand (Eff.)</p>
+          <div className="flex items-center gap-2">
+            <div className={`text-xl sm:text-2xl font-bold truncate ${currentBalance < 0 ? 'text-destructive' : 'text-foreground'}`}>
+              {Math.max(currentBalance, lastVerification?.amount || 0).toLocaleString('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 })}
             </div>
             {isDiffSignificant && (
-              <p className="mt-3 text-[10px] text-warning-foreground bg-warning/10 p-2 rounded-lg border border-warning/20">
-                Achtung: Der physische Kassenstand weicht vom Transaktionsverlauf ab. Bitte prüfe, ob alle Einnahmen und Ausgaben korrekt erfasst wurden oder ob Geld in der Kasse fehlt.
-              </p>
+              <div className="text-warning animate-pulse shrink-0">
+                <AlertCircle className="h-4 w-4" />
+              </div>
             )}
-          </CardContent>
+          </div>
         </Card>
-      )}
-
-      <FundingStatus
-        current={currentBalance}
-        checksum={lastVerification?.amount}
-        breakdown={breakdown}
-        goal={fundingGoal}
-        initialTicketSales={settings?.expected_ticket_sales ?? 150}
-        onTicketSalesChange={canEditTicketSales ? handleTicketSalesChange : undefined}
-        canEditTicketSales={canEditTicketSales}
-        isAuthenticated={!!user}
-        profile={profile}
-        settings={settings}
-      />
-
-      <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
-        <ClassRanking 
-          finances={finances} 
-          shopEarnings={shopEarnings}
-          goal={fundingGoal} 
-          useScrollContainer={false}
-          infoLink="/finanzen/spenden/abi"
-          loading={!shopEarningsLoaded}
-        />
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Finanzverlauf</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
-            <Table className="min-w-[600px] sm:min-w-0">
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Datum</TableHead>
-                  <TableHead>Beschreibung</TableHead>
-                  <TableHead className="text-right">Betrag</TableHead>
-                  {isPlanner && <TableHead className="text-right w-[100px]">Aktionen</TableHead>}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {finances.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={isPlanner ? 4 : 3} className="text-center py-4 text-muted-foreground italic">
-                      Noch keine Einnahmen erfasst.
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  finances.map((entry) => (
-                    <TableRow key={entry.id}>
-                      <TableCell className="whitespace-nowrap">{format(toDate(entry.entry_date), 'dd.MM.yyyy', { locale: de })}</TableCell>
-                      <TableCell>
-                        <div className="flex flex-col min-w-[150px]">
-                          <span>{entry.description}</span>
-                          {entry.responsible_class && (
-                            <span className="text-[10px] text-muted-foreground">Kurs {entry.responsible_class}</span>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell className={`text-right font-semibold whitespace-nowrap ${Number(entry.amount) < 0 ? 'text-destructive' : 'text-success'}`}>
-                        {Number(entry.amount) < 0 ? '-' : '+'} {Math.abs(Number(entry.amount)).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
-                      </TableCell>
-                      {isPlanner && (
-                        <TableCell className="text-right">
-                          <div className="flex justify-end items-center gap-1">
-                            <EditFinanceDialog entry={entry} />
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
-                              className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                              onClick={() => handleDelete(entry.id)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      )}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 items-start">
+        {/* Main Column */}
+        <div className="lg:col-span-8 space-y-4 sm:space-y-6">
+          <FinanceChart 
+            finances={finances} 
+            shopEarnings={shopEarnings} 
+            settings={settings} 
+            loading={loading || !shopEarningsLoaded}
+          />
+
+          {lastVerification && (
+            <Card className={`border-l-4 ${isDiffSignificant ? 'border-l-warning bg-warning/5' : 'border-l-success bg-success/5'}`}>
+              <CardContent className="py-3 px-4">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                  <div className="flex items-start gap-3">
+                    <div className={`mt-0.5 p-1.5 rounded-full ${isDiffSignificant ? 'bg-warning/10 text-warning' : 'bg-success/10 text-success'}`}>
+                      {isDiffSignificant ? <AlertCircle className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4" />}
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-xs uppercase tracking-tight">Kassenabgleich</h3>
+                      <p className="text-[10px] text-muted-foreground">
+                        {format(toDate(lastVerification.verification_date), 'dd.MM.yy HH:mm', { locale: de })} von {lastVerification.verified_by_name}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex gap-4 items-center">
+                    <div className="text-right">
+                      <p className="text-[8px] uppercase font-bold text-muted-foreground tracking-wider">Physisch</p>
+                      <p className="text-sm font-bold">{lastVerification.amount.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-[8px] uppercase font-bold text-muted-foreground tracking-wider">Diff.</p>
+                      <p className={`text-sm font-black ${isDiffSignificant ? 'text-destructive' : 'text-success'}`}>
+                        {diff! > 0 ? '+' : ''}{diff?.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          <Card>
+            <CardHeader className="py-2 px-4 border-b border-border bg-muted/5">
+              <CardTitle className="text-sm font-bold uppercase tracking-wider">Finanzverlauf</CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-muted/30 hover:bg-muted/30">
+                      <TableHead className="w-[100px] h-8 text-[10px] px-4 uppercase font-bold">Datum</TableHead>
+                      <TableHead className="h-8 text-[10px] px-4 uppercase font-bold">Beschreibung</TableHead>
+                      <TableHead className="text-right h-8 text-[10px] px-4 uppercase font-bold">Betrag</TableHead>
+                      {isPlanner && <TableHead className="text-right w-[80px] h-8 text-[10px] px-4 uppercase font-bold">Aktion</TableHead>}
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
+                  </TableHeader>
+                  <TableBody>
+                    {finances.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={isPlanner ? 4 : 3} className="text-center py-6 text-muted-foreground italic text-xs">
+                          Keine Einträge.
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      finances.map((entry) => (
+                        <TableRow key={entry.id} className="hover:bg-muted/20">
+                          <TableCell className="whitespace-nowrap font-medium text-[11px] py-1.5 px-4">{format(toDate(entry.entry_date), 'dd.MM.yy', { locale: de })}</TableCell>
+                          <TableCell className="py-1.5 px-4">
+                            <div className="flex flex-col min-w-[120px]">
+                              <span className="font-semibold text-[11px] leading-tight">{entry.description}</span>
+                              {entry.responsible_class && (
+                                <span className="text-[9px] text-muted-foreground">K {entry.responsible_class}</span>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell className={`text-right font-bold text-[11px] py-1.5 px-4 whitespace-nowrap ${Number(entry.amount) < 0 ? 'text-destructive' : 'text-success'}`}>
+                            {Number(entry.amount) < 0 ? '-' : '+'} {Math.abs(Number(entry.amount)).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
+                          </TableCell>
+                          {isPlanner && (
+                            <TableCell className="text-right py-1.5 px-4">
+                              <div className="flex justify-end items-center gap-1">
+                                <EditFinanceDialog entry={entry} />
+                                <Button 
+                                  variant="ghost" 
+                                  size="icon" 
+                                  className="h-6 w-6 text-muted-foreground hover:text-destructive transition-colors"
+                                  onClick={() => handleDelete(entry.id)}
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          )}
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Sidebar */}
+        <div className="lg:col-span-4 space-y-6">
+          <FundingStatus
+            current={currentBalance}
+            checksum={lastVerification?.amount}
+            breakdown={breakdown}
+            goal={fundingGoal}
+            initialTicketSales={settings?.expected_ticket_sales ?? 150}
+            onTicketSalesChange={canEditTicketSales ? handleTicketSalesChange : undefined}
+            canEditTicketSales={canEditTicketSales}
+            isAuthenticated={!!user}
+            profile={profile}
+            settings={settings}
+          />
+
+          <ClassRanking 
+            finances={finances} 
+            shopEarnings={shopEarnings}
+            goal={fundingGoal} 
+            useScrollContainer={true}
+            infoLink="/finanzen/spenden/abi"
+            loading={!shopEarningsLoaded}
+          />
+        </div>
+      </div>
     </div>
   )
 }

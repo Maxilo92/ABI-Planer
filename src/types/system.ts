@@ -1,4 +1,12 @@
-export type FeatureStatus = 'disabled' | 'admins_only' | 'enabled';
+export type SimpleFeatureStatus = 'disabled' | 'admins_only' | 'enabled';
+
+export interface SpecificFeatureStatus {
+  type: 'specific';
+  allowed_roles: string[];
+  allowed_groups: string[];
+}
+
+export type FeatureStatus = SimpleFeatureStatus | SpecificFeatureStatus;
 
 export interface SystemFeatures {
   trading_status: FeatureStatus;

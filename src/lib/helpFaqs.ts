@@ -1,4 +1,4 @@
-export type Locale = 'de' | 'en'
+export type Locale = 'de' | 'en' | 'es'
 
 export interface HelpFaqItem {
   id: string
@@ -342,7 +342,22 @@ export const helpFaqSections: Record<Locale, HelpFaqSection[]> = {
         },
       ],
     },
-    // Placeholder for English content
+  ],
+  es: [
+    {
+      id: 'registrierung',
+      category: 'Registro e inicio de sesión',
+      items: [
+        {
+          id: 'registrierung-email',
+          category: 'Registro e inicio de sesión',
+          question: '¿Qué dirección de correo electrónico puedo usar para registrarme?',
+          answer: 'Necesitas una dirección @hgr-web.lernsax.de. Es tu correo oficial de la escuela. Otras direcciones de correo electrónico (@gmail, @outlook, etc.) no funcionarán: es una medida de seguridad.',
+          keywords: ['registro', 'email', 'lernsax', 'login'],
+          priority: 100,
+        },
+      ],
+    },
   ]
 }
 

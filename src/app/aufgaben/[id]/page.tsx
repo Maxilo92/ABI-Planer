@@ -24,8 +24,7 @@ import {
   Trash2,
   Swords,
   Gift,
-  Eye,
-  Sparkles
+  Eye
 } from 'lucide-react'
 import Link from 'next/link'
 import { Task } from '@/types/database'
@@ -33,7 +32,7 @@ import Image from 'next/image'
 import { toast } from 'sonner'
 import { uploadTaskProof, deleteTaskFile } from '@/lib/taskMediaUpload'
 import { getTaskStatusMeta } from '@/modules/shared/status'
-import { getDeterministicSeed } from '@/lib/utils'
+import { getTaskPlaceholderImage } from '@/lib/utils'
 import { logAction } from '@/lib/logging'
 
 import { DopamineBurst } from '@/components/ui/DopamineBurst'
@@ -56,7 +55,6 @@ export default function TaskDetailPage() {
   const { profile, loading: authLoading } = useAuth()
   
   const [task, setTask] = useState<Task | null>(null)
-  const [categoryName, setCategoryName] = useState<string>('')
   const [loading, setLoading] = useState(true)
   const [uploading, setUploading] = useState(false)
   const [deleting, setDeleting] = useState(false)
@@ -97,17 +95,6 @@ export default function TaskDetailPage() {
         // Mark as viewed once we have the data
         if (profile?.id && (!taskData.viewed_by || !taskData.viewed_by.includes(profile.id))) {
           markAsViewed()
-        }
-
-        // Fetch Category Name
-        if (taskData.category_id) {
-          onSnapshot(doc(db, 'settings', 'config'), (settingsDoc) => {
-            if (settingsDoc.exists()) {
-              const cats = (settingsDoc.data() as any).task_categories || []
-              const cat = cats.find((c: any) => c.id === taskData.category_id)
-              if (cat) setCategoryName(cat.name)
-            }
-          })
         }
       } else {
         // Only redirect if not already deleting
@@ -166,8 +153,7 @@ export default function TaskDetailPage() {
 
   if (!task) return null
 
-  const seed = task.placeholder_seed ?? getDeterministicSeed(task.id)
-  const placeholderImage = `https://loremflickr.com/1200/800/city,abstract,modern?lock=${seed % 1000}`
+  const placeholderImage = getTaskPlaceholderImage(task.id, task.placeholder_seed)
 
   const isPlanner = (profile?.role === 'planner' || profile?.role === 'admin' || profile?.role === 'admin_main' || profile?.role === 'admin_co') && profile?.is_approved
   const isAssignee = task.assignee_id === profile?.id
@@ -668,7 +654,7 @@ export default function TaskDetailPage() {
             </DialogDescription>
           </DialogHeader>
           <div className="bg-muted/30 p-4 rounded-xl border border-dashed text-sm text-center italic text-muted-foreground my-2">
-            "Nur wer die Ausdauer besitzt, wird die Belohnung von {task.reward_boosters} Booster{task.reward_boosters !== 1 ? 'n' : ''} erhalten."
+            &quot;Nur wer die Ausdauer besitzt, wird die Belohnung von {task.reward_boosters} Booster{task.reward_boosters !== 1 ? 'n' : ''} erhalten.&quot;
           </div>
           <DialogFooter className="flex flex-col sm:flex-row gap-3 mt-4">
             <Button 

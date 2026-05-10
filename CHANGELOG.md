@@ -1,3 +1,5 @@
+# Changelog
+
 <!-- AGENT_NAV_METADATA -->
 <!-- path: CHANGELOG.md -->
 <!-- role: reference -->
@@ -6,47 +8,47 @@
 <!-- default_action: read newest entries only unless a regression requires older history -->
 <!-- index: docs/AGENT_CONTEXT_INDEX.md -->
 
-## [1.35.4.4] - 2026-05-09
+## [1.37.2.10] - 2026-05-10
 
 ### Fixed
-- **Cloud Functions**: Kritischer Bug in `applyAiLearningFromMatch` und `gifts` behoben, bei dem Firestore-Transaktionsregeln verletzt wurden (Interleaved Reads/Writes).
-- **Combat**: Logging in `joinMatchByCode` optimiert. Erwartete Nutzerfehler (z.B. falscher Code) werden nun als Warnung statt als Fehler geloggt, um die Log-Sauberkeit zu erhöhen.
-- **Transaktionen**: Systemweite Überprüfung und Absicherung von Datenbank-Transaktionen zur Einhaltung der "Reads-Before-Writes" Regel.
 
-## [1.35.4.3] - 2026-05-09
+- **AI Assistant**: Schema-artige Modellantworten mit `action:`- und `answer:`-Zeilen werden jetzt auf die sichtbare Antwort reduziert, damit interne Struktur nicht im Chat erscheint.
 
-### Added
-- **News SEO**: Dynamische Metadaten (Titel, Beschreibung, OG-Bilder) für einzelne News-Beiträge via Server-Side `generateMetadata`.
-- **Strukturierte Daten**: Automatische Generierung von `NewsArticle` JSON-LD für News-Beiträge zur besseren Indizierung durch Suchmaschinen.
-
-## [1.35.4.2] - 2026-05-09
+## [1.37.2.9] - 2026-05-10
 
 ### Added
-- **SEO-Optimierung**: Implementierung von OpenGraph- und Twitter-Metadaten im globalen Layout zur Verbesserung der Social-Media-Vorschau.
-- **Dynamische Sitemap**: Die Sitemap (`/sitemap.xml`) wird nun dynamisch generiert und enthält alle News-Beiträge direkt aus der Firestore-Datenbank.
 
-## [1.35.4.1] - 2026-05-09
+- **AI Assistant**: Der Dashboard-Assistent kann jetzt Todos, Unteraufgaben und Termine als bestätigungspflichtige Entwürfe vorbereiten und für berechtigte Rollen direkt speichern.
+
+### Changed
+
+- **AI Assistant**: Die Assistenz antwortet nun mit einer strukturierten Aktionsvorschau, damit der Nutzer vor dem Anlegen alles prüfen kann.
+
+## [1.37.2.8] - 2026-05-10
+
+### Changed
+
+- **AI Assistant**: Bei leeren Modellantworten erscheint jetzt nur ein kurzer Hinweis im Chat statt eines langen Ersatztexts.
+
+## [1.37.2.7] - 2026-05-10
 
 ### Fixed
-- **Build**: TypeScript-Fehler in `src/app/page.tsx` behoben (inkonsistente Property-Namen im `landingStats` State).
 
-## [1.35.4.0] - 2026-05-09
+- **AI Assistant**: Leere Antworten werden jetzt mit einem sicheren Fallback ersetzt, damit im Chat keine leeren Sprechblasen mehr erscheinen.
 
-### Added
-- **A/B-Testing (PostHog)**: Implementierung des ersten A/B-Tests für die Landingpage-Hero-Sektion (`landing-page-hero-test`).
-  - **Varianten**: Vergleicht "Planung" (Control) mit "Sammelkarten/Gamification" (Test).
-  - **Nutzer-Ausschluss**: Strikte Logik zur Exklusion bereits angemeldeter Nutzer vom Experiment, um Datenverfälschungen zu vermeiden.
-  - **Tracking-Erweiterung**: Neue PostHog-Properties `is_authenticated` und `has_account` zur präzisen Filterung von Experiment-Kohorten.
-  - **Lokalisierung**: Neue Texte für die gamifizierte Variante in Deutsch, Englisch und Spanisch hinzugefügt.
+## [1.37.2.6] - 2026-05-10
 
 ### Fixed
-- **Layout & Flicker**: Umfassende Behebung von Layout-Shifts (Flicker) in der gesamten Anwendung.
-  - **Eager Hostname Detection**: `rootMode` und `hostname` werden nun sofort beim ersten Client-Render bestimmt, wodurch der initiale Full-Screen-Loader für die meisten Nutzer entfällt.
-  - **Landing Page**: Implementierung von Skeletons für Statistiken und Graphen zur Stabilisierung des Layouts während des Ladens von öffentlichen Daten.
-  - **Funding Banner**: Synchronisierte Initialisierung des Collapsed-Status aus dem `localStorage` zur Vermeidung von springenden Headern.
-  - **Countdown Header**: Einführung eines stabilen Placeholders während der Mounting-Phase, um Verschiebungen in der Navigation zu verhindern.
 
-## [1.35.3.0] - 2026-05-09
+- **AI Assistant**: Fokusverlust im Eingabefeld behoben. Der Chat-Input bleibt nun beim Tippen stabil fokussiert und verliert nicht bei jedem Tastendruck den Cursor.
+
+## [1.37.2.5] - 2026-05-10
+
+### Fixed
+
+- **AI Assistant**: Firestore-Updates für Chat-Sessions bereinigen nun Nachrichten vor dem Speichern, damit keine `undefined`-Werte mehr in `ai_chat_sessions` landen.
+
+## [1.35.1.2] - 2026-05-08
 
 ### Fixed
 - **Marktplatz**: Clipping-Fehler bei den Tabs auf kleinen Bildschirmen behoben (Tabs sind nun scrollbar).

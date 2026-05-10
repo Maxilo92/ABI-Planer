@@ -38,19 +38,23 @@ export async function POST(request: NextRequest) {
     const expiresIn = 60 * 60 * 24 * 5 * 1000
     let sessionCookie: string;
 
-    if (process.env.NODE_ENV !== 'production') {
-      // For development, use a mock cookie. This bypasses Firebase Auth but allows testing.
-      // If there are issues with downstream usage of this mock cookie, further investigation will be needed.
-      sessionCookie = 'mock-session-cookie';
-    } else {
-      // In production, create a real session cookie using Firebase Admin SDK
+    try {
+      // Always try to create a real session cookie
       sessionCookie = await adminAuth().createSessionCookie(idToken, { expiresIn });
+    } catch (adminError) {
+      if (process.env.NODE_ENV !== 'production') {
+        console.warn('[Session API] Failed to create real session cookie in dev, using mock.', adminError)
+        sessionCookie = 'mock-session-cookie';
+      } else {
+        throw adminError;
+      }
     }
 
     const host = request.headers.get('host') || ''
     const domain = getCookieDomain(host)
 
-    // Explicitly create a JSON response
+    console.log(`[Session API] Setting session cookie for domain: ${domain || 'default'} (host: ${host})`)
+
     const response = NextResponse.json({ status: 'success' }, { status: 200 })
 
     response.cookies.set('__session', sessionCookie, {
@@ -64,9 +68,7 @@ export async function POST(request: NextRequest) {
 
     return response
   } catch (error) {
-    // Log the error for debugging
     console.error('Session API POST Error:', error)
-    // Ensure a JSON response is always returned in case of an error
     return NextResponse.json({ error: 'An internal server error occurred' }, { status: 500 })
   }
 }
@@ -74,9 +76,20 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   try {
     const sessionCookie = request.cookies.get('__session')?.value
+    const host = request.headers.get('host') || ''
 
     if (!sessionCookie) {
+      console.log(`[Session API] No session cookie found on host: ${host}`)
       return NextResponse.json({ isOnline: false }, { status: 200 })
+    }
+
+    if (sessionCookie === 'mock-session-cookie' && process.env.NODE_ENV !== 'production') {
+      console.log(`[Session API] Mock session cookie detected on host: ${host}`)
+      return NextResponse.json({ 
+        isOnline: true, 
+        uid: 'mock-user-id',
+        isMock: true
+      }, { status: 200 })
     }
 
     // Verify session cookie
@@ -85,13 +98,15 @@ export async function GET(request: NextRequest) {
     // Create a custom token for the client to sign in
     const customToken = await adminAuth().createCustomToken(decodedClaims.uid)
 
+    console.log(`[Session API] Session verified for UID: ${decodedClaims.uid} on host: ${host}`)
+
     return NextResponse.json({
       isOnline: true,
       uid: decodedClaims.uid,
       customToken: customToken,
     }, { status: 200 })
   } catch (error) {
-    // If verification fails, clear the cookie
+    console.error('[Session API] GET Error:', error)
     const response = NextResponse.json({ isOnline: false }, { status: 200 })
     response.cookies.delete('__session')
     return response

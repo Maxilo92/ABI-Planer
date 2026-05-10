@@ -12,7 +12,6 @@ import { MaintenanceBanner } from '@/components/layout/MaintenanceBanner'
 import { useSystemMessage } from '@/context/SystemMessageContext'
 import { TwoFactorGate } from '@/components/auth/TwoFactorGate'
 import { useAuth } from '@/context/AuthContext'
-import { Skeleton } from '@/components/ui/skeleton'
 import { ThemeSync } from '@/components/layout/ThemeSync'
 import { LandingHeader } from '@/components/layout/LandingHeader'
 import { getTcgBaseUrl, extractGradeFromClassName, ALLOWED_PLANNER_GRADES, isDashboardHost, isTcgHost, isShopHost, isSupportHost } from '@/lib/dashboard-url'
@@ -20,6 +19,9 @@ import { FeatureGate } from '@/components/auth/FeatureGate'
 import { SchoolYearTransitionGate } from '@/components/auth/SchoolYearTransitionGate'
 
 import { SupportHeader } from '@/components/support/SupportHeader'
+import { SupportBot } from '@/components/support/SupportBot'
+import { AiAssistantWidget } from '@/components/assistant/AiAssistantWidget'
+import { useFeatureFlagEnabled } from 'posthog-js/react'
 
 interface AppShellProps {
   children: React.ReactNode
@@ -34,27 +36,25 @@ export function AppShell({ children }: AppShellProps) {
   const { maintenance } = useSystemMessage()
   const { profile, user, loading: authLoading } = useAuth()
   const [dismissedBanner, setDismissedBanner] = useState<string | null>(null)
+  const isDevelopment = process.env.NODE_ENV === 'development'
+  const isAssistantEnabled = useFeatureFlagEnabled('ai-assistant')
+  const showAssistant = user && (isAssistantEnabled || isDevelopment)
   
-  // Heuristic initialization to avoid flicker
-  const [hostname, setHostname] = useState<string | null>(() => {
-    if (typeof window === 'undefined') return null
-    return window.location.hostname
-  })
-  
-  const isBoneyardBuild = typeof window !== 'undefined' && Boolean((window as any).__BONEYARD_BUILD)
+  // Use a dedicated mounted state for robust hydration handling
+  const [mounted, setMounted] = useState(false)
+  const [hostname, setHostname] = useState<string | null>(null)
+  const [isBoneyardBuild, setIsBoneyardBuild] = useState(false)
 
-  // Ensure hostname is correct after hydration
   useEffect(() => {
+    setMounted(true)
     if (typeof window !== 'undefined') {
-      const currentHost = window.location.hostname
-      if (hostname !== currentHost) {
-        setHostname(currentHost)
-      }
+      setHostname(window.location.hostname)
+      setIsBoneyardBuild(Boolean((window as any).__BONEYARD_BUILD))
     }
-  }, [hostname])
+  }, [])
 
   const domainInfo = useMemo(() => {
-    if (isBoneyardBuild || hostname === null) return { isDashboard: false, isTcg: false, isShop: false, isSupport: false, isAnySubdomain: false }
+    if (!mounted || hostname === null) return { isDashboard: false, isTcg: false, isShop: false, isSupport: false, isAnySubdomain: false }
     
     const isDashboard = isDashboardHost(hostname)
     const isTcg = isTcgHost(hostname)
@@ -68,14 +68,9 @@ export function AppShell({ children }: AppShellProps) {
       isSupport,
       isAnySubdomain: isDashboard || isTcg || isShop || isSupport
     }
-  }, [hostname, isBoneyardBuild])
+  }, [mounted, hostname])
 
   const isDashboardSubdomain = domainInfo.isAnySubdomain
-
-  const isNoMenuRoute = useMemo(() => {
-    if (!pathname) return false
-    return noMenuRoutes.has(pathname) || pathname.startsWith('/lehrer/erstellen/')
-  }, [pathname])
 
   const isAuthRoute = authRoutes.has(pathname) || 
     pathname?.startsWith('/lehrer/erstellen/')
@@ -132,9 +127,22 @@ export function AppShell({ children }: AppShellProps) {
     }
   }, [authLoading, isBoneyardBuild, isDashboardSubdomain, domainInfo.isShop, domainInfo.isDashboard, isAuthRoute, isSupportRoute, pathname, router, user, profile])
 
+  // Auto-redirect to preferred language if on support root /
+  useEffect(() => {
+    if (!isSupportRoute || !mounted || !pathname || !profile?.language) return
+    
+    const isRoot = pathname === '/' || pathname === ''
+    if (isRoot) {
+      const prefShort = profile.language.split('-')[0] as 'de' | 'en' | 'es'
+      if (['de', 'en', 'es'].includes(prefShort)) {
+        router.replace(`/${prefShort}`)
+      }
+    }
+  }, [isSupportRoute, mounted, pathname, profile?.language, router])
+
   // While hostname is not determined, show a minimal loading state to prevent flash
   // This return MUST be after all hooks have been declared
-  if (hostname === null) {
+  if (!mounted || hostname === null) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary/20" />
@@ -143,15 +151,24 @@ export function AppShell({ children }: AppShellProps) {
   }
 
   if (isSupportRoute) {
+    const segments = pathname?.split('/') || []
+    let locale = (segments[1] as 'de' | 'en' | 'es')
+    
+    if (!locale || !['de', 'en', 'es'].includes(locale)) {
+      locale = 'de'
+    }
+
     return (
       <div className="min-h-screen bg-background flex flex-col">
         <ThemeSync />
         <SupportHeader />
-        <main className="flex-1">
+        <main className="flex-1 pt-16 lg:pt-20">
           {children}
         </main>
+        <SupportBot locale={locale} />
         <Footer />
         <CookieConsent />
+        {showAssistant && <AiAssistantWidget />}
       </div>
     )
   }
@@ -163,6 +180,7 @@ export function AppShell({ children }: AppShellProps) {
         <LandingHeader isAuthenticated={!!user} />
         <main className="min-h-screen">{children}</main>
         <Footer />
+        {showAssistant && <AiAssistantWidget />}
       </div>
     )
   }
@@ -195,6 +213,7 @@ export function AppShell({ children }: AppShellProps) {
         <SystemMessageHost />
         <main className="min-h-screen">{children}</main>
         <CookieConsent />
+        {showAssistant && <AiAssistantWidget />}
       </div>
     )
   }
@@ -230,6 +249,7 @@ export function AppShell({ children }: AppShellProps) {
           <Footer />
         </div>
         <CookieConsent />
+        {showAssistant && <AiAssistantWidget />}
       </div>
     </TwoFactorGate>
   )
