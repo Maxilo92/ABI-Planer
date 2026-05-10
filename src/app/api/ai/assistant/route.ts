@@ -418,7 +418,24 @@ ${financeContext}
       contextState = 'Hinweis: Aktuelle Stufendaten konnten nicht vollständig geladen werden.'
     }
 
-    const systemPrompt = getAbiBotBasePrompt({ userName, userRole, className, schoolName, planningGroups, ledGroups, botMode, contextState })
+    // Fetch recent feedback for learning
+    const feedbackSnap = await db.collection('ai_assistant_feedback')
+      .where('user_id', '==', authResult.uid)
+      .orderBy('created_at', 'desc')
+      .limit(10)
+      .get()
+      .catch(() => ({ docs: [] }))
+
+    const recentFeedback = (feedbackSnap as any).docs.map((d: any) => {
+      const data = d.data()
+      return {
+        feedback: data.feedback,
+        prompt: data.prompt,
+        content: data.content,
+      }
+    })
+
+    const systemPrompt = getAbiBotBasePrompt({ userName, userRole, className, schoolName, planningGroups, ledGroups, botMode, contextState, recentFeedback })
     const actionPrompt = getActionCreationPrompt(userRole, botMode)
 
     const groqPayload = {

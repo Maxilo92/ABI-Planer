@@ -8,6 +8,21 @@
 <!-- default_action: read newest entries only unless a regression requires older history -->
 <!-- index: docs/AGENT_CONTEXT_INDEX.md -->
 
+## [1.37.2.83] - 2026-05-10
+
+### Added
+
+- **ABI Bot – Lerneffekt durch Nutzer-Feedback**: Der Bot kann nun aktiv aus Likes und Dislikes lernen.
+    - **Personalisierter Kontext**: Bei jeder Anfrage werden die letzten 10 Feedback-Einträge des Nutzers aus der Datenbank geladen.
+    - **Adaptives Verhalten**: Der System-Prompt wurde um eine dynamische "Lerneffekt"-Sektion erweitert. Der Bot sieht nun konkret, welche seiner past-Antworten dem Nutzer gefallen haben und welche nicht.
+    - **Stil-Anpassung**: Die KI ist angewiesen, erfolgreiche Interaktionsmuster aus positiven Bewertungen zu replizieren und Fehler oder unpassende Töne aus negativen Bewertungen künftig zu vermeiden.
+
+## [1.37.2.83] - 2026-05-10
+
+### Changed
+
+- **Finanzen – Clipping-Fix**: Das Abschneiden der Buttons bei geöffnetem Assistenten wurde behoben. Die Support-Buttons werden nun bei extremem Platzmangel automatisch auf Icons reduziert, und das Layout stapelt sich nun früher und robuster.
+
 ## [1.37.2.82] - 2026-05-10
 
 ### Changed

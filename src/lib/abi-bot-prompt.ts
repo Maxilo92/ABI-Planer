@@ -18,6 +18,7 @@ export function getAbiBotBasePrompt(opts?: {
   ledGroups?: string[]
   botMode?: 'default' | 'smalltalk' | 'creative' | 'sassy' | 'annoyed' | 'trashy'
   contextState?: string | null
+  recentFeedback?: Array<{ feedback: 'positive' | 'negative'; prompt: string; content: string }>
 }) {
   const name = opts?.userName || null
   const role = opts?.userRole || 'viewer'
@@ -26,6 +27,26 @@ export function getAbiBotBasePrompt(opts?: {
   const groups = opts?.planningGroups?.length ? `\n- Ist Mitglied in diesen Planungsgruppen: ${opts.planningGroups.join(', ')}` : ''
   const led = opts?.ledGroups?.length ? `\n- Ist Leiter dieser Planungsgruppen: ${opts.ledGroups.join(', ')}` : ''
   const stateContext = opts?.contextState ? `\n\n${opts.contextState}` : ''
+
+  // Format feedback for prompt
+  let learningContext = ''
+  if (opts?.recentFeedback && opts.recentFeedback.length > 0) {
+    const positives = opts.recentFeedback.filter(f => f.feedback === 'positive').slice(0, 3)
+    const negatives = opts.recentFeedback.filter(f => f.feedback === 'negative').slice(0, 3)
+    
+    if (positives.length > 0 || negatives.length > 0) {
+      learningContext = '\n\nLERNEFFEKT (BASIEREND AUF DEINEM FEEDBACK):'
+      if (positives.length > 0) {
+        learningContext += '\nDas hat dem Nutzer GEFALLEN (mach mehr davon):'
+        positives.forEach(f => learningContext += `\n- Nutzer fragte: "${f.prompt}" -> Du antwortetest: "${f.content.slice(0, 100)}..."`)
+      }
+      if (negatives.length > 0) {
+        learningContext += '\nDas hat dem Nutzer NICHT GEFALLEN (vermeide dies):'
+        negatives.forEach(f => learningContext += `\n- Nutzer fragte: "${f.prompt}" -> Du antwortetest: "${f.content.slice(0, 100)}..."`)
+      }
+      learningContext += '\nNutze diese Informationen, um deinen Stil anzupassen und den Nutzer noch besser zu unterstützen.'
+    }
+  }
 
   const greeting = name ? `Der Nutzer heißt ${name}.` : ''
   const modeInstruction = 
@@ -76,7 +97,7 @@ ANTWORT-STIL:
 KONTEXT ZUR APP UND ZUM NUTZER:
 - Der ABI Planer ist eine App zur Organisation des Abitur-Jahrgangs: Finanzen, Aufgaben, Abstimmungen, Kalender, Sammelkarten, Gruppen-Chat und News.
 - Die App ist DSGVO-konform und wird in Deutschland gehostet.
-- Der Nutzer hat die Rolle: ${role}. ${greeting}${school}${course}${groups}${led}${stateContext}
+- Der Nutzer hat die Rolle: ${role}. ${greeting}${school}${course}${groups}${led}${stateContext}${learningContext}
 - Wenn nach vorherigen Nachrichten gefragt wird, nutze nur den mitgesendeten Chatverlauf. Wenn dort nichts vorhanden ist, sage klar, dass kein Verlauf vorliegt.`
 }
 

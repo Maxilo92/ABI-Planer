@@ -224,36 +224,38 @@ export default function FinancePage() {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <div className="rounded-3xl border border-border bg-card px-4 py-4 sm:px-6 sm:py-5 shadow-sm">
-        <div className="flex flex-col @md:flex-row @md:items-center justify-between gap-4">
-          <div>
+      <div className="rounded-3xl border border-border bg-card px-4 py-4 sm:px-6 sm:py-5 shadow-sm overflow-hidden">
+        <div className="flex flex-col @lg:flex-row @lg:items-center justify-between gap-4">
+          <div className="shrink-0">
             <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-muted-foreground">Finanzen</p>
             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">Budgetplanung</h1>
           </div>
-          <div className="flex flex-wrap items-center gap-2 @md:gap-4 justify-start @md:justify-end w-full @md:w-auto">
+          <div className="flex flex-wrap items-center gap-2 @md:gap-4 justify-start @md:justify-end w-full @md:w-auto min-w-0">
             {/* Support/Donation Group */}
             <div className="flex items-center bg-muted/40 p-1 rounded-full border border-border/50 shrink-0">
               <Link href="/finanzen/spenden/abi">
-                <Button variant="ghost" size="sm" className="h-7 px-3 rounded-full gap-1.5 text-[10px] font-bold hover:bg-background shadow-none">
+                <Button variant="ghost" size="sm" className="h-7 px-2 @sm:px-3 rounded-full gap-1.5 text-[10px] font-bold hover:bg-background shadow-none transition-all">
                   <Heart className="h-3 w-3 text-primary fill-primary/10" />
-                  Spende Abi
+                  <span className="hidden @sm:inline">Spende Abi</span>
                 </Button>
               </Link>
               <div className="w-px h-3 bg-border/50 mx-0.5" />
               <Link href="/finanzen/spenden/entwickler">
-                <Button variant="ghost" size="sm" className="h-7 px-3 rounded-full gap-1.5 text-[10px] font-bold hover:bg-background shadow-none">
+                <Button variant="ghost" size="sm" className="h-7 px-2 @sm:px-3 rounded-full gap-1.5 text-[10px] font-bold hover:bg-background shadow-none transition-all">
                   <Coffee className="h-3 w-3 text-brand fill-brand/10" />
-                  Entwickler
+                  <span className="hidden @sm:inline">Entwickler</span>
                 </Button>
               </Link>
             </div>
 
             {/* Main Admin Actions */}
             {isPlanner && (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 shrink-0">
                 <div className="w-px h-5 bg-border/60 mx-1 hidden @md:block" />
-                <VerifyCashDialog />
-                <AddFinanceDialog />
+                <div className="flex items-center gap-2">
+                  <VerifyCashDialog />
+                  <AddFinanceDialog />
+                </div>
               </div>
             )}
           </div>
