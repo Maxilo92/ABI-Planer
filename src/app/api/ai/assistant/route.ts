@@ -8,6 +8,7 @@ export const runtime = 'nodejs'
 
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions'
 const DEFAULT_GROQ_MODEL = 'llama-3.3-70b-versatile'
+const FALLBACK_GROQ_MODEL = 'llama-3.1-8b-instant'
 const TITLE_GROQ_MODEL = 'llama-3.1-8b-instant' // Cheaper and faster for utility tasks
 const RATE_LIMIT_MAX = 25 // Slightly higher for personal assistant
 const RATE_LIMIT_WINDOW_SECONDS = 60
@@ -248,7 +249,7 @@ export async function POST(request: NextRequest) {
       ok: true,
       title,
       meta: {
-        model: DEFAULT_GROQ_MODEL,
+        model: TITLE_GROQ_MODEL,
         generatedAt: new Date().toISOString(),
         latencyMs: Date.now() - startedAt,
       },
@@ -444,11 +445,93 @@ ${financeContext}
       }
     })
 
+    // --- TOKEN OPTIMIZATION: Keyword-based Context Injection ---
+    const lastUserMessage = [...messages].reverse().find(m => m.role === 'user')?.content?.toLowerCase() || ''
+    const needsFinance = /finanz|geld|kasse|einnahme|ausgabe|bezahlt|kosten|euro|€|sponsoring|budget|kauf|verkauf/i.test(lastUserMessage)
+    const needsTasks = /aufgabe|todo|machen|planen|erledigen|liste|fertig|arbeit/i.test(lastUserMessage)
+    const needsEvents = /termin|kalender|event|wann|treffen|datum|uhrzeit|veranstaltung/i.test(lastUserMessage)
+    const needsNews = /news|neuigkeit|info|nachricht|ankündigung/i.test(lastUserMessage)
+
+    let contextState = ''
+    try {
+      // Always fetch high-level stats (low cost)
+      const settings = settingsDoc && 'data' in settingsDoc ? settingsDoc.data() : null
+      const fundingGoal = Number(settings?.funding_goal) || 10000
+
+      // Calculate totals (we still fetch but only send summaries to LLM if not needed)
+      const financeEntries: FinanceEntry[] = (financesSnap as any).docs.map((d: any) => {
+        const data = d.data()
+        return { 
+          id: d.id,
+          amount: Number(data.amount) || 0, 
+          description: data.description || '', 
+          date: data.entry_date || '', 
+          class: data.responsible_class || null, 
+          category: data.category || null 
+        }
+      })
+
+      const totalIncome = financeEntries.filter((e: FinanceEntry) => e.amount > 0).reduce((s: number, e: FinanceEntry) => s + e.amount, 0)
+      const totalExpenses = financeEntries.filter((e: FinanceEntry) => e.amount < 0).reduce((s: number, e: FinanceEntry) => s + Math.abs(e.amount), 0)
+      const currentBalance = totalIncome - totalExpenses
+      const progressPercent = Math.min(100, Math.round((currentBalance / fundingGoal) * 100))
+
+      // Build BASIC context (always sent, very small)
+      contextState = `AKTUELLE STATS (KOMPAKT):
+- Kassenstand: ${currentBalance.toFixed(2)}€ (${progressPercent}% vom ${fundingGoal}€ Ziel)
+- Aufgaben: ${(todosSnap as any).docs.length}+ offen
+- Nächster Termin: ${(eventsSnap as any).docs[0]?.data()?.title || 'Keiner'}`
+
+      // Build DETAILED context ONLY ON DEMAND
+      if (needsFinance) {
+        // Per-course breakdown (Limited to Top 3 for extreme saving)
+        const courseMap: Record<string, number> = {}
+        financeEntries.forEach((e: FinanceEntry) => { if (e.class && e.amount > 0) courseMap[e.class] = (courseMap[e.class] || 0) + e.amount })
+        const topCourses = Object.entries(courseMap).sort((a, b) => b[1] - a[1]).slice(0, 3)
+        const courseBreakdown = topCourses.map(([c, a]) => `  - Kurs ${c}: ${a.toFixed(2)}€`).join('\n')
+
+        // Recent 5 transactions (Reduced from 10)
+        const recentTransactions = financeEntries.slice(0, 5).map(e => {
+          const sign = e.amount >= 0 ? '+' : ''
+          return `  - ${e.date?.substring(5, 10)}: ${sign}${e.amount.toFixed(2)}€ – ${e.description} [ID: ${e.id}]`
+        }).join('\n')
+
+        contextState += `\n\nDETAILLIERTE FINANZEN:
+Einnahmen/Ausgaben: +${totalIncome.toFixed(2)}€ / -${totalExpenses.toFixed(2)}€
+Top Kurse:
+${courseBreakdown || '  Keine'}
+Letzte 5 Transaktionen:
+${recentTransactions || '  Keine'}`
+      }
+
+      if (needsTasks) {
+        const currentTodos = (todosSnap as any).docs.slice(0, 3).map((d: any) => `- ${d.data().title} (${d.data().status})`).join('\n')
+        contextState += `\n\nDETAILLIERTE AUFGABEN:
+${currentTodos || 'Keine'}`
+      }
+
+      if (needsEvents) {
+        const currentEvents = (eventsSnap as any).docs.slice(0, 3).map((d: any) => `- ${d.data().title} (${d.data().start_date})`).join('\n')
+        contextState += `\n\nKOMMENDE TERMINE:
+${currentEvents || 'Keine'}`
+      }
+
+      if (needsNews) {
+        const currentNews = (newsSnap as any).docs.slice(0, 2).map((d: any) => `- ${d.data().title}`).join('\n')
+        contextState += `\n\nNEUIGKEITEN:
+${currentNews || 'Keine'}`
+      }
+
+    } catch (dataErr) {
+      console.error('Error constructing optimized AI context:', dataErr)
+      contextState = 'Hinweis: Stufendaten eingeschränkt verfügbar.'
+    }
+
     const systemPrompt = getAbiBotBasePrompt({ userName, userRole, className, schoolName, planningGroups, ledGroups, botMode, contextState, recentFeedback })
     const actionPrompt = getActionCreationPrompt(userRole, botMode)
 
-    const groqPayload = {
-      model: DEFAULT_GROQ_MODEL,
+    const buildPayload = (model: string) => ({
+      model,
       temperature: 0.7,
       max_tokens: 1500,
       messages: [
@@ -456,16 +539,37 @@ ${financeContext}
         { role: 'system', content: actionPrompt },
         ...messages
       ],
-    }
+    })
 
-    const upstreamResponse = await fetch(GROQ_API_URL, {
+    let selectedModel = DEFAULT_GROQ_MODEL
+    let upstreamResponse = await fetch(GROQ_API_URL, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(groqPayload),
+      body: JSON.stringify(buildPayload(selectedModel)),
     })
+
+    // Fallback logic for Rate Limits or Upstream Errors
+    if (!upstreamResponse.ok) {
+      const errorData = await upstreamResponse.json().catch(() => ({}))
+      const isRateLimit = upstreamResponse.status === 429
+      const isBadGateway = upstreamResponse.status === 502
+      
+      if (isRateLimit || isBadGateway) {
+        console.warn(`Primary model (${selectedModel}) failed with status ${upstreamResponse.status}. Attempting fallback...`)
+        selectedModel = FALLBACK_GROQ_MODEL
+        upstreamResponse = await fetch(GROQ_API_URL, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${apiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(buildPayload(selectedModel)),
+        })
+      }
+    }
 
     if (!upstreamResponse.ok) {
       const errorData = await upstreamResponse.json().catch(() => ({}))
@@ -480,6 +584,7 @@ ${financeContext}
           error: errorMsg,
           code: errorCode,
           upstreamStatus: upstreamResponse.status,
+          details: errorData?.error?.message
         },
         { status: 502 }
       )
@@ -497,6 +602,7 @@ ${financeContext}
     const answer = structuredResponse?.answer || rawContent || 'Ich konnte keine Antwort erzeugen.'
     const action = structuredResponse?.action || null
     const question = structuredResponse?.question || null
+    const thought = structuredResponse?.thought || null
     const actionMode = action ? (canPersistActions ? 'confirmable' : 'draft_only') : 'none'
 
     return NextResponse.json({
@@ -505,6 +611,7 @@ ${financeContext}
       action,
       actionMode,
       question,
+      thought,
       message: {
         ...assistantMessage,
         content: answer,
@@ -515,7 +622,7 @@ ${financeContext}
         resetAt: rateLimit.resetAt.toISOString(),
       },
       meta: {
-        model: DEFAULT_GROQ_MODEL,
+        model: selectedModel,
         generatedAt: new Date().toISOString(),
         latencyMs: Date.now() - startedAt,
       },

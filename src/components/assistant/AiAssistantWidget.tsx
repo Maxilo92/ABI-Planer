@@ -731,6 +731,15 @@ export function AiAssistantWidget({ locale = 'de', displace = false }: { locale?
   const [sidebarWidth, setSidebarWidth] = useState(40) // vw
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [botMode, setBotMode] = useState<'default' | 'smalltalk' | 'creative' | 'sassy' | 'annoyed' | 'trashy'>('default')
+  const [isMobile, setIsMobile] = useState(false)
+  
+  // Detect mobile
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 1024)
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
   
   // Load saved width on mount
   useEffect(() => {
@@ -898,9 +907,23 @@ export function AiAssistantWidget({ locale = 'de', displace = false }: { locale?
         }
       }
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('AiAssistantWidget error:', error)
       toast.error(t.error)
+      
+      // Append error message to chat so user sees what happened
+      const errorMessage: AiMessage = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: `⚠️ **Fehler:** ${error?.message || 'Ich konnte keine Verbindung herstellen.'}\n\nBitte versuche es gleich noch einmal. Wenn das Problem bestehen bleibt, wende dich an einen Admin.`,
+        model: 'Error Handler'
+      }
+      
+      const finalMessages = [...newMessages, errorMessage]
+      setMessages(finalMessages)
+      if (activeSessionId) {
+        await updateSession(activeSessionId, finalMessages)
+      }
     } finally {
       setIsThinking(false)
     }
@@ -1122,7 +1145,7 @@ export function AiAssistantWidget({ locale = 'de', displace = false }: { locale?
               animate={{ x: 0, opacity: 1 }}
               exit={{ x: '100%', opacity: 0 }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              style={{ width: isDocked && !isFullscreen ? `${sidebarWidth}vw` : undefined }}
+              style={{ width: isMobile ? '100%' : (isDocked && !isFullscreen ? `${sidebarWidth}vw` : undefined) }}
               className={cn(
                 "fixed top-0 right-0 h-full bg-background border-l border-border z-[100] flex flex-col shadow-2xl",
                 !isDocked && "lg:top-6 lg:right-6 lg:h-[calc(100%-48px)] lg:max-w-md lg:rounded-2xl lg:border lg:overflow-hidden",
