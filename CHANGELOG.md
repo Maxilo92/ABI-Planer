@@ -8,6 +8,12 @@
 <!-- default_action: read newest entries only unless a regression requires older history -->
 <!-- index: docs/AGENT_CONTEXT_INDEX.md -->
 
+## [1.37.2.82] - 2026-05-10
+
+### Changed
+
+- **Finanzen – Header-Aufräumaktion**: Der "Button-Salat" im Kopfbereich der Finanzseite wurde behoben. Spenden-Buttons wurden in einer dezenten Pill-Gruppe zusammengefasst, während administrative Aktionen klarer davon getrennt und pro Gerätetyp optimal ausgerichtet werden.
+
 ## [1.37.2.81] - 2026-05-10
 
 ### Changed

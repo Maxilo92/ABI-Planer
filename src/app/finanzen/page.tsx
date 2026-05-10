@@ -225,26 +225,33 @@ export default function FinancePage() {
   return (
     <div className="space-y-4 sm:space-y-6">
       <div className="rounded-3xl border border-border bg-card px-4 py-4 sm:px-6 sm:py-5 shadow-sm">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div className="flex flex-col @md:flex-row @md:items-center justify-between gap-4">
           <div>
             <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-muted-foreground">Finanzen</p>
             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">Budgetplanung</h1>
           </div>
-          <div className="flex w-full md:w-auto flex-wrap gap-2">
-            <Link href="/finanzen/spenden/abi">
-              <Button variant="outline" size="sm" className="h-8 gap-2 border-primary/20 hover:border-primary hover:text-primary transition-all text-[11px] sm:text-xs">
-                <Heart className="h-3.5 w-3.5 fill-primary/10" />
-                Spende Abi
-              </Button>
-            </Link>
-            <Link href="/finanzen/spenden/entwickler">
-              <Button variant="outline" size="sm" className="h-8 gap-2 border-brand/20 hover:border-brand hover:text-brand transition-all text-[11px] sm:text-xs">
-                <Coffee className="h-3.5 w-3.5 fill-brand/10" />
-                Entwickler
-              </Button>
-            </Link>
+          <div className="flex flex-wrap items-center gap-2 @md:gap-4 justify-start @md:justify-end w-full @md:w-auto">
+            {/* Support/Donation Group */}
+            <div className="flex items-center bg-muted/40 p-1 rounded-full border border-border/50 shrink-0">
+              <Link href="/finanzen/spenden/abi">
+                <Button variant="ghost" size="sm" className="h-7 px-3 rounded-full gap-1.5 text-[10px] font-bold hover:bg-background shadow-none">
+                  <Heart className="h-3 w-3 text-primary fill-primary/10" />
+                  Spende Abi
+                </Button>
+              </Link>
+              <div className="w-px h-3 bg-border/50 mx-0.5" />
+              <Link href="/finanzen/spenden/entwickler">
+                <Button variant="ghost" size="sm" className="h-7 px-3 rounded-full gap-1.5 text-[10px] font-bold hover:bg-background shadow-none">
+                  <Coffee className="h-3 w-3 text-brand fill-brand/10" />
+                  Entwickler
+                </Button>
+              </Link>
+            </div>
+
+            {/* Main Admin Actions */}
             {isPlanner && (
-              <div className="flex gap-2">
+              <div className="flex items-center gap-2">
+                <div className="w-px h-5 bg-border/60 mx-1 hidden @md:block" />
                 <VerifyCashDialog />
                 <AddFinanceDialog />
               </div>
