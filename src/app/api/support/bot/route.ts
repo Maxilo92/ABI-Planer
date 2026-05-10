@@ -3,6 +3,7 @@ import { applicationDefault, cert, getApps, initializeApp } from 'firebase-admin
 import { getAuth } from 'firebase-admin/auth'
 import { getFirestore, Timestamp } from 'firebase-admin/firestore'
 import { formatHelpFaqContext, getHelpFaqItems, searchFaqItems, type HelpFaqItem } from '@/lib/helpFaqs'
+import { getAbiBotBasePrompt } from '@/lib/abi-bot-prompt'
 
 export const runtime = 'nodejs'
 
@@ -190,13 +191,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const systemPrompt = `Du bist der Support Bot fuer den ABI Planer.
-Antworte in der Sprache des Nutzers (bevorzugt: ${locale}).
-Dein Ziel ist es, Schülern und Lehrern bei Fragen zur App zu helfen.
-Nutze den bereitgestellten Hilfe-Kontext (FAQs), um genaue Antworten zu geben.
-Wenn du keine Antwort in den FAQs findest, verweise freundlich auf das Kontaktformular oder die Beschwerdeseite.
-Halte dich kurz und präzise.
-Du bist ein KI-Assistent und kannst keine manuellen Änderungen am System vornehmen.`
+    const systemPrompt = getAbiBotBasePrompt() + `\n\nZUSÄTZLICHER KONTEXT (Support-Modus):\n- Du befindest dich im öffentlichen Support-Bereich. Der Nutzer ist möglicherweise nicht eingeloggt.\n- Antworte bevorzugt auf ${locale === 'en' ? 'Englisch' : locale === 'es' ? 'Spanisch' : 'Deutsch'}.\n- Nutze den bereitgestellten FAQ-Kontext, um genaue Antworten zu geben.\n- Wenn du keine passende FAQ-Antwort findest, verweise freundlich auf das Kontaktformular oder die Beschwerdeseite.`
 
     const faqContextMessage = faqMatchResult.context !== 'Keine passenden FAQ-Treffer gefunden.'
       ? `Hilfe-Kontext:\n${faqMatchResult.context}`

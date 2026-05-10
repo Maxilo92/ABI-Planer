@@ -5,7 +5,7 @@ import { LayoutDashboard, CheckSquare, Calendar, Euro, DollarSign, Megaphone, Ba
 import { useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button, buttonVariants } from '@/components/ui/button'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { NftAvatar } from '@/components/ui/nft-avatar'
 import { Badge } from '@/components/ui/badge'
 import { db, getFirebaseAuth } from '@/lib/firebase'
 import { signOut } from 'firebase/auth'
@@ -374,7 +374,7 @@ export function DashboardNavbar() {
 
           <div className="p-4 border-t space-y-2">
             <Link href="/profil" className={cn("flex items-center rounded-md hover:bg-secondary p-2.5", isDesktopCollapsed ? "justify-center" : "gap-3")}>
-              <Avatar size="default"><AvatarFallback>{userInitial}</AvatarFallback></Avatar>
+              <NftAvatar url={profile?.photo_url} fallback={userInitial} interactive={false} className="w-8 h-8" />
               {!isDesktopCollapsed && <span className="font-semibold truncate">{profile?.full_name}</span>}
             </Link>
             <Button variant="ghost" className={cn("text-destructive w-full", isDesktopCollapsed ? "justify-center" : "justify-start gap-3")} onClick={handleSignOut}>

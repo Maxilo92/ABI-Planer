@@ -8,6 +8,494 @@
 <!-- default_action: read newest entries only unless a regression requires older history -->
 <!-- index: docs/AGENT_CONTEXT_INDEX.md -->
 
+## [1.37.2.80] - 2026-05-10
+
+### Changed
+
+- **ABI Bot – Proaktive Transaktionszuordnung**: Die Logik zur Bearbeitung von Finanzeinträgen wurde verbessert. Der Bot versucht nun aktiv, Transaktionen anhand von Nutzerbeschreibungen (Betrag, Datum, Zweck) in seinem Kontext zu identifizieren. Er nutzt die gefundenen IDs nun selbstständig, anstatt den Nutzer unnötig nach technischen IDs zu fragen.
+
+## [1.37.2.79] - 2026-05-10
+
+### Changed
+
+- **ABI Bot – Token-Optimierung**: Umfassende Maßnahmen zur Reduzierung des Token-Verbrauchs und zur Vermeidung von Rate-Limits implementiert.
+  - **Duales Modell-System**: Die Generierung von Chat-Titeln nutzt nun das hocheffiziente `llama-3.1-8b-instant` Modell, während der Haupt-Chat weiterhin auf `llama-3.3-70b-versatile` basiert.
+  - **Kontext-Kompression**: Die im System-Prompt mitgesendeten Finanzdaten wurden optimiert. Aufschlüsselungen nach Kursen und Kategorien zeigen nun nur noch die Top-Einträge; kleinere Positionen werden intelligent zu "Sonstige" zusammengefasst.
+  - **Abfrage-Effizienz**: Bei der Zusammenstellung des KI-Kontexts werden nun gezielt nur die benötigten Datenbankfelder (Projetion) aus Firestore geladen, was die Latenz und den Speicherbedarf reduziert.
+
+## [1.37.2.78] - 2026-05-10
+
+### Changed
+
+- **Finanzen – Adaptives Layout**: Zweispaltiges Layout wiederhergestellt, aber auf `xl` (1280px) angehoben statt `lg` (1024px). Unterhalb von 1280px stapeln sich alle Widgets automatisch einspaltig. Die vier Übersichtskarten zeigen bei mittlerer Breite (`md`) zwei Spalten und ab `xl` vier Spalten.
+
+## [1.37.2.77] - 2026-05-10
+
+### Changed
+
+- **Finanzen – Vollständig einspaltig**: Das zweispaltige Haupt-Layout (Diagramm links, Sidebar rechts) wurde vollständig entfernt. Alle Widgets stapeln sich nun immer untereinander: Diagramm → Kassenabgleich → Finanzverlauf → Finanzierungsziel → Kurs-Ranking.
+
+## [1.37.2.76] - 2026-05-10
+
+### Fixed
+
+- **Finanzen – Strikte einspaltige Karten**: Die vier Übersichtskarten (Einnahmen, Ausgaben, Ziel, Stand) wurden auf `grid-cols-1` ohne jegliche Breakpoint-Ausnahmen umgestellt. Sie werden nun immer untereinander gestapelt – unabhängig von der Bildschirmbreite.
+
+## [1.37.2.75] - 2026-05-10
+
+### Changed
+
+- **Finanzen – Einspaltiges Layout**: Die Finanzwidgets wurden auf ein konsequentes einspaltiges Layout umgestellt, um jegliche Quetschung von Beträgen zu vermeiden.
+  - Die Hauptkarten der Finanzübersicht stapeln sich nun bis zu einer Breite von 1280px (XL) einspaltig und nutzen erst ab 1536px (2XL) die volle Breite.
+  - Alle Sidebar-Widgets (Tickets, UVP, Budget) wurden auf eine strikte einspaltige Darstellung umgestellt, um auch in der schmalen Seitenleiste optimale Lesbarkeit zu garantieren.
+
+## [1.37.2.75] - 2026-05-10
+
+### Added
+
+- **ABI Bot – Finanz-Korrekturen**: Der Assistent kann nun bestehende Finanzeinträge bearbeiten. 
+  - Nutzer können Korrekturen anfordern (z.B. "Ändere den Betrag von Bäcker Müller auf 70€" oder "Verschiebe die Deko-Ausgabe in die Kategorie 'Location'").
+  - Der Bot identifiziert Transaktionen über eindeutige IDs, die nun im Finanz-Kontext mitgesendet und bei Bedarf angezeigt werden.
+  - Änderungen an Betrag, Zweck, Kategorie und Kurs-Zuordnung werden unterstützt.
+  - Das Backend validiert die Existenz des Eintrags vor der Änderung und loggt die Bearbeitung revisionssicher.
+
+## [1.37.2.74] - 2026-05-10
+
+### Changed
+
+- **Finanzen – Responsive Stacking**: Die Finanzwidgets und Sidebar-Elemente stapeln sich nun früher vertikal, bevor sie unleserlich schmal werden.
+  - Die vier Hauptkarten der Finanzübersicht wechseln nun bereits bei mittleren Bildschirmbreiten in eine 2-Spalten-Ansicht (statt 4), um das Abschneiden von Beträgen zu verhindern.
+  - Sidebar-Widgets wie "Dein Ticketpreis" und "Ziel-Budget" stapeln sich nun ebenfalls flexibler, um in der schmalen Seitenleiste maximale Lesbarkeit zu gewährleisten.
+
+## [1.37.2.73] - 2026-05-10
+
+### Changed
+
+- **ABI Bot – Input Blockade**: Das Chat-Eingabefeld und der Senden-Button werden nun automatisch deaktiviert, solange der Bot noch "nachdenkt" (API-Anfrage) oder die Antwort noch per Typewriter-Effekt animiert wird. Dies verhindert das Senden von Mehrfachnachrichten und sorgt für einen geordneten Gesprächsfluss. Der Platzhalter im Eingabefeld signalisiert den Wartezustand ("Warte auf Antwort...").
+
+## [1.37.2.72] - 2026-05-10
+
+### Changed
+
+- **Black Market – 20 zentrierte Vorlagen**: Alle Templates komplett neu gestaltet und auf exaktes 8×8-Raster ausgerichtet. Jede Zeile hat genau 8 Zeichen, Designs sind symmetrisch um die Mittelachse (Spalten 3-4). 8 neue Designs: POISON, SHIELD, CRYSTAL, ROCKET, ALIEN, MUSHROOM, PLANET, PORTAL, SUN. Kachelgröße im Grid auf 3-5 Spalten erhöht.
+
+## [1.37.2.71] - 2026-05-10
+
+### Added
+
+- **Avatar-Studio – Black Market**: Neuer einklappbarer Abschnitt unterhalb der Leinwand mit 12 exklusiven Pixel-Vorlagen (Skull, Heart, Diamond, Lightning, Crown, Ghost, Flame, Star, Galaxy, Wave, Snake, Matrix). Jede Vorlage hat ein Rarity-Tag (DARK / RARE / EPIC / LEGENDARY), eine Live-Pixelvorschau und ein 2-Klick-Bestätigungssystem (zweimal klicken um zu laden, verhindert versehentliches Überschreiben).
+
+### Fixed
+
+- **Avatar-Studio – Style-Warning**: React-Warnung `Updating a style property during rerender (background) when a conflicting property is set (backgroundImage)` durch Vereinheitlichung auf das `background`-Shorthand in Pixel-Zellen und Farbanzeige behoben.
+
+## [1.37.2.70] - 2026-05-10
+
+### Fixed
+
+- **AppShell – Studio-Layout**: Crash durch Rules-of-Hooks-Verletzung behoben. Der frühere `bareRoutes`-Early-Return stand zwischen Hook-Aufrufen und führte zu `Rendered more hooks than during the previous render`. Gelöst durch einen `isStudioRoute`-Flag der alle Hooks korrekt durchlaufen lässt: Für `/profil/studio` erhält `<main>` kein Padding und keinen `max-w-7xl`-Wrapper – das Studio füllt den gesamten Content-Bereich aus. Die Sidebar bleibt erhalten.
+
+## [1.37.2.69] - 2026-05-10
+
+### Changed
+
+- **Avatar-Studio – Standalone-Layout**: Das Studio rendert jetzt komplett ohne AppShell (kein Sidebar, kein Navbar, kein Footer). Technisch über eine `bareRoutes`-Menge in `AppShell.tsx` gelöst – die Route `/profil/studio` gibt `<>{children}</>` zurück, bevor jegliches Shell-Chrome aufgebaut wird.
+- **Avatar-Studio – Abmelden**: Neuer Abmelden-Button (LogOut-Icon, Rot-Hover) rechts im Header. Löscht das `sessionStorage`-Flag und meldet den Nutzer komplett ab.
+
+## [1.37.2.68] - 2026-05-10
+
+### Changed
+
+- **Avatar-Studio – Personalisierte Kernel-Sequenz**: Das Rätsel-Pool-System wurde durch eine echte nutzerbezogene Authentifizierung ersetzt.
+  - Jeder Nutzer besitzt eine einzigartige **Kernel-Sequenz** im Format `WORT-WORT-ZAHL` (z.B. `ALPHA-ECHO-4721`), die deterministisch aus der UID berechnet wird.
+  - Die Sequenz ist **nirgendwo im UI sichtbar** – außer tief im NFT-Avatar-Dialog des eigenen Profilbilds, versteckt hinter dem einklappbaren „Technische Metadaten"-Bereich.
+  - Das Studio-Gate fragt nach dieser persönlichen Sequenz. Sie ist für jeden Nutzer einzigartig und kann nicht erraten werden.
+  - Neue Datei: `src/lib/studio-code.ts` (DJB2-Hash-basierte Code-Generierung, serverseitig verifizierbar).
+  - 4 Fehlversuche → 45s Sperre. Session-Flag bleibt nach erfolgreicher Authentifizierung erhalten.
+
+## [1.37.2.67] - 2026-05-10
+
+### Changed
+
+- **Avatar-Studio**: 3 Verbesserungen in einem Update:
+  - **Rätsel-Pool**: 8 verschiedene Rätsel (pixel, 64, 16, svg, avatar, rückgängig, symmetrie…) – bei jedem Seitenaufruf wird zufällig eines gewählt.
+  - **Globales Studio-Theme**: Solange man auf `/profil/studio` ist, wird das gesamte App-Theme (inkl. AppShell, Navigation, Sidebar) auf das dunkle Zink/Grün-Labor-Thema umgestellt. Beim Verlassen der Seite wird der ursprüngliche Theme-Zustand wiederhergestellt.
+  - **Mobile-First**: Layout, Toolbar, Farbpalette und Canvas funktionieren vollständig auf kleinen Bildschirmen. Canvas füllt die volle Breite. Header komprimiert sich auf mobilen Geräten.
+
+## [1.37.2.66] - 2026-05-10
+
+### Changed
+
+- **Avatar-Studio – Zugangsmechanismus**: Der Long-Press-Trigger auf dem Profilbild wurde vollständig entfernt (war zu buggy). Der Zugang zum Studio erfolgt nun ausschließlich über die direkte URL `/profil/studio`, die aber durch ein **Rätsel-Gate** gesichert ist.
+  - Beim Aufruf der URL erscheint ein Terminal-Style-Sperrbildschirm mit einer Typewriter-Sequenz und einem Rätsel.
+  - Erst nach korrekter Antwort wird Zugang gewährt (`sessionStorage`-Flag, sodass man das Rätsel in der Session nicht wiederholen muss).
+  - Bei Fehlantworten: Fehlermeldung + Versuche-Zähler. Nach 4 Fehlversuchen: 30-Sekunden-Sperre.
+- **ProfileView**: Alle Trigger-Mechanismen (Klick-Counter, Long-Press) wurden restlos entfernt.
+
+## [1.37.2.65] - 2026-05-10
+
+### Changed
+
+- **Profil – Secret Avatar-Studio-Trigger**: Wechsel von 7×-Klick auf **3-Sekunden Long Press** auf das eigene Profilbild. Kurzes Antippen öffnet weiterhin den NFT-Info-Dialog; langes Halten zeigt einen grünen Conic-Gradient-Fortschrittsring und navigiert nach 3 s zum Studio. Kein Konflikt mit dem bestehenden Klick-Verhalten mehr.
+- **Avatar-Studio – Leinwand**: Das Pixel-Grid füllt jetzt die volle Breite des Editorbereichs aus (kein festes `400px`-Maximum mehr).
+
+## [1.37.2.64] - 2026-05-10
+
+### Added
+
+- **Profil – Geheimes Avatar-Studio** (`/profil/studio`): Vollwertiger Pixel-Art-Editor zum Malen eigener 8×8-Avatar-Designs – versteckt und nur über einen Secret-Trigger erreichbar.
+  - **Versteckter Zugang**: 7× in schneller Folge auf das eigene Profilbild klicken → visueller Glitch-Effekt als Feedback (Farbfilter ab Klick 4, Pulsieren ab Klick 6) → automatische Weiterleitung zum Studio.
+  - **Pixel-Editor**: Volle 8×8-Leinwand mit Stift, Radierer und Fülleimer-Werkzeug. Drag-to-paint (Pointer Events). Symmetriemodus (horizontale Spiegelung). Undo bis 20 Stufen. Alles-löschen. Zufällig-Füllen.
+  - **Farbpalette**: Alle 16 AVATAR_PALETTE-Farben + Transparenz-Eraser. Aktive Farbe wird hervorgehoben.
+  - **Live-Vorschau**: Animierter NFT-Render (`AnimatedNftAvatar`) in Echtzeit – in vier Größen zur Kontrolle.
+  - **Pixel-Stats**: Gefüllte Pixel, eindeutige Farben, Symmetriestatus und Verlaufsstufen werden live angezeigt.
+  - **Speichern**: Setzt den Custom-Avatar direkt als `photo_url` im Profil (schreibt `cosmetics.pixel_avatar_mode: 'custom'`).
+  - **Boot-Intro**: Terminalartige Typewriter-Sequenz beim ersten Laden unterstreicht den „geheimen Labor"-Charakter.
+  - **Keyboard-Shortcuts**: P = Stift, E = Radierer, F = Füllen, Ctrl+Z = Rückgängig.
+
+## [1.37.2.63] - 2026-05-10
+
+### Added
+
+- **Profil – Avatar Shop** (`/profil/shop`): Neuer Profilbild-Store, in dem Nutzer einzigartige, seeded Pixel-Avatar-Designs mit Notenpunkten (NP) kaufen und ausrüsten können.
+  - **12 Designs** in drei Kategorien: Kostenlos (3), Premium (6, 50–120 NP), Exklusiv (3, 250–400 NP).
+  - **Live-Animierte Vorschauen**: Alle Avatare werden als animierte NFT-Pixel-Matrix dargestellt (identisch zur bestehenden `AnimatedNftAvatar`-Komponente).
+  - **Sofortige Anwendung**: Beim Ausrüsten wird `photo_url`, `cosmetics.pixel_avatar_seed` und `cosmetics.pixel_avatar_mode` direkt in Firestore aktualisiert.
+  - **Kaufbestätigung**: Modale Bestätigungsdialog mit NP-Kontrolle vor dem Kauf.
+  - **Kategorie-Filter**: Tabs für Alle / Kostenlos / Premium / Exklusiv.
+  - **NP-Balance-Anzeige**: Aktuelles NP-Guthaben und aktiver Avatar prominent im Header.
+
+## [1.37.2.62] - 2026-05-10
+
+### Changed
+
+- **Admin – Animierte Pixel-Avatare**: Die NFT-Pixelprofilbilder in der Admin-Nutzerverwaltung (Übersicht & Detailansicht) sowie überall wo `NftAvatar` gerendert wird, sind nun wie der ABI-Bot-Avatar animiert. Das Grundmuster (8×8-Pixelmatrix mit den originalgetreuen Farben) bleibt vollständig erhalten – die einzelnen Pixel schimmern und flackern nun subtil über einen Canvas-Renderer, der die Farben aus dem SVG des Nutzerprofils ausliest. Neue Komponente `AnimatedNftAvatar` erstellt.
+
+## [1.37.2.61] - 2026-05-10
+
+### Changed
+
+- **Einstellungen – Pixelprofilbilder**: Die Pixelprofilbild-Käufe akzeptieren jetzt zusätzlich Albumkarten als Zahlungsmittel. Der Zwei-Schritt-Kauf bleibt unverändert: 5 Karten für den Entwurf, 25 Karten für den Kauf.
+
+## [1.37.2.59] - 2026-05-10
+
+### Added
+
+- **Einstellungen – Pixelprofilbilder**: In den Profileinstellungen gibt es jetzt einen Zwei-Schritt-Kauf für Pixelprofilbilder. Nutzer können für 5 Lehrerkarten ein neues Zufallsbild erzeugen und es anschließend für 25 Lehrerkarten als aktives Profilbild kaufen. Die frühere 200-Lehrerkarten-Galerie wurde entfernt; der Kauf läuft weiterhin serverseitig.
+
+## [1.37.2.56] - 2026-05-10
+
+### Changed
+
+- **Einstellungen – Profileinstellungen**: Der Profilbereich wurde aus der Kontoverwaltung herausgelöst und bekommt nun einen eigenen Bearbeitungsblock für Name, Schule und Kurs. Profilbilder lassen sich in den Einstellungen nicht mehr ändern. Sicherheitsfunktionen wie Passwort-Reset, 2FA, Abmelden und Kontolöschung sind jetzt klar getrennt.
+
+### Fixed
+
+- **Einstellungen – Layout**: Die Seiten- und Formularspalten skalieren auf schmaleren Desktopbreiten jetzt deutlich sauberer und brechen erst später in die Zweispaltenansicht um.
+- **Einstellungen – Navigation**: Die linke Navigation wird auf normalen Laptopbreiten nicht mehr neben den Inhalt gequetscht, sondern erst auf sehr breiten Displays eingeblendet.
+
+## [1.37.2.55] - 2026-05-10
+
+### Changed
+
+- **ABI Bot – Avatar Interaktion**: Das Klicken auf das Profilbild des Bots im Chat öffnet nun nicht mehr den Detail-Dialog (NFT-Info), sondern navigiert direkt zur Profilseite des Bots. Dies sorgt für einen schnelleren Zugriff auf den Bot-Steckbrief.
+
+## [1.37.2.54] - 2026-05-10
+
+### Fixed
+
+- **UI – Overlay Z-Index Fix**: Ein Problem wurde behoben, bei dem Popover (z.B. KI-Modell-Details), Dropdown-Menüs und Dialoge hinter der ABI Bot Sidebar erschienen. Die Z-Indizes dieser Komponenten wurden auf 1000 erhöht, um sicherzustellen, dass Overlays immer im Vordergrund angezeigt werden.
+
+## [1.37.2.53] - 2026-05-10
+
+### Changed
+
+- **ABI Bot – Content Displacement**: Die Sidebar des Bots verdrängt nun im Desktop-Modus (wenn angedockt) den Seiteninhalt, anstatt ihn zu überlagern. Dies sorgt für eine bessere Übersichtlichkeit, da der Hauptinhalt der Seite (z.B. Dashboard-Widgets) automatisch zur Seite geschoben wird, wenn der Bot geöffnet wird.
+
+## [1.37.2.52] - 2026-05-10
+
+### Changed
+
+- **ABI Bot – UI Cleanup**: Der Avatar wurde aus dem Header des Chat-Fensters entfernt, um das Design cleaner zu gestalten.
+- **ABI Bot – Avatar Scaling Fix**: Ein Fehler bei der Skalierung des Bot-Avatars im Profil wurde behoben. Der Avatar nutzt nun die korrekten responsiven Größenklassen und ist nun konsistent mit den User-Profilen.
+
+## [1.37.2.51] - 2026-05-10
+
+## [1.37.2.50] - 2026-05-10
+
+## [1.37.2.49] - 2026-05-10
+
+## [1.37.2.48] - 2026-05-10
+
+## [1.37.2.47] - 2026-05-10
+
+## [1.37.2.46] - 2026-05-10
+
+### Changed
+
+- **ABI Bot – Profile Interaction**: Der Bot-Steckbrief wurde von einem Popover auf einen **Dialog (Modal)** umgestellt. Dies sorgt für eine zuverlässigere Interaktion und eine bessere Darstellung der Profilinformationen, insbesondere auf mobilen Endgeräten.
+
+## [1.37.2.45] - 2026-05-10
+
+### Fixed
+
+- **ABI Bot**: Ein `ReferenceError` ("Avatar is not defined") wurde behoben, der durch fehlende Importe in der `AiAssistantWidget.tsx` Komponente verursacht wurde.
+
+## [1.37.2.44] - 2026-05-10
+
+### Added
+
+- **ABI Bot – Profil & Identität**: Der Bot hat nun eine eigene Identität mit Profilbild und klickbarem Namen.
+    - **Bot-Avatar**: Ein neues, freundliches Roboter-Avatar-Icon wurde generiert und systemweit für den Bot integriert.
+    - **Interaktives Profil**: Durch Klicken auf den Namen oder das Avatar-Icon öffnet sich ein Popover mit Details zum Bot (Rolle, Beschreibung, Fähigkeiten und Version).
+    - **UI Enhancement**: Die Chat-Nachrichten des Bots zeigen nun das Avatar-Icon anstelle des generischen Sparkles-Icons, was für eine persönlichere Atmosphäre sorgt.
+
+## [1.37.2.43] - 2026-05-10
+
+### Added
+
+- **ABI Bot – Typewriter-Effekt**: Antworten des Bots werden nun Zeichen für Zeichen (bzw. Wort für Wort) eingeblendet, um den Prozess der Textgenerierung in Echtzeit zu simulieren. Dies sorgt für eine natürlichere und weniger abrupte Benutzererfahrung.
+- **ABI Bot – UI Refinement**: Die "Spring"-Animationen der Nachrichtenblasen wurden reduziert, um den Fokus stärker auf den Textfluss zu legen.
+
+## [1.37.2.42] - 2026-05-10
+
+### Added
+
+- **ABI Bot – Feedback System**: Die Daumen-Hoch/Runter Bewertungen haben nun eine echte Funktion.
+    - **Zentrales Logging**: Feedback wird nun in einer dedizierten `ai_assistant_feedback` Kollektion gespeichert, inklusive Kontext (Frage, Antwort, Modell).
+    - **Admin-Sichtbarkeit**: Bewertungen werden als System-Aktionen geloggt und sind für Admins in den Activity-Logs einsehbar.
+    - **UI-Feedback**: Nutzer erhalten sofortige Bestätigung via Toasts ("Freut mich, dass ich helfen konnte!" oder "Danke, wurde an die Entwickler gemeldet.").
+
+## [1.37.2.41] - 2026-05-10
+
+### Fixed
+
+- **ABI Bot**: Ein `ReferenceError` wurde behoben, bei dem die `Popover`-Komponenten im `AiAssistantWidget` nicht korrekt importiert waren.
+
+## [1.37.2.40] - 2026-05-10
+
+### Fixed
+
+- **ABI Bot**: Ein 502 Bad Gateway Fehler wurde behoben, der durch Instabilitäten beim Upstream-KI-Modell verursacht wurde. Der Bot nutzt nun das stabilere `llama-3.3-70b-versatile` Modell.
+- **ABI Bot**: Die Fehlerberichterstattung im Backend wurde verbessert, um bei zukünftigen API-Problemen präzisere Diagnosedaten zu liefern.
+
+## [1.37.2.39] - 2026-05-10
+
+### Added
+
+- **ABI Bot**: Neues Kopieren-Icon hinzugefügt, mit dem Nutzer Antworten des Bots direkt in die Zwischenablage kopieren können. Inklusive visuellem Erfolgs-Feedback (Check-Icon).
+
+### Fixed
+
+- **ABI Bot**: Firebase-Fehler behoben, der beim Erstellen neuer Chats auftrat, wenn optionale Felder (wie Modell-Info oder Feedback) noch nicht gesetzt waren.
+
+## [1.37.2.38] - 2026-05-10
+
+### Fixed
+
+- **ABI Bot**: Syntax-Fehler im Chat-Widget behoben, der durch ein überschüssiges `div`-Tag verursacht wurde und zum Absturz der UI führte.
+
+## [1.37.2.37] - 2026-05-10
+
+### Fixed
+
+- **ABI Bot**: Syntax-Fehler im Chat-Widget behoben, der durch ein überschüssiges `div`-Tag verursacht wurde und zum Absturz der UI führte.
+
+## [1.37.2.36] - 2026-05-10
+
+### Added
+
+- **ABI Bot – Feedback & Model Info**: Neue Interaktionsmöglichkeiten für KI-Antworten.
+  - **Feedback-System**: Nutzer können nun jede Bot-Antwort mit einem "Daumen hoch" oder "Daumen runter" bewerten. Das Feedback wird persistent gespeichert.
+  - **KI-Modell-Info**: Ein neues Info-Icon (ⓘ) unter den Antworten zeigt bei Klick oder Hover Details zum verwendeten KI-Modell (z.B. Llama 3.1) und dem Provider an.
+  - **UI-Integration**: Die Feedback-Leiste fügt sich dezent in das Design der Chat-Blasen ein und bietet direktes haptisches Feedback.
+## [1.37.2.35] - 2026-05-10
+
+### Added
+
+- **ABI Bot – Visible Thinking**: Das "Denken" des Bots ist nun für Nutzer sichtbar.
+  - **Thinking-Prozess**: Bot-Antworten enthalten nun eine einklappbare Sektion "Thinking...", in der die internen Überlegungen und Planungsschritte der KI transparent dargestellt werden.
+  - **Upgrade auf DeepSeek-R1**: Der Standard-KI-Motor wurde auf `deepseek-r1-distill-llama-70b` aktualisiert, um tiefgründigere Analysen und präzisere Planungsvorschläge zu ermöglichen.
+  - **UI-Integration**: Ein pulsierender Indikator zeigt visuell an, dass der Bot gerade aktiv nachdenkt, bevor die Antwort erscheint.
+  - **Transparenz**: Nutzer können nun nachvollziehen, warum der Bot bestimmte Aufgaben, Termine oder Aktionen vorschlägt.
+
+## [1.37.2.35] - 2026-05-10
+
+### Added
+
+- **ABI Bot – UI Polishing**: Die Animationen wurden für ein noch flüssigeres Erlebnis verfeinert.
+  - **Spring-Animations**: Nachrichten erscheinen nun mit einem physikalisch korrekten Bounce-Effekt (Spring).
+  - **Glow-Effekt**: Das Bot-Icon leuchtet nun dezent auf, wenn eine neue Nachricht erscheint, um die Aufmerksamkeit zu lenken.
+  - **Smooth Scrolling**: Der Chat scrollt nun flüssig und sanft zur neuesten Nachricht, anstatt abrupt zu springen.
+
+## [1.37.2.34] - 2026-05-10
+
+### Added
+
+- **ABI Bot – UI Experience**: Einführung von flüssigen Animationen für den Chat-Verlauf.
+  - **Bot-Antworten**: Animieren nun sanft mit einem Fade-In, Slide-Up und Scale-Effekt hinein.
+  - **User-Nachrichten**: Erscheinen mit einer subtilen Slide-In Animation von rechts.
+  - **Sparkles-Icon**: Das Icon des Assistenten rotiert und blendet weich ein, wenn eine neue Nachricht erscheint.
+  - **Performance**: Animationen werden nur auf die jeweils neueste Nachricht angewendet, um die CPU-Last bei langen Chat-Verläufen minimal zu halten.
+
+## [1.37.2.33] - 2026-05-10
+
+### Fixed
+
+- **ABI Bot**: Die Resilienz des Backends wurde weiter maximiert. Der gesamte Prozess der Kontext-Zusammenstellung (Finanzen, Termine, Aufgaben) ist nun in `try-catch`-Blöcke gehüllt, sodass der Bot auch dann antwortet, wenn einzelne Datenquellen Fehler liefern.
+- **ABI Bot**: Fehlermeldungen im Frontend enthalten nun detailliertere Informationen zur Fehlerursache aus dem Backend.
+
+## [1.37.2.32] - 2026-05-10
+
+### Added
+
+- **ABI Bot – Finanz-Management**: Der Bot kann nun vollständig mit den Finanzen der Stufe arbeiten.
+  - **Einträge buchen**: Einnahmen und Ausgaben direkt im Chat erstellen mit automatischer Kategorisierung (Sponsoring, Deko, Catering, DJ/Musik, Location, etc.).
+  - **Finanz-Analyse**: Der Bot "sieht" nun die **kompletten** Finanzdaten in Echtzeit: Gesamteinnahmen, Gesamtausgaben, aktueller Stand, Fortschritt zum Ziel, Aufschlüsselung nach Kurs und Kategorie, sowie die letzten 10 Transaktionen.
+  - **Intelligente Auswertung**: Kann Trends erkennen, Hochrechnungen anstellen, Kurs-Vergleiche ziehen und bei Budget-Engpässen warnen.
+  - **Shop-Einnahmen**: Auch Abi-Anteile aus dem Shop werden in die Analyse einbezogen.
+- **ABI Bot – Kontext-Erweiterung**: Die Echtzeit-Kontext-Injektion wurde von einem simplen Finanzierungsziel auf einen vollständigen Finanzbericht ausgebaut (Totals, Kurs-Breakdown, Kategorie-Breakdown, letzte Transaktionen).
+
+### Changed
+
+- **ABI Bot**: `max_tokens` von 1000 auf 1500 erhöht, um ausführlichere Finanz-Analysen zu ermöglichen.
+
+### Fixed
+
+- **ABI Bot**: Ein kritischer 500-Fehler im Backend wurde behoben, der durch fehlende Fehlerbehandlung bei Datenbankabfragen (insbesondere Finanzen) verursacht wurde. Die Abfragen sind nun resilienter gegenüber fehlenden Indizes oder leeren Kollektionen.
+
+## [1.37.2.31] - 2026-05-10
+
+### Added
+
+- **ABI Bot**: Drei neue "extreme" Persönlichkeits-Modi hinzugefügt:
+    - **Sassy**: Sarkastisch, schlagfertig und leicht arrogant.
+    - **Genervt**: Kurz angebunden, mürrisch und wenig motiviert.
+    - **Asozial/Trashy**: Extremer Straßenslang ("Digga", "Wallah"), direkt und respektlos.
+- **ABI Bot**: Die Backend-Logik und das Menü wurden erweitert, um diese Persönlichkeiten konsistent über alle Funktionen hinweg abzubilden.
+
+## [1.37.2.30] - 2026-05-10
+
+### Changed
+
+- **ABI Bot**: Das Aktions-Menü in der Input-Leiste wurde umstrukturiert. Die Modus-Auswahl befindet sich nun in einem Untermenü ("Modus wechseln"), um Platz für zukünftige Funktionen zu schaffen.
+- **ABI Bot**: Ein Platzhalter für Dateianhänge ("Anhang (Bald verfügbar)") wurde dem Hauptmenü hinzugefügt.
+
+## [1.37.2.29] - 2026-05-10
+
+### Added
+
+- **ABI Bot**: Ein neuer Modus-Umschalter wurde direkt in die Input-Leiste integriert (hinter dem "Drei-Punkte"-Menü auf der linken Seite). Nutzer können nun zwischen **Planer-**, **Kreativ-** und **Smalltalk-Modus** wählen, um die Persönlichkeit und Zielsetzung des Bots anzupassen.
+- **ABI Bot**: Die Input-Leiste wurde auf eine maximale Länge von 1000 Zeichen begrenzt, um die Stabilität der KI-Anfragen zu erhöhen.
+
+
+## [1.37.2.29] - 2026-05-10
+
+### Added
+- **ABI Bot**: Umfassendes Skill-Update. Der Assistent kann nun aktiv Abstimmungen erstellen, News-Einträge verfassen, Finanz-Transaktionen buchen, Planungsgruppen gründen und Nachrichten in Gruppen-Chats posten.
+- **ABI Bot**: Real-time Context Injection. Der Assistent "sieht" nun die aktuellen 5 Aufgaben, Termine und News sowie das Finanzierungsziel, um präzisere und kontextbezogene Antworten zu geben.
+
+## [1.37.2.28] - 2026-05-10
+
+### Changed
+
+- **ABI Bot**: Der System-Prompt wurde dahingehend gelockert, dass der KI-Assistent nun auch offener für Smalltalk und allgemeine Lebenshilfe ist. Wenn Nutzer über Themen abseits der Abi-Planung sprechen, geht der Bot natürlicher darauf ein, anstatt krampfhaft zu versuchen, neue Todos oder Termine daraus zu generieren.
+
+## [1.37.2.27] - 2026-05-10
+
+### Fixed
+
+- **ABI Bot**: Ein Sicherheitsproblem behoben, bei dem der Bot auf Notfälle (z.B. medizinische Krisen) mit unangemessenen Vorschlägen (wie dem Aussetzen von Aufgaben) reagiert hat. Der System-Prompt wurde um Notfall-Richtlinien erweitert. Wenn nun ein akuter Notfall geschildert wird, bricht der Bot jede Planung ab und verweist direkt auf den Notruf (112/110) oder eine Vertrauensperson, ohne interaktive Buttons anzubieten.
+
+## [1.37.2.26] - 2026-05-10
+
+### Added
+
+- **ABI Bot**: Ein neuer Vollbildmodus für Desktop-Nutzer wurde hinzugefügt. Über ein Icon im Header kann der Chat nun den gesamten Bildschirm einnehmen (sowohl im angedockten als auch im schwebenden Modus), um komplexere Konversationen komfortabler zu führen.
+
+## [1.37.2.25] - 2026-05-10
+
+## [1.37.2.24] - 2026-05-10
+
+## [1.37.2.23] - 2026-05-10
+
+### Fixed
+
+- **ABI Bot**: Ein Bug wurde behoben, bei dem die Generierung des Chat-Titels im Hintergrund permanent fehlschlug und dadurch immer auf "Neuer Chat" zurückgefallen ist. Der Groq-API-Aufruf nutzt nun explizit den `json_object` Response-Format-Zwang, wodurch das LLM (Llama 3.1 8b) die Titel zuverlässig generiert.
+
+## [1.37.2.23] - 2026-05-10
+
+### Changed
+
+- **ABI Bot**: Die Größe (Breite der Sidebar), der Docking-Status und der Öffnungszustand des Chat-Fensters werden nun dauerhaft im Browser gespeichert (`localStorage`) und beim Neuladen der Seite wiederhergestellt.
+
+## [1.37.2.22] - 2026-05-10
+
+## [1.37.2.21] - 2026-05-10
+
+### Changed
+
+- **ABI Bot**: In der Chat-Historie wird nun standardmäßig "Neuer Chat..." angezeigt, bis die KI eine dynamische Zusammenfassung generiert hat, anstatt einfach die erste Nachricht abzuschneiden. Der KI-Prompt zur Titel-Generierung wurde optimiert, um eine prägnante Zusammenfassung (2-6 Wörter) des Gesprächs zu erstellen, anstatt den eingegebenen Text zu wiederholen.
+
+## [1.37.2.20] - 2026-05-10
+
+### Fixed
+
+- **ABI Bot**: Problem behoben, bei dem interaktive Optionen (Buttons/Fragen) als reiner Text statt als klickbare Elemente im Chat angezeigt wurden. Der System-Prompt wurde verschärft, um die Nutzung von JSON für strukturierte Rückfragen zu erzwingen, und der Antwort-Parser wurde robuster gestaltet, um JSON-Objekte zuverlässiger aus dem KI-Output zu extrahieren.
+
+## [1.37.2.19] - 2026-05-10
+
+## [1.37.2.18] - 2026-05-10
+
+### Changed
+
+- **ABI Bot**: Das Texteingabefeld im Chat wird während der Generierung einer Antwort nicht mehr deaktiviert. Nutzer können ihre nächste Nachricht bereits eintippen, während die KI noch antwortet.
+
+## [1.37.2.17] - 2026-05-10
+
+### Changed
+
+- **ABI Bot**: Die Sidebar des AI Assistenten ist nun im Desktop-Modus (gedockt) in der Breite verstellbar (resizable). Nutzer können die Sidebar stufenlos zwischen 20% und 80% der Bildschirmbreite per Drag-and-Drop anpassen.
+
+## [1.37.2.16] - 2026-05-10
+
+### Added
+
+- **ABI Bot**: Der Assistent kann nun interaktive Rückfragen im Chat stellen. Die Benutzeroberfläche unterstützt jetzt "Multiple Choice" (klickbare Buttons) und "Text Input" (Eingabefelder) direkt in den Bot-Nachrichten, um strukturierte Informationen vom Nutzer einzuholen.
+
+## [1.37.2.15] - 2026-05-10
+
+### Changed
+
+- **ABI Bot**: Gemeinsames Prompt-Modul (`abi-bot-prompt.ts`) eingeführt. Dashboard-Assistent, Gruppen-Bot und Support-Bot teilen nun dieselbe Persönlichkeit – freundlicher, motivierender Ton mit jugendlicher Sprache, Emoji-Einsatz und proaktiver Gesprächsführung. Der Dashboard-Assistent behält zusätzlich die Fähigkeit, Aufgaben und Termine anzulegen.
+
+## [1.37.2.14] - 2026-05-10
+
+### Added
+
+- **NFT Avatare**: Profilbilder wurden in einzigartige NFT-Style Matrizen umgewandelt. Jedes Bild erhält eine deterministische ID (`#ABI-XXXX`).
+- **Avatar Ansicht**: Beim Klicken auf das eigene Profilbild öffnet sich nun eine vergrößerte Detailansicht mit Informationen zur Einzigartigkeit des Pixels.
+- **Admin System Control**: Ein One-Time Button zur asynchronen Migration aller bestehenden Profilbilder wurde unter "System Control" hinzugefügt.
+
+## [1.37.2.13] - 2026-05-10
+
+### Changed
+
+- **ABI Bot**: Der KI-Assistent wurde offiziell in "ABI Bot" umbenannt. Dies umfasst die UI-Titel, Begrüßungstexte in allen Sprachen, System-Prompts und die Lehrer-Einreichungs-Plattform.
+
+## [1.37.2.12] - 2026-05-10
+
+### Added
+
+- **Account-Erstellung**: Automatische Generierung von 8x8 Pixel Profilbildern (Avataren) bei der Registrierung unter Verwendung einer 16-Farben-Palette.
+- **Benutzerprofile**: Bestehende Nutzer ohne Profilbild bekommen automatisch bei ihrer ersten Aktion ein generiertes Bild, bzw. via Admin-Migrationsskript.
+
+## [1.37.2.11] - 2026-05-10
+
+### Changed
+
+- **AI Assistant**: Chatverlauf-Titel werden nach der ersten Antwort jetzt dynamisch von der KI erstellt und anschließend in der Session gespeichert.
+
 ## [1.37.2.10] - 2026-05-10
 
 ### Fixed
@@ -1209,3 +1697,6 @@
   - Erhöhung der horizontalen und vertikalen Abstände zwischen den Karten zur Vermeidung von Kollisionen beim Hover-Effekt.
   - Optimierung des Grids für extrem breite Bildschirme (max 5 Spalten bei 2XL).
   - Verbesserung der visuellen Hierarchie im Pool durch größeres Padding und Schatten.
+
+## [1.37.2.4] - 2026-05-10
+- [Maestro] Added new skills to ABI Bot: create_poll, create_news, add_finance_transaction.

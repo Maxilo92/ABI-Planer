@@ -84,6 +84,8 @@ export type LogActionType =
   | 'AD_CREATED'
   | 'AD_UPDATED'
   | 'AD_DELETED'
+  | 'ABI_BOT_FEEDBACK_POSITIVE'
+  | 'ABI_BOT_FEEDBACK_NEGATIVE'
 
 export interface LogEntry {
   action: LogActionType

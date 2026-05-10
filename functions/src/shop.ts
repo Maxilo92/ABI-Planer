@@ -11,6 +11,7 @@ import {
   markWebhookProcessed,
   checkRateLimit,
 } from "./npSecurity";
+import { generateSeededPixelAvatar } from "./pixelAvatar";
 
 const TEACHER_PACK_ID = "teacher_vol1";
 const LEGACY_TEACHER_PACK_ID = "teachers_v1";
@@ -107,6 +108,17 @@ const PACK_CONFIGS: Record<string, {
 
 const DEFAULT_DAILY_PACK_ALLOWANCE = 2;
 const BERLIN_TIMEZONE = "Europe/Berlin";
+const PIXEL_AVATAR_GENERATE_COST = 5;
+const PIXEL_AVATAR_PURCHASE_COST = 25;
+const ALBUM_CARD_KEYS = ["album_v1", "album_vol_1", "albumkarten_v1"];
+
+const RARITY_VALUE: Record<string, number> = {
+  common: 1,
+  rare: 2,
+  epic: 5,
+  mythic: 10,
+  legendary: 20,
+}
 
 const toSafeInt = (val: any) => {
   const parsed = parseInt(String(val));
@@ -182,6 +194,50 @@ const buildShopEarningPayload = (session: Stripe.Checkout.Session, itemId: strin
     created_by: "stripe_webhook",
     updated_at: FieldValue.serverTimestamp(),
   };
+};
+
+const buildPixelAvatarSeed = (uid: string) => `${uid}-${Date.now()}-${Math.random().toString(16).slice(2, 10)}`;
+
+const getTeacherCardInventory = (inventory: Record<string, any> | undefined | null) => {
+  const teacherCards = toSafeInt(inventory?.teacher_vol1);
+  const legacyTeacherCards = toSafeInt(inventory?.teachers_v1);
+  return {
+    teacherCards,
+    legacyTeacherCards,
+    total: teacherCards + legacyTeacherCards,
+  };
+};
+
+const getAlbumCardInventory = (inventory: Record<string, any> | undefined | null) => {
+  const albumCards = ALBUM_CARD_KEYS.reduce((sum, key) => sum + toSafeInt(inventory?.[key]), 0);
+  return { albumCards };
+};
+
+const spendFromInventoryKeys = (inventory: Record<string, any> | undefined | null, keys: string[], cost: number) => {
+  const nextInventory = { ...(inventory || {}) };
+  let remainingCost = cost;
+
+  for (const key of keys) {
+    if (remainingCost <= 0) break;
+
+    const currentCards = toSafeInt(nextInventory[key]);
+    const spent = Math.min(currentCards, remainingCost);
+    nextInventory[key] = Math.max(0, currentCards - spent);
+    remainingCost -= spent;
+  }
+
+  return { nextInventory, remainingCost };
+};
+
+const spendPixelAvatarCards = (inventory: Record<string, any> | undefined | null, cost: number) => {
+  const teacherKeys = [TEACHER_PACK_ID, LEGACY_TEACHER_PACK_ID];
+  const { nextInventory: teacherAdjusted, remainingCost: teacherRemaining } = spendFromInventoryKeys(inventory, teacherKeys, cost);
+
+  if (teacherRemaining <= 0) {
+    return { nextInventory: teacherAdjusted, remainingCost: 0 };
+  }
+
+  return spendFromInventoryKeys(teacherAdjusted, ALBUM_CARD_KEYS, teacherRemaining);
 };
 
 const getCurrentBoosterDay = (config?: any): string => {
@@ -551,6 +607,143 @@ export const openBooster = onCall({
     });
     transaction.set(userTeachersRef, userTeachersData);
     return { packs: allPacks };
+  });
+});
+
+export const purchasePixelProfileAvatar = onCall({
+  cors: CALLABLE_CORS_ORIGINS,
+  maxInstances: 10,
+  memory: "256MiB",
+  region: "europe-west3",
+}, async (request) => {
+  if (!request.auth?.uid) {
+    throw new HttpsError("unauthenticated", "Anmeldung erforderlich.");
+  }
+  const uid = request.auth.uid as string;
+
+  const mode = request.data?.mode === "purchase" ? "purchase" : "generate";
+  const db = getFirestore("abi-data");
+  const profileRef = db.collection("profiles").doc(request.auth.uid);
+
+  return await db.runTransaction(async (transaction) => {
+    const profileSnap = await transaction.get(profileRef);
+    if (!profileSnap.exists) {
+      throw new HttpsError("not-found", "Profil fehlt.");
+    }
+
+    const profileData = profileSnap.data() || {};
+    const boosterStats = profileData.booster_stats || {};
+    const inventory = boosterStats.inventory || {};
+    const currentCards = getTeacherCardInventory(inventory);
+    const albumCards = getAlbumCardInventory(inventory);
+    const selectedCards: string[] = Array.isArray(request.data?.selectedCards) ? request.data.selectedCards : [];
+    const currentCosmetics = profileData.cosmetics || {};
+    const cost = mode === "purchase" ? PIXEL_AVATAR_PURCHASE_COST : PIXEL_AVATAR_GENERATE_COST;
+    // selectedCards represent individual album cards the user wants to give up.
+    let selectedValue = 0;
+    let userTeachersData: any = {};
+    if (selectedCards.length > 0) {
+    const userTeachersRef = db.collection('user_teachers').doc(uid);
+      const userTeachersSnap = await transaction.get(userTeachersRef);
+      userTeachersData = userTeachersSnap.exists ? (userTeachersSnap.data() || {}) : {};
+
+      for (const cid of selectedCards) {
+        const card = userTeachersData[cid];
+        if (!card || toSafeInt(card.count) <= 0) {
+          throw new HttpsError('failed-precondition', `Karte nicht gefunden oder bereits verwendet: ${cid}`);
+        }
+        const rarity = card.rarity || 'common';
+        if (rarity === 'iconic') {
+          throw new HttpsError('failed-precondition', 'Icons können nicht als Zahlung verwendet werden.');
+        }
+        selectedValue += RARITY_VALUE[rarity] || 1;
+      }
+    }
+
+    const totalPaymentCards = currentCards.total + albumCards.albumCards + selectedValue;
+
+    if (totalPaymentCards < cost) {
+      throw new HttpsError("failed-precondition", `Du benötigst ${cost} Karten. Du kannst dafür Lehrerkarten oder Albumkarten verwenden.`);
+    }
+
+    const { nextInventory, remainingCost } = spendPixelAvatarCards(inventory, cost);
+
+    // If inventory-based spend didn't fully cover the cost, consume selected individual cards.
+      if (remainingCost > 0) {
+      if (selectedValue < remainingCost) {
+        throw new HttpsError('failed-precondition', 'Nicht genug Karten ausgewählt, um die Zahlung zu decken.');
+      }
+      // decrement selected cards from user_teachers
+      const userTeachersRef = db.collection('user_teachers').doc(uid);
+      const updatedUserTeachers = { ...(userTeachersData || {}) };
+      for (const cid of selectedCards) {
+        const entry = updatedUserTeachers[cid];
+        if (!entry) continue;
+        const newCount = Math.max(0, toSafeInt(entry.count) - 1);
+        if (newCount <= 0) {
+          delete updatedUserTeachers[cid];
+        } else {
+          updatedUserTeachers[cid] = { ...entry, count: newCount };
+        }
+      }
+      transaction.update(userTeachersRef, updatedUserTeachers);
+    }
+
+    const nowIso = new Date().toISOString();
+    if (mode === "generate") {
+      const draftSeed = buildPixelAvatarSeed(uid);
+      const draftPhotoUrl = generateSeededPixelAvatar(draftSeed);
+
+      transaction.update(profileRef, {
+        cosmetics: {
+          ...currentCosmetics,
+          custom_avatar: true,
+          pixel_avatar_draft_seed: draftSeed,
+          pixel_avatar_mode: "random",
+          unlocked_at: nowIso,
+        },
+        "booster_stats.inventory": nextInventory,
+        updated_at: FieldValue.serverTimestamp(),
+      });
+
+      return {
+        success: true,
+        mode,
+        cost,
+        remainingTeacherCards: totalPaymentCards - cost,
+        photoUrl: draftPhotoUrl,
+        seed: draftSeed,
+      };
+    }
+
+    const draftSeed = typeof currentCosmetics.pixel_avatar_draft_seed === "string" ? currentCosmetics.pixel_avatar_draft_seed.trim() : "";
+    if (!draftSeed) {
+      throw new HttpsError("failed-precondition", "Erzeuge zuerst ein zufälliges Pixelprofilbild für 5 Karten.");
+    }
+
+    const photoUrl = generateSeededPixelAvatar(draftSeed);
+    transaction.update(profileRef, {
+      photo_url: photoUrl,
+      cosmetics: {
+        ...currentCosmetics,
+        custom_avatar: true,
+        pixel_avatar_seed: draftSeed,
+        pixel_avatar_draft_seed: null,
+        pixel_avatar_mode: "purchased",
+        unlocked_at: nowIso,
+      },
+      "booster_stats.inventory": nextInventory,
+      updated_at: FieldValue.serverTimestamp(),
+    });
+
+    return {
+      success: true,
+      mode,
+      cost,
+      remainingTeacherCards: totalPaymentCards - cost,
+      photoUrl,
+      seed: draftSeed,
+    };
   });
 });
 

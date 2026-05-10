@@ -219,6 +219,227 @@ export async function POST(request: NextRequest) {
     })
   }
 
+  if (action.type === 'create_poll') {
+    const pollData = {
+      question: action.title.trim(),
+      is_active: true,
+      allow_vote_change: true,
+      multiple_choice: false,
+      max_votes: 1,
+      target_groups: action.assigned_to_group ? [action.assigned_to_group] : [],
+      created_at: new Date().toISOString(),
+      created_by: userName || 'Unbekannt',
+      created_by_name: userName || 'Unbekannt',
+      deadline_date: action.deadline_date || null,
+    }
+
+    const docRef = await db.collection('polls').add(pollData)
+    
+    if (action.poll_options && action.poll_options.length > 0) {
+      const optionsCollection = db.collection('polls').doc(docRef.id).collection('options')
+      for (const optionText of action.poll_options) {
+        await optionsCollection.add({
+          poll_id: docRef.id,
+          option_text: optionText,
+          created_by: userName || 'Unbekannt',
+          is_custom: false
+        })
+      }
+    }
+
+    await logAssistantAction(authResult.uid, userName, 'POLL_CREATED', {
+      source: 'ai_assistant',
+      poll_id: docRef.id,
+      question: action.title.trim(),
+      target_groups: pollData.target_groups,
+      options_count: action.poll_options?.length || 0
+    })
+
+    return NextResponse.json({
+      ok: true,
+      saved: true,
+      type: 'poll',
+      id: docRef.id,
+      actionLabel: getAssistantActionLabel(action),
+      summary: getAssistantActionSummary(action),
+      message: 'Abstimmung wurde erstellt.',
+    })
+  }
+
+  if (action.type === 'create_news') {
+    const newsData = {
+      title: action.title.trim(),
+      content: action.description || '',
+      created_at: new Date().toISOString(),
+      created_by: userName || 'Unbekannt',
+      author_name: userName || 'Unbekannt',
+      target_group: action.assigned_to_group || null,
+      is_ai_generated: true
+    }
+
+    const docRef = await db.collection('news').add(newsData)
+
+    await logAssistantAction(authResult.uid, userName, 'NEWS_CREATED', {
+      source: 'ai_assistant',
+      news_id: docRef.id,
+      title: action.title.trim()
+    })
+
+    return NextResponse.json({
+      ok: true,
+      saved: true,
+      type: 'news',
+      id: docRef.id,
+      actionLabel: getAssistantActionLabel(action),
+      summary: getAssistantActionSummary(action),
+      message: 'News-Eintrag wurde erstellt.',
+    })
+  }
+
+  if (action.type === 'add_finance_transaction') {
+    const amountVal = action.amount ? Math.abs(action.amount) : 0
+    const finalAmount = action.transaction_type === 'expense' ? -amountVal : amountVal
+
+    const financeData = {
+      amount: finalAmount,
+      description: action.title.trim(),
+      entry_date: new Date().toISOString(),
+      created_by: userName || 'Unbekannt',
+      category: action.category || null,
+      responsible_class: action.assigned_to_class || null
+    }
+
+    const docRef = await db.collection('finances').add(financeData)
+
+    await logAssistantAction(authResult.uid, userName, 'FINANCE_TRANSACTION_CREATED', {
+      source: 'ai_assistant',
+      finance_id: docRef.id,
+      amount: finalAmount,
+      description: action.title.trim()
+    })
+
+    return NextResponse.json({
+      ok: true,
+      saved: true,
+      type: 'finance',
+      id: docRef.id,
+      actionLabel: getAssistantActionLabel(action),
+      summary: getAssistantActionSummary(action),
+      message: 'Finanz-Eintrag wurde erstellt.',
+    })
+  }
+
+  if (action.type === 'edit_finance_transaction') {
+    if (!action.transaction_id) {
+      return NextResponse.json({ ok: false, error: 'transaction_id is required for editing' }, { status: 400 })
+    }
+
+    const docRef = db.collection('finances').doc(action.transaction_id)
+    const snap = await docRef.get()
+
+    if (!snap.exists) {
+      return NextResponse.json({ ok: false, error: 'Transaction not found' }, { status: 404 })
+    }
+
+    const currentData = snap.data() || {}
+    const updates: Record<string, any> = {}
+
+    if (action.amount !== null && action.amount !== undefined) {
+      const amountVal = Math.abs(action.amount)
+      const type = action.transaction_type || (Number(currentData.amount) < 0 ? 'expense' : 'income')
+      updates.amount = type === 'expense' ? -amountVal : amountVal
+    } else if (action.transaction_type) {
+      const amountVal = Math.abs(Number(currentData.amount) || 0)
+      updates.amount = action.transaction_type === 'expense' ? -amountVal : amountVal
+    }
+
+    if (action.title) updates.description = action.title.trim()
+    if (action.category !== undefined) updates.category = action.category
+    if (action.assigned_to_class !== undefined) updates.responsible_class = action.assigned_to_class
+
+    updates.updated_at = new Date().toISOString()
+    updates.updated_by = userName || 'Unbekannt'
+
+    await docRef.update(updates)
+
+    await logAssistantAction(authResult.uid, userName, 'FINANCE_TRANSACTION_EDITED', {
+      source: 'ai_assistant',
+      finance_id: action.transaction_id,
+      updates
+    })
+
+    return NextResponse.json({
+      ok: true,
+      saved: true,
+      type: 'finance_edit',
+      id: action.transaction_id,
+      actionLabel: getAssistantActionLabel(action),
+      summary: getAssistantActionSummary(action),
+      message: 'Finanz-Eintrag wurde aktualisiert.',
+    })
+  }
+
+  if (action.type === 'send_group_message') {
+    const isHub = !action.group_name || action.group_name.toLowerCase() === 'hub'
+    const msgData = {
+      content: action.description || '',
+      created_by: authResult.uid,
+      author_name: userName || 'ABI Bot',
+      group_name: isHub ? 'hub' : action.group_name,
+      type: isHub ? 'hub' : 'internal',
+      created_at: new Date().toISOString(),
+      is_ai_generated: true
+    }
+
+    const docRef = await db.collection('group_messages').add(msgData)
+
+    await logAssistantAction(authResult.uid, userName, 'GROUP_MESSAGE_SENT_BY_BOT', {
+      source: 'ai_assistant',
+      group_name: msgData.group_name,
+      message_id: docRef.id
+    })
+
+    return NextResponse.json({
+      ok: true,
+      saved: true,
+      type: 'group_message',
+      id: docRef.id,
+      actionLabel: getAssistantActionLabel(action),
+      summary: getAssistantActionSummary(action),
+      message: `Nachricht an ${isHub ? 'den Hub' : action.group_name} wurde gesendet.`,
+    })
+  }
+
+  if (action.type === 'create_group') {
+    const settingsRef = db.collection('settings').doc('config')
+    const settingsDoc = await settingsRef.get()
+    const currentGroups = settingsDoc.exists ? (settingsDoc.data()?.planning_groups || []) : []
+
+    const newGroup = {
+      name: action.group_name || action.title,
+      leader_name: action.leader_name || userName || null,
+      created_at: new Date().toISOString()
+    }
+
+    await settingsRef.update({
+      planning_groups: FieldValue.arrayUnion(newGroup)
+    })
+
+    await logAssistantAction(authResult.uid, userName, 'PLANNING_GROUP_CREATED', {
+      source: 'ai_assistant',
+      group_name: newGroup.name
+    })
+
+    return NextResponse.json({
+      ok: true,
+      saved: true,
+      type: 'group',
+      actionLabel: getAssistantActionLabel(action),
+      summary: getAssistantActionSummary(action),
+      message: `Planungsgruppe "${newGroup.name}" wurde angelegt.`,
+    })
+  }
+
   const parentId = await resolveParentTodoId(action)
   if (action.type === 'create_subtodo' && !parentId) {
     return NextResponse.json({

@@ -22,6 +22,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { NftAvatar } from '@/components/ui/nft-avatar'
 import { format } from 'date-fns'
 import { de } from 'date-fns/locale'
 import { toDate, cn, getOnlineStatus } from '@/lib/utils'
@@ -547,14 +548,17 @@ export function GroupWall({
                   return (
                     <div
                       key={msg.id}
-                      className={cn('flex w-full', isAssistant ? 'justify-start' : 'justify-end')}
+                      className={cn('flex w-full gap-2.5', isAssistant ? 'justify-start' : 'justify-end flex-row-reverse')}
                     >
+                      {isAssistant && (
+                        <NftAvatar isBot className="h-8 w-8 mt-1.5 shrink-0 border shadow-sm" />
+                      )}
                       <div
                         className={cn(
                           'max-w-[90%] md:max-w-[85%] rounded-2xl px-4 py-3',
                           isAssistant
-                            ? 'bg-muted border border-border text-foreground shadow'
-                            : 'bg-primary text-primary-foreground shadow-none'
+                            ? 'bg-muted border border-border text-foreground shadow rounded-tl-none'
+                            : 'bg-primary text-primary-foreground shadow-none rounded-tr-none'
                         )}
                       >
                         <p className="text-[10px] uppercase tracking-wider font-black opacity-70 mb-1">
@@ -566,12 +570,20 @@ export function GroupWall({
                           className="text-sm"
                         />
                       </div>
+                      {!isAssistant && (
+                        <Avatar className="h-8 w-8 mt-1.5 shrink-0 border shadow-sm">
+                          <AvatarFallback className="text-[10px] bg-primary text-primary-foreground font-bold">
+                            {profile?.full_name?.charAt(0) || user?.displayName?.charAt(0) || '?'}
+                          </AvatarFallback>
+                        </Avatar>
+                      )}
                     </div>
                   )
                 })}
                 {botSending && (
-                  <div className="flex w-full justify-start animate-in fade-in slide-in-from-bottom-2">
-                    <div className="max-w-[90%] md:max-w-[85%] rounded-2xl px-4 py-3 shadow bg-muted border border-border text-foreground">
+                  <div className="flex w-full justify-start gap-2.5 animate-in fade-in slide-in-from-bottom-2">
+                    <NftAvatar isBot className="h-8 w-8 mt-1.5 shrink-0 border shadow-sm" />
+                    <div className="max-w-[90%] md:max-w-[85%] rounded-2xl rounded-tl-none px-4 py-3 shadow bg-muted border border-border text-foreground">
                       <p className="text-[10px] uppercase tracking-wider font-black opacity-70 mb-1">ABI Bot</p>
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Wrench className="h-4 w-4 animate-pulse text-primary" />

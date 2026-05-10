@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { NftAvatar } from '@/components/ui/nft-avatar'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import {
   ContextMenu,
@@ -798,9 +799,12 @@ export default function AdminUserPage() {
                             />
                           </TableCell>
                           <TableCell className="font-medium">
-                            <Link href={`/admin/user/${p.id}`} className="hover:underline focus-visible:underline">
-                              {p.full_name || 'Unbekannt'}
-                            </Link>
+                            <div className="flex items-center gap-3">
+                              <NftAvatar url={p.photo_url} fallback={p.full_name?.substring(0, 1).toUpperCase()} className="h-8 w-8" interactive={false} />
+                              <Link href={`/admin/user/${p.id}`} className="hover:underline focus-visible:underline">
+                                {p.full_name || 'Unbekannt'}
+                              </Link>
+                            </div>
                           </TableCell>
                           <TableCell className="text-muted-foreground break-all">{p.email}</TableCell>
                           <TableCell>
@@ -860,6 +864,7 @@ export default function AdminUserPage() {
                   <div className="flex justify-between items-start gap-2">
                     <div className="min-w-0 flex-1 flex items-start gap-3">
                       <Checkbox checked={selected} onCheckedChange={(checked) => toggleRecipient(p.id, checked === true)} className="mt-1" />
+                      <NftAvatar url={p.photo_url} fallback={p.full_name?.substring(0, 1).toUpperCase()} className="h-10 w-10 shrink-0" interactive={false} />
                       <div className="min-w-0 flex-1">
                         <Link href={`/admin/user/${p.id}`} className="font-bold hover:underline truncate block text-foreground leading-tight">{p.full_name || 'Unbekannt'}</Link>
                         <p className="text-xs text-muted-foreground break-all mt-0.5">{p.email}</p>

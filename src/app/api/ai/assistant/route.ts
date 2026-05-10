@@ -2,12 +2,14 @@ import { NextRequest, NextResponse } from 'next/server'
 import { adminAuth, adminDb } from '@/lib/firebase-admin-server'
 import { Timestamp } from 'firebase-admin/firestore'
 import { parseAssistantResponseContent } from '@/lib/assistant-actions'
+import { getAbiBotBasePrompt, getActionCreationPrompt } from '@/lib/abi-bot-prompt'
 
 export const runtime = 'nodejs'
 
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions'
-const DEFAULT_GROQ_MODEL = 'llama-3.1-8b-instant'
-const RATE_LIMIT_MAX = 20 // Slightly higher for personal assistant
+const DEFAULT_GROQ_MODEL = 'llama-3.3-70b-versatile'
+const TITLE_GROQ_MODEL = 'llama-3.1-8b-instant' // Cheaper and faster for utility tasks
+const RATE_LIMIT_MAX = 25 // Slightly higher for personal assistant
 const RATE_LIMIT_WINDOW_SECONDS = 60
 
 type AuthResult =
@@ -17,6 +19,34 @@ type AuthResult =
 async function verifyApprovedUser(authHeader: string | null): Promise<AuthResult> {
   const isBypass = process.env.MAESTRO_DEV_BYPASS === 'true'
 
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    try {
+      const idToken = authHeader.slice(7).trim()
+      if (idToken) {
+        const auth = adminAuth()
+        const db = adminDb()
+
+        const decoded = await auth.verifyIdToken(idToken)
+        const profileSnap = await db.collection('profiles').doc(decoded.uid).get()
+
+        if (profileSnap.exists) {
+          const profile = (profileSnap.data() || {}) as Record<string, unknown>
+          if (profile.is_approved) {
+            return { ok: true, uid: decoded.uid, profile }
+          } else if (!isBypass) {
+            return { ok: false, status: 403, error: 'Profile not approved' }
+          }
+        } else if (!isBypass) {
+          return { ok: false, status: 404, error: 'Profile not found' }
+        }
+      }
+    } catch (error: unknown) {
+      if (!isBypass) {
+        return { ok: false, status: 401, error: `Authentication failed: ${error instanceof Error ? error.message : 'Unknown error'}` }
+      }
+    }
+  }
+
   if (isBypass) {
     return {
       ok: true,
@@ -25,39 +55,14 @@ async function verifyApprovedUser(authHeader: string | null): Promise<AuthResult
         is_approved: true,
         role: 'admin',
         full_name: 'Dev User',
+        class_name: '12a',
+        school_name: 'Dev High School',
+        planning_groups: ['Abiball', 'Finanzen'],
       },
     }
   }
 
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return { ok: false, status: 401, error: 'Missing bearer token' }
-  }
-
-  const idToken = authHeader.slice(7).trim()
-  if (!idToken) {
-    return { ok: false, status: 401, error: 'Missing bearer token' }
-  }
-
-  try {
-    const auth = adminAuth()
-    const db = adminDb()
-
-    const decoded = await auth.verifyIdToken(idToken)
-    const profileSnap = await db.collection('profiles').doc(decoded.uid).get()
-
-    if (!profileSnap.exists) {
-      return { ok: false, status: 404, error: 'Profile not found' }
-    }
-
-    const profile = (profileSnap.data() || {}) as Record<string, unknown>
-    if (!profile.is_approved) {
-      return { ok: false, status: 403, error: 'Profile not approved' }
-    }
-
-    return { ok: true, uid: decoded.uid, profile }
-  } catch (error: unknown) {
-    return { ok: false, status: 401, error: `Authentication failed: ${error instanceof Error ? error.message : 'Unknown error'}` }
-  }
+  return { ok: false, status: 401, error: 'Missing bearer token' }
 }
 
 async function checkAndIncrementRateLimit(uid: string) {
@@ -123,6 +128,95 @@ function sanitizeMessages(messages: unknown): ChatMessage[] {
     .slice(-20) // Keep last 20 messages for context
 }
 
+function sanitizeTitleCandidate(title: string) {
+  return title
+    .trim()
+    .replace(/^["'`]+|["'`]+$/g, '')
+    .replace(/\s+/g, ' ')
+    .replace(/[\r\n]+/g, ' ')
+    .replace(/[.!?]+$/g, '')
+    .slice(0, 48)
+}
+
+function buildFallbackChatTitle(messages: ChatMessage[]) {
+  return 'Neuer Chat'
+}
+
+function extractJsonObject(content: string) {
+  const trimmed = content.trim()
+  const codeFenceMatch = trimmed.match(/```(?:json)?\s*([\s\S]*?)\s*```/i)
+  const jsonText = codeFenceMatch?.[1]?.trim() || trimmed
+
+  const firstBrace = jsonText.indexOf('{')
+  const lastBrace = jsonText.lastIndexOf('}')
+
+  if (firstBrace === -1 || lastBrace === -1 || lastBrace <= firstBrace) {
+    return null
+  }
+
+  return jsonText.slice(firstBrace, lastBrace + 1)
+}
+
+async function generateChatTitle(messages: ChatMessage[], locale: string) {
+  const apiKey = process.env.GROQ_API_KEY?.trim().replace(/^["']|["']$/g, '')
+  const fallbackTitle = buildFallbackChatTitle(messages)
+
+  if (!apiKey || messages.length === 0) {
+    return fallbackTitle
+  }
+
+  const localeLabel = locale === 'en' ? 'English' : locale === 'es' ? 'Spanish' : 'German'
+  const prompt = `Du bist ein präziser Titel-Generator. Erzeuge eine sehr kurze Zusammenfassung (als Titel) für diesen Chatverlauf in ${localeLabel}.
+Regeln:
+- Gib EXAKT ein JSON-Objekt mit dem Feld "title" zurück.
+- Der Titel soll 1 bis 5 Wörter lang sein.
+- Fasse das Thema basierend NUR auf den tatsächlichen Nachrichten zusammen. Erfinde NIEMALS Themen dazu (wie z.B. "Nudelrezepte" oder "Abiball", wenn sie nicht erwähnt wurden)!
+- Wenn der Nutzer nur "Test" schreibt, antworte mit {"title": "Chat Test"}.
+- Wenn der Nutzer nur Hallo sagt oder die Unterhaltung kein klares Thema hat, antworte mit {"title": "Begrüßung" oder "Allgemeiner Chat"}.
+- Kein Punkt am Ende, keine Anführungszeichen im Titel.`
+
+  try {
+    const response = await fetch(GROQ_API_URL, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: TITLE_GROQ_MODEL,
+        temperature: 0.2,
+        max_tokens: 80,
+        response_format: { type: 'json_object' },
+        messages: [
+          { role: 'system', content: prompt },
+          ...messages,
+        ],
+      }),
+    })
+
+    if (!response.ok) {
+      return fallbackTitle
+    }
+
+    const parsed = await response.json()
+    const assistantMessage = parsed?.choices?.[0]?.message
+    const rawContent = typeof assistantMessage?.content === 'string' ? assistantMessage.content : ''
+    const jsonText = extractJsonObject(rawContent)
+
+    if (!jsonText) {
+      return fallbackTitle
+    }
+
+    const payload = JSON.parse(jsonText) as { title?: unknown }
+    const normalizedTitle = typeof payload.title === 'string' ? sanitizeTitleCandidate(payload.title) : ''
+
+    return normalizedTitle || fallbackTitle
+  } catch (error) {
+    console.error('AI chat title generation failed:', error)
+    return fallbackTitle
+  }
+}
+
 export async function POST(request: NextRequest) {
   const startedAt = Date.now()
   const authResult = await verifyApprovedUser(request.headers.get('authorization'))
@@ -133,6 +227,24 @@ export async function POST(request: NextRequest) {
 
   const body = await request.json().catch(() => null)
   const messages = sanitizeMessages(body?.messages)
+  const mode = body?.mode === 'title' ? 'title' : 'assistant'
+  const allowedModes = ['default', 'smalltalk', 'creative', 'sassy', 'annoyed', 'trashy']
+  const botMode = allowedModes.includes(body?.botMode) ? body.botMode : 'default'
+
+  if (mode === 'title') {
+    const locale = typeof body?.locale === 'string' ? body.locale : 'de'
+    const title = await generateChatTitle(messages.slice(0, 4), locale)
+
+    return NextResponse.json({
+      ok: true,
+      title,
+      meta: {
+        model: DEFAULT_GROQ_MODEL,
+        generatedAt: new Date().toISOString(),
+        latencyMs: Date.now() - startedAt,
+      },
+    })
+  }
 
   if (messages.length === 0) {
     return NextResponse.json({ ok: false, error: 'messages array is required and cannot be empty' }, { status: 400 })
@@ -173,64 +285,149 @@ export async function POST(request: NextRequest) {
   try {
     const userRole = String(authResult.profile.role || 'viewer')
     const canPersistActions = ['planner', 'admin', 'admin_main', 'admin_co'].includes(userRole)
-    const systemPrompt = `Du bist ein hilfreicher, proaktiver persönlicher Assistent für die "ABI Planer" Anwendung.
-Deine Aufgabe ist es, Nutzer bei der Organisation ihres Abiballs (Abschlussfeier) und verwandter Veranstaltungen zu unterstützen. Der Planer dient zur Planung von Events, Aufgaben, Tickets und Zeitplänen — nicht zum Lernen oder zur Prüfungsvorbereitung. Antworte auf Deutsch.
+    const userName = typeof authResult.profile.full_name === 'string' ? authResult.profile.full_name : null
+    const className = typeof authResult.profile.class_name === 'string' ? authResult.profile.class_name : null
+    const schoolName = typeof authResult.profile.school_name === 'string' ? authResult.profile.school_name : null
+    const planningGroups = Array.isArray(authResult.profile.planning_groups) ? authResult.profile.planning_groups.filter((g): g is string => typeof g === 'string') : []
+    const ledGroups = Array.isArray(authResult.profile.led_groups) ? authResult.profile.led_groups.filter((g): g is string => typeof g === 'string') : []
 
-Du hast vollen Zugriff auf das interne Support-Wissen und die Projektdokumentation; nutze dieses Wissen, um präzise und kontextbezogene Vorschläge zu machen. Teile keine geheimen Zugangsdaten oder sicherheitskritischen Informationen.
+    // Fetch current state for context
+    const db = adminDb()
+    const [todosSnap, eventsSnap, newsSnap, settingsDoc, financesSnap, shopEarningsSnap] = await Promise.all([
+      db.collection('todos').orderBy('created_at', 'desc').limit(5).get().catch(() => ({ docs: [] })),
+      db.collection('events').where('start_date', '>=', new Date().toISOString()).orderBy('start_date', 'asc').limit(5).get().catch(() => ({ docs: [] })),
+      db.collection('news').orderBy('created_at', 'desc').limit(3).get().catch(() => ({ docs: [] })),
+      db.collection('settings').doc('config').get().catch(() => null),
+      db.collection('finances').orderBy('entry_date', 'desc').select('amount', 'description', 'entry_date', 'responsible_class', 'category').get().catch(() => ({ docs: [] })),
+      db.collection('shop_earnings').get().catch(() => ({ docs: [] })),
+    ])
 
-Wenn der Nutzer eindeutig darum bittet, etwas anzulegen, gib genau ein JSON-Objekt zurück mit diesen Feldern:
-{
-  "answer": "kurze Antwort an den Nutzer",
-  "actionMode": "none" | "draft_only" | "confirmable",
-  "action": {
-    "type": "create_todo" | "create_subtodo" | "create_event",
-    "title": "...",
-    "description": "optional",
-    "assigned_to_user_name": "optional",
-    "assigned_to_class": "optional",
-    "assigned_to_group": "optional",
-    "deadline_date": "YYYY-MM-DD optional",
-    "parentId": "optional",
-    "parentTitle": "optional",
-    "start_date": "ISO optional",
-    "end_date": "ISO optional",
-    "location": "optional",
-    "mentioned_user_names": [],
-    "mentioned_roles": [],
-    "mentioned_groups": []
-  }
-}
+    let contextState = ''
+    try {
+      const currentTodos = (todosSnap as any).docs.map((d: any) => `- ${d.data().title} (${d.data().status})`).join('\n')
+      const currentEvents = (eventsSnap as any).docs.map((d: any) => `- ${d.data().title} (${d.data().start_date})`).join('\n')
+      const currentNews = (newsSnap as any).docs.map((d: any) => `- ${d.data().title}`).join('\n')
+      const settings = settingsDoc && 'data' in settingsDoc ? settingsDoc.data() : null
 
-KLASSIFIKATIONSREGELN:
-- Verwende "create_event" nur für klar terminierte, kalendarische Einträge mit festem Datum und/oder Uhrzeit, idealerweise auch mit Ort oder Teilnehmern.
-- Verwende "create_todo" für Aufgaben, Vorbereitungen, Erinnerungen, Checklisten oder Planungsarbeit ohne festen Kalendereintrag.
-- Verwende "create_subtodo" nur, wenn die Anfrage erkennbar zu einer bereits genannten Hauptaufgabe gehört oder als Unterpunkt formuliert ist.
-- Wenn ein Satz sowohl nach Termin als auch nach Aufgabe klingt, entscheide nach dem stärksten Signal: feste Zeit = Termin, offene To-do/Planung = Aufgabe.
-- Formulierungen wie "morgen um 10 Uhr", "am 12.05. um 14:30", "Treffen", "Termin", "Meeting" oder "Abgabe" sprechen eher für ein Event.
-- Formulierungen wie "vorbereiten", "organisieren", "prüfen", "erledigen", "schreiben", "beschaffen" oder "Liste" sprechen eher für eine Todo.
-- Wenn der Nutzer nur Planungsschritte beschreibt, aber keinen konkreten Zeitpunkt nennt, frage lieber nach und lege noch nichts an.
-- Wenn du unsicher bist, ob es ein Termin oder eine Aufgabe ist, stelle eine kurze Rückfrage statt zu raten.
+      // --- Comprehensive Finance Analysis ---
+      const financeEntries = (financesSnap as any).docs.map((d: any) => {
+        const data = d.data()
+        return { 
+          id: d.id,
+          amount: Number(data.amount) || 0, 
+          description: data.description || '', 
+          date: data.entry_date || '', 
+          class: data.responsible_class || null, 
+          category: data.category || null 
+        }
+      })
 
-WICHTIG: Gib niemals das obige Beispiel-JSON wortwörtlich zurück. Das JSON dient ausschließlich als Schema. Wenn du nicht genügend Informationen für eine Anlage hast oder eine Rückfrage erforderlich ist, antworte stattdessen kurz in natürlicher Sprache, setze "action" auf null und "actionMode" auf "none".
+      const totalIncome = financeEntries.filter(e => e.amount > 0).reduce((s, e) => s + e.amount, 0)
+      const totalExpenses = financeEntries.filter(e => e.amount < 0).reduce((s, e) => s + Math.abs(e.amount), 0)
+      const currentBalance = totalIncome - totalExpenses
+      const fundingGoal = Number(settings?.funding_goal) || 10000
+      const progressPercent = Math.min(100, Math.round((currentBalance / fundingGoal) * 100))
 
-Wenn keine Anlage nötig ist, setze "action" auf null und "actionMode" auf "none".
-Wenn Informationen fehlen, frage kurz nach und lasse "action" auf null.
-Erfinde keine IDs. Verwende nur sichtbare Namen oder Gruppen aus dem Gespräch.
-Der aktuelle Nutzer hat die Rolle: ${userRole}.
-Wenn die Rolle keine Schreibrechte hat, sollen Aktionen als Entwurf behandelt werden, nicht als bereits erledigt.`
-    const answerGuardrails = `WICHTIG FÜR DAS FELD "answer":
-    - Schreibe ausschließlich den sichtbaren Chat-Text für den Nutzer.
-    - Wenn Informationen fehlen, antworte mit genau einer kurzen Rückfrage in natürlicher Sprache.
-    - Gib niemals JSON, Codefences, Schlüssel wie "answer" oder "action" oder technische Erklärungen im sichtbaren Text aus.
-    - Der Nutzer darf nur die Frage oder Antwort sehen, nicht die Struktur.`
+      // Per-course breakdown
+      const courseMap: Record<string, number> = {}
+      financeEntries.forEach(e => {
+        if (e.class && e.amount > 0) {
+          courseMap[e.class] = (courseMap[e.class] || 0) + e.amount
+        }
+      })
+
+      // Per-category breakdown
+      const catMap: Record<string, { income: number; expense: number }> = {}
+      financeEntries.forEach(e => {
+        const cat = e.category || (e.amount >= 0 ? 'Sonstige Einnahmen' : 'Sonstige Ausgaben')
+        if (!catMap[cat]) catMap[cat] = { income: 0, expense: 0 }
+        if (e.amount >= 0) catMap[cat].income += e.amount
+        else catMap[cat].expense += Math.abs(e.amount)
+      })
+
+      // Per-course breakdown (Limited to Top 5 to save tokens)
+      const courseEntries = Object.entries(courseMap).sort((a, b) => b[1] - a[1])
+      const topCourses = courseEntries.slice(0, 5)
+      const otherCoursesSum = courseEntries.slice(5).reduce((s, e) => s + e[1], 0)
+      
+      let courseBreakdown = topCourses.map(([c, a]) => `  - Kurs ${c}: ${a.toFixed(2)}€`).join('\n')
+      if (otherCoursesSum > 0) courseBreakdown += `\n  - Sonstige Kurse: ${otherCoursesSum.toFixed(2)}€`
+      if (courseEntries.length > 5) courseBreakdown += `\n  (Insgesamt ${courseEntries.length} Kurse erfasst)`
+
+      // Per-category breakdown (Limited to Top 8 to save tokens)
+      const catEntries = Object.entries(catMap).sort((a, b) => (b[1].income + b[1].expense) - (a[1].income + a[1].expense))
+      const topCats = catEntries.slice(0, 8)
+      const otherCats = catEntries.slice(8)
+      
+      let categoryBreakdown = topCats.map(([cat, v]) => {
+        const parts = []
+        if (v.income > 0) parts.push(`+${v.income.toFixed(2)}€`)
+        if (v.expense > 0) parts.push(`-${v.expense.toFixed(2)}€`)
+        return `  - ${cat}: ${parts.join(' / ')}`
+      }).join('\n')
+      
+      if (otherCats.length > 0) {
+        const otherInc = otherCats.reduce((s, e) => s + e[1].income, 0)
+        const otherExp = otherCats.reduce((s, e) => s + e[1].expense, 0)
+        categoryBreakdown += `\n  - Weitere ${otherCats.length} Kategorien: +${otherInc.toFixed(2)}€ / -${otherExp.toFixed(2)}€`
+      }
+
+      // Shop earnings total
+      const shopTotal = (shopEarningsSnap as any).docs.reduce((s: number, d: any) => s + (Number(d.data().abi_share_eur) || 0), 0)
+
+      // Recent 10 transactions for context
+      const recentTransactions = financeEntries.slice(0, 10).map(e => {
+        const sign = e.amount >= 0 ? '+' : ''
+        const dateStr = e.date ? e.date.substring(0, 10) : '?'
+        return `  - ${dateStr}: ${sign}${e.amount.toFixed(2)}€ – ${e.description}${e.class ? ` (${e.class})` : ''} [ID: ${e.id}]`
+      }).join('\n')
+
+      const financeContext = `
+Finanzen:
+  Finanzierungsziel: ${fundingGoal.toLocaleString('de-DE')}€
+  Gesamteinnahmen: +${totalIncome.toFixed(2)}€
+  Gesamtausgaben: -${totalExpenses.toFixed(2)}€
+  Aktueller Stand: ${currentBalance.toFixed(2)}€ (${progressPercent}% vom Ziel)
+  Noch fehlend: ${Math.max(0, fundingGoal - currentBalance).toFixed(2)}€
+  Einträge gesamt: ${financeEntries.length}
+  Shop-Einnahmen (Abi-Anteil): ${shopTotal.toFixed(2)}€
+
+Aufschlüsselung nach Kurs:
+${courseBreakdown || '  Keine kursspezifischen Einnahmen'}
+
+Aufschlüsselung nach Kategorie:
+${categoryBreakdown || '  Keine kategorisierten Einträge'}
+
+Letzte 10 Transaktionen (Nutze die ID in Klammern für 'edit_finance_transaction'):
+${recentTransactions || '  Keine Einträge'}`
+
+      contextState = `
+AKTUELLE SITUATION DER STUFE:
+Bestehende Aufgaben (Top 5):
+${currentTodos || 'Keine'}
+
+Kommende Termine (Top 5):
+${currentEvents || 'Keine'}
+
+Letzte News:
+${currentNews || 'Keine'}
+${financeContext}
+`
+    } catch (dataErr) {
+      console.error('Error constructing AI context state:', dataErr)
+      contextState = 'Hinweis: Aktuelle Stufendaten konnten nicht vollständig geladen werden.'
+    }
+
+    const systemPrompt = getAbiBotBasePrompt({ userName, userRole, className, schoolName, planningGroups, ledGroups, botMode, contextState })
+    const actionPrompt = getActionCreationPrompt(userRole, botMode)
 
     const groqPayload = {
       model: DEFAULT_GROQ_MODEL,
       temperature: 0.7,
-      max_tokens: 1000,
+      max_tokens: 1500,
       messages: [
         { role: 'system', content: systemPrompt },
-        { role: 'system', content: answerGuardrails },
+        { role: 'system', content: actionPrompt },
         ...messages
       ],
     }
@@ -247,10 +444,15 @@ Wenn die Rolle keine Schreibrechte hat, sollen Aktionen als Entwurf behandelt we
     if (!upstreamResponse.ok) {
       const errorData = await upstreamResponse.json().catch(() => ({}))
       console.error('Groq API error:', upstreamResponse.status, errorData)
+      
+      const errorMsg = errorData?.error?.message || 'ABI Bot derzeit nicht erreichbar'
+      const errorCode = errorData?.error?.code || 'upstream_error'
+      
       return NextResponse.json(
         {
           ok: false,
-          error: 'AI Assistant derzeit nicht erreichbar',
+          error: errorMsg,
+          code: errorCode,
           upstreamStatus: upstreamResponse.status,
         },
         { status: 502 }
@@ -268,6 +470,7 @@ Wenn die Rolle keine Schreibrechte hat, sollen Aktionen als Entwurf behandelt we
     const structuredResponse = parseAssistantResponseContent(rawContent)
     const answer = structuredResponse?.answer || rawContent || 'Ich konnte keine Antwort erzeugen.'
     const action = structuredResponse?.action || null
+    const question = structuredResponse?.question || null
     const actionMode = action ? (canPersistActions ? 'confirmable' : 'draft_only') : 'none'
 
     return NextResponse.json({
@@ -275,6 +478,7 @@ Wenn die Rolle keine Schreibrechte hat, sollen Aktionen als Entwurf behandelt we
       answer,
       action,
       actionMode,
+      question,
       message: {
         ...assistantMessage,
         content: answer,
@@ -291,11 +495,11 @@ Wenn die Rolle keine Schreibrechte hat, sollen Aktionen als Entwurf behandelt we
       },
     })
   } catch (error: unknown) {
-    console.error('AI Assistant Error:', error)
+    console.error('ABI Bot Error:', error)
     return NextResponse.json(
       {
         ok: false,
-        error: 'AI Assistant konnte nicht antworten.',
+        error: 'ABI Bot konnte nicht antworten.',
         details: error instanceof Error ? error.message : String(error),
       },
       { status: 500 }

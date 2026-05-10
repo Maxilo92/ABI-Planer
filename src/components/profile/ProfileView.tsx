@@ -4,8 +4,8 @@ import { Profile, UserRole } from '@/types/database'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Mail, Shield, Award, MapPin, Users, ShieldCheck, UserPlus, UserX, UserCheck, Settings as SettingsIcon, Calendar, User, Star } from 'lucide-react'
+import { NftAvatar } from '@/components/ui/nft-avatar'
+import { Mail, Shield, Award, MapPin, Users, ShieldCheck, UserPlus, UserX, UserCheck, Settings as SettingsIcon, Calendar, User, Star, ShoppingBag } from 'lucide-react'
 import { format } from 'date-fns'
 import { de } from 'date-fns/locale'
 import { toDate, getOnlineStatus, cn } from '@/lib/utils'
@@ -50,12 +50,12 @@ export function ProfileView({
       <Card>
         <CardHeader className="flex flex-row items-center gap-4 space-y-0 border-b pb-6">
           <div className="relative">
-            <Avatar className="h-20 w-20 sm:h-24 sm:w-24 border-2 border-border shadow-sm">
-              <AvatarImage src={avatarUrl || ''} className="object-cover" />
-              <AvatarFallback className="bg-primary/10 text-primary text-2xl font-bold">
-                {userInitial}
-              </AvatarFallback>
-            </Avatar>
+            <NftAvatar 
+              url={avatarUrl} 
+              fallback={userInitial}
+              isBot={profile.id === 'abi-bot'}
+              className="h-20 w-20 sm:h-24 sm:w-24 border-2 border-border shadow-sm" 
+            />
             <div 
               className={cn(
                 "absolute bottom-1 right-1 w-5 h-5 rounded-full border-4 border-card",
@@ -70,9 +70,14 @@ export function ProfileView({
                 {profile.full_name}
               </CardTitle>
               {isOwnProfile && (
-                <Button variant="outline" size="sm" className="hidden sm:flex gap-2 font-bold" render={<Link href="/einstellungen" />}>
-                  <SettingsIcon className="w-4 h-4" /> Einstellungen
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" size="sm" className="hidden sm:flex gap-2 font-bold" render={<Link href="/profil/shop" />}>
+                    <ShoppingBag className="w-4 h-4" /> Avatar Shop
+                  </Button>
+                  <Button variant="outline" size="sm" className="hidden sm:flex gap-2 font-bold" render={<Link href="/einstellungen" />}>
+                    <SettingsIcon className="w-4 h-4" /> Einstellungen
+                  </Button>
+                </div>
               )}
             </div>
             <div className="flex flex-col gap-1.5 mt-1">
@@ -95,8 +100,11 @@ export function ProfileView({
         
         <CardContent className="grid gap-6 py-8">
           {isOwnProfile && (
-            <div className="sm:hidden -mt-4 mb-2">
-               <Button variant="outline" size="sm" className="w-full gap-2 font-bold" render={<Link href="/einstellungen" />}>
+            <div className="sm:hidden -mt-4 mb-2 flex gap-2">
+              <Button variant="outline" size="sm" className="flex-1 gap-2 font-bold" render={<Link href="/profil/shop" />}>
+                <ShoppingBag className="w-4 h-4" /> Avatar Shop
+              </Button>
+              <Button variant="outline" size="sm" className="flex-1 gap-2 font-bold" render={<Link href="/einstellungen" />}>
                 <SettingsIcon className="w-4 h-4" /> Einstellungen
               </Button>
             </div>

@@ -254,7 +254,7 @@ export function ClassRanking({
           {showManualCorrection && canEditLeaderboard && (
             <div className="space-y-2 bg-background/50 rounded-lg p-2 border border-border/40">
               <p className="text-[9px] font-extrabold text-primary uppercase tracking-[0.1em] leading-tight">Korrektur</p>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 gap-2">
                 {displayedStats.map((entry) => (
                   <label key={`adjustment-${entry.className}`} className="flex items-center justify-between gap-1.5 rounded border border-border/50 bg-card px-1.5 py-1">
                     <span className="text-[10px] font-semibold text-foreground truncate">K {entry.className}</span>

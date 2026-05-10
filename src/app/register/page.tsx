@@ -17,6 +17,7 @@ import { logAction } from '@/lib/logging'
 import { getAppHomeUrl, getAccessTargetFromProfile, getMainBaseUrl } from '@/lib/dashboard-url'
 import { useLanguage } from '@/context/LanguageContext'
 import { LanguageToggle } from '@/components/ui/LanguageToggle'
+import { generatePixelAvatar } from '@/lib/avatar'
 
 const OPTION_TEACHER = 'Lehrer'
 const OPTION_PARENT = 'Eltern'
@@ -190,6 +191,7 @@ function RegisterForm() {
         led_groups: [],
         is_group_leader: false,
         is_approved: true, // Auto-approve for MVP
+        photo_url: generatePixelAvatar(), // Add generated pixel avatar
         created_at: new Date().toISOString(),
         legal_consents: {
           is_at_least_16: true,

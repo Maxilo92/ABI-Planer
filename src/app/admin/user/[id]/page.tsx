@@ -45,6 +45,7 @@ import { DiscountHistoryDialog } from '@/components/modals/DiscountHistoryDialog
 import { SetTimeoutDialog } from '@/components/modals/SetTimeoutDialog'
 import { ResetPasswordDialog } from '@/components/modals/ResetPasswordDialog'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { NftAvatar } from '@/components/ui/nft-avatar'
 import { cn } from '@/lib/utils'
 
 export default function UserDetailView({ params }: { params: Promise<{ id: string }> }) {
@@ -239,17 +240,20 @@ export default function UserDetailView({ params }: { params: Promise<{ id: strin
       </div>
 
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-        <div className="space-y-2">
-          <div className="flex items-center gap-3">
-            <h1 className="text-4xl font-extrabold tracking-tight">{targetProfile.full_name || 'Unbekannter Nutzer'}</h1>
-            <Badge variant={targetProfile.is_approved ? "success" : "warning"} className="h-6">
-              {targetProfile.is_approved ? "Freigeschaltet" : "Ausstehend"}
-            </Badge>
-          </div>
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
-            <span className="flex items-center gap-1.5"><Mail className="h-3.5 w-3.5" /> {targetProfile.email}</span>
-            <span className="flex items-center gap-1.5"><Shield className="h-3.5 w-3.5" /> Rolle: <span className="capitalize font-medium text-foreground">{targetProfile.role}</span></span>
-            <span className="flex items-center gap-1.5"><Calendar className="h-3.5 w-3.5" /> Registriert: {new Date(targetProfile.created_at).toLocaleDateString('de-DE')}</span>
+        <div className="flex items-center gap-5">
+          <NftAvatar url={targetProfile.photo_url} fallback={targetProfile.full_name?.substring(0, 1).toUpperCase()} className="h-16 w-16 md:h-20 md:w-20 shadow-sm border-2 border-border shrink-0" />
+          <div className="space-y-2">
+            <div className="flex flex-wrap items-center gap-3">
+              <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight">{targetProfile.full_name || 'Unbekannter Nutzer'}</h1>
+              <Badge variant={targetProfile.is_approved ? "success" : "warning"} className="h-6">
+                {targetProfile.is_approved ? "Freigeschaltet" : "Ausstehend"}
+              </Badge>
+            </div>
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+              <span className="flex items-center gap-1.5"><Mail className="h-3.5 w-3.5" /> {targetProfile.email}</span>
+              <span className="flex items-center gap-1.5"><Shield className="h-3.5 w-3.5" /> Rolle: <span className="capitalize font-medium text-foreground">{targetProfile.role}</span></span>
+              <span className="flex items-center gap-1.5"><Calendar className="h-3.5 w-3.5" /> Registriert: {new Date(targetProfile.created_at).toLocaleDateString('de-DE')}</span>
+            </div>
           </div>
         </div>
         {targetProfile.timeout_until && new Date(targetProfile.timeout_until) > new Date() && (

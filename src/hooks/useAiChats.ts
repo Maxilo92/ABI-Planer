@@ -21,6 +21,9 @@ export type AiMessage = {
   id: string
   role: 'user' | 'assistant' | 'system'
   content: string
+  thought?: string | null
+  model?: string
+  feedback?: 'positive' | 'negative' | null
 }
 
 function sanitizeAiMessage(message: unknown, index: number): AiMessage | null {
@@ -34,11 +37,25 @@ function sanitizeAiMessage(message: unknown, index: number): AiMessage | null {
     return null
   }
 
-  return {
+  const sanitized: AiMessage = {
     id: typeof candidate.id === 'string' && candidate.id.trim() ? candidate.id : `legacy-${index}`,
     role,
     content: content.trim(),
   }
+
+  if (typeof candidate.thought === 'string' && candidate.thought.trim()) {
+    sanitized.thought = candidate.thought.trim()
+  }
+
+  if (typeof candidate.model === 'string') {
+    sanitized.model = candidate.model
+  }
+
+  if (candidate.feedback === 'positive' || candidate.feedback === 'negative') {
+    sanitized.feedback = candidate.feedback
+  }
+
+  return sanitized
 }
 
 function sanitizeAiMessages(messages: unknown): AiMessage[] {
@@ -64,13 +81,25 @@ export const useAiChats = () => {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    let cancelled = false
+
     if (!user?.uid) {
-      setSessions([])
-      setLoading(false)
-      return
+      Promise.resolve().then(() => {
+        if (cancelled) return
+        setSessions([])
+        setLoading(false)
+      })
+
+      return () => {
+        cancelled = true
+      }
     }
 
-    setLoading(true)
+    Promise.resolve().then(() => {
+      if (cancelled) return
+      setLoading(true)
+    })
+
     const q = query(
       collection(db, 'ai_chat_sessions'),
       where('user_id', '==', user.uid),
@@ -94,8 +123,11 @@ export const useAiChats = () => {
       }
     )
 
-    return () => unsubscribe()
-  }, [user?.uid])
+    return () => {
+      cancelled = true
+      unsubscribe()
+    }
+  }, [user])
 
   const createSession = useCallback(
     async (firstMessage: AiMessage) => {
@@ -106,13 +138,9 @@ export const useAiChats = () => {
         throw new Error('Invalid first message payload')
       }
 
-      const title = sanitizedFirstMessage.content.length > 30
-        ? sanitizedFirstMessage.content.substring(0, 30) + '...'
-        : sanitizedFirstMessage.content
-
       const newSession = {
         user_id: user.uid,
-        title,
+        title: 'Neuer Chat...',
         messages: [sanitizedFirstMessage],
         created_at: serverTimestamp(),
         updated_at: serverTimestamp(),
@@ -126,7 +154,7 @@ export const useAiChats = () => {
         throw error
       }
     },
-    [user?.uid]
+    [user]
   )
 
   const updateSession = useCallback(
@@ -146,7 +174,28 @@ export const useAiChats = () => {
         throw error
       }
     },
-    [user?.uid]
+    [user]
+  )
+
+  const updateSessionTitle = useCallback(
+    async (sessionId: string, title: string) => {
+      if (!user?.uid) throw new Error('User not authenticated')
+
+      const normalizedTitle = title.trim()
+      if (!normalizedTitle) return
+
+      try {
+        const sessionRef = doc(db, 'ai_chat_sessions', sessionId)
+        await updateDoc(sessionRef, {
+          title: normalizedTitle,
+          updated_at: serverTimestamp(),
+        })
+      } catch (error) {
+        console.error('Error updating AI chat session title:', error)
+        throw error
+      }
+    },
+    [user]
   )
 
   const deleteSession = useCallback(
@@ -161,7 +210,7 @@ export const useAiChats = () => {
         throw error
       }
     },
-    [user?.uid]
+    [user]
   )
 
   return {
@@ -169,6 +218,7 @@ export const useAiChats = () => {
     loading,
     createSession,
     updateSession,
+    updateSessionTitle,
     deleteSession,
   }
 }

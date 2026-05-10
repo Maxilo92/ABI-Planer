@@ -1,0 +1,18 @@
+Starting avatar generation migration...
+Unhandled error during migration: Error: Unable to detect a Project Id in the current environment. 
+To learn more about authentication and Google APIs, visit: 
+https://cloud.google.com/docs/authentication/getting-started
+    at GoogleAuth.findAndCacheProjectId (/Users/maximilian/Documents/Code/ABI_Planer/ABI Planer/node_modules/google-gax/node_modules/google-auth-library/build/src/auth/googleauth.js:170:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async Firestore.initializeIfNeeded (/Users/maximilian/Documents/Code/ABI_Planer/ABI Planer/node_modules/@google-cloud/firestore/build/src/index.js:1201:35)
+Caused by: Error
+    at QueryUtil._getResponse (/Users/maximilian/Documents/Code/ABI_Planer/ABI Planer/node_modules/@google-cloud/firestore/build/src/reference/query-util.js:44:23)
+    at CollectionReference._getResponse (/Users/maximilian/Documents/Code/ABI_Planer/ABI Planer/node_modules/@google-cloud/firestore/build/src/reference/query.js:784:32)
+    at CollectionReference._get (/Users/maximilian/Documents/Code/ABI_Planer/ABI Planer/node_modules/@google-cloud/firestore/build/src/reference/query.js:777:35)
+    at /Users/maximilian/Documents/Code/ABI_Planer/ABI Planer/node_modules/@google-cloud/firestore/build/src/reference/query.js:745:43
+    at /Users/maximilian/Documents/Code/ABI_Planer/ABI Planer/node_modules/@google-cloud/firestore/build/src/telemetry/enabled-trace-util.js:110:30
+    at NoopContextManager.with (/Users/maximilian/Documents/Code/ABI_Planer/ABI Planer/node_modules/@opentelemetry/api/src/context/NoopContextManager.ts:31:15)
+    at ContextAPI.with (/Users/maximilian/Documents/Code/ABI_Planer/ABI Planer/node_modules/@opentelemetry/api/src/api/context.ts:77:42)
+    at NoopTracer.startActiveSpan (/Users/maximilian/Documents/Code/ABI_Planer/ABI Planer/node_modules/@opentelemetry/api/src/trace/NoopTracer.ts:98:27)
+    at ProxyTracer.startActiveSpan (/Users/maximilian/Documents/Code/ABI_Planer/ABI Planer/node_modules/@opentelemetry/api/src/trace/ProxyTracer.ts:51:20)
+    at EnabledTraceUtil.startActiveSpan (/Users/maximilian/Documents/Code/ABI_Planer/ABI Planer/node_modules/@google-cloud/firestore/build/src/telemetry/enabled-trace-util.js:102:28)

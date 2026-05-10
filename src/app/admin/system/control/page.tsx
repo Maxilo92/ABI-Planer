@@ -1,5 +1,7 @@
 'use client'
 
+import * as React from 'react'
+
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -18,6 +20,7 @@ import { useAdminSystem } from '@/components/admin/AdminSystemContext'
 import { CompactFeatureToggleRow } from '@/components/admin/system/SystemComponents'
 import { usePopupManager } from '@/modules/popup/usePopupManager'
 import { Separator } from '@/components/ui/separator'
+import { toast } from 'sonner'
 
 /**
  * Formats an ISO string for use in a datetime-local input.
@@ -49,6 +52,32 @@ export default function AdminSystemControl() {
   } = useAdminSystem()
   
   const { confirm } = usePopupManager()
+  const [migratingAvatars, setMigratingAvatars] = React.useState(false)
+
+  const handleMigrateAvatars = async () => {
+    const confirmed = await confirm({
+      title: 'NFT-Avatare generieren?',
+      content: 'Dies überschreibt alle bestehenden Profilbilder der Nutzer mit neuen, einzigartigen Pixel-Avataren (NFT-Style). Möchtest du fortfahren?',
+      priority: 'high',
+      confirmLabel: 'Ja, migrieren',
+    })
+    if (!confirmed) return
+
+    setMigratingAvatars(true)
+    try {
+      const res = await fetch('/api/admin/avatars/migrate', { method: 'POST' })
+      const data = await res.json()
+      if (data.success) {
+        toast.success(`Erfolgreich migriert: ${data.count} Profile aktualisiert.`)
+      } else {
+        toast.error('Fehler bei der Migration: ' + data.error)
+      }
+    } catch (err: any) {
+      toast.error('Netzwerkfehler: ' + err.message)
+    } finally {
+      setMigratingAvatars(false)
+    }
+  }
 
   const handleClearMaintenancePlan = async () => {
     const confirmed = await confirm({
@@ -289,6 +318,23 @@ export default function AdminSystemControl() {
                   >
                     <RefreshCw className={cn('w-3 h-3 mr-1.5', resettingSessionStats && 'animate-spin')} />
                     Reset
+                  </Button>
+                </div>
+
+                <div className="flex items-center justify-between p-4 rounded-xl border border-muted/30 bg-muted/10">
+                  <div className="space-y-0.5">
+                    <p className="text-xs font-black uppercase tracking-tight">NFT Avatare</p>
+                    <p className="text-[10px] text-muted-foreground">Alle Profilbilder neu generieren.</p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 text-[10px] font-black uppercase tracking-widest border-primary/20 text-primary hover:bg-primary/5"
+                    onClick={handleMigrateAvatars}
+                    disabled={migratingAvatars}
+                  >
+                    <RefreshCw className={cn('w-3 h-3 mr-1.5', migratingAvatars && 'animate-spin')} />
+                    Migrieren
                   </Button>
                 </div>
               </div>

@@ -261,7 +261,7 @@ export default function TeacherCreateCardPage() {
               "text-[9px] sm:text-[10px] font-bold uppercase tracking-widest transition-colors", 
               helpMode ? "text-primary" : "text-muted-foreground"
             )}>
-              <span className="hidden xs:inline">Assistent</span>
+              <span className="hidden xs:inline">ABI Bot</span>
               <span className="xs:hidden">Hilfe</span>
             </span>
             <Switch checked={helpMode} onCheckedChange={setHelpMode} className="scale-90 sm:scale-100" />
@@ -297,7 +297,7 @@ export default function TeacherCreateCardPage() {
                   <Sparkles className="w-6 h-6 sm:w-8 sm:h-8 text-primary" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-lg sm:text-xl underline decoration-primary/20 underline-offset-4">Mit Assistent (Empfohlen)</h3>
+                  <h3 className="font-bold text-lg sm:text-xl underline decoration-primary/20 underline-offset-4">Mit ABI Bot (Empfohlen)</h3>
                   <p className="text-sm text-muted-foreground mt-2 leading-relaxed">Jeder Schritt wird einfach erklärt. Perfekt für Einsteiger.</p>
                 </div>
               </button>

@@ -74,6 +74,7 @@ export function AppShell({ children }: AppShellProps) {
 
   const isAuthRoute = authRoutes.has(pathname) || 
     pathname?.startsWith('/lehrer/erstellen/')
+  const isStudioRoute = pathname === '/profil/studio'
   const isPublicLandingRoute = isDashboardSubdomain === false && !isAuthRoute && pathname !== '/maintenance'
   const isSupportRoute = domainInfo.isSupport
   const isMaintenancePage = pathname === '/maintenance'
@@ -237,19 +238,27 @@ export function AppShell({ children }: AppShellProps) {
           )}
           <EmailVerificationBanner />
           <SystemMessageHost />
-          <main className="flex-1 px-4 py-8 sm:px-6 lg:px-8 min-w-0">
-            <div className="mx-auto max-w-7xl w-full">
+          <main className={isStudioRoute ? 'flex-1 min-w-0' : 'flex-1 px-4 py-8 sm:px-6 lg:px-8 min-w-0'}>
+            {isStudioRoute ? (
               <FeatureGate>
                 <SchoolYearTransitionGate>
                   {children}
                 </SchoolYearTransitionGate>
               </FeatureGate>
-            </div>
+            ) : (
+              <div className="mx-auto max-w-7xl w-full">
+                <FeatureGate>
+                  <SchoolYearTransitionGate>
+                    {children}
+                  </SchoolYearTransitionGate>
+                </FeatureGate>
+              </div>
+            )}
           </main>
           <Footer />
         </div>
         <CookieConsent />
-        {showAssistant && <AiAssistantWidget />}
+        {showAssistant && <AiAssistantWidget displace={true} />}
       </div>
     </TwoFactorGate>
   )

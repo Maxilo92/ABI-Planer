@@ -1,11 +1,12 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { deleteUser, sendPasswordResetEmail, signOut, updateProfile } from 'firebase/auth'
-import { User, MoonStar, MessageSquarePlus, LogOut, Users, Save, Plus, Trash2, Sparkles, AlertTriangle, Globe, ShieldCheck, Bell, BellOff, Image as ImageIcon, Menu, X, ChevronRight } from 'lucide-react'
+import { User, MoonStar, MessageSquarePlus, LogOut, Users, Save, Plus, Trash2, Sparkles, AlertTriangle, Globe, ShieldCheck, Bell, BellOff, Menu, X, ChevronRight, Coins, Shuffle, CheckCircle2 } from 'lucide-react'
 import { collection, doc, getDoc, getDocs, onSnapshot, query, setDoc, updateDoc, where, writeBatch, deleteDoc } from 'firebase/firestore'
+import { getFunctions, httpsCallable } from 'firebase/functions'
 
 import { auth, db } from '@/lib/firebase'
 import { useAuth } from '@/context/AuthContext'
@@ -31,13 +32,8 @@ import { toast } from 'sonner'
 import { logAction } from '@/lib/logging'
 import { TOTPSetup } from '@/components/admin/TOTPSetup'
 import { usePopupManager } from '@/modules/popup/usePopupManager'
-
-interface SettingsNavItem {
-  id: string
-  label: string
-  icon: React.ReactNode
-  disabled?: boolean
-}
+import { NftAvatar } from '@/components/ui/nft-avatar'
+import { generateSeededPixelAvatar } from '@/lib/avatar'
 
 interface SettingsNavItem {
   id: string
@@ -50,6 +46,11 @@ interface CourseRow {
   id: string
   before: string
   after: string
+}
+
+const PIXEL_AVATAR_COSTS = {
+  generate: 5,
+  purchase: 25,
 }
 
 export default function SettingsPage() {
@@ -67,15 +68,19 @@ export default function SettingsPage() {
   // Account management state
   const [fullName, setFullName] = useState('')
   const [schoolName, setSchoolName] = useState('')
-  const [customAvatarUrl, setCustomAvatarUrl] = useState('')
   const [savingName, setSavingName] = useState(false)
   const [savingSchool, setSavingSchool] = useState(false)
-  const [savingAvatar, setSavingAvatar] = useState(false)
   const [availableCourses, setAvailableCourses] = useState<string[]>(['Kurs 1', 'Kurs 2', 'Kurs 3', 'Kurs 4', 'Kurs 5', 'Kurs 6', 'Kurs 7'])
   const [selectedCourse, setSelectedCourse] = useState('')
   const [savingCourse, setSavingCourse] = useState(false)
   const [sendingReset, setSendingReset] = useState(false)
   const [deletingAccount, setDeletingAccount] = useState(false)
+  const [buyingPixelAvatar, setBuyingPixelAvatar] = useState(false)
+  const [pendingPixelSeed, setPendingPixelSeed] = useState<string | null>(null)
+  const [userTeachersList, setUserTeachersList] = useState<Array<any>>([])
+  const [albumTotalCount, setAlbumTotalCount] = useState(0)
+  const [selectModalOpen, setSelectModalOpen] = useState(false)
+  const [selectedCardIds, setSelectedCardIds] = useState<Set<string>>(new Set())
 
   // Check for unsaved changes
   const hasUnsavedChanges = useCallback(() => {
@@ -191,8 +196,11 @@ export default function SettingsPage() {
     setFullName(profile?.full_name || '')
     setSchoolName(profile?.school_name || '')
     setSelectedCourse(profile?.class_name || '')
-    setCustomAvatarUrl(profile?.photo_url || '')
-  }, [profile?.full_name, profile?.school_name, profile?.class_name, profile?.photo_url])
+  }, [profile?.full_name, profile?.school_name, profile?.class_name])
+
+  useEffect(() => {
+    setPendingPixelSeed(profile?.cosmetics?.pixel_avatar_draft_seed || null)
+  }, [profile?.cosmetics?.pixel_avatar_draft_seed])
 
   const handleUpdateName = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -294,31 +302,6 @@ export default function SettingsPage() {
     }
   }
 
-  const handleSaveCustomAvatar = async () => {
-    if (!user || !profile) return
-
-    const normalizedUrl = customAvatarUrl.trim()
-
-    try {
-      setSavingAvatar(true)
-      await updateDoc(doc(db, 'profiles', user.uid), {
-        photo_url: normalizedUrl || null,
-      })
-
-      await logAction('PROFILE_UPDATED', user.uid, profile.full_name, {
-        field: 'photo_url',
-        value: normalizedUrl || null,
-      })
-
-      toast.success('Profilbild gespeichert.')
-    } catch (error) {
-      console.error('Error updating custom avatar:', error)
-      toast.error('Profilbild konnte nicht gespeichert werden.')
-    } finally {
-      setSavingAvatar(false)
-    }
-  }
-
   const handleDeleteAccount = async () => {
     if (!user || !profile) return
 
@@ -389,6 +372,174 @@ export default function SettingsPage() {
     profile?.role === 'admin_main' ||
     profile?.role === 'admin_co'
   )
+
+  const teacherCardBalance = useMemo(() => {
+    const inventory = profile?.booster_stats?.inventory || {}
+    const albumCardBalance = Number(inventory.album_v1 || 0) + Number(inventory.album_vol_1 || 0) + Number(inventory.albumkarten_v1 || 0)
+    return Math.max(0, Number(inventory.teacher_vol1 || 0) + Number(inventory.teachers_v1 || 0) + albumCardBalance)
+  }, [profile?.booster_stats?.inventory])
+  const combinedCardTotal = useMemo(() => teacherCardBalance + albumTotalCount, [teacherCardBalance, albumTotalCount])
+
+  const RARITY_VALUE: Record<string, number> = {
+    common: 1,
+    rare: 2,
+    epic: 5,
+    mythic: 10,
+    legendary: 20,
+  }
+
+  useEffect(() => {
+    const loadUserTeachers = async () => {
+      try {
+        if (!user) return
+        const docRef = doc(db, 'user_teachers', user.uid)
+        const snap = await getDoc(docRef)
+        const data = snap.exists() ? (snap.data() || {}) : {}
+        const list: Array<any> = []
+        let total = 0
+        for (const key of Object.keys(data)) {
+          const val = data[key]
+          const count = Number(val?.count || 0)
+          if (count <= 0) continue
+          total += count
+          list.push({ id: key, name: val.name || key, rarity: val.rarity || 'common', count })
+        }
+        setUserTeachersList(list)
+        setAlbumTotalCount(total)
+      } catch (err) {
+        console.error('Failed to load user_teachers:', err)
+      }
+    }
+
+    loadUserTeachers()
+  }, [user, profile])
+
+  const selectedValue = useMemo(() => {
+    let sum = 0
+    selectedCardIds.forEach((id) => {
+      const found = userTeachersList.find((x) => x.id === id)
+      if (found) sum += RARITY_VALUE[found.rarity] || 1
+    })
+    return sum
+  }, [selectedCardIds, userTeachersList])
+
+  const currentAvatarUrl = profile?.photo_url || null
+  const pendingPixelAvatar = pendingPixelSeed ? generateSeededPixelAvatar(pendingPixelSeed) : null
+
+  const handleGeneratePixelAvatar = async () => {
+    if (!user || !profile) return
+
+    try {
+      setBuyingPixelAvatar(true)
+      const functions = getFunctions(undefined, 'europe-west3')
+      const purchaseAvatar = httpsCallable<{ mode: 'generate' | 'purchase' }, { success: boolean; photoUrl: string; seed?: string; remainingTeacherCards: number }>(functions, 'purchasePixelProfileAvatar')
+      // If user hasn't explicitly selected album cards, but combined total
+      // includes user_teachers entries, auto-select lowest-value cards to
+      // cover the generate cost so the callable can decrement them.
+      const autoSelectIfNeeded = async (mode: 'generate' | 'purchase') => {
+        const cost = mode === 'generate' ? PIXEL_AVATAR_COSTS.generate : PIXEL_AVATAR_COSTS.purchase
+        // teacherCardBalance already includes inventory-based album keys.
+        if (teacherCardBalance >= cost) return [] as string[]
+        let remaining = cost - teacherCardBalance
+        const candidates = [...userTeachersList].sort((a, b) => {
+          const va = RARITY_VALUE[a.rarity] || 1
+          const vb = RARITY_VALUE[b.rarity] || 1
+          if (va !== vb) return va - vb
+          return (a.count || 0) - (b.count || 0)
+        })
+        const selected: string[] = []
+        const counts: Record<string, number> = {}
+        for (const c of candidates) counts[c.id] = c.count || 0
+
+        for (const c of candidates) {
+          if (remaining <= 0) break
+          if ((c.rarity || 'common') === 'iconic') continue
+          while (counts[c.id] > 0 && remaining > 0) {
+            selected.push(c.id)
+            counts[c.id] -= 1
+            remaining -= RARITY_VALUE[c.rarity] || 1
+          }
+        }
+        if (remaining > 0) return [] as string[]
+        return selected
+      }
+
+      const autoSelected = await autoSelectIfNeeded('generate')
+      const payload: any = { mode: 'generate' }
+      if (autoSelected.length > 0) payload.selectedCards = autoSelected
+
+      const result = await purchaseAvatar(payload)
+
+      if (!result.data?.seed) {
+        throw new Error('Es konnte kein Zufallsbild erzeugt werden.')
+      }
+
+      setPendingPixelSeed(result.data.seed)
+      toast.success('Neues Zufallsbild für 5 Karten erzeugt.')
+      router.refresh()
+    } catch (error: any) {
+      console.error('Error generating pixel avatar:', error)
+      toast.error(error?.message || 'Pixelprofilbild konnte nicht erzeugt werden.')
+    } finally {
+      setBuyingPixelAvatar(false)
+    }
+  }
+
+  const handlePurchasePendingPixelAvatar = async () => {
+    if (!user || !profile) return
+
+    if (!pendingPixelSeed) {
+      toast.error('Erzeuge zuerst ein Zufallsbild.')
+      return
+    }
+
+    try {
+      setBuyingPixelAvatar(true)
+      const functions = getFunctions(undefined, 'europe-west3')
+      const purchaseAvatar = httpsCallable<{ mode: 'generate' | 'purchase' }, { success: boolean; photoUrl: string; seed?: string; remainingTeacherCards: number }>(functions, 'purchasePixelProfileAvatar')
+      // Auto-select cards if needed for purchase as well
+      const autoSelectIfNeeded = async (mode: 'generate' | 'purchase') => {
+        const cost = mode === 'generate' ? PIXEL_AVATAR_COSTS.generate : PIXEL_AVATAR_COSTS.purchase
+        if (teacherCardBalance >= cost) return [] as string[]
+        let remaining = cost - teacherCardBalance
+        const candidates = [...userTeachersList].sort((a, b) => {
+          const va = RARITY_VALUE[a.rarity] || 1
+          const vb = RARITY_VALUE[b.rarity] || 1
+          if (va !== vb) return va - vb
+          return (a.count || 0) - (b.count || 0)
+        })
+        const selected: string[] = []
+        const counts: Record<string, number> = {}
+        for (const c of candidates) counts[c.id] = c.count || 0
+
+        for (const c of candidates) {
+          if (remaining <= 0) break
+          if ((c.rarity || 'common') === 'iconic') continue
+          while (counts[c.id] > 0 && remaining > 0) {
+            selected.push(c.id)
+            counts[c.id] -= 1
+            remaining -= RARITY_VALUE[c.rarity] || 1
+          }
+        }
+        if (remaining > 0) return [] as string[]
+        return selected
+      }
+
+      const autoSelected = await autoSelectIfNeeded('purchase')
+      const payload: any = { mode: 'purchase' }
+      if (autoSelected.length > 0) payload.selectedCards = autoSelected
+      await purchaseAvatar(payload)
+
+      setPendingPixelSeed(null)
+      toast.success('Pixelprofilbild für 25 Karten gekauft.')
+      router.refresh()
+    } catch (error: any) {
+      console.error('Error purchasing pending pixel avatar:', error)
+      toast.error(error?.message || 'Pixelprofilbild konnte nicht gekauft werden.')
+    } finally {
+      setBuyingPixelAvatar(false)
+    }
+  }
 
   const handleSignOut = async () => {
     await signOut(auth)
@@ -489,18 +640,18 @@ export default function SettingsPage() {
     }
   }
 
-  const [activeSection, setActiveSection] = useState<string>('personal')
+  const [activeSection, setActiveSection] = useState<string>('profile')
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   // Build navigation items
   const navItems: SettingsNavItem[] = [
-    { id: 'personal', label: t('settings.sections.personal'), icon: <User className="h-4 w-4" /> },
+    { id: 'profile', label: t('settings.sections.profile'), icon: <User className="h-4 w-4" /> },
     { id: 'appearance', label: t('settings.sections.appearance'), icon: <MoonStar className="h-4 w-4" /> },
     { id: 'language', label: t('settings.sections.language'), icon: <Globe className="h-4 w-4" /> },
     { id: 'notifications', label: 'Benachrichtigungen', icon: <Bell className="h-4 w-4" /> },
     { id: 'feedback', label: t('settings.sections.feedback'), icon: <MessageSquarePlus className="h-4 w-4" /> },
     { id: 'bonuses', label: t('settings.sections.bonuses'), icon: <Sparkles className="h-4 w-4" /> },
-    { id: 'account', label: 'Kontoverwaltung', icon: <ShieldCheck className="h-4 w-4" /> },
+    { id: 'security', label: t('settings.sections.security'), icon: <ShieldCheck className="h-4 w-4" /> },
     ...(canManageCourses ? [{ id: 'courses', label: t('settings.courseSystem.title'), icon: <Users className="h-4 w-4" /> }] : []),
   ]
 
@@ -564,7 +715,7 @@ export default function SettingsPage() {
         )}
 
         <div className="mx-auto w-full px-3 sm:px-6 lg:px-8 py-3 sm:py-6">
-          <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] lg:grid-cols-[200px_1fr] gap-3 md:gap-4 lg:gap-6">
+          <div className="grid grid-cols-1 xl:grid-cols-[240px_minmax(0,1fr)] 2xl:grid-cols-[260px_minmax(0,1fr)] gap-3 md:gap-4 lg:gap-6">
             {/* Sidebar Navigation */}
             <aside
               className={`${
@@ -597,10 +748,10 @@ export default function SettingsPage() {
           {/* Main Content */}
           <main className="space-y-4 sm:space-y-5 pb-6 md:pb-8 min-h-screen">
             {/* Profile Section */}
-            {activeSection === 'personal' && (
+            {activeSection === 'profile' && (
               <div className="space-y-3 sm:space-y-4 animate-in fade-in">
                 <div>
-                  <h2 className="text-lg sm:text-xl font-bold">{t('settings.sections.personal')}</h2>
+                  <h2 className="text-lg sm:text-xl font-bold">{t('settings.sections.profile')}</h2>
                   <p className="text-xs sm:text-sm text-muted-foreground">Verwalte deine persönlichen Daten</p>
                 </div>
                 <Card className="overflow-hidden">
@@ -616,6 +767,246 @@ export default function SettingsPage() {
                         {t('settings.profile.button')}
                       </Link>
                     </Button>
+                  </CardContent>
+                </Card>
+
+                <Card className="overflow-hidden border-primary/20 bg-gradient-to-br from-primary/5 via-background to-background">
+                  <CardHeader className="pb-3 sm:pb-4">
+                    <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                      <Sparkles className="h-4 w-4 flex-shrink-0 text-primary" /> Pixelprofilbilder
+                    </CardTitle>
+                    <CardDescription className="text-xs sm:text-sm">
+                      Erzeuge ein neues Zufallsbild für 5 Karten und kaufe es danach für 25 Karten. Lehrerkarten und Albumkarten zählen beide.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4 sm:space-y-5">
+                    <div className="grid grid-cols-1 lg:grid-cols-[160px_minmax(0,1fr)] gap-4">
+                      <div className="flex flex-col items-center gap-3 rounded-2xl border border-border/60 bg-card p-4">
+                        <NftAvatar
+                          url={currentAvatarUrl}
+                          fallback={profile?.full_name?.substring(0, 1).toUpperCase() || 'U'}
+                          role={profile?.role}
+                          interactive={false}
+                          className="h-28 w-28 border-2 border-border shadow-sm"
+                        />
+                        <div className="text-center space-y-1">
+                          <p className="text-sm font-bold">Aktuelles Profilbild</p>
+                          <p className="text-xs text-muted-foreground">
+                            {currentAvatarUrl?.startsWith('data:image/svg+xml') ? 'Pixelbild aktiv' : 'Standardbild aktiv'}
+                          </p>
+                          <div className="flex items-center justify-center gap-2">
+                            <div className="flex items-center gap-1 rounded-full bg-muted px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
+                              <Coins className="h-3.5 w-3.5" /> {combinedCardTotal} Karten gesamt
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="space-y-4">
+                        <div className="rounded-2xl border border-border/60 bg-muted/30 p-4 space-y-3">
+                          <div className="flex items-center justify-between gap-3">
+                            <div>
+                              <p className="text-sm font-bold">Zufallsbild erzeugen</p>
+                              <p className="text-xs text-muted-foreground">Du bekommst zuerst einen Entwurf. Wenn er dir gefällt, kaufst du ihn danach für 25 Karten.</p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-lg font-black">5</p>
+                              <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Karten</p>
+                            </div>
+                          </div>
+                          <Button
+                            className="w-full gap-2"
+                            onClick={handleGeneratePixelAvatar}
+                            disabled={buyingPixelAvatar || combinedCardTotal < PIXEL_AVATAR_COSTS.generate}
+                          >
+                            <Shuffle className="h-4 w-4" />
+                            {buyingPixelAvatar ? 'Erzeuge...' : 'Neues Zufallsbild erzeugen'}
+                          </Button>
+                        </div>
+
+                        <div className="rounded-2xl border border-border/60 bg-card p-4 space-y-3">
+                          <div className="flex items-center justify-between gap-3">
+                            <div>
+                              <p className="text-sm font-bold">Dein aktueller Entwurf</p>
+                              <p className="text-xs text-muted-foreground">
+                                {pendingPixelSeed ? 'Dieses Bild kannst du jetzt für 25 Karten kaufen.' : 'Noch kein Entwurf erzeugt.'}
+                              </p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-lg font-black">25</p>
+                              <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Karten</p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-3 rounded-2xl border border-dashed border-border/70 bg-muted/20 p-3">
+                            {pendingPixelAvatar ? (
+                              <NftAvatar
+                                url={pendingPixelAvatar}
+                                fallback={profile?.full_name?.substring(0, 1).toUpperCase() || 'U'}
+                                interactive={false}
+                                className="h-20 w-20 border border-border/60"
+                              />
+                            ) : (
+                              <div className="flex h-20 w-20 items-center justify-center rounded-full border border-dashed border-border/70 bg-background text-muted-foreground">
+                                <Sparkles className="h-5 w-5" />
+                              </div>
+                            )}
+
+                            <div className="min-w-0 flex-1 space-y-1">
+                              <p className="text-sm font-semibold">
+                                {pendingPixelSeed ? 'Bereit zum Kauf' : 'Kein Bild ausgewählt'}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {pendingPixelSeed
+                                  ? 'Wenn du dieses Bild behältst, wird es direkt als dein Profilbild gespeichert.'
+                                  : 'Erzeuge zuerst ein Zufallsbild, um einen Entwurf zu erhalten.'}
+                              </p>
+                            </div>
+                          </div>
+
+                          <Button
+                            className="w-full gap-2"
+                            onClick={() => setSelectModalOpen(true)}
+                            disabled={buyingPixelAvatar || !pendingPixelSeed || combinedCardTotal < PIXEL_AVATAR_COSTS.purchase}
+                          >
+                            <CheckCircle2 className="h-4 w-4" />
+                            {buyingPixelAvatar ? 'Kaufe...' : 'Dieses Bild kaufen'}
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Card selection modal */}
+                <Dialog open={selectModalOpen} onOpenChange={(open) => setSelectModalOpen(open)}>
+                  <DialogContent className="sm:max-w-xl">
+                    <DialogHeader>
+                      <DialogTitle>Karten auswählen zum Bezahlen</DialogTitle>
+                      <DialogDescription className="text-xs text-muted-foreground">Wähle einzelne Karten aus deinem Album aus, die du opfern möchtest. Icons können nicht verwendet werden.</DialogDescription>
+                    </DialogHeader>
+
+                    <div className="max-h-64 overflow-auto mt-2 space-y-2">
+                      {userTeachersList.length === 0 && <div className="text-xs text-muted-foreground">Keine Karten im Album gefunden.</div>}
+                      {userTeachersList.map((card) => (
+                        <div key={card.id} className="flex items-center justify-between gap-2 p-2 border rounded">
+                          <div>
+                            <div className="text-sm font-medium">{card.name}</div>
+                            <div className="text-xs text-muted-foreground">Seltenheit: {card.rarity} • Anzahl: {card.count}</div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <div className="text-xs text-muted-foreground">Wert: {RARITY_VALUE[card.rarity] || 1}</div>
+                            <input
+                              type="checkbox"
+                              checked={selectedCardIds.has(card.id)}
+                              onChange={(e) => {
+                                const next = new Set(selectedCardIds)
+                                if (e.target.checked) next.add(card.id)
+                                else next.delete(card.id)
+                                setSelectedCardIds(next)
+                              }}
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="mt-4 flex items-center justify-between">
+                      <div className="text-sm">Ausgewählter Wert: <strong>{selectedValue}</strong> Karten</div>
+                      <div className="flex gap-2">
+                        <Button variant="ghost" onClick={() => setSelectModalOpen(false)}>Abbrechen</Button>
+                        <Button
+                          onClick={async () => {
+                            try {
+                              setBuyingPixelAvatar(true)
+                              const functions = getFunctions(undefined, 'europe-west3')
+                              const purchaseAvatar = httpsCallable<{ mode: 'generate' | 'purchase'; selectedCards?: string[] }, { success: boolean; photoUrl: string; seed?: string; remainingTeacherCards: number }>(functions, 'purchasePixelProfileAvatar')
+                              await purchaseAvatar({ mode: 'purchase', selectedCards: Array.from(selectedCardIds) })
+                              setSelectedCardIds(new Set())
+                              setSelectModalOpen(false)
+                              setPendingPixelSeed(null)
+                              toast.success('Pixelprofilbild für 25 Karten gekauft.')
+                              router.refresh()
+                            } catch (error: any) {
+                              console.error('Error purchasing with selected cards:', error)
+                              toast.error(error?.message || 'Pixelprofilbild konnte nicht gekauft werden.')
+                            } finally {
+                              setBuyingPixelAvatar(false)
+                            }
+                          }}
+                          disabled={buyingPixelAvatar || (!pendingPixelSeed)}
+                        >
+                          Bezahlen
+                        </Button>
+                      </div>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+
+                <Card className="overflow-hidden">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base sm:text-lg">Profil bearbeiten</CardTitle>
+                    <CardDescription className="text-xs sm:text-sm">Ändere Name, Schule und Kurs für dein Konto.</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4 sm:space-y-6">
+                    <div className="grid grid-cols-1 2xl:grid-cols-2 gap-4">
+                      <form onSubmit={handleUpdateName} className="space-y-2 sm:space-y-3">
+                        <Label htmlFor="profile-full-name" className="text-xs sm:text-sm">Name ändern</Label>
+                        <div className="flex flex-col sm:flex-row gap-2">
+                          <Input
+                            id="profile-full-name"
+                            value={fullName}
+                            onChange={(e) => setFullName(e.target.value)}
+                            placeholder="Dein vollständiger Name"
+                            className="text-sm h-9 sm:h-10"
+                            required
+                          />
+                          <Button type="submit" disabled={savingName} className="h-9 sm:h-10 text-xs sm:text-sm flex-shrink-0">
+                            {savingName ? 'Speichern...' : 'Speichern'}
+                          </Button>
+                        </div>
+                      </form>
+
+                      <form onSubmit={handleUpdateSchool} className="space-y-2 sm:space-y-3">
+                        <Label htmlFor="profile-school-name" className="text-xs sm:text-sm">Schule ändern</Label>
+                        <div className="flex flex-col sm:flex-row gap-2">
+                          <Input
+                            id="profile-school-name"
+                            value={schoolName}
+                            onChange={(e) => setSchoolName(e.target.value)}
+                            placeholder="Gymnasial-Schule am See"
+                            className="text-sm h-9 sm:h-10"
+                          />
+                          <Button type="submit" disabled={savingSchool} className="h-9 sm:h-10 text-xs sm:text-sm flex-shrink-0">
+                            {savingSchool ? 'Speichern...' : 'Speichern'}
+                          </Button>
+                        </div>
+                      </form>
+                    </div>
+
+                    <div className="border-t pt-4 sm:pt-6">
+                      <form onSubmit={handleUpdateCourse} className="space-y-2 sm:space-y-3">
+                        <Label htmlFor="profile-course" className="text-xs sm:text-sm">Kurs ändern</Label>
+                        <div className="flex flex-col sm:flex-row gap-2">
+                          <select
+                            id="profile-course"
+                            value={selectedCourse}
+                            onChange={(e) => setSelectedCourse(e.target.value)}
+                            className="flex h-9 sm:h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-xs sm:text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                            required
+                          >
+                            {availableCourses.map((course) => (
+                              <option key={course} value={course}>
+                                {course}
+                              </option>
+                            ))}
+                          </select>
+                          <Button type="submit" disabled={savingCourse} className="h-9 sm:h-10 text-xs sm:text-sm flex-shrink-0">
+                            {savingCourse ? 'Speichern...' : 'Speichern'}
+                          </Button>
+                        </div>
+                      </form>
+                    </div>
                   </CardContent>
                 </Card>
               </div>
@@ -641,39 +1032,6 @@ export default function SettingsPage() {
                     <div className="border-t pt-4 sm:pt-6 space-y-2 sm:space-y-3">
                       <Label className="text-sm font-semibold">Akzentfarbe</Label>
                       <AccentThemeSelector />
-                    </div>
-                    <div className="rounded-lg border border-border/60 bg-muted/30 p-3 sm:p-4 space-y-3 sm:space-y-4 mt-4 sm:mt-6">
-                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
-                        <div className="space-y-1 min-w-0">
-                          <p className="text-xs sm:text-sm font-semibold flex items-center gap-2">
-                            <ImageIcon className="h-4 w-4 flex-shrink-0" /> Profilbild
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            Gib eine Bild-URL ein, um dein Profilbild anzupassen.
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="space-y-3 pt-3 sm:pt-4 border-t">
-                        <div className="space-y-2">
-                          <Label htmlFor="custom-avatar-url" className="text-xs sm:text-sm">Bild-URL</Label>
-                          <Input
-                            id="custom-avatar-url"
-                            value={customAvatarUrl}
-                            onChange={(e) => setCustomAvatarUrl(e.target.value)}
-                            placeholder="https://.../mein-icon.png"
-                            className="text-sm"
-                          />
-                        </div>
-                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                          <Button onClick={handleSaveCustomAvatar} disabled={savingAvatar} size="sm" className="h-9 sm:h-10 text-xs sm:text-sm">
-                            {savingAvatar ? 'Speichere...' : 'Profilbild speichern'}
-                          </Button>
-                          <Button variant="ghost" onClick={() => setCustomAvatarUrl(profile.photo_url || '')} disabled={savingAvatar} size="sm" className="h-9 sm:h-10 text-xs sm:text-sm">
-                            Zurücksetzen
-                          </Button>
-                        </div>
-                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -817,76 +1175,18 @@ export default function SettingsPage() {
             )}
 
             {/* Account Management Section */}
-            {activeSection === 'account' && (
+            {activeSection === 'security' && (
               <div className="space-y-3 sm:space-y-4">
                 <div>
-                  <h2 className="text-lg sm:text-xl font-bold">Kontoverwaltung</h2>
-                  <p className="text-xs sm:text-sm text-muted-foreground">Verwalte deine Sicherheit und persönliche Daten</p>
+                  <h2 className="text-lg sm:text-xl font-bold">Sicherheit</h2>
+                  <p className="text-xs sm:text-sm text-muted-foreground">Verwalte Passwort, Zwei-Faktor-Authentisierung und Kontozugriff</p>
                 </div>
                 <Card className="overflow-hidden">
                   <CardHeader className="pb-3">
-                    <CardTitle className="text-base sm:text-lg">Account-Einstellungen</CardTitle>
-                    <CardDescription className="text-xs sm:text-sm">Verwalte deine persönlichen Daten und Sicherheitseinstellungen.</CardDescription>
+                    <CardTitle className="text-base sm:text-lg">Sicherheitseinstellungen</CardTitle>
+                    <CardDescription className="text-xs sm:text-sm">Schütze dein Konto und verwalte den Zugriff auf diesem Gerät.</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4 sm:space-y-6">
-                    {/* Name Settings */}
-                    <form onSubmit={handleUpdateName} className="space-y-2 sm:space-y-3">
-                      <Label htmlFor="profile-full-name" className="text-xs sm:text-sm">Name ändern</Label>
-                      <div className="flex flex-col sm:flex-row gap-2">
-                        <Input
-                          id="profile-full-name"
-                          value={fullName}
-                          onChange={(e) => setFullName(e.target.value)}
-                          placeholder="Dein vollständiger Name"
-                          className="text-sm h-9 sm:h-10"
-                          required
-                        />
-                        <Button type="submit" disabled={savingName} className="h-9 sm:h-10 text-xs sm:text-sm flex-shrink-0">
-                          {savingName ? 'Speichern...' : 'Speichern'}
-                        </Button>
-                      </div>
-                    </form>
-
-                    {/* School Settings */}
-                    <form onSubmit={handleUpdateSchool} className="space-y-2 sm:space-y-3 border-t pt-3 sm:pt-4">
-                      <Label htmlFor="profile-school-name" className="text-xs sm:text-sm">Schule ändern</Label>
-                      <div className="flex flex-col sm:flex-row gap-2">
-                        <Input
-                          id="profile-school-name"
-                          value={schoolName}
-                          onChange={(e) => setSchoolName(e.target.value)}
-                          placeholder="Gymnasial-Schule am See"
-                          className="text-sm h-9 sm:h-10"
-                        />
-                        <Button type="submit" disabled={savingSchool} className="h-9 sm:h-10 text-xs sm:text-sm flex-shrink-0">
-                          {savingSchool ? 'Speichern...' : 'Speichern'}
-                        </Button>
-                      </div>
-                    </form>
-
-                    {/* Course Settings */}
-                    <form onSubmit={handleUpdateCourse} className="space-y-2 sm:space-y-3 border-t pt-3 sm:pt-4">
-                      <Label htmlFor="profile-course" className="text-xs sm:text-sm">Kurs ändern</Label>
-                      <div className="flex flex-col sm:flex-row gap-2">
-                        <select
-                          id="profile-course"
-                          value={selectedCourse}
-                          onChange={(e) => setSelectedCourse(e.target.value)}
-                          className="flex h-9 sm:h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-xs sm:text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                          required
-                        >
-                          {availableCourses.map((course) => (
-                            <option key={course} value={course}>
-                              {course}
-                            </option>
-                          ))}
-                        </select>
-                        <Button type="submit" disabled={savingCourse} className="h-9 sm:h-10 text-xs sm:text-sm flex-shrink-0">
-                          {savingCourse ? 'Speichern...' : 'Speichern'}
-                        </Button>
-                      </div>
-                    </form>
-
                     {/* Password Reset */}
                     <div className="space-y-2 sm:space-y-3 border-t pt-3 sm:pt-4">
                       <Label className="text-xs sm:text-sm">Passwort ändern</Label>

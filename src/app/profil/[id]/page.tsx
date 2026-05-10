@@ -12,6 +12,37 @@ import { useAuth } from '@/context/AuthContext'
 import { useFriendSystem } from '@/hooks/useFriendSystem'
 import { toast } from 'sonner'
 import { ProfileView } from '@/components/profile/ProfileView'
+import { Timestamp } from 'firebase/firestore'
+
+const BOT_PROFILE_DATA: Profile = {
+  id: 'abi-bot',
+  full_name: 'ABI Bot',
+  photo_url: '/images/bot/avatar.png',
+  email: 'bot@abi-planer.de',
+  role: 'admin_main',
+  planning_groups: ['System-Zentrale', 'Support'],
+  led_groups: [],
+  is_approved: true,
+  created_at: '2024-01-01T00:00:00.000Z',
+  referral_code: 'ABIBOT',
+  referred_by: null,
+  isOnline: true,
+  lastOnline: new Date(),
+  school_name: 'Zentrale Datenbank',
+  class_name: 'KI',
+  task_stats: {
+    completed_count: 9999,
+    earned_boosters: 42069,
+    total_penalty_reduction: 0,
+    ehrenpunkte: 999
+  },
+  booster_stats: {
+    last_reset: new Date().toISOString(),
+    count: 0,
+    total_opened: 1337,
+    total_cards: 420
+  }
+}
 
 export default function PublicProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
@@ -29,6 +60,12 @@ export default function PublicProfilePage({ params }: { params: Promise<{ id: st
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    if (id === 'abi-bot') {
+      setTargetProfile(BOT_PROFILE_DATA)
+      setLoading(false)
+      return
+    }
+
     const fetchProfile = async () => {
       try {
         const docRef = doc(db, 'profiles', id)
@@ -158,8 +195,8 @@ export default function PublicProfilePage({ params }: { params: Promise<{ id: st
       <ProfileView 
         profile={targetProfile} 
         isOwnProfile={isOwnProfile}
-        relationshipState={relationshipState}
-        onFriendAction={handleFriendAction}
+        relationshipState={id === 'abi-bot' ? 'none' : relationshipState}
+        onFriendAction={id === 'abi-bot' ? undefined : handleFriendAction}
       />
     </div>
   )

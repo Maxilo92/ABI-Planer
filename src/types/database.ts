@@ -105,6 +105,9 @@ export interface Profile {
   cosmetics?: {
     premium_themes?: boolean;
     custom_avatar?: boolean;
+    pixel_avatar_seed?: string | null;
+    pixel_avatar_draft_seed?: string | null;
+    pixel_avatar_mode?: 'random' | 'purchased' | null;
     unlocked_at?: string | null;
   } | null;
   fcmTokens?: string[];

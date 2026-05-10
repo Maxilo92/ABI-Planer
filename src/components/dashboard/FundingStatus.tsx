@@ -250,7 +250,7 @@ export function FundingStatus({
 
           {isAuthenticated ? (
             <div className="pt-3 border-t space-y-3">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <Label htmlFor="tickets" className="text-[11px] font-bold uppercase text-muted-foreground tracking-wider">Tickets (Erw.)</Label>
                   {ticketSalesEditable ? (
@@ -279,7 +279,7 @@ export function FundingStatus({
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 xs:grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                 {profile && (
                   <div className="p-2.5 rounded-xl bg-primary/5 border border-primary/20 flex flex-col justify-center">
                     <p className="text-[9px] uppercase font-bold text-primary tracking-wider mb-0.5">Dein Ticketpreis</p>

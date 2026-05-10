@@ -172,8 +172,8 @@ export const translations = {
         rateLimit: 'Rate-Limit erreicht. Bitte warte eine Minute.'
       },
       aiAssistant: {
-        title: 'ABI Assistent',
-        welcome: 'Hallo! Ich bin dein persönlicher ABI Assistent. Wie kann ich dir heute bei der Planung helfen?',
+        title: 'ABI Bot',
+        welcome: 'Hallo! Ich bin dein persönlicher ABI Bot. Wie kann ich dir heute bei der Planung helfen?',
         placeholder: 'Frage stellen...',
         thinking: 'Überlegt...',
         error: 'Fehler beim Antworten.',
@@ -324,10 +324,12 @@ export const translations = {
       quickAccess: 'Schnellzugriff',
       sections: {
         personal: 'Persönlich',
+        profile: 'Profil',
         appearance: 'Darstellung',
         feedback: 'Feedback',
         bonuses: 'Boni',
         account: 'Konto',
+        security: 'Sicherheit',
         administration: 'Verwaltung',
         language: 'Sprache'
       },
@@ -709,8 +711,8 @@ export const translations = {
         rateLimit: 'Rate limit reached. Please wait a minute.'
       },
       aiAssistant: {
-        title: 'ABI Assistant',
-        welcome: 'Hello! I am your personal ABI Assistant. How can I help you with your planning today?',
+        title: 'ABI Bot',
+        welcome: 'Hello! I am your personal ABI Bot. How can I help you with your planning today?',
         placeholder: 'Ask a question...',
         thinking: 'Thinking...',
         error: 'Failed to respond.',
@@ -861,10 +863,12 @@ export const translations = {
       quickAccess: 'Quick Access',
       sections: {
         personal: 'Personal',
+        profile: 'Profile',
         appearance: 'Appearance',
         feedback: 'Feedback',
         bonuses: 'Bonuses',
         account: 'Account',
+        security: 'Security',
         administration: 'Administration',
         language: 'Language'
       },
@@ -1246,8 +1250,8 @@ export const translations = {
         rateLimit: 'Límite de velocidad alcanzado. Por favor, espera un minuto.'
       },
       aiAssistant: {
-        title: 'Asistente ABI',
-        welcome: '¡Hola! Soy tu asistente personal de ABI. ¿Cómo puedo ayudarte con tu planificación hoy?',
+        title: 'ABI Bot',
+        welcome: '¡Hola! Soy tu ABI Bot personal. ¿Cómo puedo ayudarte con tu planificación hoy?',
         placeholder: 'Hacer una pregunta...',
         thinking: 'Pensando...',
         error: 'Error al responder.',
@@ -1398,10 +1402,12 @@ export const translations = {
       quickAccess: 'Acceso Rápido',
       sections: {
         personal: 'Personal',
+        profile: 'Perfil',
         appearance: 'Apariencia',
         feedback: 'Comentarios',
         bonuses: 'Bonos',
         account: 'Cuenta',
+        security: 'Seguridad',
         administration: 'Administración',
         language: 'Idioma'
       },

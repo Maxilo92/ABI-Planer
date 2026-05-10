@@ -5,7 +5,7 @@ import { ShoppingBag, User, LogOut, Menu, X, ShoppingCart, Sparkles, LayoutDashb
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { NftAvatar } from '@/components/ui/nft-avatar'
 import { getFirebaseAuth } from '@/lib/firebase'
 import { signOut } from 'firebase/auth'
 import { useRouter } from 'next/navigation'
@@ -66,7 +66,7 @@ export function ShopNavbar() {
           {user ? (
             <div className="hidden md:flex items-center gap-3 ml-4">
               <Link href="/profil" className="flex items-center gap-2 hover:bg-secondary rounded-full pl-1 pr-3 py-1 transition-colors">
-                <Avatar size="sm"><AvatarFallback className="text-[10px]">{userInitial}</AvatarFallback></Avatar>
+                <NftAvatar url={profile?.photo_url} fallback={userInitial} interactive={false} size="sm" />
                 <span className="text-sm font-medium">{profile?.full_name?.split(' ')[0]}</span>
               </Link>
               <Button variant="ghost" size="icon" onClick={handleSignOut} title="Abmelden">
